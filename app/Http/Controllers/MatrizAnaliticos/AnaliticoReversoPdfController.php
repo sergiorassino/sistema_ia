@@ -21,10 +21,9 @@ class AnaliticoReversoPdfController extends Controller
         ]);
         $idLegajos = (int) $validated['idLegajos'];
 
+        abort_unless(schoolEsNivelSecundario(), 403, 'Este módulo requiere contexto de Secundario.');
+
         $ctx = schoolCtx();
-        if (! str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari')) {
-            abort(403, 'Este módulo requiere contexto de Secundario.');
-        }
 
         $idNivel = (int) $ctx->idNivel;
         if ($idNivel < 1 || $idLegajos < 1) {

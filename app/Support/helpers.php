@@ -75,6 +75,16 @@ if (! function_exists('schoolEsAdministracion')) {
     }
 }
 
+if (! function_exists('schoolEsNivelSecundario')) {
+    /**
+     * Nivel secundario en sesión de secretaría (`niveles.id` = 3).
+     */
+    function schoolEsNivelSecundario(): bool
+    {
+        return \App\Support\NivelSistema::esSecundario((int) (schoolCtx()->idNivel ?? 0));
+    }
+}
+
 if (! function_exists('layoutMenuStaff')) {
     /** Layout del portal staff: Administración o Secretaría pedagógica. */
     function layoutMenuStaff(): string

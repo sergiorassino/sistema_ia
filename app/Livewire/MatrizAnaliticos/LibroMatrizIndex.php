@@ -23,10 +23,7 @@ class LibroMatrizIndex extends Component
     public function mount(): void
     {
         abort_unless(tienePermiso(16), 403, 'Sin permiso para Libro Matriz / Analítico.');
-        $ctx = schoolCtx();
-        if (! str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari')) {
-            abort(403, 'Este módulo requiere contexto de Secundario.');
-        }
+        abort_unless(schoolEsNivelSecundario(), 403, 'Este módulo requiere contexto de Secundario.');
 
         LibroMatrizAnalitico::persistirBuscarListado($this->buscar);
     }
