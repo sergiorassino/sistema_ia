@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manual de uso — Comunicación institucional</title>
+  <style>
+    :root {
+      --primary: #40848D;
+      --primary-dark: #2f6369;
+      --jet: #333333;
+      --moonstone: #739FA5;
+      --accent: #C1D7DA;
+      --bg: #F4F8F9;
+      --white: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(51, 51, 51, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--primary); }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  /* Portada */
+    .cover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 55%, var(--jet) 100%);
+      color: var(--white);
+      padding: 3rem 1.25rem 2.5rem;
+      margin: 0 -1.25rem 2rem;
+    }
+  .cover-inner { max-width: 920px; margin: 0 auto; }
+    .cover h1 { margin: 0 0 0.5rem; font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 700; }
+    .cover .sub { opacity: 0.9; font-size: 1rem; max-width: 36rem; }
+    .meta-box {
+      margin-top: 2rem;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+    }
+    .meta-box dt { font-weight: 600; display: inline; }
+    .meta-box dd { display: inline; margin: 0 1.5rem 0 0.35rem; }
+
+  /* Navegación */
+    nav.toc {
+      background: var(--white);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--shadow);
+    }
+    nav.toc h2 { margin: 0 0 0.75rem; font-size: 1.1rem; color: var(--jet); }
+    nav.toc ol { margin: 0; padding-left: 1.25rem; }
+    nav.toc li { margin: 0.35rem 0; }
+    nav.toc a { text-decoration: none; font-weight: 500; }
+    nav.toc a:hover { text-decoration: underline; }
+
+  /* Secciones */
+    section { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    section > h2 {
+      font-size: 1.45rem;
+      color: var(--jet);
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 0.4rem;
+      margin: 0 0 1rem;
+    }
+    h3 { font-size: 1.05rem; color: var(--jet); margin: 1.5rem 0 0.6rem; }
+    p { margin: 0 0 0.85rem; }
+    ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+    li { margin: 0.3rem 0; }
+
+    .box {
+      background: #f0f4f5;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+      margin: 1rem 0;
+    }
+    .box-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--jet); }
+    .box table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .box th, .box td { text-align: left; padding: 0.35rem 0.5rem 0.35rem 0; vertical-align: top; }
+    .box th { width: 38%; font-weight: 600; color: var(--muted); }
+
+    .callout {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 1rem 1.15rem;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+    }
+    .callout strong { color: #1e40af; display: block; margin-bottom: 0.25rem; }
+
+    .routes {
+      font-size: 0.88rem;
+      background: #fafafa;
+      border-left: 4px solid var(--primary);
+      padding: 0.65rem 1rem;
+      margin: 0.75rem 0;
+    }
+    .routes code { font-size: 0.85em; background: #eee; padding: 0.1em 0.35em; border-radius: 4px; }
+
+  /* Mockups de pantalla */
+    .screen {
+      margin: 1.5rem 0 2rem;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--accent);
+      background: var(--white);
+    }
+    .screen-caption {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .hero-mock {
+      background: linear-gradient(120deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--white);
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .hero-mock .eyebrow {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      opacity: 0.75;
+      margin: 0 0 0.2rem;
+    }
+    .hero-mock h4 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+    .hero-mock .ctx { font-size: 0.8rem; opacity: 0.85; margin-top: 0.25rem; }
+    .hero-mock .btn-ghost {
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.12);
+      color: var(--white);
+      padding: 0.45rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .hero-mock .btn-white {
+      background: var(--white);
+      color: var(--primary);
+      padding: 0.45rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+    }
+    .screen-body { padding: 1rem 1.25rem 1.25rem; background: var(--bg); }
+    .toolbar-mock {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0.85rem 1rem;
+      background: var(--white);
+      border-bottom: 1px solid var(--accent);
+    }
+    .label-mock {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    select.mock, input.mock, textarea.mock {
+      font: inherit;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 0.4rem 0.6rem;
+      background: var(--white);
+      min-width: 140px;
+      color: var(--text);
+    }
+    textarea.mock { width: 100%; min-height: 4.5rem; resize: vertical; }
+    .pills { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+    .pill {
+      padding: 0.4rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--accent);
+      background: var(--white);
+      color: var(--text);
+    }
+    .pill.on {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+    }
+    .card-mock {
+      background: var(--white);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.65rem;
+      font-size: 0.88rem;
+    }
+    .card-mock .subject { font-weight: 700; margin-bottom: 0.2rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      margin-right: 0.35rem;
+    }
+    .badge.recv { background: #dbeafe; color: #1e40af; }
+    .badge.sent { background: #d1fae5; color: #065f46; }
+    .badge.warn { background: #fef3c7; color: #92400e; }
+    .panel-mock {
+      background: var(--white);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+    }
+    .panel-mock .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin: 0 0 0.35rem;
+    }
+    .btn-primary-mock {
+      display: inline-block;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.75rem;
+      float: right;
+    }
+    .checkbox-mock {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+    .checkbox-mock input { margin-top: 0.2rem; accent-color: var(--primary); }
+    table.data-mock {
+      width: 100%;
+      font-size: 0.78rem;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    table.data-mock th {
+      background: #eef4f5;
+      text-align: left;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    table.data-mock td {
+      border-top: 1px solid var(--accent);
+      padding: 0.4rem 0.5rem;
+    }
+    .status-ok { color: #047857; font-weight: 600; }
+    .status-fail { color: #b91c1c; font-weight: 600; }
+    .status-pend { color: #b45309; font-weight: 600; }
+
+    .sidebar-mock {
+      display: flex;
+      gap: 0;
+      min-height: 120px;
+      font-size: 0.75rem;
+    }
+    .sidebar-mock aside {
+      width: 200px;
+      background: var(--jet);
+      color: rgba(255,255,255,0.85);
+      padding: 0.75rem 0.5rem;
+      flex-shrink: 0;
+    }
+    .sidebar-mock aside .group {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.55);
+      padding: 0.5rem 0.4rem 0.25rem;
+    }
+    .sidebar-mock aside a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      margin: 0.1rem 0;
+    }
+    .sidebar-mock aside a.active {
+      background: var(--primary);
+      color: var(--white);
+    }
+    .sidebar-mock main {
+      flex: 1;
+      background: var(--bg);
+      padding: 0.5rem;
+      min-width: 0;
+    }
+
+    footer.doc-foot {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--accent);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    @media print {
+      body { background: white; font-size: 11pt; }
+      .cover { break-after: page; margin: 0; padding: 2rem 1rem; }
+      .screen { break-inside: avoid; box-shadow: none; }
+      nav.toc { break-after: page; }
+      a { color: inherit; text-decoration: none; }
+      nav.toc a::after { content: leader('.') target-counter(attr(href), page); }
+    }
+  </style>
+</head>
+<body>
+  <header class="cover">
+    <div class="cover-inner wrap">
+      <h1>Manual de uso — Comunicación institucional</h1>
+      <p class="sub">Bandeja · Nuevo comunicado · Control de cuaderno · Canales · Informe de envío</p>
+      <dl class="meta-box">
+        <dt>Versión:</dt><dd>1.0</dd>
+        <dt>Módulo:</dt><dd>COMUNICACIÓN INSTITUCIONAL</dd>
+        <dt>Uso:</dt><dd>Documento interno para personal de gestión, docentes y referentes de familias.</dd>
+      </dl>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="toc" aria-label="Índice">
+      <h2>Índice</h2>
+      <ol>
+        <li><a href="#intro">Introducción y lógica general</a></li>
+        <li><a href="#menu">Menú y accesos</a></li>
+        <li><a href="#bandeja">Bandeja de comunicados</a></li>
+        <li><a href="#nuevo">Nuevo comunicado</a></li>
+        <li><a href="#hilo">Conversación (hilo)</a></li>
+        <li><a href="#informe">Informe de envío</a></li>
+        <li><a href="#control">Control de cuaderno (revisión)</a></li>
+        <li><a href="#canales">Configuración de canales</a></li>
+        <li><a href="#checklist">Checklist rápido</a></li>
+      </ol>
+    </nav>
+
+    <!-- INTRO -->
+    <section id="intro">
+      <h2>1. Introducción y lógica general</h2>
+      <p>
+        El módulo de <strong>Comunicación institucional</strong> funciona como un cuaderno de comunicados digital:
+        la escuela envía mensajes a familias (alumnos, cursos o todo el colegio) y también puede haber
+        comunicaciones internas entre personal (docentes, preceptores, directivos), según la configuración de canales.
+      </p>
+      <div class="box">
+        <div class="box-title">Conceptos clave</div>
+        <table>
+          <tr><th>Hilo</th><td>Conversación agrupada por asunto. Un hilo contiene uno o más mensajes.</td></tr>
+          <tr><th>Mensaje</th><td>Cada publicación dentro del hilo (inicial o respuesta).</td></tr>
+          <tr><th>Destinatario</th><td>Persona o familia que puede recibir notificación por uno o más medios.</td></tr>
+          <tr><th>Lectura</th><td>Cada destinatario registra «leído» al abrir el mensaje.</td></tr>
+          <tr><th>Respuesta</th><td>Si está habilitada, el destinatario puede responder en el mismo hilo.</td></tr>
+        </table>
+      </div>
+      <div class="box">
+        <div class="box-title">Dónde se ve el módulo</div>
+        <table>
+          <tr><th>Gestión / Secretaría</th><td>Menú lateral <strong>COMUNICACIÓN INSTITUCIONAL</strong> (bandeja, nuevo, control, canales).</td></tr>
+          <tr><th>Portal Docente</th><td>Menú Docentes → Comunicaciones (mismas pantallas, según permisos).</td></tr>
+          <tr><th>Portal Familias</th><td>Portal → Comunicaciones (bandeja, nuevo y preferencias, si está habilitado).</td></tr>
+        </table>
+      </div>
+      <h3>Permisos habituales (referencia)</h3>
+      <p>El sistema muestra opciones según la cadena de permisos del usuario (<code>profesores.permisos</code>, posición = <code>permisosusuarios.orden</code>):</p>
+      <ul>
+        <li><strong>Bandeja:</strong> permiso 3 (orden 51 en catálogo de manual general).</li>
+        <li><strong>Nuevo comunicado:</strong> permiso 4 (orden 52).</li>
+        <li><strong>Control / Revisión:</strong> permiso 8 (orden 56).</li>
+        <li><strong>Canales (configuración):</strong> permiso 5 (orden 53).</li>
+        <li><strong>Borrar mensajes:</strong> permisos 6 (propios) y 7 (ajenos).</li>
+      </ul>
+    </section>
+
+    <!-- MENÚ -->
+    <section id="menu">
+      <h2>2. Menú y accesos</h2>
+      <p>En el layout de gestión, el grupo de menú se despliega con estos ítems (según permisos):</p>
+      <div class="screen">
+        <p class="screen-caption" style="padding:0.75rem 1rem 0;margin:0;">Vista del menú lateral (gestión)</p>
+        <div class="sidebar-mock">
+          <aside>
+            <div class="group">Comunicación institucional</div>
+            <a href="#bandeja" class="active">Bandeja de comunicados</a>
+            <a href="#nuevo">Nuevo comunicado</a>
+            <a href="#control">Control Cuaderno de Comunicados</a>
+            <a href="#canales">Configuración de Canales</a>
+          </aside>
+          <main>
+            <div class="hero-mock" style="border-radius:10px;padding:0.75rem;">
+              <div>
+                <p class="eyebrow">Comunicaciones</p>
+                <h4 style="font-size:0.95rem;">Bandeja de comunicados</h4>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+      <div class="routes">
+        <strong>Rutas típicas (gestión):</strong><br />
+        Bandeja <code>/comunicaciones</code> ·
+        Nuevo <code>/comunicaciones/nuevo</code> ·
+        Revisión <code>/comunicaciones/revision</code> ·
+        Informe <code>/comunicaciones/informe-envio/{id}</code> ·
+        Canales <code>/parametrizacion/com-canales</code>
+      </div>
+      <div class="routes">
+        <strong>Portal docente:</strong> prefijo <code>/portal-docente/comunicaciones</code> ·
+        <strong>Familias:</strong> <code>/alumnos/comunicaciones</code>
+      </div>
+      <p>También puede descargarse un PDF desde <code>/manual-comunicacion-institucional.pdf</code> (si su perfil tiene acceso al manual del sistema).</p>
+    </section>
+
+    <!-- BANDEJA -->
+    <section id="bandeja">
+      <h2>3. Bandeja de comunicados</h2>
+      <p>
+        Punto de entrada: lista los hilos del año lectivo en el contexto activo (nivel y ciclo).
+        Desde aquí se abre cada hilo para leer, responder, marcar como no leído o eliminar mensajes (si aplica).
+      </p>
+
+      <p class="screen-caption">Pantalla — Bandeja de comunicados</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div>
+            <p class="eyebrow">Comunicaciones</p>
+            <h4>Bandeja de comunicados</h4>
+            <p class="ctx">Secundario · Ciclo lectivo 2026</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span class="btn-ghost" style="opacity:0.9;">12 hilos</span>
+            <span class="btn-white">+ Nuevo comunicado</span>
+          </div>
+        </div>
+        <div class="toolbar-mock">
+          <div>
+            <span class="label-mock">Año lectivo</span>
+            <select class="mock" disabled><option>Actual</option><option>Toda la historia</option></select>
+          </div>
+          <div>
+            <span class="label-mock">Estado</span>
+            <div class="pills">
+              <span class="pill on">Todos</span>
+              <span class="pill">No leídos</span>
+            </div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="card-mock">
+            <span class="badge recv">Recibido</span>
+            <span class="badge warn">2 no leídos</span>
+            <div class="subject">Autorización salida pedagógica — 3º A</div>
+            <div style="color:var(--muted);font-size:0.8rem;">De: García, María (madre) · 27/05/2026</div>
+          </div>
+          <div class="card-mock">
+            <span class="badge sent">Enviado</span>
+            <span style="font-size:0.75rem;color:var(--muted);">Ver conversación</span>
+            <div class="subject">Recordatorio entrega libreta sanitaria</div>
+            <div style="color:var(--muted);font-size:0.8rem;">Para: Curso 2º B (28 familias) · Solo informativo</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Filtros</h3>
+      <ul>
+        <li><strong>Año lectivo — Actual:</strong> hilos del ciclo lectivo activo del contexto.</li>
+        <li><strong>Año lectivo — Toda la historia:</strong> incluye otros ciclos (búsqueda histórica).</li>
+        <li><strong>Estado — No leídos:</strong> hilos con al menos un destinatario pendiente de lectura para usted.</li>
+      </ul>
+
+      <h3>Etiquetas en la lista</h3>
+      <ul>
+        <li><strong>Recibido:</strong> el hilo lo inició una familia u otro usuario; usted es destinatario.</li>
+        <li><strong>Enviado:</strong> usted (u otro personal) inició el envío hacia familias o docentes.</li>
+        <li><strong>Ver conversación:</strong> hay más de un mensaje en el hilo.</li>
+        <li><strong>X no leído(s):</strong> pendientes de lectura en ese hilo.</li>
+        <li><strong>Solo informativo:</strong> el hilo no admite respuestas (familias o docentes, según el caso).</li>
+      </ul>
+    </section>
+
+    <!-- NUEVO -->
+    <section id="nuevo">
+      <h2>4. Nuevo comunicado</h2>
+      <p>
+        Inicia un hilo nuevo con el primer mensaje. El envío puede ser hacia familias (estudiantes)
+        o hacia docentes/personal, según el bloque de destinatarios elegido.
+      </p>
+
+      <p class="screen-caption">Pantalla — Nuevo comunicado (formulario principal)</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div>
+            <p class="eyebrow">Comunicaciones</p>
+            <h4>Nuevo comunicado</h4>
+            <p class="ctx">Secundario · Ciclo lectivo 2026</p>
+          </div>
+          <span class="btn-ghost">← Volver a la bandeja</span>
+        </div>
+        <div class="screen-body">
+          <div class="panel-mock" style="background:#f8fafb;">
+            <p class="section-title">Destinatarios y mensaje</p>
+            <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.75rem;">
+              Definí destinatarios y redactá el mensaje. A familias se aplican canales y preferencias.
+            </p>
+
+            <span class="label-mock">Destinatarios</span>
+            <div class="pills">
+              <span class="pill on">Estudiantes (familias)</span>
+              <span class="pill">Docentes</span>
+            </div>
+
+            <div class="panel-mock" style="margin-top:1rem;">
+              <p class="section-title">Estudiantes</p>
+              <span class="label-mock">Alcance</span>
+              <div class="pills">
+                <span class="pill">Uno o varios alumnos</span>
+                <span class="pill on">Uno o varios cursos</span>
+                <span class="pill">Todo el colegio</span>
+              </div>
+              <div style="margin-top:0.75rem;">
+                <span class="btn-primary-mock" style="float:none;margin:0;">Elegir cursos…</span>
+                <span style="font-size:0.8rem;color:var(--muted);margin-left:0.5rem;">2 curso(s)</span>
+              </div>
+            </div>
+
+            <div style="margin-top:1rem;">
+              <span class="label-mock">Asunto</span>
+              <input class="mock" type="text" value="Recordatorio reunión de padres — 2º año" style="width:100%;" readonly />
+            </div>
+            <div style="margin-top:0.75rem;">
+              <span class="label-mock">Mensaje</span>
+              <textarea class="mock" readonly>Estimadas familias: les recordamos la reunión del viernes 30/05 a las 18:00 en el SUM…</textarea>
+              <div style="text-align:right;font-size:0.75rem;color:var(--muted);">142 / 2000</div>
+            </div>
+
+            <div class="checkbox-mock">
+              <input type="checkbox" checked disabled />
+              <span>
+                <strong>Permitir que la familia responda</strong><br />
+                <span style="font-size:0.8rem;color:var(--muted);">Si se desactiva, el comunicado queda solo informativo.</span>
+              </span>
+            </div>
+            <button type="button" class="btn-primary-mock">Enviar comunicado</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Pasos del formulario</h3>
+      <ol>
+        <li><strong>Bloque de destinatarios:</strong> Estudiantes (familias) o Docentes.</li>
+        <li><strong>Alcance (familias):</strong> Alumnos puntuales, uno o más cursos, o todo el colegio (matrícula vigente en nivel y ciclo).</li>
+        <li><strong>Selección:</strong> botones «Elegir alumnos…» / «Elegir cursos…» abren un modal con filtro y casillas; confirmar con «Aplicar selección».</li>
+        <li><strong>Docentes:</strong> tipo Profesores o Personal; luego «Elegir profesores…» o «Elegir personal…».</li>
+        <li><strong>Asunto y mensaje:</strong> obligatorios (límites configurables, típico 200 / 2000 caracteres).</li>
+        <li><strong>Respuestas:</strong> casilla para permitir o bloquear respuestas en el hilo.</li>
+        <li><strong>Enviar:</strong> crea hilo, destinatarios, distribución por medios e informe de envío.</li>
+      </ol>
+
+      <div class="callout">
+        <strong>Tip operativo</strong>
+        Si el envío incluye WhatsApp en modalidad manual, tras enviar verá enlaces wa.me o WhatsApp Web para completar el envío desde su dispositivo.
+      </div>
+
+      <p class="screen-caption">Modal — Elegir alumnos (ejemplo)</p>
+      <div class="screen" style="max-width:420px;">
+        <div style="padding:0.85rem 1rem;background:#f0f4f5;border-bottom:1px solid var(--accent);">
+          <strong style="font-size:0.9rem;">Elegir alumnos</strong>
+          <p style="margin:0.25rem 0 0;font-size:0.78rem;color:var(--muted);">Filtrar por apellido, nombre o DNI. Las selecciones se mantienen al confirmar.</p>
+        </div>
+        <div style="padding:0.75rem 1rem;">
+          <span class="label-mock">Filtrar listado</span>
+          <input class="mock" type="search" placeholder="Apellido, nombre o DNI…" style="width:100%;" />
+          <div style="margin-top:0.75rem;font-size:0.85rem;">
+            <label><input type="checkbox" checked disabled /> Pérez, Juan — DNI 45123456</label><br />
+            <label><input type="checkbox" disabled /> López, Ana — DNI 46987654</label>
+          </div>
+          <div style="margin-top:1rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+            <span class="pill">Cancelar</span>
+            <span class="pill on">Aplicar selección</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HILO -->
+    <section id="hilo">
+      <h2>5. Conversación (hilo)</h2>
+      <p>Al abrir un hilo desde la bandeja se muestra el historial de mensajes, destinatarios («Para»), estado del hilo y —si corresponde— el cuadro de respuesta.</p>
+
+      <p class="screen-caption">Pantalla — Detalle del hilo</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div style="flex:1;min-width:0;">
+            <p class="eyebrow">Comunicaciones</p>
+            <h4 style="font-size:1rem;">Recordatorio reunión de padres</h4>
+            <p class="ctx">Curso · Iniciado 28/05/2026 09:15</p>
+            <p class="ctx" style="margin-top:0.35rem;"><span style="opacity:0.7;">PARA:</span> 2º A, 2º B (56 familias)</p>
+          </div>
+          <span class="btn-ghost">← Bandeja</span>
+        </div>
+        <div class="screen-body">
+          <div class="card-mock" style="border-left:4px solid var(--primary);">
+            <div style="font-size:0.75rem;color:var(--muted);">Usted · 28/05/2026 09:15</div>
+            <p style="margin:0.35rem 0 0;">Estimadas familias: les recordamos la reunión del viernes…</p>
+          </div>
+          <div class="card-mock" style="border-left:4px solid var(--moonstone);">
+            <div style="font-size:0.75rem;color:var(--muted);">García, María (madre) · 28/05/2026 14:22 · Leído</div>
+            <p style="margin:0.35rem 0 0;">Confirmo asistencia. Gracias.</p>
+          </div>
+          <div class="panel-mock">
+            <span class="label-mock">Responder</span>
+            <textarea class="mock" placeholder="Escriba su respuesta…"></textarea>
+            <span class="btn-primary-mock" style="float:none;margin-top:0.5rem;">Enviar respuesta</span>
+          </div>
+        </div>
+      </div>
+      <p>Si el comunicado es <strong>solo informativo</strong>, verá una etiqueta en el encabezado y no aparecerá el área de respuesta (familia o docentes, según configuración).</p>
+    </section>
+
+    <!-- INFORME -->
+    <section id="informe">
+      <h2>6. Informe de envío</h2>
+      <p>
+        Tras enviar un comunicado, el informe muestra qué medios se intentaron (push, correo, WhatsApp),
+        el estado por destinatario y enlaces WhatsApp manuales si aplica.
+      </p>
+
+      <p class="screen-caption">Pantalla — Informe de envío</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div>
+            <p class="eyebrow">Comunicaciones</p>
+            <h4>Informe de envío</h4>
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            <span class="btn-ghost">Ir al comunicado</span>
+            <span class="btn-ghost">Volver a la bandeja</span>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="panel-mock">
+            <p class="section-title">Resumen</p>
+            <strong>Recordatorio reunión de padres — 2º año</strong>
+            <div class="pills" style="margin-top:0.5rem;">
+              <span class="pill" style="background:#d1fae5;border-color:#6ee7b7;">Enviado: 48</span>
+              <span class="pill" style="background:#fee2e2;border-color:#fca5a5;">Fallido: 2</span>
+              <span class="pill">No aplica: 6</span>
+              <span class="pill" style="background:#fef3c7;border-color:#fcd34d;">Pendiente: 0</span>
+            </div>
+          </div>
+          <table class="data-mock">
+            <thead>
+              <tr>
+                <th>Destinatario</th>
+                <th>Medio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>García, María</td><td>Email</td><td class="status-ok">Enviado</td></tr>
+              <tr><td>López, Carlos</td><td>Push</td><td class="status-pend">Pendiente</td></tr>
+              <tr><td>Pérez, Juan</td><td>WhatsApp</td><td class="status-fail">Fallido</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title">Estados típicos</div>
+        <table>
+          <tr><th>Enviado</th><td>El medio reporta envío correcto.</td></tr>
+          <tr><th>Pendiente</th><td>En cola o aún no procesado.</td></tr>
+          <tr><th>Fallido</th><td>Error en el envío (revisar motivo y canal).</td></tr>
+          <tr><th>No aplica</th><td>Sin ese medio disponible (ej. sin email cargado).</td></tr>
+          <tr><th>Envío manual</th><td>WhatsApp manual: completar fuera del sistema con el enlace provisto.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONTROL -->
+    <section id="control">
+      <h2>7. Control de cuaderno de comunicados (revisión)</h2>
+      <p>
+        Bandeja institucional para supervisar comunicaciones del nivel y ciclo: auditoría, búsqueda y seguimiento
+        (no solo «mi bandeja»). Requiere permiso 8.
+      </p>
+
+      <p class="screen-caption">Pantalla — Revisión de bandejas</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div>
+            <p class="eyebrow">Comunicaciones</p>
+            <h4>Revisión de bandejas</h4>
+            <p class="ctx">Secundario · Ciclo lectivo 2026</p>
+          </div>
+          <span class="btn-ghost">← Volver a mi bandeja</span>
+        </div>
+        <div class="screen-body">
+          <div class="panel-mock">
+            <p class="section-title">Usuario y filtros</p>
+            <div style="display:grid;gap:0.75rem;grid-template-columns:1fr auto;">
+              <div>
+                <span class="label-mock">Buscar usuario (profesor/a, personal o estudiante)</span>
+                <input class="mock" type="search" placeholder="Apellido, nombre o DNI…" style="width:100%;" />
+                <p style="font-size:0.78rem;margin:0.35rem 0 0;"><strong>Viendo:</strong> Todos los comunicados institucionales</p>
+              </div>
+              <div>
+                <span class="label-mock">Dirección</span>
+                <select class="mock"><option>Todos</option><option>Recibidos</option><option>Enviados</option></select>
+              </div>
+            </div>
+            <div style="display:flex;gap:1rem;margin-top:0.75rem;flex-wrap:wrap;">
+              <div>
+                <span class="label-mock">Año lectivo</span>
+                <select class="mock"><option>Actual</option></select>
+              </div>
+              <div>
+                <span class="label-mock">Estado</span>
+                <div class="pills"><span class="pill on">Todos</span><span class="pill">No leídos</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul>
+        <li>Ver todos los hilos del nivel/ciclo.</li>
+        <li>Filtrar por no leídos y por dirección (recibidos / enviados).</li>
+        <li>Acotar la vista a un profesor o estudiante con la búsqueda unificada.</li>
+      </ul>
+      <div class="callout">
+        <strong>Nota</strong>
+        Si no ve esta pantalla en el menú, su rol no tiene habilitada la revisión (permiso 8).
+      </div>
+    </section>
+
+    <!-- CANALES -->
+    <section id="canales">
+      <h2>8. Configuración de canales y medios</h2>
+      <p>
+        Los canales definen qué roles pueden comunicarse (iniciar / responder) y por qué medios se distribuye el mensaje
+        (push, email, whatsapp). Ruta: <code>/parametrizacion/com-canales</code> (permiso 5).
+      </p>
+
+      <p class="screen-caption">Pantalla — Canales de comunicación (formulario nuevo canal)</p>
+      <div class="screen">
+        <div class="hero-mock">
+          <div>
+            <p class="eyebrow">Configuración</p>
+            <h4>Canales de comunicación</h4>
+            <p class="ctx">Quién puede iniciar y responder, y por qué medios.</p>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="panel-mock">
+            <p class="section-title">Nuevo canal</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div>
+                <span class="label-mock">De (emisor)</span>
+                <select class="mock" style="width:100%;"><option>Profesor</option></select>
+              </div>
+              <div>
+                <span class="label-mock">Para (receptor)</span>
+                <select class="mock" style="width:100%;"><option>Familia</option></select>
+              </div>
+            </div>
+            <div class="checkbox-mock" style="flex-wrap:wrap;">
+              <label><input type="checkbox" checked disabled /> Puede iniciar</label>
+              <label><input type="checkbox" checked disabled /> Puede responder</label>
+              <label><input type="checkbox" checked disabled /> Activo</label>
+            </div>
+            <span class="label-mock" style="display:block;margin-top:0.5rem;">Medios permitidos</span>
+            <div class="pills">
+              <span class="pill on">Push</span>
+              <span class="pill on">Email</span>
+              <span class="pill">Whatsapp</span>
+            </div>
+            <div style="margin-top:1rem;">
+              <span class="pill on">Guardar canal</span>
+              <span class="pill">Cancelar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Impacto directo</strong>
+        Si no hay medios habilitados para un tipo de envío, el sistema puede bloquear el envío con un mensaje del estilo
+        «No hay medios habilitados… Revise la parametrización de canales».
+      </div>
+    </section>
+
+    <!-- CHECKLIST -->
+    <section id="checklist">
+      <h2>9. Checklist rápido</h2>
+      <ol>
+        <li>Confirmar nivel y ciclo lectivo activos antes de enviar.</li>
+        <li>Elegir correctamente el bloque de destinatarios (familias vs docentes).</li>
+        <li>Para cursos/colegio: validar que haya matrícula cargada (sin matrícula no hay destinatarios).</li>
+        <li>Definir si el comunicado admite respuestas (solo informativo vs conversacional).</li>
+        <li>Después de enviar: revisar el informe de envío y documentar fallos si los hubiera.</li>
+        <li>Ante dudas de alcance: usar Control de cuaderno para trazabilidad.</li>
+      </ol>
+    </section>
+
+    <footer class="doc-foot">
+      <p>
+        Documento de uso interno — Sistema Escolar. Los nombres de pantallas y permisos pueden variar según configuración del colegio.
+        Versión alineada al manual PDF <code>manual-comunicacion-institucional.pdf</code> y al módulo en código (mayo 2026).
+      </p>
+      <p>Para abrir este manual: archivo <code>sistema/docs/manual-comunicacion-institucional.html</code> en el navegador (doble clic o arrastrar al Chrome/Edge/Firefox).</p>
+    </footer>
+  </main>
+</body>
+</html>

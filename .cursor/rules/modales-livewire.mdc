@@ -1,0 +1,80 @@
+---
+description: Modales Livewire centrados en viewport (teleport, my-auto, scroll interno)
+globs: resources/views/**/*.blade.php
+alwaysApply: false
+---
+
+# Modales Livewire — posicionamiento en viewport
+
+## Problema a evitar
+
+Modales renderizados **dentro** del contenido scrolleable de la página (p. ej. al final de un formulario largo) pueden:
+
+- Aparecer **cortados** o por debajo del borde inferior del monitor.
+- **Desplazarse** al hacer scroll del contenido de fondo.
+- Quedar afectados por `transform`/`overflow` de contenedores padres (`se-page`, cards, etc.).
+
+## Patrón obligatorio (referencia: Comunicaciones → destinatarios)
+
+Implementación de referencia: `resources/views/comunicaciones/livewire/comunicaciones/nuevo-comunicado.blade.php` (modales alumnos/cursos/docentes).
+
+### 1. Un solo elemento raíz + teleport al `body`
+
+Livewire exige **un único elemento HTML raíz** por componente. Estructura:
+
+```blade
+<div>
+    <div class="se-page">…contenido de la pantalla…</div>
+    @teleport('body')
+        <div>…modales…</div>
+    @endteleport
+</div>
+```
+
+- `@teleport` va **dentro** del wrapper raíz, no como segundo hermano al mismo nivel (error: *Multiple root elements detected*).
+- No anidar `@teleport` dentro de un `@include` (el modal deja de actualizarse).
+
+Referencia: `historial-examenes.blade.php`, `nuevo-comunicado.blade.php`.
+
+### 2. Capa fija centrada en el viewport
+
+Contenedor exterior del modal:
+
+```blade
+<div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+     role="dialog" aria-modal="true" aria-labelledby="...">
+    <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrar..."></div>
+```
+
+- `fixed inset-0` + `z-[90]` (o superior al sidebar si hiciera falta; sidebar interno suele ser `z-[1000]` solo en móvil overlay).
+- Overlay con `absolute inset-0` **dentro** del `fixed`, no como hermano suelto en el flujo del documento.
+
+### 3. Panel con `my-auto`
+
+Panel blanco (no el overlay):
+
+```blade
+<div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),40rem)]">
+```
+
+- **`my-auto`**: centra el panel en el eje vertical dentro del contenedor `fixed`, aunque la página detrás tenga scroll.
+- **`max-h` con `dvh`**: no desborda el alto del monitor.
+- **`flex flex-col overflow-hidden`**: el scroll va **dentro** del modal, no en el `body`.
+
+### 4. Scroll solo en el cuerpo del modal
+
+- Listas largas: `min-h-0 flex-1 overflow-y-auto` en la zona de contenido.
+- Formularios: cuerpo con `overflow-y-auto`; header y footer `shrink-0`.
+- Confirmaciones cortas: puede omitirse `overflow-y-auto` en el exterior y usar solo `flex items-center justify-center px-4 py-8` (sin scroll en el wrapper).
+
+### 5. No hacer
+
+- Modal solo con `fixed` **sin** `@teleport('body')` al final de una vista muy larga.
+- Depender del scroll de la página para “ver” el modal (`overflow-y-auto` en el wrapper **sin** `my-auto` en el panel).
+- Poner el panel modal como hijo directo de `.se-card` o tablas con scroll.
+
+## Reutilización
+
+Para varios modales en un mismo componente, extraer a un partial (ej. `partials/*-modales.blade.php`) que use `@teleport('body')` y los mismos estilos.
+
+Documentación extendida: `docs/05-preferencias-y-convenciones.md` §11.

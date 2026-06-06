@@ -1,0 +1,21 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@tailwindcss/forms": "^0.5.11",
+        "@tailwindcss/vite": "^4.2.4",
+        "@vitejs/plugin-vue": "^6.0.6",
+        "autoprefixer": "^10.5.0",
+        "axios": "^1.6.4",
+        "laravel-vite-plugin": "^1.0",
+        "tailwindcss": "^4.2.4",
+        "vite": "^5.4.21"
+    },
+    "dependencies": {
+        "sweetalert2": "^11.26.25"
+    }
+}

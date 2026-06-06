@@ -1,0 +1,65 @@
+---
+description: Contexto del proyecto y reglas para agentes de IA
+alwaysApply: true
+---
+
+# Contexto del Proyecto — Sistemas Escolares
+
+## Qué es este proyecto
+
+Sistema de gestión pedagógica y de cuotas para escuelas (inicial, primario, secundario).
+Laravel 11 + Livewire 4 + Tailwind CSS 4 sobre base de datos MySQL legacy.
+
+**Políticas para IAs (versionadas, para todo colaborador):** leer `AGENTS.md` en la raíz del repo y `sistema/AGENTS.md`; no dependen de reglas personales de Cursor.
+
+## Documentación obligatoria
+
+Antes de trabajar en cualquier módulo, leer:
+
+1. `docs/01-descripcion-general.md` — Visión general, stack, estructura
+2. `docs/02-modelo-de-datos.md` — Tablas del núcleo, tabla `ento`, relaciones
+3. `docs/03-autenticacion-y-permisos.md` — Dos logins, passwords híbridos, permisos `0/1`
+4. `docs/04-identidad-visual.md` — Paleta de colores, logos, design system
+5. `docs/05-preferencias-y-convenciones.md` — Convenciones de código y preferencias
+6. `docs/06-reglas-de-seguridad.md` — Baseline de seguridad obligatorio
+7. `docs/07-versionado-de-modulos-por-tenant.md` — Personalización por colegio (config, BD, permisos; sin paquetes Composer)
+8. `docs/08-menus-de-navegacion.md` — Menú de Secretaría / Alumnos / Docentes (nombres oficiales)
+
+## Reglas críticas (siempre)
+
+### Base de datos
+- NO modificar tablas existentes de la BD legacy.
+- Migraciones solo aditivas (nuevas tablas, nuevas columnas).
+- Modelos con `$table` explícito, `$timestamps = false`, `$fillable` explícito.
+- **Prohibido** (salvo entorno 100% desechable, backup verificado y aprobación explícita): `migrate:fresh`, `migrate:refresh`, `db:wipe`, recreación total del esquema, imports que reemplacen la BD, `DROP DATABASE` / `DROP TABLE` / `TRUNCATE` masivos sin plan, borrar datos del motor sin backup.
+- **Política actual — ejecución (incluso si el usuario pide borrar o modificar datos):** no ejecutar en terminal nada que altere la BD: `migrate*`, `db:*`, `mysql`, imports, seeds, **`tinker`**, **`php -r`**, scripts PHP one-shot, ni comandos que invoquen Eloquent/`DB::` con `delete`/`update`/`insert`. Entregar **solo SQL revisable** en el chat (DDL y DML: `DELETE`/`UPDATE`/`INSERT`/`TRUNCATE` con advertencia de alcance) y/o archivos de migración o código **guardados en disco**, sin correrlos para aplicar el cambio en la BD. Artisan solo como texto para copiar. Detalle en `docs/06-reglas-de-seguridad.md` sección 9.
+
+### Seguridad
+- `auth` middleware en toda ruta interna.
+- Filtrar queries por `schoolCtx()->idNivel` / `idTerlec`.
+- Revalidar alcance en operaciones por ID.
+- Validación server-side obligatoria.
+- `{{ }}` en Blade (nunca `{!! !!}` sin sanitizar).
+- Sin `DB::raw()` con input de usuario.
+
+### Permisos
+- `profesores.permisos` = cadena de 0s y 1s.
+- Posición N corresponde a `permisosusuarios.orden = N`.
+- Verificar en rutas, componentes Livewire y acciones.
+
+### SchoolContext
+- `schoolCtx()` retorna el contexto de sesión (idProfesor, idNivel, idTerlec).
+- Toda consulta de datos se filtra por este contexto.
+- `ento.idTerlecVerNotas` determina el ciclo lectivo de autogestión.
+
+### Promedio de calificaciones (secundario)
+- No calcular promedios en planillas PDF, boletines, consultas ni importaciones.
+- Único cálculo autorizado: `CargaCalificacionesSecundario::syncPromedioAnual()` al guardar `ic01..ic28` → `calif`.
+- Ver `docs/05-preferencias-y-convenciones.md` §7.
+
+### Identidad visual
+- Paleta en `/SE/PALETA COLORES LOGO.PNG`.
+- Primario: `#40848D` · Oscuro: `#333333` · Suave: `#C1D7DA`.
+- Regla global obligatoria: `.cursor/rules/ui-front-se.mdc`.
+- Logos disponibles en `public/img/1.png` a `public/img/5.png`.
+- Usar `schoolLogoUrl()` cuando exista logo institucional dinámico; fallback recomendado: `asset('img/3.png')`.

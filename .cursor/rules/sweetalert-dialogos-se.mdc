@@ -1,0 +1,38 @@
+---
+description: Diálogos de usuario con SweetAlert2 (seSwal*); prohibido confirm/alert del navegador y wire:confirm
+globs: resources/views/**/*.blade.php,resources/js/**/*.js,app/Livewire/**/*.php
+alwaysApply: false
+---
+
+# SweetAlert2 — diálogos SE
+
+Detalle: `docs/05-preferencias-y-convenciones.md` sección **12**.
+
+## Prohibido
+
+- `window.confirm`, `window.alert`
+- `wire:confirm`, `wire:confirm.prompt` (diálogo nativo del navegador)
+
+## Usar
+
+Helpers en `resources/js/app.js` (expuestos en `window`):
+
+- `seSwalExito(mensaje, titulo?)`
+- `seSwalAviso(mensaje, titulo?)`
+- `seSwalError(mensaje, titulo?)`
+- `seSwalConfirmar(mensaje, titulo?, opciones?)` → `Promise<boolean>`
+
+## Livewire
+
+1. PHP: `$this->dispatch('se-swal-exito'|'se-swal-error', mensaje: '...');`
+2. Blade: `@script` con `$wire.on('se-swal-exito', …)` / `se-swal-error`.
+3. Borrado: `x-on:click` + `seSwalConfirmar().then(ok => ok && $wire.metodo())`.
+
+## Referencias
+
+- `resources/views/livewire/cuotas/plantilla-index.blade.php`
+- `resources/views/livewire/cuotas/historial-pagos-cuota.blade.php`
+- `resources/views/livewire/alumnos/actualizacion-datos-personales-form.blade.php`
+- `resources/views/livewire/alumnos/aranceles-escolares-index.blade.php` (`seSwalAviso`)
+
+Tras cambiar `app.js`: `npm run build` y subir `public/build/`.

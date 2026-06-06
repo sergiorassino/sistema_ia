@@ -1,0 +1,38 @@
+---
+description: Selects de año lectivo (terlec) siempre en orden decreciente por año
+alwaysApply: true
+---
+
+# Años lectivos — orden en desplegables
+
+Cuando se ofrezca elegir un **ciclo / año lectivo** desde la tabla `terlec` (login, contexto, ABM, exámenes, etc.), el listado debe ir **del año más reciente al más antiguo**, para que al abrir el `<select>` el ciclo actual quede arriba (debajo de la opción vacía).
+
+## Implementación obligatoria
+
+- **PHP (Eloquent):** `Terlec::paraSelector()` o `Terlec::ordenado()` — no armar el listado con `orderBy('orden')` ascendente ni consultas sueltas sin ese criterio.
+- **PHP (Query Builder):** si no se usa el modelo, equivalente: `orderByDesc('ano')->orderByDesc('orden')->orderByDesc('id')`.
+- **Blade / Livewire:** iterar la colección devuelta por esos métodos; no reordenar en la vista salvo necesidad documentada.
+
+```php
+// ✅ BIEN
+$terlecs = Terlec::paraSelector();
+
+// ❌ MAL (años viejos primero en el desplegable)
+Terlec::query()->orderBy('orden')->orderBy('ano')->get(['id', 'ano']);
+DB::table('terlec')->orderBy('ano')->get(['id', 'ano']);
+```
+
+## Livewire
+
+- Formularios que **re-renderizan seguido** (p. ej. login con `wire:model.live` en DNI): usar el componente **`livewire:components.terlec-selector`** con `wire:model` / `wire:model.live` en el padre, en lugar de un `<select>` inline que comparta el mismo componente Livewire.
+- Validaciones `Rule::in(...)`: tomar IDs desde `Terlec::paraSelector()->pluck('id')`, no desde un array cacheado en orden distinto.
+
+## Excepciones
+
+- **ABM `terlec` (grilla administrativa):** puede listar con `Terlec::ordenado()`; no es un `<select>` de elección rápida.
+- **Orden por año en reportes/tablas** (columnas, PDF, agrupaciones): usar el criterio del módulo; esta regla aplica a **controles de selección** de año lectivo.
+
+## Referencia en código
+
+- Modelo: `app/Models/Terlec.php` (`scopeOrdenado`, `paraSelector()`)
+- Componente Livewire: `app/Livewire/Components/TerlecSelector.php`

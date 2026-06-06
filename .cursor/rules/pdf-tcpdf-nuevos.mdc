@@ -1,0 +1,40 @@
+---
+description: PDFs nuevos — usar TCPDF (no DomPDF)
+globs:
+  - app/Http/Controllers/**/*Pdf*.php
+  - app/Support/**/*Tcpdf.php
+  - app/Support/**/*Pdf*.php
+alwaysApply: true
+---
+
+# PDFs nuevos — TCPDF obligatorio
+
+**Todo PDF nuevo** del sistema debe generarse con **[TCPDF](https://tcpdf.org/)** (`tecnickcom/tcpdf`, ya en `composer.json`), **no** con Barryvdh DomPDF (`Pdf::loadView`, vistas Blade en `resources/views/pdf/`).
+
+Los PDFs **ya existentes** en DomPDF se mantienen hasta una migración explícita; no reescribirlos a TCPDF salvo que el usuario lo pida.
+
+## Patrón del repo
+
+1. **Clase de maquetación** en `app/Support/.../` que extiende `TCPDF` (coordenadas en mm).
+2. **Fuente Arial obligatoria:** usar `App\Support\Pdf\TcpdfFuenteArial::aplicar($pdf, $style, $size)` en lugar de `SetFont('dejavusans', …)`. Los TTF van en `storage/fonts/` (`arial.ttf`, `arialbd.ttf` opcional).
+3. **Controlador** `*PdfController` que arma datos, instancia la clase, llama a un método tipo `generar()` / `Output()` y devuelve `Response` con `Content-Type: application/pdf`.
+4. **Sin** `Barryvdh\DomPDF\Facade\Pdf` ni vistas Blade dedicadas al layout del PDF (salvo reutilizar datos ya calculados en PHP).
+
+Referencia: `App\Support\InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController` (Arial + maquetación compacta).
+
+## Convenciones
+
+- Márgenes, anchos de columna y alturas de fila en **constantes** (mm), documentadas si replican un PDF legacy.
+- `setPrintHeader(false)` / `setPrintFooter(false)` si no hay membrete TCPDF estándar.
+- Fechas en PDF: formato español `d/m/Y` (regla `formato-fechas-es.mdc`).
+- Rutas con `auth`, filtro por `schoolCtx()`, rate-limit en descargas masivas (como otros `*PdfController`).
+
+## Prohibido en PDFs nuevos
+
+- `use Barryvdh\DomPDF\Facade\Pdf;`
+- Nuevas vistas en `resources/views/pdf/` o `resources/views/listados/pdf/` solo para renderizar el documento.
+- Depender de CSS/HTML para tablas complejas (usar `Cell`, `MultiCell`, líneas, etc.).
+
+## DomPDF (solo legacy)
+
+Si se toca un PDF **existente** en DomPDF, seguir `.cursor/rules/pdf-dompdf-columnas.mdc` y `docs/05-preferencias-y-convenciones.md` §9.

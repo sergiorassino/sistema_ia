@@ -1,0 +1,1652 @@
+@import "tailwindcss";
+
+/* Alpine: evita parpadeo de nodos con x-cloak antes de hidratar */
+[x-cloak] {
+    display: none !important;
+}
+
+@plugin "@tailwindcss/forms";
+
+@theme {
+    --color-primary-50:  #edf5f6;
+    --color-primary-100: #d1e6e9;
+    --color-primary-200: #a3cdd3;
+    --color-primary-300: #739fa5;
+    --color-primary-400: #5a9199;
+    --color-primary-500: #40848d;
+    --color-primary-600: #366f76;
+    --color-primary-700: #2c5a60;
+    --color-primary-800: #224549;
+    --color-primary-900: #183033;
+
+    --color-neutral-50:  #f5f5f5;
+    --color-neutral-100: #e5e5e5;
+    --color-neutral-200: #cccccc;
+    --color-neutral-300: #b3b3b3;
+    --color-neutral-400: #999999;
+    --color-neutral-500: #666666;
+    --color-neutral-600: #4d4d4d;
+    --color-neutral-700: #404040;
+    --color-neutral-800: #333333;
+    --color-neutral-900: #1a1a1a;
+
+    --color-accent-50:  #f4f8f9;
+    --color-accent-100: #e5eff0;
+    --color-accent-200: #c1d7da;
+    --color-accent-300: #a8c8cc;
+    --color-accent-400: #8fb9be;
+    --color-accent-500: #76aab0;
+}
+
+@layer base {
+    /*
+     * Inputs nativos (radio/checkbox): color de marca.
+     * Esto evita que el plugin de forms o el UA use azul por defecto,
+     * especialmente visible en controles dentro de filtros/segmentos.
+     */
+    input[type="radio"],
+    input[type="checkbox"] {
+        accent-color: var(--color-primary-600);
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition-colors duration-150 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-info {
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-danger {
+        @apply inline-flex items-center justify-center rounded-xl border border-transparent bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+    .form-label {
+        @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-600;
+    }
+    .form-input {
+        @apply block w-full rounded-xl border-accent-200 bg-accent-50/50 shadow-sm transition-colors focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+    }
+    .form-select {
+        @apply block w-full rounded-xl border-accent-200 bg-accent-50/50 shadow-sm transition-colors focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+    }
+    .form-error {
+        @apply mt-1 text-xs text-red-600;
+    }
+    .card {
+        @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
+    }
+    .table-header {
+        @apply border-b border-accent-200 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-neutral-500;
+    }
+    .table-cell {
+        @apply px-4 py-3 text-sm text-neutral-900;
+    }
+
+    /* Asegura que los bordes (border-r, etc.) se rendericen en tablas */
+    td, th {
+        border-style: solid;
+    }
+
+    /*
+     * ══════════════════════════════════════════════════════════════════
+     *  GRILLA COMPACTA  (.gf-*)
+     *  Estilo tipo planilla/Excel para tablas de listado y formularios.
+     *  Uso:
+     *    Listado  → <div class="gf-wrap"> <div class="gf"> … </div> </div>
+     *    Form     → <div class="gf"> filas con .gf-label + .gf-cell </div>
+     * ══════════════════════════════════════════════════════════════════
+     */
+
+    /* Contenedor centrado (para listados que no ocupan todo el ancho) */
+    .gf-wrap {
+        @apply flex justify-center;
+    }
+
+    /* Contenedor principal de la grilla */
+    .gf {
+        @apply border border-gray-400 text-xs inline-block;
+    }
+
+    /* Encabezado de tabla */
+    .gf-head {
+        @apply flex bg-gray-200 border-b border-gray-400 font-semibold text-gray-700 uppercase tracking-wide text-[10px];
+    }
+    .gf-th {
+        @apply px-2 py-1.5 border-r border-gray-400 last:border-r-0 whitespace-nowrap select-none;
+    }
+    .gf-th-right {
+        @apply px-2 py-1.5 text-right whitespace-nowrap select-none;
+    }
+
+    /* Fila de datos (listado o formulario) */
+    .gf-row {
+        @apply flex border-b border-gray-300 last:border-b-0;
+    }
+    .gf-row-hover {
+        @apply hover:bg-primary-50 transition-colors;
+    }
+
+    /* Gestión de aranceles — búsqueda de estudiantes */
+    .gf.gf-cuotas-busqueda {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-cuotas-busqueda .gf-head,
+    .gf.gf-cuotas-busqueda .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-busqueda .gf-th.gf-th-nombre,
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre {
+        flex: 1 1 12rem;
+        width: auto;
+        min-width: 12rem;
+        max-width: none;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre a {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-busqueda .gf-td.gf-td-nivel {
+        @apply flex items-center py-1;
+    }
+    .gf.gf-cuotas-busqueda .gf-row.gf-row--sin-matricula-actual {
+        background-color: #fce7f3;
+    }
+    .gf.gf-cuotas-busqueda .gf-row-hover.gf-row--sin-matricula-actual:hover {
+        background-color: #fbcfe8;
+    }
+
+    /* Gestión de mora — estado de deuda familiar */
+    .se-card.se-card-mora-familias,
+    .gf.gf-mora-familias {
+        border-radius: 0;
+    }
+    .gf.gf-mora-familias {
+        width: 100%;
+        min-width: 58rem;
+    }
+    .gf.gf-mora-familias .gf-head,
+    .gf.gf-mora-familias .gf-row-mora-familia {
+        width: 100%;
+        align-items: stretch;
+    }
+    .gf.gf-mora-familias .gf-row-mora-familia {
+        border-bottom-width: 1px;
+        border-bottom-color: #6b7280;
+    }
+    .gf.gf-mora-familias .gf-row-mora-familia:last-child {
+        border-bottom-width: 0;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-accion,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-accion {
+        flex: 0 0 4.75rem;
+        width: 4.75rem;
+        min-width: 4.75rem;
+        max-width: 4.75rem;
+        @apply flex items-center justify-center px-0.5 py-1;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-accion-label {
+        white-space: normal;
+        line-height: 1.15;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 9px;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-familia,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-familia {
+        flex: 1 1 12rem;
+        min-width: 10rem;
+        max-width: 18rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-responsable,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-responsable {
+        flex: 0 0 10rem;
+        width: 10rem;
+        min-width: 8rem;
+        max-width: 12rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-estudiantes,
+    .gf.gf-mora-familias .gf-td.gf-td-mora-estudiantes {
+        flex: 1 1 22rem;
+        min-width: 22rem;
+    }
+    .gf.gf-mora-familias .gf-th.gf-th-mora-estudiantes-label {
+        text-transform: none;
+        letter-spacing: normal;
+    }
+    .se-mora-accion-btn {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-accent-200 bg-white text-primary-700 transition-colors;
+    }
+    a.se-mora-accion-btn:hover {
+        @apply border-primary-500 bg-primary-50;
+    }
+    .se-mora-accion-btn:disabled {
+        @apply cursor-not-allowed opacity-80;
+    }
+    .se-mora-accion-btn--diferimiento {
+        @apply border-red-300 text-red-600;
+    }
+    .se-mora-estudiantes-list {
+        @apply flex w-full flex-col;
+    }
+    .se-mora-estudiante-row {
+        @apply flex min-h-[2rem] items-center gap-2 px-2 py-1;
+    }
+    .se-mora-estudiante-nombre {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+    .se-mora-estudiante-dni {
+        flex: 0 0 6.5rem;
+        width: 6.5rem;
+    }
+    .se-mora-estudiante-curso {
+        flex: 0 0 8.5rem;
+        width: 8.5rem;
+        min-width: 0;
+    }
+    .se-mora-deuda {
+        @apply text-[11px] font-semibold normal-case tracking-normal text-neutral-500;
+    }
+    .se-mora-deuda--positivo {
+        @apply text-red-700;
+    }
+
+    /* Gestión de aranceles — grillas sin esquinas redondeadas */
+    .se-card.se-card-cuotas-busqueda,
+    .se-card.se-card-cuotas-grid,
+    .gf.gf-cuotas-busqueda,
+    .gf.gf-cuotas-estudiante {
+        border-radius: 0;
+    }
+    .gf.gf-cuotas-estudiante {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-cuotas-estudiante .gf-head,
+    .gf.gf-cuotas-estudiante .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-cuota,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-cuota {
+        flex: 1 1 7rem;
+        width: auto;
+        min-width: 7rem;
+        max-width: none;
+    }
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-cuota {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row-hover {
+        transition: background-color 0.15s ease;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--pagada {
+        background-color: #bbf7d0;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada {
+        background-color: #ffffff;
+    }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--pagada .gf-td,
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada .gf-td {
+        background-color: transparent;
+    }
+    .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--pagada:hover {
+        background-color: #b8e8c8;
+    }
+    .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
+        background-color: #d4e8ec;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-nivel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
+        line-height: 1;
+        white-space: normal;
+    }
+    .gf.gf-cuotas-estudiante .gf-td-nivel-linea {
+        display: block;
+        width: 100%;
+        font-size: 8px;
+        line-height: 1.2;
+        letter-spacing: 0.02em;
+        text-align: center;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-th.gf-th-fecha,
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-fecha {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 5.75rem;
+        min-width: 5.75rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-accion {
+        box-sizing: border-box;
+        flex: 0 0 2rem !important;
+        width: 2rem !important;
+        min-width: 2rem !important;
+        max-width: 2rem !important;
+        padding-left: 0;
+        padding-right: 0;
+        border-right-width: 1px;
+        border-right-style: solid;
+        border-right-color: rgb(209 213 219);
+    }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion:last-child,
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-accion:last-child {
+        border-right-width: 0;
+    }
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Listado de cuotas — importes por curso (compacto, centrado) */
+    .se-cuotas-importes-lista-scroll {
+        @apply w-full overflow-x-auto flex justify-center;
+    }
+    .se-cuotas-importes-lista-tabla {
+        @apply border border-gray-400 text-[11px] border-collapse;
+        width: max-content;
+        table-layout: auto;
+    }
+    .se-cuotas-importes-lista-tabla th,
+    .se-cuotas-importes-lista-tabla td {
+        @apply border border-gray-300 px-2 py-1 align-middle;
+    }
+    .se-cuotas-importes-lista-tabla thead th {
+        @apply bg-gray-200 font-semibold text-gray-700 uppercase tracking-wide text-[10px];
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-nombre,
+    .se-cuotas-importes-lista-tabla .se-cil-td-nombre {
+        @apply text-left font-medium text-neutral-800;
+        min-width: 10rem;
+        max-width: 18rem;
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-venc,
+    .se-cuotas-importes-lista-tabla .se-cil-td-venc {
+        width: 5rem;
+        @apply text-center bg-neutral-50/90 text-neutral-700;
+    }
+    .se-cuotas-importes-lista-tabla .se-cil-th-accion,
+    .se-cuotas-importes-lista-tabla .se-cil-td-accion {
+        @apply text-center;
+        width: 7.5rem;
+    }
+    .se-cuotas-importes-lista-tabla tbody tr:hover {
+        @apply bg-primary-50/60;
+    }
+
+    /* Importes por curso — edición (tabla compacta, scroll contenido) */
+    .se-main:has(.se-cuotas-importes-fill) {
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+    main:has(.se-cuotas-importes-fill) {
+        @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden !px-0 py-4 md:!py-6;
+    }
+    .se-cuotas-importes-fill {
+        @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
+    }
+    @media (min-width: 768px) {
+        .se-cuotas-importes-fill {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+    .se-cuotas-importes-grid {
+        display: grid;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 auto;
+        overflow: hidden;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: 0.5rem;
+    }
+    .se-cuotas-importes-hero .se-hero-inner {
+        @apply gap-2 p-3 sm:p-4;
+    }
+    .se-cuotas-importes-toolbar {
+        @apply shrink-0 mb-0 py-2;
+    }
+    .se-cuotas-importes-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        flex: 1 1 auto;
+        overflow: hidden;
+        padding: 0;
+    }
+    .se-cuotas-importes-scroll {
+        flex: 1 1 0;
+        min-height: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    .se-cuotas-importes-tabla {
+        width: max-content;
+        min-width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        @apply border border-gray-400 text-[11px] text-gray-900;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-cuota {
+        width: 7.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-curso {
+        width: 8.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-importe {
+        width: 6.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-bon {
+        width: 2.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-valor {
+        width: 3.75rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-col-porcan {
+        width: 2.5rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-th {
+        @apply border border-gray-400 bg-gray-200 p-0 text-center align-middle font-semibold uppercase tracking-wide text-[9px] leading-tight text-gray-700;
+    }
+    .se-cuotas-importes-tabla .se-cii-th-principal {
+        @apply px-1 py-1.5;
+    }
+    .se-cuotas-importes-tabla .se-cii-th-venc {
+        border-left-width: 2px;
+        vertical-align: bottom;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-head {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-title {
+        @apply border-b border-gray-400 px-0.5 py-1 text-center text-[9px] font-semibold leading-tight;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-subs {
+        display: grid;
+        grid-template-columns: 2fr 3fr 2fr;
+        width: 100%;
+    }
+    .se-cuotas-importes-tabla .se-cii-venc-sub {
+        @apply border-r border-gray-400 px-0.5 py-0.5 text-center text-[8px] font-semibold leading-tight last:border-r-0;
+    }
+    .se-cuotas-importes-tabla thead .se-cii-th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+    }
+    .se-cuotas-importes-tabla .se-cii-td {
+        @apply border border-gray-300 bg-white p-0 align-middle;
+    }
+    .se-cuotas-importes-tabla .se-cii-td-text {
+        @apply px-1.5 py-1 text-xs font-medium text-primary-700;
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .se-cuotas-importes-tabla .se-cii-td-bon {
+        border-left-width: 2px;
+    }
+    .se-cuotas-importes-tabla .se-cii-tr:hover .se-cii-td {
+        @apply bg-primary-50/50;
+    }
+    .se-cuotas-importes-tabla .se-cii-input,
+    .se-cuotas-importes-tabla .se-cii-select {
+        @apply m-0 block w-full min-w-0 border-0 bg-transparent px-1 py-1 text-[11px] leading-tight text-gray-900 outline-none;
+        box-sizing: border-box;
+        font: inherit;
+        border-radius: 0;
+    }
+    .se-cuotas-importes-tabla .se-cii-input--center {
+        @apply text-center font-mono;
+    }
+    .se-cuotas-importes-tabla .se-cii-select {
+        @apply appearance-none text-center;
+        padding-right: 0.25rem;
+    }
+    .se-cuotas-importes-tabla .se-cii-select--signo {
+        @apply text-center font-bold;
+    }
+    .se-cuotas-importes-tabla .se-cii-input:focus,
+    .se-cuotas-importes-tabla .se-cii-select:focus {
+        @apply bg-white ring-2 ring-inset ring-primary-500;
+    }
+    .se-cuotas-importes-tabla .se-cii-input--err,
+    .se-cuotas-importes-tabla .se-cii-select.se-cii-input--err {
+        @apply bg-red-50 ring-2 ring-inset ring-red-400;
+    }
+    .se-cuotas-importes-tabla .se-cii-field-err {
+        @apply truncate px-0.5 text-[9px] leading-tight text-red-700;
+    }
+    .se-cuotas-importes-tabla .se-cii-empty {
+        @apply px-4 py-10 text-center text-sm text-neutral-500;
+    }
+
+    /* Historial de pagos de una cuota */
+    .gf.gf-cuotas-historial-pagos {
+        width: max-content;
+        min-width: 42rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-head,
+    .gf.gf-cuotas-historial-pagos .gf-row {
+        width: 100%;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-cuota-nombre,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-cuota-nombre {
+        flex: 0 0 8rem;
+        width: 8rem;
+        min-width: 8rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-fecha-hora,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-fecha-hora {
+        flex: 0 0 11.5rem;
+        width: 11.5rem;
+        min-width: 11.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-mp,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-mp {
+        flex: 0 0 3rem;
+        width: 3rem;
+        min-width: 3rem;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-importe,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-importe {
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
+        min-width: 5.5rem;
+        text-align: right;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion {
+        box-sizing: border-box;
+        flex: 0 0 2.75rem !important;
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        max-width: 2.75rem !important;
+        padding-left: 0;
+        padding-right: 0;
+        font-size: 9px;
+        line-height: 1.1;
+        text-align: center;
+        white-space: normal;
+    }
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Celda de datos (listado) */
+    .gf-td {
+        @apply px-2 py-1.5 border-r border-gray-300 last:border-r-0 text-gray-900;
+    }
+    .gf-td-muted {
+        @apply px-2 py-1.5 border-r border-gray-300 text-gray-500;
+    }
+    .gf-td-actions {
+        @apply px-2 py-1 flex items-center justify-end gap-2;
+    }
+
+    /* Alineación vertical centrada en celdas (listados puntuales) */
+    .gf-vcenter .gf-head,
+    .gf-vcenter .gf-row {
+        @apply items-stretch;
+    }
+    .gf-vcenter .gf-th,
+    .gf-vcenter .gf-th-right,
+    .gf-vcenter .gf-td:not(.gf-td-actions) {
+        @apply flex items-center;
+    }
+    .gf-vcenter .gf-th-right,
+    .gf-vcenter .gf-td.gf-th-right {
+        @apply justify-end;
+    }
+
+    /*
+     * Inline edit en listados (.gf-td)
+     * Debe ocupar exactamente el ancho de la celda sin “mover” columnas.
+     */
+    .gf-inline {
+        @apply w-full bg-transparent border-0 p-0 m-0 text-inherit rounded-none;
+        box-sizing: border-box;
+        outline: none;
+        font: inherit;
+        line-height: inherit;
+        display: block;
+    }
+    .gf-inline:focus {
+        box-shadow: inset 0 -2px 0 rgba(64, 132, 141, 0.65);
+        background: rgba(255, 255, 255, 0.85);
+    }
+
+    .gf-inline-select {
+        @apply w-full bg-transparent border-0 p-0 m-0 text-inherit rounded-none appearance-none;
+        box-sizing: border-box;
+        outline: none;
+        font: inherit;
+        line-height: inherit;
+        display: block;
+        padding-right: 1rem; /* espacio para el caret */
+    }
+
+    /* Celda de etiqueta (formularios) */
+    .gf-label {
+        @apply bg-gray-100 border-r border-gray-300 px-2 py-1.5 font-medium text-gray-600
+               whitespace-nowrap flex items-center shrink-0 select-none;
+    }
+    /* Agrega asterisco rojo para campos obligatorios */
+    .gf-label-req::after {
+        content: ' *';
+        color: #ef4444;
+    }
+
+    /* Celda de input (formularios) */
+    .gf-cell {
+        @apply flex-1 flex items-stretch bg-white min-w-0;
+    }
+    .gf-cell-err {
+        @apply bg-red-50;
+    }
+
+    /* Inputs y selects dentro de celdas */
+    .gf-input {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+    }
+    .gf-input-err {
+        @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
+    }
+    .gf-select {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500 cursor-pointer;
+    }
+    .gf-select-err {
+        @apply bg-red-50 focus:bg-red-50 focus:ring-red-400;
+    }
+    .gf-textarea {
+        @apply w-full px-2 py-1.5 text-xs text-gray-900 bg-transparent border-0 outline-none resize-none
+               focus:bg-primary-50 focus:ring-2 focus:ring-inset focus:ring-primary-500;
+    }
+
+    /* Fila de mensaje de error (debajo del campo con error) */
+    .gf-error-row {
+        @apply flex border-b border-gray-200 last:border-b-0 bg-red-50;
+    }
+    .gf-error-spacer {
+        @apply shrink-0 border-r border-gray-200;
+    }
+    .gf-error-msg {
+        @apply flex-1 px-2 py-0.5 text-xs text-red-600 italic;
+    }
+
+    /* Fila vacía / sin registros */
+    .gf-empty {
+        @apply px-4 py-6 text-center text-gray-400 text-xs;
+    }
+
+    /* Login / auth — paleta SE (ui-front-se) */
+    .se-auth-card {
+        @apply bg-white rounded-3xl border shadow-lg shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
+    }
+    .se-auth-label {
+        @apply block text-[11px] font-semibold uppercase tracking-[0.14em] mb-1.5;
+        color: rgba(51, 51, 51, 0.72);
+    }
+    .se-auth-input,
+    .se-auth-select {
+        @apply block w-full rounded-xl text-sm shadow-sm transition-colors duration-150;
+        background-color: rgba(193, 215, 218, 0.35);
+        border: 1px solid var(--color-accent-200);
+    }
+    .se-auth-input:focus,
+    .se-auth-select:focus {
+        @apply outline-none ring-2 ring-offset-0;
+        border-color: var(--color-primary-500);
+        --tw-ring-color: rgba(64, 132, 141, 0.35);
+    }
+    .se-auth-btn {
+        @apply inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed bg-primary-600 hover:bg-primary-700;
+    }
+    .se-auth-btn:focus-visible {
+        @apply outline-none ring-2 ring-offset-2;
+        --tw-ring-color: rgba(64, 132, 141, 0.45);
+    }
+
+    /* Dashboard — tarjetas de acceso rápido SE */
+    .se-dash-access {
+        @apply flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200;
+        border-color: var(--color-accent-200);
+    }
+    .se-dash-access:hover {
+        @apply shadow-md -translate-y-0.5;
+        border-color: var(--color-primary-500);
+        box-shadow: 0 10px 25px -12px rgba(51, 51, 51, 0.12);
+    }
+    .se-dash-access-icon {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+        background-color: rgba(193, 215, 218, 0.45);
+        color: var(--color-primary-600);
+    }
+
+    .se-dash-session-card {
+        @apply flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition-shadow duration-200 sm:gap-4 sm:p-5;
+        border-color: var(--color-accent-200);
+    }
+    .se-dash-session-body {
+        @apply min-w-0 flex-1 overflow-hidden;
+    }
+    .se-dash-session-value {
+        @apply mt-1 truncate text-base font-bold leading-snug sm:text-lg;
+    }
+    .se-dash-session-card:hover {
+        @apply shadow-md;
+        border-color: rgba(64, 132, 141, 0.35);
+    }
+    .se-dash-session-icon {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+        background: linear-gradient(145deg, rgba(64, 132, 141, 0.14), rgba(193, 215, 218, 0.5));
+        color: var(--color-primary-600);
+    }
+    .se-dash-mail-panel {
+        @apply overflow-hidden rounded-3xl border bg-white shadow-sm;
+        border-color: var(--color-accent-200);
+        background: linear-gradient(180deg, #ffffff 0%, rgba(244, 248, 249, 0.65) 100%);
+    }
+    .se-dash-mail-stat {
+        @apply block rounded-2xl border bg-white/90 p-5 shadow-sm transition-all duration-200;
+        border-color: var(--color-accent-200);
+    }
+    a.se-dash-mail-stat:hover {
+        @apply -translate-y-0.5 shadow-md;
+        border-color: var(--color-primary-500);
+    }
+    .se-dash-mail-stat--urgent {
+        border-color: rgba(236, 72, 153, 0.45);
+        background: linear-gradient(145deg, #fff5f7 0%, #ffffff 70%);
+    }
+    .se-dash-mail-stat--warn {
+        border-color: rgba(245, 158, 11, 0.45);
+        background: linear-gradient(145deg, #fffbeb 0%, #ffffff 70%);
+    }
+    .se-dash-mail-stat--calm {
+        @apply bg-accent-50/40;
+    }
+    .se-dash-urgent-badge {
+        @apply inline-flex items-center rounded-full border border-pink-300 bg-pink-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-pink-900;
+    }
+    .se-dash-warn-badge {
+        @apply inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900;
+    }
+
+    /* Pantallas operativas SE: ABM, formularios y listados */
+    .se-page {
+        @apply mx-auto max-w-7xl space-y-6;
+    }
+
+    /* Cierre anual: ocupar viewport y scroll solo en el cuerpo de la grilla (cabecera fija). */
+    .se-main:has(.se-cierre-anual-fill) {
+        @apply h-full min-h-0 overflow-hidden;
+    }
+    main:has(.se-cierre-anual-fill) {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+    }
+    .se-cierre-anual-fill {
+        @apply -mx-4 -mb-4 flex min-h-0 flex-1 flex-col md:-mx-8 md:-mb-8;
+    }
+    .se-cierre-anual-grid {
+        @apply grid min-h-0 flex-1 gap-3;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    .se-cierre-anual-grid--listado {
+        grid-template-rows: auto auto minmax(0, 1fr);
+    }
+    .se-cierre-anual-hero .se-hero-inner {
+        @apply gap-2 p-3 sm:p-4;
+    }
+    .se-cierre-anual-hero .se-hero-inner h2 {
+        @apply text-lg sm:text-xl;
+    }
+    .se-cierre-anual-panel--compacto {
+        max-height: min(28vh, 11rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .se-cierre-anual-panel--expandido {
+        max-height: none;
+        overflow: visible;
+    }
+    .se-cierre-anual-panel .btn-secondary {
+        @apply px-2.5 py-1.5 text-xs;
+    }
+    .se-cierre-anual-panel--expandido .se-cierre-anual-confirmacion {
+        @apply w-full;
+    }
+    .se-cierre-anual-buscar .form-input {
+        @apply text-sm;
+    }
+    .se-cierre-anual-grid--listado .se-cierre-anual-tabla {
+        @apply text-[13px];
+    }
+    .se-cierre-anual-grid--listado .se-cierre-anual-tabla thead th {
+        @apply px-2.5 py-1.5;
+    }
+    .se-cierre-anual-grid--listado .se-cierre-anual-tabla tbody td {
+        @apply px-2.5 py-1;
+    }
+    /* Libro matriz — listado: más filas visibles + paginación compacta fija abajo */
+    .se-main:has(.se-matriz-list-fill) {
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+    main:has(.se-matriz-list-fill) {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+    }
+    .se-matriz-list-fill {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+        margin: 0 !important;
+        height: 100%;
+        max-height: 100%;
+    }
+    .se-cierre-anual-grid--matriz-listado {
+        @apply min-h-0 flex-1 gap-2 overflow-hidden;
+        grid-template-rows: auto auto minmax(0, 1fr);
+    }
+    .se-matriz-list-hero .se-hero-inner {
+        @apply gap-2 p-3 sm:p-4;
+    }
+    .se-matriz-list-hero .se-hero-inner h2 {
+        @apply text-lg sm:text-xl;
+    }
+    .se-matriz-list-toolbar {
+        @apply flex shrink-0 flex-wrap items-center gap-2 rounded-xl border bg-white px-2 py-1.5 shadow-sm;
+        border-color: var(--color-accent-200);
+    }
+    .se-matriz-list-toolbar--angosta {
+        @apply justify-center;
+    }
+    /* Grillas con pocas columnas: ancho al contenido, centrada, 30 mm entre columnas */
+    .se-grid-pocos-campos {
+        width: max-content;
+        max-width: 100%;
+        border-collapse: collapse;
+    }
+    .se-grid-pocos-campos th:not(:last-child),
+    .se-grid-pocos-campos td:not(:last-child) {
+        padding-right: 30mm;
+    }
+    .se-grid-pocos-campos th,
+    .se-grid-pocos-campos td {
+        padding-left: 0;
+    }
+    /* Toolbar / búsqueda sobre grilla angosta: centrado + 30 mm entre controles */
+    .se-toolbar-pocos-campos {
+        @apply flex flex-wrap items-center justify-center;
+        gap: 30mm;
+    }
+    .se-grid-angosta-wrap > .se-grid-pocos-campos {
+        flex-shrink: 0;
+    }
+    .se-matriz-list-toolbar .form-label {
+        @apply mb-0 text-[10px];
+    }
+    .se-matriz-list-toolbar .form-input {
+        @apply py-1.5 text-sm;
+    }
+    .se-matriz-list-card {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-white shadow-sm;
+        border-color: var(--color-accent-200);
+    }
+    .se-matriz-list-grilla.se-cierre-anual-grilla {
+        @apply min-h-0 flex-1 overflow-hidden;
+    }
+    .se-matriz-list-grilla--unified .se-matriz-list-scroll {
+        @apply min-h-0 flex-1 overflow-auto overscroll-y-contain bg-white;
+        scrollbar-gutter: stable;
+    }
+    .se-matriz-list-tabla {
+        @apply w-full min-w-full border-collapse border-spacing-0 text-[11px] leading-tight text-gray-900;
+    }
+    /* Certificado alumno regular: tabla compacta, sin estirar al 100% del card */
+    .se-matriz-list-tabla--cert-alu-reg,
+    .se-matriz-list-tabla--cert-asist-prof {
+        width: max-content;
+        max-width: 100%;
+        min-width: 0;
+    }
+    /* Grilla angosta (ancho al contenido o min-width acotado): centrada en el contenedor */
+    .se-grid-angosta-wrap {
+        @apply flex justify-center;
+    }
+    .se-grid-angosta-wrap > .gf,
+    .se-grid-angosta-wrap > table,
+    .se-grid-angosta-wrap > .se-matriz-list-tabla--cert-alu-reg,
+    .se-grid-angosta-wrap > .se-matriz-list-tabla--cert-asist-prof {
+        flex-shrink: 0;
+    }
+    .se-matriz-list-tabla thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        @apply border border-gray-400 bg-gray-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700;
+        line-height: 1.2;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+    }
+    .se-matriz-list-tabla tbody td {
+        @apply border border-gray-300 px-2 py-0 align-middle;
+        height: 1.65rem;
+        line-height: 1.2;
+    }
+    .se-matriz-list-tabla tbody tr:hover td {
+        @apply bg-primary-50/35;
+    }
+    .se-matriz-list-tabla .se-matriz-list-cell-truncate {
+        @apply block max-w-full truncate;
+    }
+    .se-matriz-list-iconbtn {
+        @apply inline-flex h-7 w-7 items-center justify-center rounded-md border border-primary-200 bg-white text-primary-700 transition hover:border-primary-400 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500/35;
+    }
+    .se-matriz-list-iconbtn--off {
+        @apply cursor-not-allowed border-accent-200 bg-accent-50 text-neutral-400 hover:border-accent-200 hover:bg-accent-50;
+    }
+    .se-matriz-list-footer {
+        @apply shrink-0 border-t border-accent-200 bg-white/95 px-2 py-1 backdrop-blur-sm;
+    }
+    .se-pagination--compact .se-pagination-btn {
+        @apply gap-0 rounded-md border-accent-200 px-1.5 py-1 text-[11px] font-semibold;
+    }
+    .se-pagination--compact .se-pagination-btn--icon {
+        @apply px-1.5;
+    }
+    .se-pagination--compact .se-pagination-page {
+        @apply h-7 min-w-7 rounded-md px-1.5 text-[11px];
+    }
+    .se-pagination--compact .se-pagination-page-active {
+        @apply min-w-7;
+    }
+    .se-pagination--compact .se-pagination-ellipsis {
+        @apply h-7 min-w-5 text-[11px];
+    }
+    /* Libro matriz — edición: viewport fijo; scroll solo en tbody; barras guardar siempre visibles */
+    .se-main:has(.se-matriz-edit-fill) {
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+    main:has(.se-matriz-edit-fill) {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+    }
+    .se-matriz-edit-fill {
+        @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+        /* anula márgenes negativos de se-cierre-anual-fill para no desbordar el viewport */
+        margin: 0 !important;
+        height: 100%;
+        max-height: 100%;
+    }
+    .se-cierre-anual-grid--matriz-edit {
+        @apply min-h-0 flex-1 overflow-hidden;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    .se-matriz-edit-body {
+        @apply flex min-h-0 flex-1 flex-col gap-1 overflow-hidden;
+    }
+    .se-matriz-edit-hero .se-hero-inner {
+        @apply gap-2 p-3 sm:p-4;
+    }
+    .se-matriz-edit-hero .se-hero-inner h2 {
+        @apply text-lg sm:text-xl;
+    }
+    .se-matriz-edit-panel {
+        @apply grid min-h-0 flex-1 overflow-hidden rounded-2xl border bg-white shadow-sm;
+        border-color: var(--color-accent-200);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+    .se-matriz-edit-panel--solo-grilla {
+        grid-template-rows: minmax(0, 1fr);
+    }
+    .se-matriz-edit-bar {
+        @apply z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-accent-200 bg-accent-50 px-2 py-1.5;
+    }
+    .se-matriz-edit-bar--top {
+        @apply border-b;
+    }
+    .se-matriz-edit-bar--bottom {
+        @apply border-t shadow-[0_-4px_12px_rgba(0,0,0,0.06)];
+    }
+    .se-matriz-edit-hint {
+        @apply text-[10px] leading-tight text-neutral-600;
+    }
+    .se-matriz-edit-panel > .se-matriz-excel-grilla.se-cierre-anual-grilla {
+        @apply min-h-0 flex-1 flex-col overflow-hidden border-0;
+        height: auto;
+        min-height: 0;
+    }
+    /* Edición matriz: cabecera fija fuera del scroll (sin sticky; columnas sincronizadas por JS). */
+    .se-matriz-excel-grilla--unified.se-cierre-anual-grilla {
+        @apply min-h-0 flex-1 overflow-hidden;
+    }
+    .se-matriz-excel-grilla--unified .se-matriz-excel-head-wrap {
+        @apply shrink-0 overflow-x-hidden border-b border-gray-400 bg-gray-200 shadow-sm shadow-neutral-900/5;
+    }
+    .se-matriz-excel-grilla--unified .se-matriz-excel-scroll {
+        @apply min-h-0 flex-1 overflow-auto overscroll-y-contain bg-white;
+    }
+    .se-matriz-excel-grilla--unified .se-matriz-excel-thead th {
+        @apply border border-gray-400 bg-gray-200 px-1 py-0 text-[10px] font-semibold uppercase tracking-wide text-gray-700;
+        line-height: 1.2;
+    }
+    .se-matriz-excel-tabla {
+        @apply w-full min-w-full border-collapse text-[11px] leading-tight text-gray-900;
+        table-layout: fixed;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-matriz-excel-tabla tbody td {
+        @apply border border-gray-300 bg-white p-0 align-middle;
+        height: 1.35rem;
+        max-height: 1.35rem;
+        line-height: 1.2;
+        vertical-align: middle;
+    }
+    .se-matriz-excel-tabla tbody tr:hover td {
+        @apply bg-primary-50/40;
+    }
+    .se-matriz-excel-tabla .se-matriz-excel-read {
+        @apply block truncate px-1 py-0 text-[11px];
+    }
+    .se-matriz-excel-tabla .se-matriz-excel-apro {
+        @apply inline-block max-w-full truncate px-1 text-[10px] font-medium text-gray-700;
+    }
+    .se-matriz-excel-input {
+        @apply m-0 block h-[1.35rem] w-full min-w-0 border-0 bg-transparent px-1 py-0 text-[11px] leading-tight text-gray-900 outline-none;
+        box-sizing: border-box;
+        font: inherit;
+        border-radius: 0;
+    }
+    .se-matriz-excel-input:focus {
+        @apply bg-white ring-2 ring-inset ring-primary-500;
+    }
+    .se-matriz-excel-input--err {
+        @apply bg-red-50 ring-2 ring-inset ring-red-400;
+    }
+    .btn-matriz-save {
+        @apply inline-flex items-center justify-center rounded border border-primary-700 bg-primary-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-60;
+    }
+    /* Formulario datos adicionales del analítico (analiticodatos) */
+    .se-analitico-datos-form {
+        @apply text-sm;
+    }
+    .se-analitico-datos-row {
+        @apply grid grid-cols-1 items-start gap-x-4 gap-y-1 sm:grid-cols-[11rem_minmax(0,1fr)];
+    }
+    .se-analitico-datos-label-wrap {
+        @apply sm:text-right;
+    }
+    .se-analitico-datos-label {
+        @apply block pt-2 text-sm font-medium text-neutral-700 sm:text-right;
+    }
+    .se-analitico-datos-field {
+        @apply min-w-0;
+    }
+    .se-analitico-datos-field--leyenda {
+        @apply relative pr-8;
+    }
+    .se-analitico-datos-input {
+        @apply form-input w-full rounded-lg bg-accent-50/60 px-3 py-2 text-sm;
+    }
+    .se-analitico-datos-input--corto {
+        @apply max-w-[8rem];
+    }
+    .se-analitico-datos-input--fecha {
+        @apply max-w-[11rem];
+    }
+    .se-analitico-datos-textarea {
+        @apply min-h-[5.5rem] resize-y leading-relaxed;
+    }
+    .se-analitico-datos-hint {
+        @apply mt-1 text-[11px] text-neutral-500;
+    }
+    .se-analitico-datos-ayuda {
+        @apply absolute right-0 top-2 flex h-6 w-6 cursor-help items-center justify-center rounded-full bg-neutral-800 text-xs font-bold text-white;
+    }
+    /* Grilla: cabecera fuera del scroll vertical (no depende de position:sticky ni del transform del layout). */
+    .se-cierre-anual-grilla {
+        @apply flex h-full min-h-0 flex-1 flex-col;
+    }
+    .se-cierre-anual-head-wrap {
+        @apply shrink-0 overflow-x-hidden border-b border-accent-200 bg-white shadow-sm shadow-neutral-900/5;
+    }
+    .se-cierre-anual-body-wrap {
+        @apply min-h-0 flex-1 overflow-x-auto overflow-y-auto overscroll-y-contain;
+    }
+    .se-cierre-anual-tabla-wide {
+        @apply w-full;
+        min-width: 66rem;
+    }
+    .se-cierre-anual-tabla {
+        @apply w-full min-w-full border-separate border-spacing-0 text-sm;
+    }
+    .se-cierre-anual-tabla thead th {
+        @apply bg-white px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500;
+    }
+    .se-cierre-anual-tabla tbody td {
+        @apply px-3 py-2;
+    }
+    .se-hero {
+        @apply relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-neutral-800 text-white shadow-lg shadow-neutral-900/10;
+    }
+    .se-hero::before {
+        content: '';
+        @apply pointer-events-none absolute inset-0;
+        background: radial-gradient(ellipse 80% 70% at 100% 0%, rgba(255,255,255,.14), transparent 58%);
+    }
+    .se-hero-inner {
+        @apply relative flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between;
+    }
+    .se-eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60;
+    }
+    .se-card {
+        @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
+        border-color: var(--color-accent-200);
+    }
+
+    /* Gestión solicitudes de evaluación — bloque unificado por día */
+    .se-gest-eval-dia {
+        overflow: hidden;
+        border-radius: 1rem;
+        border: 1px solid #86efac;
+        background-color: #dcfce7;
+        box-shadow: 0 1px 3px 0 rgb(22 101 52 / 0.12);
+    }
+    .se-gest-eval-dia__fecha {
+        border-bottom: 1px solid #86efac;
+        background-color: #dcfce7;
+        padding: 0.75rem 1.25rem;
+    }
+    .se-gest-eval-dia__tabla {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #dcfce7;
+    }
+    .se-gest-eval-dia__tabla thead th.table-header,
+    .se-gest-eval-dia__tabla tbody td.table-cell {
+        background-color: #dcfce7;
+        border-color: #86efac;
+    }
+    .se-gest-eval-dia__tabla tbody tr:hover td.table-cell {
+        background-color: #bbf7d0;
+    }
+    .se-gest-eval-dia__tabla tbody tr + tr td.table-cell {
+        border-top: 1px solid #86efac;
+    }
+
+    /* Listado inasistencias docentes: caber en ~17" sin scroll horizontal */
+    .se-inas-docentes-table {
+        @apply w-full table-fixed border-collapse text-[11px];
+    }
+    .se-inas-docentes-table .table-header {
+        @apply px-1 py-1.5 text-[10px] tracking-wide;
+    }
+    .se-inas-docentes-table .table-cell {
+        @apply px-1 py-1.5 text-[11px];
+    }
+    .se-inas-docentes-table .btn-sm,
+    .se-inas-docentes-table .se-inas-doc-btn {
+        @apply px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide;
+    }
+    .se-inas-docentes-table .se-inas-doc-btn {
+        @apply inline-block max-w-[3.75rem] text-center;
+    }
+    .se-soft-card {
+        @apply rounded-2xl border shadow-sm;
+        background-color: rgba(255,255,255,.82);
+        border-color: var(--color-accent-200);
+    }
+    .se-toolbar {
+        @apply flex flex-col gap-3 rounded-2xl border bg-white/90 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between;
+        border-color: var(--color-accent-200);
+    }
+    .se-icon-badge {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+        background-color: rgba(193, 215, 218, 0.45);
+        color: var(--color-primary-600);
+    }
+    .se-pill {
+        @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold;
+        border-color: rgba(193, 215, 218, .75);
+        color: var(--color-primary-700);
+        background-color: rgba(193, 215, 218, .28);
+    }
+
+    .se-pagination-btn {
+        @apply inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition;
+        border-color: var(--color-accent-200);
+        color: var(--color-primary-700);
+        background-color: #fff;
+    }
+    .se-pagination-btn-nav:hover {
+        border-color: var(--color-primary-500);
+        background-color: rgba(193, 215, 218, 0.35);
+    }
+    .se-pagination-btn-nav:focus-visible {
+        @apply outline-none ring-2 ring-primary-500/40;
+    }
+    .se-pagination-btn-disabled {
+        @apply cursor-not-allowed opacity-45;
+        background-color: rgba(244, 248, 249, 0.9);
+        color: var(--color-neutral-400);
+    }
+    .se-pagination-page {
+        @apply inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-sm font-semibold transition;
+        border-color: transparent;
+        color: var(--color-primary-700);
+    }
+    .se-pagination-page:hover {
+        border-color: var(--color-accent-200);
+        background-color: rgba(193, 215, 218, 0.35);
+    }
+    .se-pagination-page-active {
+        border-color: var(--color-primary-500);
+        background-color: var(--color-primary-600);
+        color: #fff;
+    }
+    .se-pagination-ellipsis {
+        @apply inline-flex h-9 min-w-6 items-center justify-center px-1 text-sm text-neutral-400;
+    }
+
+    /* Chips de matrícula por nivel (listado de legajos) — fondos explícitos para buen contraste */
+    .se-mat-nivel-chip {
+        @apply rounded-md border px-1.5 py-0.5 text-[10px] leading-tight shadow-sm;
+    }
+  /* Inicial: verde lima (cálido); Secundario: azul celeste (frío) — evitar verde-azulado compartido */
+    .se-mat-nivel-inicial {
+        background-color: #ecfccb;
+        border-color: #bef264;
+        color: #3f6212;
+    }
+    .se-mat-nivel-primario {
+        background-color: #fef9c3;
+        border-color: #fde047;
+        color: #854d0e;
+    }
+    .se-mat-nivel-secundario {
+        background-color: #eff6ff;
+        border-color: #60a5fa;
+        color: #1d4ed8;
+    }
+    .se-mat-nivel-default {
+        background-color: var(--color-accent-50);
+        border-color: var(--color-accent-200);
+        color: var(--color-neutral-700);
+    }
+    .se-mat-nivel-chip.se-mat-ciclo-activo {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-primary-500);
+    }
+
+    .se-section-title {
+        @apply text-sm font-bold uppercase tracking-[0.12em] text-neutral-500;
+    }
+    .se-form-tabs {
+        @apply flex gap-2 overflow-x-auto p-2;
+    }
+    .se-form-tab {
+        @apply inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors;
+    }
+    .se-form-tab-active {
+        @apply bg-primary-600 text-white shadow-sm;
+    }
+    .se-form-tab-idle {
+        @apply text-neutral-600 hover:bg-accent-100 hover:text-primary-700;
+    }
+
+    .se-legajo-form .se-card {
+        @apply overflow-hidden;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,248,249,.58));
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid {
+        @apply gap-3 sm:gap-4;
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid > div:has(> .form-label) {
+        @apply rounded-2xl border p-3 transition-all duration-150;
+        border-color: rgba(193, 215, 218, .68);
+        background:
+            linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,248,249,.72));
+        box-shadow: 0 8px 24px -22px rgba(51, 51, 51, .42);
+    }
+    .se-legajo-form .se-card .space-y-5 > .grid > div:has(> .form-label):focus-within {
+        border-color: rgba(64, 132, 141, .55);
+        background: #fff;
+        box-shadow: 0 12px 28px -20px rgba(64, 132, 141, .48);
+    }
+    .se-legajo-form .form-label {
+        @apply mb-2 text-[10px];
+        color: rgba(51, 51, 51, .62);
+    }
+    .se-legajo-form .form-input,
+    .se-legajo-form .form-select {
+        @apply rounded-2xl border-0 bg-white/80 px-3 py-2.5 text-neutral-800 shadow-none ring-1 ring-inset ring-accent-200/80 transition-all;
+    }
+    .se-legajo-form .form-input::placeholder {
+        color: rgba(102, 102, 102, .58);
+    }
+    .se-legajo-form .form-input:focus,
+    .se-legajo-form .form-select:focus {
+        @apply bg-white ring-2 ring-primary-500/35;
+        box-shadow: inset 0 0 0 1px rgba(64, 132, 141, .18);
+    }
+    .se-legajo-form textarea.form-input {
+        @apply min-h-24 leading-relaxed;
+    }
+    .se-legajo-form input[readonly] {
+        @apply bg-accent-100/70 text-neutral-500;
+    }
+
+    /* Edición de cuota (Gestión de aranceles) — campos compactos */
+    .se-cuota-form {
+        @apply text-xs;
+    }
+    .se-cuota-form .se-section-title {
+        @apply mb-3 text-sm;
+    }
+    .se-cuota-form .form-label {
+        @apply mb-0.5 text-[10px] tracking-wide;
+    }
+    .se-cuota-form .form-input,
+    .se-cuota-form .form-select {
+        @apply mt-0.5 rounded-lg border-accent-200 bg-white px-2 py-1.5 text-xs leading-tight shadow-sm sm:text-sm;
+    }
+    .se-cuota-form .se-cuota-form-body {
+        @apply mx-auto w-full max-w-xl;
+    }
+    .se-cuota-form .se-cuota-form-fechas {
+        @apply grid grid-cols-3 justify-items-center gap-x-3 gap-y-2;
+    }
+    .se-cuota-form .se-cuota-form-fechas > div {
+        @apply w-full max-w-[11rem];
+    }
+    .se-cuota-form .se-cuota-form-fechas .form-label {
+        @apply text-center;
+    }
+    .se-cuota-form input[type="date"].form-input {
+        @apply min-w-[10.25rem] w-full py-1 text-center tabular-nums;
+    }
+    .se-cuota-form .se-cuota-form-importes {
+        @apply mx-auto grid max-w-md grid-cols-2 gap-2;
+    }
+    .se-cuota-form textarea.form-input {
+        @apply min-h-[3.25rem] py-1.5 leading-snug;
+    }
+    .se-cuota-form input[readonly] {
+        @apply bg-accent-50/90 text-neutral-700 cursor-default;
+    }
+    .se-cuota-form .form-error {
+        @apply mt-0.5 text-[10px];
+    }
+
+    /*
+     * Carga de calificaciones (secundario) — grilla compacta
+     * Objetivo: que todas las columnas entren en monitor 17" sin que el plugin
+     * de forms o estilos globales agranden inputs.
+     */
+    .se-calif-grid input[type="text"] {
+        height: 18px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1 !important;
+        font-size: 10px !important;
+        box-sizing: border-box;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+    .se-calif-grid td,
+    .se-calif-grid th {
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        line-height: 1 !important;
+    }
+    .se-calif-grid {
+        table-layout: fixed !important;
+        font-size: 10px !important;
+    }
+
+    /* Módulo Listados (por curso): checkbox sin borde (UI más limpia) */
+    .se-page fieldset input[type="checkbox"] {
+        border-width: 0 !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+        --tw-ring-shadow: 0 0 #0000 !important;
+        --tw-shadow: 0 0 #0000 !important;
+    }
+
+    /* Listados: el item NO debe verse como "campo" con borde */
+    .se-page fieldset label.flex.cursor-pointer.items-start {
+        border-width: 0 !important;
+        background: transparent !important;
+        padding: 0.25rem 0.25rem !important;
+        gap: 0.6rem !important;
+    }
+    .se-page fieldset label.flex.cursor-pointer.items-start:hover {
+        border-width: 0 !important;
+        background: transparent !important;
+    }
+}
+
+/* Sidebar: títulos de grupo a la izquierda; opciones hijas con sangría 5 mm (icono incluido). */
+.se-sidebar:not(.is-collapsed) .se-sidebar-groupbtn {
+    justify-content: flex-start;
+}
+.se-sidebar:not(.is-collapsed) .se-sidebar-groupbtn .se-sidebar-group-label {
+    flex: 1 1 0%;
+    min-width: 0;
+    text-align: left;
+}
+.se-sidebar-group-items > .se-sidebar-link {
+    padding-left: 5mm;
+    padding-right: 0.625rem;
+}
+
+/*
+ * Sidebar Bosque SE (Secretaría, Alumnos, Docentes).
+ * Mismo degradé y brillo que .se-hero (headers de formularios / ABM).
+ * Activar con clase .se-sidebar--bosque en el <aside> del layout.
+ */
+.se-sidebar--bosque {
+    color: #fff;
+    font-family: "Source Sans 3", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    width: var(--se-sidebar-w);
+    overflow-x: hidden;
+    background-color: var(--color-primary-700);
+    background-image: linear-gradient(
+        to bottom right,
+        var(--color-primary-600) 0%,
+        var(--color-primary-700) 42%,
+        var(--color-neutral-800) 100%
+    );
+}
+.se-sidebar--bosque::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 80% 70% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 58%);
+}
+@media (min-width: 768px) {
+    .se-sidebar--bosque.is-collapsed {
+        width: var(--se-sidebar-w-collapsed);
+    }
+}
+.se-sidebar--bosque .se-sidebar-sep {
+    border-color: var(--se-sep);
+}
+.se-sidebar--bosque .se-sidebar-iconbtn {
+    color: var(--se-sidebar-text);
+}
+.se-sidebar--bosque .se-sidebar-iconbtn:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-groupbtn {
+    font-size: 0.75rem; /* 12px — +1 respecto a 11px */
+    color: var(--se-group-text, #a3cdd3);
+    background: var(--se-group-bg, rgba(34, 69, 73, 0.4));
+    border: 1px solid var(--se-sep);
+}
+.se-sidebar--bosque .se-sidebar-groupbtn:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-groupbtn.is-open {
+    background: var(--se-group-open-bg, rgba(44, 90, 96, 0.25));
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-link {
+    font-family: inherit;
+    font-size: 0.875rem; /* 14px — +1 respecto a 13px */
+    font-weight: 400;
+    min-width: 0;
+    color: var(--se-sidebar-text);
+}
+.se-sidebar--bosque .se-sidebar-link span.truncate {
+    min-width: 0;
+    flex: 1 1 0%;
+}
+.se-sidebar--bosque .se-sidebar-link:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-link.is-active {
+    background: var(--color-primary-500);
+    color: #fff;
+    font-weight: 500;
+    box-shadow:
+        inset 3px 0 0 var(--color-accent-200),
+        0 1px 0 rgba(0, 0, 0, 0.12);
+}
+/* Menú de Secretaría: ítem activo por tipografía (prueba), sin bloque primary-500. */
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active {
+    background: transparent;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9375rem; /* 15px — +1 respecto al link base 14px */
+    box-shadow: none;
+}
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active span.truncate {
+    text-decoration: underline;
+    text-decoration-color: var(--se-light-blue, #c1d7da);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 2px;
+}
+.se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active:hover {
+    background: var(--se-hover-bg);
+}
+.se-sidebar--bosque .se-sidebar-nav-label {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.5);
+}
+@media (min-width: 768px) {
+    .se-sidebar--bosque.is-collapsed .se-sidebar-groupbtn {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+    .se-sidebar--bosque.is-collapsed .se-sidebar-link {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+}
+
+/*
+ * Logo del encabezado del sidebar: tamaño acotado por CSS (.is-collapsed / .is-narrowing),
+ * no solo por Alpine :class, para evitar el flash del logo a tamaño natural al animar el rail.
+ */
+.se-sidebar-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    max-width: 100%;
+}
+.se-sidebar-brand img {
+    display: block;
+    height: 2.25rem;
+    width: auto;
+    max-width: 9.5rem;
+    max-height: 2.25rem;
+    object-fit: contain;
+}
+.se-sidebar.is-collapsed .se-sidebar-brand img,
+.se-sidebar.is-narrowing .se-sidebar-brand img {
+    height: 2rem;
+    width: 2rem;
+    max-width: 2rem;
+    max-height: 2rem;
+}

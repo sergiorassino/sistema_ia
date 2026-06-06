@@ -1,0 +1,177 @@
+<?php
+
+namespace App\Support\Security;
+
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
+use JsonException;
+
+/**
+ * Referencias opacas para rutas GET (PDF, descargas) sin IDs numéricos en la URL.
+ *
+ * El valor en la ruta es cifrado con APP_KEY; no es enumerable ni adivinable.
+ * Siempre revalidar alcance en el controlador (sesión, schoolCtx, etc.).
+ */
+final class OpaqueRouteToken
+{
+    public const PURPOSE_COMPROBANTE_PAGO = 'alumnos.comprobante-pago';
+
+    public const PURPOSE_ADMIN_COMPROBANTE_PAGO = 'cuotas.comprobante-pago';
+
+    public const PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION = 'cuotas.comprobante-pago-imputacion';
+
+    public const PURPOSE_ADMIN_RESUMEN_PAGOS = 'cuotas.resumen-pagos';
+
+    public const PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR = 'cuotas.solicitud-ayuda-familiar';
+
+    public const PURPOSE_MORA_ESTADO_DEUDA = 'mora.estado-deuda-familiar';
+
+    public const PURPOSE_MORA_LISTADO_DEUDA = 'mora.listado-deuda';
+
+    public const PURPOSE_MORA_NOTIFICACION_DEUDA = 'mora.notificacion-deuda';
+
+    public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
+    }
+
+    public static function forComprobantePagoCuotaAdministracion(int $idCuotaGenerada, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
+    }
+
+    public static function forComprobantePagoImputacionAdministracion(int $idCuotaPago, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION, $idCuotaPago, $idLegajo);
+    }
+
+    public static function forResumenPagosEstudiante(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_RESUMEN_PAGOS, $idLegajo, $idLegajo);
+    }
+
+    public static function forSolicitudAyudaFamiliar(int $nroSolicitud, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR, $nroSolicitud, $idLegajo);
+    }
+
+    public static function forEstadoDeudaFamiliar(int $idFamilia): string
+    {
+        return self::encode(self::PURPOSE_MORA_ESTADO_DEUDA, $idFamilia, $idFamilia);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forListadoMorosos(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_LISTADO_DEUDA, $filtros);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forNotificacionDeudaMorosos(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_NOTIFICACION_DEUDA, $filtros);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function decodePayload(string $ref, string $purpose): ?array
+    {
+        $ref = trim($ref);
+        if ($ref === '') {
+            return null;
+        }
+
+        try {
+            $json = Crypt::decryptString(self::fromUrlSafe($ref));
+            /** @var array{p?: string, d?: array<string, mixed>} $payload */
+            $payload = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (DecryptException|JsonException) {
+            return null;
+        }
+
+        if (($payload['p'] ?? '') !== $purpose) {
+            return null;
+        }
+
+        $data = $payload['d'] ?? null;
+
+        return is_array($data) ? $data : null;
+    }
+
+    /**
+     * @return array{id: int, legajo: int}|null
+     */
+    public static function decode(string $ref, string $purpose): ?array
+    {
+        $ref = trim($ref);
+        if ($ref === '') {
+            return null;
+        }
+
+        try {
+            $json = Crypt::decryptString(self::fromUrlSafe($ref));
+            /** @var array{p?: string, i?: int, l?: int} $payload */
+            $payload = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (DecryptException|JsonException) {
+            return null;
+        }
+
+        if (($payload['p'] ?? '') !== $purpose) {
+            return null;
+        }
+
+        $id = (int) ($payload['i'] ?? 0);
+        $legajo = (int) ($payload['l'] ?? 0);
+
+        if ($id <= 0 || $legajo <= 0) {
+            return null;
+        }
+
+        return ['id' => $id, 'legajo' => $legajo];
+    }
+
+    private static function encode(string $purpose, int $id, int $idLegajo): string
+    {
+        $payload = json_encode([
+            'p' => $purpose,
+            'i' => $id,
+            'l' => $idLegajo,
+        ], JSON_THROW_ON_ERROR);
+
+        return self::toUrlSafe(Crypt::encryptString($payload));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function encodePayload(string $purpose, array $data): string
+    {
+        $payload = json_encode([
+            'p' => $purpose,
+            'd' => $data,
+        ], JSON_THROW_ON_ERROR);
+
+        return self::toUrlSafe(Crypt::encryptString($payload));
+    }
+
+    private static function toUrlSafe(string $encrypted): string
+    {
+        return rtrim(strtr($encrypted, '+/', '-_'), '=');
+    }
+
+    private static function fromUrlSafe(string $ref): string
+    {
+        $b64 = strtr($ref, '-_', '+/');
+        $pad = strlen($b64) % 4;
+        if ($pad > 0) {
+            $b64 .= str_repeat('=', 4 - $pad);
+        }
+
+        return $b64;
+    }
+}

@@ -1,0 +1,33 @@
+---
+description: PDFs legacy con DomPDF — anchos de columna en tablas Blade
+globs:
+  - resources/views/pdf/**
+  - resources/views/listados/pdf/**
+alwaysApply: false
+---
+
+# PDFs legacy DomPDF — columnas con distinto ancho
+
+Solo aplica a PDFs **ya existentes** en DomPDF. Los **PDFs nuevos** usan TCPDF: ver `.cursor/rules/pdf-tcpdf-nuevos.mdc`.
+
+Leer **`docs/05-preferencias-y-convenciones.md` §8** antes de crear o modificar tablas en PDF.
+
+## Obligatorio
+
+- `table { width: 100%; table-layout: fixed; }`
+- En **cada** `th` y `td`: `style="width:X%;min-width:0;max-width:X%;overflow:hidden;"` (calcular % en `@php` del Blade).
+- Misma referencia de anchos en encabezado y cuerpo; si hay `colspan`, el % de la celda agrupada = suma de columnas.
+- Texto largo: `white-space: nowrap; overflow: hidden` en la columna ancha de nombres.
+- Subcolumnas: celda exterior con % fijo + `table.inner` (ver `pdf/partials/planilla-calificaciones-hoja.blade.php`).
+
+## Evitar
+
+- Depender solo de `<colgroup>` o anchos en mm/pt sin % en cada celda.
+- Dos tablas separadas (encabezado/cuerpo) sin repetir anchos en cada celda.
+- Meter `pdf.partials.header` dentro de la tabla de datos.
+
+## Ejemplos en el repo
+
+- `pdf/partials/planilla-calificaciones-hoja.blade.php`
+- `listados/pdf/libro-matricula.blade.php`
+- `pdf/acta-volante-coloquios.blade.php`

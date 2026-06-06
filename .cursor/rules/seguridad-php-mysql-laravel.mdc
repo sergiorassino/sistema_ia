@@ -1,0 +1,35 @@
+---
+description: Medidas de seguridad obligatorias (PHP/MySQL/Laravel/Livewire) para este sistema
+alwaysApply: true
+---
+
+# Seguridad (baseline obligatorio)
+
+Detalle completo en `docs/06-reglas-de-seguridad.md`.
+Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes.
+
+## Base de datos (agente)
+
+- Ver sección **9** de `docs/06-reglas-de-seguridad.md`: sin operaciones destructivas sin backup y aprobación.
+- **No ejecutar** nada que escriba en la BD, **ni si el usuario pide borrar o actualizar tablas**: ni `migrate*`, `db:*`, `mysql`, seeds, ni **`tinker`**, ni **`php -r`** / scripts que usen Eloquent o `DB::` para `delete`/`update`/`insert`.
+- Entregar **SQL explícito** (DML/DDL) en el chat para revisión humana, y migraciones/código solo como archivos; Artisan como texto para copiar, no invocado desde aquí.
+
+## Checklist rápido (verificar siempre)
+
+1. ¿Ruta protegida con `auth` middleware?
+2. ¿Query filtrada por `schoolCtx()` (idNivel / idTerlec)?
+3. ¿Operaciones por ID revalidan alcance del registro?
+4. ¿Validación server-side con `$this->validate()` o FormRequest?
+5. ¿Normalización de entradas (`trim`, formatos)?
+6. ¿`$fillable` explícito en el modelo (no `$guarded = []`)?
+7. ¿Blade usa `{{ }}` (no `{!! !!}`)?
+8. ¿Sin `DB::raw()` con input de usuario?
+9. ¿Rate-limit en acciones sensibles?
+10. ¿Permisos verificados (cadena `0/1` de `profesores.permisos`)?
+11. ¿URLs de PDF/descarga/autogestión sin IDs ni documentos en la ruta (§10 de `docs/06-reglas-de-seguridad.md`, `OpaqueRouteToken`)?
+
+## Contraseñas — modo híbrido
+
+- Legacy: texto plano → `hash_equals()`.
+- Nuevos/blanqueo: bcrypt → `password_verify()`.
+- Al crear usuario o blanquear clave: guardar con `bcrypt()`, **excepto** alta de legajo docente (`LegajoProfesorForm`), que usa `1234` en texto plano — ver `docs/03-autenticacion-y-permisos.md` §2.1.

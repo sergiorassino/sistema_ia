@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Curso;
+use App\Support\HorariosProfesores;
+use App\Support\Listados\ListadoCursoExportParams;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Dompdf\Adapter\CPDF as DompdfCpdfAdapter;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+
+class ParteDiarioPreceptorPdfController extends Controller
+{
+    public function __invoke(Request $request)
+    {
+        @ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
+        $key = 'parte-diario-preceptor-pdf:'.(auth()->id() ?? $request->ip());
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');
+        }
+        RateLimiter::hit($key, 60);
+
+        $cursosInput = $request->query('cursos');
+        if (($cursosInput === null || $cursosInput === '') && $request->filled('curso')) {
+            $cursosInput = (string) (int) $request->query('curso');
+        }
+
+        $validated = Validator::make(
+            ['cursos' => $cursosInput],
+            ['cursos' => ['required', 'string', 'max:8000']],
+        )->validate();
+
+        $ctx = schoolCtx();
+        $cursosPermitidos = Curso::query()
+            ->where('idNivel', $ctx->idNivel)
+            ->where('idTerlec', $ctx->idTerlec)
+            ->orderBy('orden')
+            ->orderBy('cursec')
+            ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
+
+        if ($cursosPermitidos->isEmpty()) {
+            abort(404);
+        }
+
+        $allowedById = $cursosPermitidos->keyBy(fn (Curso $c) => (int) $c->Id);
+        $cursoIds = ListadoCursoExportParams::resolverIdsCursos(trim((string) $validated['cursos']), $allowedById);
+        if ($cursoIds === []) {
+            abort(404);
+        }
+
+        $ordenados = [];
+        foreach ($cursosPermitidos as $c) {
+            $id = (int) $c->Id;
+            if (in_array($id, $cursoIds, true)) {
+                $ordenados[] = $c;
+            }
+        }
+
+        $fechaRaw = trim((string) $request->query('fecha', ''));
+        $fechaReferencia = null;
+        if ($fechaRaw !== '') {
+            try {
+                $fechaReferencia = Carbon::createFromFormat('Y-m-d', $fechaRaw)->startOfDay();
+            } catch (\Throwable) {
+                $fechaReferencia = null;
+            }
+        }
+        if ($fechaReferencia === null) {
+            $fechaReferencia = Carbon::now()->startOfDay();
+        }
+        $fechaTexto = $fechaReferencia->format('d/m/Y');
+
+        $dia = (int) $fechaReferencia->dayOfWeekIso;
+        if ($dia < 1 || $dia > 7) {
+            $dia = 1;
+        }
+        $nombreDia = HorariosProfesores::DIAS[$dia] ?? '';
+        $lineaDia = $nombreDia !== '' ? 'Día: '.$nombreDia : '';
+
+        $turnoElegido = (int) $request->query('turnoElegido', 0);
+        $unSoloCurso = count($ordenados) === 1;
+
+        $paginas = [];
+        foreach ($ordenados as $curso) {
+            $cursoId = (int) $curso->Id;
+            $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
+            if ($unSoloCurso && $turnoElegido > 0 && in_array($turnoElegido, $turnos, true)) {
+                $idTurnoClase = $turnoElegido;
+            } else {
+                $idTurnoClase = (int) ($turnos[0] ?? 1);
+            }
+            if ($idTurnoClase <= 0) {
+                $idTurnoClase = 1;
+            }
+
+            $filas = HorariosProfesores::filasParteDiarioCursoDia($cursoId, $dia, $idTurnoClase);
+
+            $paginas[] = [
+                'subtitulo' => 'PARTE DIARIO DEL PRECEPTOR — '.$curso->nombreParaListado(),
+                'lineaDia' => $lineaDia,
+                'fechaTexto' => $fechaTexto,
+                'turnoTitulo' => HorariosProfesores::nombreTurnoClase($idTurnoClase),
+                'filasHorario' => $filas,
+            ];
+        }
+
+        if ($paginas === []) {
+            abort(404);
+        }
+
+        if (count($paginas) === 1) {
+            $slug = Str::slug('parte-diario-'.$ordenados[0]->nombreParaListado().'-'.$nombreDia, '_') ?: 'parte_diario_preceptor';
+        } else {
+            $slug = Str::slug('partes-diarios-'.count($paginas).'-cursos-'.$fechaReferencia->format('Y-m-d'), '_') ?: 'partes_diarios_preceptor';
+        }
+
+        $pdf = Pdf::loadView('pdf.parte-diario-preceptor', [
+            'pdfHeader' => schoolPdfHeaderData(),
+            'metaCiclo' => schoolCtx()->nivelNombre().' · Ciclo '.schoolCtx()->terlecAno(),
+            'paginas' => $paginas,
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption('dpi', 72);
+
+        $pdf->render();
+
+        $canvas = $pdf->getDomPDF()->getCanvas();
+        if ($canvas instanceof DompdfCpdfAdapter) {
+            $canvas->get_cpdf()->setPreferences('PrintScaling', 'None');
+        }
+
+        return $pdf->stream($slug.'.pdf');
+    }
+}

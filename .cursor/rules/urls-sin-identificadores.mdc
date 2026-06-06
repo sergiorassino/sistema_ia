@@ -1,0 +1,36 @@
+---
+description: URLs sin IDs ni documentos en rutas visibles (autogestión, PDF, descargas)
+globs:
+  - routes/**/*.php
+  - app/Http/Controllers/**/*.php
+  - app/Livewire/**/*.php
+  - resources/views/**/*.blade.php
+alwaysApply: false
+---
+
+# URLs sin identificadores reveladores
+
+Detalle: `docs/06-reglas-de-seguridad.md` sección **10**.
+
+## Prohibido en URLs visibles
+
+- IDs numéricos de BD en segmentos de ruta o query (`/comprobante/44205`, `?legajo=123`).
+- DNI, legajo, CUIL u otros documentos.
+- Secuencias adivinables.
+
+## Patrones aprobados
+
+1. **Autogestión / PDF con sesión:** `OpaqueRouteToken` (`app/Support/Security/OpaqueRouteToken.php`).
+   - Ruta: `{ref}` con `->where('ref', '[A-Za-z0-9_-]+')`.
+   - Enlace: `OpaqueRouteToken::for…()` + `se_route_url(..., ['ref' => $ref])`.
+   - Controlador: `decode()` → 404 si falla → revalidar alcance (ej. `studentCtx`, `schoolCtx`).
+
+2. **Público sin login:** token aleatorio en BD (ver `AspirantesTokenService`).
+
+3. **ABM secretaría:** `{id}` solo con `auth` + permisos; no reutilizar en portal familia ni `target="_blank"` compartibles.
+
+## Checklist al agregar ruta GET de descarga
+
+- [ ] ¿El segmento de ruta es opaco o firmado, no un entero?
+- [ ] ¿Se revalida el registro en servidor?
+- [ ] ¿El nombre del archivo descargado evita IDs?

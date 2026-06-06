@@ -1,0 +1,421 @@
+<?php
+
+namespace App\Support\Cuotas;
+
+use App\Models\CuotaGenerada;
+use App\Models\CuotaTipoPago;
+use App\Models\CuotasBeca;
+use App\Models\Legajo;
+use App\Models\Matricula;
+use App\Models\Terlec;
+use App\Support\MatriculaNivelEstilo;
+use App\Support\SchoolAlcancePedagogico;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+
+/**
+ * Consultas del módulo Gestión de aranceles (nivel Administración).
+ */
+final class GestionAranceles
+{
+    public static function legajoParaGestion(int $idLegajo): ?Legajo
+    {
+        return Legajo::query()
+            ->whereKey($idLegajo)
+            ->first(['id', 'apellido', 'nombre', 'dni', 'legajo']);
+    }
+
+    /**
+     * Cuotas del estudiante en el ciclo lectivo activo (adeudadas y pagadas).
+     *
+     * @return Collection<int, CuotaGenerada>
+     */
+    public static function cuotasDelEstudiante(int $idLegajo): Collection
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+
+        return self::consultaCuotasEstudiante($idLegajo)
+            ->where('idTerlec', $idTerlec)
+            ->orderBy('venc1')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * Cuotas abonadas del estudiante en cualquier ciclo lectivo (historial).
+     *
+     * @return Collection<int, CuotaGenerada>
+     */
+    public static function cuotasAbonadasHistorial(int $idLegajo): Collection
+    {
+        return self::consultaCuotasEstudiante($idLegajo)
+            ->where('faltapa', '<=', 0)
+            ->orderByDesc('idTerlec')
+            ->orderByDesc('venc1')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
+     * @return Builder<CuotaGenerada>
+     */
+    private static function consultaCuotasEstudiante(int $idLegajo): Builder
+    {
+        return CuotaGenerada::query()
+            ->with([
+                'legajo:id,apellido,nombre,dni',
+                'terlec:id,ano',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                'curso.curplan:id,curPlanCurso',
+                'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
+                'cuota:id,nombre',
+            ])
+            ->where('idLegajos', $idLegajo);
+    }
+
+    public static function cuotaParaGestion(int $idCuotaGenerada, int $idLegajo): ?CuotaGenerada
+    {
+        return CuotaGenerada::query()
+            ->with([
+                'legajo:id,apellido,nombre,dni',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                'curso.curplan:id,curPlanCurso',
+                'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
+                'cuota:id,nombre',
+            ])
+            ->whereKey($idCuotaGenerada)
+            ->where('idLegajos', $idLegajo)
+            ->where('idTerlec', (int) schoolCtx()->idTerlec)
+            ->first();
+    }
+
+    /**
+     * @return array{
+     *     apellido: string,
+     *     nombre: string,
+     *     dni: string,
+     *     curso: string,
+     *     becaResumen: string,
+     *     terlecAno: string
+     * }|null
+     */
+    public static function encabezadoEstudiante(int $idLegajo): ?array
+    {
+        $legajo = self::legajoParaGestion($idLegajo);
+        if ($legajo === null) {
+            return null;
+        }
+
+        $matricula = self::matriculaCicloActivo($idLegajo);
+        $curso = trim((string) ($matricula?->curso?->nombreParaListado() ?? ''));
+        if ($curso === '') {
+            $primera = self::cuotasDelEstudiante($idLegajo)->first();
+            $curso = trim((string) ($primera?->curso?->nombreParaListado() ?? ''));
+        }
+
+        $becaResumen = self::etiquetaBecaPorId((int) ($matricula?->idCuotasbecas ?? 0));
+
+        $terlec = Terlec::query()->find((int) schoolCtx()->idTerlec, ['id', 'ano']);
+
+        return [
+            'apellido' => mb_strtoupper(trim((string) ($legajo->apellido ?? ''))),
+            'nombre' => mb_strtoupper(trim((string) ($legajo->nombre ?? ''))),
+            'dni' => CuotasFormato::formatearDni($legajo->dni ?? ''),
+            'curso' => mb_strtoupper($curso),
+            'becaResumen' => $becaResumen,
+            'terlecAno' => (string) ($terlec->ano ?? schoolCtx()->terlecAno()),
+        ];
+    }
+
+    /**
+     * Matrícula del estudiante en el ciclo lectivo activo (beca y curso del encabezado).
+     */
+    public static function matriculaCicloActivo(int $idLegajo): ?Matricula
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+
+        $query = Matricula::query()
+            ->where('idLegajos', $idLegajo)
+            ->where('idTerlec', $idTerlec);
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        return $query
+            ->with(self::relacionesMatricula())
+            ->first();
+    }
+
+    /**
+     * Última matrícula registrada del estudiante (cualquier ciclo lectivo).
+     */
+    public static function ultimaMatricula(int $idLegajo): ?Matricula
+    {
+        $query = Matricula::query()->where('idLegajos', $idLegajo);
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        return $query
+            ->with(self::relacionesMatricula())
+            ->orderByDesc('idTerlec')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /** Beca de la fila en cuotasgeneradas (idCuotasbecas del registro). */
+    public static function etiquetaBeca(CuotaGenerada $registro): string
+    {
+        return self::etiquetaBecaPorId((int) ($registro->idCuotasbecas ?? 0));
+    }
+
+    /**
+     * Texto de beca para listados y formularios.
+     * id = 1 → «C/E» (cuota entera, sin ayuda familiar).
+     */
+    public static function etiquetaBecaPorId(int $idCuotasbecas): string
+    {
+        if ($idCuotasbecas < 1) {
+            return '';
+        }
+
+        $beca = CuotasBeca::query()->find($idCuotasbecas);
+        if ($beca === null) {
+            return $idCuotasbecas === 1 ? 'C/E' : '';
+        }
+
+        $nombre = trim((string) ($beca->nombreBeca ?? ''));
+
+        return $nombre !== '' ? $nombre : ($idCuotasbecas === 1 ? 'C/E' : '');
+    }
+
+    public static function filaPagada(CuotaGenerada $registro): bool
+    {
+        return (float) ($registro->faltapa ?? 0) <= 0;
+    }
+
+    public static function filaAvisoPago(CuotaGenerada $registro): bool
+    {
+        return (int) ($registro->avisoPago ?? 0) === 1;
+    }
+
+    /**
+     * IDs de cuotastipopago habilitados en imputación manual de pago.
+     *
+     * @var list<int>
+     */
+    public const IDS_MEDIOS_PAGO_IMPUTACION = [1, 2, 8, 9, 10];
+
+    /**
+     * @return list<int>
+     */
+    public static function idsMediosPagoImputacion(): array
+    {
+        return self::IDS_MEDIOS_PAGO_IMPUTACION;
+    }
+
+    /**
+     * Medios de pago para el formulario de imputación (solo IDs habilitados).
+     *
+     * @return Collection<int, CuotaTipoPago>
+     */
+    public static function mediosDePagoImputacion(): Collection
+    {
+        $orden = self::IDS_MEDIOS_PAGO_IMPUTACION;
+
+        return CuotaTipoPago::query()
+            ->whereIn('id', $orden)
+            ->get(['id', 'tipoPago', 'abrev'])
+            ->sortBy(fn (CuotaTipoPago $medio) => array_search((int) $medio->id, $orden, true))
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, CuotaTipoPago>
+     */
+    public static function mediosDePago(): Collection
+    {
+        return CuotaTipoPago::query()
+            ->where('tipoPago', '!=', '')
+            ->orderBy('id')
+            ->get(['id', 'tipoPago', 'abrev']);
+    }
+
+    /**
+     * @return Collection<int, CuotasBeca>
+     */
+    public static function becasParaSelector(): Collection
+    {
+        return CuotasBeca::query()
+            ->orderBy('porcentaje')
+            ->orderBy('nombreBeca')
+            ->get(['id', 'nombreBeca', 'porcentaje']);
+    }
+
+    /**
+     * Búsqueda de legajos con al menos una matrícula histórica (todos los niveles pedagógicos en Administración).
+     *
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public static function buscarLegajos(string $termino, int $porPagina = 20)
+    {
+        $query = Legajo::query()
+            ->whereHas('matriculas', function (Builder $q) {
+                SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+            });
+
+        $termino = trim($termino);
+        if ($termino !== '') {
+            $query->buscar($termino);
+        }
+
+        return $query
+            ->with([
+                'matriculas' => function ($q) {
+                    $q->with(self::relacionesMatricula())
+                        ->orderByDesc('idTerlec')
+                        ->orderByDesc('id');
+                    SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+                },
+            ])
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->paginate($porPagina, ['id', 'apellido', 'nombre', 'dni', 'legajo']);
+    }
+
+    /**
+     * Curso, nivel y beca para el listado de búsqueda (ciclo activo o última matrícula).
+     *
+     * @return array{curso: string, nivel: string, beca: string}
+     */
+    public static function datosMatriculaParaListado(Legajo $legajo): array
+    {
+        $mat = self::matriculaReferenciaListado($legajo);
+
+        return self::datosDesdeMatricula($mat);
+    }
+
+    /**
+     * Datos de fila en la búsqueda de estudiantes (incluye matrícula actual y año de la última).
+     *
+     * @return array{
+     *     curso: string,
+     *     nivel: string,
+     *     beca: string,
+     *     tieneMatriculaActual: bool,
+     *     anoUltimaMatricula: string,
+     *     nivelEtiqueta: string,
+     *     claseChipNivel: string
+     * }
+     */
+    public static function datosListadoBusqueda(Legajo $legajo): array
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+        $ultima = self::ultimaMatriculaDesdeLegajo($legajo);
+        $matReferencia = self::matriculaReferenciaListado($legajo);
+        $nivelNombre = trim((string) ($matReferencia?->nivel?->nivel ?? ''));
+
+        return array_merge(self::datosMatriculaParaListado($legajo), [
+            'tieneMatriculaActual' => self::tieneMatriculaCicloActivo($legajo, $idTerlec),
+            'anoUltimaMatricula' => self::anoTerlecMatricula($ultima),
+            'nivelEtiqueta' => $nivelNombre !== '' ? $nivelNombre : '—',
+            'claseChipNivel' => MatriculaNivelEstilo::claseChipPorNombreNivel($nivelNombre),
+        ]);
+    }
+
+    public static function tieneMatriculaCicloActivo(Legajo $legajo, ?int $idTerlec = null): bool
+    {
+        $idTerlec ??= (int) schoolCtx()->idTerlec;
+
+        if ($legajo->relationLoaded('matriculas')) {
+            return $legajo->matriculas->contains(
+                fn (Matricula $m) => (int) $m->idTerlec === $idTerlec,
+            );
+        }
+
+        return self::matriculaCicloActivo((int) $legajo->id) !== null;
+    }
+
+    /**
+     * Curso, nivel y beca de la matrícula del ciclo lectivo activo en sesión.
+     *
+     * @return array{curso: string, nivel: string, beca: string}
+     */
+    public static function datosMatriculaCicloActivo(Legajo $legajo): array
+    {
+        return self::datosDesdeMatricula(self::matriculaCicloActivo((int) $legajo->id));
+    }
+
+    /**
+     * @return array{curso: string, nivel: string, beca: string}
+     */
+    private static function datosDesdeMatricula(?Matricula $mat): array
+    {
+        if ($mat === null) {
+            return ['curso' => '—', 'nivel' => '—', 'beca' => '—'];
+        }
+
+        $curso = trim((string) ($mat->curso?->nombreParaListado() ?? $mat->curso?->cursec ?? ''));
+        $nivel = trim((string) ($mat->nivel?->nivel ?? ''));
+        $beca = self::etiquetaBecaPorId((int) ($mat->idCuotasbecas ?? 0));
+
+        return [
+            'curso' => $curso !== '' ? mb_strtoupper($curso) : '—',
+            'nivel' => $nivel !== '' ? mb_strtoupper($nivel) : '—',
+            'beca' => $beca !== '' ? $beca : '—',
+        ];
+    }
+
+    private static function matriculaReferenciaListado(Legajo $legajo): ?Matricula
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+
+        if ($legajo->relationLoaded('matriculas') && $legajo->matriculas->isNotEmpty()) {
+            return $legajo->matriculas->firstWhere('idTerlec', $idTerlec)
+                ?? $legajo->matriculas->first();
+        }
+
+        return self::matriculaCicloActivo((int) $legajo->id) ?? self::ultimaMatricula((int) $legajo->id);
+    }
+
+    private static function ultimaMatriculaDesdeLegajo(Legajo $legajo): ?Matricula
+    {
+        if ($legajo->relationLoaded('matriculas') && $legajo->matriculas->isNotEmpty()) {
+            return $legajo->matriculas->first();
+        }
+
+        return self::ultimaMatricula((int) $legajo->id);
+    }
+
+    private static function anoTerlecMatricula(?Matricula $mat): string
+    {
+        if ($mat === null) {
+            return '—';
+        }
+
+        if ($mat->relationLoaded('terlec') && $mat->terlec !== null) {
+            $ano = trim((string) ($mat->terlec->ano ?? ''));
+
+            return $ano !== '' ? $ano : '—';
+        }
+
+        $terlec = Terlec::query()->find((int) $mat->idTerlec, ['id', 'ano']);
+        $ano = trim((string) ($terlec->ano ?? ''));
+
+        return $ano !== '' ? $ano : '—';
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function relacionesMatricula(): array
+    {
+        return [
+            'terlec:id,ano',
+            'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+            'curso.curplan:id,curPlanCurso',
+            'curso.turnoClase:id,nombre',
+            'nivel:id,nivel',
+        ];
+    }
+}

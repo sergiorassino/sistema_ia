@@ -1,0 +1,69 @@
+---
+description: Convenciones UI: grillas/listados y sidebar (no superposición)
+alwaysApply: true
+---
+
+# UI — Grillas/listados y sidebar (estándar)
+
+## Grillas tipo planilla (`.gf-*`)
+
+- **No centrar listados con `.gf-wrap`** cuando el contenido puede desbordar horizontalmente (muchas columnas).
+  - `.gf-wrap` aplica `justify-center` y, al cambiar el ancho disponible (ej. sidebar), puede dejar columnas “debajo” del sidebar.
+- Para listados anchos, usar este patrón:
+
+```blade
+<div class="w-full overflow-x-auto">
+    <div class="flex justify-start">
+        <div class="gf min-w-[XXXXpx]">
+            <!-- gf-head / gf-row -->
+        </div>
+    </div>
+</div>
+```
+
+- **Intención**: el listado arranca a la izquierda y, si no entra, aparece scroll horizontal; nunca debe quedar oculto por el sidebar.
+
+## Grillas angostas (pocas columnas o ancho acotado)
+
+Cuando la grilla **no** ocupa todo el ancho del contenedor (tabla con `width: max-content`, `w-max`, columnas en `rem` fijas, `.gf` con `min-width` menor que el card, etc.), debe quedar **centrada** horizontalmente.
+
+- Envolver el scroll + grilla en un contenedor con clase **`se-grid-angosta-wrap`** (definida en `resources/css/app.css`).
+- Ese contenedor combina scroll vertical/horizontal del listado (`overflow-auto`, p. ej. `se-matriz-list-scroll` o `w-full overflow-x-auto`) con `display: flex; justify-content: center`.
+- El hijo directo (tabla, `.gf`, etc.) lleva `flex-shrink: 0` vía la regla CSS; no usar `justify-start` en grillas angostas.
+- La **barra de búsqueda/filtros** asociada a esa grilla angosta también va centrada: `se-matriz-list-toolbar--angosta` (o `justify-center` equivalente en el toolbar del módulo).
+
+```blade
+<div class="se-cierre-anual-body-wrap se-matriz-list-scroll se-grid-angosta-wrap" tabindex="0">
+    <table class="se-matriz-list-tabla se-matriz-list-tabla--cert-alu-reg table-fixed">
+        ...
+    </table>
+</div>
+```
+
+Variante planilla `.gf-*`:
+
+```blade
+<div class="w-full overflow-x-auto se-grid-angosta-wrap">
+    <div class="gf min-w-[32rem]">
+        <!-- gf-head / gf-row -->
+    </div>
+</div>
+```
+
+- **Grillas anchas** (muchas columnas, `min-w` grande, riesgo de quedar bajo el sidebar): seguir con `justify-start` y el patrón de la sección anterior; **no** centrar.
+
+## Grillas con pocos campos (separación 30 mm)
+
+Cuando la grilla tiene **pocas columnas** (p. ej. etiqueta + botón, checkbox + nombre + acción):
+
+- Tabla: clase **`se-grid-pocos-campos`** — ancho al contenido y **30 mm** entre columnas (`padding-right` en celdas, salvo la última).
+- Contenedor: **`se-grid-angosta-wrap`** + `overflow-x-auto` para centrar la grilla en el card.
+- Toolbar / búsqueda / botones **encima** de esa grilla: **`se-toolbar-pocos-campos`** — `justify-center` y **`gap: 30mm`** entre controles.
+
+Detalle y ejemplo Blade: `docs/05-preferencias-y-convenciones.md` (sección *Grillas con pocos campos*).
+
+## Sidebar
+
+- Al cambiar el ancho del sidebar, asegurar que el contenido principal se desplace (o ajuste su ancho) de forma consistente.
+- Evitar depender de clases Tailwind “arbitrarias” en bindings dinámicos si pueden no compilarse; preferir CSS explícito (variables) cuando aplique.
+

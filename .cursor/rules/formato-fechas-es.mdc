@@ -1,0 +1,15 @@
+---
+description: Formato estándar de fechas (es-AR) en UI y PDFs
+alwaysApply: true
+---
+
+# Formato de fechas (regla global)
+
+- Toda fecha que se muestre en UI o PDFs debe estar en **formato español**: **`dd/mm/aaaa`** (año de 4 dígitos).
+- Ejemplo: `01/01/2026`.
+
+## Implementación
+
+- En Blade/PDF: usar `->format('d/m/Y')`.
+- En timestamps: `->format('d/m/Y H:i')` si corresponde (también con año de 4 dígitos).
+

@@ -1,0 +1,182 @@
+---
+description: Reglas esteticas globales del sistema institucional SE
+alwaysApply: true
+---
+
+# Sistema institucional SE: reglas esteticas globales
+
+Esta regla define la identidad visual aprobada para todo el sistema: login, dashboard, layouts internos, sidebar, paginas operativas, listados, formularios, modales y vistas de autogestion. Debe aplicarse al crear o modificar cualquier pantalla.
+
+## Stack y alcance
+
+- Mantener el stack del proyecto: Laravel Blade, Livewire y Tailwind CSS.
+- No introducir frameworks visuales nuevos.
+- Preferir `resources/css/app.css`, componentes Tailwind locales y patrones existentes.
+- No crear estilos aislados para una pantalla si el patron puede reutilizarse como componente `se-*`.
+- Archivos de referencia:
+  - `resources/css/app.css`
+  - `resources/views/layouts/guest.blade.php`
+  - `resources/views/layouts/app.blade.php` (Menú de Secretaría)
+  - `resources/views/layouts/alumno.blade.php` (Menú de Alumnos)
+  - `resources/views/layouts/docente.blade.php` (Menú de Docentes)
+  - `docs/08-menus-de-navegacion.md`
+  - `resources/views/livewire/auth/login.blade.php`
+  - `resources/views/dashboard.blade.php`
+  - `resources/views/livewire/abm/legajos/index2.blade.php`
+  - `resources/views/livewire/abm/legajos/form.blade.php`
+
+## Paleta SE
+
+Usar la paleta institucional como identidad dominante:
+
+- Primario: dark cyan `#40848D`; en Tailwind usar `primary-*` (`primary-500` = marca).
+- Jet: `#333333`; texto fuerte, sidebar y bloques oscuros de contraste.
+- Moonstone: `#739FA5`; apoyos visuales y estados secundarios.
+- Light blue: `#C1D7DA`; bordes, fondos suaves y estados hover.
+- White: `#FFFFFF`; superficie principal de lectura.
+- Fondo de aplicacion: `#F4F8F9` o `accent-50`.
+
+Reglas:
+
+- Reservar `#40848D` para acciones, activos, enlaces importantes y acentos de marca.
+- Reservar `#333333` para texto principal, sidebar y profundidad.
+- Usar `#C1D7DA` en bordes, hover, fondos suaves y separadores.
+- Evitar paletas multicolor fuera de marca. Rojo/ambar/verde solo para estados funcionales.
+- Evitar interfaces dominadas por un solo bloque oscuro; el sistema debe sentirse claro y operativo.
+
+## Tipografia y texto
+
+- Usar jerarquia sobria: titulos claros, labels pequenos en mayusculas y texto auxiliar breve.
+- No usar textos instructivos largos dentro de pantallas operativas.
+- Labels de formularios: `text-[10px]` o `text-[11px]`, semibold, uppercase, tracking moderado, color neutral con opacidad.
+- Botones y tabs: semibold, textos cortos, verbos de accion.
+- Cuidar mobile: ningun texto debe superponerse ni desbordar botones, cards o tablas.
+
+## Logos e identidad
+
+- Usar logos de `public/img`, especialmente `asset('img/3.png')`, o `schoolLogoUrl()` cuando corresponda.
+- El logo debe tener presencia real en login, dashboard y headers institucionales.
+- No usar el logo como detalle minimo perdido en la pantalla.
+
+## Layout general
+
+- Las pantallas internas viven sobre fondo claro (`accent-50` / `#F4F8F9`) con contenido centrado y aire suficiente.
+- Usar `md:p-8` o padding generoso en desktop; compactar en mobile.
+- Evitar cards anidadas innecesarias. Las secciones principales son bandas o contenedores; las cards se reservan para items, paneles, modales y herramientas.
+- Usar radios amplios en superficies principales: `rounded-2xl` o `rounded-3xl`.
+- Usar sombras suaves, nunca dramaticas.
+- Mantener el ancho operativo con `max-w-6xl` o `max-w-7xl` segun densidad.
+
+## Sidebar y navegacion interna
+
+Tres portales con sidebar (nombres oficiales en `docs/08-menus-de-navegacion.md`): **Secretaría** (`app`), **Alumnos** (`alumno`), **Docentes** (`docente`).
+
+- El menu interno debe ser sidebar en desktop.
+- En estado colapsado debe quedar una barra compacta con iconos, no desaparecer.
+- Fondo del sidebar: Jet `#333333` con radial suave dark cyan arriba a la izquierda.
+- Separadores: `#C1D7DA` con baja opacidad.
+- Links:
+  - Normal: blanco con opacidad.
+  - Hover: `#C1D7DA` en baja opacidad.
+  - Activo: fondo `#40848D` y acento lateral `#C1D7DA`.
+- Header:
+  - Menú de Secretaría: logo en contenedor blanco, contexto activo y selector (`context-switcher`).
+  - Menú de Alumnos / Docentes: version compacta segun su layout.
+- Footer: avatar simple con inicial, nombre de usuario y logout con icono.
+
+## Login
+
+- Debe sentirse institucional, moderno y claro.
+- Desktop: layout partido, panel editorial oscuro a la izquierda y formulario blanco a la derecha.
+- Mobile: ocultar panel editorial y mostrar logo arriba del formulario.
+- Tarjeta blanca con borde `#C1D7DA`, sombra suave y radio amplio.
+- Inputs con fondo `#C1D7DA` en baja opacidad, borde suave y focus dark cyan.
+- Boton principal: fondo `#40848D`, texto blanco, hover `primary-700`.
+- Mantener validaciones Livewire debajo de cada campo.
+
+## Dashboard
+
+- Debe ser un panel operativo, no una landing page.
+- Estructura recomendada:
+  - Hero superior dark cyan con profundidad Jet, contexto activo y logo visible.
+  - Tarjetas de resumen claras.
+  - Accesos principales segun permisos.
+- Los accesos usan cards blancas con borde `#C1D7DA`, icono simple, hover con elevacion leve y borde `#40848D`.
+- Respetar permisos con `tienePermiso()`. No mostrar rutas no autorizadas.
+
+## Paginas internas y ABM
+
+- Usar el patron `se-page` para contenedores operativos.
+- Usar `se-hero` cuando la pantalla sea principal de modulo o tenga acciones de alto nivel.
+- Usar `se-toolbar` para busquedas, filtros y acciones secundarias.
+- Usar `se-card` para contenedores de listados, formularios y herramientas.
+- Usar `se-pill` para estados, contadores y metadatos breves.
+- La pagina debe poder escanearse rapido: contexto arriba, filtros cerca, tabla/formulario debajo.
+- No convertir ABM en landing page ni agregar bloques decorativos innecesarios.
+
+## Listados y tablas
+
+- Tablas limpias, con encabezados en `accent-50`, labels pequenos uppercase y bordes suaves.
+- Evitar grillas con bordes oscuros salvo que la pantalla sea explicitamente tipo planilla.
+- Filas con hover sutil `accent-50`.
+- Acciones alineadas a la derecha y con botones consistentes.
+- En listados densos, usar chips o badges para datos secundarios repetibles.
+- Estados vacios: icono simple, texto breve, sin explicaciones largas.
+
+## Formularios
+
+- Los formularios deben sentirse suaves y profesionales, no como grillas duras.
+- Inputs y selects:
+  - Radio amplio (`rounded-xl` o `rounded-2xl`).
+  - Fondo blanco o `accent-50` muy suave.
+  - Borde `accent-200`, focus con `primary-500`.
+  - Sombra minima o ring interno, no bordes negros.
+- En formularios largos, agrupar visualmente los campos con superficies suaves y `focus-within`.
+- Tabs de formulario: pills redondeadas, activo con `primary-600` y texto blanco.
+- Mantener errores debajo del campo.
+- Campos readonly: fondo suave, texto neutral, sin parecer deshabilitados rotos.
+- Textareas: altura comoda y `leading-relaxed`.
+
+## Modales
+
+- Overlay oscuro neutral con opacidad y, si corresponde, `backdrop-blur-sm`.
+- Modal blanco, `rounded-2xl`, sombra suave y max-width acorde al contenido.
+- Header con borde `accent-200`; acciones en footer claro `accent-50`.
+- Confirmaciones destructivas usan rojo solo en icono/boton, no en toda la pantalla.
+- **Posicionamiento (obligatorio en Livewire):** `@teleport('body')`, panel con `my-auto` y `max-h` en `dvh`; scroll interno al contenido. Ver `.cursor/rules/modales-livewire.mdc` y `docs/05-preferencias-y-convenciones.md` §11. Referencia: Comunicaciones → elegir destinatarios.
+
+## Botones e iconos
+
+- Botones: `rounded-xl`, semibold, sombra suave, estados hover/focus visibles.
+- Primario: `primary-600` / hover `primary-700`.
+- Secundario: blanco, borde `accent-200`, texto `primary-700`.
+- Info institucional: preferir primary antes que celestes externos.
+- Danger: rojo funcional, usado con moderacion.
+- Usar iconos simples SVG o libreria existente si ya esta disponible. No agregar librerias solo por iconos.
+
+## Mobile
+
+- Todo debe ser usable en mobile sin solapamientos.
+- Tablas pueden tener scroll horizontal, pero botones y filtros deben apilarse bien.
+- Heroes internos deben compactarse; no ocupar demasiado alto.
+- Botones de accion deben envolver o apilarse sin perder legibilidad.
+
+## Accesibilidad y comportamiento
+
+- Mantener focus visible.
+- No eliminar labels ni mensajes de error.
+- No depender solo del color para estados criticos.
+- Mantener contraste suficiente en botones, sidebar y hero.
+- Preservar Livewire, validaciones y rutas existentes.
+
+## Checklist antes de finalizar
+
+1. Compila `npm.cmd run build`.
+2. Si se tocaron Blade grandes, validar con `php artisan view:cache` y luego limpiar con `php artisan view:clear`.
+3. La pantalla usa paleta SE como identidad dominante.
+4. No se agregaron dependencias visuales nuevas.
+5. El layout funciona en desktop y mobile.
+6. No hay textos superpuestos ni botones con texto desbordado.
+7. Sidebar y dashboard mantienen permisos y contexto con `schoolCtx()`.
+8. Formularios largos se ven suaves, agrupados y legibles.
+9. Modales y estados destructivos son claros sin ser visualmente agresivos.

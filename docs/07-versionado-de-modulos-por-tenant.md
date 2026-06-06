@@ -1,0 +1,164 @@
+# Personalización por colegio (tenant)
+
+> Cómo diferenciar funcionalidades entre escuelas sin afectar a las demás.
+> Antes de tocar un módulo compartido, leer este documento.
+
+---
+
+## 1. Modelo de despliegue
+
+Cada colegio es un **tenant** identificado por `TENANT_SLUG` en `.env`:
+
+- **Base de datos propia** (`DB_DATABASE`, habitualmente `ia_{slug}` salvo excepciones en `SwitchTenantCommand`).
+- **Mismo código** Laravel en `sistema/` (monorepo compartido).
+- **Overrides livianos** versionados en `config/tenants/{slug}.php`.
+
+No usamos multi-tenant en una sola BD con `tenant_id` en cada fila: el aislamiento fuerte es **instalación (o entorno) + BD separada**.
+
+En desarrollo local: `php artisan se:switch {slug}` cambia `TENANT_SLUG` y `DB_DATABASE` en el `.env` activo.
+
+---
+
+## 2. Qué **no** usamos (histórico)
+
+Se evaluó empaquetar variantes de módulos con **Composer path** (`packages/modulo-*`, dependencias `se/modulo-*`, un `composer.json` distinto por colegio). Ese enfoque **se descartó**: complejidad operativa, despliegues difíciles de mantener y poco valor frente a las alternativas actuales.
+
+**No documentar ni implementar** paquetes `se/modulo-*`, `TenantOverridesServiceProvider`, vistas en `resources/views/custom/{slug}/`, ni helpers `tenantConfig()` para elegir versiones de módulo. La carpeta `packages/` queda vacía a propósito.
+
+---
+
+## 3. Capas de personalización (de menor a mayor impacto)
+
+### 3.1 Configuración en archivos (`config/tenant.php` + `config/tenants/{slug}.php`)
+
+`TenantConfigMergeServiceProvider` hace merge recursivo del archivo del slug sobre los defaults.
+
+- Defaults: `config/tenant.php`.
+- Solo diferencias del colegio: `config/tenants/{slug}.php` (versionado en git).
+- Leer valores con `config('tenant.clave')` o `config('tenant.bloque.clave')`.
+
+Ejemplo real (Montecristo — enlace externo en portal alumno):
+
+```php
+// config/tenants/montecristo.php
+return [
+    'autogestion' => [
+        'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
+    ],
+];
+```
+
+**Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
+
+Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.
+
+Ejemplo (tercer materia en boletín / consulta de calificaciones — solo colegios que lo usan):
+
+```php
+// config/tenants/{slug}.php
+return [
+    'boletin' => [
+        'mostrar_tercer_materia' => true,
+    ],
+];
+```
+
+Default en `config/tenant.php`: `false`. Consumir con `tenantBoletinMuestraTercerMateria()` o `config('tenant.boletin.mostrar_tercer_materia')`.
+
+Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
+
+```php
+// config/tenants/{slug}.php — solo lo que difiere
+return [
+    'cuotas' => [
+        'formulas_iniciales_plantilla' => [
+            'signo1v' => '-',
+            'valor1v' => 15.0,
+        ],
+    ],
+];
+```
+
+Consumir con `tenantCuotasFormulasInicialesPlantilla()` o `CuotasImportesCatalog::valoresInicialesRegistro()`.
+
+El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
+
+### 3.2 Parametrización en base de datos (principal)
+
+Cada colegio tiene **su propia BD**; la parametrización vive en tablas y pantallas de administración. Es el mecanismo habitual para “este colegio ve otro legajo / otro listado / no usa X”.
+
+| Área | Tablas / pantallas | Efecto |
+|------|-------------------|--------|
+| **Permisos** | `permisosusuarios`, `profesores.permisos` | Qué entradas del menú y acciones existen (`tienePermiso(orden)`, middleware `permiso:N`). Ver [03-autenticacion-y-permisos.md](03-autenticacion-y-permisos.md). |
+| **Legajo — solapas y campos** | `solapas_legajo`, `campos_legajo` | Pestañas y campos visibles en ABM; parametrización en `param.solapas-legajo` y `param.campos-listado-alumnos`. |
+| **Listado por curso / PDF** | `campos_legajo.visible_listado` | Columnas del listado y del PDF por curso. |
+| **Institucional** | `ento` | Nombre, logo, CUE, etc. por nivel (`param.parametros-sistema`). |
+| **Comunicaciones** | `com_*`, preferencias | Canales, reglas y datos del cuaderno de comunicados. |
+
+Apellido, nombre y DNI del legajo son **siempre** obligatorios; no se desactivan por parametrización.
+
+### 3.3 Código compartido en `app/`
+
+Todo el código de módulos vive en el árbol estándar de Laravel:
+
+- PHP: `app/Livewire/`, `app/Http/`, `app/Models/`, `app/Support/`
+- Rutas: `routes/web.php`
+- Vistas: `resources/views/` (namespaces de vistas vía providers, ej. `listados::` desde `ListadosServiceProvider`)
+
+**No** hay dependencias internas `se/*` en `composer.json`. Los módulos se registran con service providers en `bootstrap/providers.php` (`ListadosServiceProvider`, `ComunicacionesServiceProvider`, etc.).
+
+El menú lateral y el dashboard enlazan **rutas fijas** y muestran u ocultan ítems según `tienePermiso()`. Los tooltips “v1.0” son solo referencia visual; no hay conmutación de versiones por config.
+
+---
+
+## 4. Módulos de referencia (ubicación actual)
+
+| Módulo | Ubicación principal | Rutas típicas |
+|--------|---------------------|---------------|
+| **Comunicaciones / cuaderno** | `App\Livewire\Comunicaciones\*`, `App\Comunicaciones\*`, modelos `Com*`, vistas `resources/views/comunicaciones/` | `comunicaciones.*`, `alumnos.comunicaciones.*`, `param.com-canales` |
+| **Listados por curso** | `App\Livewire\Listados\ListadoPorCurso`, `ListadoCursoPdfController`, `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf` |
+| **Legajos** | `App\Livewire\Abm\Legajos\*`, `LegajoForm` + `solapas_legajo` / `campos_legajo` | `abm.legajos`, `param.campos-listado-alumnos`, `param.solapas-legajo` |
+| **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |
+| **Calificaciones secundario** | `App\Livewire\Calificaciones\*` | `calificacionesSecundario.*` |
+| **Boletines secundario** | `App\Livewire\BoletinesSecundario\*`, `BoletinSecundarioPdfController` | `boletinesSecundario.index`, `boletinesSecundario.pdf` |
+
+Los boletines de **primario** e **inicial** serán módulos aparte (rutas, menú y tooltips con nivel explícito). Ver sección 6 de [05-preferencias-y-convenciones.md](05-preferencias-y-convenciones.md).
+
+---
+
+## 5. Cuándo un colegio necesita algo “muy distinto”
+
+Orden recomendado:
+
+1. **¿Se resuelve con permisos o parametrización en BD?** → Usar eso primero.
+2. **¿Es un dato o URL fija?** → `config/tenants/{slug}.php`.
+3. **¿Requiere lógica o UI incompatible con el resto?** → Implementar en `app/` con ramas explícitas y seguras (`config('tenant.slug')`, feature flag en `config/tenants`, o consulta a tabla de parámetros), **documentando** el caso en el PR. Evitar `if ($colegio === 'x')` dispersos sin registro en config.
+4. **¿El cambio es tan grande que no puede convivir en main?** → Rama o despliegue dedicado temporalmente; no reintroducir paquetes Composer por módulo.
+
+Antes de agregar comportamiento solo para un colegio en código compartido, confirmar que no rompe el flujo por defecto de los demás (misma ruta, mismos permisos por defecto, migraciones aditivas).
+
+---
+
+## 6. Flujo de trabajo (ejemplo)
+
+**Montecristo necesita enlace a aranceles en autogestión:**
+
+1. Agregar clave en `config/tenants/montecristo.php`.
+2. Consumir con `config('tenant.autogestion.aranceles_aulica_url')` en el **Menú de Alumnos** (`layouts/alumno.blade.php`).
+3. En el servidor de Montecristo: `TENANT_SLUG=montecristo` y BD correspondiente.
+
+**Colegio nuevo con legajo distinto:**
+
+1. Clonar `config/tenants/{colegio-parecido}.php` si aplica; ajustar solo diferencias.
+2. Cargar datos en su BD: solapas, campos, catálogo de permisos y usuarios.
+3. No tocar `composer.json` ni crear carpetas en `packages/`.
+
+---
+
+## 7. Checklist para PRs que afectan varios colegios
+
+- [ ] ¿El cambio es seguro con parametrización por defecto (sin config de tenant)?
+- [ ] Si hay rama por `tenant.slug` o config, ¿está documentada la clave en `config/tenant.php` o en el tenant file?
+- [ ] ¿Migraciones aditivas y compatibles con BDs ya en producción?
+- [ ] ¿Menú y rutas respetan `tienePermiso()` y `schoolCtx()`?
+- [ ] ¿No se reintroducen dependencias `se/modulo-*` ni documentación del patrón Composer descartado?
