@@ -584,18 +584,51 @@ if (! function_exists('tenantSolicitudEvaluacionHabilitada')) {
     }
 }
 
+if (! function_exists('tenantAutogestionActualizacionDatosImplementacion')) {
+    /**
+     * Variante de formulario de actualización de datos (`estandar`, `sanfranciscoasis`, …).
+     */
+    function tenantAutogestionActualizacionDatosImplementacion(): string
+    {
+        $impl = (string) config('tenant.autogestion.actualizacion_datos.implementacion', 'estandar');
+
+        return $impl !== '' ? $impl : 'estandar';
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
     /**
      * Si el portal familia incluye actualización de datos personales del legajo.
-     * Default false; activar en `config/tenants/{slug}.php` con `implementacion` definida.
+     * Default habilitado (`config/tenant.php`); desactivar en `config/tenants/{slug}.php`.
      */
     function tenantAutogestionActualizacionDatosHabilitada(): bool
     {
-        if (! (bool) config('tenant.autogestion.actualizacion_datos.habilitado', false)) {
-            return false;
-        }
+        return (bool) config('tenant.autogestion.actualizacion_datos.habilitado', true);
+    }
+}
 
-        return filled(config('tenant.autogestion.actualizacion_datos.implementacion'));
+if (! function_exists('tenantAutogestionActualizacionDatosRequiereDocumentos')) {
+    /**
+     * Si el formulario exige aceptación de documentos institucionales antes de guardar.
+     */
+    function tenantAutogestionActualizacionDatosRequiereDocumentos(): bool
+    {
+        return tenantAutogestionActualizacionDatosImplementacion() === 'sanfranciscoasis';
+    }
+}
+
+if (! function_exists('tenantAutogestionActualizacionDatosLivewireComponent')) {
+    /**
+     * Componente Livewire del formulario según la variante del tenant.
+     *
+     * @return class-string<\Livewire\Component>
+     */
+    function tenantAutogestionActualizacionDatosLivewireComponent(): string
+    {
+        return match (tenantAutogestionActualizacionDatosImplementacion()) {
+            'sanfranciscoasis' => \App\Livewire\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsisForm::class,
+            default => \App\Livewire\Alumnos\ActualizacionDatosPersonalesEstandarForm::class,
+        };
     }
 }
 

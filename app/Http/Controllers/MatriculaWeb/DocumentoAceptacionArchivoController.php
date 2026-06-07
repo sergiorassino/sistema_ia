@@ -20,6 +20,7 @@ class DocumentoAceptacionArchivoController extends Controller
 
         if (auth('alumno')->check()) {
             abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
+            abort_unless(tenantAutogestionActualizacionDatosRequiereDocumentos(), 404);
 
             $idNivel = (int) (studentCtx()->idNivel ?? 0);
             abort_unless($idNivel > 0, 403);

@@ -86,7 +86,6 @@ use App\Http\Controllers\Comunicaciones\AbrirHiloComunicacionGestionController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
-use App\Livewire\Alumnos\ActualizacionDatosPersonalesForm;
 use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
@@ -265,7 +264,8 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/aranceles-escolares/formulario-debito-automatico', FormularioDebitoAutomaticoPdfController::class)
         ->name('alumnos.aranceles-escolares.formulario-debito-automatico');
 
-    Route::get('/actualizacion-datos', ActualizacionDatosPersonalesForm::class)->name('alumnos.actualizacion-datos');
+    Route::get('/actualizacion-datos', tenantAutogestionActualizacionDatosLivewireComponent())
+        ->name('alumnos.actualizacion-datos');
     Route::get('/actualizacion-datos/aceptacion/{tipo}', AceptacionDocumentoFamilia::class)
         ->where('tipo', 'compromiso|aec|normas|traslado')
         ->name('alumnos.actualizacion-datos.aceptacion');

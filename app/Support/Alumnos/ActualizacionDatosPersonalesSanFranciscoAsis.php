@@ -4,15 +4,14 @@ namespace App\Support\Alumnos;
 
 use App\Models\Legajo;
 use App\Models\Matricula;
-use App\Support\InformeInasistencias;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 
 /**
- * Actualización de datos personales — portal familia (autogestión).
+ * Actualización de datos personales — variante San Francisco de Asís (formulario completo + documentos).
  */
-final class ActualizacionDatosPersonales
+final class ActualizacionDatosPersonalesSanFranciscoAsis
 {
     /** Texto legal bajo compromiso educativo aceptado. */
     public const TEXTO_COMPROMISO_PARENTAL =
@@ -23,27 +22,12 @@ final class ActualizacionDatosPersonales
      */
     public static function contexto(): ?array
     {
-        $ctx = studentCtx();
-        if (! $ctx->isValid()) {
-            return null;
-        }
-
-        $matricula = InformeInasistencias::matriculaAutogestion();
-        if ($matricula === null) {
-            return null;
-        }
-
-        $legajo = Legajo::query()->where('id', (int) $ctx->idLegajo)->first();
-        if ($legajo === null) {
-            return null;
-        }
-
-        return ['legajo' => $legajo, 'matricula' => $matricula];
+        return ActualizacionDatosPersonalesComun::contexto();
     }
 
     public static function estaBloqueado(Legajo $legajo): bool
     {
-        return (bool) ($legajo->bloqmatr ?? false) || (bool) ($legajo->bloqadmi ?? false);
+        return ActualizacionDatosPersonalesComun::estaBloqueado($legajo);
     }
 
     /**
@@ -62,8 +46,14 @@ final class ActualizacionDatosPersonales
 
     public static function todasAceptadas(Matricula $matricula): bool
     {
-        foreach (self::aceptacionesDesdeMatricula($matricula) as $ok) {
-            if (! $ok) {
+        $aceptaciones = self::aceptacionesDesdeMatricula($matricula);
+
+        foreach (MatriculaWebDocumentos::claves() as $clave) {
+            if (! self::documentoDisponible($clave)) {
+                continue;
+            }
+
+            if (! ($aceptaciones[$clave] ?? false)) {
                 return false;
             }
         }
@@ -83,6 +73,11 @@ final class ActualizacionDatosPersonales
         $matricula->save();
     }
 
+    public static function documentoDisponible(string $clave): bool
+    {
+        return MatriculaWebDocumentos::pathAlmacenado($clave) !== null;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -91,7 +86,7 @@ final class ActualizacionDatosPersonales
         return [
             'reglamApenom' => (string) ($legajo->reglamApenom ?? ''),
             'reglamDni' => (string) ($legajo->reglamDni ?? ''),
-            'reglamEmail' => self::normalizarEmailInput($legajo->reglamEmail ?? ''),
+            'reglamEmail' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->reglamEmail ?? ''),
             'fechnaci' => self::fechaInput($legajo->fechnaci),
             'ln_depto' => (string) ($legajo->ln_depto ?? ''),
             'ln_provincia' => (string) ($legajo->ln_provincia ?? ''),
@@ -100,28 +95,28 @@ final class ActualizacionDatosPersonales
             'barrio' => (string) ($legajo->barrio ?? ''),
             'localidad' => (string) ($legajo->localidad ?? ''),
             'telefono' => (string) ($legajo->telefono ?? ''),
-            'email' => self::normalizarEmailInput($legajo->email ?? ''),
+            'email' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->email ?? ''),
             'escori' => (string) ($legajo->escori ?? ''),
             'needes' => self::needesParaFormulario($legajo),
             'needes_detalle' => self::needesDetalleParaFormulario($legajo),
             'nombrepad' => (string) ($legajo->nombrepad ?? ''),
             'dnipad' => (string) ($legajo->dnipad ?? ''),
             'telepad' => (string) ($legajo->telepad ?? ''),
-            'emailpad' => self::normalizarEmailInput($legajo->emailpad ?? ''),
+            'emailpad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailpad ?? ''),
             'ocupacpad' => (string) ($legajo->ocupacpad ?? ''),
             'lugtrapad' => (string) ($legajo->lugtrapad ?? ''),
             'telltp' => (string) ($legajo->telltp ?? ''),
             'nombremad' => (string) ($legajo->nombremad ?? ''),
             'dnimad' => (string) ($legajo->dnimad ?? ''),
             'telemad' => (string) ($legajo->telemad ?? ''),
-            'emailmad' => self::normalizarEmailInput($legajo->emailmad ?? ''),
+            'emailmad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailmad ?? ''),
             'ocupacmad' => (string) ($legajo->ocupacmad ?? ''),
             'lugtramad' => (string) ($legajo->lugtramad ?? ''),
             'telltm' => (string) ($legajo->telltm ?? ''),
             'nombretut' => (string) ($legajo->nombretut ?? ''),
             'dnitut' => self::dnitutParaFormulario($legajo->dnitut),
             'teletut' => (string) ($legajo->teletut ?? ''),
-            'emailtut' => self::normalizarEmailInput($legajo->emailtut ?? ''),
+            'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailtut ?? ''),
             'lugtratut' => (string) ($legajo->lugtratut ?? ''),
             'telltt' => (string) ($legajo->telltt ?? ''),
             'ec_padres' => (string) ($legajo->ec_padres ?? ''),
@@ -148,7 +143,7 @@ final class ActualizacionDatosPersonales
         $data = [
             'reglamApenom' => self::trimCampo($state['reglamApenom'] ?? ''),
             'reglamDni' => self::trimCampo($state['reglamDni'] ?? ''),
-            'reglamEmail' => self::normalizarEmailInput($state['reglamEmail'] ?? ''),
+            'reglamEmail' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['reglamEmail'] ?? ''),
             'fechnaci' => self::parseFecha($state['fechnaci'] ?? '') ?: null,
             'ln_depto' => self::trimCampo($state['ln_depto'] ?? ''),
             'ln_provincia' => self::trimCampo($state['ln_provincia'] ?? ''),
@@ -157,7 +152,7 @@ final class ActualizacionDatosPersonales
             'barrio' => self::trimCampo($state['barrio'] ?? ''),
             'localidad' => self::trimCampo($state['localidad'] ?? ''),
             'telefono' => self::trimCampo($state['telefono'] ?? ''),
-            'email' => self::normalizarEmailInput($state['email'] ?? ''),
+            'email' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['email'] ?? ''),
             'escori' => self::trimCampo($state['escori'] ?? ''),
             'needes' => ($state['needes'] ?? '') === 'si' ? 'si' : '',
             'needes_detalle' => ($state['needes'] ?? '') === 'si'
@@ -166,14 +161,14 @@ final class ActualizacionDatosPersonales
             'nombrepad' => self::trimCampo($state['nombrepad'] ?? ''),
             'dnipad' => self::trimCampo($state['dnipad'] ?? ''),
             'telepad' => self::trimCampo($state['telepad'] ?? ''),
-            'emailpad' => self::normalizarEmailInput($state['emailpad'] ?? ''),
+            'emailpad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailpad'] ?? ''),
             'ocupacpad' => self::trimCampo($state['ocupacpad'] ?? ''),
             'lugtrapad' => self::trimCampo($state['lugtrapad'] ?? ''),
             'telltp' => self::trimCampo($state['telltp'] ?? ''),
             'nombremad' => self::trimCampo($state['nombremad'] ?? ''),
             'dnimad' => self::trimCampo($state['dnimad'] ?? ''),
             'telemad' => self::trimCampo($state['telemad'] ?? ''),
-            'emailmad' => self::normalizarEmailInput($state['emailmad'] ?? ''),
+            'emailmad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailmad'] ?? ''),
             'ocupacmad' => self::trimCampo($state['ocupacmad'] ?? ''),
             'lugtramad' => self::trimCampo($state['lugtramad'] ?? ''),
             'telltm' => self::trimCampo($state['telltm'] ?? ''),
@@ -191,7 +186,7 @@ final class ActualizacionDatosPersonales
             $data['nombretut'] = self::trimCampo($state['nombretut'] ?? '');
             $data['dnitut'] = self::soloDigitosDni($state['dnitut'] ?? '');
             $data['teletut'] = self::trimCampo($state['teletut'] ?? '');
-            $data['emailtut'] = self::normalizarEmailInput($state['emailtut'] ?? '');
+            $data['emailtut'] = ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailtut'] ?? '');
             $data['lugtratut'] = self::trimCampo($state['lugtratut'] ?? '');
             $data['telltt'] = self::trimCampo($state['telltt'] ?? '');
         } else {
@@ -206,25 +201,17 @@ final class ActualizacionDatosPersonales
         return $data;
     }
 
-    public static function guardar(Legajo $legajo, array $state): void
+    public static function guardar(Legajo $legajo, Matricula $matricula, array $state): void
     {
-        $id = (int) $legajo->id;
-        if ($id < 1) {
-            throw new \InvalidArgumentException('Legajo inválido.');
+        $matricula = $matricula->fresh();
+        if ($matricula === null || ! self::todasAceptadas($matricula)) {
+            throw new \RuntimeException('Debe aceptar todos los documentos institucionales antes de guardar.');
         }
 
-        $data = self::datosParaGuardar($state);
-
-        if (! Legajo::query()->where('id', $id)->exists()) {
-            throw new \RuntimeException('No se encontró el legajo a actualizar.');
-        }
-
-        Legajo::query()->where('id', $id)->update($data);
+        ActualizacionDatosPersonalesComun::persistirLegajo($legajo, self::datosParaGuardar($state));
     }
 
     /**
-     * Recarga propiedades del formulario desde el legajo persistido.
-     *
      * @return array<string, string>
      */
     public static function atributosParaFormulario(Legajo $legajo): array
@@ -318,8 +305,6 @@ final class ActualizacionDatosPersonales
     }
 
     /**
-     * Etiquetas legibles para el aviso modal de validación.
-     *
      * @return array<string, string>
      */
     public static function etiquetasCampos(): array
@@ -447,14 +432,7 @@ final class ActualizacionDatosPersonales
         return $dniLimpio !== '' && $dniLimpio !== '0';
     }
 
-    public static function documentoDisponible(string $clave): bool
-    {
-        return MatriculaWebDocumentos::pathAlmacenado($clave) !== null;
-    }
-
     /**
-     * E-mail obligatorio o guión (-) cuando no corresponde (regla legacy).
-     *
      * @return list<mixed>
      */
     private static function reglaEmailObligatorio(): array
@@ -483,41 +461,10 @@ final class ActualizacionDatosPersonales
     private static function reglaClosureEmail(bool $opcional): \Closure
     {
         return static function (string $attribute, mixed $value, \Closure $fail) use ($opcional): void {
-            if (! self::emailInputAceptado($value, $opcional)) {
+            if (! ActualizacionDatosPersonalesComun::emailInputAceptado($value, $opcional)) {
                 $fail('Debe ingresar un e-mail válido o un guión (-) si no corresponde.');
             }
         };
-    }
-
-    /**
-     * E-mail obligatorio, guión (-) si no corresponde, o vacío si es opcional.
-     */
-    public static function emailInputAceptado(mixed $value, bool $opcional): bool
-    {
-        $v = self::normalizarEmailInput($value);
-        if ($opcional && $v === '') {
-            return true;
-        }
-        if ($v === '-') {
-            return true;
-        }
-        if ($v === '') {
-            return false;
-        }
-
-        return filter_var($v, FILTER_VALIDATE_EMAIL) !== false;
-    }
-
-    /**
-     * Limpia espacios y caracteres invisibles frecuentes al copiar/pegar (p. ej. NBSP).
-     * `trim()` de PHP no elimina U+00A0 y el e-mail puede verse bien en pantalla pero fallar validación.
-     */
-    public static function normalizarEmailInput(mixed $value): string
-    {
-        $v = (string) $value;
-        $v = preg_replace('/[\x{00A0}\x{200B}-\x{200D}\x{FEFF}]/u', '', $v) ?? $v;
-
-        return trim($v);
     }
 
     private static function trimCampo(mixed $v): string
@@ -544,7 +491,6 @@ final class ActualizacionDatosPersonales
             return 'no';
         }
 
-        // Legacy: «No» se persiste como cadena vacía; si ya actualizó datos, mostrar No.
         if ($v === '' && $legajo->fechActDatos !== null) {
             return 'no';
         }

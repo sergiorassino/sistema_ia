@@ -1,3 +1,4 @@
+<div>
 <div class="se-page max-w-3xl mx-auto">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -69,7 +70,7 @@
         (En aquellos casos donde no se deba consignar ningún dato, escribir un guión)
     </p>
 
-    <form wire:submit="guardar" novalidate class="space-y-4 @if($bloqueado) opacity-60 pointer-events-none @endif">
+    <form wire:submit.prevent="guardar" novalidate class="space-y-4 @if($bloqueado) opacity-60 pointer-events-none @endif">
         {{-- Aceptaciones --}}
         <section id="documentos-institucionales" class="se-card p-4 sm:p-5 space-y-4 scroll-mt-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">Documentos institucionales</p>
@@ -403,101 +404,104 @@
             </button>
         </div>
     </form>
+    </div>
 
     @if ($mostrarAvisoCamposIncompletos && count($camposIncompletosAviso) > 0)
         @php
             $primerCampoIncompleto = $camposIncompletosAviso[0]['campo'] ?? null;
         @endphp
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm"
-             role="alertdialog"
-             aria-modal="true"
-             aria-labelledby="aviso-campos-titulo"
-             x-data
-             x-on:keydown.escape.window="$wire.cerrarAvisoCamposIncompletos()">
-            <button type="button"
-                    class="absolute inset-0 cursor-default"
-                    tabindex="-1"
-                    aria-hidden="true"
-                    wire:click="cerrarAvisoCamposIncompletos"></button>
-            <div class="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border-2 border-amber-400 bg-white shadow-2xl"
-                 @click.stop
-                 x-init="$nextTick(() => $el.querySelector('[data-modal-focus]')?.focus())">
-                <div class="overflow-y-auto p-6 sm:p-8">
-                    <div class="mx-auto mb-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-100">
+        @teleport('body')
+            <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                 role="alertdialog"
+                 aria-modal="true"
+                 aria-labelledby="aviso-campos-titulo"
+                 wire:key="aviso-campos-sfa"
+                 x-data
+                 x-on:keydown.escape.window="$wire.cerrarAvisoCamposIncompletos()">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                     wire:click="cerrarAvisoCamposIncompletos"
+                     aria-hidden="true"></div>
+                <div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border-2 border-amber-400 bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),40rem)]"
+                     @click.stop
+                     x-init="$nextTick(() => $el.querySelector('[data-modal-focus]')?.focus())">
+                    <div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
+                        <div class="mx-auto mb-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                            <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <h3 id="aviso-campos-titulo" class="text-center text-lg font-bold text-neutral-900">
+                            Campos incompletos
+                        </h3>
+                        <p class="mt-3 text-center text-sm leading-relaxed text-neutral-700">
+                            Complete o corrija los siguientes campos antes de guardar.
+                            Los datos que ya cargó <strong>se mantienen</strong>.
+                        </p>
+                        <ul class="mt-4 max-h-48 space-y-2 overflow-y-auto rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-neutral-800"
+                            role="list">
+                            @foreach ($camposIncompletosAviso as $item)
+                                <li class="flex gap-2" role="listitem">
+                                    <span class="mt-0.5 text-amber-600" aria-hidden="true">•</span>
+                                    <span>{{ $item['etiqueta'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <div class="shrink-0 border-t border-amber-100 px-6 pb-6 sm:px-8">
+                        <button type="button"
+                                data-modal-focus
+                                wire:click="cerrarAvisoCamposIncompletos"
+                                @if ($primerCampoIncompleto)
+                                    x-on:click="document.getElementById('campo-{{ $primerCampoIncompleto }}')?.scrollIntoView({ behavior: 'smooth', block: 'center' })"
+                                @endif
+                                class="w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2">
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endteleport
+    @endif
+
+    @if ($mostrarAvisoDocumentosPendientes)
+        @teleport('body')
+            <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                 role="alertdialog"
+                 aria-modal="true"
+                 aria-labelledby="aviso-documentos-titulo"
+                 wire:key="aviso-documentos-sfa"
+                 x-data
+                 x-on:keydown.escape.window="$wire.cerrarAvisoDocumentosPendientes()">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                     wire:click="cerrarAvisoDocumentosPendientes"
+                     aria-hidden="true"></div>
+                <div class="relative z-10 my-auto w-full max-w-md rounded-2xl border-2 border-amber-400 bg-white p-6 shadow-xl ring-1 ring-black/5 sm:p-8"
+                     @click.stop
+                     x-init="$nextTick(() => $el.querySelector('[data-modal-focus]')?.focus())">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
                         <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                         </svg>
                     </div>
-                    <h3 id="aviso-campos-titulo" class="text-center text-lg font-bold text-neutral-900">
-                        Campos incompletos
+                    <h3 id="aviso-documentos-titulo" class="text-center text-lg font-bold text-neutral-900">
+                        Documentos pendientes
                     </h3>
                     <p class="mt-3 text-center text-sm leading-relaxed text-neutral-700">
-                        Complete o corrija los siguientes campos antes de guardar.
-                        Los datos que ya cargó <strong>se mantienen</strong>.
+                        Debe aceptar los <strong>cuatro documentos institucionales</strong> antes de guardar.
+                        Los datos que cargó en el formulario se mantienen; solo falta completar las aceptaciones.
                     </p>
-                    <ul class="mt-4 max-h-48 space-y-2 overflow-y-auto rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-neutral-800"
-                        role="list">
-                        @foreach ($camposIncompletosAviso as $item)
-                            <li class="flex gap-2" role="listitem">
-                                <span class="mt-0.5 text-amber-600" aria-hidden="true">•</span>
-                                <span>{{ $item['etiqueta'] }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-                <div class="border-t border-amber-100 px-6 pb-6 sm:px-8">
                     <button type="button"
                             data-modal-focus
-                            wire:click="cerrarAvisoCamposIncompletos"
-                            @if ($primerCampoIncompleto)
-                                x-on:click="document.getElementById('campo-{{ $primerCampoIncompleto }}')?.scrollIntoView({ behavior: 'smooth', block: 'center' })"
-                            @endif
-                            class="w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2">
+                            wire:click="cerrarAvisoDocumentosPendientes"
+                            x-on:click="document.getElementById('documentos-institucionales')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                            class="mt-6 w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2">
                         Entendido
                     </button>
                 </div>
             </div>
-        </div>
-    @endif
-
-    @if ($mostrarAvisoDocumentosPendientes)
-        <div class="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm"
-             role="alertdialog"
-             aria-modal="true"
-             aria-labelledby="aviso-documentos-titulo"
-             x-data
-             x-on:keydown.escape.window="$wire.cerrarAvisoDocumentosPendientes()">
-            <button type="button"
-                    class="absolute inset-0 cursor-default"
-                    tabindex="-1"
-                    aria-hidden="true"
-                    wire:click="cerrarAvisoDocumentosPendientes"></button>
-            <div class="relative w-full max-w-md rounded-2xl border-2 border-amber-400 bg-white p-6 shadow-2xl sm:p-8"
-                 @click.stop
-                 x-init="$nextTick(() => $el.querySelector('[data-modal-focus]')?.focus())">
-                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-                    <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                    </svg>
-                </div>
-                <h3 id="aviso-documentos-titulo" class="text-center text-lg font-bold text-neutral-900">
-                    Documentos pendientes
-                </h3>
-                <p class="mt-3 text-center text-sm leading-relaxed text-neutral-700">
-                    Debe aceptar los <strong>cuatro documentos institucionales</strong> antes de guardar.
-                    Los datos que cargó en el formulario se mantienen; solo falta completar las aceptaciones.
-                </p>
-                <button type="button"
-                        data-modal-focus
-                        wire:click="cerrarAvisoDocumentosPendientes"
-                        x-on:click="document.getElementById('documentos-institucionales')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                        class="mt-6 w-full rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2">
-                    Entendido
-                </button>
-            </div>
-        </div>
+        @endteleport
     @endif
 
     @script

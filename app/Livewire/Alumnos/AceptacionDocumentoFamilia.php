@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Alumnos;
 
-use App\Support\Alumnos\ActualizacionDatosPersonales;
+use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Livewire\Component;
 
@@ -13,15 +13,16 @@ class AceptacionDocumentoFamilia extends Component
     public function mount(string $tipo): void
     {
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
+        abort_unless(tenantAutogestionActualizacionDatosRequiereDocumentos(), 404);
         abort_unless(MatriculaWebDocumentos::claveValida($tipo), 404);
 
         $this->tipo = $tipo;
 
-        if (ActualizacionDatosPersonales::contexto() === null) {
+        if (ActualizacionDatosPersonalesSanFranciscoAsis::contexto() === null) {
             abort(404);
         }
 
-        if (! ActualizacionDatosPersonales::documentoDisponible($tipo)) {
+        if (! ActualizacionDatosPersonalesSanFranciscoAsis::documentoDisponible($tipo)) {
             session()->flash('error', 'El documento no está disponible para su nivel. Contacte a la institución.');
             $this->redirectRoute('alumnos.actualizacion-datos', navigate: true);
         }
@@ -29,12 +30,12 @@ class AceptacionDocumentoFamilia extends Component
 
     public function aceptar(): void
     {
-        $ctx = ActualizacionDatosPersonales::contexto();
+        $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
         if ($ctx === null) {
             abort(404);
         }
 
-        if (ActualizacionDatosPersonales::estaBloqueado($ctx['legajo'])) {
+        if (ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($ctx['legajo'])) {
             session()->flash('error', 'La actualización no está habilitada.');
 
             $this->redirectRoute('alumnos.actualizacion-datos', navigate: true);
@@ -42,7 +43,7 @@ class AceptacionDocumentoFamilia extends Component
             return;
         }
 
-        ActualizacionDatosPersonales::marcarAceptacion($ctx['matricula'], $this->tipo, true);
+        ActualizacionDatosPersonalesSanFranciscoAsis::marcarAceptacion($ctx['matricula'], $this->tipo, true);
 
         session()->flash('success', 'Documento aceptado.');
 
@@ -58,7 +59,7 @@ class AceptacionDocumentoFamilia extends Component
             'def' => $def,
             'pdfUrl' => $pdfUrl,
             'textoCompromiso' => $this->tipo === MatriculaWebDocumentos::COMPROMISO
-                ? ActualizacionDatosPersonales::TEXTO_COMPROMISO_PARENTAL
+                ? ActualizacionDatosPersonalesSanFranciscoAsis::TEXTO_COMPROMISO_PARENTAL
                 : null,
         ])->layout('layouts.alumno', ['pageTitle' => 'Aceptación — '.($def['titulo_corto'] ?? 'Documento')]);
     }

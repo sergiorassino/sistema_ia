@@ -39,11 +39,13 @@ return [
 
         /**
          * Actualización de datos personales del legajo (portal familia).
-         * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
+         * Default habilitado para todos los colegios con variante `estandar`.
+         * Desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         * `implementacion`: clave de variante en código (`estandar` | `sanfranciscoasis`).
          */
         'actualizacion_datos' => [
-            'habilitado' => false,
-            'implementacion' => null,
+            'habilitado' => true,
+            'implementacion' => 'estandar',
         ],
 
         /**

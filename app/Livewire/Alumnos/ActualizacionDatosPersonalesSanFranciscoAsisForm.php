@@ -3,13 +3,16 @@
 namespace App\Livewire\Alumnos;
 
 use App\Models\Legajo;
-use App\Support\Alumnos\ActualizacionDatosPersonales;
+use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
-class ActualizacionDatosPersonalesForm extends Component
+/**
+ * Actualización de datos personales — variante San Francisco de Asís (completo con documentos).
+ */
+class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 {
     public string $apellido = '';
 
@@ -126,8 +129,9 @@ class ActualizacionDatosPersonalesForm extends Component
     public function mount(): void
     {
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
+        abort_unless(tenantAutogestionActualizacionDatosImplementacion() === 'sanfranciscoasis', 404);
 
-        $ctx = ActualizacionDatosPersonales::contexto();
+        $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
         if ($ctx === null) {
             abort(404, 'No se encontró la matrícula del ciclo de autogestión.');
         }
@@ -138,15 +142,15 @@ class ActualizacionDatosPersonalesForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
-        $this->bloqueado = ActualizacionDatosPersonales::estaBloqueado($legajo);
+        $this->bloqueado = ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($legajo);
 
-        foreach (ActualizacionDatosPersonales::atributosDesdeLegajo($legajo) as $k => $v) {
+        foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
                 $this->{$k} = (string) $v;
             }
         }
 
-        $this->aceptaciones = ActualizacionDatosPersonales::aceptacionesDesdeMatricula($matricula);
+        $this->aceptaciones = ActualizacionDatosPersonalesSanFranciscoAsis::aceptacionesDesdeMatricula($matricula);
     }
 
     public function updatedNeedes(string $value): void
@@ -179,14 +183,14 @@ class ActualizacionDatosPersonalesForm extends Component
             return;
         }
 
-        $ctx = ActualizacionDatosPersonales::contexto();
+        $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
         if ($ctx === null) {
             return;
         }
 
-        ActualizacionDatosPersonales::marcarAceptacion($ctx['matricula'], $clave, false);
+        ActualizacionDatosPersonalesSanFranciscoAsis::marcarAceptacion($ctx['matricula'], $clave, false);
         $ctx['matricula']->refresh();
-        $this->aceptaciones = ActualizacionDatosPersonales::aceptacionesDesdeMatricula($ctx['matricula']);
+        $this->aceptaciones = ActualizacionDatosPersonalesSanFranciscoAsis::aceptacionesDesdeMatricula($ctx['matricula']);
     }
 
     public function guardar(): void
@@ -197,29 +201,30 @@ class ActualizacionDatosPersonalesForm extends Component
             return;
         }
 
-        $key = 'alumnos-act-datos:'.(auth('alumno')->id() ?? 'guest');
+        $key = 'alumnos-act-datos-sfa:'.(auth('alumno')->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
             $this->addError('reglamApenom', 'Demasiados intentos. Espere un momento.');
 
             return;
         }
-        $ctx = ActualizacionDatosPersonales::contexto();
+
+        $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
         if ($ctx === null) {
             abort(404);
         }
 
         $matricula = $ctx['matricula']->fresh();
-        if (! ActualizacionDatosPersonales::todasAceptadas($matricula)) {
+        if (! ActualizacionDatosPersonalesSanFranciscoAsis::todasAceptadas($matricula)) {
             $this->mostrarAvisoDocumentosPendientes = true;
 
             return;
         }
 
-        $keys = array_keys(ActualizacionDatosPersonales::atributosDesdeLegajo($ctx['legajo']));
+        $keys = array_keys(ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($ctx['legajo']));
         $validator = Validator::make(
             $this->only($keys),
-            ActualizacionDatosPersonales::reglasValidacion($this->needes),
-            ActualizacionDatosPersonales::mensajesValidacion(),
+            ActualizacionDatosPersonalesSanFranciscoAsis::reglasValidacion($this->needes),
+            ActualizacionDatosPersonalesSanFranciscoAsis::mensajesValidacion(),
         );
 
         if ($validator->fails()) {
@@ -229,7 +234,7 @@ class ActualizacionDatosPersonalesForm extends Component
                     $this->addError($campo, $mensaje);
                 }
             }
-            $this->camposIncompletosAviso = ActualizacionDatosPersonales::camposIncompletosDesdeErrores($validator->errors());
+            $this->camposIncompletosAviso = ActualizacionDatosPersonalesSanFranciscoAsis::camposIncompletosDesdeErrores($validator->errors());
             $this->mostrarAvisoCamposIncompletos = true;
 
             return;
@@ -240,20 +245,30 @@ class ActualizacionDatosPersonalesForm extends Component
         $state = $this->only($keys);
 
         try {
-            ActualizacionDatosPersonales::guardar($ctx['legajo'], $state);
+            ActualizacionDatosPersonalesSanFranciscoAsis::guardar($ctx['legajo'], $matricula, $state);
         } catch (\Throwable $e) {
             report($e);
+            if (str_contains($e->getMessage(), 'documentos institucionales')) {
+                $this->mostrarAvisoDocumentosPendientes = true;
+
+                return;
+            }
             $this->addError('reglamApenom', 'No se pudieron guardar los datos. Intente nuevamente o contacte a secretaría.');
 
             return;
         }
 
         $legajo = Legajo::query()->findOrFail((int) $ctx['legajo']->id);
-        foreach (ActualizacionDatosPersonales::atributosParaFormulario($legajo) as $k => $v) {
+        foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosParaFormulario($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
                 $this->{$k} = $v;
             }
         }
+
+        $this->resetErrorBag();
+        $this->mostrarAvisoCamposIncompletos = false;
+        $this->camposIncompletosAviso = [];
+        $this->mostrarAvisoDocumentosPendientes = false;
 
         $this->dispatch('se-swal-exito', mensaje: 'Datos personales actualizados correctamente.');
     }
@@ -266,14 +281,14 @@ class ActualizacionDatosPersonalesForm extends Component
             $documentos[$clave] = [
                 'def' => $definiciones[$clave],
                 'aceptado' => (bool) ($this->aceptaciones[$clave] ?? false),
-                'disponible' => ActualizacionDatosPersonales::documentoDisponible($clave),
+                'disponible' => ActualizacionDatosPersonalesSanFranciscoAsis::documentoDisponible($clave),
             ];
         }
 
-        return view('livewire.alumnos.actualizacion-datos-personales-form', [
+        return view('livewire.alumnos.actualizacion-datos-personales-sanfranciscoasis-form', [
             'documentos' => $documentos,
             'esSecundario' => studentEsNivelSecundario(),
-            'textoCompromiso' => ActualizacionDatosPersonales::TEXTO_COMPROMISO_PARENTAL,
+            'textoCompromiso' => ActualizacionDatosPersonalesSanFranciscoAsis::TEXTO_COMPROMISO_PARENTAL,
         ])->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
     }
 }
