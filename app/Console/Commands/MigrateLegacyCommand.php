@@ -67,12 +67,14 @@ class MigrateLegacyCommand extends Command
 
         // ── PASO 1: Verificar y falsificar la migración del schema legacy ──────
         $this->line('<comment>  Paso 1/4</comment> — Verificando migración del schema legacy...');
-        $this->fakeLegacySchemaMigration();
+        $paso1 = $this->fakeLegacySchemaMigration();
 
         // ── PASO 2: Migraciones core ───────────────────────────────────────────
         $this->newLine();
         $this->line('<comment>  Paso 2/4</comment> — Corriendo migraciones core...');
+        $migracionesAntesCore = $this->migrationNames();
         $this->call('migrate', ['--force' => true]);
+        $migracionesCore = $this->nuevasMigraciones($migracionesAntesCore);
 
         // ── PASO 3: Migraciones de paquetes ────────────────────────────────────
         $this->newLine();
@@ -85,23 +87,17 @@ class MigrateLegacyCommand extends Command
         // ── PASO 4: Migraciones tenant ─────────────────────────────────────────
         $this->newLine();
         $this->line('<comment>  Paso 4/4</comment> — Corriendo migraciones tenant del colegio...');
+        $migracionesAntesTenant = $this->migrationNames();
         $this->call('migrate', [
             '--path' => 'database/migrations/tenant',
             '--force' => true,
         ]);
+        $migracionesTenant = $this->nuevasMigraciones($migracionesAntesTenant);
 
         $this->newLine();
         $this->info('  Migración completada.');
         $this->newLine();
-        $this->line('  Resumen de lo que se agregó a la BD legacy:');
-        $this->line('    • Tablas SE nuevas : push_subscriptions');
-        $this->line('    • Tablas módulo Listados   : solapas_legajo, campos_legajo');
-        $this->line('    • Tablas módulo Comunicaciones : com_canales, com_hilos, com_mensajes,');
-        $this->line('                         com_mensajes_destinatarios, com_mensajes_envios,');
-        $this->line('                         com_preferencias');
-        $this->line('    • Columnas nuevas  : calificaciones.tea, ento.logo_path,');
-        $this->line('                         ento.logo_original_name, matricula.fechaBaja');
-        $this->line('                         + columnas de las migraciones tenant del colegio');
+        $this->imprimirResumenEjecucion($paso1, $migracionesCore, $migracionesTenant);
         $this->newLine();
 
         return self::SUCCESS;
@@ -111,11 +107,13 @@ class MigrateLegacyCommand extends Command
      * Marca la migración del schema legacy como "ya ejecutada" si aún no lo está.
      * Esto es necesario porque esa migración requiere un archivo schema.sql que
      * en una BD legacy ya existente no tiene sentido usar (las tablas ya están).
+     *
+     * @return array{migrations_table_creada: bool, legacy_schema: 'registered'|'already'}
      */
-    private function fakeLegacySchemaMigration(): void
+    private function fakeLegacySchemaMigration(): array
     {
         // Asegurarse de que la tabla migrations existe ANTES de consultarla
-        $this->ensureMigrationsTable();
+        $migrationsTableCreada = $this->ensureMigrationsTable();
 
         $alreadyRan = DB::table('migrations')
             ->where('migration', self::LEGACY_SCHEMA_MIGRATION)
@@ -124,7 +122,10 @@ class MigrateLegacyCommand extends Command
         if ($alreadyRan) {
             $this->line('           Ya estaba registrada. OK.');
 
-            return;
+            return [
+                'migrations_table_creada' => $migrationsTableCreada,
+                'legacy_schema' => 'already',
+            ];
         }
 
         // Obtener el batch máximo actual para usar el siguiente
@@ -136,6 +137,11 @@ class MigrateLegacyCommand extends Command
         ]);
 
         $this->line('           Registrada como ejecutada (tablas legacy ya existentes). OK.');
+
+        return [
+            'migrations_table_creada' => $migrationsTableCreada,
+            'legacy_schema' => 'registered',
+        ];
     }
 
     /**
@@ -143,10 +149,10 @@ class MigrateLegacyCommand extends Command
      * Normalmente `php artisan migrate` la crea automáticamente,
      * pero la necesitamos antes de ejecutar el primer migrate.
      */
-    private function ensureMigrationsTable(): void
+    private function ensureMigrationsTable(): bool
     {
         if (DB::getSchemaBuilder()->hasTable('migrations')) {
-            return;
+            return false;
         }
 
         DB::getSchemaBuilder()->create('migrations', function ($table) {
@@ -156,6 +162,84 @@ class MigrateLegacyCommand extends Command
         });
 
         $this->line('           Tabla `migrations` creada. OK.');
+
+        return true;
+    }
+
+    /** @return list<string> */
+    private function migrationNames(): array
+    {
+        if (! DB::getSchemaBuilder()->hasTable('migrations')) {
+            return [];
+        }
+
+        return DB::table('migrations')
+            ->orderBy('id')
+            ->pluck('migration')
+            ->all();
+    }
+
+    /**
+     * @param  list<string>  $antes
+     * @return list<string>
+     */
+    private function nuevasMigraciones(array $antes): array
+    {
+        $setAntes = array_flip($antes);
+
+        return array_values(array_filter(
+            $this->migrationNames(),
+            fn (string $migration) => ! isset($setAntes[$migration])
+        ));
+    }
+
+    /**
+     * @param  array{migrations_table_creada: bool, legacy_schema: 'registered'|'already'}  $paso1
+     * @param  list<string>  $migracionesCore
+     * @param  list<string>  $migracionesTenant
+     */
+    private function imprimirResumenEjecucion(array $paso1, array $migracionesCore, array $migracionesTenant): void
+    {
+        $huboCambios = $paso1['migrations_table_creada']
+            || $paso1['legacy_schema'] === 'registered'
+            || $migracionesCore !== []
+            || $migracionesTenant !== [];
+
+        $this->line('  Resumen de esta ejecución:');
+
+        if (! $huboCambios) {
+            $this->line('    Sin cambios: la BD ya estaba al día.');
+
+            return;
+        }
+
+        if ($paso1['migrations_table_creada']) {
+            $this->line('    • Tabla <comment>migrations</comment> creada.');
+        }
+
+        if ($paso1['legacy_schema'] === 'registered') {
+            $this->line('    • Schema legacy registrado como ejecutado (sin recrear tablas existentes).');
+        }
+
+        $this->imprimirMigracionesDelPaso('Core + paquetes', $migracionesCore);
+        $this->imprimirMigracionesDelPaso('Tenant del colegio', $migracionesTenant);
+    }
+
+    /** @param  list<string>  $migraciones */
+    private function imprimirMigracionesDelPaso(string $etiqueta, array $migraciones): void
+    {
+        if ($migraciones === []) {
+            $this->line("    • {$etiqueta}: sin migraciones pendientes.");
+
+            return;
+        }
+
+        $cantidad = count($migraciones);
+        $this->line("    • {$etiqueta}: {$cantidad} migración".($cantidad === 1 ? '' : 'es').' aplicada'.($cantidad === 1 ? '' : 's').':');
+
+        foreach ($migraciones as $migration) {
+            $this->line("        - {$migration}");
+        }
     }
 
     private function dryRun(): int
