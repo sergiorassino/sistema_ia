@@ -57,6 +57,12 @@ final class MenuSecretariaPerfil
         return ! self::esAdministracion();
     }
 
+    /** Grupo sidebar «ESTADÍSTICAS» — solo sesión en `niveles.id` = 3 (secundario). */
+    public static function muestraEstadisticas(): bool
+    {
+        return self::muestraCalificacionesSecundario();
+    }
+
     /** Gestión de cursos y materias del año: solo Menú de Secretaría. */
     public static function muestraCursosMateriasAnio(): bool
     {

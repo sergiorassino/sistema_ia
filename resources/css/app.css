@@ -89,6 +89,52 @@
         @apply px-4 py-3 text-sm text-neutral-900;
     }
 
+    /* Tablas con orden por clic en cabecera (estadística, etc.) */
+    [data-se-tabla-ordenable] thead th.se-th-sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 1.35rem;
+        transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    [data-se-tabla-ordenable] thead th.se-th-sortable:hover {
+        @apply text-primary-700 bg-accent-100/80;
+    }
+    [data-se-tabla-ordenable] thead th.se-th-sortable::after {
+        content: '⇅';
+        position: absolute;
+        right: 0.4rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.65rem;
+        line-height: 1;
+        opacity: 0.55;
+        font-weight: 700;
+        pointer-events: none;
+    }
+    [data-se-tabla-ordenable] thead th.se-th-sortable.se-th-sort-asc::after {
+        content: '↑';
+        opacity: 1;
+        color: #40848D;
+    }
+    [data-se-tabla-ordenable] thead th.se-th-sortable.se-th-sort-desc::after {
+        content: '↓';
+        opacity: 1;
+        color: #40848D;
+    }
+
+    /* Gráficos estadística: ocultos hasta render completo (como sistema legacy) */
+    [data-se-estad-chart-panel] {
+        position: relative;
+        min-height: 4rem;
+    }
+    [data-se-estad-chart-panel]:not(.se-estad-chart-panel--ready) {
+        visibility: hidden;
+    }
+    [data-se-estad-chart-panel].se-estad-chart-panel--ready {
+        visibility: visible;
+    }
+
     /* Asegura que los bordes (border-r, etc.) se rendericen en tablas */
     td, th {
         border-style: solid;

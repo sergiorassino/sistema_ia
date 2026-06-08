@@ -133,6 +133,9 @@ final class PermisosIaCatalog
     /** Menú Administración — gestión de morosos (listados y notificaciones). */
     public const ADMIN_MORA_GESTION_MOROSOS = 64;
 
+    /** Menú de Secretaría — estadística de rendimiento escolar (nivel medio). */
+    public const ESTADISTICA_RENDIMIENTO_ESCOLAR = 65;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -200,6 +203,7 @@ final class PermisosIaCatalog
             ['id' => 62, 'orden' => self::ADMIN_BECAS_SOLICITUD_AYUDA, 'tema' => 'BECAS', 'descripcion' => 'Buscar estudiante e imprimir solicitud de ayuda familiar.'],
             ['id' => 63, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda familiar: listado de familias y deuda.'],
             ['id' => 64, 'orden' => self::ADMIN_MORA_GESTION_MOROSOS, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.'],
+            ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
         ];
     }
 

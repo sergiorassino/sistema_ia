@@ -151,6 +151,10 @@ use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
+use App\Livewire\Estadistica\PorDocente as EstadisticaPorDocente;
+use App\Livewire\Estadistica\PorEstudiante as EstadisticaPorEstudiante;
+use App\Livewire\Estadistica\PorMateria as EstadisticaPorMateria;
+use App\Livewire\Estadistica\RendimientoEscolarIndex;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpeLotePdfController;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpePdfController;
 use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesPrimarioPdfController;
@@ -783,6 +787,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('boletinesSecundario.pdf');
     Route::post('/boletines-secundario/pdf-lote', BoletinSecundarioLotePdfController::class)
         ->name('boletinesSecundario.pdfLote');
+
+    // Estadísticas — rendimiento escolar (nivel secundario, permiso orden 65)
+    Route::middleware('permiso:65')->group(function () {
+        Route::get('/estadistica/rendimiento-escolar', RendimientoEscolarIndex::class)
+            ->name('estadistica.rendimiento');
+        Route::get('/estadistica/rendimiento-escolar/por-materia', EstadisticaPorMateria::class)
+            ->name('estadistica.rendimiento.porMateria');
+        Route::get('/estadistica/rendimiento-escolar/por-docente', EstadisticaPorDocente::class)
+            ->name('estadistica.rendimiento.porDocente');
+        Route::get('/estadistica/rendimiento-escolar/por-estudiante', EstadisticaPorEstudiante::class)
+            ->name('estadistica.rendimiento.porEstudiante');
+    });
 
     // Seguimiento disciplinario (permiso orden 37)
     Route::middleware('permiso:37')->group(function () {
