@@ -23,8 +23,11 @@ use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
 use App\Http\Controllers\ParteDiarioPreceptorPdfController;
+use App\Http\Controllers\FichaMatriculaSecretariaPdfController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
+use App\Http\Controllers\ListadoDocentesExcelController;
+use App\Http\Controllers\ListadoDocentesPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
@@ -181,7 +184,9 @@ use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Listados\EstudiantesDatosExport;
+use App\Livewire\Listados\FichaMatriculaSecretaria;
 use App\Livewire\Listados\LibroMatricula;
+use App\Livewire\Listados\ListadoDocentes;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\CamposProfesorIndex;
@@ -898,4 +903,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/listados/libro-matricula', LibroMatricula::class)->name('listados.libro-matricula');
     Route::get('/listados/libro-matricula/pdf', LibroMatriculaPdfController::class)
         ->name('listados.libro-matricula.pdf');
+    Route::get('/listados/ficha-matricula', FichaMatriculaSecretaria::class)->name('listados.ficha-matricula');
+    Route::get('/listados/ficha-matricula/pdf', FichaMatriculaSecretariaPdfController::class)
+        ->name('listados.ficha-matricula.pdf');
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->group(function () {
+        Route::get('/listados/docentes', ListadoDocentes::class)->name('listados.docentes');
+        Route::get('/listados/docentes/listado', ListadoDocentesPdfController::class)->name('listados.docentes.pdf');
+        Route::get('/listados/docentes/excel', ListadoDocentesExcelController::class)->name('listados.docentes.excel');
+    });
 });

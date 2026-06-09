@@ -62,6 +62,24 @@ final class FichaMatriculaTcpdf extends TCPDF
         return $pdf;
     }
 
+    /**
+     * @param  list<array<string, mixed>>  $hojas
+     * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
+     */
+    public static function generarLote(array $hojas, array $header): self
+    {
+        $pdf = new self([], $header);
+
+        foreach ($hojas as $datos) {
+            $pdf->datos = $datos;
+            $pdf->header = $datos['header'] ?? $header;
+            $pdf->AddPage();
+            $pdf->dibujarDocumento();
+        }
+
+        return $pdf;
+    }
+
     public static function respuestaHttp(self $pdf, string $nombreArchivo): \Illuminate\Http\Response
     {
         while (ob_get_level() > 0) {

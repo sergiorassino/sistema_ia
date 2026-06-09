@@ -41,7 +41,7 @@
         estadisticas: {{ str_starts_with($route ?? '', 'estadistica.rendimiento') ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
-        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias')) ? 'true' : 'false' }},
+        docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias') || request()->routeIs('listados.docentes', 'listados.docentes.pdf', 'listados.docentes.excel')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
@@ -304,6 +304,26 @@
                     </svg>
                     <span class="truncate">Libro de Matrícula</span>
                 </a>
+
+                @if (tenantSecretariaFichaMatriculaHabilitada())
+                    @php
+                        if (! \Illuminate\Support\Facades\Route::has('listados.ficha-matricula')) {
+                            throw new \RuntimeException("Sidebar: falta la ruta 'listados.ficha-matricula'.");
+                        }
+                    @endphp
+                    <a href="{{ route('listados.ficha-matricula') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => request()->routeIs('listados.ficha-matricula', 'listados.ficha-matricula.pdf'),
+                       ])
+                       title="{{ tenantSecretariaFichaMatriculaEtiqueta() }} v1.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">{{ tenantSecretariaFichaMatriculaEtiqueta() }}</span>
+                    </a>
+                @endif
 
             </div>
         @endif

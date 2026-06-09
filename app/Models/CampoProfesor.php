@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Listados\ListadoDocentesPdfFieldCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Schema;
@@ -103,5 +104,82 @@ class CampoProfesor extends Model
         }
 
         return $map;
+    }
+
+    // ─── Listado PDF / Excel ──────────────────────────────────────────────────
+
+    /**
+     * Filtra claves `profesores.*` según columnas con solapa asignada.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function aplicarVisibilidadListadoPdf(array $keys): array
+    {
+        if (! Schema::hasTable('campos_profesores') || ! static::query()->exists()) {
+            return $keys;
+        }
+
+        $permitidas = static::columnasProfesoresVisiblesParaUi();
+        if ($permitidas === null) {
+            return $keys;
+        }
+
+        $flip = array_flip($permitidas);
+        $out = [];
+        foreach ($keys as $k) {
+            if (str_starts_with($k, 'profesores.')) {
+                $col = substr($k, strlen('profesores.'));
+                if (! isset($flip[$col])) {
+                    continue;
+                }
+                $out[] = $k;
+
+                continue;
+            }
+            continue;
+        }
+
+        if ($out !== []) {
+            return $out;
+        }
+
+        $defecto = [];
+        foreach (['profesores.apellido', 'profesores.nombre', 'profesores.dni'] as $k) {
+            $col = substr($k, strlen('profesores.'));
+            if (isset($flip[$col])) {
+                $defecto[] = $k;
+            }
+        }
+
+        return $defecto !== [] ? $defecto : [];
+    }
+
+    /**
+     * Columnas de `profesores` elegibles en el selector del listado.
+     *
+     * @return list<string>|null
+     */
+    public static function columnasProfesoresVisiblesParaUi(): ?array
+    {
+        if (! Schema::hasTable('campos_profesores') || ! static::query()->exists()) {
+            return null;
+        }
+
+        $cols = static::query()
+            ->whereNotNull('solapa_legajo_profesor_id')
+            ->whereNotIn('columna', self::COLUMNAS_FIJAS_DOCENTE)
+            ->orderBy('orden')
+            ->orderBy('columna')
+            ->pluck('columna')
+            ->map(function ($c) {
+                $raw = (string) $c;
+
+                return ListadoDocentesPdfFieldCatalog::canonicalProfesorColumnName($raw) ?? $raw;
+            })
+            ->values()
+            ->all();
+
+        return array_values(array_unique(array_merge(self::COLUMNAS_FIJAS_DOCENTE, $cols)));
     }
 }

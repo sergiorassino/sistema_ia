@@ -647,6 +647,46 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
     }
 }
 
+if (! function_exists('tenantSecretariaFichaMatriculaImplementacion')) {
+    /**
+     * Variante de ficha de matrícula para secretaría (`sanfranciscoasis` | `montecristo`).
+     */
+    function tenantSecretariaFichaMatriculaImplementacion(): ?string
+    {
+        $valor = config('tenant.secretaria.ficha_matricula.implementacion');
+
+        return filled($valor) ? (string) $valor : null;
+    }
+}
+
+if (! function_exists('tenantSecretariaFichaMatriculaHabilitada')) {
+    /**
+     * Si el Menú de Secretaría incluye impresión de ficha de matrícula por curso.
+     */
+    function tenantSecretariaFichaMatriculaHabilitada(): bool
+    {
+        if (! (bool) config('tenant.secretaria.ficha_matricula.habilitado', false)) {
+            return false;
+        }
+
+        return filled(tenantSecretariaFichaMatriculaImplementacion());
+    }
+}
+
+if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
+    /**
+     * Título del ítem de menú / pantalla según la variante del tenant.
+     */
+    function tenantSecretariaFichaMatriculaEtiqueta(): string
+    {
+        return match (tenantSecretariaFichaMatriculaImplementacion()) {
+            'montecristo' => 'Ficha de Solicitud de Matrícula',
+            'sanfranciscoasis' => 'Ficha de Matrícula',
+            default => 'Ficha de Matrícula',
+        };
+    }
+}
+
 if (! function_exists('tenantAutogestionArancelesEscolaresHabilitada')) {
     /**
      * Si el portal familia incluye aranceles escolares (cuotas pendientes + comprobante).

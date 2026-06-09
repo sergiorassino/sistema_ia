@@ -3,6 +3,7 @@
 namespace App\Support\Alumnos;
 
 use App\Models\Legajo;
+use App\Models\Matricula;
 use App\Models\Sexo;
 use App\Support\InformeInasistencias;
 use Carbon\CarbonInterface;
@@ -24,6 +25,42 @@ final class FichaMatriculaDatos
         'legajo', 'escori', 'retira1', 'retira2',
         'reglamApenom', 'reglamDni', 'reglamEmail',
     ];
+
+    /**
+     * Datos para secretaría (matrícula en contexto escolar activo).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function paraMatricula(int $idMatricula): ?array
+    {
+        $ctx = schoolCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        /** @var Matricula|null $matricula */
+        $matricula = Matricula::query()
+            ->with('curso')
+            ->where('id', $idMatricula)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereNull('fechaBaja')
+            ->first();
+
+        if ($matricula === null) {
+            return null;
+        }
+
+        $legajo = Legajo::query()
+            ->where('id', (int) $matricula->idLegajos)
+            ->first(self::COLUMNAS_LEGAJO);
+
+        if ($legajo === null) {
+            return null;
+        }
+
+        return self::armarDesdeRegistros($legajo, $matricula, (int) $ctx->idNivel, (int) ($ctx->terlecAno() ?? 0));
+    }
 
     /**
      * @return array<string, mixed>|null
@@ -48,17 +85,42 @@ final class FichaMatriculaDatos
             return null;
         }
 
-        $anoTerlec = (int) ($ctx->terlecAno() ?? 0);
+        return self::armarDesdeRegistros(
+            $legajo,
+            $matricula,
+            (int) $ctx->idNivel,
+            (int) ($ctx->terlecAno() ?? 0),
+            true,
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function armarDesdeRegistros(
+        Legajo $legajo,
+        Matricula $matricula,
+        int $idNivel,
+        int $anoTerlec,
+        bool $usarLegajoComoNroMatricula = false,
+    ): array {
         $header = studentPdfHeaderData();
         $curso = trim((string) ($matricula->curso?->nombreParaListado() ?? ''));
+        $nroMatricula = $usarLegajoComoNroMatricula
+            ? trim((string) ($legajo->legajo ?? ''))
+            : trim((string) ($matricula->nroMatricula ?? ''));
+
+        if ($nroMatricula === '') {
+            $nroMatricula = trim((string) ($legajo->legajo ?? ''));
+        }
 
         return [
             'header' => $header,
-            'cicloLectivo' => $anoTerlec > 0 ? (string) ($anoTerlec + 1) : '',
-            'nroMatricula' => trim((string) ($legajo->legajo ?? '')),
+            'cicloLectivo' => $anoTerlec > 0 ? (string) $anoTerlec : '',
+            'nroMatricula' => $nroMatricula,
             'curso' => $curso,
-            'idNivel' => (int) $ctx->idNivel,
-            'mostrarRetira2' => (int) $ctx->idNivel !== 3,
+            'idNivel' => $idNivel,
+            'mostrarRetira2' => $idNivel !== 3,
             'apellido' => trim((string) ($legajo->apellido ?? '')),
             'nombre' => trim((string) ($legajo->nombre ?? '')),
             'dni' => trim((string) ($legajo->dni ?? '')),

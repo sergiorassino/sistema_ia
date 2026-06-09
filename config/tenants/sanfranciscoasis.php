@@ -7,6 +7,13 @@
  */
 
 return [
+    'secretaria' => [
+        'ficha_matricula' => [
+            'habilitado' => true,
+            'implementacion' => 'sanfranciscoasis',
+        ],
+    ],
+
     'autogestion' => [
         'actualizacion_datos' => [
             'habilitado' => true,

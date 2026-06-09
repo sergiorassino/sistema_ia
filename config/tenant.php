@@ -104,6 +104,18 @@ return [
     ],
 
     /**
+     * Menú de Secretaría — impresión de ficha de matrícula por curso (PDF en lote).
+     * `implementacion`: variante en código (`sanfranciscoasis` = con aceptación de documentos;
+     * `montecristo` = solicitud de matrícula solo datos).
+     */
+    'secretaria' => [
+        'ficha_matricula' => [
+            'habilitado' => false,
+            'implementacion' => null,
+        ],
+    ],
+
+    /**
      * Solicitud de evaluación (tabla evaluac) — Menú de Secretaría y Menú de Docentes.
      * Sin permiso IA: visible para todo el personal en secundario (tenant activo).
      * Activar solo en `config/tenants/{slug}.php` para colegios que lo usan.
