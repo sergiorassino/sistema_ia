@@ -59,12 +59,12 @@ final class FichaMatriculaSecretariaPdf
         }
 
         return match ($implementacion) {
-            'sanfranciscoasis' => FichaMatriculaTcpdf::respuestaHttp(
-                FichaMatriculaTcpdf::generarLote($hojas, $header),
+            'sanfranciscoasis' => FichaMatriculaConAceptacionTcpdf::respuestaHttp(
+                FichaMatriculaConAceptacionTcpdf::generarLote($hojas, $header),
                 $slug.'.pdf',
             ),
-            'montecristo' => FichaMatriculaMontecristoTcpdf::respuestaHttp(
-                FichaMatriculaMontecristoTcpdf::generarLote($hojas),
+            'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::respuestaHttp(
+                FichaMatriculaSolicitudMontecristoTcpdf::generarLote($hojas),
                 $slug.'.pdf',
             ),
             default => abort(404),

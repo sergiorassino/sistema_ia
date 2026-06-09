@@ -6,9 +6,9 @@ use App\Support\Pdf\TcpdfFuenteArial;
 use TCPDF;
 
 /**
- * Ficha de matrícula (A4 vertical, una página, membrete institucional SE).
+ * Ficha de matrícula con aceptación de documentos (A4 vertical, una página, membrete institucional SE).
  */
-final class FichaMatriculaTcpdf extends TCPDF
+final class FichaMatriculaConAceptacionTcpdf extends TCPDF
 {
     private const MARGEN_IZQ = 30.0;
 

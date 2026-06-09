@@ -8,7 +8,7 @@ use TCPDF;
 /**
  * Ficha de solicitud de matrícula Montecristo (Legal vertical, legacy FPDF).
  */
-final class FichaMatriculaMontecristoTcpdf extends TCPDF
+final class FichaMatriculaSolicitudMontecristoTcpdf extends TCPDF
 {
     private const MARGEN_IZQ = 30.0;
 

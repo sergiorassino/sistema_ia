@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
 use App\Support\Alumnos\FichaMatriculaDatos;
-use App\Support\Alumnos\FichaMatriculaTcpdf;
+use App\Support\Alumnos\FichaMatriculaConAceptacionTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -42,8 +42,8 @@ class FichaMatriculaPdfController extends Controller
         /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} $header */
         $header = $datos['header'] ?? studentPdfHeaderData();
 
-        $pdf = FichaMatriculaTcpdf::generar($datos, $header);
+        $pdf = FichaMatriculaConAceptacionTcpdf::generar($datos, $header);
 
-        return FichaMatriculaTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return FichaMatriculaConAceptacionTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }
