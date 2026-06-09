@@ -83,6 +83,7 @@ use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Http\Controllers\Alumnos\AbrirHiloComunicacionFamiliaController;
 use App\Http\Controllers\Comunicaciones\AbrirHiloComunicacionGestionController;
+use App\Http\Controllers\Comunicaciones\ComunicacionHiloPdfController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
 use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
@@ -338,6 +339,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.informe-envio');
     Route::get('/comunicaciones/hilo', HiloShow::class)->name('portalDocente.comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo.pdf/{ref}', ComunicacionHiloPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('portalDocente.comunicaciones.hilo.pdf');
     Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.abrir');
@@ -481,6 +485,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->whereNumber('id')
         ->name('comunicaciones.informe-envio');
     Route::get('/comunicaciones/hilo', HiloShow::class)->middleware('permiso:3')->name('comunicaciones.hilo');
+    Route::get('/comunicaciones/hilo.pdf/{ref}', ComunicacionHiloPdfController::class)
+        ->middleware('permiso:3')
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('comunicaciones.hilo.pdf');
     Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
         ->middleware('permiso:3')
         ->whereNumber('id')

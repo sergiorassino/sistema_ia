@@ -92,12 +92,6 @@ class ComCanalesIndex extends Component
             'nuevoRolReceptor' => 'receptor',
         ]);
 
-        if ($this->nuevoRolEmisor === $this->nuevoRolReceptor) {
-            $this->addError('nuevoRolReceptor', 'El emisor y el receptor deben ser distintos.');
-
-            return;
-        }
-
         $yaExiste = ComCanal::query()
             ->where('id_nivel', $this->idNivel)
             ->where('rol_emisor', $this->nuevoRolEmisor)

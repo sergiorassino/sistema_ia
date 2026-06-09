@@ -30,6 +30,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_MORA_NOTIFICACION_DEUDA = 'mora.notificacion-deuda';
 
+    public const PURPOSE_COMUNICACION_HILO = 'comunicaciones.hilo-pdf';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -74,6 +76,14 @@ final class OpaqueRouteToken
     public static function forNotificacionDeudaMorosos(array $filtros): string
     {
         return self::encodePayload(self::PURPOSE_MORA_NOTIFICACION_DEUDA, $filtros);
+    }
+
+    public static function forComunicacionHilo(int $idHilo, int $idProfesor): string
+    {
+        return self::encodePayload(self::PURPOSE_COMUNICACION_HILO, [
+            'h' => $idHilo,
+            'p' => $idProfesor,
+        ]);
     }
 
     /**

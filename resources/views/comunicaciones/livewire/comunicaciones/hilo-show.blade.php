@@ -1,7 +1,9 @@
 <div class="se-page max-w-4xl">
 @php
     use App\Support\ComunicacionesRutasGestion;
+    use App\Support\Security\OpaqueRouteToken;
     $waWinName = (string) config('comunicaciones.whatsapp_wa_link_target', 'comunicaciones_whatsapp_wa');
+    $hiloPdfRef = OpaqueRouteToken::forComunicacionHilo((int) $hilo->id, (int) $idProfesorSesion);
 @endphp
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -30,13 +32,26 @@
                     </p>
                 @endif
             </div>
-            <a href="{{ ComunicacionesRutasGestion::route('index') }}"
-               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Bandeja
-            </a>
+            <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <a href="{{ ComunicacionesRutasGestion::route('hilo.pdf', ['ref' => $hiloPdfRef]) }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   title="Imprimir conversación (PDF)"
+                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimir
+                </a>
+                <a href="{{ ComunicacionesRutasGestion::route('index') }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Bandeja
+                </a>
+            </div>
         </div>
     </section>
 
