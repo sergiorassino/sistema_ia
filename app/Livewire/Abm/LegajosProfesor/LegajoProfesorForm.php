@@ -12,6 +12,7 @@ use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class LegajoProfesorForm extends Component
@@ -169,7 +170,13 @@ class LegajoProfesorForm extends Component
     public function save(): mixed
     {
         $this->requireModificarLegajoDocente();
-        $this->validate();
+
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            $this->focusTabForValidationErrors(array_keys($e->errors()));
+            throw $e;
+        }
 
         $allData = $this->formData();
         $set = $this->camposActivosSet();
@@ -349,6 +356,37 @@ class LegajoProfesorForm extends Component
         $docenteNombre = SolapaLegajoProfesor::where('slug', 'docente')->value('nombre') ?? 'DOCENTE';
 
         return array_merge(['docente' => $docenteNombre], $rest);
+    }
+
+    /**
+     * Muestra el error en la solapa donde está el campo (p. ej. email en CONTACTO).
+     *
+     * @param  list<string>  $errorKeys
+     */
+    private function focusTabForValidationErrors(array $errorKeys): void
+    {
+        if ($errorKeys === []) {
+            return;
+        }
+
+        $firstKey = $errorKeys[0];
+        $columna = str_starts_with($firstKey, 'profesorExtras.')
+            ? substr($firstKey, strlen('profesorExtras.'))
+            : $firstKey;
+
+        $slug = 'docente';
+        if (! in_array($columna, self::CORE_COLUMNS, true)) {
+            foreach (CampoProfesor::camposPorSolapaSlugOrdenados() as $tabSlug => $campos) {
+                foreach ($campos as $campo) {
+                    if ($campo['columna'] === $columna) {
+                        $slug = $tabSlug;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        $this->activeTab = $slug;
     }
 
     private function pageForProfesor(int $id, int $perPage): int

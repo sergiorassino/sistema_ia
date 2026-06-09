@@ -94,7 +94,9 @@
     @default
         <div class="sm:col-span-2">
             <label class="form-label">{{ $label }}</label>
-            <input type="text" wire:model.live="profesorExtras.{{ $col }}" maxlength="4000" class="form-input">
+            <input type="text" wire:model.live="profesorExtras.{{ $col }}" maxlength="4000"
+                   class="form-input @error('profesorExtras.'.$col) border-red-400 @enderror">
+            @error('profesorExtras.'.$col) <p class="form-error">{{ $message }}</p> @enderror
         </div>
         @break
 @endswitch

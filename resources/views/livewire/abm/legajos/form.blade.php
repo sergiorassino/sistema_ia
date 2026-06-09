@@ -20,6 +20,16 @@
             {{ session('warning') }}
         </div>
     @endif
+    @if ($errors->any())
+        <div class="se-soft-card border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+            <p class="font-semibold">No se pudo guardar. Revise los campos indicados.</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $message)
+                    <li>{{ $message }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <section class="se-hero">
         <div class="se-hero-inner">

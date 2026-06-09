@@ -15,6 +15,7 @@ use App\Models\Terlec;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class LegajoForm extends Component
@@ -331,7 +332,13 @@ class LegajoForm extends Component
     public function save(): mixed
     {
         $this->requireModificarLegajo();
-        $this->validate();
+
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            $this->focusTabForValidationErrors(array_keys($e->errors()));
+            throw $e;
+        }
 
         $allData = $this->formData();
         $set = $this->camposActivosSet();
@@ -1292,6 +1299,45 @@ class LegajoForm extends Component
         }
 
         return array_flip(array_unique(array_merge(self::CORE_COLUMNS, $visibles)));
+    }
+
+    /**
+     * Muestra el error en la solapa donde está el campo (p. ej. email en Domicilio).
+     *
+     * @param  list<string>  $errorKeys
+     */
+    private function focusTabForValidationErrors(array $errorKeys): void
+    {
+        if ($errorKeys === []) {
+            return;
+        }
+
+        $firstKey = $errorKeys[0];
+        $columna = str_starts_with($firstKey, 'legajoExtras.')
+            ? substr($firstKey, strlen('legajoExtras.'))
+            : $firstKey;
+
+        $this->activeTab = $this->slugForColumn($columna);
+    }
+
+    private function slugForColumn(string $columna): string
+    {
+        if (in_array($columna, self::CORE_COLUMNS, true)) {
+            return 'alumno';
+        }
+
+        if (Schema::hasTable('campos_legajo') && Schema::hasTable('solapas_legajo')) {
+            $slug = CampoLegajo::query()
+                ->where('campos_legajo.columna', $columna)
+                ->whereNotNull('campos_legajo.solapa_legajo_id')
+                ->join('solapas_legajo', 'solapas_legajo.id', '=', 'campos_legajo.solapa_legajo_id')
+                ->value('solapas_legajo.slug');
+            if ($slug) {
+                return (string) $slug;
+            }
+        }
+
+        return self::columnToPanelMap()[$columna] ?? 'alumno';
     }
 
     private function pageForLegajo(int $id, int $perPage): int

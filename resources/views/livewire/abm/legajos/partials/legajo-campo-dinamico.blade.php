@@ -267,7 +267,9 @@
     @default
         <div class="sm:col-span-2">
             <label class="form-label">{{ $label }}</label>
-            <input type="text" wire:model.live="legajoExtras.{{ $col }}" maxlength="4000" class="form-input">
+            <input type="text" wire:model.live="legajoExtras.{{ $col }}" maxlength="4000"
+                   class="form-input @error('legajoExtras.'.$col) border-red-400 @enderror">
+            @error('legajoExtras.'.$col) <p class="form-error">{{ $message }}</p> @enderror
         </div>
         @break
 @endswitch
