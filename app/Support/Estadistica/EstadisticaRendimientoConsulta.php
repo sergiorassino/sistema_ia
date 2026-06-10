@@ -229,4 +229,23 @@ final class EstadisticaRendimientoConsulta
             round(($resumen['pendientes'] ?? 0) / $tot * 100, 1),
         ];
     }
+
+    /**
+     * @param  array{total_estudiantes: int, promovidos_anio: int, promovidos_dic: int, promovidos_feb: int, no_promovidos: int}  $resumen
+     * @return list<float>
+     */
+    public static function porcentajesPromocion(array $resumen): array
+    {
+        $tot = (int) ($resumen['total_estudiantes'] ?? 0);
+        if ($tot <= 0) {
+            return [0.0, 0.0, 0.0, 0.0];
+        }
+
+        return [
+            round($resumen['promovidos_anio'] / $tot * 100, 1),
+            round($resumen['promovidos_dic'] / $tot * 100, 1),
+            round($resumen['promovidos_feb'] / $tot * 100, 1),
+            round($resumen['no_promovidos'] / $tot * 100, 1),
+        ];
+    }
 }

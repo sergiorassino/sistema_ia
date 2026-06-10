@@ -41,6 +41,7 @@ class PorEstudiante extends Component
             : null;
 
         $resumen = $reporte['resumen'] ?? null;
+        $resumenPromocion = $reporte['resumen_promocion'] ?? null;
         $porEstudiante = $reporte['por_estudiante'] ?? [];
 
         $idsLegajos = array_column($porEstudiante, 'idLegajos');
@@ -59,11 +60,13 @@ class PorEstudiante extends Component
             'cursos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::cursos($idTerlec) : collect(),
             'alumnos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::alumnos($idTerlec) : collect(),
             'resumen' => $resumen,
+            'resumenPromocion' => $resumenPromocion,
             'porEstudiante' => $porEstudiante,
             'inasPorLegajo' => $inasPorLegajo,
             'previasPorLegajo' => $previasPorLegajo,
             'matriculaPorLegajo' => $matriculaPorLegajo,
             'pctResumen' => $resumen ? EstadisticaRendimientoConsulta::porcentajesResumen($resumen) : [0, 0, 0, 0],
+            'pctPromocion' => $resumenPromocion ? EstadisticaRendimientoConsulta::porcentajesPromocion($resumenPromocion) : [0, 0, 0, 0],
             'chartBarras' => $chartBarras,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Estadística por estudiante']);
     }

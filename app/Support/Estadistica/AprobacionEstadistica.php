@@ -108,6 +108,81 @@ final class AprobacionEstadistica
     }
 
     /**
+     * Vía efectiva de aprobación de una materia (prioridad: año → dic → feb → pendiente).
+     *
+     * @param  array<string, mixed>  $row
+     */
+    public static function viaAprobacionPorMateria(array $row): string
+    {
+        $estado = self::estadoAprobacionPorMateria($row);
+
+        if ($estado['durante_anio']) {
+            return 'anio';
+        }
+        if ($estado['diciembre']) {
+            return 'dic';
+        }
+        if ($estado['febrero']) {
+            return 'feb';
+        }
+
+        return 'pendiente';
+    }
+
+    /**
+     * Clasificación de promoción anual según el desglose de vías por materia.
+     *
+     * @param  array{anio: int, dic: int, feb: int, pendiente: int}  $vias
+     */
+    public static function clasificarPromocionPorVias(array $vias): string
+    {
+        if (($vias['pendiente'] ?? 0) > 0) {
+            return 'no_promovido';
+        }
+
+        $total = (int) ($vias['anio'] ?? 0) + (int) ($vias['dic'] ?? 0) + (int) ($vias['feb'] ?? 0);
+        if ($total === 0) {
+            return 'no_promovido';
+        }
+
+        if (($vias['dic'] ?? 0) === 0 && ($vias['feb'] ?? 0) === 0) {
+            return 'promovido_anio';
+        }
+
+        if (($vias['feb'] ?? 0) > 0) {
+            return 'promovido_feb';
+        }
+
+        return 'promovido_dic';
+    }
+
+    /** @return array{total_estudiantes: int, promovidos_anio: int, promovidos_dic: int, promovidos_feb: int, no_promovidos: int} */
+    public static function contadorPromocionVacio(): array
+    {
+        return [
+            'total_estudiantes' => 0,
+            'promovidos_anio' => 0,
+            'promovidos_dic' => 0,
+            'promovidos_feb' => 0,
+            'no_promovidos' => 0,
+        ];
+    }
+
+    /**
+     * @param  array{total_estudiantes: int, promovidos_anio: int, promovidos_dic: int, promovidos_feb: int, no_promovidos: int}  $bucket
+     */
+    public static function acumularPromocionResumen(array &$bucket, string $promocion): void
+    {
+        $bucket['total_estudiantes']++;
+        match ($promocion) {
+            'promovido_anio' => $bucket['promovidos_anio']++,
+            'promovido_dic' => $bucket['promovidos_dic']++,
+            'promovido_feb' => $bucket['promovidos_feb']++,
+            default => $bucket['no_promovidos']++,
+        };
+    }
+
+    /**
      * Resumen + desglose por materia/curso en un solo recorrido de la BD.
      *
      * @return array{resumen: array{total: int, aprobados_durante_anio: int, aprobados_diciembre: int, aprobados_febrero: int, pendientes: int}, por_materia_curso: list<array<string, mixed>>}
@@ -156,7 +231,11 @@ final class AprobacionEstadistica
     /**
      * Resumen + desglose por estudiante en un solo recorrido de la BD.
      *
-     * @return array{resumen: array{total: int, aprobados_durante_anio: int, aprobados_diciembre: int, aprobados_febrero: int, pendientes: int}, por_estudiante: list<array<string, mixed>>}
+     * @return array{
+     *     resumen: array{total: int, aprobados_durante_anio: int, aprobados_diciembre: int, aprobados_febrero: int, pendientes: int},
+     *     resumen_promocion: array{total_estudiantes: int, promovidos_anio: int, promovidos_dic: int, promovidos_feb: int, no_promovidos: int},
+     *     por_estudiante: list<array<string, mixed>>
+     * }
      */
     public function reportePorEstudiante(
         int $idTerlec,
@@ -164,6 +243,7 @@ final class AprobacionEstadistica
         ?int $idLegajos = null,
     ): array {
         $resumen = self::contadorResumenVacio();
+        $resumenPromocion = self::contadorPromocionVacio();
         $agrupado = [];
 
         foreach ($this->cursorFilasEstudiante($idTerlec, $idCursos, $idLegajos) as $row) {
@@ -180,6 +260,7 @@ final class AprobacionEstadistica
                     ...self::contadorDetalleVacio(),
                     'tiene_tea' => false,
                     'sin_nota' => 0,
+                    'vias_materias' => ['anio' => 0, 'dic' => 0, 'feb' => 0, 'pendiente' => 0],
                 ];
             }
 
@@ -191,13 +272,24 @@ final class AprobacionEstadistica
             }
 
             self::acumularDetalle($agrupado[$idLeg], $estado);
+
+            $via = self::viaAprobacionPorMateria($row);
+            $agrupado[$idLeg]['vias_materias'][$via]++;
         }
+
+        foreach ($agrupado as &$estudiante) {
+            $estudiante['promocion'] = self::clasificarPromocionPorVias($estudiante['vias_materias']);
+            self::acumularPromocionResumen($resumenPromocion, $estudiante['promocion']);
+            unset($estudiante['vias_materias']);
+        }
+        unset($estudiante);
 
         $porEstudiante = array_values($agrupado);
         self::ordenarPorEstudiante($porEstudiante);
 
         return [
             'resumen' => $resumen,
+            'resumen_promocion' => $resumenPromocion,
             'por_estudiante' => $porEstudiante,
         ];
     }

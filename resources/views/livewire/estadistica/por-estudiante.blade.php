@@ -41,6 +41,12 @@
     @if ($idTerlec <= 0)
         <div class="se-card p-6 text-center text-neutral-500 text-sm">Seleccioná un año lectivo en el contexto de sesión.</div>
     @elseif ($resumen !== null)
+        @include('livewire.estadistica.partials.resumen-promocion-cards', [
+            'resumenPromocion' => $resumenPromocion,
+            'anoLabel' => $anoLabel,
+            'pctPromocion' => $pctPromocion,
+        ])
+
         @include('livewire.estadistica.partials.resumen-cards', ['resumen' => $resumen, 'anoLabel' => $anoLabel])
 
         @if ($resumen['total'] > 0)
@@ -72,6 +78,7 @@
                                 <th class="table-header text-right num" data-sort-num="1">Dic</th>
                                 <th class="table-header text-right num" data-sort-num="1">Feb</th>
                                 <th class="table-header text-right num" data-sort-num="1">Pend</th>
+                                <th class="table-header">Promoción</th>
                                 <th class="table-header text-right num" data-sort-num="1">Inas</th>
                                 <th class="table-header text-center" data-sort-disabled="1">Boletín</th>
                             </tr>
@@ -92,6 +99,21 @@
                                     $claseNombre = $mostrarAmarillo ? 'text-amber-700 font-semibold' : ($mostrarRojo ? 'text-red-600 font-semibold' : '');
                                     $tienePrevia = ! empty($previasPorLegajo[$r['idLegajos']]);
                                     $idMatricula = $matriculaPorLegajo[$r['idLegajos']] ?? 0;
+                                    $promocion = $r['promocion'] ?? '';
+                                    $promocionLabel = match ($promocion) {
+                                        'promovido_anio' => 'Año',
+                                        'promovido_dic' => 'Dic',
+                                        'promovido_feb' => 'Feb',
+                                        'no_promovido' => 'No prom.',
+                                        default => '—',
+                                    };
+                                    $promocionClass = match ($promocion) {
+                                        'promovido_anio' => 'text-emerald-700 font-semibold',
+                                        'promovido_dic' => 'text-blue-700 font-semibold',
+                                        'promovido_feb' => 'text-amber-700 font-semibold',
+                                        'no_promovido' => 'text-red-700 font-semibold',
+                                        default => 'text-neutral-500',
+                                    };
                                 @endphp
                                 <tr class="hover:bg-accent-50/60">
                                     <td class="table-cell text-center tabular-nums">{{ $num + 1 }}</td>
@@ -116,6 +138,7 @@
                                     <td class="table-cell text-right tabular-nums">{{ $r['diciembre'] }}</td>
                                     <td class="table-cell text-right tabular-nums">{{ $r['febrero'] }}</td>
                                     <td class="table-cell text-right tabular-nums">{{ $r['pendientes'] ?? 0 }}</td>
+                                    <td class="table-cell {{ $promocionClass }}">{{ $promocionLabel }}</td>
                                     <td class="table-cell text-right tabular-nums {{ $inasRojo ? 'text-red-600 font-semibold' : '' }}">{{ $inas }}</td>
                                     <td class="table-cell text-center {{ $tienePrevia ? 'bg-pink-200/70' : '' }}">
                                         @if ($idMatricula > 0)
@@ -161,7 +184,52 @@
             </div>
         @endif
 
-        @if ($resumen['total'] > 0)
+        @if ($resumenPromocion !== null && ($resumenPromocion['total_estudiantes'] ?? 0) > 0)
+            @php
+                $chartDataPromocion = [
+                    'labels' => ['Todo año', 'Con Dic', 'Con Feb', 'No promovidos'],
+                    'datasets' => [[
+                        'data' => $pctPromocion,
+                        'backgroundColor' => ['#198754', '#0d6efd', '#fd7e14', '#dc3545'],
+                        'borderWidth' => 1,
+                    ]],
+                ];
+            @endphp
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div class="se-card p-4" wire:key="chart-promocion-est-{{ $cursoId }}-{{ $legajoId }}">
+                    <h3 class="text-sm font-semibold text-neutral-800 mb-3">Promoción anual por estudiante (%)</h3>
+                    <div class="relative w-full h-72 se-estad-chart-panel" data-se-estad-chart-panel>
+                        @include('livewire.estadistica.partials.chart-canvas', [
+                            'canvasId' => 'chartEstadPromocionEstudiante',
+                            'chartType' => 'doughnut',
+                            'chartData' => $chartDataPromocion,
+                        ])
+                    </div>
+                </div>
+                @if ($resumen['total'] > 0)
+                    @php
+                        $chartDataTorta = [
+                            'labels' => ['Año', 'Dic', 'Feb', 'Pend'],
+                            'datasets' => [[
+                                'data' => $pctResumen,
+                                'backgroundColor' => ['#198754', '#0d6efd', '#fd7e14', '#6c757d'],
+                                'borderWidth' => 1,
+                            ]],
+                        ];
+                    @endphp
+                    <div class="se-card p-4" wire:key="chart-torta-est-{{ $cursoId }}-{{ $legajoId }}">
+                        <h3 class="text-sm font-semibold text-neutral-800 mb-3">Aprobación por materia (%)</h3>
+                        <div class="relative w-full h-72 se-estad-chart-panel" data-se-estad-chart-panel>
+                            @include('livewire.estadistica.partials.chart-canvas', [
+                                'canvasId' => 'chartEstadTortaEstudiante',
+                                'chartType' => 'doughnut',
+                                'chartData' => $chartDataTorta,
+                            ])
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @elseif ($resumen['total'] > 0)
             @php
                 $chartDataTorta = [
                     'labels' => ['Año', 'Dic', 'Feb', 'Pend'],
@@ -172,8 +240,8 @@
                     ]],
                 ];
             @endphp
-            <div class="se-card p-4 max-w-md" wire:key="chart-torta-est-{{ $cursoId }}-{{ $legajoId }}">
-                <h3 class="text-sm font-semibold text-neutral-800 mb-3">Distribución de aprobación (%)</h3>
+            <div class="se-card p-4 max-w-md mb-6" wire:key="chart-torta-est-{{ $cursoId }}-{{ $legajoId }}">
+                <h3 class="text-sm font-semibold text-neutral-800 mb-3">Aprobación por materia (%)</h3>
                 <div class="relative w-full h-72 se-estad-chart-panel" data-se-estad-chart-panel>
                     @include('livewire.estadistica.partials.chart-canvas', [
                         'canvasId' => 'chartEstadTortaEstudiante',
