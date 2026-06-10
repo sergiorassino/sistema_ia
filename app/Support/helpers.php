@@ -584,6 +584,17 @@ if (! function_exists('tenantSolicitudEvaluacionHabilitada')) {
     }
 }
 
+if (! function_exists('tenantProgramasExamenHabilitado')) {
+    /**
+     * Descarga pública de programas de examen (/programas-examen).
+     * Por defecto deshabilitado; activar en `config/tenants/{slug}.php` → `programas_examen.habilitado`.
+     */
+    function tenantProgramasExamenHabilitado(): bool
+    {
+        return (bool) config('tenant.programas_examen.habilitado', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosImplementacion')) {
     /**
      * Variante de formulario de actualización de datos (`estandar`, `sanfranciscoasis`, …).

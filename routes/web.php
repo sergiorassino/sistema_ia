@@ -54,6 +54,7 @@ use App\Livewire\Aspirantes\CursosModeloIndex as AspirantesCursosModeloIndex;
 use App\Livewire\Aspirantes\InstanciaForm as AspirantesInstanciaForm;
 use App\Livewire\Aspirantes\InstanciaIndex as AspirantesInstanciaIndex;
 use App\Livewire\Parametrizacion\CamposAspirantesIndex;
+use App\Livewire\Programas\ProgramasExamenPublico;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
@@ -236,6 +237,15 @@ Route::middleware('throttle:120,1')->group(function () {
         ->where('token', '[A-Za-z0-9]{8,80}')
         ->name('aspirantes.publico.registro');
 });
+
+// Descarga pública de programas de examen (sin auth, sin school.context).
+// Solo se registra si el tenant lo habilita explícitamente en config/tenants/{slug}.php.
+if (tenantProgramasExamenHabilitado()) {
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::get('/programas-examen', ProgramasExamenPublico::class)
+            ->name('programas.examen.publico');
+    });
+}
 
 // Login: siempre limpia sesión previa (equipos compartidos; no usar middleware `guest`).
 Route::middleware(['login.limpiar-sesion', 'no-store'])->group(function () {

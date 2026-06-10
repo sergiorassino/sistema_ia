@@ -125,6 +125,29 @@ return [
     ],
 
     /**
+     * Descarga pública de programas de examen (sin login).
+     * Lee las tablas legacy `pp{año}` (ej. pp2020) y enlaza los PDF alojados
+     * en un servidor de archivos externo.
+     *
+     * Por defecto deshabilitado para todos los colegios. Activar solo en
+     * `config/tenants/{slug}.php` con `habilitado => true` y el resto de claves.
+     *
+     *   - `habilitado`: registra la ruta pública /programas-examen (ausente si false).
+     *   - `glo_codcol`: código de colegio usado en la ruta de archivos (fallback: slug).
+     *   - `nivel`: segmento de carpeta del servidor de archivos (legacy `secu`).
+     *   - `base_url`: dominio y ruta base del repositorio de archivos del colegio
+     *     (sin barra final; ej. `https://sistemasescolares1.com/archivos` para NSSC).
+     *   - `anios`: años ofrecidos en el menú; deben existir como tablas `pp{año}`.
+     */
+    'programas_examen' => [
+        'habilitado' => false,
+        'glo_codcol' => null,
+        'nivel' => 'secu',
+        'base_url' => 'https://sistesco.site/archivos',
+        'anios' => [],
+    ],
+
+    /**
      * Plantillas de cuotas — fórmulas al crear una cuota («Valores por defecto del sistema»).
      * Corresponden a: hasta 1.er venc., 1.º→2.º, 2.º→3.º y después del 3.er vencimiento.
      * Override parcial en `config/tenants/{slug}.php` (solo claves que difieran).
