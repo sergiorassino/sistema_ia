@@ -6,6 +6,7 @@ use App\Models\SalidaViaje;
 use App\Support\Navegacion\MenuSecretariaPerfil;
 use App\Support\PermisosIaCatalog;
 use App\Support\Viajes\SalidaViajeHtmlSanitizer;
+use App\Support\Viajes\SalidaViajeTextoPlantilla;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -39,6 +40,8 @@ class SalidaViajeForm extends Component
             $this->formDesde = $viaje->desde?->format('Y-m-d') ?? '';
             $this->formHasta = $viaje->hasta?->format('Y-m-d') ?? '';
             $this->formTexto = (string) ($viaje->texto ?? '');
+        } else {
+            $this->formTexto = SalidaViajeTextoPlantilla::paraNuevoViaje();
         }
     }
 
