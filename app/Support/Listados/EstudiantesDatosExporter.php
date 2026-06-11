@@ -136,9 +136,9 @@ final class EstudiantesDatosExporter
             'legajos.telemad',
         ];
 
-        $columnaGs = EstudiantesDatosConsulta::columnaGrupoSanguineo();
-        if ($columnaGs !== null) {
-            $select[] = 'legajos.'.$columnaGs.' as grupo_sanguineo';
+        $exprGs = EstudiantesDatosConsulta::expresionSqlGrupoSanguineo();
+        if ($exprGs !== null) {
+            $select[] = DB::raw($exprGs.' as grupo_sanguineo');
         }
 
         $rows = DB::table('matricula')

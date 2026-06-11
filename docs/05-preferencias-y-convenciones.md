@@ -172,6 +172,7 @@ Todo **PDF nuevo** y toda **migración explícita** desde DomPDF debe usar **TCP
 - **Fuente:** **Arial** mediante `App\Support\Pdf\TcpdfFuenteArial::aplicar($pdf, $style, $pt)` (no `dejavusans` ni `SetFont` directo).
 - **Archivos TTF:** `storage/fonts/arial.ttf` y opcional `arialbd.ttf` (ver `storage/fonts/README.md`). En Windows también se detecta `C:\Windows\Fonts\`.
 - **Maquetación:** coordenadas en mm (`Cell`, `MultiCell`, `Rect`); fechas `d/m/Y`.
+- **Texto justificado:** no usar `MultiCell(..., 'J')` ni `writeHTMLCell` con alineación `J` para párrafos corridos. TCPDF estira también la **última línea** del bloque y queda con espaciado exagerado. Usar `App\Support\Pdf\TcpdfMultiCellJustificado::escribir($pdf, $ancho, $alturaLinea, $texto)` — justifica las líneas completas y deja la última alineada a la izquierda. Referencia: `InformeProgresoInicialTcpdf`, `SalidaViajeTcpdf`.
 - **Referencia:** `App\Support\InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController`.
 
 Regla Cursor: `.cursor/rules/pdf-tcpdf-nuevos.mdc`.

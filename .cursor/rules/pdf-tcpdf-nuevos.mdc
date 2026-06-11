@@ -27,6 +27,7 @@ Referencia: `App\Support\InformeInasistenciasTcpdf` + `InformeInasistenciasPdfCo
 - Márgenes, anchos de columna y alturas de fila en **constantes** (mm), documentadas si replican un PDF legacy.
 - `setPrintHeader(false)` / `setPrintFooter(false)` si no hay membrete TCPDF estándar.
 - Fechas en PDF: formato español `d/m/Y` (regla `formato-fechas-es.mdc`).
+- **Texto justificado:** no usar `MultiCell(..., 'J')` para párrafos — TCPDF estira la última línea. Usar `App\Support\Pdf\TcpdfMultiCellJustificado::escribir()`. Detalle: `docs/05-preferencias-y-convenciones.md` §8.
 - Rutas con `auth`, filtro por `schoolCtx()`, rate-limit en descargas masivas (como otros `*PdfController`).
 
 ## Prohibido en PDFs nuevos

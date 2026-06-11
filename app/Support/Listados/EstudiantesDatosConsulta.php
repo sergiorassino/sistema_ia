@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Schema;
  */
 final class EstudiantesDatosConsulta
 {
+    /** Nombres legacy posibles de la columna en `legajos` (orden de preferencia). */
+    private const CANDIDATAS_GRUPO_SANGUIENO = ['grupsang', 'gruposang', 'gruposanguineo', 'grupo_sanguineo', 'gsang'];
+
     /** @return Collection<int, Curso> */
     public static function cursosEnContexto(): Collection
     {
@@ -89,9 +92,9 @@ final class EstudiantesDatosConsulta
             'legajos.telemad',
         ];
 
-        $columnaGs = self::columnaGrupoSanguineo();
-        if ($columnaGs !== null) {
-            $select[] = 'legajos.'.$columnaGs.' as grupo_sanguineo';
+        $exprGs = self::expresionSqlGrupoSanguineo();
+        if ($exprGs !== null) {
+            $select[] = DB::raw($exprGs.' as grupo_sanguineo');
         }
 
         $rows = DB::table('matricula')
@@ -223,28 +226,63 @@ final class EstudiantesDatosConsulta
         return self::nombreArchivo($momento, 'pdf');
     }
 
-    public static function columnaGrupoSanguineo(): ?string
+    /**
+     * @return list<string>
+     */
+    public static function columnasGrupoSanguineoExistentes(): array
     {
-        static $columna = null;
-        static $resuelto = false;
+        static $columnas = null;
 
-        if ($resuelto) {
-            return $columna;
+        if ($columnas !== null) {
+            return $columnas;
         }
 
-        $resuelto = true;
+        $columnas = [];
         if (! Schema::hasTable('legajos')) {
-            return null;
+            return $columnas;
         }
 
-        foreach (['gruposanguineo', 'grupo_sanguineo', 'gsang', 'gruposang'] as $candidata) {
+        foreach (self::CANDIDATAS_GRUPO_SANGUIENO as $candidata) {
             if (Schema::hasColumn('legajos', $candidata)) {
-                $columna = $candidata;
-
-                return $columna;
+                $columnas[] = $candidata;
             }
         }
 
-        return null;
+        return $columnas;
+    }
+
+    /** Primera columna existente (compatibilidad con consultas simples). */
+    public static function columnaGrupoSanguineo(): ?string
+    {
+        return self::columnasGrupoSanguineoExistentes()[0] ?? null;
+    }
+
+    /** Valor no vacío del legajo, probando todas las columnas legacy conocidas. */
+    public static function valorGrupoSanguineo(object $legajo): string
+    {
+        foreach (self::columnasGrupoSanguineoExistentes() as $columna) {
+            $valor = trim((string) ($legajo->{$columna} ?? ''));
+            if ($valor !== '') {
+                return $valor;
+            }
+        }
+
+        return '';
+    }
+
+    /** COALESCE sobre columnas existentes (para SELECT en listados). */
+    public static function expresionSqlGrupoSanguineo(string $alias = 'legajos'): ?string
+    {
+        $columnas = self::columnasGrupoSanguineoExistentes();
+        if ($columnas === []) {
+            return null;
+        }
+
+        $partes = array_map(
+            fn (string $columna) => "NULLIF(TRIM({$alias}.{$columna}), '')",
+            $columnas
+        );
+
+        return 'COALESCE('.implode(', ', $partes).", '')";
     }
 }

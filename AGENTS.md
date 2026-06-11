@@ -40,7 +40,7 @@ No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`
 
 ## PDFs
 
-- **Nuevos:** **TCPDF** (`tecnickcom/tcpdf`), clase en `app/Support/`, controlador `*PdfController`. Fuente **Arial** vía `App\Support\Pdf\TcpdfFuenteArial` (`storage/fonts/arial.ttf`). No usar DomPDF ni vistas Blade de layout. Regla: `.cursor/rules/pdf-tcpdf-nuevos.mdc`. Referencia: `InformeInasistenciasTcpdf`, `ActaVolantePreviosTcpdf`.
+- **Nuevos:** **TCPDF** (`tecnickcom/tcpdf`), clase en `app/Support/`, controlador `*PdfController`. Fuente **Arial** vía `App\Support\Pdf\TcpdfFuenteArial` (`storage/fonts/arial.ttf`). Párrafos justificados: `TcpdfMultiCellJustificado::escribir()` (no `MultiCell` con `J`). No usar DomPDF ni vistas Blade de layout. Regla: `.cursor/rules/pdf-tcpdf-nuevos.mdc`. Referencia: `InformeInasistenciasTcpdf`, `ActaVolantePreviosTcpdf`.
 - **Legacy (DomPDF):** tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. Regla: `.cursor/rules/pdf-dompdf-columnas.mdc`; detalle en `docs/05-preferencias-y-convenciones.md` §9.
 
 ## Selects de año lectivo (`terlec`)

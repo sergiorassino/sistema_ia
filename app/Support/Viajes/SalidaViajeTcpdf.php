@@ -4,6 +4,7 @@ namespace App\Support\Viajes;
 
 use App\Models\SalidaViaje;
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfMultiCellJustificado;
 use TCPDF;
 
 /**
@@ -169,6 +170,8 @@ final class SalidaViajeTcpdf extends TCPDF
         $cursec = (string) ($alumno['cursec'] ?? '');
         $callenum = (string) ($alumno['callenum'] ?? '');
         $localidad = (string) ($alumno['localidad'] ?? '');
+        $gruposang = trim((string) ($alumno['gruposang'] ?? ''));
+        $grupoSanguineoTexto = $gruposang !== '' ? $gruposang : '.................';
 
         TcpdfFuenteArial::aplicar($this, 'B', 7);
         $this->SetXY(150, 25);
@@ -185,9 +188,9 @@ final class SalidaViajeTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, '', 9);
         $intro = 'Por la presente AUTORIZO a mi hijo/a: '.$apellido.', '.$nombre
             .' DNI N° '.$dni
-            .' Grupo y factor sanguíneo:.................  Alumno/a del curso: '.$cursec
+            .' Grupo y factor sanguíneo: '.$grupoSanguineoTexto.'. Alumno/a del curso: '.$cursec
             .' Con domicilio en calle '.$callenum.' de la localidad de '.$localidad.'.';
-        $this->MultiCell($ancho, 4, $intro, 0, 'J', false, 1);
+        TcpdfMultiCellJustificado::escribir($this, $ancho, 4, $intro);
         $this->Ln(2);
 
         if ($htmlCuerpo !== '') {

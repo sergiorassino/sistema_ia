@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\SalidaViaje;
 use App\Support\BoletinSecundarioLoteParams;
+use App\Support\Listados\EstudiantesDatosConsulta;
 use Illuminate\Support\Collection;
 
 /**
@@ -57,6 +58,7 @@ final class SalidaViajeDatos
                 'apellido' => trim((string) ($legajo->apellido ?? '')),
                 'nombre' => trim((string) ($legajo->nombre ?? '')),
                 'dni' => trim((string) ($legajo->dni ?? '')),
+                'gruposang' => EstudiantesDatosConsulta::valorGrupoSanguineo($legajo),
                 'cursec' => trim((string) ($matricula->curso?->cursec ?? '')),
                 'callenum' => trim((string) ($legajo->callenum ?? '')),
                 'localidad' => trim((string) ($legajo->localidad ?? '')),
