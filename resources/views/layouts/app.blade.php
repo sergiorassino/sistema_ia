@@ -33,7 +33,7 @@
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
-        viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf') ? 'true' : 'false' }},
+        viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf', 'viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf') ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))) ? 'true' : 'false' }},
         calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') ? 'true' : 'false' }},
         calificacionesPrimario: {{ str_starts_with($route ?? '', 'calificacionesPrimario.') ? 'true' : 'false' }},
@@ -329,7 +329,7 @@
         @endif
 
 
-        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraViajesSalidasEducativas())
+        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraViajesSalidasEducativas() && tienePermiso(\App\Support\PermisosIaCatalog::VIAJES_SALIDAS_EDUCATIVAS))
         {{-- Viajes / Salidas educativas: Menú de Secretaría, niveles 1–4 (no Administración) --}}
             <div class="mt-4"></div>
             <button type="button"
@@ -359,7 +359,22 @@
                     if (! \Illuminate\Support\Facades\Route::has('listados.estudiantes-datos')) {
                         throw new \RuntimeException("Sidebar: falta la ruta 'listados.estudiantes-datos'.");
                     }
+                    if (! \Illuminate\Support\Facades\Route::has('viajes.salidas')) {
+                        throw new \RuntimeException("Sidebar: falta la ruta 'viajes.salidas'.");
+                    }
                 @endphp
+                <a href="{{ route('viajes.salidas') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf'),
+                   ])
+                   title="Gestión de salidas educativas">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="truncate">Salidas educativas</span>
+                </a>
                 <a href="{{ route('listados.estudiantes-datos') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -771,7 +786,7 @@
             </div>
         @endif
 
-        @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21))
+        @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21) || tienePermiso(22) || tienePermiso(66))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -876,6 +891,20 @@
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span class="truncate">Solicitud de Pase</span>
+                    </a>
+                @endif
+                @if (tienePermiso(66))
+                    <a href="{{ route('certificados.cusIsaVozImagen') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => in_array($route ?? '', ['certificados.cusIsaVozImagen', 'certificados.cusIsaVozImagen.pdf'], true),
+                       ])
+                       title="C.U.S. / I.S.A. / Voz-Imagen">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">C.U.S. / I.S.A. / Voz-Imagen</span>
                     </a>
                 @endif
             </div>

@@ -32,15 +32,6 @@
 
     <div class="se-card space-y-5 p-5 sm:p-6">
         <div class="space-y-3 text-sm text-neutral-600">
-            <p>
-                Esta acción ejecuta el equivalente a
-                <code class="rounded bg-accent-100 px-1.5 py-0.5 text-xs text-neutral-800">UPDATE calificaciones SET inscri = 0 WHERE inscri = 1</code>
-                sobre <strong>toda la tabla calificaciones</strong> (todos los ciclos lectivos).
-            </p>
-            <p>
-                Solo se modifican filas con <code class="text-xs">inscri = 1</code> (inscripto «Sí»).
-                Los registros con <code class="text-xs">inscri = 2</code> u otros valores no se alteran.
-            </p>
             <p class="font-medium text-amber-900">
                 La operación no se puede deshacer desde esta pantalla. Revise el conteo antes de confirmar.
             </p>

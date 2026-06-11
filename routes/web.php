@@ -19,6 +19,7 @@ use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfControl
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesDatosExcelController;
 use App\Http\Controllers\EstudiantesDatosPdfController;
+use App\Http\Controllers\Viajes\SalidaViajePdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
@@ -142,6 +143,7 @@ use App\Http\Controllers\Certificados\CertificadoAsistenciaProfesorPdfController
 use App\Http\Controllers\Certificados\ConstanciaDocumentosPdfController;
 use App\Http\Controllers\Certificados\PaseParcialPdfController;
 use App\Http\Controllers\Certificados\SolicitudDePasePdfController;
+use App\Http\Controllers\Certificados\CusIsaVozImagenPdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoFrentePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoReversoPdfController;
 use App\Http\Controllers\Navegacion\AutogestionDocenteController;
@@ -152,6 +154,7 @@ use App\Livewire\Certificados\CertificadoAsistenciaProfesorIndex;
 use App\Livewire\Certificados\ConstanciaDocumentosIndex;
 use App\Livewire\Certificados\PaseParcialIndex;
 use App\Livewire\Certificados\SolicitudDePaseIndex;
+use App\Livewire\Certificados\CusIsaVozImagenIndex;
 use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
@@ -185,6 +188,9 @@ use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Listados\EstudiantesDatosExport;
+use App\Livewire\Viajes\SalidaViajeForm;
+use App\Livewire\Viajes\SalidaViajeImpresion;
+use App\Livewire\Viajes\SalidasViajesIndex;
 use App\Livewire\Listados\FichaMatriculaSecretaria;
 use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoDocentes;
@@ -575,12 +581,20 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:13')
         ->name('horarios.config');
 
-    Route::get('/listados/estudiantes-datos', EstudiantesDatosExport::class)
-        ->name('listados.estudiantes-datos');
-    Route::get('/listados/estudiantes-datos/excel', EstudiantesDatosExcelController::class)
-        ->name('listados.estudiantes-datos.excel');
-    Route::get('/listados/estudiantes-datos/pdf', EstudiantesDatosPdfController::class)
-        ->name('listados.estudiantes-datos.pdf');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::VIAJES_SALIDAS_EDUCATIVAS)->group(function () {
+        Route::get('/listados/estudiantes-datos', EstudiantesDatosExport::class)
+            ->name('listados.estudiantes-datos');
+        Route::get('/listados/estudiantes-datos/excel', EstudiantesDatosExcelController::class)
+            ->name('listados.estudiantes-datos.excel');
+        Route::get('/listados/estudiantes-datos/pdf', EstudiantesDatosPdfController::class)
+            ->name('listados.estudiantes-datos.pdf');
+
+        Route::get('/viajes/salidas', SalidasViajesIndex::class)->name('viajes.salidas');
+        Route::get('/viajes/salidas/nuevo', SalidaViajeForm::class)->name('viajes.salidas.create');
+        Route::get('/viajes/salidas/{id}/editar', SalidaViajeForm::class)->whereNumber('id')->name('viajes.salidas.edit');
+        Route::get('/viajes/salidas/{id}/imprimir', SalidaViajeImpresion::class)->whereNumber('id')->name('viajes.salidas.imprimir');
+        Route::post('/viajes/salidas/pdf', SalidaViajePdfController::class)->name('viajes.salidas.pdf');
+    });
 
     Route::middleware('permiso:12')->group(function () {
         Route::get('/examenes/materias-adeudadas/entrar', [MateriasAdeudadasEntradaController::class, 'listado'])
@@ -802,6 +816,15 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::post('/certificados/solicitud-de-pase/pdf', SolicitudDePasePdfController::class)
         ->middleware('permiso:22')
         ->name('certificados.solicitudDePase.pdf');
+
+    // Certificados — C.U.S. / I.S.A. / Voz-Imagen
+    Route::get('/certificados/cus-isa-voz-imagen', CusIsaVozImagenIndex::class)
+        ->middleware('permiso:66')
+        ->name('certificados.cusIsaVozImagen');
+    Route::post('/certificados/cus-isa-voz-imagen/pdf/{tipo}', CusIsaVozImagenPdfController::class)
+        ->where('tipo', 'cus|isa|voz-imagen')
+        ->middleware('permiso:66')
+        ->name('certificados.cusIsaVozImagen.pdf');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)

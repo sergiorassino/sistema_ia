@@ -59,6 +59,11 @@ final class PermisosIaCatalog
 
     public const CERT_SOLICITUD_PASE = 22;
 
+    public const CERT_CUS_ISA_VOZ_IMAGEN = 66;
+
+    /** Menú de Secretaría — salidas educativas, autorizaciones PDF y Excel de datos para viajes. */
+    public const VIAJES_SALIDAS_EDUCATIVAS = 67;
+
     public const INASISTENCIAS_DOCENTES = 23;
 
     public const INASISTENCIAS_SINCRO_CIDI = 24;
@@ -164,6 +169,7 @@ final class PermisosIaCatalog
             ['id' => 22, 'orden' => self::CERT_ASISTENCIA_PROF, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de asistencia del profesor: listado de personal del legajo y emisión de PDF.'],
             ['id' => 23, 'orden' => self::CERT_PASE_PARCIAL, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'],
             ['id' => 24, 'orden' => self::CERT_SOLICITUD_PASE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'],
+            ['id' => 66, 'orden' => self::CERT_CUS_ISA_VOZ_IMAGEN, 'tema' => 'CERTIFICADOS', 'descripcion' => 'C.U.S., I.S.A. y autorización de uso de imagen y voz: selección por curso y emisión de PDF.'],
             ['id' => 25, 'orden' => self::INASISTENCIAS_DOCENTES, 'tema' => 'INASISTENCIAS DOCENTES', 'descripcion' => 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'],
             ['id' => 26, 'orden' => self::INASISTENCIAS_SINCRO_CIDI, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'],
             ['id' => 27, 'orden' => PermisosConfiguracion::TERLEC, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Términos lectivos.'],
@@ -204,6 +210,7 @@ final class PermisosIaCatalog
             ['id' => 63, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda familiar: listado de familias y deuda.'],
             ['id' => 64, 'orden' => self::ADMIN_MORA_GESTION_MOROSOS, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.'],
             ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
+            ['id' => 67, 'orden' => self::VIAJES_SALIDAS_EDUCATIVAS, 'tema' => 'VIAJES / SALIDAS EDUCATIVAS', 'descripcion' => 'Gestión de salidas educativas, autorizaciones en PDF y exportación Excel de datos para viajes.'],
         ];
     }
 

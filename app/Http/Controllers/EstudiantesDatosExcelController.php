@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\Listados\EstudiantesDatosExporter;
 use App\Support\Navegacion\MenuSecretariaPerfil;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,6 +15,7 @@ class EstudiantesDatosExcelController extends Controller
 {
     public function __invoke(Request $request, EstudiantesDatosExporter $exporter): StreamedResponse
     {
+        abort_unless(tienePermiso(PermisosIaCatalog::VIAJES_SALIDAS_EDUCATIVAS), 403);
         MenuSecretariaPerfil::abortSiNoViajesSalidasEducativas();
 
         $key = 'estudiantes-datos-xlsx:'.(auth()->id() ?? $request->ip());

@@ -4,6 +4,7 @@ namespace App\Livewire\Listados;
 
 use App\Support\Listados\EstudiantesDatosConsulta;
 use App\Support\Navegacion\MenuSecretariaPerfil;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Layout;
@@ -14,6 +15,7 @@ class EstudiantesDatosExport extends Component
 {
     public function mount(): void
     {
+        abort_unless(tienePermiso(PermisosIaCatalog::VIAJES_SALIDAS_EDUCATIVAS), 403);
         MenuSecretariaPerfil::abortSiNoViajesSalidasEducativas();
     }
 

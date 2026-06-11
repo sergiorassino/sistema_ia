@@ -996,6 +996,99 @@ document.addEventListener('livewire:init', () => {
  * Enlaces WhatsApp manual (wa.me / web.whatsapp.com): reutilizar la misma ventana/pestaña.
  * <a target="nombre"> no es fiable con destinos externos; window.open(href, nombre) sí (gesto del usuario).
  */
+/**
+ * Editor HTML liviano (salidas educativas): fuentes, tamaños, enlaces; sin imágenes.
+ */
+/** Sincroniza todos los editores HTML livianos con Livewire (p. ej. antes de guardar). */
+window.syncSeHtmlEditors = function syncSeHtmlEditors(root) {
+    (root || document).querySelectorAll('.se-html-editor__area').forEach((el) => {
+        el.dispatchEvent(new Event('blur'));
+    });
+};
+
+window.seHtmlEditor = function seHtmlEditor(config) {
+    const wireModel = config?.wireModel ?? 'formTexto';
+    let initialHtml = config?.initialHtml ?? '';
+
+    return {
+        resolveHtml() {
+            if (this.$wire && typeof this.$wire.get === 'function') {
+                const fromWire = this.$wire.get(wireModel);
+                if (fromWire != null && String(fromWire).trim() !== '') {
+                    return String(fromWire);
+                }
+            }
+
+            return initialHtml ?? '';
+        },
+        init() {
+            this.$nextTick(() => {
+                const html = this.resolveHtml();
+                if (this.$refs.editor) {
+                    this.$refs.editor.innerHTML = html;
+                }
+            });
+        },
+        resetEditor(html) {
+            initialHtml = html ?? '';
+            if (this.$refs.editor) {
+                this.$refs.editor.innerHTML = this.resolveHtml();
+            }
+        },
+        cmd(command, value = null) {
+            this.$refs.editor?.focus();
+            document.execCommand(command, false, value);
+            this.stripImages();
+            this.sync();
+        },
+        setFontFamily(family) {
+            if (!family) {
+                return;
+            }
+            this.cmd('fontName', family);
+        },
+        setFontSize(size) {
+            if (!size) {
+                return;
+            }
+            this.cmd('fontSize', size);
+        },
+        insertLink() {
+            const url = window.prompt('URL del enlace (https://…)');
+            if (!url) {
+                return;
+            }
+            const trimmed = String(url).trim();
+            if (!trimmed || /^javascript:/i.test(trimmed)) {
+                return;
+            }
+            this.cmd('createLink', trimmed);
+        },
+        stripImages() {
+            this.$refs.editor?.querySelectorAll('img').forEach((img) => img.remove());
+        },
+        onPaste(event) {
+            event.preventDefault();
+            const text = event.clipboardData?.getData('text/html')
+                || event.clipboardData?.getData('text/plain')
+                || '';
+            const sanitized = text
+                .replace(/<img\b[^>]*>/gi, '')
+                .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+            document.execCommand('insertHTML', false, sanitized);
+            this.stripImages();
+            this.sync();
+        },
+        sync() {
+            this.stripImages();
+            const html = this.$refs.editor?.innerHTML ?? '';
+            if (this.$wire && typeof this.$wire.set === 'function') {
+                this.$wire.set(wireModel, html);
+            }
+        },
+    };
+};
+
 document.addEventListener('click', (e) => {
     const a = e.target.closest('a[data-se-wa-reuse="1"]');
     if (!a) {
