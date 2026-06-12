@@ -100,11 +100,7 @@ final class EstudiantesDatosExporter
             EstudiantesDatosConsulta::formatearFechaNacimiento($alumno->fechnaci ?? null),
             (string) ($alumno->domicilio ?? ''),
             trim((string) ($alumno->grupo_sanguineo ?? '')),
-            EstudiantesDatosConsulta::formatearTelDniResponsable(
-                (string) ($alumno->nombremad ?? ''),
-                (string) ($alumno->dnimad ?? ''),
-                (string) ($alumno->telemad ?? ''),
-            ),
+            EstudiantesDatosConsulta::formatearTelDniResponsableDesdeLegajo($alumno),
         ];
     }
 
@@ -134,6 +130,12 @@ final class EstudiantesDatosExporter
             'legajos.nombremad',
             'legajos.dnimad',
             'legajos.telemad',
+            'legajos.nombrepad',
+            'legajos.dnipad',
+            'legajos.telepad',
+            'legajos.nombretut',
+            'legajos.dnitut',
+            'legajos.teletut',
         ];
 
         $exprGs = EstudiantesDatosConsulta::expresionSqlGrupoSanguineo();
@@ -141,24 +143,22 @@ final class EstudiantesDatosExporter
             $select[] = DB::raw($exprGs.' as grupo_sanguineo');
         }
 
-        $rows = DB::table('matricula')
+        $idsPermitidos = array_flip($matriculaIds);
+
+        $filas = DB::table('matricula')
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->whereIn('matricula.id', $matriculaIds)
             ->where('matricula.idTerlec', (int) $ctx->idTerlec)
             ->where('matricula.idNivel', (int) $ctx->idNivel)
             ->where('matricula.idCondiciones', 1)
             ->whereNull('matricula.fechaBaja')
+            ->orderBy('legajos.apellido')
+            ->orderBy('legajos.nombre')
+            ->orderBy('matricula.id')
             ->select($select)
             ->get()
-            ->keyBy(fn (object $row) => (int) $row->matricula_id);
-
-        return collect($matriculaIds)
-            ->map(function (int $id) use ($rows, $cursosPorId) {
-                $row = $rows->get($id);
-                if ($row === null) {
-                    return null;
-                }
-
+            ->filter(fn (object $row) => isset($idsPermitidos[(int) $row->matricula_id]))
+            ->map(function (object $row) use ($cursosPorId) {
                 /** @var Curso|null $curso */
                 $curso = $cursosPorId->get((int) $row->id_curso);
                 $row->curso_nombre = $curso?->nombreParaListado() ?? '';
@@ -172,9 +172,9 @@ final class EstudiantesDatosExporter
                 }
 
                 return $row;
-            })
-            ->filter()
-            ->values();
+            });
+
+        return EstudiantesDatosConsulta::ordenarFilasAlfabeticamente($filas);
     }
 
     private function estilizarEncabezado(Worksheet $hoja, int $totalColumnas): void

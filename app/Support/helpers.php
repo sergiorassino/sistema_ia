@@ -773,6 +773,29 @@ if (! function_exists('tenantArancelesEscolaresMediosPago')) {
     }
 }
 
+if (! function_exists('rrdRol')) {
+    /**
+     * Rol efectivo del usuario en el módulo Reserva de Material Didáctico.
+     *
+     * Devuelve 'admin' | 'profesor' | 'lectura' | null (sin acceso).
+     * El bit más alto gana: admin > profesor > lectura.
+     */
+    function rrdRol(): ?string
+    {
+        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN)) {
+            return 'admin';
+        }
+        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)) {
+            return 'profesor';
+        }
+        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_LECTURA)) {
+            return 'lectura';
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('notificaciones_push_enviar')) {
     /**
      * Enviar notificación push a uno o más legajos (user_key).

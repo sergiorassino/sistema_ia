@@ -191,6 +191,9 @@ use App\Livewire\Listados\EstudiantesDatosExport;
 use App\Livewire\Viajes\SalidaViajeForm;
 use App\Livewire\Viajes\SalidaViajeImpresion;
 use App\Livewire\Viajes\SalidasViajesIndex;
+use App\Livewire\MaterialDidactico\ReservasDashboard;
+use App\Livewire\MaterialDidactico\ReservaForm;
+use App\Livewire\MaterialDidactico\RecursosAdmin;
 use App\Livewire\Listados\FichaMatriculaSecretaria;
 use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoDocentes;
@@ -594,6 +597,26 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/viajes/salidas/{id}/editar', SalidaViajeForm::class)->whereNumber('id')->name('viajes.salidas.edit');
         Route::get('/viajes/salidas/{id}/imprimir', SalidaViajeImpresion::class)->whereNumber('id')->name('viajes.salidas.imprimir');
         Route::post('/viajes/salidas/pdf', SalidaViajePdfController::class)->name('viajes.salidas.pdf');
+    });
+
+    // Material Didáctico — acceso: Admin (68) | Profesor (69) | Solo Lectura (70)
+    Route::prefix('material-didactico')->group(function () {
+        // Listado: cualquiera con algún permiso del módulo puede ver
+        Route::get('/', ReservasDashboard::class)->name('material-didactico.index');
+
+        // Registrar y editar: Admin o Profesor
+        Route::get('/reservar', ReservaForm::class)
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->name('material-didactico.reservar');
+        Route::get('/reservar/{id}/editar', ReservaForm::class)
+            ->whereNumber('id')
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->name('material-didactico.reservar.edit');
+
+        // Recursos (ABM): solo Admin
+        Route::get('/recursos', RecursosAdmin::class)
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN)
+            ->name('material-didactico.recursos');
     });
 
     Route::middleware('permiso:12')->group(function () {

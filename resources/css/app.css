@@ -704,6 +704,162 @@
         @apply justify-end;
     }
 
+    /* Material didáctico — listado de reservas (grid + subgrid: columnas alineadas entre filas) */
+    .gf.gf-rrd-listado {
+        display: grid;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        grid-template-columns:
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 1.05fr)
+            minmax(2.75rem, 0.95fr)
+            minmax(3rem, 1fr)
+            minmax(2.5rem, 0.8fr)
+            minmax(3rem, 1.1fr)
+            minmax(4.5rem, 5rem)
+            minmax(11.5rem, 13.5rem);
+    }
+    .gf.gf-rrd-listado.gf-rrd-listado--admin {
+        grid-template-columns:
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 1fr)
+            minmax(2.75rem, 0.9fr)
+            minmax(3rem, 0.95fr)
+            minmax(2.5rem, 0.75fr)
+            minmax(3rem, 1fr)
+            minmax(4.5rem, 5rem)
+            minmax(2.75rem, 0.85fr)
+            minmax(15.5rem, 17rem);
+    }
+    .gf.gf-rrd-listado.gf-rrd-listado--todas {
+        grid-template-columns:
+            minmax(4.5rem, 5rem)
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 1fr)
+            minmax(2.75rem, 0.9fr)
+            minmax(3rem, 0.95fr)
+            minmax(2.5rem, 0.75fr)
+            minmax(3rem, 1fr)
+            minmax(4.5rem, 5rem)
+            minmax(11.5rem, 13.5rem);
+    }
+    .gf.gf-rrd-listado.gf-rrd-listado--todas.gf-rrd-listado--admin {
+        grid-template-columns:
+            minmax(4.5rem, 5rem)
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 0.95fr)
+            minmax(2.75rem, 0.85fr)
+            minmax(3rem, 0.9fr)
+            minmax(2.5rem, 0.7fr)
+            minmax(3rem, 0.95fr)
+            minmax(4.5rem, 5rem)
+            minmax(2.75rem, 0.8fr)
+            minmax(15.5rem, 17rem);
+    }
+    .gf.gf-rrd-listado .gf-head,
+    .gf.gf-rrd-listado .gf-row {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-rrd-listado > .gf-empty {
+        grid-column: 1 / -1;
+    }
+    .gf.gf-rrd-listado .gf-th,
+    .gf.gf-rrd-listado .gf-td {
+        box-sizing: border-box;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .gf.gf-rrd-listado .gf-th {
+        white-space: normal;
+        line-height: 1.2;
+    }
+    .gf.gf-rrd-listado .gf-td.gf-rrd-grupo,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-sala,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-recurso,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-auxiliar,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-usuario,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-entregado {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.25;
+    }
+    .gf.gf-rrd-listado .gf-td.gf-rrd-estado .se-pill {
+        font-size: 10px;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+    .gf.gf-rrd-listado.gf-vcenter .gf-th,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td:not(.gf-td-actions) {
+        display: flex;
+        align-items: center;
+    }
+    .gf.gf-rrd-listado .gf-th.gf-rrd-acciones,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-acciones {
+        overflow: visible;
+    }
+    .gf.gf-rrd-listado.gf-vcenter .gf-th.gf-rrd-acciones,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-acciones {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 0.2rem;
+        padding-left: 0.2rem;
+        padding-right: 0.2rem;
+    }
+    .gf.gf-rrd-listado .gf-td.gf-rrd-acciones .btn-sm {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 0.28rem 0.42rem;
+        font-size: 10px;
+        line-height: 1.15;
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+        gap: 0;
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack-item {
+        display: flex;
+        align-items: center;
+        min-height: 1.75rem;
+        padding-top: 0.35rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid rgb(193 215 218 / 0.45);
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack-item:first-child {
+        padding-top: 0;
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack--acciones .gf-rrd-stack-item--acciones {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.2rem;
+    }
+    .gf.gf-rrd-listado .gf-rrd-stack-item--pedido {
+        justify-content: center;
+        margin-top: 0.15rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed rgb(193 215 218 / 0.65);
+        border-bottom: 0;
+    }
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-recurso,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-grupo,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-estado,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-entregado {
+        align-items: stretch;
+    }
+
     /*
      * Inline edit en listados (.gf-td)
      * Debe ocupar exactamente el ancho de la celda sin “mover” columnas.

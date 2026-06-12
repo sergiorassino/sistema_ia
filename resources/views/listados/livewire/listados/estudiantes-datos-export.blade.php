@@ -146,8 +146,8 @@
         @endif
 
         <div class="se-card mt-4 p-5 sm:p-6">
-            <p class="text-sm text-neutral-600">
-                El archivo Excel (.xlsx) o PDF incluye las columnas de la plantilla «ESTUDIANTES DATOS», con fecha y hora en el nombre del archivo.
+            <p class="text-sm text-neutral-500">
+                El campo de adulto responsable busca datos cargados en Madre (Responsable 1), Padre (Responsable 2) y Tutor, en ese orden.
             </p>
             <div class="mt-4 flex flex-wrap gap-3">
                 <a href="{{ $this->excelUrl }}"

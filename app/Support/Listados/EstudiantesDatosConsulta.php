@@ -90,6 +90,12 @@ final class EstudiantesDatosConsulta
             'legajos.nombremad',
             'legajos.dnimad',
             'legajos.telemad',
+            'legajos.nombrepad',
+            'legajos.dnipad',
+            'legajos.telepad',
+            'legajos.nombretut',
+            'legajos.dnitut',
+            'legajos.teletut',
         ];
 
         $exprGs = self::expresionSqlGrupoSanguineo();
@@ -159,6 +165,26 @@ final class EstudiantesDatosConsulta
             ->all();
     }
 
+    /** Clave de orden apellido + nombre (insensible a mayúsculas). */
+    public static function claveOrdenAlfabetico(object $row): string
+    {
+        $apellido = mb_strtolower(trim((string) ($row->apellido ?? '')), 'UTF-8');
+        $nombre = mb_strtolower(trim((string) ($row->nombre ?? '')), 'UTF-8');
+
+        return $apellido."\0".$nombre;
+    }
+
+    /**
+     * @param  Collection<int, object>  $filas
+     * @return Collection<int, object>
+     */
+    public static function ordenarFilasAlfabeticamente(Collection $filas): Collection
+    {
+        return $filas
+            ->sortBy(fn (object $row) => self::claveOrdenAlfabetico($row), SORT_STRING)
+            ->values();
+    }
+
     public static function formatearApellidoNombre(string $apellido, string $nombre): string
     {
         $texto = trim($apellido.' '.$nombre);
@@ -191,6 +217,40 @@ final class EstudiantesDatosConsulta
         }
 
         return mb_strtoupper($partes->implode(' — '), 'UTF-8');
+    }
+
+    /**
+     * Madre → padre → tutor según nombre cargado en el legajo.
+     *
+     * @return array{nombre: string, dni: string, tel: string}
+     */
+    public static function datosAdultoResponsableLegajo(object $legajo): array
+    {
+        $candidatos = [
+            ['nombremad', 'dnimad', 'telemad'],
+            ['nombrepad', 'dnipad', 'telepad'],
+            ['nombretut', 'dnitut', 'teletut'],
+        ];
+
+        foreach ($candidatos as [$colNombre, $colDni, $colTel]) {
+            $nombre = trim((string) ($legajo->{$colNombre} ?? ''));
+            if ($nombre !== '') {
+                return [
+                    'nombre' => $nombre,
+                    'dni' => trim((string) ($legajo->{$colDni} ?? '')),
+                    'tel' => trim((string) ($legajo->{$colTel} ?? '')),
+                ];
+            }
+        }
+
+        return ['nombre' => '', 'dni' => '', 'tel' => ''];
+    }
+
+    public static function formatearTelDniResponsableDesdeLegajo(object $legajo): string
+    {
+        $datos = self::datosAdultoResponsableLegajo($legajo);
+
+        return self::formatearTelDniResponsable($datos['nombre'], $datos['dni'], $datos['tel']);
     }
 
     public static function formatearTelDniResponsable(string $nombremad, string $dnimad, string $telemad): string

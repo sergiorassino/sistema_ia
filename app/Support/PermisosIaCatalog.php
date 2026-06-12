@@ -64,6 +64,15 @@ final class PermisosIaCatalog
     /** Menú de Secretaría — salidas educativas, autorizaciones PDF y Excel de datos para viajes. */
     public const VIAJES_SALIDAS_EDUCATIVAS = 67;
 
+    /** Reserva de Material Didáctico — préstamos espontáneos, gestión total, ABM recursos, entrega/devolución. */
+    public const RESERVA_MATERIAL_ADMIN = 68;
+
+    /** Reserva de Material Didáctico — reservar, editar y cancelar pedidos propios (hasta la entrega). */
+    public const RESERVA_MATERIAL_PROFESOR = 69;
+
+    /** Reserva de Material Didáctico — solo consulta del listado de reservas. */
+    public const RESERVA_MATERIAL_LECTURA = 70;
+
     public const INASISTENCIAS_DOCENTES = 23;
 
     public const INASISTENCIAS_SINCRO_CIDI = 24;
@@ -211,6 +220,9 @@ final class PermisosIaCatalog
             ['id' => 64, 'orden' => self::ADMIN_MORA_GESTION_MOROSOS, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.'],
             ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
             ['id' => 67, 'orden' => self::VIAJES_SALIDAS_EDUCATIVAS, 'tema' => 'VIAJES / SALIDAS EDUCATIVAS', 'descripcion' => 'Gestión de salidas educativas, autorizaciones en PDF y exportación Excel de datos para viajes.'],
+            ['id' => 68, 'orden' => self::RESERVA_MATERIAL_ADMIN, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — préstamos espontáneos, gestión de todas las reservas, ABM de grupos/recursos/disponibilidad y registro de entregas/devoluciones.'],
+            ['id' => 69, 'orden' => self::RESERVA_MATERIAL_PROFESOR, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — registrar, editar y cancelar pedidos propios (mientras el recurso no haya sido entregado).'],
+            ['id' => 70, 'orden' => self::RESERVA_MATERIAL_LECTURA, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — consulta del listado de reservas (solo lectura).'],
         ];
     }
 
