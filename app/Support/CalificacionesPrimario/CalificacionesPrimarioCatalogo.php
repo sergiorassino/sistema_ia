@@ -202,26 +202,77 @@ final class CalificacionesPrimarioCatalogo
         return self::etiquetaEncabezadoColumna($materia);
     }
 
-    /**
-     * Celdas no editables (p. ej. Aprec. final deshabilitada en ORAL/ESCR en 1° grado).
-     */
+    /** @deprecated Sin celdas bloqueadas: la nota anual (ic03) se carga manualmente en todas las materias. */
     public static function celdaInhabilitada(int $ciclo, int $ord, string $campo): bool
     {
-        if ($campo !== 'ic03') {
-            return false;
+        return false;
+    }
+
+    /** Etapas seleccionables en la carga por materia (1ª y 2ª). */
+    public static function normalizarEtapaCargaMateria(int $etapa): int
+    {
+        return $etapa === 2 ? 2 : 1;
+    }
+
+    /**
+     * Columnas de la grilla por materia según etapa (mapeo GE / legacy primario).
+     *
+     * @return array{
+     *     parciales: list<array{campo: string, etiqueta: string}>,
+     *     finalEtapa: array{campo: string, etiqueta: string},
+     *     anual: ?array{campo: string, etiqueta: string}
+     * }
+     */
+    public static function columnasGrillaMateria(int $etapa): array
+    {
+        $etapa = self::normalizarEtapaCargaMateria($etapa);
+
+        if ($etapa === 2) {
+            return [
+                'parciales' => [
+                    ['campo' => 'ic11', 'etiqueta' => 'Eval. 1'],
+                    ['campo' => 'ic12', 'etiqueta' => 'Eval. 2'],
+                    ['campo' => 'ic13', 'etiqueta' => 'Eval. 3'],
+                    ['campo' => 'ic14', 'etiqueta' => 'Eval. 4'],
+                    ['campo' => 'ic15', 'etiqueta' => 'Eval. 5'],
+                    ['campo' => 'ic16', 'etiqueta' => 'Eval. 6'],
+                ],
+                'finalEtapa' => ['campo' => 'ic02', 'etiqueta' => 'Nota etapa'],
+                'anual' => ['campo' => 'ic03', 'etiqueta' => 'Nota anual'],
+            ];
         }
 
-        if ($ciclo > 1) {
-            return false;
+        return [
+            'parciales' => [
+                ['campo' => 'ic05', 'etiqueta' => 'Eval. 1'],
+                ['campo' => 'ic06', 'etiqueta' => 'Eval. 2'],
+                ['campo' => 'ic07', 'etiqueta' => 'Eval. 3'],
+                ['campo' => 'ic08', 'etiqueta' => 'Eval. 4'],
+                ['campo' => 'ic09', 'etiqueta' => 'Eval. 5'],
+                ['campo' => 'ic10', 'etiqueta' => 'Eval. 6'],
+            ],
+            'finalEtapa' => ['campo' => 'ic01', 'etiqueta' => 'Nota etapa'],
+            'anual' => null,
+        ];
+    }
+
+    /** @return list<string> */
+    public static function camposNotaGrillaMateria(int $etapa): array
+    {
+        $cols = self::columnasGrillaMateria($etapa);
+        $campos = array_column($cols['parciales'], 'campo');
+        $campos[] = $cols['finalEtapa']['campo'];
+        if ($cols['anual'] !== null) {
+            $campos[] = $cols['anual']['campo'];
         }
 
-        return in_array($ord, [1, 3], true);
+        return $campos;
     }
 
     /** @return list<string> */
     public static function camposNotaEditables(): array
     {
-        return ['ic01', 'ic02', 'ic03'];
+        return ['ic01', 'ic02', 'ic03', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10', 'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16'];
     }
 
     /** @return list<string> */

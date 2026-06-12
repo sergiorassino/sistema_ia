@@ -8,9 +8,9 @@ class Ento extends Model
 {
     protected $table = 'ento';
 
-    protected $primaryKey = 'idNivel';
+    protected $primaryKey = 'Id';
 
-    public $incrementing = false;
+    public $incrementing = true;
 
     protected $keyType = 'int';
 

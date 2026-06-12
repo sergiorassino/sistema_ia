@@ -94,6 +94,6 @@ class CargaCalificacionesPrimarioIndex extends Component
         return view('livewire.calificaciones-primario.carga-calificaciones-primario-index', [
             'cursos' => $this->cursos(),
             'matriculas' => $this->matriculasDelCurso(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones (primario)']);
+        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones por estudiante (primario)']);
     }
 }

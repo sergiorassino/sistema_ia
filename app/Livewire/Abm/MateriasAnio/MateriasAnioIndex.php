@@ -459,16 +459,12 @@ class MateriasAnioIndex extends Component
             ->with('turnoClase')
             ->get(['Id', 'cursec', 'c', 's', 'idCurPlan', 'idTurnoClase']);
 
-        $planesIds = Plan::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->pluck('id');
-
-        $curplanes = Curplan::query()
-            ->with('plan')
-            ->whereIn('idPlan', $planesIds)
-            ->orderBy('idPlan')
-            ->orderBy('curPlanCurso')
-            ->get(['id', 'idPlan', 'curPlanCurso']);
+        $curplanes = Curplan::ordenarColeccion(
+            Curplan::query()
+                ->delNivel((int) $ctx->idNivel)
+                ->with('plan')
+                ->get(['id', 'idPlan', 'curPlanCurso'])
+        );
 
         $matplanes = Matplan::query()
             ->whereIn('idCurPlan', $curplanes->pluck('id'))

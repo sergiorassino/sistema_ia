@@ -2,7 +2,9 @@
 
 namespace App\Support\CalificacionesPrimario;
 
+use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -192,5 +194,147 @@ final class CalificacionesPrimarioDatos
             'id' => (int) $fila->id,
             'ord' => (int) $fila->ord,
         ];
+    }
+
+    /**
+     * Grilla por materia: matrículas regulares del curso con notas de la materia elegida.
+     *
+     * @return array{
+     *     ciclo: int,
+     *     ord: int,
+     *     materiaLabel: string,
+     *     cursoLabel: string,
+     *     columnas: array{
+     *         parciales: list<array{campo: string, etiqueta: string}>,
+     *         finalEtapa: array{campo: string, etiqueta: string},
+     *         anual: ?array{campo: string, etiqueta: string}
+     *     },
+     *     filas: list<array{
+     *         idMatricula: int,
+     *         idCalificacion: ?int,
+     *         alumno: string,
+     *         notas: array<string, string>
+     *     }>
+     * }
+     */
+    public static function cargarGrillaMateria(int $cursoId, int $materiaId, int $etapa): array
+    {
+        $ctx = schoolCtx();
+        $etapa = CalificacionesPrimarioCatalogo::normalizarEtapaCargaMateria($etapa);
+        $columnas = CalificacionesPrimarioCatalogo::columnasGrillaMateria($etapa);
+        $campos = CalificacionesPrimarioCatalogo::camposNotaGrillaMateria($etapa);
+
+        $curso = Curso::query()
+            ->with('curplan')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('Id', $cursoId)
+            ->first();
+
+        if ($curso === null) {
+            return [
+                'ciclo' => 1,
+                'ord' => 0,
+                'materiaLabel' => '—',
+                'cursoLabel' => '—',
+                'columnas' => $columnas,
+                'filas' => [],
+            ];
+        }
+
+        $materia = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idCursos', $cursoId)
+            ->where('id', $materiaId)
+            ->first(['id', 'ord', 'materia']);
+
+        if ($materia === null) {
+            return [
+                'ciclo' => CalificacionesPrimarioCatalogo::cicloDesdeCurso($curso),
+                'ord' => 0,
+                'materiaLabel' => '—',
+                'cursoLabel' => $curso->nombreParaListado(),
+                'columnas' => $columnas,
+                'filas' => [],
+            ];
+        }
+
+        $ord = (int) $materia->ord;
+        $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($curso);
+        $idsCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES,
+        );
+
+        $matriculas = Matricula::query()
+            ->with('legajo')
+            ->join('legajos as l', 'l.id', '=', 'matricula.idLegajos')
+            ->where('matricula.idCursos', $cursoId)
+            ->where('matricula.idNivel', (int) $ctx->idNivel)
+            ->where('matricula.idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('matricula.idCondiciones', $idsCondiciones)
+            ->whereNull('matricula.fechaBaja')
+            ->orderBy('l.apellido')
+            ->orderBy('l.nombre')
+            ->select('matricula.*')
+            ->get();
+
+        $idsMatricula = $matriculas->map(fn (Matricula $m) => (int) $m->id)->all();
+        $porMatricula = self::calificacionesPorMatriculaOrd($idsMatricula, $ord);
+
+        $filas = [];
+        foreach ($matriculas as $mat) {
+            $idMatricula = (int) $mat->id;
+            $fila = $porMatricula[$idMatricula] ?? null;
+            $notas = [];
+            foreach ($campos as $campo) {
+                $notas[$campo] = (string) ($fila?->{$campo} ?? '');
+            }
+
+            $legajo = $mat->legajo;
+            $filas[] = [
+                'idMatricula' => $idMatricula,
+                'idCalificacion' => $fila !== null ? (int) $fila->id : null,
+                'alumno' => trim(((string) ($legajo?->apellido ?? '')).', '.((string) ($legajo?->nombre ?? ''))),
+                'notas' => $notas,
+            ];
+        }
+
+        return [
+            'ciclo' => $ciclo,
+            'ord' => $ord,
+            'materiaLabel' => trim((string) ($materia->materia ?? '')) !== '' ? (string) $materia->materia : '—',
+            'cursoLabel' => $curso->nombreParaListado(),
+            'columnas' => $columnas,
+            'filas' => $filas,
+        ];
+    }
+
+    /**
+     * @param  list<int>  $idsMatricula
+     * @return array<int, object{id: int, ic01: ?string, ic02: ?string, ic03: ?string, ic05: ?string, ic06: ?string, ic07: ?string, ic08: ?string, ic09: ?string, ic10: ?string, ic11: ?string, ic12: ?string, ic13: ?string, ic14: ?string, ic15: ?string, ic16: ?string}>
+     */
+    private static function calificacionesPorMatriculaOrd(array $idsMatricula, int $ord): array
+    {
+        if ($idsMatricula === []) {
+            return [];
+        }
+
+        $filas = DB::table('calificaciones')
+            ->whereIn('idMatricula', $idsMatricula)
+            ->where('ord', $ord)
+            ->get([
+                'id', 'idMatricula', 'ord',
+                'ic01', 'ic02', 'ic03',
+                'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
+                'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16',
+            ]);
+
+        $out = [];
+        foreach ($filas as $r) {
+            $out[(int) $r->idMatricula] = $r;
+        }
+
+        return $out;
     }
 }

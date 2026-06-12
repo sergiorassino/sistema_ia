@@ -182,24 +182,10 @@ if (! function_exists('tieneAlgunPermisoConfiguracion')) {
 if (! function_exists('schoolLogoStoragePath')) {
     function schoolLogoStoragePath(bool $refresh = false): ?string
     {
-        static $memo = null;
-        static $done = false;
-
-        if ($refresh) {
-            $done = false;
-            $memo = null;
-        }
-
-        if ($done) {
-            return $memo;
-        }
-
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
             return null;
         }
-
-        $done = true;
 
         $path = Ento::query()
             ->where('idNivel', $idNivel)
@@ -214,9 +200,7 @@ if (! function_exists('schoolLogoStoragePath')) {
             return null;
         }
 
-        $memo = $path;
-
-        return $memo;
+        return $path;
     }
 }
 
@@ -232,19 +216,10 @@ if (! function_exists('schoolLogoUrl')) {
 if (! function_exists('studentLogoStoragePath')) {
     function studentLogoStoragePath(): ?string
     {
-        static $memo = null;
-        static $done = false;
-
-        if ($done) {
-            return $memo;
-        }
-
         $idNivel = (int) (studentCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
             return null;
         }
-
-        $done = true;
 
         $path = Ento::query()
             ->where('idNivel', $idNivel)
@@ -259,9 +234,7 @@ if (! function_exists('studentLogoStoragePath')) {
             return null;
         }
 
-        $memo = $path;
-
-        return $memo;
+        return $path;
     }
 }
 
@@ -280,14 +253,6 @@ if (! function_exists('entoInstitutionalLogoStoragePath')) {
      */
     function entoInstitutionalLogoStoragePath(): ?string
     {
-        static $memo = null;
-        static $done = false;
-
-        if ($done) {
-            return $memo;
-        }
-        $done = true;
-
         $path = Ento::query()
             ->whereNotNull('logo_path')
             ->where('logo_path', '<>', '')
@@ -295,21 +260,15 @@ if (! function_exists('entoInstitutionalLogoStoragePath')) {
             ->value('logo_path');
 
         if (! is_string($path) || trim($path) === '') {
-            $memo = null;
-
             return null;
         }
 
         $path = trim($path);
         if (! Storage::disk('public')->exists($path)) {
-            $memo = null;
-
             return null;
         }
 
-        $memo = $path;
-
-        return $memo;
+        return $path;
     }
 }
 
@@ -392,18 +351,9 @@ if (! function_exists('schoolPdfHeaderData')) {
      */
     function schoolPdfHeaderData(): array
     {
-        static $memo = null;
-        static $done = false;
-
-        if ($done) {
-            /** @var array $memo */
-            return $memo;
-        }
-        $done = true;
-
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
-            $memo = [
+            return [
                 'insti' => '',
                 'direccion' => '',
                 'localidad' => '',
@@ -411,71 +361,6 @@ if (! function_exists('schoolPdfHeaderData')) {
                 'ee' => '',
                 'logo_file' => null,
             ];
-
-            return $memo;
-        }
-
-        $ento = Ento::query()
-            ->where('idNivel', $idNivel)
-            ->first(['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path']);
-
-        $insti = trim((string) ($ento?->insti ?? ''));
-        $direccion = trim((string) ($ento?->direccion ?? ''));
-        $localidad = trim((string) ($ento?->localidad ?? ''));
-        $cue = trim((string) ($ento?->cue ?? ''));
-        $ee = trim((string) ($ento?->ee ?? ''));
-
-        $logoFile = null;
-        $logoPath = trim((string) ($ento?->logo_path ?? ''));
-        if ($logoPath !== '') {
-            $abs = Storage::disk('public')->path($logoPath);
-            if (is_string($abs) && $abs !== '' && file_exists($abs)) {
-                $logoFile = $abs;
-            }
-        }
-
-        $memo = [
-            'insti' => $insti,
-            'direccion' => $direccion,
-            'localidad' => $localidad,
-            'cue' => $cue,
-            'ee' => $ee,
-            'logo_file' => $logoFile,
-        ];
-
-        return $memo;
-    }
-}
-
-if (! function_exists('studentPdfHeaderData')) {
-    /**
-     * Encabezado institucional para PDFs del portal alumno (Dompdf), según `studentCtx()->idNivel`.
-     *
-     * @return array{insti:string,direccion:string,localidad:string,cue:string,ee:string,logo_file:?string}
-     */
-    function studentPdfHeaderData(): array
-    {
-        static $memo = null;
-        static $done = false;
-
-        if ($done) {
-            /** @var array $memo */
-            return $memo;
-        }
-        $done = true;
-
-        $idNivel = (int) (studentCtx()->idNivel ?? 0);
-        if ($idNivel <= 0) {
-            $memo = [
-                'insti' => '',
-                'direccion' => '',
-                'localidad' => '',
-                'cue' => '',
-                'ee' => '',
-                'logo_file' => null,
-            ];
-
-            return $memo;
         }
 
         $ento = Ento::query()
@@ -506,7 +391,7 @@ if (! function_exists('studentPdfHeaderData')) {
             }
         }
 
-        $memo = [
+        return [
             'insti' => $insti,
             'direccion' => $direccion,
             'localidad' => $localidad,
@@ -514,8 +399,65 @@ if (! function_exists('studentPdfHeaderData')) {
             'ee' => $ee,
             'logo_file' => $logoFile,
         ];
+    }
+}
 
-        return $memo;
+if (! function_exists('studentPdfHeaderData')) {
+    /**
+     * Encabezado institucional para PDFs del portal alumno (Dompdf), según `studentCtx()->idNivel`.
+     *
+     * @return array{insti:string,direccion:string,localidad:string,cue:string,ee:string,logo_file:?string}
+     */
+    function studentPdfHeaderData(): array
+    {
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return [
+                'insti' => '',
+                'direccion' => '',
+                'localidad' => '',
+                'cue' => '',
+                'ee' => '',
+                'logo_file' => null,
+            ];
+        }
+
+        $ento = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->first(['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path']);
+
+        $insti = trim((string) ($ento?->insti ?? ''));
+        $direccion = trim((string) ($ento?->direccion ?? ''));
+        $localidad = trim((string) ($ento?->localidad ?? ''));
+        $cue = trim((string) ($ento?->cue ?? ''));
+        $ee = trim((string) ($ento?->ee ?? ''));
+
+        $logoFile = null;
+        $logoPath = trim((string) ($ento?->logo_path ?? ''));
+        if ($logoPath !== '') {
+            $abs = Storage::disk('public')->path($logoPath);
+            if (is_string($abs) && $abs !== '' && file_exists($abs)) {
+                $logoFile = $abs;
+            }
+        }
+        if ($logoFile === null) {
+            $fallbackPath = entoInstitutionalLogoStoragePath();
+            if (is_string($fallbackPath) && $fallbackPath !== '') {
+                $abs = Storage::disk('public')->path($fallbackPath);
+                if (is_string($abs) && $abs !== '' && file_exists($abs)) {
+                    $logoFile = $abs;
+                }
+            }
+        }
+
+        return [
+            'insti' => $insti,
+            'direccion' => $direccion,
+            'localidad' => $localidad,
+            'cue' => $cue,
+            'ee' => $ee,
+            'logo_file' => $logoFile,
+        ];
     }
 }
 

@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesPrimario;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
 /**
@@ -33,6 +34,12 @@ final class BoletinIpeTcpdf extends TCPDF
     private const ALTO_BLOQUE_OBS = 110.0;
 
     private const FILL_GRIS = [232, 232, 232];
+
+    private const ALTO_ENCABEZADO_INST = 22.0;
+
+    private const ANCHO_LOGO = 18.0;
+
+    private const ALTO_LOGO = 18.0;
 
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $header;
@@ -133,13 +140,24 @@ final class BoletinIpeTcpdf extends TCPDF
             $insti = 'Institución';
         }
 
-        $logo = $this->header['logo_file'] ?? null;
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $xy1 + 3, $xy1 + 1, 20, 20, '', '', '', false, 300);
-        }
-
         $this->SetDrawColor(0, 0, 0);
-        $this->Rect($xy1, $xy1, self::ANCHO_UTIL, 22);
+        $this->Rect($xy1, $xy1, self::ANCHO_UTIL, self::ALTO_ENCABEZADO_INST);
+
+        $logo = $this->resolverLogoArchivo();
+        if ($logo !== null) {
+            $this->Image(
+                $logo,
+                $xy1 + 2,
+                $xy1 + ((self::ALTO_ENCABEZADO_INST - self::ALTO_LOGO) / 2),
+                self::ANCHO_LOGO,
+                self::ALTO_LOGO,
+                '',
+                '',
+                '',
+                false,
+                300,
+            );
+        }
 
         $this->SetXY($xy1, $xy1);
         TcpdfFuenteArial::aplicar($this, 'B', 10);
@@ -158,7 +176,27 @@ final class BoletinIpeTcpdf extends TCPDF
         $curso = trim((string) ($datos['cursoLabel'] ?? ''));
         $this->Cell(self::ANCHO_UTIL, 5, $curso, 0, 2, 'C');
 
-        return $xy1 + 22 + 2;
+        return $xy1 + self::ALTO_ENCABEZADO_INST + 2;
+    }
+
+    private function resolverLogoArchivo(): ?string
+    {
+        $logo = $this->header['logo_file'] ?? null;
+        if (is_string($logo) && $logo !== '' && is_file($logo)) {
+            return $logo;
+        }
+
+        $path = entoInstitutionalLogoStoragePath();
+        if (is_string($path) && $path !== '') {
+            $abs = Storage::disk('public')->path($path);
+            if (is_string($abs) && $abs !== '' && is_file($abs)) {
+                return $abs;
+            }
+        }
+
+        $fallback = public_path('img/3.png');
+
+        return is_file($fallback) ? $fallback : null;
     }
 
     private function dibujarEncabezadoGrilla(float $y): float

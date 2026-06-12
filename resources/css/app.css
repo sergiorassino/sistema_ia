@@ -1673,6 +1673,99 @@
         font-size: 10px !important;
     }
 
+    /* Primario — celda nota: input + desplegable compacto de notas permitidas */
+    .se-calif-prim-nota-combo .se-calif-prim-nota-input {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .se-calif-prim-nota-picker {
+        position: relative;
+    }
+    .se-calif-prim-nota-picker-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.35rem;
+        min-width: 1.35rem;
+        height: 22px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid rgb(193 215 218);
+        border-left: 0;
+        border-top-right-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+        background-color: rgb(244 248 249);
+        color: rgb(85 85 85);
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .se-calif-prim-nota-picker-btn:hover {
+        background-color: rgb(225 237 239);
+        border-color: rgb(64 132 141);
+        color: rgb(64 132 141);
+    }
+    .se-calif-prim-nota-picker-btn:focus-visible {
+        outline: 2px solid rgb(64 132 141);
+        outline-offset: 0;
+    }
+    .se-calif-prim-nota-picker-icon {
+        width: 0.75rem;
+        height: 0.75rem;
+        pointer-events: none;
+    }
+    .se-calif-prim-nota-picker-menu {
+        z-index: 250;
+        min-width: 2.25rem;
+        width: max-content;
+        max-width: 3.25rem;
+        padding: 0.125rem;
+        border: 1px solid rgb(193 215 218);
+        border-radius: 0.5rem;
+        background-color: #ffffff;
+        box-shadow: 0 4px 14px rgb(51 51 51 / 0.12);
+    }
+    .se-calif-prim-nota-picker-option.is-selected {
+        background-color: rgb(64 132 141);
+        color: #ffffff;
+    }
+    .se-calif-prim-nota-picker-option.is-focused {
+        background-color: rgb(225 237 239);
+        color: rgb(64 132 141);
+        outline: 2px solid rgb(64 132 141);
+        outline-offset: -1px;
+    }
+    .se-calif-prim-nota-picker-option.is-selected.is-focused {
+        background-color: rgb(52 110 118);
+        color: #ffffff;
+    }
+    .se-calif-prim-nota-picker-option {
+        display: block;
+        width: 100%;
+        min-width: 2rem;
+        margin: 0;
+        padding: 0.25rem 0.375rem;
+        border: 0;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: rgb(51 51 51);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.2;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.12s ease, color 0.12s ease;
+    }
+    .se-calif-prim-nota-picker-option:hover,
+    .se-calif-prim-nota-picker-option:focus-visible {
+        background-color: rgb(244 248 249);
+        color: rgb(64 132 141);
+        outline: none;
+    }
+    table.se-calif-prim-grid .se-calif-prim-nota-combo input,
+    table.se-calif-prim-mat-grid .se-calif-prim-nota-combo input {
+        height: 22px;
+    }
+
     /* Módulo Listados (por curso): checkbox sin borde (UI más limpia) */
     .se-page fieldset input[type="checkbox"] {
         border-width: 0 !important;

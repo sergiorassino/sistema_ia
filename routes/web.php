@@ -178,6 +178,7 @@ use App\Livewire\CalificacionesPrimario\BoletinIpeIndex;
 use App\Livewire\CalificacionesPrimario\PlanillaCalificacionesPrimario;
 use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioForm;
 use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioIndex;
+use App\Livewire\CalificacionesPrimario\CargaCalificacionesPrimarioMateria;
 use App\Livewire\CalificacionesPrimario\SincroDesempenos;
 use App\Livewire\CalificacionesPrimario\SincroGe as SincroGePrimario;
 use App\Livewire\CalificacionesSecundario\SincroGe;
@@ -718,6 +719,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:9')
         ->whereNumber('matricula')
         ->name('calificacionesPrimario.carga.alumno');
+    Route::get('/calificaciones-primario/carga-materia', CargaCalificacionesPrimarioMateria::class)
+        ->middleware('permiso:9')
+        ->name('calificacionesPrimario.cargaMateria');
     Route::get('/calificaciones-primario/boletin-ipe', BoletinIpeIndex::class)
         ->middleware('permiso:9')
         ->name('calificacionesPrimario.boletinIpe');

@@ -259,6 +259,289 @@ function seCalifPrimCampoConCatalogo(field) {
     return field === 'ic01' || field === 'ic02' || field === 'ic03';
 }
 
+let seCalifPrimNotaPickerOpen = null;
+
+function seCalifPrimNotaPickerOptions(menu) {
+    return Array.from(menu.querySelectorAll('.se-calif-prim-nota-picker-option'));
+}
+
+function seCalifPrimSyncNotaPickerSelection(menu, value) {
+    const val = String(value ?? '').trim();
+    seCalifPrimNotaPickerOptions(menu).forEach((opt) => {
+        const match = String(opt.dataset.nota ?? '').trim() === val && val !== '';
+        opt.classList.toggle('is-selected', match);
+        opt.setAttribute('aria-selected', match ? 'true' : 'false');
+        opt.classList.remove('is-focused');
+    });
+}
+
+function seCalifPrimClearNotaPickerFocus(menu) {
+    seCalifPrimNotaPickerOptions(menu).forEach((opt) => opt.classList.remove('is-focused'));
+}
+
+function seCalifPrimFocusNotaPickerOption(menu, index) {
+    const options = seCalifPrimNotaPickerOptions(menu);
+    if (!options.length) {
+        return null;
+    }
+    let idx = index;
+    if (idx < 0) {
+        idx = 0;
+    }
+    if (idx >= options.length) {
+        idx = options.length - 1;
+    }
+    seCalifPrimClearNotaPickerFocus(menu);
+    const opt = options[idx];
+    opt.classList.add('is-focused');
+    opt.focus({ preventScroll: true });
+    return opt;
+}
+
+function seCalifPrimFocusNotaPickerInitial(menu, input) {
+    const val = String(input?.value ?? '').trim();
+    const options = seCalifPrimNotaPickerOptions(menu);
+    let idx = options.findIndex((opt) => String(opt.dataset.nota ?? '').trim() === val);
+    if (idx < 0) {
+        idx = 0;
+    }
+    return seCalifPrimFocusNotaPickerOption(menu, idx);
+}
+
+function seCalifPrimFindNotaPickerMenu(picker) {
+    const inputId = picker?.dataset?.seCalifPrimNotaPickerFor ?? '';
+    if (inputId === '') {
+        return null;
+    }
+    return document.querySelector(
+        `.se-calif-prim-nota-picker-menu[data-se-calif-prim-nota-menu-for="${CSS.escape(String(inputId))}"]`,
+    );
+}
+
+function seCalifPrimCloseNotaPicker(focusBack = false) {
+    if (!seCalifPrimNotaPickerOpen) {
+        return;
+    }
+    const { menu, btn, picker, placeholder } = seCalifPrimNotaPickerOpen;
+    menu.hidden = true;
+    menu.classList.add('hidden');
+    menu.style.cssText = '';
+    if (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+    }
+    if (placeholder && picker && menu.parentElement === document.body) {
+        picker.insertBefore(menu, placeholder);
+        placeholder.remove();
+    }
+    delete menu._seCalifPrimPlaceholder;
+    delete menu._seCalifPrimHome;
+    const returnFocus = focusBack ? btn : null;
+    seCalifPrimNotaPickerOpen = null;
+    if (returnFocus) {
+        returnFocus.focus({ preventScroll: true });
+    }
+}
+
+function seCalifPrimApplyNotaFromPicker(input, nota, menu) {
+    input.dataset.seCalifPrimLast = input.value ?? '';
+    input.dataset.seCalifPrimMatLast = input.value ?? '';
+    input.value = nota;
+    if (menu) {
+        seCalifPrimSyncNotaPickerSelection(menu, nota);
+    }
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+}
+
+function seCalifPrimPositionNotaPickerMenu(btn, menu) {
+    menu.hidden = false;
+    menu.classList.remove('hidden');
+    menu.style.visibility = 'hidden';
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '250';
+    const menuWidth = Math.max(36, Math.ceil(menu.getBoundingClientRect().width));
+    const rect = btn.getBoundingClientRect();
+    let left = rect.right - menuWidth;
+    left = Math.max(4, Math.min(left, window.innerWidth - menuWidth - 4));
+    menu.style.width = `${menuWidth}px`;
+    menu.style.top = `${Math.round(rect.bottom + 2)}px`;
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.visibility = 'visible';
+}
+
+function seCalifPrimOpenNotaPicker(btn, menu, picker, input) {
+    seCalifPrimCloseNotaPicker(false);
+    const placeholder = document.createComment('se-calif-prim-nota-picker-menu');
+    picker.insertBefore(placeholder, menu);
+    menu._seCalifPrimPlaceholder = placeholder;
+    menu._seCalifPrimHome = picker;
+    document.body.appendChild(menu);
+    btn.setAttribute('aria-expanded', 'true');
+    seCalifPrimSyncNotaPickerSelection(menu, input.value);
+    seCalifPrimPositionNotaPickerMenu(btn, menu);
+    seCalifPrimNotaPickerOpen = { menu, btn, picker, input, placeholder };
+    seCalifPrimFocusNotaPickerInitial(menu, input);
+}
+
+function seCalifPrimHandleNotaPickerClick(e) {
+    const opt = e.target.closest('.se-calif-prim-nota-picker-option');
+    if (opt && seCalifPrimNotaPickerOpen?.menu?.contains(opt)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const { menu, input } = seCalifPrimNotaPickerOpen;
+        const nota = String(opt.dataset.nota ?? opt.textContent ?? '').trim();
+        if (nota !== '') {
+            seCalifPrimApplyNotaFromPicker(input, nota, menu);
+        }
+        seCalifPrimCloseNotaPicker(true);
+        return;
+    }
+
+    const btn = e.target.closest('.se-calif-prim-nota-picker-btn');
+    if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const picker = btn.closest('[data-se-calif-prim-nota-picker-for]');
+        if (!picker) {
+            return;
+        }
+        const menu = seCalifPrimFindNotaPickerMenu(picker);
+        const input = document.getElementById(picker.dataset.seCalifPrimNotaPickerFor);
+        if (!menu || !input || input.disabled) {
+            return;
+        }
+        if (seCalifPrimNotaPickerOpen && seCalifPrimNotaPickerOpen.menu === menu) {
+            seCalifPrimCloseNotaPicker(true);
+            return;
+        }
+        seCalifPrimOpenNotaPicker(btn, menu, picker, input);
+        return;
+    }
+
+    if (!seCalifPrimNotaPickerOpen) {
+        return;
+    }
+    const { menu, btn: openBtn } = seCalifPrimNotaPickerOpen;
+    if (menu.contains(e.target) || openBtn.contains(e.target)) {
+        return;
+    }
+    seCalifPrimCloseNotaPicker(true);
+}
+
+function seCalifPrimBindNotaPickerDocClose() {
+    if (window._seCalifPrimNotaPickerDocBound) {
+        return;
+    }
+    window._seCalifPrimNotaPickerDocBound = true;
+
+    document.addEventListener(
+        'mousedown',
+        (e) => {
+            if (e.target.closest('.se-calif-prim-nota-picker-btn')) {
+                e.preventDefault();
+            }
+        },
+        true,
+    );
+
+    document.addEventListener(
+        'click',
+        (e) => {
+            seCalifPrimHandleNotaPickerClick(e);
+        },
+        true,
+    );
+
+    document.addEventListener('keydown', (e) => {
+        if (!seCalifPrimNotaPickerOpen) {
+            return;
+        }
+        const { menu, input, btn } = seCalifPrimNotaPickerOpen;
+        const options = seCalifPrimNotaPickerOptions(menu);
+        let idx = options.findIndex((opt) => opt.classList.contains('is-focused'));
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            seCalifPrimCloseNotaPicker(true);
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (idx < 0) {
+                idx = 0;
+            } else {
+                idx = Math.min(idx + 1, options.length - 1);
+            }
+            seCalifPrimFocusNotaPickerOption(menu, idx);
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (idx < 0) {
+                idx = options.length - 1;
+            } else {
+                idx = Math.max(idx - 1, 0);
+            }
+            seCalifPrimFocusNotaPickerOption(menu, idx);
+            return;
+        }
+
+        if (e.key === 'Enter' || e.key === ' ') {
+            const focused = options[idx];
+            if (!focused || !menu.contains(document.activeElement)) {
+                return;
+            }
+            e.preventDefault();
+            const nota = String(focused.dataset.nota ?? '').trim();
+            if (nota !== '') {
+                seCalifPrimApplyNotaFromPicker(input, nota, menu);
+            }
+            seCalifPrimCloseNotaPicker(true);
+        }
+    });
+
+    window.addEventListener('scroll', () => seCalifPrimCloseNotaPicker(true), true);
+    window.addEventListener('resize', () => seCalifPrimCloseNotaPicker(true));
+}
+
+/** Desplegable compacto de notas permitidas → copia al input y dispara guardado (focusout). */
+function seCalifPrimBindNotaPickerCombo(tbody) {
+    if (tbody._seCalifPrimNotaPickerBound) {
+        return;
+    }
+    tbody._seCalifPrimNotaPickerBound = true;
+    seCalifPrimBindNotaPickerDocClose();
+
+    tbody.addEventListener(
+        'keydown',
+        (e) => {
+            const btn = e.target.closest('.se-calif-prim-nota-picker-btn');
+            if (!btn) {
+                return;
+            }
+            if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'ArrowDown') {
+                return;
+            }
+            e.preventDefault();
+            const picker = btn.closest('[data-se-calif-prim-nota-picker-for]');
+            if (!picker) {
+                return;
+            }
+            const menu = seCalifPrimFindNotaPickerMenu(picker);
+            const input = document.getElementById(picker.dataset.seCalifPrimNotaPickerFor);
+            if (!menu || !input || input.disabled) {
+                return;
+            }
+            if (seCalifPrimNotaPickerOpen && seCalifPrimNotaPickerOpen.menu === menu) {
+                return;
+            }
+            seCalifPrimOpenNotaPicker(btn, menu, picker, input);
+        },
+        true,
+    );
+}
+
 function seCalifPrimCallSaveCell(root, ord, field, value) {
     const c = root && root.__livewire;
     if (!c || !c.$wire) {
@@ -338,6 +621,7 @@ function bindCalifPrimarioTablas() {
             return;
         }
         tbody._seCalifPrimBound = true;
+        seCalifPrimBindNotaPickerCombo(tbody);
 
         tbody.addEventListener(
             'focusin',
@@ -415,6 +699,200 @@ function bindCalifPrimarioTablas() {
                 }
 
                 const matrix = seCalifPrimBuildNavMatrix(tbody);
+                const pos = seCalifPrimFindNavPos(matrix, el);
+                if (!pos) {
+                    return;
+                }
+
+                const nrows = matrix.length;
+                const ncols = matrix[0] ? matrix[0].length : 0;
+                if (!nrows || !ncols) {
+                    return;
+                }
+
+                const { row, col } = pos;
+                let next = null;
+
+                if (e.key === 'ArrowLeft') {
+                    next = seCalifPrimStep(matrix, row, col, 0, -1);
+                } else if (e.key === 'ArrowRight') {
+                    next = seCalifPrimStep(matrix, row, col, 0, 1);
+                } else if (e.key === 'ArrowUp') {
+                    next = seCalifPrimStep(matrix, row, col, -1, 0);
+                } else if (e.key === 'ArrowDown') {
+                    next = seCalifPrimStep(matrix, row, col, 1, 0);
+                } else if (e.key === 'Enter') {
+                    next = seCalifPrimStep(matrix, row, col, 1, 0);
+                    if (!next && col + 1 < ncols) {
+                        for (let r = 0; r < nrows; r++) {
+                            const candidate = matrix[r][col + 1];
+                            if (candidate && !candidate.disabled) {
+                                next = candidate;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!next || next === el) {
+                    return;
+                }
+
+                e.preventDefault();
+                seCalifFocusNavCell(next);
+            },
+            true,
+        );
+    });
+}
+
+const SECALIF_PRIM_MAT_INPUT_ID = /^se-calif-prim-mat-(\d+)-(ic\d{2})$/;
+
+function seCalifPrimMatCampoConCatalogo(field) {
+    return (
+        field === 'ic01' ||
+        field === 'ic02' ||
+        field === 'ic03' ||
+        (field >= 'ic05' && field <= 'ic16')
+    );
+}
+
+function seCalifPrimMatCallSaveCell(root, idMatricula, field, value) {
+    const c = root && root.__livewire;
+    if (!c || !c.$wire) {
+        return false;
+    }
+    const w = c.$wire;
+    if (typeof w.call === 'function') {
+        w.call('saveCell', idMatricula, field, value);
+        return true;
+    }
+    if (typeof w.saveCell === 'function') {
+        w.saveCell(idMatricula, field, value);
+        return true;
+    }
+    return false;
+}
+
+function seCalifPrimMatBuildNavMatrix(tbody) {
+    const matrix = [];
+    tbody.querySelectorAll(':scope > tr').forEach((tr) => {
+        const row = [];
+        tr.querySelectorAll('input[id^="se-calif-prim-mat-"]').forEach((inp) => {
+            if (inp.type === 'checkbox' || inp.disabled) {
+                row.push(inp);
+                return;
+            }
+            if (!SECALIF_PRIM_MAT_INPUT_ID.test(String(inp.id || ''))) {
+                return;
+            }
+            row.push(inp);
+        });
+        if (row.length) {
+            matrix.push(row);
+        }
+    });
+    return matrix;
+}
+
+function bindCalifPrimarioMateriaTablas() {
+    document.querySelectorAll('[data-se-calif-prim-mat-tbody]').forEach((tbody) => {
+        if (tbody._seCalifPrimMatBound) {
+            return;
+        }
+        tbody._seCalifPrimMatBound = true;
+        seCalifPrimBindNotaPickerCombo(tbody);
+
+        tbody.addEventListener(
+            'focusin',
+            (e) => {
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                    return;
+                }
+                el.dataset.seCalifPrimMatLast = el.value ?? '';
+                el.dataset.seCalifPrimMatScopeMateria = tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '';
+                el.dataset.seCalifPrimMatScopeOrd = tbody.getAttribute('data-se-calif-prim-mat-ord') ?? '';
+            },
+            true,
+        );
+
+        tbody.addEventListener(
+            'focusout',
+            (e) => {
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                    return;
+                }
+                if (el.disabled) {
+                    return;
+                }
+                const m = el.id && String(el.id).match(SECALIF_PRIM_MAT_INPUT_ID);
+                if (!m) {
+                    return;
+                }
+                const scopeMateria = el.dataset.seCalifPrimMatScopeMateria ?? '';
+                const scopeOrd = el.dataset.seCalifPrimMatScopeOrd ?? '';
+                if (
+                    scopeMateria !== '' &&
+                    (scopeMateria !== (tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '') ||
+                        scopeOrd !== (tbody.getAttribute('data-se-calif-prim-mat-ord') ?? ''))
+                ) {
+                    return;
+                }
+                if (!el.isConnected) {
+                    return;
+                }
+                const idMatricula = parseInt(m[1], 10);
+                const field = m[2];
+                const val = (el.value || '').trim();
+
+                const activa = tbody.getAttribute('data-se-calif-prim-mat-activa') === '1';
+                let allowed = [];
+                try {
+                    allowed = JSON.parse(tbody.getAttribute('data-se-calif-prim-mat-allowed') || '[]');
+                } catch {
+                    allowed = [];
+                }
+                const set = new Set(allowed.map((x) => String(x).trim()));
+
+                if (activa && seCalifPrimMatCampoConCatalogo(field) && val !== '' && !set.has(val)) {
+                    el.value = el.dataset.seCalifPrimMatLast ?? '';
+                    window.seCalifToastInvalida(el);
+                    queueMicrotask(() => {
+                        seCalifFocusNavCell(el);
+                    });
+                    return;
+                }
+
+                const root = el.closest('[wire\\:id]');
+                if (!root) {
+                    return;
+                }
+                seCalifPrimMatCallSaveCell(root, idMatricula, field, el.value);
+            },
+            true,
+        );
+
+        tbody.addEventListener(
+            'keydown',
+            (e) => {
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    return;
+                }
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                    return;
+                }
+                if (!SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''))) {
+                    return;
+                }
+                const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+                if (!navKeys.includes(e.key)) {
+                    return;
+                }
+
+                const matrix = seCalifPrimMatBuildNavMatrix(tbody);
                 const pos = seCalifPrimFindNavPos(matrix, el);
                 if (!pos) {
                     return;
@@ -884,8 +1362,10 @@ function bindCierreAnualGrillas() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    seCalifPrimBindNotaPickerDocClose();
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCalifPrimarioTablas);
+    queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
 });
@@ -961,6 +1441,7 @@ function triggerSeSidebarOverflowSync() {
 document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCalifPrimarioTablas);
+    queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);
@@ -976,6 +1457,7 @@ document.addEventListener('livewire:init', () => {
         L.hook('morph.updated', () => {
             queueMicrotask(bindCalifCargaTablas);
             queueMicrotask(bindCalifPrimarioTablas);
+    queueMicrotask(bindCalifPrimarioMateriaTablas);
             queueMicrotask(bindCuotasImportesForm);
             queueMicrotask(bindCierreAnualGrillas);
             queueMicrotask(triggerSeSidebarOverflowSync);

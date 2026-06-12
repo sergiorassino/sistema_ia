@@ -211,6 +211,7 @@ class SincroGe extends Component
         $joined = mb_strtoupper(implode(';', array_map('trim', $header)), 'UTF-8');
 
         return str_contains($joined, 'GRADO')
+            && str_contains($joined, 'ESPACIO CURRICULAR')
             && ! str_contains($joined, 'NOTA EVAL 1');
     }
 

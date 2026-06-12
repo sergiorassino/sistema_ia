@@ -153,10 +153,6 @@ class ParametrosSistemaForm extends Component
             abort(403);
         }
 
-        /** @var Ento $ento */
-        $ento = Ento::query()->firstOrNew(['idNivel' => $idNivel]);
-        $ento->idNivel = $idNivel;
-
         $payload = [
             'insti' => ($v = trim($this->insti)) !== '' ? $v : null,
             'cue' => ($v = trim($this->cue)) !== '' ? $v : null,
@@ -172,9 +168,14 @@ class ParametrosSistemaForm extends Component
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
 
+        $logoPathEsperado = null;
+
+        /** @var Ento|null $entoActual */
+        $entoActual = Ento::query()->where('idNivel', $idNivel)->first();
+
         // Logo: remove tiene prioridad; si luego se sube nuevo, se reemplaza.
         if ($this->removeLogo) {
-            $old = (string) ($ento->logo_path ?? '');
+            $old = (string) ($entoActual?->logo_path ?? '');
             if ($old !== '') {
                 Storage::disk('public')->delete($old);
             }
@@ -183,20 +184,39 @@ class ParametrosSistemaForm extends Component
         }
 
         if ($this->logo instanceof TemporaryUploadedFile) {
-            $logoPath = $this->persistLogoFile($idNivel, (string) ($ento->logo_path ?? ''));
+            $logoPath = $this->persistLogoFile($idNivel, (string) ($entoActual?->logo_path ?? ''));
             if ($logoPath === null) {
                 return;
             }
 
             $payload['logo_path'] = $logoPath;
             $payload['logo_original_name'] = (string) $this->logo->getClientOriginalName();
+            $logoPathEsperado = $logoPath;
         }
 
-        $ento->fill($payload);
-        $ento->save();
+        Ento::query()->updateOrCreate(
+            ['idNivel' => $idNivel],
+            array_merge($payload, ['idNivel' => $idNivel]),
+        );
 
-        $this->currentLogoUrl = schoolLogoUrl(refresh: true);
+        if ($logoPathEsperado !== null) {
+            $persistido = trim((string) Ento::query()
+                ->where('idNivel', $idNivel)
+                ->value('logo_path'));
+
+            if ($persistido !== $logoPathEsperado) {
+                $this->addError(
+                    'logo',
+                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_path y ento.logo_original_name.'
+                );
+
+                return;
+            }
+        }
+
+        $this->currentLogoUrl = schoolLogoUrl();
         $this->logo = null;
+        $this->removeLogo = false;
 
         session()->flash('success', 'Parámetros del sistema actualizados.');
     }
@@ -258,9 +278,7 @@ class ParametrosSistemaForm extends Component
         $disk = Storage::disk('public');
 
         try {
-            if (! $disk->exists($dir)) {
-                $disk->makeDirectory($dir);
-            }
+            $disk->makeDirectory($dir, 0755, true);
 
             $newPath = $this->logo->storeAs($dir, $filename, 'public');
         } catch (\Throwable $e) {

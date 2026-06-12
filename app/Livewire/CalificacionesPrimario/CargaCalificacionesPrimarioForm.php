@@ -236,6 +236,6 @@ class CargaCalificacionesPrimarioForm extends Component
         return view('livewire.calificaciones-primario.carga-calificaciones-primario-form', [
             'notasPermitidasLista' => $this->notasPermitidasLista,
             'notasPermitidasActiva' => $this->notasPermitidasActiva(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones']);
+        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones por estudiante']);
     }
 }

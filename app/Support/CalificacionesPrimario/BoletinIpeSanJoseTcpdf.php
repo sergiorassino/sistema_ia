@@ -6,6 +6,7 @@ use App\Support\Pdf\PdfMateriaEncabezadoLineas;
 use App\Support\Pdf\TcpdfFuenteArial;
 use App\Support\Pdf\TcpdfMultiCellJustificado;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
 /**
@@ -36,6 +37,12 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
     private const SEPARACION_ENCABEZADO_3_LINEAS = 2.8;
 
     private const ALTO_FILA = 7.0;
+
+    private const ALTO_ENCABEZADO_INST = 22.0;
+
+    private const ANCHO_LOGO = 18.0;
+
+    private const ALTO_LOGO = 18.0;
 
     private const FILL_GRIS = [232, 232, 232];
 
@@ -137,13 +144,24 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
             $insti = 'Institución';
         }
 
-        $logo = $this->header['logo_file'] ?? null;
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, self::MARGEN_IZQ + 5, $xy1 + 1, 20, 20, '', '', '', false, 300);
-        }
-
         $this->SetDrawColor(0, 0, 0);
-        $this->Rect(self::MARGEN_IZQ, $xy1, self::ANCHO_ENCABEZADO, 22);
+        $this->Rect(self::MARGEN_IZQ, $xy1, self::ANCHO_ENCABEZADO, self::ALTO_ENCABEZADO_INST);
+
+        $logo = $this->resolverLogoArchivo();
+        if ($logo !== null) {
+            $this->Image(
+                $logo,
+                self::MARGEN_IZQ + 2,
+                $xy1 + ((self::ALTO_ENCABEZADO_INST - self::ALTO_LOGO) / 2),
+                self::ANCHO_LOGO,
+                self::ALTO_LOGO,
+                '',
+                '',
+                '',
+                false,
+                300,
+            );
+        }
 
         $this->SetXY(self::MARGEN_IZQ, $xy1);
         TcpdfFuenteArial::aplicar($this, 'B', 10);
@@ -162,7 +180,27 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
         $curso = trim((string) ($datos['cursoLabel'] ?? ''));
         $this->Cell(self::ANCHO_ENCABEZADO, 5, $curso, 0, 2, 'C');
 
-        return $xy1 + 22 + 2;
+        return $xy1 + self::ALTO_ENCABEZADO_INST + 2;
+    }
+
+    private function resolverLogoArchivo(): ?string
+    {
+        $logo = $this->header['logo_file'] ?? null;
+        if (is_string($logo) && $logo !== '' && is_file($logo)) {
+            return $logo;
+        }
+
+        $path = entoInstitutionalLogoStoragePath();
+        if (is_string($path) && $path !== '') {
+            $abs = Storage::disk('public')->path($path);
+            if (is_string($abs) && $abs !== '' && is_file($abs)) {
+                return $abs;
+            }
+        }
+
+        $fallback = public_path('img/3.png');
+
+        return is_file($fallback) ? $fallback : null;
     }
 
     private function dibujarEncabezadoGrupos(int $cicloEscolar): void

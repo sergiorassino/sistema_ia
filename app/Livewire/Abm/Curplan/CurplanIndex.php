@@ -81,12 +81,7 @@ class CurplanIndex extends Component
             ->orderBy('id')
             ->get(['id', 'plan', 'abrev']);
 
-        $curplanes = Curplan::query()
-            ->with('plan')
-            ->whereIn('idPlan', $planes->pluck('id'))
-            ->orderBy('idPlan')
-            ->orderBy('curPlanCurso')
-            ->get();
+        $curplanes = Curplan::listadoOrdenadoParaNivel((int) $ctx->idNivel);
 
         return view('livewire.abm.curplan.index', compact('curplanes', 'planes'))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Cursos modelo (CurPlan)']);

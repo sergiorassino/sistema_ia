@@ -264,15 +264,7 @@ class CursosIndex extends Component
 
         $ctx = schoolCtx();
 
-        $planesIds = Plan::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->pluck('id');
-
-        $curplanId = (int) (Curplan::query()
-            ->whereIn('idPlan', $planesIds)
-            ->orderBy('idPlan')
-            ->orderBy('curPlanCurso')
-            ->value('id') ?? 0);
+        $curplanId = (int) (Curplan::listadoOrdenadoParaNivel((int) $ctx->idNivel, [])->first()?->id ?? 0);
 
         if ($curplanId <= 0) {
             session()->flash('success', 'No hay cursos modelo disponibles para este nivel. Cree un CurPlan primero.');
@@ -400,16 +392,7 @@ class CursosIndex extends Component
             ->orderBy('Id')
             ->get();
 
-        $planesIds = Plan::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->pluck('id');
-
-        $curplanes = Curplan::query()
-            ->with('plan')
-            ->whereIn('idPlan', $planesIds)
-            ->orderBy('idPlan')
-            ->orderBy('curPlanCurso')
-            ->get();
+        $curplanes = Curplan::listadoOrdenadoParaNivel((int) $ctx->idNivel);
 
         $terlecs = Terlec::paraSelector();
 

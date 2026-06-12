@@ -38,7 +38,7 @@
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-2">
                 <p class="se-eyebrow">Calificaciones · Primario</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones</h2>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones por estudiante</h2>
                 <p class="max-w-3xl text-sm text-white/80">
                     <span class="font-semibold text-white">{{ $alumnoLinea }}</span>
                     <span class="block sm:inline sm:before:content-['·'] sm:before:mx-2">{{ $cursoLabel }}</span>
@@ -57,8 +57,8 @@
 
     @if ($notasPermitidasActiva)
         <p class="text-xs text-neutral-500">
-            Escriba la nota manualmente en cada celda. Si no coincide con el catálogo del nivel, no se guardará.
-            Use las flechas para moverse y Enter para pasar a la celda siguiente.
+            Elija la nota del desplegable (flecha) o escriba con el teclado. En el listado: ↑↓, Enter y Escape.
+            Use las flechas para moverse entre celdas y Enter para pasar a la siguiente.
         </p>
     @endif
 
@@ -84,7 +84,7 @@
                 data-se-calif-prim-tbody
                 data-se-calif-prim-activa="{{ $notasPermitidasActiva ? '1' : '0' }}"
                 data-se-calif-prim-allowed='@json($notasPermitidasLista ?? [])'>
-                @foreach (['ic01' => 'Etapa 1', 'ic02' => 'Etapa 2', 'ic03' => 'Aprec. final'] as $campo => $etiquetaFila)
+                @foreach (['ic01' => 'Etapa 1', 'ic02' => 'Etapa 2', 'ic03' => 'Nota anual'] as $campo => $etiquetaFila)
                     <tr wire:key="calif-prim-fila-{{ $campo }}">
                         <td class="se-calif-prim-row-label border border-accent-200 bg-accent-50/80 px-2 text-[10px] uppercase text-neutral-600">
                             {{ $etiquetaFila }}
@@ -92,18 +92,16 @@
                         @foreach ($materiasLista as $m)
                             @php
                                 $ord = (int) $m['ord'];
-                                $inhabilitada = CalificacionesPrimarioCatalogo::celdaInhabilitada($ciclo, $ord, $campo);
                                 $valor = $notas[$ord][$campo] ?? '';
                             @endphp
                             <td class="border border-accent-200 p-0.5">
-                                <input type="text"
-                                       id="se-calif-prim-{{ $ord }}-{{ $campo }}"
-                                       @disabled($inhabilitada)
-                                       maxlength="15"
-                                       autocomplete="off"
-                                       value="{{ $valor }}"
-                                       wire:key="prim-cell-{{ $idMatricula }}-{{ $ord }}-{{ $campo }}"
-                                       class="rounded border border-accent-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:opacity-80" />
+                                @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
+                                    'id' => 'se-calif-prim-'.$ord.'-'.$campo,
+                                    'value' => $valor,
+                                    'wireKey' => 'prim-cell-'.$idMatricula.'-'.$ord.'-'.$campo,
+                                    'notasPermitidasActiva' => $notasPermitidasActiva,
+                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                ])
                             </td>
                         @endforeach
                     </tr>

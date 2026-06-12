@@ -9,11 +9,12 @@ use Throwable;
 /**
  * Importa calificaciones de primario desde CSV GE/CIDI (formato grados 1°–6°).
  *
- * Por fila: curso (PRIMER GRADO…), división, DNI, nombre de materia (`materias.materia`),
- * notas de evaluaciones 1 y 2 y aprobación final (`ic01`–`ic03`, `ic05`–`ic16`).
+ * Por fila: curso (PRIMER GRADO…), división, DNI, código de espacio curricular
+ * (`Cód. Esp. Curricular` → `matplan.codGE|codGE2|codGE3`), notas de evaluaciones 1 y 2
+ * y aprobación final (`ic01`–`ic03`, `ic05`–`ic16`).
  *
  * Criterio de actualización: exactamente una fila en `calificaciones` con
- * `idLegajos` + `idTerlec` + `idMaterias` (misma materia del curso resuelta por nombre).
+ * `idLegajos` + `idTerlec` + `idMaterias` (misma materia del curso resuelta por código GE).
  */
 final class GeCsvImporterPrimario
 {
@@ -31,7 +32,9 @@ final class GeCsvImporterPrimario
 
     private const COL_NOMBRE = 7;
 
-    private const COL_NOMBRE_MATERIA = 11;
+    private const COL_ESPACIO_CURRICULAR = 11;
+
+    private const COL_COD_MATERIA = 12;
 
     private const COL_N1E1 = 29;
 
@@ -123,7 +126,7 @@ final class GeCsvImporterPrimario
 
                 $cursoNum = $this->mapCurso($row[self::COL_CURSO] ?? '');
                 $seccion = trim((string) ($row[self::COL_SECCION] ?? ''));
-                $nombreMateria = trim((string) ($row[self::COL_NOMBRE_MATERIA] ?? ''));
+                $codMat = trim((string) ($row[self::COL_COD_MATERIA] ?? ''));
                 $dniRaw = trim((string) ($row[self::COL_DNI] ?? ''));
 
                 if ($cursoNum === null) {
@@ -133,9 +136,9 @@ final class GeCsvImporterPrimario
                     continue;
                 }
 
-                if ($nombreMateria === '') {
+                if ($codMat === '') {
                     $skippedRows++;
-                    $issues[] = $this->issue($lineNumber, 'materia_vacia', 'Falta el nombre de la materia en el archivo.', $this->formatIssueContext($row));
+                    $issues[] = $this->issue($lineNumber, 'codigo_materia_vacio', 'Falta el código de espacio curricular (GE).', $this->formatIssueContext($row));
 
                     continue;
                 }
@@ -149,13 +152,13 @@ final class GeCsvImporterPrimario
 
                 $dni = (int) $dniRaw;
 
-                $materia = $this->resolveMateriaPorNombre($nombreMateria, $cursoNum, $seccion, $idTerlec, $idNivel);
+                $materia = $this->resolveMateria($codMat, $cursoNum, $seccion, $idTerlec, $idNivel);
                 if ($materia === null) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
                         'materia_no_encontrada',
-                        "No se encontró la materia «{$nombreMateria}» para {$cursoNum}° «{$seccion}».",
+                        "No se encontró la materia con código GE «{$codMat}» para {$cursoNum}° «{$seccion}».",
                         $this->formatIssueContext($row)
                     );
 
@@ -314,7 +317,7 @@ final class GeCsvImporterPrimario
             $parts[] = $curso;
         }
 
-        $materia = $materiaNombre ?? trim((string) ($row[self::COL_NOMBRE_MATERIA] ?? ''));
+        $materia = $materiaNombre ?? trim((string) ($row[self::COL_ESPACIO_CURRICULAR] ?? ''));
         if ($materia !== '') {
             $parts[] = $materia;
         }
@@ -346,9 +349,9 @@ final class GeCsvImporterPrimario
     /**
      * @return array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}|null
      */
-    private function resolveMateriaPorNombre(string $nombreMateria, int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?array
+    private function resolveMateria(string $codMat, int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?array
     {
-        $cacheKey = "{$nombreMateria}|{$cursoNum}|{$seccion}|{$idTerlec}|{$idNivel}";
+        $cacheKey = "{$codMat}|{$cursoNum}|{$seccion}|{$idTerlec}|{$idNivel}";
         if (array_key_exists($cacheKey, $this->materiaCache)) {
             return $this->materiaCache[$cacheKey];
         }
@@ -360,7 +363,11 @@ final class GeCsvImporterPrimario
             ->where('materias.idNivel', $idNivel)
             ->where('cursos.c', $cursoNum)
             ->whereRaw('TRIM(cursos.s) = ?', [$seccion])
-            ->whereRaw('TRIM(materias.materia) = ?', [$nombreMateria])
+            ->where(function ($q) use ($codMat) {
+                $q->whereRaw('TRIM(matplan.codGE) = ?', [$codMat])
+                    ->orWhereRaw('TRIM(matplan.codGE2) = ?', [$codMat])
+                    ->orWhereRaw('TRIM(matplan.codGE3) = ?', [$codMat]);
+            })
             ->select([
                 'matplan.id as idMatPlan',
                 'matplan.matPlanMateria',

@@ -4,7 +4,7 @@
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-2">
                 <p class="se-eyebrow">Calificaciones · Primario</p>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones</h2>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Carga de calificaciones por estudiante</h2>
                 <p class="max-w-2xl text-sm text-white/80">
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                 </p>

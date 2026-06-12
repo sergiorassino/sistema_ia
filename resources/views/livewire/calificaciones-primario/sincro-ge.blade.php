@@ -36,7 +36,7 @@
             <p>Suba el archivo <strong>CSV</strong> exportado desde <strong>GE</strong> para primario (separador punto y coma).</p>
             <ul class="list-disc space-y-1 pl-5">
                 <li>Se actualizan <code class="text-xs">ic01</code>–<code class="text-xs">ic03</code> (evaluaciones y aprobación final) y <code class="text-xs">ic05</code>–<code class="text-xs">ic16</code> (notas por módulo de cada evaluación). Las celdas vacías borran el valor en el sistema.</li>
-                <li>La materia se identifica por el <strong>nombre</strong> que trae el archivo (columna de espacio curricular), en el grado y división indicados (PRIMER GRADO … SEXTO GRADO).</li>
+                <li>La materia se identifica por el <strong>código de espacio curricular</strong> del archivo (columna <em>Cód. Esp. Curricular</em>), cruzado con <code class="text-xs">matplan.codGE</code>, <code class="text-xs">codGE2</code> o <code class="text-xs">codGE3</code> del grado y división indicados (PRIMER GRADO … SEXTO GRADO).</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel primario</strong> de su sesión actual.</li>
                 <li>Debe existir <strong>exactamente un</strong> registro en calificaciones por alumno (DNI), ciclo lectivo activo y materia del curso. Si no existe o hay duplicados, la fila se informa y no se graba.</li>
             </ul>
