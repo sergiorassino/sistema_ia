@@ -42,7 +42,7 @@ class MateriasAdeudadasInscripcionIndex extends Component
         );
 
         if ($alumno === null) {
-            abort(404, 'Alumno no encontrado en la matrícula activa del ciclo lectivo actual.');
+            abort(404, 'Alumno no encontrado en el historial de secundario.');
         }
 
         $this->idLegajos = $idLegajos;

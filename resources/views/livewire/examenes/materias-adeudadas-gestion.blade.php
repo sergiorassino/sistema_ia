@@ -27,32 +27,48 @@
         <div class="se-toolbar mt-6 flex-col !items-stretch gap-4 sm:flex-row sm:items-end">
             <div class="min-w-0 flex-1">
                 <label for="ma-buscar" class="form-label">Buscar alumno</label>
-                <input id="ma-buscar"
-                       type="search"
-                       wire:model.live.debounce.300ms="buscar"
-                       class="form-input mt-1.5 w-full max-w-md"
-                       placeholder="Apellido, nombre o DNI (mín. 2 caracteres)"
-                       autocomplete="off">
+                <div class="relative mt-1.5 max-w-md">
+                    <input id="ma-buscar"
+                           type="search"
+                           wire:model.live.debounce.500ms="buscar"
+                           x-on:focus="$event.target.select()"
+                           x-on:click="$event.target.select()"
+                           class="form-input w-full pr-10"
+                           placeholder="Apellido, nombre o DNI (mín. {{ $minCharsBusqueda }} caracteres)"
+                           autocomplete="off"
+                           title="Al volver del detalle se mantiene la búsqueda. Hacé clic o escribí para reemplazarla.">
+                    <div wire:loading.delay.shortest wire:target="buscar"
+                         class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                        <svg class="h-4 w-4 animate-spin text-primary-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
-            <span class="se-pill tabular-nums">{{ $totalAlumnos }} alumno{{ $totalAlumnos === 1 ? '' : 's' }}</span>
+            @if ($alumnos !== null)
+                <span class="se-pill tabular-nums">{{ $totalAlumnos }} alumno{{ $totalAlumnos === 1 ? '' : 's' }}</span>
+            @endif
         </div>
 
         <div class="se-card mt-6 overflow-hidden p-0">
             <div class="border-b border-accent-200 bg-accent-50 px-5 py-3">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Alumnos del legajo</p>
                 <p class="text-sm text-neutral-600">
-                    Matrícula activa en el ciclo lectivo del contexto. Use el icono de carga manual para registrar adeudos por alumno.
+                    Busque entre todos los alumnos que cursaron secundario en la institución. Use el icono de carga manual para registrar adeudos por alumno.
                 </p>
             </div>
 
-            @if ($totalAlumnos === 0)
+            @if ($alumnos === null)
                 <div class="px-6 py-12 text-center">
                     <p class="text-sm text-neutral-600">
-                        @if (strlen(trim($buscar)) >= 2)
-                            No hay alumnos que coincidan con la búsqueda.
-                        @else
-                            No hay alumnos matriculados en este ciclo lectivo.
-                        @endif
+                        Ingrese al menos {{ $minCharsBusqueda }} caracteres (apellido, nombre o DNI) para buscar en el historial de secundario.
+                    </p>
+                </div>
+            @elseif ($totalAlumnos === 0)
+                <div class="px-6 py-12 text-center">
+                    <p class="text-sm text-neutral-600">
+                        No hay alumnos que coincidan con la búsqueda.
                     </p>
                 </div>
             @else
@@ -84,6 +100,7 @@
                                             'icono' => 'carga',
                                             'navDestino' => 'examenes.materias-adeudadas.gestion.carga',
                                             'idLegajos' => $alumno['idLegajos'],
+                                            'buscarListado' => $buscar,
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -93,6 +110,7 @@
                                             'icono' => 'inscribir',
                                             'navDestino' => 'examenes.materias-adeudadas.gestion.inscribir',
                                             'idLegajos' => $alumno['idLegajos'],
+                                            'buscarListado' => $buscar,
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -102,6 +120,7 @@
                                             'icono' => 'notas',
                                             'navDestino' => 'examenes.materias-adeudadas.gestion.notas',
                                             'idLegajos' => $alumno['idLegajos'],
+                                            'buscarListado' => $buscar,
                                         ])
                                     </td>
                                     <td class="px-3 py-2.5 text-center">
@@ -111,6 +130,7 @@
                                             'icono' => 'historial',
                                             'navDestino' => 'examenes.materias-adeudadas.gestion.historial',
                                             'idLegajos' => $alumno['idLegajos'],
+                                            'buscarListado' => $buscar,
                                         ])
                                     </td>
                                 </tr>
@@ -118,6 +138,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($alumnos->hasPages())
+                    <div class="border-t border-accent-200 bg-white px-4 py-3">
+                        {{ $alumnos->links() }}
+                    </div>
+                @endif
             @endif
         </div>
     @endif

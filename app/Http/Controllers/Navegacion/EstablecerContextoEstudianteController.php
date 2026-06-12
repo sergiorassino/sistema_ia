@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Navegacion;
 
 use App\Http\Controllers\Controller;
+use App\Support\Examenes\MateriasAdeudadasAlumnosListado;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,11 @@ class EstablecerContextoEstudianteController extends Controller
 
         $buscarListado = trim((string) ($validated['buscar'] ?? ''));
         if ($buscarListado !== '') {
-            \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::persistirBuscarListado($buscarListado);
+            if ((string) $validated['alcance'] === ContextoEstudianteSesion::EXAMENES_MATERIAS_ADEUDADAS) {
+                MateriasAdeudadasAlumnosListado::persistirBuscarListado($buscarListado);
+            } else {
+                \App\Support\MatrizAnaliticos\LibroMatrizAnalitico::persistirBuscarListado($buscarListado);
+            }
         }
 
         $parametrosRuta = match ($destino) {

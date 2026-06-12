@@ -16,7 +16,7 @@ final class MateriasAdeudadasCargaManual
 
     /**
 
-     * Datos del alumno si tiene matrícula activa en el nivel y ciclo del contexto.
+     * Datos del alumno si tuvo matrícula en secundario alguna vez (prioriza el ciclo del contexto).
 
      *
 
@@ -42,7 +42,7 @@ final class MateriasAdeudadasCargaManual
 
     {
 
-        if ($idLegajos < 1 || $idNivel < 1 || $idTerlec < 1) {
+        if ($idLegajos < 1 || $idNivel < 1) {
 
             return null;
 
@@ -50,75 +50,15 @@ final class MateriasAdeudadasCargaManual
 
 
 
-        $r = DB::table('matricula as m')
+        return MateriasAdeudadasAlumnosListado::alumnoPorLegajo(
 
-            ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
+            $idLegajos,
 
-            ->leftJoin('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            $idNivel,
 
-            ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
+            $idTerlec > 0 ? $idTerlec : null,
 
-            ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
-
-            ->where('m.idLegajos', $idLegajos)
-
-            ->where('m.idNivel', $idNivel)
-
-            ->where('m.idTerlec', $idTerlec)
-
-            ->whereNull('m.fechaBaja')
-
-            ->select([
-
-                'm.id as idMatricula',
-
-                'l.id as idLegajos',
-
-                'l.apellido',
-
-                'l.nombre',
-
-                'l.dni',
-
-                'cu.cursec',
-
-                'cp.curPlanCurso',
-
-                'tc.nombre as turnoClaseNombre',
-
-                'cu.c',
-
-                'cu.s',
-
-            ])
-
-            ->first();
-
-
-
-        if ($r === null) {
-
-            return null;
-
-        }
-
-
-
-        return [
-
-            'idLegajos' => (int) $r->idLegajos,
-
-            'idMatricula' => (int) $r->idMatricula,
-
-            'apellido' => trim((string) ($r->apellido ?? '')),
-
-            'nombre' => trim((string) ($r->nombre ?? '')),
-
-            'dni' => trim((string) ($r->dni ?? '')),
-
-            'curso' => self::cursoLabelDesdeFila($r),
-
-        ];
+        );
 
     }
 

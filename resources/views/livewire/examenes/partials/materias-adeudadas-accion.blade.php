@@ -18,6 +18,7 @@
             :destino="$navDestino"
             :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::EXAMENES_MATERIAS_ADEUDADAS"
             :id-legajos="$idLegajos"
+            :buscar="$buscarListado ?? null"
             class="inline">
             <span class="{{ $btnClass }}" aria-label="{{ $titulo }}">
                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
