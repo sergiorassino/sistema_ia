@@ -40,7 +40,7 @@ class SincroDesempenos extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para descargar desempeños desde GE.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI), 403, 'Sin permiso para descargar desempeños desde GE.');
         abort_unless(
             NivelSistema::esPrimario((int) (schoolCtx()->idNivel ?? 0)),
             403,
@@ -98,7 +98,7 @@ class SincroDesempenos extends Component
 
     public function importar(DesempenosCsvImporter $importer): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI), 403);
 
         $this->validate([
             'etapa' => 'required|in:1,2',

@@ -25,7 +25,7 @@ class BoletinIpeIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para boletines de calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para boletines de calificaciones.');
         abort_unless(
             NivelSistema::esPrimario((int) schoolCtx()->idNivel),
             403,

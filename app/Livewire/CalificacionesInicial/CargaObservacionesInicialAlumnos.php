@@ -22,7 +22,7 @@ class CargaObservacionesInicialAlumnos extends Component
 
     public function mount(int $materia): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
         abort_unless(
             NivelSistema::esInicial((int) schoolCtx()->idNivel),
             403,

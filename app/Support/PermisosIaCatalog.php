@@ -28,7 +28,11 @@ final class PermisosIaCatalog
 
     public const COM_REVISION = 8;
 
-    public const CALIF_SINCRO_CARGA = 9;
+    /** Importar calificaciones desde CSV CIDI/GE (primario y secundario). */
+    public const CALIF_SINCRO_CIDI = 9;
+
+    /** Carga manual de calificaciones e indicadores (inicial, primario y secundario). */
+    public const CALIF_CARGA = 71;
 
     public const CALIF_COLOQUIOS = 10;
 
@@ -163,7 +167,8 @@ final class PermisosIaCatalog
             ['id' => 7, 'orden' => self::COM_BORRAR_PROPIO, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar mensajes propios en un hilo.'],
             ['id' => 8, 'orden' => self::COM_BORRAR_OTROS, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar mensajes de otros participantes en un hilo.'],
             ['id' => 9, 'orden' => self::COM_REVISION, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Acceder a la bandeja de revisión de comunicados.'],
-            ['id' => 10, 'orden' => self::CALIF_SINCRO_CARGA, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Importar calificaciones desde CIDI/GE y carga manual de calificaciones (secundario).'],
+            ['id' => 10, 'orden' => self::CALIF_SINCRO_CIDI, 'tema' => 'CALIFICACIONES', 'descripcion' => 'Importar calificaciones desde CSV CIDI/GE (primario y secundario).'],
+            ['id' => 71, 'orden' => self::CALIF_CARGA, 'tema' => 'CALIFICACIONES', 'descripcion' => 'Carga manual de calificaciones e indicadores (inicial, primario y secundario).'],
             ['id' => 11, 'orden' => self::CALIF_COLOQUIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Carga de coloquios Dic / Feb (secundario).'],
             ['id' => 12, 'orden' => self::LEGAJOS_DOCENTES, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes (ABM legajo docente).'],
             ['id' => 48, 'orden' => self::ASIGNACION_PROFESORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar docentes en materias por curso (ppc); consultar cursos por profesor.'],

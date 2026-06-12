@@ -38,7 +38,7 @@ class CargaObservacionesInicialForm extends Component
 
     public function mount(int $materia, int $matricula): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
         abort_unless(
             NivelSistema::esInicial((int) schoolCtx()->idNivel),
             403,
@@ -77,7 +77,7 @@ class CargaObservacionesInicialForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
 
         $key = 'calif-inicial-obs:save:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 30)) {

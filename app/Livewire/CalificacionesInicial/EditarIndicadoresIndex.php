@@ -13,7 +13,7 @@ class EditarIndicadoresIndex extends Component
 {
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
         abort_unless(
             NivelSistema::esInicial((int) schoolCtx()->idNivel),
             403,

@@ -62,7 +62,7 @@ class CargaCalificacionesPrimarioMateria extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para cargar calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
         abort_unless(
             NivelSistema::esPrimario((int) schoolCtx()->idNivel),
             403,
@@ -211,7 +211,7 @@ class CargaCalificacionesPrimarioMateria extends Component
     #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
 
         $key = 'calificacionesPrimario:carga-materia:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {

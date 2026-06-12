@@ -23,7 +23,7 @@
          x-show="groups.calificacionesPrimario && !sidebarCollapsed"
          x-collapse
          x-cloak>
-        @if (tienePermiso(9))
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI))
         <a href="{{ route('calificacionesPrimario.sincroGe') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -48,6 +48,8 @@
             </svg>
             <span class="truncate">Descargar Desempeños desde GE</span>
         </a>
+        @endif
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
         <a href="{{ route('calificacionesPrimario.carga') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',

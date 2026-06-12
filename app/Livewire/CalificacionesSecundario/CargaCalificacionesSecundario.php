@@ -58,7 +58,7 @@ class CargaCalificacionesSecundario extends Component
      */
     public array $notasPermitidasLista = [];
 
-    /** Menú de Docentes: sin permiso 9; alcance por ppc y `ento.cargaNotasOff`. */
+    /** Menú de Docentes: sin permiso de carga; alcance por ppc y `ento.cargaNotasOff`. */
     public bool $modoPortalDocente = false;
 
     public bool $cargaNotasSoloLectura = false;
@@ -78,7 +78,7 @@ class CargaCalificacionesSecundario extends Component
             return;
         }
 
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para cargar calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
 
         // Entrada al módulo: forzar selección explícita de curso/materia.
         $this->cursoId = null;
@@ -423,7 +423,7 @@ class CargaCalificacionesSecundario extends Component
                 return;
             }
         } else {
-            abort_unless(tienePermiso(9), 403);
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
         }
 
         // Rate limit suave: evita bursts si el usuario navega rápido con teclado.

@@ -676,74 +676,74 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     // Calificaciones (nivel inicial): indicadores por materia y etapa
     Route::get('/calificaciones-inicial/indicadores', EditarIndicadoresIndex::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.indicadores');
     Route::get('/calificaciones-inicial/indicadores/{materia}', EditarIndicadoresForm::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->whereNumber('materia')
         ->name('calificacionesInicial.indicadores.materia');
 
     Route::get('/calificaciones-inicial/observaciones', CargaObservacionesInicialIndex::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.observaciones');
     Route::get('/calificaciones-inicial/observaciones/{materia}', CargaObservacionesInicialAlumnos::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->whereNumber('materia')
         ->name('calificacionesInicial.observaciones.alumnos');
     Route::get('/calificaciones-inicial/observaciones/{materia}/{matricula}', CargaObservacionesInicialForm::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->whereNumber(['materia', 'matricula'])
         ->name('calificacionesInicial.observaciones.carga');
 
     Route::get('/calificaciones-inicial/informe-progreso', InformeProgresoInicialIndex::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.informeProgreso');
     Route::post('/calificaciones-inicial/informe-progreso/pdf', InformeProgresoInicialPdfController::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.informeProgreso.pdf');
     Route::post('/calificaciones-inicial/informe-progreso/pdf-lote', InformeProgresoInicialLotePdfController::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.informeProgreso.pdfLote');
 
     // Calificaciones (nivel primario): GE/CIDI y desempeños por etapa (CSV)
     Route::get('/calificaciones-primario/sincro-ge', SincroGePrimario::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
         ->name('calificacionesPrimario.sincroGe');
     Route::get('/calificaciones-primario/sincro-desempenos', SincroDesempenos::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
         ->name('calificacionesPrimario.sincroDesempenos');
     Route::get('/calificaciones-primario/carga', CargaCalificacionesPrimarioIndex::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.carga');
     Route::get('/calificaciones-primario/carga/{matricula}', CargaCalificacionesPrimarioForm::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->whereNumber('matricula')
         ->name('calificacionesPrimario.carga.alumno');
     Route::get('/calificaciones-primario/carga-materia', CargaCalificacionesPrimarioMateria::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.cargaMateria');
     Route::get('/calificaciones-primario/boletin-ipe', BoletinIpeIndex::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.boletinIpe');
     Route::post('/calificaciones-primario/boletin-ipe/pdf', BoletinIpePdfController::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.boletinIpe.pdf');
     Route::post('/calificaciones-primario/boletin-ipe/pdf-lote', BoletinIpeLotePdfController::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.boletinIpe.pdfLote');
     Route::get('/calificaciones-primario/planilla', PlanillaCalificacionesPrimario::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.planilla');
     Route::get('/calificaciones-primario/planilla/pdf', PlanillaCalificacionesPrimarioPdfController::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesPrimario.planilla.pdf');
 
     // Calificaciones (nivel secundario): sincro GE/CIDI, carga y consulta institucional
     Route::get('/calificaciones-secundario/sincro-ge', SincroGe::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
         ->name('calificacionesSecundario.sincroGe');
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
-        ->middleware('permiso:9')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesSecundario.carga');
     Route::get('/calificaciones-secundario/coloquios', CargaColoquiosSecundario::class)
         ->middleware('permiso:10')

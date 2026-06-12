@@ -51,7 +51,7 @@ class CargaCalificacionesPrimarioForm extends Component
 
     public function mount(int $matricula): void
     {
-        abort_unless(tienePermiso(9), 403, 'Sin permiso para cargar calificaciones.');
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
         abort_unless(
             NivelSistema::esPrimario((int) schoolCtx()->idNivel),
             403,
@@ -124,7 +124,7 @@ class CargaCalificacionesPrimarioForm extends Component
     #[Renderless]
     public function saveCell(int $ord, string $campo, mixed $value): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
 
         $key = 'calificacionesPrimario:carga:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
@@ -196,7 +196,7 @@ class CargaCalificacionesPrimarioForm extends Component
     #[Renderless]
     public function saveObservacion(string $campo, mixed $value): void
     {
-        abort_unless(tienePermiso(9), 403);
+        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
 
         $key = 'calificacionesPrimario:carga:obs:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 120)) {
