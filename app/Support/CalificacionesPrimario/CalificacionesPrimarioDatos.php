@@ -76,6 +76,42 @@ final class CalificacionesPrimarioDatos
     }
 
     /**
+     * Notas completas por `ord` (todos los campos del esquema primario).
+     *
+     * @param  list<int>  $ords
+     * @return array<int, array<string, string>>
+     */
+    public static function calificacionesCompletasPorOrd(int $idMatricula, array $ords): array
+    {
+        if ($ords === []) {
+            return [];
+        }
+
+        $campos = array_merge(
+            CalificacionesPrimarioCatalogo::camposNotaTodos(),
+            CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
+            [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
+        );
+        $columnas = array_merge(['ord'], $campos);
+
+        $filas = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->whereIn('ord', $ords)
+            ->get($columnas);
+
+        $out = [];
+        foreach ($filas as $r) {
+            $nota = [];
+            foreach ($campos as $campo) {
+                $nota[$campo] = (string) ($r->{$campo} ?? '');
+            }
+            $out[(int) $r->ord] = $nota;
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<int>  $ords
      * @return array<int, object{id: int, ic01: ?string, ic02: ?string, ic03: ?string}>
      */
@@ -105,7 +141,7 @@ final class CalificacionesPrimarioDatos
         string $valor,
         ?int $idMaterias = null,
     ): void {
-        if (! in_array($campo, CalificacionesPrimarioCatalogo::camposNotaEditables(), true)) {
+        if (! CalificacionesPrimarioCatalogo::esCampoNotaGrillaPersistible($campo)) {
             abort(400);
         }
 
@@ -139,6 +175,44 @@ final class CalificacionesPrimarioDatos
             'ic01' => $campo === 'ic01' ? $valor : '',
             'ic02' => $campo === 'ic02' ? $valor : '',
             'ic03' => $campo === 'ic03' ? $valor : '',
+            'dic' => $campo === CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION ? $valor : '',
+        ]);
+    }
+
+    public static function guardarObservacionCalificacion(
+        Matricula $matricula,
+        int $ord,
+        string $campo,
+        string $valor,
+        ?int $idMaterias = null,
+    ): void {
+        if (! CalificacionesPrimarioCatalogo::esCampoObservacionCalificacion($campo)) {
+            abort(400);
+        }
+
+        $idMatricula = (int) $matricula->id;
+        $existente = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->where('ord', $ord)
+            ->first(['id']);
+
+        if ($existente) {
+            DB::table('calificaciones')
+                ->where('id', (int) $existente->id)
+                ->update([$campo => $valor]);
+
+            return;
+        }
+
+        DB::table('calificaciones')->insert([
+            'idMatricula' => $idMatricula,
+            'idLegajos' => (int) $matricula->idLegajos,
+            'idTerlec' => (int) $matricula->idTerlec,
+            'idCursos' => (int) $matricula->idCursos,
+            'idMaterias' => $idMaterias,
+            'ord' => $ord,
+            'obs01' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_1 ? $valor : '',
+            'obs02' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_2 ? $valor : '',
         ]);
     }
 
@@ -207,7 +281,9 @@ final class CalificacionesPrimarioDatos
      *     columnas: array{
      *         parciales: list<array{campo: string, etiqueta: string}>,
      *         finalEtapa: array{campo: string, etiqueta: string},
-     *         anual: ?array{campo: string, etiqueta: string}
+     *         anual: ?array{campo: string, etiqueta: string},
+     *         intensificacion: ?array{campo: string, etiqueta: string},
+     *         obs: array{campo: string, etiqueta: string}
      *     },
      *     filas: list<array{
      *         idMatricula: int,
@@ -222,7 +298,7 @@ final class CalificacionesPrimarioDatos
         $ctx = schoolCtx();
         $etapa = CalificacionesPrimarioCatalogo::normalizarEtapaCargaMateria($etapa);
         $columnas = CalificacionesPrimarioCatalogo::columnasGrillaMateria($etapa);
-        $campos = CalificacionesPrimarioCatalogo::camposNotaGrillaMateria($etapa);
+        $campos = CalificacionesPrimarioCatalogo::camposGrillaMateriaEditables($etapa);
 
         $curso = Curso::query()
             ->with('curplan')
@@ -323,12 +399,12 @@ final class CalificacionesPrimarioDatos
         $filas = DB::table('calificaciones')
             ->whereIn('idMatricula', $idsMatricula)
             ->where('ord', $ord)
-            ->get([
-                'id', 'idMatricula', 'ord',
-                'ic01', 'ic02', 'ic03',
-                'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
-                'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16',
-            ]);
+            ->get(array_merge(
+                ['id', 'idMatricula', 'ord'],
+                CalificacionesPrimarioCatalogo::camposNotaTodos(),
+                CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
+                [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
+            ));
 
         $out = [];
         foreach ($filas as $r) {

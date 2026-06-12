@@ -518,13 +518,26 @@ if (! function_exists('tenantBoletinMuestraTercerMateria')) {
 if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
     /**
      * Variante del informe de progreso escolar (primario).
-     * Valores: `estandar` (vertical) | `sanjose` (apaisado).
+     * Valores: `estandar` (vertical) | `sanjose` (apaisado) | `montecristo` (extracurriculares institucionales).
      */
     function tenantBoletinPrimarioIpeImplementacion(): string
     {
         $impl = trim((string) config('tenant.boletin_primario.ipe_implementacion', 'estandar'));
 
         return $impl !== '' ? $impl : 'estandar';
+    }
+}
+
+if (! function_exists('tenantBoletinPrimarioMenuEtiquetaBoletinIpe')) {
+    /**
+     * Etiqueta del ítem de boletín IPE en CALIFICACIONES (Primario) del Menú de Secretaría.
+     * Default `Boletines IPE`; personalizar en `config/tenants/{slug}.php`.
+     */
+    function tenantBoletinPrimarioMenuEtiquetaBoletinIpe(): string
+    {
+        $etiqueta = trim((string) config('tenant.boletin_primario.menu_etiqueta_boletin_ipe', 'Boletines IPE'));
+
+        return $etiqueta !== '' ? $etiqueta : 'Boletines IPE';
     }
 }
 

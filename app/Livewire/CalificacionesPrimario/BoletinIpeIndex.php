@@ -181,6 +181,7 @@ class BoletinIpeIndex extends Component
         $etapa = $this->etapa === 2 ? 2 : 1;
 
         $usaSelectorEtapa = BoletinIpePrimarioGenerador::usaSelectorEtapa();
+        $etiquetaPdf = BoletinIpePrimarioGenerador::etiquetaPdf();
 
         return view('livewire.calificaciones-primario.boletin-ipe-index', [
             'cursos' => $this->cursos(),
@@ -192,6 +193,7 @@ class BoletinIpeIndex extends Component
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'etapaPdf' => $etapa,
             'usaSelectorEtapa' => $usaSelectorEtapa,
+            'etiquetaPdf' => $etiquetaPdf,
         ])
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Boletín IPE (primario)']);
     }

@@ -214,7 +214,7 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $this->Cell(self::ANCHO_OBS, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
 
         $etapa = (int) ($this->contexto['etapa'] ?? 1);
-        $esApreciacionFinal = $etapa === PlanillaCalificacionesPrimarioDatos::ETAPA_APRECIACION_FINAL;
+        $esApreciacionFinal = $etapa === CalificacionesPrimarioCatalogo::ETAPA_APRECIACION_FINAL;
 
         $f = 0;
         foreach ($alumnos as $alumno) {

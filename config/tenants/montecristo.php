@@ -7,6 +7,12 @@
  */
 
 return [
+    'boletin_primario' => [
+        'ipe_implementacion' => 'montecristo',
+        'director_firma' => 'Prof. Lic. Adriana Rufino',
+        'menu_etiqueta_boletin_ipe' => 'Síntesis y Calificaciones',
+    ],
+
     'secretaria' => [
         'ficha_matricula' => [
             'habilitado' => true,

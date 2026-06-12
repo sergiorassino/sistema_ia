@@ -12,6 +12,29 @@ use Illuminate\Support\Facades\Schema;
  */
 final class CalificacionesPrimarioCatalogo
 {
+    /** Etapa de planilla / PDF: apreciación final (`ic03`). */
+    public const ETAPA_APRECIACION_FINAL = 9;
+
+    public const CAMPO_FINAL_ETAPA_1 = 'ic01';
+
+    public const CAMPO_FINAL_ETAPA_2 = 'ic02';
+
+    public const CAMPO_ANUAL = 'ic03';
+
+    public const CAMPO_INTENSIFICACION = 'dic';
+
+    public const CAMPO_OBS_ETAPA_1 = 'obs01';
+
+    public const CAMPO_OBS_ETAPA_2 = 'obs02';
+
+    public const MAX_CARACTERES_OBS_CALIFICACION = 1500;
+
+    /** @var list<string> */
+    public const PARCIALES_ETAPA_1 = ['ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10'];
+
+    /** @var list<string> */
+    public const PARCIALES_ETAPA_2 = ['ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16'];
+
     /** Materias base (ord 1–14) para todos los grados. */
     public const ORD_BASE = 14;
 
@@ -83,7 +106,25 @@ final class CalificacionesPrimarioCatalogo
      */
     public static function materiasParaCurso(int $idCurso, int $idNivel, int $idTerlec, int $ciclo): Collection
     {
-        $maxOrd = self::maxOrdVisible($ciclo);
+        return self::consultaMateriasCurso($idCurso, $idNivel, $idTerlec, self::maxOrdVisible($ciclo));
+    }
+
+    /**
+     * Todas las materias del curso (sin tope de `ord` por grado).
+     * Usado por el boletín Montecristo para incluir extracurriculares institucionales con `ord` alto.
+     *
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     */
+    public static function materiasParaCursoTodasOrd(int $idCurso, int $idNivel, int $idTerlec): Collection
+    {
+        return self::consultaMateriasCurso($idCurso, $idNivel, $idTerlec, null);
+    }
+
+    /**
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     */
+    private static function consultaMateriasCurso(int $idCurso, int $idNivel, int $idTerlec, ?int $maxOrd): Collection
+    {
         $columnas = [
             'm.id',
             'm.ord',
@@ -97,7 +138,7 @@ final class CalificacionesPrimarioCatalogo
             $columnas[] = 'm.esInstitucional';
         }
 
-        $materias = DB::table('materias as m')
+        $query = DB::table('materias as m')
             ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
             ->leftJoin('matplan as mp_id', function ($join) {
                 $join->on('mp_id.id', '=', 'm.idMatPlan')
@@ -109,8 +150,13 @@ final class CalificacionesPrimarioCatalogo
             })
             ->where('m.idNivel', $idNivel)
             ->where('m.idTerlec', $idTerlec)
-            ->where('m.idCursos', $idCurso)
-            ->where('m.ord', '<=', $maxOrd)
+            ->where('m.idCursos', $idCurso);
+
+        if ($maxOrd !== null) {
+            $query->where('m.ord', '<=', $maxOrd);
+        }
+
+        $materias = $query
             ->orderBy('m.ord')
             ->orderBy('m.id')
             ->get($columnas)
@@ -214,13 +260,101 @@ final class CalificacionesPrimarioCatalogo
         return $etapa === 2 ? 2 : 1;
     }
 
+    public static function normalizarEtapaPlanilla(int $etapa): int
+    {
+        return match ($etapa) {
+            2 => 2,
+            self::ETAPA_APRECIACION_FINAL => self::ETAPA_APRECIACION_FINAL,
+            default => 1,
+        };
+    }
+
+    /** @return list<string> */
+    public static function parcialesEtapa(int $etapa): array
+    {
+        return self::normalizarEtapaCargaMateria($etapa) === 2
+            ? self::PARCIALES_ETAPA_2
+            : self::PARCIALES_ETAPA_1;
+    }
+
+    public static function finalEtapa(int $etapa): string
+    {
+        return self::normalizarEtapaCargaMateria($etapa) === 2
+            ? self::CAMPO_FINAL_ETAPA_2
+            : self::CAMPO_FINAL_ETAPA_1;
+    }
+
+    public static function campoAnual(): string
+    {
+        return self::CAMPO_ANUAL;
+    }
+
+    /**
+     * Campo de nota de etapa para planilla / boletín según selector de etapa.
+     */
+    public static function campoNotaEtapa(int $etapa): string
+    {
+        return match (self::normalizarEtapaPlanilla($etapa)) {
+            2 => self::CAMPO_FINAL_ETAPA_2,
+            self::ETAPA_APRECIACION_FINAL => self::CAMPO_ANUAL,
+            default => self::CAMPO_FINAL_ETAPA_1,
+        };
+    }
+
+    public static function etiquetaEtapaPlanilla(int $etapa): string
+    {
+        return match (self::normalizarEtapaPlanilla($etapa)) {
+            2 => 'SEGUNDA',
+            self::ETAPA_APRECIACION_FINAL => 'APRECIACIÓN FINAL',
+            default => 'PRIMERA',
+        };
+    }
+
+    public static function campoObservacionMatriculaEtapa(int $etapa): string
+    {
+        return self::normalizarEtapaCargaMateria($etapa) === 2 ? 'obs2' : 'obs1';
+    }
+
+    /** @return list<string> */
+    public static function camposNotaTodos(): array
+    {
+        return array_values(array_unique(array_merge(
+            [self::CAMPO_FINAL_ETAPA_1, self::CAMPO_FINAL_ETAPA_2, self::CAMPO_ANUAL],
+            self::PARCIALES_ETAPA_1,
+            self::PARCIALES_ETAPA_2,
+        )));
+    }
+
+    /**
+     * Texto de síntesis a partir de parciales no vacíos (boletín Montecristo y similares).
+     *
+     * @param  array<string, string>  $notasPorCampo
+     */
+    public static function formatearParcialesEtapa(array $notasPorCampo, int $etapa): string
+    {
+        $cols = self::columnasGrillaMateria($etapa)['parciales'];
+        $partes = [];
+        foreach ($cols as $col) {
+            $campo = (string) $col['campo'];
+            $valor = trim((string) ($notasPorCampo[$campo] ?? ''));
+            if ($valor === '') {
+                continue;
+            }
+            $partes[] = trim((string) $col['etiqueta']).': '.$valor;
+        }
+
+        return implode(' · ', $partes);
+    }
+
     /**
      * Columnas de la grilla por materia según etapa (mapeo GE / legacy primario).
      *
      * @return array{
      *     parciales: list<array{campo: string, etiqueta: string}>,
      *     finalEtapa: array{campo: string, etiqueta: string},
-     *     anual: ?array{campo: string, etiqueta: string}
+     *     anual: ?array{campo: string, etiqueta: string},
+     *     intensificacion: ?array{campo: string, etiqueta: string},
+     *     obs: array{campo: string, etiqueta: string}
      * }
      */
     public static function columnasGrillaMateria(int $etapa): array
@@ -237,8 +371,10 @@ final class CalificacionesPrimarioCatalogo
                     ['campo' => 'ic15', 'etiqueta' => 'Eval. 5'],
                     ['campo' => 'ic16', 'etiqueta' => 'Eval. 6'],
                 ],
-                'finalEtapa' => ['campo' => 'ic02', 'etiqueta' => 'Nota etapa'],
-                'anual' => ['campo' => 'ic03', 'etiqueta' => 'Nota anual'],
+                'finalEtapa' => ['campo' => self::CAMPO_FINAL_ETAPA_2, 'etiqueta' => 'CALIF. 2º ETAPA'],
+                'anual' => ['campo' => self::CAMPO_ANUAL, 'etiqueta' => 'APREC. FINAL'],
+                'intensificacion' => ['campo' => self::CAMPO_INTENSIFICACION, 'etiqueta' => 'Intensif.'],
+                'obs' => ['campo' => self::CAMPO_OBS_ETAPA_2, 'etiqueta' => 'Obs. etapa'],
             ];
         }
 
@@ -251,8 +387,10 @@ final class CalificacionesPrimarioCatalogo
                 ['campo' => 'ic09', 'etiqueta' => 'Eval. 5'],
                 ['campo' => 'ic10', 'etiqueta' => 'Eval. 6'],
             ],
-            'finalEtapa' => ['campo' => 'ic01', 'etiqueta' => 'Nota etapa'],
+            'finalEtapa' => ['campo' => self::CAMPO_FINAL_ETAPA_1, 'etiqueta' => 'CALIF. 1º ETAPA'],
             'anual' => null,
+            'intensificacion' => null,
+            'obs' => ['campo' => self::CAMPO_OBS_ETAPA_1, 'etiqueta' => 'Obs. etapa'],
         ];
     }
 
@@ -265,14 +403,50 @@ final class CalificacionesPrimarioCatalogo
         if ($cols['anual'] !== null) {
             $campos[] = $cols['anual']['campo'];
         }
+        if ($cols['intensificacion'] !== null) {
+            $campos[] = $cols['intensificacion']['campo'];
+        }
+
+        return $campos;
+    }
+
+    public static function esCampoNotaGrillaPersistible(string $campo): bool
+    {
+        return in_array($campo, self::camposNotaEditables(), true)
+            || $campo === self::CAMPO_INTENSIFICACION;
+    }
+
+    /** Notas + observación de etapa visibles en la grilla por materia. */
+    public static function camposGrillaMateriaEditables(int $etapa): array
+    {
+        $campos = self::camposNotaGrillaMateria($etapa);
+        $campos[] = self::columnasGrillaMateria($etapa)['obs']['campo'];
 
         return $campos;
     }
 
     /** @return list<string> */
+    public static function camposObservacionCalificacion(): array
+    {
+        return [self::CAMPO_OBS_ETAPA_1, self::CAMPO_OBS_ETAPA_2];
+    }
+
+    public static function esCampoObservacionCalificacion(string $campo): bool
+    {
+        return in_array($campo, self::camposObservacionCalificacion(), true);
+    }
+
+    public static function campoObsCalificacionPorEtapa(int $etapa): string
+    {
+        return self::normalizarEtapaCargaMateria($etapa) === 2
+            ? self::CAMPO_OBS_ETAPA_2
+            : self::CAMPO_OBS_ETAPA_1;
+    }
+
+    /** @return list<string> */
     public static function camposNotaEditables(): array
     {
-        return ['ic01', 'ic02', 'ic03', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10', 'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16'];
+        return self::camposNotaTodos();
     }
 
     /** @return list<string> */

@@ -3,6 +3,7 @@
 namespace App\Livewire\CalificacionesPrimario;
 
 use App\Models\Curso;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
 use App\Support\NivelSistema;
 use Illuminate\Support\Collection;
@@ -45,7 +46,7 @@ class PlanillaCalificacionesPrimario extends Component
     {
         return match ($this->etapa) {
             2 => 'Segunda etapa',
-            PlanillaCalificacionesPrimarioDatos::ETAPA_APRECIACION_FINAL => 'Apreciación final',
+            CalificacionesPrimarioCatalogo::ETAPA_APRECIACION_FINAL => 'Apreciación final',
             default => 'Primera etapa',
         };
     }

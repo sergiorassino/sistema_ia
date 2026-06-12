@@ -8,6 +8,7 @@ use App\Support\NivelSistema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 /**
@@ -120,6 +121,7 @@ class CargaCalificacionesPrimarioForm extends Component
         return in_array($nota, $this->notasPermitidasLista, true);
     }
 
+    #[Renderless]
     public function saveCell(int $ord, string $campo, mixed $value): void
     {
         abort_unless(tienePermiso(9), 403);
@@ -191,6 +193,7 @@ class CargaCalificacionesPrimarioForm extends Component
         }
     }
 
+    #[Renderless]
     public function saveObservacion(string $campo, mixed $value): void
     {
         abort_unless(tienePermiso(9), 403);

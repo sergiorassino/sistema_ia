@@ -10,12 +10,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Attributes\Renderless;
 use Livewire\Component;
 
 /**
  * Carga manual por materia (primario): etapa → curso → materia → grilla de alumnos.
  *
- * Parciales ic05–ic10 (1ª etapa) o ic11–ic16 (2ª); nota de etapa ic01/ic02; anual ic03 en 2ª etapa.
+ * Parciales ic05–ic10 (1ª) o ic11–ic16 (2ª); nota etapa ic01/ic02; AP.FINAL ic03 e Intensif. dic en 2ª etapa.
  */
 class CargaCalificacionesPrimarioMateria extends Component
 {
@@ -44,6 +45,12 @@ class CargaCalificacionesPrimarioMateria extends Component
 
     /** @var ?array{campo: string, etiqueta: string} */
     public ?array $columnaAnual = null;
+
+    /** @var ?array{campo: string, etiqueta: string} */
+    public ?array $columnaIntensificacion = null;
+
+    /** @var array{campo: string, etiqueta: string} */
+    public array $columnaObs = ['campo' => 'obs01', 'etiqueta' => 'Obs. etapa'];
 
     /**
      * @var array<int, array{idMatricula: int, idCalificacion: ?int, alumno: string, notas: array<string, string>}>
@@ -99,6 +106,8 @@ class CargaCalificacionesPrimarioMateria extends Component
         $this->columnasParciales = $cols['parciales'];
         $this->columnaFinalEtapa = $cols['finalEtapa'];
         $this->columnaAnual = $cols['anual'];
+        $this->columnaIntensificacion = $cols['intensificacion'];
+        $this->columnaObs = $cols['obs'];
     }
 
     protected function ensureScopeOr404(): void
@@ -154,6 +163,8 @@ class CargaCalificacionesPrimarioMateria extends Component
         $this->columnasParciales = $data['columnas']['parciales'];
         $this->columnaFinalEtapa = $data['columnas']['finalEtapa'];
         $this->columnaAnual = $data['columnas']['anual'];
+        $this->columnaIntensificacion = $data['columnas']['intensificacion'];
+        $this->columnaObs = $data['columnas']['obs'];
 
         $this->filas = [];
         foreach ($data['filas'] as $fila) {
@@ -197,6 +208,7 @@ class CargaCalificacionesPrimarioMateria extends Component
         return in_array($nota, $this->notasPermitidasLista, true);
     }
 
+    #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
         abort_unless(tienePermiso(9), 403);
@@ -210,12 +222,13 @@ class CargaCalificacionesPrimarioMateria extends Component
         $this->ensureScopeOr404();
 
         $campo = trim($campo);
-        $camposEtapa = CalificacionesPrimarioCatalogo::camposNotaGrillaMateria($this->etapa);
+        $esObsCalificacion = CalificacionesPrimarioCatalogo::esCampoObservacionCalificacion($campo);
+        $camposEtapa = CalificacionesPrimarioCatalogo::camposGrillaMateriaEditables($this->etapa);
         if (! in_array($campo, $camposEtapa, true)) {
             abort(400);
         }
 
-        if (CalificacionesPrimarioCatalogo::celdaInhabilitada($this->ciclo, $this->ordMateria, $campo)) {
+        if (! $esObsCalificacion && CalificacionesPrimarioCatalogo::celdaInhabilitada($this->ciclo, $this->ordMateria, $campo)) {
             return;
         }
 
@@ -225,6 +238,36 @@ class CargaCalificacionesPrimarioMateria extends Component
         }
 
         $value = is_string($value) ? trim($value) : (string) ($value ?? '');
+
+        if ($esObsCalificacion) {
+            Validator::make(
+                ['value' => $value],
+                ['value' => ['nullable', 'string', 'max:'.CalificacionesPrimarioCatalogo::MAX_CARACTERES_OBS_CALIFICACION]],
+                [],
+                ['value' => $campo],
+            )->validate();
+
+            CalificacionesPrimarioDatos::guardarObservacionCalificacion(
+                $mat,
+                $this->ordMateria,
+                $campo,
+                $value,
+                (int) $this->materiaId,
+            );
+
+            if (isset($this->filas[$idMatricula])) {
+                $this->filas[$idMatricula]['notas'][$campo] = $value;
+                if ($this->filas[$idMatricula]['idCalificacion'] === null) {
+                    $idCalif = DB::table('calificaciones')
+                        ->where('idMatricula', $idMatricula)
+                        ->where('ord', $this->ordMateria)
+                        ->value('id');
+                    $this->filas[$idMatricula]['idCalificacion'] = $idCalif !== null ? (int) $idCalif : null;
+                }
+            }
+
+            return;
+        }
 
         Validator::make(
             ['value' => $value],

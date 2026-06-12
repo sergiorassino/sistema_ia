@@ -17,7 +17,23 @@ final class BoletinIpePrimarioGenerador
 
     public static function usaSelectorEtapa(): bool
     {
-        return self::implementacion() === 'estandar';
+        return in_array(self::implementacion(), ['estandar', 'montecristo'], true);
+    }
+
+    public static function etiquetaPdf(): string
+    {
+        return match (self::implementacion()) {
+            'montecristo' => 'BOLETÍN DE CALIFICACIONES',
+            default => 'INFORME DE PROGRESO ESCOLAR',
+        };
+    }
+
+    public static function prefijoArchivoPdf(): string
+    {
+        return match (self::implementacion()) {
+            'montecristo' => 'boletin_calificaciones',
+            default => 'informe_progreso_escolar',
+        };
     }
 
     /**
@@ -27,6 +43,7 @@ final class BoletinIpePrimarioGenerador
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseDatos::buildForMatriculaEnContextoEscolar($idMatricula),
+            'montecristo' => BoletinIpeMontecristoDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa),
             default => BoletinIpeDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa),
         };
     }
@@ -39,6 +56,7 @@ final class BoletinIpePrimarioGenerador
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarHoja($datos, $header),
+            'montecristo' => BoletinIpeMontecristoTcpdf::generarHoja($datos, $header),
             default => BoletinIpeTcpdf::generarHoja($datos, $header),
         };
     }
@@ -51,6 +69,7 @@ final class BoletinIpePrimarioGenerador
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarLote($hojas, $header),
+            'montecristo' => BoletinIpeMontecristoTcpdf::generarLote($hojas, $header),
             default => BoletinIpeTcpdf::generarLote($hojas, $header),
         };
     }
@@ -59,6 +78,7 @@ final class BoletinIpePrimarioGenerador
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::respuestaHttp($pdf, $nombreArchivo),
+            'montecristo' => BoletinIpeMontecristoTcpdf::respuestaHttp($pdf, $nombreArchivo),
             default => BoletinIpeTcpdf::respuestaHttp($pdf, $nombreArchivo),
         };
     }

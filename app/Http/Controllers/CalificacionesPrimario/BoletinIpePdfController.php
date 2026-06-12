@@ -42,10 +42,11 @@ class BoletinIpePdfController extends Controller
             abort(404, $data['error'] ?? 'No disponible.');
         }
 
+        $prefijo = BoletinIpePrimarioGenerador::prefijoArchivoPdf();
         $slugBase = trim((string) ($data['alumnoLinea'] ?? ''));
-        $slug = Str::slug('informe-progreso-escolar-'.$slugBase, '_');
+        $slug = Str::slug($prefijo.'-'.$slugBase, '_');
         if ($slug === '') {
-            $slug = 'informe_progreso_escolar';
+            $slug = $prefijo;
         }
 
         $pdf = BoletinIpePrimarioGenerador::generarHoja($data, schoolPdfHeaderData());

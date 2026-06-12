@@ -308,45 +308,133 @@ function seCalifPrimFocusNotaPickerInitial(menu, input) {
     return seCalifPrimFocusNotaPickerOption(menu, idx);
 }
 
-function seCalifPrimFindNotaPickerMenu(picker) {
-    const inputId = picker?.dataset?.seCalifPrimNotaPickerFor ?? '';
+function seCalifPrimPickerHomeForMenu(menu) {
+    const inputId = menu?.dataset?.seCalifPrimNotaMenuFor ?? '';
     if (inputId === '') {
         return null;
     }
+
     return document.querySelector(
+        `[data-se-calif-prim-nota-picker-for="${CSS.escape(String(inputId))}"]`,
+    );
+}
+
+function seCalifPrimResetNotaPickerMenuStyles(menu) {
+    if (!menu) {
+        return;
+    }
+    menu.hidden = true;
+    menu.classList.add('hidden');
+    menu.style.cssText = '';
+}
+
+function seCalifPrimRepatriateNotaPickerMenu(menu) {
+    if (!menu || !menu.isConnected) {
+        return;
+    }
+    const home = seCalifPrimPickerHomeForMenu(menu);
+    if (!home) {
+        if (menu.parentElement === document.body) {
+            menu.remove();
+        }
+        return;
+    }
+    seCalifPrimResetNotaPickerMenuStyles(menu);
+    const existingInHome = home.querySelector('.se-calif-prim-nota-picker-menu');
+    if (existingInHome && existingInHome !== menu) {
+        menu.remove();
+        return;
+    }
+    if (menu.parentElement !== home) {
+        home.appendChild(menu);
+    }
+    delete menu._seCalifPrimPlaceholder;
+    delete menu._seCalifPrimHome;
+}
+
+/** Devuelve al DOM los menús del desplegable que quedaron en body tras morph de Livewire. */
+function seCalifPrimRepatriateAllNotaPickerMenus() {
+    if (seCalifPrimNotaPickerOpen) {
+        const { menu, btn, picker, placeholder } = seCalifPrimNotaPickerOpen;
+        seCalifPrimResetNotaPickerMenuStyles(menu);
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        if (placeholder?.isConnected && picker?.isConnected && menu?.parentElement === document.body) {
+            picker.insertBefore(menu, placeholder);
+            placeholder.remove();
+        } else {
+            seCalifPrimRepatriateNotaPickerMenu(menu);
+        }
+        if (placeholder?.isConnected) {
+            placeholder.remove();
+        }
+        seCalifPrimNotaPickerOpen = null;
+    }
+
+    document.querySelectorAll('body > .se-calif-prim-nota-picker-menu').forEach((menu) => {
+        seCalifPrimRepatriateNotaPickerMenu(menu);
+    });
+}
+
+function seCalifPrimFindNotaPickerMenu(picker) {
+    const inputId = picker?.dataset?.seCalifPrimNotaPickerFor ?? '';
+    if (inputId === '' || !picker?.isConnected) {
+        return null;
+    }
+
+    if (seCalifPrimNotaPickerOpen?.picker === picker && seCalifPrimNotaPickerOpen.menu?.isConnected) {
+        return seCalifPrimNotaPickerOpen.menu;
+    }
+
+    let menu = picker.querySelector('.se-calif-prim-nota-picker-menu');
+    if (menu) {
+        return menu;
+    }
+
+    menu = document.querySelector(
         `.se-calif-prim-nota-picker-menu[data-se-calif-prim-nota-menu-for="${CSS.escape(String(inputId))}"]`,
     );
+    if (menu) {
+        seCalifPrimRepatriateNotaPickerMenu(menu);
+    }
+
+    return menu;
 }
 
 function seCalifPrimCloseNotaPicker(focusBack = false) {
     if (!seCalifPrimNotaPickerOpen) {
         return;
     }
-    const { menu, btn, picker, placeholder } = seCalifPrimNotaPickerOpen;
-    menu.hidden = true;
-    menu.classList.add('hidden');
-    menu.style.cssText = '';
+    const { menu, btn, picker, placeholder, input } = seCalifPrimNotaPickerOpen;
+    seCalifPrimResetNotaPickerMenuStyles(menu);
     if (btn) {
         btn.setAttribute('aria-expanded', 'false');
     }
-    if (placeholder && picker && menu.parentElement === document.body) {
+    if (placeholder?.isConnected && picker?.isConnected && menu?.parentElement === document.body) {
         picker.insertBefore(menu, placeholder);
         placeholder.remove();
+    } else {
+        seCalifPrimRepatriateNotaPickerMenu(menu);
     }
-    delete menu._seCalifPrimPlaceholder;
-    delete menu._seCalifPrimHome;
-    const returnFocus = focusBack ? btn : null;
+    if (placeholder?.isConnected) {
+        placeholder.remove();
+    }
+    delete menu?._seCalifPrimPlaceholder;
+    delete menu?._seCalifPrimHome;
+    const returnFocus = focusBack ? btn ?? document.getElementById(input?.id ?? '') : null;
     seCalifPrimNotaPickerOpen = null;
-    if (returnFocus) {
+    if (returnFocus?.isConnected) {
         returnFocus.focus({ preventScroll: true });
     }
 }
 
 function seCalifPrimApplyNotaFromPicker(input, nota, menu) {
+    seCalifPrimCloseNotaPicker(false);
     input.dataset.seCalifPrimLast = input.value ?? '';
     input.dataset.seCalifPrimMatLast = input.value ?? '';
     input.value = nota;
-    if (menu) {
+    if (menu?.isConnected) {
         seCalifPrimSyncNotaPickerSelection(menu, nota);
     }
     input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
@@ -387,12 +475,14 @@ function seCalifPrimHandleNotaPickerClick(e) {
     if (opt && seCalifPrimNotaPickerOpen?.menu?.contains(opt)) {
         e.preventDefault();
         e.stopPropagation();
-        const { menu, input } = seCalifPrimNotaPickerOpen;
+        const { menu, input, btn } = seCalifPrimNotaPickerOpen;
         const nota = String(opt.dataset.nota ?? opt.textContent ?? '').trim();
         if (nota !== '') {
             seCalifPrimApplyNotaFromPicker(input, nota, menu);
         }
-        seCalifPrimCloseNotaPicker(true);
+        if (btn?.isConnected) {
+            btn.focus({ preventScroll: true });
+        }
         return;
     }
 
@@ -456,6 +546,17 @@ function seCalifPrimBindNotaPickerDocClose() {
             return;
         }
         const { menu, input, btn } = seCalifPrimNotaPickerOpen;
+        const t = e.target;
+        if (input && (t === input || input.contains(t))) {
+            return;
+        }
+        if (btn && (t === btn || btn.contains(t)) && !menu.contains(t)) {
+            return;
+        }
+        if (!menu.contains(t) && t !== btn) {
+            seCalifPrimCloseNotaPicker(false);
+            return;
+        }
         const options = seCalifPrimNotaPickerOptions(menu);
         let idx = options.findIndex((opt) => opt.classList.contains('is-focused'));
 
@@ -497,7 +598,9 @@ function seCalifPrimBindNotaPickerDocClose() {
             if (nota !== '') {
                 seCalifPrimApplyNotaFromPicker(input, nota, menu);
             }
-            seCalifPrimCloseNotaPicker(true);
+            if (btn?.isConnected) {
+                btn.focus({ preventScroll: true });
+            }
         }
     });
 
@@ -616,6 +719,7 @@ function seCalifPrimStep(matrix, row, col, dRow, dCol) {
 }
 
 function bindCalifPrimarioTablas() {
+    seCalifPrimRepatriateAllNotaPickerMenus();
     document.querySelectorAll('[data-se-calif-prim-tbody]').forEach((tbody) => {
         if (tbody._seCalifPrimBound) {
             return;
@@ -746,15 +850,34 @@ function bindCalifPrimarioTablas() {
     });
 }
 
-const SECALIF_PRIM_MAT_INPUT_ID = /^se-calif-prim-mat-(\d+)-(ic\d{2})$/;
+const SECALIF_PRIM_MAT_INPUT_ID = /^se-calif-prim-mat-(\d+)-(ic\d{2}|obs0[12]|dic)$/;
 
 function seCalifPrimMatCampoConCatalogo(field) {
     return (
         field === 'ic01' ||
         field === 'ic02' ||
         field === 'ic03' ||
+        field === 'dic' ||
         (field >= 'ic05' && field <= 'ic16')
     );
+}
+
+function seCalifPrimMatEsCeldaEditable(el) {
+    if (!el || el.disabled) {
+        return false;
+    }
+    if (el.tagName === 'TEXTAREA') {
+        return SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''));
+    }
+    if (el.tagName === 'INPUT' && el.type !== 'checkbox') {
+        return SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''));
+    }
+
+    return false;
+}
+
+function seCalifPrimMatEsObsTextarea(el) {
+    return el?.tagName === 'TEXTAREA' && SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''));
 }
 
 function seCalifPrimMatCallSaveCell(root, idMatricula, field, value) {
@@ -778,11 +901,7 @@ function seCalifPrimMatBuildNavMatrix(tbody) {
     const matrix = [];
     tbody.querySelectorAll(':scope > tr').forEach((tr) => {
         const row = [];
-        tr.querySelectorAll('input[id^="se-calif-prim-mat-"]').forEach((inp) => {
-            if (inp.type === 'checkbox' || inp.disabled) {
-                row.push(inp);
-                return;
-            }
+        tr.querySelectorAll('input[type="text"][id^="se-calif-prim-mat-"]').forEach((inp) => {
             if (!SECALIF_PRIM_MAT_INPUT_ID.test(String(inp.id || ''))) {
                 return;
             }
@@ -795,148 +914,173 @@ function seCalifPrimMatBuildNavMatrix(tbody) {
     return matrix;
 }
 
-function bindCalifPrimarioMateriaTablas() {
-    document.querySelectorAll('[data-se-calif-prim-mat-tbody]').forEach((tbody) => {
-        if (tbody._seCalifPrimMatBound) {
-            return;
+function seCalifPrimMatHandleNavKeydown(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+    }
+    const el = e.target;
+    if (seCalifPrimMatEsObsTextarea(el)) {
+        return;
+    }
+    if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+        return;
+    }
+    if (!SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''))) {
+        return;
+    }
+    const tbody = el.closest('[data-se-calif-prim-mat-tbody]');
+    if (!tbody) {
+        return;
+    }
+    const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+    if (!navKeys.includes(e.key)) {
+        return;
+    }
+    if (seCalifPrimNotaPickerOpen) {
+        seCalifPrimCloseNotaPicker(false);
+    }
+
+    const matrix = seCalifPrimMatBuildNavMatrix(tbody);
+    const pos = seCalifPrimFindNavPos(matrix, el);
+    if (!pos) {
+        return;
+    }
+
+    const nrows = matrix.length;
+    const ncols = matrix[0] ? matrix[0].length : 0;
+    if (!nrows || !ncols) {
+        return;
+    }
+
+    const { row, col } = pos;
+    let next = null;
+
+    if (e.key === 'ArrowLeft') {
+        next = seCalifPrimStep(matrix, row, col, 0, -1);
+    } else if (e.key === 'ArrowRight') {
+        next = seCalifPrimStep(matrix, row, col, 0, 1);
+    } else if (e.key === 'ArrowUp') {
+        next = seCalifPrimStep(matrix, row, col, -1, 0);
+    } else if (e.key === 'ArrowDown') {
+        next = seCalifPrimStep(matrix, row, col, 1, 0);
+    } else if (e.key === 'Enter') {
+        next = seCalifPrimStep(matrix, row, col, 1, 0);
+        if (!next && col + 1 < ncols) {
+            for (let r = 0; r < nrows; r++) {
+                const candidate = matrix[r][col + 1];
+                if (candidate && !candidate.disabled) {
+                    next = candidate;
+                    break;
+                }
+            }
         }
-        tbody._seCalifPrimMatBound = true;
+    }
+
+    if (!next || next === el) {
+        return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    seCalifFocusNavCell(next);
+}
+
+function seCalifPrimMatHandleFocusin(e) {
+    const el = e.target;
+    if (!seCalifPrimMatEsCeldaEditable(el)) {
+        return;
+    }
+    const tbody = el.closest('[data-se-calif-prim-mat-tbody]');
+    if (!tbody) {
+        return;
+    }
+    el.dataset.seCalifPrimMatLast = el.value ?? '';
+    el.dataset.seCalifPrimMatScopeMateria = tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '';
+    el.dataset.seCalifPrimMatScopeOrd = tbody.getAttribute('data-se-calif-prim-mat-ord') ?? '';
+}
+
+function seCalifPrimMatHandleFocusout(e) {
+    const el = e.target;
+    if (!seCalifPrimMatEsCeldaEditable(el)) {
+        return;
+    }
+    const tbody = el.closest('[data-se-calif-prim-mat-tbody]');
+    if (!tbody) {
+        return;
+    }
+    if (el.disabled) {
+        return;
+    }
+    const m = el.id && String(el.id).match(SECALIF_PRIM_MAT_INPUT_ID);
+    if (!m) {
+        return;
+    }
+    const scopeMateria = el.dataset.seCalifPrimMatScopeMateria ?? '';
+    const scopeOrd = el.dataset.seCalifPrimMatScopeOrd ?? '';
+    if (
+        scopeMateria !== '' &&
+        (scopeMateria !== (tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '') ||
+            scopeOrd !== (tbody.getAttribute('data-se-calif-prim-mat-ord') ?? ''))
+    ) {
+        return;
+    }
+    if (!el.isConnected) {
+        return;
+    }
+    const idMatricula = parseInt(m[1], 10);
+    const field = m[2];
+    const val = seCalifPrimMatEsObsTextarea(el) ? String(el.value ?? '') : (el.value || '').trim();
+
+    const activa = tbody.getAttribute('data-se-calif-prim-mat-activa') === '1';
+    const set = seCalifPrimMatGetAllowedSet(tbody);
+
+    if (activa && seCalifPrimMatCampoConCatalogo(field) && val !== '' && !set.has(val)) {
+        el.value = el.dataset.seCalifPrimMatLast ?? '';
+        window.seCalifToastInvalida(el);
+        queueMicrotask(() => {
+            seCalifFocusNavCell(el);
+        });
+        return;
+    }
+
+    const root = el.closest('[wire\\:id]');
+    if (!root) {
+        return;
+    }
+    seCalifPrimMatCallSaveCell(root, idMatricula, field, el.value);
+}
+
+function seCalifPrimMatBindDocHandlers() {
+    if (window._seCalifPrimMatDocBound) {
+        return;
+    }
+    window._seCalifPrimMatDocBound = true;
+
+    document.addEventListener('focusin', seCalifPrimMatHandleFocusin, true);
+    document.addEventListener('focusout', seCalifPrimMatHandleFocusout, true);
+    document.addEventListener('keydown', seCalifPrimMatHandleNavKeydown, true);
+}
+
+function seCalifPrimMatGetAllowedSet(tbody) {
+    if (tbody._seCalifPrimMatAllowedSet) {
+        return tbody._seCalifPrimMatAllowedSet;
+    }
+    let allowed = [];
+    try {
+        allowed = JSON.parse(tbody.getAttribute('data-se-calif-prim-mat-allowed') || '[]');
+    } catch {
+        allowed = [];
+    }
+    tbody._seCalifPrimMatAllowedSet = new Set(allowed.map((x) => String(x).trim()));
+    return tbody._seCalifPrimMatAllowedSet;
+}
+
+function bindCalifPrimarioMateriaTablas() {
+    seCalifPrimRepatriateAllNotaPickerMenus();
+    seCalifPrimMatBindDocHandlers();
+    document.querySelectorAll('[data-se-calif-prim-mat-tbody]').forEach((tbody) => {
+        delete tbody._seCalifPrimMatAllowedSet;
         seCalifPrimBindNotaPickerCombo(tbody);
-
-        tbody.addEventListener(
-            'focusin',
-            (e) => {
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                el.dataset.seCalifPrimMatLast = el.value ?? '';
-                el.dataset.seCalifPrimMatScopeMateria = tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '';
-                el.dataset.seCalifPrimMatScopeOrd = tbody.getAttribute('data-se-calif-prim-mat-ord') ?? '';
-            },
-            true,
-        );
-
-        tbody.addEventListener(
-            'focusout',
-            (e) => {
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                if (el.disabled) {
-                    return;
-                }
-                const m = el.id && String(el.id).match(SECALIF_PRIM_MAT_INPUT_ID);
-                if (!m) {
-                    return;
-                }
-                const scopeMateria = el.dataset.seCalifPrimMatScopeMateria ?? '';
-                const scopeOrd = el.dataset.seCalifPrimMatScopeOrd ?? '';
-                if (
-                    scopeMateria !== '' &&
-                    (scopeMateria !== (tbody.getAttribute('data-se-calif-prim-mat-materia-id') ?? '') ||
-                        scopeOrd !== (tbody.getAttribute('data-se-calif-prim-mat-ord') ?? ''))
-                ) {
-                    return;
-                }
-                if (!el.isConnected) {
-                    return;
-                }
-                const idMatricula = parseInt(m[1], 10);
-                const field = m[2];
-                const val = (el.value || '').trim();
-
-                const activa = tbody.getAttribute('data-se-calif-prim-mat-activa') === '1';
-                let allowed = [];
-                try {
-                    allowed = JSON.parse(tbody.getAttribute('data-se-calif-prim-mat-allowed') || '[]');
-                } catch {
-                    allowed = [];
-                }
-                const set = new Set(allowed.map((x) => String(x).trim()));
-
-                if (activa && seCalifPrimMatCampoConCatalogo(field) && val !== '' && !set.has(val)) {
-                    el.value = el.dataset.seCalifPrimMatLast ?? '';
-                    window.seCalifToastInvalida(el);
-                    queueMicrotask(() => {
-                        seCalifFocusNavCell(el);
-                    });
-                    return;
-                }
-
-                const root = el.closest('[wire\\:id]');
-                if (!root) {
-                    return;
-                }
-                seCalifPrimMatCallSaveCell(root, idMatricula, field, el.value);
-            },
-            true,
-        );
-
-        tbody.addEventListener(
-            'keydown',
-            (e) => {
-                if (e.ctrlKey || e.metaKey || e.altKey) {
-                    return;
-                }
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                if (!SECALIF_PRIM_MAT_INPUT_ID.test(String(el.id || ''))) {
-                    return;
-                }
-                const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
-                if (!navKeys.includes(e.key)) {
-                    return;
-                }
-
-                const matrix = seCalifPrimMatBuildNavMatrix(tbody);
-                const pos = seCalifPrimFindNavPos(matrix, el);
-                if (!pos) {
-                    return;
-                }
-
-                const nrows = matrix.length;
-                const ncols = matrix[0] ? matrix[0].length : 0;
-                if (!nrows || !ncols) {
-                    return;
-                }
-
-                const { row, col } = pos;
-                let next = null;
-
-                if (e.key === 'ArrowLeft') {
-                    next = seCalifPrimStep(matrix, row, col, 0, -1);
-                } else if (e.key === 'ArrowRight') {
-                    next = seCalifPrimStep(matrix, row, col, 0, 1);
-                } else if (e.key === 'ArrowUp') {
-                    next = seCalifPrimStep(matrix, row, col, -1, 0);
-                } else if (e.key === 'ArrowDown') {
-                    next = seCalifPrimStep(matrix, row, col, 1, 0);
-                } else if (e.key === 'Enter') {
-                    next = seCalifPrimStep(matrix, row, col, 1, 0);
-                    if (!next && col + 1 < ncols) {
-                        for (let r = 0; r < nrows; r++) {
-                            const candidate = matrix[r][col + 1];
-                            if (candidate && !candidate.disabled) {
-                                next = candidate;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (!next || next === el) {
-                    return;
-                }
-
-                e.preventDefault();
-                seCalifFocusNavCell(next);
-            },
-            true,
-        );
     });
 }
 
@@ -1363,6 +1507,7 @@ function bindCierreAnualGrillas() {
 
 document.addEventListener('DOMContentLoaded', () => {
     seCalifPrimBindNotaPickerDocClose();
+    seCalifPrimMatBindDocHandlers();
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCalifPrimarioTablas);
     queueMicrotask(bindCalifPrimarioMateriaTablas);
@@ -1455,9 +1600,14 @@ document.addEventListener('livewire:init', () => {
     const L = window.Livewire;
     if (L && typeof L.hook === 'function') {
         L.hook('morph.updated', () => {
-            queueMicrotask(bindCalifCargaTablas);
-            queueMicrotask(bindCalifPrimarioTablas);
-    queueMicrotask(bindCalifPrimarioMateriaTablas);
+            if (document.querySelector('body > .se-calif-prim-nota-picker-menu')) {
+                seCalifPrimRepatriateAllNotaPickerMenus();
+            }
+            if (document.querySelector('[data-se-calif-prim-mat-tbody], [data-se-calif-prim-tbody], [data-se-calif-tbody]')) {
+                queueMicrotask(bindCalifCargaTablas);
+                queueMicrotask(bindCalifPrimarioTablas);
+                queueMicrotask(bindCalifPrimarioMateriaTablas);
+            }
             queueMicrotask(bindCuotasImportesForm);
             queueMicrotask(bindCierreAnualGrillas);
             queueMicrotask(triggerSeSidebarOverflowSync);

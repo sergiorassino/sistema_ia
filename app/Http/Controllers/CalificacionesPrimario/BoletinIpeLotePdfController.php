@@ -63,15 +63,16 @@ class BoletinIpeLotePdfController extends Controller
             abort(404);
         }
 
+        $prefijo = BoletinIpePrimarioGenerador::prefijoArchivoPdf();
         $cantidad = count($hojas);
         if ($cantidad === 1) {
             $slugBase = trim((string) ($hojas[0]['alumnoLinea'] ?? ''));
-            $slug = Str::slug('informe-progreso-escolar-'.$slugBase, '_');
+            $slug = Str::slug($prefijo.'-'.$slugBase, '_');
         } else {
-            $slug = Str::slug('informes-progreso-escolar-'.$cantidad.'-alumnos', '_');
+            $slug = Str::slug($prefijo.'-'.$cantidad.'-alumnos', '_');
         }
         if ($slug === '') {
-            $slug = 'informes_progreso_escolar';
+            $slug = $prefijo;
         }
 
         $pdf = BoletinIpePrimarioGenerador::generarLote($hojas, schoolPdfHeaderData());

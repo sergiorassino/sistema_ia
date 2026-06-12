@@ -97,10 +97,13 @@ return [
 
     /**
      * Boletín IPE — nivel primario.
-     * `implementacion`: `estandar` (A4 vertical, NSSC/CAIXAL) | `sanjose` (A4 apaisado, matriz).
+     * `implementacion`: `estandar` (A4 vertical) | `sanjose` (A4 apaisado, matriz) | `montecristo` (extracurriculares institucionales).
      */
     'boletin_primario' => [
         'ipe_implementacion' => 'estandar',
+        'director_firma' => '',
+        /** Texto del ítem en CALIFICACIONES (Primario) del Menú de Secretaría. */
+        'menu_etiqueta_boletin_ipe' => 'Boletines IPE',
     ],
 
     /**

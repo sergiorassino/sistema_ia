@@ -14,34 +14,19 @@ use Illuminate\Support\Facades\DB;
  */
 final class PlanillaCalificacionesPrimarioDatos
 {
-    /** Valor legacy ScriptCase para apreciación final (`ic03`). */
-    public const ETAPA_APRECIACION_FINAL = 9;
-
     public static function normalizarEtapa(int $etapa): int
     {
-        return match ($etapa) {
-            2 => 2,
-            self::ETAPA_APRECIACION_FINAL => self::ETAPA_APRECIACION_FINAL,
-            default => 1,
-        };
+        return CalificacionesPrimarioCatalogo::normalizarEtapaPlanilla($etapa);
     }
 
     public static function campoNotaParaEtapa(int $etapa): string
     {
-        return match (self::normalizarEtapa($etapa)) {
-            2 => 'ic02',
-            self::ETAPA_APRECIACION_FINAL => 'ic03',
-            default => 'ic01',
-        };
+        return CalificacionesPrimarioCatalogo::campoNotaEtapa($etapa);
     }
 
     public static function etiquetaEtapa(int $etapa): string
     {
-        return match (self::normalizarEtapa($etapa)) {
-            2 => 'SEGUNDA',
-            self::ETAPA_APRECIACION_FINAL => 'APRECIACIÓN FINAL',
-            default => 'PRIMERA',
-        };
+        return CalificacionesPrimarioCatalogo::etiquetaEtapaPlanilla($etapa);
     }
 
     /**
@@ -197,7 +182,7 @@ final class PlanillaCalificacionesPrimarioDatos
             return [];
         }
 
-        if (! in_array($campoNota, ['ic01', 'ic02', 'ic03'], true)) {
+        if (! in_array($campoNota, CalificacionesPrimarioCatalogo::camposNotaTodos(), true)) {
             return [];
         }
 

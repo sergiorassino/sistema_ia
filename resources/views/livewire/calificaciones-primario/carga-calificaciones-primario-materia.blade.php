@@ -1,34 +1,146 @@
-{{-- Carga por materia: etapa → curso → materia → grilla alumnos × parciales + nota etapa (+ anual en 2ª). --}}
+{{-- Carga por materia: etapa → curso → materia → grilla alumnos × parciales + nota etapa (+ anual en 2ª) + obs etapa. --}}
 @php
     use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
+    $maxObsCalif = CalificacionesPrimarioCatalogo::MAX_CARACTERES_OBS_CALIFICACION;
 @endphp
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
     <style>
-        table.se-calif-prim-mat-grid { table-layout: fixed; width: 100%; min-width: 720px; font-size: 11px; }
+        table.se-calif-prim-mat-grid {
+            table-layout: fixed;
+            width: 100%;
+            font-size: 11px;
+        }
         table.se-calif-prim-mat-grid th,
-        table.se-calif-prim-mat-grid td { padding: 4px 3px; line-height: 1.2; }
+        table.se-calif-prim-mat-grid td { padding: 3px 2px; line-height: 1.2; }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-alumno,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-nota {
+            vertical-align: middle;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-obs {
+            vertical-align: top;
+        }
         table.se-calif-prim-mat-grid input[type="text"] {
             width: 100%;
             height: 22px;
-            padding: 0 4px;
+            padding: 0 2px;
             font-size: 11px;
             text-align: center;
             box-sizing: border-box;
         }
         table.se-calif-prim-mat-grid input:disabled {
-            background: #e8ecef;
+            background: #e8e8e8;
             color: #6b7280;
             cursor: not-allowed;
         }
         table.se-calif-prim-mat-grid .se-calif-prim-mat-col-alumno {
-            width: 11rem;
+            width: 9.5rem;
             text-align: left;
             font-weight: 600;
         }
+        table.se-calif-prim-mat-grid th.se-calif-prim-mat-col-nota,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-nota {
+            width: 3.7rem;
+            min-width: 3.7rem;
+            max-width: 3.7rem;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+        table.se-calif-prim-mat-grid thead th.se-calif-prim-mat-col-nota,
+        table.se-calif-prim-mat-grid thead th.se-calif-prim-mat-col-alumno {
+            vertical-align: middle;
+        }
         table.se-calif-prim-mat-grid thead th.se-calif-prim-mat-col-nota {
-            min-width: 2.5rem;
-            max-width: 3.5rem;
-            line-height: 1.15;
+            font-size: 7px;
+            line-height: 1.05;
+            word-break: break-word;
+            hyphens: auto;
+            letter-spacing: -0.02em;
+        }
+        table.se-calif-prim-mat-grid thead th.se-calif-prim-mat-col-nota-principal {
+            font-size: 7px;
+            font-weight: 700;
+            line-height: 1.05;
+            word-break: break-word;
+            hyphens: auto;
+            letter-spacing: -0.02em;
+        }
+        table.se-calif-prim-mat-grid th.se-calif-prim-mat-col-obs,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-obs {
+            width: auto;
+            min-width: 12rem;
+        }
+        table.se-calif-prim-mat-grid textarea.se-calif-prim-mat-obs-input {
+            display: block;
+            width: 100%;
+            min-height: 2.75rem;
+            padding: 4px 6px;
+            font-size: 11px;
+            line-height: 1.35;
+            text-align: left;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        /* Nota de etapa (columna final de etapa) — gris neutro pálido */
+        table.se-calif-prim-mat-grid th.se-calif-prim-mat-col-etapa,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-etapa {
+            background-color: #f5f5f5;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-etapa input[type="text"],
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-etapa .se-calif-prim-nota-combo {
+            background-color: #f5f5f5;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-etapa .se-calif-prim-nota-picker-btn {
+            background-color: #f5f5f5;
+            border-color: #d4d4d4;
+        }
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-etapa,
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-etapa input[type="text"],
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-etapa .se-calif-prim-nota-combo,
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-etapa .se-calif-prim-nota-picker-btn {
+            background-color: #ececec;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-etapa .se-calif-prim-nota-picker-btn:hover {
+            background-color: #ececec;
+            border-color: #b3b3b3;
+            color: #404040;
+        }
+        /* Aprec. final / calificación anual — gris neutro suave */
+        table.se-calif-prim-mat-grid th.se-calif-prim-mat-col-anual,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-anual {
+            background-color: #f2f2f2;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-anual input[type="text"],
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-anual .se-calif-prim-nota-combo {
+            background-color: #f2f2f2;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-anual .se-calif-prim-nota-picker-btn {
+            background-color: #f2f2f2;
+            border-color: #d4d4d4;
+        }
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-anual,
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-anual input[type="text"],
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-anual .se-calif-prim-nota-combo,
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-anual .se-calif-prim-nota-picker-btn {
+            background-color: #ececec;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-anual .se-calif-prim-nota-picker-btn:hover {
+            background-color: #ececec;
+            border-color: #b3b3b3;
+            color: #404040;
+        }
+        /* Parciales e intensificación: fondo blanco (también al hover de fila) */
+        table.se-calif-prim-mat-grid th.se-calif-prim-mat-col-blanco,
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-blanco {
+            background-color: #ffffff;
+        }
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-blanco input[type="text"],
+        table.se-calif-prim-mat-grid td.se-calif-prim-mat-col-blanco .se-calif-prim-nota-combo {
+            background-color: #ffffff;
+        }
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-blanco,
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-blanco input[type="text"],
+        table.se-calif-prim-mat-grid tbody tr:hover td.se-calif-prim-mat-col-blanco .se-calif-prim-nota-combo {
+            background-color: #ffffff;
         }
     </style>
 
@@ -107,28 +219,38 @@
             <div class="se-card overflow-x-auto p-4" wire:key="calif-prim-mat-grid-{{ $materiaId }}-{{ $etapa }}">
                 <div class="w-full overflow-x-auto">
                     <div class="flex justify-start">
-                        <table class="se-calif-prim-mat-grid min-w-[720px] border-collapse border border-accent-200">
+                        <table class="se-calif-prim-mat-grid w-full border-collapse border border-accent-200">
                             <thead>
-                                <tr class="bg-accent-50">
-                                    <th class="se-calif-prim-mat-col-alumno border border-accent-200 px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                                <tr class="bg-neutral-100">
+                                    <th class="se-calif-prim-mat-col-alumno border border-accent-200 bg-white px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
                                         Estudiante
                                     </th>
-                                    @foreach ($columnasParciales as $col)
-                                        <th class="se-calif-prim-mat-col-nota border border-accent-200 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-neutral-700"
-                                            title="Calificación parcial">
-                                            {{ $col['etiqueta'] }}
+                                    @foreach ($columnasParciales as $idx => $col)
+                                        <th class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-blanco border border-accent-200 px-0.5 py-1.5 text-center uppercase text-neutral-700"
+                                            title="{{ $col['etiqueta'] }}">
+                                            {{ $idx + 1 }}
                                         </th>
                                     @endforeach
-                                    <th class="se-calif-prim-mat-col-nota border border-accent-200 px-1 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-primary-800"
+                                    <th class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-nota-principal se-calif-prim-mat-col-etapa border border-accent-200 px-0.5 py-1.5 text-center uppercase text-primary-800"
                                         title="{{ $columnaFinalEtapa['etiqueta'] }}">
                                         {{ $columnaFinalEtapa['etiqueta'] }}
                                     </th>
                                     @if ($columnaAnual)
-                                        <th class="se-calif-prim-mat-col-nota border border-accent-200 px-1 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-primary-800"
+                                        <th class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-nota-principal se-calif-prim-mat-col-anual border border-accent-200 px-0.5 py-1.5 text-center uppercase text-primary-800"
                                             title="{{ $columnaAnual['etiqueta'] }}">
                                             {{ $columnaAnual['etiqueta'] }}
                                         </th>
                                     @endif
+                                    @if ($columnaIntensificacion)
+                                        <th class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-nota-principal se-calif-prim-mat-col-blanco border border-accent-200 px-0.5 py-1.5 text-center uppercase text-primary-800"
+                                            title="{{ $columnaIntensificacion['etiqueta'] }}">
+                                            {{ $columnaIntensificacion['etiqueta'] }}
+                                        </th>
+                                    @endif
+                                    <th class="se-calif-prim-mat-col-obs border border-accent-200 bg-white px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-neutral-700"
+                                        title="{{ $columnaObs['etiqueta'] }} ({{ $maxObsCalif }} caract. máx.)">
+                                        {{ $columnaObs['etiqueta'] }}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody
@@ -139,8 +261,8 @@
                                 data-se-calif-prim-mat-activa="{{ $notasPermitidasActiva ? '1' : '0' }}"
                                 data-se-calif-prim-mat-allowed='@json($notasPermitidasLista ?? [])'>
                                 @foreach ($filas as $idMatricula => $fila)
-                                    <tr wire:key="calif-prim-mat-row-{{ $materiaId }}-{{ $etapa }}-{{ $idMatricula }}" class="hover:bg-accent-50/40">
-                                        <td class="se-calif-prim-mat-col-alumno border border-accent-200 bg-white px-2 py-1 text-[11px] text-neutral-800">
+                                    <tr wire:key="calif-prim-mat-row-{{ $materiaId }}-{{ $etapa }}-{{ $idMatricula }}" class="hover:bg-neutral-50">
+                                        <td class="se-calif-prim-mat-col-alumno border border-accent-200 bg-white px-2 py-1 text-[11px] text-neutral-800 align-middle">
                                             {{ $fila['alumno'] }}
                                         </td>
                                         @foreach ($columnasParciales as $col)
@@ -148,7 +270,7 @@
                                                 $campo = $col['campo'];
                                                 $valor = $fila['notas'][$campo] ?? '';
                                             @endphp
-                                            <td class="border border-accent-200 p-0.5">
+                                            <td class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-blanco border border-accent-200 p-0.5 align-middle">
                                                 @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
                                                     'id' => 'se-calif-prim-mat-'.$idMatricula.'-'.$campo,
                                                     'value' => $valor,
@@ -162,7 +284,7 @@
                                             $campoFinal = $columnaFinalEtapa['campo'];
                                             $valorFinal = $fila['notas'][$campoFinal] ?? '';
                                         @endphp
-                                        <td class="border border-accent-200 bg-accent-50/30 p-0.5">
+                                        <td class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-etapa border border-accent-200 p-0.5 align-middle">
                                             @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
                                                 'id' => 'se-calif-prim-mat-'.$idMatricula.'-'.$campoFinal,
                                                 'value' => $valorFinal,
@@ -177,7 +299,7 @@
                                                 $campoAnual = $columnaAnual['campo'];
                                                 $valorAnual = $fila['notas'][$campoAnual] ?? '';
                                             @endphp
-                                            <td class="border border-accent-200 bg-accent-50/30 p-0.5">
+                                            <td class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-anual border border-accent-200 p-0.5 align-middle">
                                                 @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
                                                     'id' => 'se-calif-prim-mat-'.$idMatricula.'-'.$campoAnual,
                                                     'value' => $valorAnual,
@@ -188,6 +310,35 @@
                                                 ])
                                             </td>
                                         @endif
+                                        @if ($columnaIntensificacion)
+                                            @php
+                                                $campoIntensif = $columnaIntensificacion['campo'];
+                                                $valorIntensif = $fila['notas'][$campoIntensif] ?? '';
+                                            @endphp
+                                            <td class="se-calif-prim-mat-col-nota se-calif-prim-mat-col-blanco border border-accent-200 p-0.5 align-middle">
+                                                @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
+                                                    'id' => 'se-calif-prim-mat-'.$idMatricula.'-'.$campoIntensif,
+                                                    'value' => $valorIntensif,
+                                                    'wireKey' => 'prim-mat-cell-'.$materiaId.'-'.$etapa.'-'.$idMatricula.'-'.$campoIntensif,
+                                                    'inputClass' => 'rounded border border-accent-200 font-semibold focus:border-primary-500 focus:ring-1 focus:ring-primary-500',
+                                                    'notasPermitidasActiva' => $notasPermitidasActiva,
+                                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                                ])
+                                            </td>
+                                        @endif
+                                        @php
+                                            $campoObs = $columnaObs['campo'];
+                                            $valorObs = $fila['notas'][$campoObs] ?? '';
+                                        @endphp
+                                        <td class="se-calif-prim-mat-col-obs border border-accent-200 p-1">
+                                            <textarea id="se-calif-prim-mat-{{ $idMatricula }}-{{ $campoObs }}"
+                                                      rows="2"
+                                                      maxlength="{{ $maxObsCalif }}"
+                                                      autocomplete="off"
+                                                      wire:key="prim-mat-cell-{{ $materiaId }}-{{ $etapa }}-{{ $idMatricula }}-{{ $campoObs }}"
+                                                      title="{{ $maxObsCalif }} caracteres máx."
+                                                      class="se-calif-prim-mat-obs-input rounded border border-accent-200 leading-relaxed focus:border-primary-500 focus:ring-1 focus:ring-primary-500">{{ $valorObs }}</textarea>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
