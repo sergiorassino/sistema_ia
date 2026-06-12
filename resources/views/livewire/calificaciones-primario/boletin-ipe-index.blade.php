@@ -29,13 +29,15 @@
                 @endforeach
             </select>
         </div>
-        <div class="min-w-0 flex-1 lg:max-w-xs">
-            <label for="se-boletin-ipe-etapa" class="form-label">Etapa del informe</label>
-            <select id="se-boletin-ipe-etapa" wire:model.live="etapa" class="form-select mt-1.5 w-full">
-                <option value="1">Primera etapa</option>
-                <option value="2">Segunda etapa</option>
-            </select>
-        </div>
+        @if ($usaSelectorEtapa ?? true)
+            <div class="min-w-0 flex-1 lg:max-w-xs">
+                <label for="se-boletin-ipe-etapa" class="form-label">Etapa del informe</label>
+                <select id="se-boletin-ipe-etapa" wire:model.live="etapa" class="form-select mt-1.5 w-full">
+                    <option value="1">Primera etapa</option>
+                    <option value="2">Segunda etapa</option>
+                </select>
+            </div>
+        @endif
     </div>
 
     @if ($cursoId)
@@ -73,7 +75,9 @@
                               class="inline">
                             @csrf
                             <input type="hidden" name="curso" value="{{ (int) $cursoId }}">
-                            <input type="hidden" name="etapa" value="{{ (int) $etapaPdf }}">
+                            @if ($usaSelectorEtapa ?? true)
+                                <input type="hidden" name="etapa" value="{{ (int) $etapaPdf }}">
+                            @endif
                             @foreach ($idsPdfLote as $idMat)
                                 <input type="hidden" name="matriculas[]" value="{{ (int) $idMat }}">
                             @endforeach
@@ -123,7 +127,7 @@
                                     <x-pdf-post-matricula
                                         :action="route('calificacionesPrimario.boletinIpe.pdf')"
                                         :matricula="$mat->id"
-                                        :fields="['etapa' => $etapaPdf]">
+                                        :fields="($usaSelectorEtapa ?? true) ? ['etapa' => $etapaPdf] : []">
                                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>

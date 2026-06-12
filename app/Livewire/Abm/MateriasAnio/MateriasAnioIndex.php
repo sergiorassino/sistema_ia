@@ -11,6 +11,7 @@ use App\Models\Plan;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -62,6 +63,7 @@ class MateriasAnioIndex extends Component
         $this->creating = false;
         $this->create = [];
         $this->editingId = null;
+        $this->draft = [];
         $this->resetValidation();
     }
 
@@ -93,6 +95,7 @@ class MateriasAnioIndex extends Component
             'idMatPlan' => $matplanId > 0 ? $matplanId : null,
             'materia' => '',
             'abrev' => '',
+            'esInstitucional' => false,
         ];
 
         $this->editingId = null;
@@ -119,6 +122,7 @@ class MateriasAnioIndex extends Component
             'create.idMatPlan' => ['required', 'integer', Rule::in($matplanIds)],
             'create.materia' => ['required', 'string', 'max:70'],
             'create.abrev' => ['nullable', 'string', 'max:5'],
+            'create.esInstitucional' => ['boolean'],
         ];
     }
 
@@ -172,6 +176,9 @@ class MateriasAnioIndex extends Component
             'cierre1e' => 0,
             'cierre2e' => 0,
         ];
+        if (Schema::hasColumn('materias', 'esInstitucional')) {
+            $payload['esInstitucional'] = ! empty($this->create['esInstitucional']) ? 1 : 0;
+        }
 
         try {
             $id = (int) DB::table('materias')->insertGetId($payload);
@@ -213,6 +220,7 @@ class MateriasAnioIndex extends Component
             'idMatPlan' => (int) $m->idMatPlan,
             'materia' => (string) ($m->materia ?? ''),
             'abrev' => (string) ($m->abrev ?? ''),
+            'esInstitucional' => (int) ($m->esInstitucional ?? 0) === 1,
         ];
 
         $this->creating = false;
@@ -238,6 +246,7 @@ class MateriasAnioIndex extends Component
             "draft.$id.idMatPlan" => ['required', 'integer', Rule::in($matplanIds)],
             "draft.$id.materia" => ['required', 'string', 'max:70'],
             "draft.$id.abrev" => ['nullable', 'string', 'max:5'],
+            "draft.$id.esInstitucional" => ['boolean'],
         ];
     }
 
@@ -300,6 +309,9 @@ class MateriasAnioIndex extends Component
             'materia' => trim((string) $d['materia']),
             'abrev' => trim((string) ($d['abrev'] ?? '')) !== '' ? trim((string) $d['abrev']) : null,
         ];
+        if (Schema::hasColumn('materias', 'esInstitucional')) {
+            $payload['esInstitucional'] = ! empty($d['esInstitucional']) ? 1 : 0;
+        }
 
         try {
             DB::table('materias')->where('id', $id)->update($payload);
@@ -311,6 +323,39 @@ class MateriasAnioIndex extends Component
 
         $this->editingId = null;
         $this->resetValidation();
+    }
+
+    public function toggleEsInstitucional(int $id): void
+    {
+        if (! Schema::hasColumn('materias', 'esInstitucional')) {
+            session()->flash('error', 'Falta aplicar la migración del campo «Proyecto institucional» en materias.');
+
+            return;
+        }
+
+        $key = 'materias-anio:toggle-instit:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 60)) {
+            session()->flash('error', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx = schoolCtx();
+
+        $m = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('id', $id)
+            ->first(['id', 'esInstitucional']);
+
+        if (! $m) {
+            abort(404);
+        }
+
+        $nuevo = (int) ($m->esInstitucional ?? 0) === 1 ? 0 : 1;
+
+        DB::table('materias')->where('id', $id)->update(['esInstitucional' => $nuevo]);
     }
 
     public function confirmDelete(int $id): void
@@ -447,23 +492,35 @@ class MateriasAnioIndex extends Component
             ->orderBy('id')
             ;
 
-        $materias = $q->get([
-                'id',
-                'ord',
-                'idNivel',
-                'idCursos',
-                'idTerlec',
-                'idCurPlan',
-                'idMatPlan',
-                'materia',
-                'abrev',
-            ]);
+        $columnas = [
+            'id',
+            'ord',
+            'idNivel',
+            'idCursos',
+            'idTerlec',
+            'idCurPlan',
+            'idMatPlan',
+            'materia',
+            'abrev',
+        ];
+        if (Schema::hasColumn('materias', 'esInstitucional')) {
+            $columnas[] = 'esInstitucional';
+        }
+
+        $materias = $q->get($columnas);
 
         [$cursos, $curplanes, $matplanes] = $this->options();
 
         $matplanesByCurplan = $matplanes->groupBy('idCurPlan');
+        $tieneEsInstitucional = Schema::hasColumn('materias', 'esInstitucional');
 
-        return view('livewire.abm.materias-anio.index', compact('materias', 'cursos', 'curplanes', 'matplanesByCurplan'))
+        return view('livewire.abm.materias-anio.index', compact(
+            'materias',
+            'cursos',
+            'curplanes',
+            'matplanesByCurplan',
+            'tieneEsInstitucional',
+        ))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Asignaturas del Año']);
     }
 }

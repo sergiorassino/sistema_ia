@@ -1,10 +1,21 @@
 <?php
 
+use App\Livewire\Alumnos\ActualizacionDatosPersonalesEstandarForm;
+use App\Livewire\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsisForm;
 use App\Models\Ento;
+use App\Models\Profesor;
 use App\Push\WebPushService;
+use App\Support\Cuotas\CuotasImportesCatalog;
+use App\Support\MatriculaWeb\MatriculaWebDocumentos;
+use App\Support\NivelSistema;
+use App\Support\PermisosConfiguracion;
+use App\Support\PermisosIaCatalog;
+use App\Support\ProfesorMenuPortal;
+use App\Support\SchoolAlcancePedagogico;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
 
 if (! function_exists('se_route_url')) {
     /**
@@ -62,9 +73,9 @@ if (! function_exists('studentEsNivelSecundario')) {
 }
 
 if (! function_exists('profesorEsSecretario')) {
-    function profesorEsSecretario(?\App\Models\Profesor $profesor = null): bool
+    function profesorEsSecretario(?Profesor $profesor = null): bool
     {
-        return \App\Support\ProfesorMenuPortal::esSecretario($profesor);
+        return ProfesorMenuPortal::esSecretario($profesor);
     }
 }
 
@@ -81,7 +92,7 @@ if (! function_exists('schoolEsNivelSecundario')) {
      */
     function schoolEsNivelSecundario(): bool
     {
-        return \App\Support\NivelSistema::esSecundario((int) (schoolCtx()->idNivel ?? 0));
+        return NivelSistema::esSecundario((int) (schoolCtx()->idNivel ?? 0));
     }
 }
 
@@ -89,18 +100,18 @@ if (! function_exists('layoutMenuStaff')) {
     /** Layout del portal staff: Administración o Secretaría pedagógica. */
     function layoutMenuStaff(): string
     {
-        return \App\Support\ProfesorMenuPortal::layoutStaff();
+        return ProfesorMenuPortal::layoutStaff();
     }
 }
 
 if (! function_exists('schoolIdNivelPedagogico')) {
     /**
      * Nivel único de filtro (login 1–4). En Administración devuelve 0: usar
-     * {@see \App\Support\SchoolAlcancePedagogico::aplicarFiltroColumnaNivel()}.
+     * {@see SchoolAlcancePedagogico::aplicarFiltroColumnaNivel()}.
      */
     function schoolIdNivelPedagogico(): int
     {
-        return (int) (\App\Support\SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
+        return (int) (SchoolAlcancePedagogico::idNivelFiltroUnico() ?? 0);
     }
 }
 
@@ -112,10 +123,10 @@ if (! function_exists('puedeModificarLegajosEstudiantes')) {
     function puedeModificarLegajosEstudiantes(): bool
     {
         if (schoolEsAdministracion()) {
-            return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_MODIFICAR_ADMIN);
+            return tienePermiso(PermisosIaCatalog::LEGAJOS_MODIFICAR_ADMIN);
         }
 
-        return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_ESTUDIANTES);
+        return tienePermiso(PermisosIaCatalog::LEGAJOS_ESTUDIANTES);
     }
 }
 
@@ -157,14 +168,14 @@ if (! function_exists('tienePermiso')) {
 if (! function_exists('tienePermisoConfig')) {
     function tienePermisoConfig(int $orden): bool
     {
-        return \App\Support\PermisosConfiguracion::tiene($orden);
+        return PermisosConfiguracion::tiene($orden);
     }
 }
 
 if (! function_exists('tieneAlgunPermisoConfiguracion')) {
     function tieneAlgunPermisoConfiguracion(): bool
     {
-        return \App\Support\PermisosConfiguracion::tieneAlgunAccesoMenu();
+        return PermisosConfiguracion::tieneAlgunAccesoMenu();
     }
 }
 
@@ -324,15 +335,15 @@ if (! function_exists('matriculaWebDocumentoUrl')) {
      */
     function matriculaWebDocumentoUrl(string $tipo, ?int $idNivel = null): ?string
     {
-        if (! \App\Support\MatriculaWeb\MatriculaWebDocumentos::claveValida($tipo)) {
+        if (! MatriculaWebDocumentos::claveValida($tipo)) {
             return null;
         }
 
-        if (\App\Support\MatriculaWeb\MatriculaWebDocumentos::nombreRegistrado($tipo, $idNivel) === null) {
+        if (MatriculaWebDocumentos::nombreRegistrado($tipo, $idNivel) === null) {
             return null;
         }
 
-        if (\App\Support\MatriculaWeb\MatriculaWebDocumentos::pathAlmacenado($tipo, $idNivel) === null) {
+        if (MatriculaWebDocumentos::pathAlmacenado($tipo, $idNivel) === null) {
             return null;
         }
 
@@ -547,7 +558,7 @@ if (! function_exists('tenantCuotasFormulasInicialesPlantilla')) {
      */
     function tenantCuotasFormulasInicialesPlantilla(): array
     {
-        return \App\Support\Cuotas\CuotasImportesCatalog::valoresInicialesRegistro();
+        return CuotasImportesCatalog::valoresInicialesRegistro();
     }
 }
 
@@ -559,6 +570,19 @@ if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     function tenantBoletinMuestraTercerMateria(): bool
     {
         return (bool) config('tenant.boletin.mostrar_tercer_materia', false);
+    }
+}
+
+if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
+    /**
+     * Variante del informe de progreso escolar (primario).
+     * Valores: `estandar` (vertical) | `sanjose` (apaisado).
+     */
+    function tenantBoletinPrimarioIpeImplementacion(): string
+    {
+        $impl = trim((string) config('tenant.boletin_primario.ipe_implementacion', 'estandar'));
+
+        return $impl !== '' ? $impl : 'estandar';
     }
 }
 
@@ -632,13 +656,13 @@ if (! function_exists('tenantAutogestionActualizacionDatosLivewireComponent')) {
     /**
      * Componente Livewire del formulario según la variante del tenant.
      *
-     * @return class-string<\Livewire\Component>
+     * @return class-string<Component>
      */
     function tenantAutogestionActualizacionDatosLivewireComponent(): string
     {
         return match (tenantAutogestionActualizacionDatosImplementacion()) {
-            'sanfranciscoasis' => \App\Livewire\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsisForm::class,
-            default => \App\Livewire\Alumnos\ActualizacionDatosPersonalesEstandarForm::class,
+            'sanfranciscoasis' => ActualizacionDatosPersonalesSanFranciscoAsisForm::class,
+            default => ActualizacionDatosPersonalesEstandarForm::class,
         };
     }
 }
@@ -782,13 +806,13 @@ if (! function_exists('rrdRol')) {
      */
     function rrdRol(): ?string
     {
-        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN)) {
+        if (tienePermiso(PermisosIaCatalog::RESERVA_MATERIAL_ADMIN)) {
             return 'admin';
         }
-        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)) {
+        if (tienePermiso(PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)) {
             return 'profesor';
         }
-        if (tienePermiso(\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_LECTURA)) {
+        if (tienePermiso(PermisosIaCatalog::RESERVA_MATERIAL_LECTURA)) {
             return 'lectura';
         }
 

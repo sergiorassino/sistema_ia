@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\CalificacionesPrimario;
 
 use App\Http\Controllers\Controller;
-use App\Support\CalificacionesPrimario\BoletinIpeDatos;
-use App\Support\CalificacionesPrimario\BoletinIpeTcpdf;
+use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -38,7 +37,7 @@ class BoletinIpePdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $data = BoletinIpeDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa);
+        $data = BoletinIpePrimarioGenerador::buildDatos($idMatricula, $etapa);
         if (! $data['ok']) {
             abort(404, $data['error'] ?? 'No disponible.');
         }
@@ -49,8 +48,8 @@ class BoletinIpePdfController extends Controller
             $slug = 'informe_progreso_escolar';
         }
 
-        $pdf = BoletinIpeTcpdf::generarHoja($data, schoolPdfHeaderData());
+        $pdf = BoletinIpePrimarioGenerador::generarHoja($data, schoolPdfHeaderData());
 
-        return BoletinIpeTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return BoletinIpePrimarioGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

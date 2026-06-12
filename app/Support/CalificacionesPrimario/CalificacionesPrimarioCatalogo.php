@@ -5,6 +5,7 @@ namespace App\Support\CalificacionesPrimario;
 use App\Models\Curso;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Catálogo de columnas (materias por `ord`) y reglas de visibilidad del formulario legacy de primario.
@@ -78,13 +79,25 @@ final class CalificacionesPrimarioCatalogo
      * Materias del curso en el ciclo lectivo activo, ordenadas por `ord` (misma fuente que secundario).
      * La abreviatura del encabezado prioriza `materias.abrev` y, si falta, `matplan.abrev` (plan del curso).
      *
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string}>
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
      */
     public static function materiasParaCurso(int $idCurso, int $idNivel, int $idTerlec, int $ciclo): Collection
     {
         $maxOrd = self::maxOrdVisible($ciclo);
+        $columnas = [
+            'm.id',
+            'm.ord',
+            'm.abrev as m_abrev',
+            'm.materia',
+            'mp_id.abrev as mp_id_abrev',
+            'mp_ord.abrev as mp_ord_abrev',
+            'mp_ord.matPlanMateria as mp_ord_nombre',
+        ];
+        if (Schema::hasColumn('materias', 'esInstitucional')) {
+            $columnas[] = 'm.esInstitucional';
+        }
 
-        return DB::table('materias as m')
+        $materias = DB::table('materias as m')
             ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
             ->leftJoin('matplan as mp_id', function ($join) {
                 $join->on('mp_id.id', '=', 'm.idMatPlan')
@@ -100,15 +113,7 @@ final class CalificacionesPrimarioCatalogo
             ->where('m.ord', '<=', $maxOrd)
             ->orderBy('m.ord')
             ->orderBy('m.id')
-            ->get([
-                'm.id',
-                'm.ord',
-                'm.abrev as m_abrev',
-                'm.materia',
-                'mp_id.abrev as mp_id_abrev',
-                'mp_ord.abrev as mp_ord_abrev',
-                'mp_ord.matPlanMateria as mp_ord_nombre',
-            ])
+            ->get($columnas)
             ->map(function ($r) {
                 $materia = trim((string) ($r->materia ?? ''));
                 if ($materia === '') {
@@ -124,8 +129,42 @@ final class CalificacionesPrimarioCatalogo
                         (string) ($r->mp_ord_abrev ?? ''),
                     ),
                     'materia' => $materia,
+                    'esInstitucional' => (int) ($r->esInstitucional ?? 0),
                 ];
             });
+
+        return self::ordenarMateriasParaColumnas($materias);
+    }
+
+    /**
+     * Orden de columnas alineado al IPE: por `ord` y, si hay institucionales, al final del bloque curricular.
+     *
+     * @param  Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional?: int}>  $materias
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     */
+    public static function ordenarMateriasParaColumnas(Collection $materias): Collection
+    {
+        $ordenadas = $materias
+            ->sortBy(fn (object $m) => [(int) $m->ord, (int) $m->id])
+            ->values();
+
+        $tieneInstitucional = $ordenadas->contains(
+            fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1,
+        );
+
+        if (! $tieneInstitucional) {
+            return $ordenadas;
+        }
+
+        $curriculares = $ordenadas
+            ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) !== 1)
+            ->values();
+
+        $institucionales = $ordenadas
+            ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1)
+            ->values();
+
+        return $curriculares->concat($institucionales);
     }
 
     /**

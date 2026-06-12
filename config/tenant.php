@@ -96,6 +96,14 @@ return [
     ],
 
     /**
+     * Boletín IPE — nivel primario.
+     * `implementacion`: `estandar` (A4 vertical, NSSC/CAIXAL) | `sanjose` (A4 apaisado, matriz).
+     */
+    'boletin_primario' => [
+        'ipe_implementacion' => 'estandar',
+    ],
+
+    /**
      * Menú de Docentes: Cuaderno de Seguimiento Áulico (secundario).
      * Activar solo en `config/tenants/{slug}.php` para colegios que lo usan.
      */

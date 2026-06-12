@@ -4,8 +4,7 @@ namespace App\Http\Controllers\CalificacionesPrimario;
 
 use App\Http\Controllers\Controller;
 use App\Support\BoletinSecundarioLoteParams;
-use App\Support\CalificacionesPrimario\BoletinIpeDatos;
-use App\Support\CalificacionesPrimario\BoletinIpeTcpdf;
+use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -54,7 +53,7 @@ class BoletinIpeLotePdfController extends Controller
 
         $hojas = [];
         foreach ($ids as $idMatricula) {
-            $data = BoletinIpeDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa);
+            $data = BoletinIpePrimarioGenerador::buildDatos($idMatricula, $etapa);
             if ($data['ok']) {
                 $hojas[] = $data;
             }
@@ -75,8 +74,8 @@ class BoletinIpeLotePdfController extends Controller
             $slug = 'informes_progreso_escolar';
         }
 
-        $pdf = BoletinIpeTcpdf::generarLote($hojas, schoolPdfHeaderData());
+        $pdf = BoletinIpePrimarioGenerador::generarLote($hojas, schoolPdfHeaderData());
 
-        return BoletinIpeTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return BoletinIpePrimarioGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

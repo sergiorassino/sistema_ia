@@ -14,6 +14,7 @@ use App\Models\TurnoClase;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -160,18 +161,25 @@ class CursosIndex extends Component
                         ->orderBy('id')
                         ->get(['id', 'ord', 'matPlanMateria', 'abrev']);
 
-                    $rows = $matplan->map(fn ($m) => [
-                        'ord' => (int) $m->ord,
-                        'idCurPlan' => $newCurplan,
-                        'idMatPlan' => (int) $m->id,
-                        'idNivel' => (int) $curso->idNivel,
-                        'idCursos' => (int) $curso->Id,
-                        'idTerlec' => (int) $curso->idTerlec,
-                        'materia' => (string) $m->matPlanMateria,
-                        'abrev' => $m->abrev !== null && trim((string) $m->abrev) !== '' ? (string) $m->abrev : null,
-                        'cierre1e' => 0,
-                        'cierre2e' => 0,
-                    ])->all();
+                    $rows = $matplan->map(function ($m) use ($newCurplan, $curso) {
+                        $row = [
+                            'ord' => (int) $m->ord,
+                            'idCurPlan' => $newCurplan,
+                            'idMatPlan' => (int) $m->id,
+                            'idNivel' => (int) $curso->idNivel,
+                            'idCursos' => (int) $curso->Id,
+                            'idTerlec' => (int) $curso->idTerlec,
+                            'materia' => (string) $m->matPlanMateria,
+                            'abrev' => $m->abrev !== null && trim((string) $m->abrev) !== '' ? (string) $m->abrev : null,
+                            'cierre1e' => 0,
+                            'cierre2e' => 0,
+                        ];
+                        if (Schema::hasColumn('materias', 'esInstitucional')) {
+                            $row['esInstitucional'] = 0;
+                        }
+
+                        return $row;
+                    })->all();
 
                     if (! empty($rows)) {
                         DB::table('materias')->insert($rows);
@@ -290,18 +298,25 @@ class CursosIndex extends Component
                 ->orderBy('id')
                 ->get(['id', 'ord', 'matPlanMateria', 'abrev']);
 
-            $rows = $matplan->map(fn ($m) => [
-                'ord' => (int) $m->ord,
-                'idCurPlan' => $curplanId,
-                'idMatPlan' => (int) $m->id,
-                'idNivel' => (int) $ctx->idNivel,
-                'idCursos' => (int) $curso->Id,
-                'idTerlec' => (int) $ctx->idTerlec,
-                'materia' => (string) $m->matPlanMateria,
-                'abrev' => $m->abrev !== null && trim((string) $m->abrev) !== '' ? (string) $m->abrev : null,
-                'cierre1e' => 0,
-                'cierre2e' => 0,
-            ])->all();
+            $rows = $matplan->map(function ($m) use ($curplanId, $ctx, $curso) {
+                $row = [
+                    'ord' => (int) $m->ord,
+                    'idCurPlan' => $curplanId,
+                    'idMatPlan' => (int) $m->id,
+                    'idNivel' => (int) $ctx->idNivel,
+                    'idCursos' => (int) $curso->Id,
+                    'idTerlec' => (int) $ctx->idTerlec,
+                    'materia' => (string) $m->matPlanMateria,
+                    'abrev' => $m->abrev !== null && trim((string) $m->abrev) !== '' ? (string) $m->abrev : null,
+                    'cierre1e' => 0,
+                    'cierre2e' => 0,
+                ];
+                if (Schema::hasColumn('materias', 'esInstitucional')) {
+                    $row['esInstitucional'] = 0;
+                }
+
+                return $row;
+            })->all();
 
             if (! empty($rows)) {
                 DB::table('materias')->insert($rows);

@@ -59,7 +59,7 @@
     <div class="se-card overflow-hidden p-2 sm:p-3">
         <div class="w-full overflow-x-auto">
             <div class="flex justify-start">
-                <div class="gf min-w-[1320px]">
+                <div class="gf" style="min-width: {{ $tieneEsInstitucional ? '88.75rem' : '82.5rem' }};" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
                 <div class="gf-head">
                     <div class="gf-th w-20">ID</div>
                     <div class="gf-th w-20">Ord</div>
@@ -70,11 +70,14 @@
                     <div class="gf-th w-28">idMatPlan</div>
                     <div class="gf-th flex-1 min-w-[20rem]">Materia</div>
                     <div class="gf-th w-28">Abrev</div>
+                    @if ($tieneEsInstitucional)
+                        <div class="gf-th w-28" title="Materia extracurricular / proyecto institucional (IPE San José, máx. 2 por curso)">Extrac.</div>
+                    @endif
                     <div class="gf-th-right w-52">Acciones</div>
                 </div>
 
                 @if ($creating)
-                    <div class="gf-row gf-row-hover bg-amber-50/40">
+                    <div class="gf-row gf-row-hover bg-amber-50/40" wire:key="materias-anio-create-row">
                         <div class="gf-td w-20 font-mono text-neutral-500">—</div>
 
                         <div class="gf-td w-20">
@@ -141,6 +144,16 @@
                             @error('create.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         </div>
 
+                        @if ($tieneEsInstitucional)
+                            <div class="gf-td w-28">
+                                <label class="inline-flex items-center gap-2">
+                                    <input type="checkbox" wire:model.defer="create.esInstitucional"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extrac.</span>
+                                </label>
+                            </div>
+                        @endif
+
                         <div class="gf-td-actions w-52 whitespace-nowrap">
                             <button type="button" wire:click="saveCreate" wire:loading.attr="disabled" class="btn-primary btn-sm">
                                 <span wire:loading.remove wire:target="saveCreate">Guardar</span>
@@ -152,7 +165,7 @@
                 @endif
 
                 @forelse ($materias as $m)
-                    <div class="gf-row gf-row-hover">
+                    <div class="gf-row gf-row-hover" wire:key="materia-anio-row-{{ $m->id }}">
                         <div class="gf-td w-20 font-mono text-neutral-600">{{ $m->id }}</div>
 
                         <div class="gf-td w-20">
@@ -238,6 +251,29 @@
                                 <div class="font-mono text-neutral-700">{{ $m->abrev ?: '—' }}</div>
                             @endif
                         </div>
+
+                        @if ($tieneEsInstitucional)
+                            <div class="gf-td w-28">
+                                @if ($editingId === $m->id)
+                                    <label class="inline-flex items-center gap-2">
+                                        <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.esInstitucional"
+                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extrac.</span>
+                                    </label>
+                                @else
+                                    <label class="inline-flex cursor-pointer items-center gap-2" title="Marcar como materia extracurricular (máx. 2 en el boletín IPE)">
+                                        <input type="checkbox"
+                                               wire:key="materia-anio-instit-{{ $m->id }}-{{ (int) ($m->esInstitucional ?? 0) }}"
+                                               wire:click="toggleEsInstitucional({{ $m->id }})"
+                                               @checked((int) ($m->esInstitucional ?? 0) === 1)
+                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'text-primary-700' : 'text-neutral-400' }}">
+                                            {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'Sí' : 'No' }}
+                                        </span>
+                                    </label>
+                                @endif
+                            </div>
+                        @endif
 
                         <div class="gf-td-actions w-52 whitespace-nowrap">
                             @if ($editingId === $m->id)

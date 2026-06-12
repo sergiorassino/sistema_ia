@@ -5,6 +5,7 @@ namespace App\Livewire\CalificacionesPrimario;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
+use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -179,6 +180,8 @@ class BoletinIpeIndex extends Component
 
         $etapa = $this->etapa === 2 ? 2 : 1;
 
+        $usaSelectorEtapa = BoletinIpePrimarioGenerador::usaSelectorEtapa();
+
         return view('livewire.calificaciones-primario.boletin-ipe-index', [
             'cursos' => $this->cursos(),
             'matriculas' => $matriculas,
@@ -188,6 +191,7 @@ class BoletinIpeIndex extends Component
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'etapaPdf' => $etapa,
+            'usaSelectorEtapa' => $usaSelectorEtapa,
         ])
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Boletín IPE (primario)']);
     }
