@@ -5,6 +5,7 @@ namespace App\Http\Controllers\CalificacionesPrimario;
 use App\Http\Controllers\Controller;
 use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -29,6 +30,11 @@ class BoletinIpePdfController extends Controller
 
         $idMatricula = (int) $validated['matricula'];
         $etapa = (int) ($validated['etapa'] ?? 1);
+
+        if (CalificacionesPrimarioPortalDocente::esPortalDocente()) {
+            CalificacionesPrimarioPortalDocente::abortSiPortalBoletinIpeInactivo();
+            CalificacionesPrimarioPortalDocente::abortSiProfesorSinMatricula($idMatricula);
+        }
 
         $uid = (string) (auth()->id() ?? '');
         $key = 'staff-boletin-ipe-primario-pdf:'.$uid.':'.($request->ip() ?? '');

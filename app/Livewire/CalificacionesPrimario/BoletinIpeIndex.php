@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -23,9 +24,18 @@ class BoletinIpeIndex extends Component
     /** IDs de matrícula marcados (`matriculas.id` como string). */
     public array $matriculasSeleccionadas = [];
 
+    public bool $modoPortalDocente = false;
+
     public function mount(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para boletines de calificaciones.');
+        $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesPrimarioPortalDocente::abortSiPortalBoletinIpeInactivo();
+        } else {
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para boletines de calificaciones.');
+        }
+
         abort_unless(
             NivelSistema::esPrimario((int) schoolCtx()->idNivel),
             403,
@@ -35,7 +45,11 @@ class BoletinIpeIndex extends Component
 
     public function updatedCursoId(mixed $value): void
     {
-        $this->cursoId = ((int) $value) > 0 ? (int) $value : null;
+        $id = ((int) $value) > 0 ? (int) $value : null;
+        if ($id !== null && $this->modoPortalDocente) {
+            CalificacionesPrimarioPortalDocente::abortSiProfesorSinCurso($id);
+        }
+        $this->cursoId = $id;
         $this->matriculasSeleccionadas = [];
     }
 
@@ -129,6 +143,10 @@ class BoletinIpeIndex extends Component
             return collect();
         }
 
+        if ($this->modoPortalDocente && ! in_array((int) $this->cursoId, CalificacionesPrimarioPortalDocente::idsCursosAsignados(), true)) {
+            return collect();
+        }
+
         return Matricula::query()
             ->with('legajo')
             ->where('idCursos', (int) $this->cursoId)
@@ -151,6 +169,7 @@ class BoletinIpeIndex extends Component
         return Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when($this->modoPortalDocente, fn ($q) => $q->whereIn('Id', CalificacionesPrimarioPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -182,6 +201,7 @@ class BoletinIpeIndex extends Component
 
         $usaSelectorEtapa = BoletinIpePrimarioGenerador::usaSelectorEtapa();
         $etiquetaPdf = BoletinIpePrimarioGenerador::etiquetaPdf();
+        $etiquetaMenu = tenantBoletinPrimarioMenuEtiquetaBoletinIpe();
 
         return view('livewire.calificaciones-primario.boletin-ipe-index', [
             'cursos' => $this->cursos(),
@@ -194,7 +214,8 @@ class BoletinIpeIndex extends Component
             'etapaPdf' => $etapa,
             'usaSelectorEtapa' => $usaSelectorEtapa,
             'etiquetaPdf' => $etiquetaPdf,
+            'etiquetaMenu' => $etiquetaMenu,
         ])
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Boletín IPE (primario)']);
+            ->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => $etiquetaMenu]);
     }
 }

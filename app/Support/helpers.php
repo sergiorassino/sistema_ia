@@ -571,6 +571,17 @@ if (! function_exists('tenantCalificacionesPrimarioPlanillaImplementacion')) {
     }
 }
 
+if (! function_exists('tenantPortalDocenteBoletinIpe')) {
+    /**
+     * Si el Menú de Docentes incluye boletín IPE / síntesis (primario).
+     * Default false; activar en `config/tenants/{slug}.php`.
+     */
+    function tenantPortalDocenteBoletinIpe(): bool
+    {
+        return (bool) config('tenant.portal_docente.menu.primario.boletin_ipe', false);
+    }
+}
+
 if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
     /**
      * Si el Menú de Docentes incluye el Cuaderno de Seguimiento Áulico (secundario).

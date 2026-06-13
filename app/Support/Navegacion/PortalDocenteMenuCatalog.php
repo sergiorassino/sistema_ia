@@ -68,6 +68,20 @@ final class PortalDocenteMenuCatalog
                 'icon' => 'rows',
             ],
             [
+                'id' => 'primario.boletin_ipe',
+                'nivel' => NivelSistema::PRIMARIO,
+                'menu_config' => 'tenant.portal_docente.menu.primario.boletin_ipe',
+                'route' => 'portalDocente.calificacionesPrimario.boletinIpe',
+                'active_routes' => [
+                    'portalDocente.calificacionesPrimario.boletinIpe',
+                    'portalDocente.calificacionesPrimario.boletinIpe.pdf',
+                    'portalDocente.calificacionesPrimario.boletinIpe.pdfLote',
+                ],
+                'label' => tenantBoletinPrimarioMenuEtiquetaBoletinIpe(),
+                'title' => tenantBoletinPrimarioMenuEtiquetaBoletinIpe(),
+                'icon' => 'document',
+            ],
+            [
                 'id' => 'primario.planilla',
                 'nivel' => NivelSistema::PRIMARIO,
                 'modulo' => CalificacionesPrimarioModulos::PLANILLA,

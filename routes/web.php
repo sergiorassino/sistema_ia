@@ -350,6 +350,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->name('portalDocente.calificacionesPrimario.carga.alumno');
     Route::get('/calificaciones-primario/carga-materia', CargaCalificacionesPrimarioMateria::class)
         ->name('portalDocente.calificacionesPrimario.cargaMateria');
+    Route::get('/calificaciones-primario/boletin-ipe', BoletinIpeIndex::class)
+        ->name('portalDocente.calificacionesPrimario.boletinIpe');
+    Route::post('/calificaciones-primario/boletin-ipe/pdf', BoletinIpePdfController::class)
+        ->name('portalDocente.calificacionesPrimario.boletinIpe.pdf');
+    Route::post('/calificaciones-primario/boletin-ipe/pdf-lote', BoletinIpeLotePdfController::class)
+        ->name('portalDocente.calificacionesPrimario.boletinIpe.pdfLote');
     Route::get('/calificaciones-primario/planilla', PlanillaCalificacionesPrimario::class)
         ->name('portalDocente.calificacionesPrimario.planilla');
     Route::get('/calificaciones-primario/planilla/pdf', PlanillaCalificacionesPrimarioPdfController::class)

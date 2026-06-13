@@ -2,6 +2,7 @@
 
 namespace App\Support\PortalDocente;
 
+use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\NivelSistema;
@@ -29,7 +30,34 @@ final class CalificacionesPrimarioPortalDocente
 
         $referer = (string) request()->headers->get('referer', '');
 
-        return $referer !== '' && str_contains($referer, '/portal-docente/calificaciones-primario');
+        return $referer !== '' && (
+            str_contains($referer, '/portal-docente/calificaciones-primario')
+            || str_contains($referer, '/portal-docente/calificaciones-primario/boletin-ipe')
+        );
+    }
+
+    public static function abortSiPortalBoletinIpeInactivo(): void
+    {
+        if (self::esPortalDocente()) {
+            abort_unless(tenantPortalDocenteBoletinIpe(), 404);
+        }
+    }
+
+    public static function rutaBoletinIpe(string $accion = 'index'): string
+    {
+        $nombre = self::esPortalDocente()
+            ? match ($accion) {
+                'pdf' => 'portalDocente.calificacionesPrimario.boletinIpe.pdf',
+                'pdfLote' => 'portalDocente.calificacionesPrimario.boletinIpe.pdfLote',
+                default => 'portalDocente.calificacionesPrimario.boletinIpe',
+            }
+            : match ($accion) {
+                'pdf' => 'calificacionesPrimario.boletinIpe.pdf',
+                'pdfLote' => 'calificacionesPrimario.boletinIpe.pdfLote',
+                default => 'calificacionesPrimario.boletinIpe',
+            };
+
+        return route($nombre);
     }
 
     /**
@@ -114,6 +142,22 @@ final class CalificacionesPrimarioPortalDocente
     {
         abort_unless(
             in_array($idCurso, self::idsCursosAsignados(), true),
+            404,
+        );
+    }
+
+    public static function abortSiProfesorSinMatricula(int $idMatricula): void
+    {
+        $ctx = schoolCtx();
+
+        $idCurso = Matricula::query()
+            ->where('id', $idMatricula)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->value('idCursos');
+
+        abort_unless(
+            $idCurso !== null && in_array((int) $idCurso, self::idsCursosAsignados(), true),
             404,
         );
     }

@@ -135,6 +135,7 @@ return [
             'primario' => [
                 'carga_estudiante' => false,
                 'carga_materia' => false,
+                'boletin_ipe' => false,
                 'planilla' => false,
                 'listado_estudiantes' => true,
             ],
