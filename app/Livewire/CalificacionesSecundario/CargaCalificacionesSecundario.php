@@ -4,7 +4,9 @@ namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
 use App\Support\EntoCargaNotas;
+use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
+use App\Support\PortalDocente\PortalDocenteContext;
 use App\Support\PromedioAnualCalificacionesSecundario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +80,10 @@ class CargaCalificacionesSecundario extends Component
             return;
         }
 
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+        PortalDocenteContext::abortSiStaffSinPermisoIa(
+            PermisosIaCatalog::CALIF_CARGA,
+            'Sin permiso para cargar calificaciones.',
+        );
 
         // Entrada al módulo: forzar selección explícita de curso/materia.
         $this->cursoId = null;
@@ -423,7 +428,7 @@ class CargaCalificacionesSecundario extends Component
                 return;
             }
         } else {
-            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
+            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
         }
 
         // Rate limit suave: evita bursts si el usuario navega rápido con teclado.

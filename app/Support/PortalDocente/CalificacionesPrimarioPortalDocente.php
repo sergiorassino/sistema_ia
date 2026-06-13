@@ -3,11 +3,8 @@
 namespace App\Support\PortalDocente;
 
 use App\Models\Matricula;
-use App\Models\Profesor;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\NivelSistema;
-use App\Support\ProfesorMenuPortal;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,21 +16,7 @@ final class CalificacionesPrimarioPortalDocente
 
     public static function esPortalDocente(): bool
     {
-        if (request()->routeIs(self::PORTAL_PREFIX.'*')) {
-            return true;
-        }
-
-        $profesor = Auth::user();
-        if ($profesor instanceof Profesor && ProfesorMenuPortal::usaMenuDocentes($profesor)) {
-            return true;
-        }
-
-        $referer = (string) request()->headers->get('referer', '');
-
-        return $referer !== '' && (
-            str_contains($referer, '/portal-docente/calificaciones-primario')
-            || str_contains($referer, '/portal-docente/calificaciones-primario/boletin-ipe')
-        );
+        return PortalDocenteContext::esActivo();
     }
 
     public static function abortSiPortalBoletinIpeInactivo(): void

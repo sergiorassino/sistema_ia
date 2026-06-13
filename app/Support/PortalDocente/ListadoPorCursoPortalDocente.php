@@ -10,17 +10,9 @@ use App\Support\ProfesorMenuPortal;
  */
 final class ListadoPorCursoPortalDocente
 {
-    private const PORTAL_PREFIX = 'portalDocente.listados.';
-
     public static function esPortalDocente(): bool
     {
-        if (request()->routeIs(self::PORTAL_PREFIX.'*')) {
-            return true;
-        }
-
-        $referer = (string) request()->headers->get('referer', '');
-
-        return $referer !== '' && str_contains($referer, '/portal-docente/listados');
+        return PortalDocenteContext::esActivo();
     }
 
     public static function layout(): string

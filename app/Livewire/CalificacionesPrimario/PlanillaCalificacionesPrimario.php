@@ -7,6 +7,7 @@ use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -30,7 +31,10 @@ class PlanillaCalificacionesPrimario extends Component
         $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
 
         if (! $this->modoPortalDocente) {
-            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para generar planillas.');
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                \App\Support\PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para generar planillas.',
+            );
         }
 
         CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();

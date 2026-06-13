@@ -95,6 +95,7 @@ El sidebar no lista ítems fijos por colegio. Se resuelve en runtime con:
 2. La clave `implementacion` (p. ej. `montecristo`) nombra la variante en código, **no** el tenant: otro colegio puede reutilizarla en su `config/tenants/{slug}.php`.
 3. En portal docente, calificaciones primario filtran cursos/materias por asignación `ppc` (`CalificacionesPrimarioPortalDocente`).
 4. En Menú de Secretaría, los mismos módulos primario usan `calificacionesPrimario.*` + permisos; la visibilidad de carga/planilla también exige `CalificacionesPrimarioModulos::moduloActivo()`.
+5. En portal docente **no** se comprueba `permisos_ia` para entrar ni para guardar (Livewire/PDF). El alcance es `menu.portal:docente`, config del tenant y `ppc`. En componentes compartidos staff/portal usar `PortalDocenteContext::abortSiStaffSinPermisoIa()`.
 
 Detalle de config y matriz de variantes: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md) §3.4.
 

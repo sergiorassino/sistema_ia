@@ -2,8 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\Profesor;
-use Illuminate\Support\Facades\Auth;
+use App\Support\PortalDocente\PortalDocenteContext;
 
 /**
  * Rutas y layout del cuaderno de comunicados para personal (secretaría o portal docente).
@@ -16,22 +15,7 @@ final class ComunicacionesRutasGestion
 
     public static function esPortalDocente(): bool
     {
-        if (request()->routeIs(self::PORTAL_PREFIX . '*', 'portalDocente.push.suscribir')) {
-            return true;
-        }
-
-        // Livewire envía POST a /livewire/update: la ruta nombrada ya no es la de la pantalla.
-        $profesor = Auth::user();
-        if ($profesor instanceof Profesor && ProfesorMenuPortal::usaMenuDocentes($profesor)) {
-            return true;
-        }
-
-        $referer = (string) request()->headers->get('referer', '');
-        if ($referer !== '' && str_contains($referer, '/portal-docente/')) {
-            return true;
-        }
-
-        return false;
+        return PortalDocenteContext::esActivo();
     }
 
     public static function nombreRuta(string $accion): string

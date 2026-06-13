@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -26,7 +27,10 @@ class CargaCalificacionesPrimarioIndex extends Component
         $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
 
         if (! $this->modoPortalDocente) {
-            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                \App\Support\PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para cargar calificaciones.',
+            );
         }
 
         CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();

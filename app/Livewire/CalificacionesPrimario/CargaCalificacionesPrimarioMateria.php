@@ -8,6 +8,7 @@ use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -71,7 +72,10 @@ class CargaCalificacionesPrimarioMateria extends Component
         $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
 
         if (! $this->modoPortalDocente) {
-            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                \App\Support\PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para cargar calificaciones.',
+            );
         }
 
         CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
@@ -225,7 +229,7 @@ class CargaCalificacionesPrimarioMateria extends Component
     #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
+        PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesPrimario:carga-materia:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
