@@ -4,7 +4,8 @@ namespace App\Livewire\CalificacionesPrimario;
 
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
-use App\Support\NivelSistema;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -49,17 +50,26 @@ class CargaCalificacionesPrimarioForm extends Component
      */
     public array $materiasLista = [];
 
+    public bool $modoPortalDocente = false;
+
     public function mount(int $matricula): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
-        abort_unless(
-            NivelSistema::esPrimario((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel primario.'
-        );
+        CalificacionesPrimarioModulos::abortSiModuloInactivo(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE);
+
+        $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
+
+        if (! $this->modoPortalDocente) {
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+        }
+
+        CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
         $mat = CalificacionesPrimarioDatos::matriculaEnContexto($matricula);
         abort_if($mat === null, 404);
+
+        if ($this->modoPortalDocente) {
+            CalificacionesPrimarioPortalDocente::abortSiProfesorSinCurso((int) $mat->idCursos);
+        }
 
         $this->idMatricula = (int) $mat->id;
         $this->cursoId = (int) $mat->idCursos;
@@ -239,6 +249,6 @@ class CargaCalificacionesPrimarioForm extends Component
         return view('livewire.calificaciones-primario.carga-calificaciones-primario-form', [
             'notasPermitidasLista' => $this->notasPermitidasLista,
             'notasPermitidasActiva' => $this->notasPermitidasActiva(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones por estudiante']);
+        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante']);
     }
 }

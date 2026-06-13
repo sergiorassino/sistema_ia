@@ -4,8 +4,9 @@ namespace App\Livewire\CalificacionesPrimario;
 
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
-use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -16,24 +17,36 @@ class CargaCalificacionesPrimarioIndex extends Component
 {
     public ?int $cursoId = null;
 
+    public bool $modoPortalDocente = false;
+
     public function mount(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
-        abort_unless(
-            NivelSistema::esPrimario((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel primario. Cambie el contexto de nivel en el menú lateral.'
-        );
+        CalificacionesPrimarioModulos::abortSiModuloInactivo(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE);
+
+        $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
+
+        if (! $this->modoPortalDocente) {
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+        }
+
+        CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
         $curso = (int) request()->query('curso', 0);
         if ($curso > 0) {
+            if ($this->modoPortalDocente) {
+                CalificacionesPrimarioPortalDocente::abortSiProfesorSinCurso($curso);
+            }
             $this->cursoId = $curso;
         }
     }
 
     public function updatedCursoId(mixed $value): void
     {
-        $this->cursoId = ((int) $value) > 0 ? (int) $value : null;
+        $id = ((int) $value) > 0 ? (int) $value : null;
+        if ($id !== null && $this->modoPortalDocente) {
+            CalificacionesPrimarioPortalDocente::abortSiProfesorSinCurso($id);
+        }
+        $this->cursoId = $id;
     }
 
     /**
@@ -84,6 +97,7 @@ class CargaCalificacionesPrimarioIndex extends Component
         return Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when($this->modoPortalDocente, fn ($q) => $q->whereIn('Id', CalificacionesPrimarioPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -94,6 +108,6 @@ class CargaCalificacionesPrimarioIndex extends Component
         return view('livewire.calificaciones-primario.carga-calificaciones-primario-index', [
             'cursos' => $this->cursos(),
             'matriculas' => $this->matriculasDelCurso(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones por estudiante (primario)']);
+        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante (primario)']);
     }
 }

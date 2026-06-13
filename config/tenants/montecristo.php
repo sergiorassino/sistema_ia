@@ -13,6 +13,26 @@ return [
         'menu_etiqueta_boletin_ipe' => 'Síntesis y Calificaciones',
     ],
 
+    'calificaciones_primario' => [
+        'carga_estudiante' => ['implementacion' => 'montecristo'],
+        'carga_materia' => ['implementacion' => 'montecristo'],
+        'planilla' => ['implementacion' => 'montecristo'],
+    ],
+
+    'portal_docente' => [
+        'menu' => [
+            'primario' => [
+                'carga_estudiante' => true,
+                'carga_materia' => true,
+                'planilla' => true,
+            ],
+            'secundario' => [
+                'calificaciones' => true,
+                'solicitud_evaluacion' => true,
+            ],
+        ],
+    ],
+
     'secretaria' => [
         'ficha_matricula' => [
             'habilitado' => true,

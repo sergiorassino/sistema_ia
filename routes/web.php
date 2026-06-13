@@ -343,6 +343,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.calificaciones.pdf');
 
+    Route::get('/calificaciones-primario/carga', CargaCalificacionesPrimarioIndex::class)
+        ->name('portalDocente.calificacionesPrimario.carga');
+    Route::get('/calificaciones-primario/carga/{matricula}', CargaCalificacionesPrimarioForm::class)
+        ->whereNumber('matricula')
+        ->name('portalDocente.calificacionesPrimario.carga.alumno');
+    Route::get('/calificaciones-primario/carga-materia', CargaCalificacionesPrimarioMateria::class)
+        ->name('portalDocente.calificacionesPrimario.cargaMateria');
+    Route::get('/calificaciones-primario/planilla', PlanillaCalificacionesPrimario::class)
+        ->name('portalDocente.calificacionesPrimario.planilla');
+    Route::get('/calificaciones-primario/planilla/pdf', PlanillaCalificacionesPrimarioPdfController::class)
+        ->name('portalDocente.calificacionesPrimario.planilla.pdf');
+
     Route::get('/cuaderno-seguimiento', PortalDocenteCuadernoSeguimientoIndex::class)
         ->name('portalDocente.cuadernoSeguimiento');
     Route::get('/cuaderno-seguimiento/{curso}/{materia}', PortalDocenteRegistroSituacionAulicaIndex::class)
@@ -356,6 +368,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->name('portalDocente.solicitudEvaluacion');
     Route::get('/solicitud-evaluacion/nueva', SolicitudEvaluacionForm::class)
         ->name('portalDocente.solicitudEvaluacion.create');
+
+    Route::get('/listados/por-curso', ListadoPorCurso::class)
+        ->name('portalDocente.listados.porCurso');
+    Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)
+        ->name('portalDocente.listados.porCurso.pdf');
+    Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
+        ->name('portalDocente.listados.exportarExcel');
 
     Route::get('/comunicaciones', BandejaGestion::class)->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');

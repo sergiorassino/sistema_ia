@@ -109,6 +109,43 @@ Todo el código de módulos vive en el árbol estándar de Laravel:
 
 El menú lateral y el dashboard enlazan **rutas fijas** y muestran u ocultan ítems según `tienePermiso()`. Los tooltips “v1.0” son solo referencia visual; no hay conmutación de versiones por config.
 
+### 3.4 Menú de Docentes y calificaciones primario (implementación vs tenant)
+
+Tres ejes **independientes**:
+
+| Eje | Ejemplo | Dónde |
+|-----|---------|--------|
+| Tenant (despliegue) | `TENANT_SLUG=montecristo` | `.env` |
+| Menú docente (mostrar ítem) | `tenant.portal_docente.menu.primario.carga_estudiante => true` | `config/tenants/{slug}.php` |
+| Implementación del módulo | `calificaciones_primario.carga_estudiante.implementacion => montecristo` | `config/tenants/{slug}.php` |
+
+La clave **`montecristo`** en `implementacion` identifica la variante en código (grilla ic01–ic03, carga por materia con parciales, planilla TCPDF actual). **No** significa “solo Montecristo”: otro colegio puede apuntar a la misma variante sin cambiar PHP.
+
+**Defaults** (`config/tenant.php`): menú docente primario desactivado; implementaciones `null`. **Montecristo** (`config/tenants/montecristo.php`): activa menú + implementación `montecristo` en los tres módulos de carga/planilla.
+
+**Registro en código** — `App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos`:
+
+| Módulo (`modulo`) | Clave config | Variante `montecristo` (Livewire) |
+|-------------------|--------------|-----------------------------------|
+| `carga_estudiante` | `calificaciones_primario.carga_estudiante` | `CargaCalificacionesPrimarioIndex`, `CargaCalificacionesPrimarioForm` |
+| `carga_materia` | `calificaciones_primario.carga_materia` | `CargaCalificacionesPrimarioMateria` |
+| `planilla` | `calificaciones_primario.planilla` | `PlanillaCalificacionesPrimario`, PDF vía `PlanillaCalificacionesPrimarioPdfController` |
+
+Helpers: `tenantCalificacionesPrimarioCargaEstudianteImplementacion()`, `tenantCalificacionesPrimarioCargaMateriaImplementacion()`, `tenantCalificacionesPrimarioPlanillaImplementacion()`.
+
+**Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`.
+
+**Al agregar una variante nueva** (otro colegio con UI distinta):
+
+1. Implementar Livewire/controladores bajo `app/Livewire/CalificacionesPrimario/`.
+2. Registrar la clave en `CalificacionesPrimarioModulos::registro()` (p. ej. `'legacy_xyz' => [ … ]`).
+3. Activar en `config/tenants/{slug}.php`: `implementacion` + flags de menú docente si aplica.
+4. Actualizar esta tabla en el PR.
+
+**Prohibido:** `if (tenantSlug() === 'montecristo')` en Blade o Livewire para elegir pantalla; usar siempre `implementacion` desde config.
+
+Ver también [08-menus-de-navegacion.md](08-menus-de-navegacion.md) §3 (sidebar dinámico).
+
 ---
 
 ## 4. Módulos de referencia (ubicación actual)
@@ -152,6 +189,12 @@ Antes de agregar comportamiento solo para un colegio en código compartido, conf
 1. Clonar `config/tenants/{colegio-parecido}.php` si aplica; ajustar solo diferencias.
 2. Cargar datos en su BD: solapas, campos, catálogo de permisos y usuarios.
 3. No tocar `composer.json` ni crear carpetas en `packages/`.
+
+**Montecristo — calificaciones primario en Menú de Docentes:**
+
+1. En `config/tenants/montecristo.php`: `calificaciones_primario.*.implementacion = montecristo` y `portal_docente.menu.primario.* = true`.
+2. El código de la variante vive en `CalificacionesPrimarioModulos` (registro) y los Livewire actuales.
+3. Otro colegio con la misma lógica: copiar solo el bloque de config, sin renombrar clases.
 
 ---
 

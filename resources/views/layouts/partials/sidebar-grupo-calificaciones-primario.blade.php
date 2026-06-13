@@ -1,4 +1,4 @@
-{{-- Menú de Secretaría: grupo CALIFICACIONES (Primario) — `niveles.id` = 2. Ítems futuros (sin secundario). --}}
+{{-- Menú de Secretaría: grupo CALIFICACIONES (Primario) — `niveles.id` = 2. --}}
 
 @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesPrimario())
     <div class="mt-4"></div>
@@ -49,7 +49,7 @@
             <span class="truncate">Descargar Desempeños desde GE</span>
         </a>
         @endif
-        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_ESTUDIANTE))
         <a href="{{ route('calificacionesPrimario.carga') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -63,18 +63,22 @@
             </svg>
             <span class="truncate">Carga de calificaciones por estudiante</span>
         </a>
+        @endif
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_MATERIA))
         <a href="{{ route('calificacionesPrimario.cargaMateria') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'calificacionesPrimario.cargaMateria',
            ])
-           title="Carga de calificaciones por materia (primario)">
+           title="Carga por espacio curricular (primario)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
             </svg>
-            <span class="truncate">Carga de calificaciones por materia</span>
+            <span class="truncate">Carga por Espacio Curricular</span>
         </a>
+        @endif
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
         <a href="{{ route('calificacionesPrimario.boletinIpe') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -87,6 +91,8 @@
             </svg>
             <span class="truncate">{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}</span>
         </a>
+        @endif
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA))
         <a href="{{ route('calificacionesPrimario.planilla') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',

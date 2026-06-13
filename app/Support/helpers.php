@@ -541,6 +541,36 @@ if (! function_exists('tenantBoletinPrimarioMenuEtiquetaBoletinIpe')) {
     }
 }
 
+if (! function_exists('tenantCalificacionesPrimarioCargaEstudianteImplementacion')) {
+    /** Variante activa de carga por estudiante (primario), p. ej. `montecristo`. */
+    function tenantCalificacionesPrimarioCargaEstudianteImplementacion(): ?string
+    {
+        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
+            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
+        );
+    }
+}
+
+if (! function_exists('tenantCalificacionesPrimarioCargaMateriaImplementacion')) {
+    /** Variante activa de carga por materia (primario), p. ej. `montecristo`. */
+    function tenantCalificacionesPrimarioCargaMateriaImplementacion(): ?string
+    {
+        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
+            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_MATERIA,
+        );
+    }
+}
+
+if (! function_exists('tenantCalificacionesPrimarioPlanillaImplementacion')) {
+    /** Variante activa de planilla (primario), p. ej. `montecristo`. */
+    function tenantCalificacionesPrimarioPlanillaImplementacion(): ?string
+    {
+        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
+            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA,
+        );
+    }
+}
+
 if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
     /**
      * Si el Menú de Docentes incluye el Cuaderno de Seguimiento Áulico (secundario).
@@ -548,7 +578,10 @@ if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
      */
     function tenantPortalDocenteCuadernoSeguimientoAulico(): bool
     {
-        return (bool) config('tenant.portal_docente.cuaderno_seguimiento_aulico', false);
+        return (bool) config(
+            'tenant.portal_docente.menu.secundario.cuaderno_seguimiento_aulico',
+            config('tenant.portal_docente.cuaderno_seguimiento_aulico', false),
+        );
     }
 }
 

@@ -12,6 +12,10 @@ return [
     ],
 
     'portal_docente' => [
-        'cuaderno_seguimiento_aulico' => true,
+        'menu' => [
+            'secundario' => [
+                'cuaderno_seguimiento_aulico' => true,
+            ],
+        ],
     ],
 ];

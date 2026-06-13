@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Curso;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioTcpdf;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +19,8 @@ class PlanillaCalificacionesPrimarioPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
+        CalificacionesPrimarioModulos::abortSiModuloInactivo(CalificacionesPrimarioModulos::PLANILLA);
+
         abort_unless(
             NivelSistema::esPrimario((int) schoolCtx()->idNivel),
             403,
@@ -53,6 +57,7 @@ class PlanillaCalificacionesPrimarioPdfController extends Controller
         $cursosPermitidos = Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when(CalificacionesPrimarioPortalDocente::esPortalDocente(), fn ($q) => $q->whereIn('Id', CalificacionesPrimarioPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get();

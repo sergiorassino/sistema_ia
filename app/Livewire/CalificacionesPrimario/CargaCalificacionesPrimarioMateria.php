@@ -5,7 +5,9 @@ namespace App\Livewire\CalificacionesPrimario;
 use App\Models\Curso;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
-use App\Support\NivelSistema;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\PortalDocente\CalificacionesDocenteSecundario;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -60,14 +62,19 @@ class CargaCalificacionesPrimarioMateria extends Component
     /** @var list<string> */
     public array $notasPermitidasLista = [];
 
+    public bool $modoPortalDocente = false;
+
     public function mount(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
-        abort_unless(
-            NivelSistema::esPrimario((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel primario.'
-        );
+        CalificacionesPrimarioModulos::abortSiModuloInactivo(CalificacionesPrimarioModulos::CARGA_MATERIA);
+
+        $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
+
+        if (! $this->modoPortalDocente) {
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para cargar calificaciones.');
+        }
+
+        CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
         $this->cargarNotasPermitidas();
         $this->aplicarColumnasEtapa();
@@ -137,6 +144,13 @@ class CargaCalificacionesPrimarioMateria extends Component
 
         if (! $materiaOk) {
             abort(404);
+        }
+
+        if ($this->modoPortalDocente) {
+            CalificacionesPrimarioPortalDocente::abortSiProfesorSinMateria(
+                (int) $this->materiaId,
+                (int) $this->cursoId,
+            );
         }
     }
 
@@ -318,6 +332,7 @@ class CargaCalificacionesPrimarioMateria extends Component
         return Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when($this->modoPortalDocente, fn ($q) => $q->whereIn('Id', CalificacionesPrimarioPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -351,7 +366,17 @@ class CargaCalificacionesPrimarioMateria extends Component
             (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
             $ciclo,
-        );
+        )->when($this->modoPortalDocente, function (Collection $materias) {
+            $idProfesor = (int) (schoolCtx()->idProfesor ?? 0);
+
+            return $materias->filter(
+                fn ($m) => CalificacionesDocenteSecundario::profesorTieneMateria(
+                    $idProfesor,
+                    (int) $m->id,
+                    (int) $this->cursoId,
+                ),
+            )->values();
+        });
     }
 
     public function render()
@@ -361,6 +386,6 @@ class CargaCalificacionesPrimarioMateria extends Component
             'materias' => $this->materiasDelCurso(),
             'notasPermitidasActiva' => $this->notasPermitidasActiva(),
             'notasPermitidasLista' => $this->notasPermitidasLista,
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de calificaciones por materia (primario)']);
+        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por materia (primario)']);
     }
 }

@@ -58,7 +58,7 @@ Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcio
 ## 3. Menú de Docentes
 
 - **Audiencia:** profesores que solo necesitan **pocas acciones** (carga/consulta acotada, comunicados propios, etc.) sin el menú completo de secretaría.
-- **Estado:** layout operativo; ítems según permisos (calificaciones/cuaderno en secundario, comunicación institucional, etc.).
+- **Estado:** layout operativo; ítems pedagógicos según config del tenant y nivel de sesión; comunicación institucional siempre visible.
 - **Layout:** `resources/views/layouts/docente.blade.php`.
 - **Rutas (convención):** prefijo URL `/portal-docente` · nombres de ruta `portalDocente.*`  
   (no usar solo `/docentes` porque ya existe el módulo de secretaría `docentes.inasistencias.*`).
@@ -74,6 +74,29 @@ Implementación: `App\Support\ProfesorMenuPortal` y middleware `menu.portal:secr
 Un profesor (`IdTipoProf = 6`) no puede abrir rutas de secretaría (redirección al portal); el resto no puede abrir `/portal-docente`.
 
 **Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`.
+
+### Sidebar dinámico (tenant × nivel × implementación)
+
+El sidebar no lista ítems fijos por colegio. Se resuelve en runtime con:
+
+| Capa | Responsable | Qué define |
+|------|-------------|------------|
+| Catálogo | `App\Support\Navegacion\PortalDocenteMenuCatalog` | Ítems posibles, nivel (`niveles.id`), ruta `portalDocente.*`, icono |
+| Visibilidad menú | `config('tenant.portal_docente.menu.{nivel}.{item}')` | Si **este colegio** muestra el ítem al docente (sin `permiso_ia`) |
+| Implementación módulo | `config('tenant.calificaciones_primario.{modulo}.implementacion')` | Qué **variante de código** corre (`montecristo`, futuras claves) |
+| Registro variantes | `App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos` | Mapa `implementacion` → Livewire, rutas portal/staff |
+| Render sidebar | `PortalDocenteMenu::itemsParaSesionActual()` + partial `sidebar-portal-docente-item` | Filtra por nivel de sesión, flags de menú e implementación activa |
+
+**Comunicación institucional** (bandeja, nuevo comunicado, push) sigue fija en el layout; no pasa por el catálogo.
+
+**Reglas:**
+
+1. Un ítem de calificaciones primario en el menú docente exige **menú = true** e **implementacion ≠ null** registrada en código.
+2. La clave `implementacion` (p. ej. `montecristo`) nombra la variante en código, **no** el tenant: otro colegio puede reutilizarla en su `config/tenants/{slug}.php`.
+3. En portal docente, calificaciones primario filtran cursos/materias por asignación `ppc` (`CalificacionesPrimarioPortalDocente`).
+4. En Menú de Secretaría, los mismos módulos primario usan `calificacionesPrimario.*` + permisos; la visibilidad de carga/planilla también exige `CalificacionesPrimarioModulos::moduloActivo()`.
+
+Detalle de config y matriz de variantes: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md) §3.4.
 
 ### Autogestión Docente (rol mixto: Preceptor + Profesor)
 
@@ -121,6 +144,9 @@ En código y PRs, preferir comentarios del tipo:
 | Tooltips y grupos del sidebar de Secretaría | [05-preferencias-y-convenciones.md](05-preferencias-y-convenciones.md) §6 |
 | Identidad visual (sidebar) | [04-identidad-visual.md](04-identidad-visual.md) · regla `.cursor/rules/ui-front-se.mdc` |
 | Rutas portal docente | `routes/web.php` (bloque `portal-docente`) |
+| Menú docente (catálogo/resolver) | `App\Support\Navegacion\PortalDocenteMenuCatalog`, `PortalDocenteMenu` |
+| Calificaciones primario (variantes) | `App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos` |
+| Config tenant | `config/tenant.php`, `config/tenants/{slug}.php` |
 
 ---
 
@@ -168,3 +194,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-06-01:** Viajes / salidas educativas: solo Menú de Secretaría en niveles 1–4; no Administración, Docentes ni Alumnos.
 - **2026-06-04:** Menú de Administración como layout y portal propios; rutas `/cuotas` y `/mora` aisladas con `menu.portal:administracion`.
 - **2026-06-04:** Tres grupos CALIFICACIONES por nivel (Inicial / Primario / Secundario) en el Menú de Secretaría; el bloque secundario renombrado y acotado a `niveles.id = 3`.
+- **2026-06-13:** Menú de Docentes: sidebar dinámico por tenant/nivel (`PortalDocenteMenu`); calificaciones primario con variantes `implementacion` (`CalificacionesPrimarioModulos`).

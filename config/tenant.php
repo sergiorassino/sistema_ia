@@ -107,10 +107,45 @@ return [
     ],
 
     /**
-     * Menú de Docentes: Cuaderno de Seguimiento Áulico (secundario).
-     * Activar solo en `config/tenants/{slug}.php` para colegios que lo usan.
+     * Calificaciones primario — variantes de carga/planilla por `implementacion`.
+     * Claves conocidas: `montecristo` (grilla ic01–ic03, parciales por materia, planilla TCPDF).
+     * La implementación es reutilizable entre colegios; no confundir con `TENANT_SLUG`.
+     */
+    'calificaciones_primario' => [
+        'carga_estudiante' => [
+            'implementacion' => null,
+        ],
+        'carga_materia' => [
+            'implementacion' => null,
+        ],
+        'planilla' => [
+            'implementacion' => null,
+        ],
+    ],
+
+    /**
+     * Menú de Docentes — ítems opcionales por nivel (sin permiso_ia en sidebar).
+     * Cada ítem de primario exige además `calificaciones_primario.{modulo}.implementacion`.
      */
     'portal_docente' => [
+        'menu' => [
+            'inicial' => [
+                'listado_estudiantes' => true,
+            ],
+            'primario' => [
+                'carga_estudiante' => false,
+                'carga_materia' => false,
+                'planilla' => false,
+                'listado_estudiantes' => true,
+            ],
+            'secundario' => [
+                'calificaciones' => true,
+                'solicitud_evaluacion' => false,
+                'cuaderno_seguimiento_aulico' => false,
+                'listado_estudiantes' => true,
+            ],
+        ],
+        /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */
         'cuaderno_seguimiento_aulico' => false,
     ],
 

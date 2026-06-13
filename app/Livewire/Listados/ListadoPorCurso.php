@@ -8,6 +8,7 @@ use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
+use App\Support\PortalDocente\ListadoPorCursoPortalDocente;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -157,7 +158,7 @@ class ListadoPorCurso extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'camposPorGrupo' => $camposPorGrupo,
             'plantillas' => $plantillas,
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Alumnos por curso']);
+        ])->layout(ListadoPorCursoPortalDocente::layout(), ['pageTitle' => 'Alumnos por curso']);
     }
 
     /** Al elegir un radio de plantilla, aplica columnas y condición automáticamente. */
@@ -370,7 +371,7 @@ class ListadoPorCurso extends Component
             $params['subtitulo'] = $subtitulo;
         }
 
-        return route('listados.por-curso.pdf', $params);
+        return ListadoPorCursoPortalDocente::routePdf($params);
     }
 
     public function puedeGenerarPdf(): bool
@@ -385,7 +386,7 @@ class ListadoPorCurso extends Component
     /** Exportación completa: todos los cursos y columnas de solapas del legajo. */
     public function getExcelUrlCompletoProperty(): string
     {
-        return route('listados.exportar-excel');
+        return ListadoPorCursoPortalDocente::routeExcel();
     }
 
     /** Misma selección que el PDF: cursos elegidos, columnas marcadas y condición. */
@@ -404,7 +405,7 @@ class ListadoPorCurso extends Component
             ->unique()
             ->values();
 
-        return route('listados.exportar-excel', [
+        return ListadoPorCursoPortalDocente::routeExcel([
             'cursos' => $ids->implode(','),
             'campos' => implode(',', $campos),
             'condicion' => $filtro,

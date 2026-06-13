@@ -4,8 +4,9 @@ namespace App\Livewire\CalificacionesPrimario;
 
 use App\Models\Curso;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
-use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -20,13 +21,19 @@ class PlanillaCalificacionesPrimario extends Component
     /** 1 = primera etapa, 2 = segunda, 9 = apreciación final (legacy). */
     public int $etapa = 1;
 
+    public bool $modoPortalDocente = false;
+
     public function mount(): void
     {
-        abort_unless(
-            NivelSistema::esPrimario((int) schoolCtx()->idNivel),
-            403,
-            'Esta planilla corresponde al nivel primario.'
-        );
+        CalificacionesPrimarioModulos::abortSiModuloInactivo(CalificacionesPrimarioModulos::PLANILLA);
+
+        $this->modoPortalDocente = CalificacionesPrimarioPortalDocente::esPortalDocente();
+
+        if (! $this->modoPortalDocente) {
+            abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para generar planillas.');
+        }
+
+        CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
         $this->cursosSeleccionados = [];
         $this->etapa = 1;
@@ -97,6 +104,7 @@ class PlanillaCalificacionesPrimario extends Component
         return Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when($this->modoPortalDocente, fn ($q) => $q->whereIn('Id', CalificacionesPrimarioPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -132,7 +140,7 @@ class PlanillaCalificacionesPrimario extends Component
                 ->unique()
                 ->values();
 
-            $pdfUrl = route('calificacionesPrimario.planilla.pdf', [
+            $pdfUrl = CalificacionesPrimarioPortalDocente::route('planilla.pdf', [
                 'cursos' => $ids->implode(','),
                 'etapa' => $this->etapa,
             ]);
@@ -147,6 +155,6 @@ class PlanillaCalificacionesPrimario extends Component
             'pdfUrl',
             'etiquetaEtapa',
         ))
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Planilla de calificaciones']);
+            ->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Planilla de calificaciones']);
     }
 }
