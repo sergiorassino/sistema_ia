@@ -7,6 +7,10 @@
  */
 
 return [
+    'login' => [
+        'niveles_ids' => [1, 2, 3, 5],
+    ],
+
     'boletin_primario' => [
         'ipe_implementacion' => 'montecristo',
         'director_firma' => 'Prof. Lic. Adriana Rufino',

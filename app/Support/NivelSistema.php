@@ -19,8 +19,14 @@ final class NivelSistema
     /** Secundario / medio (`niveles.id`). */
     public const SECUNDARIO = 3;
 
+    /** Terciario (`niveles.id`). */
+    public const TERCIARIO = 4;
+
     /** Nivel «Administración» (cuotas, gestión transversal). */
     public const ADMINISTRACION = 5;
+
+    /** Adultos (`niveles.id`; solo algunos colegios). */
+    public const ADULTOS = 6;
 
     public static function esInicial(int $idNivel): bool
     {
@@ -45,6 +51,44 @@ final class NivelSistema
     public static function esNivelPedagogico(int $idNivel): bool
     {
         return $idNivel > 0 && ! self::esAdministracion($idNivel);
+    }
+
+    /**
+     * IDs configurados en `tenant.login.niveles_ids`, o `null` si no hay filtro (todos en BD).
+     *
+     * @return list<int>|null
+     */
+    public static function idsNivelesLoginConfigurados(): ?array
+    {
+        $ids = config('tenant.login.niveles_ids');
+
+        if (! is_array($ids) || $ids === []) {
+            return null;
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
+    /** @return Collection<int, Nivel> */
+    public static function nivelesParaLogin(): Collection
+    {
+        $query = Nivel::query()->orderBy('id');
+
+        $ids = self::idsNivelesLoginConfigurados();
+        if ($ids !== null) {
+            $query->whereIn('id', $ids);
+        }
+
+        return $query->get(['id', 'nivel', 'abrev']);
+    }
+
+    public static function nivelPermitidoEnLogin(int $idNivel): bool
+    {
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        return self::nivelesParaLogin()->contains('id', $idNivel);
     }
 
     /** @return Collection<int, Nivel> */

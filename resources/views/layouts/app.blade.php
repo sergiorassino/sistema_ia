@@ -49,6 +49,7 @@
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
         aspirantes: {{ str_starts_with($route ?? '', 'aspirantes.') ? 'true' : 'false' }},
         matriculaWeb: {{ str_starts_with($route ?? '', 'matricula-web.') ? 'true' : 'false' }},
+        cooperadora: {{ str_starts_with($route ?? '', 'cooperadora.') ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {
@@ -1153,6 +1154,8 @@
             </div>
         @endif
         @endunless
+
+        @include('layouts.partials.sidebar-grupo-cooperadora')
 
         {{-- Configuración --}}
         @if (tieneAlgunPermisoConfiguracion())

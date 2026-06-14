@@ -123,6 +123,20 @@ use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
 use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
+use App\Http\Controllers\Cooperadora\MovimientosPdfController;
+use App\Http\Controllers\Cooperadora\OrdenPagoPdfController;
+use App\Http\Controllers\Cooperadora\ReciboPdfController;
+use App\Livewire\Cooperadora\ConfigForm;
+use App\Livewire\Cooperadora\EgresoForm;
+use App\Livewire\Cooperadora\EgresosIndex;
+use App\Livewire\Cooperadora\IngresoForm;
+use App\Livewire\Cooperadora\IngresosIndex;
+use App\Livewire\Cooperadora\ItemsIndex;
+use App\Livewire\Cooperadora\MediosPagoIndex;
+use App\Livewire\Cooperadora\MovimientosIndex;
+use App\Livewire\Cooperadora\ProveedoresForm;
+use App\Livewire\Cooperadora\ProveedoresIndex;
+use App\Livewire\Cooperadora\RubrosIndex;
 use App\Http\Controllers\Mora\EstadoDeudaFamiliarPdfController;
 use App\Http\Controllers\Mora\ListadoMorososPdfController;
 use App\Http\Controllers\Mora\NotificacionDeudaPdfController;
@@ -512,6 +526,61 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
 
 // Menú de Secretaría / Administración — módulos compartidos (legajos, comunicación, configuración, etc.).
 Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(function () {
+    $pi = \App\Support\PermisosIaCatalog::class;
+
+    Route::prefix('cooperadora')->group(function () use ($pi) {
+        Route::get('/config', ConfigForm::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.config');
+        Route::get('/rubros', RubrosIndex::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.rubros');
+        Route::get('/items', ItemsIndex::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.items');
+        Route::get('/proveedores', ProveedoresIndex::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.proveedores');
+        Route::get('/proveedores/nuevo', ProveedoresForm::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.proveedores.nuevo');
+        Route::get('/proveedores/{id}/editar', ProveedoresForm::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->whereNumber('id')
+            ->name('cooperadora.proveedores.editar');
+        Route::get('/medios-pago', MediosPagoIndex::class)
+            ->middleware('permiso:'.$pi::COOP_PARAMETRIZACION)
+            ->name('cooperadora.medios-pago');
+
+        Route::get('/ingresos', IngresosIndex::class)
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.ingresos');
+        Route::get('/ingresos/nuevo', IngresoForm::class)
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.ingresos.nuevo');
+        Route::get('/recibo.pdf/{ref}', ReciboPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.recibo.pdf');
+
+        Route::get('/egresos', EgresosIndex::class)
+            ->middleware('permiso:'.$pi::COOP_EGRESOS)
+            ->name('cooperadora.egresos');
+        Route::get('/egresos/nuevo', EgresoForm::class)
+            ->middleware('permiso:'.$pi::COOP_EGRESOS)
+            ->name('cooperadora.egresos.nuevo');
+        Route::get('/orden-pago.pdf/{ref}', OrdenPagoPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::COOP_EGRESOS)
+            ->name('cooperadora.orden-pago.pdf');
+
+        Route::get('/movimientos', MovimientosIndex::class)
+            ->middleware('permiso:'.$pi::COOP_MOVIMIENTOS)
+            ->name('cooperadora.movimientos');
+        Route::get('/movimientos.pdf', MovimientosPdfController::class)
+            ->middleware('permiso:'.$pi::COOP_MOVIMIENTOS)
+            ->name('cooperadora.movimientos.pdf');
+    });
 
     Route::get('/', function () {
         return redirect()->route(\App\Support\ProfesorMenuPortal::rutaInicio());

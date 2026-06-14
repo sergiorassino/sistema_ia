@@ -19,6 +19,15 @@ return [
     'nombre' => 'Colegio',
 
     /**
+     * Login de Secretaría / Docentes (`/loginUsuario`).
+     * `niveles_ids`: IDs de `niveles` visibles en el desplegable. `null` = todos los registros de la tabla.
+     * Override en `config/tenants/{slug}.php` (ej. `[1, 2, 3, 5]` sin terciario; agregar `6` si el colegio usa Adultos).
+     */
+    'login' => [
+        'niveles_ids' => null,
+    ],
+
+    /**
      * Gestión de mora — notificación de deuda (PDF).
      * Personalizar en `config/tenants/{slug}.php` (imagen bajo `public/`).
      */

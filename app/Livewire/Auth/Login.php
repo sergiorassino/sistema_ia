@@ -2,15 +2,16 @@
 
 namespace App\Livewire\Auth;
 
-use App\Models\Nivel;
 use App\Models\Profesor;
 use App\Models\Terlec;
 use App\Support\DniInput;
+use App\Support\NivelSistema;
 use App\Support\EntoTerlecVerNotas;
 use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -76,7 +77,7 @@ class Login extends Component
 
         if ($this->idNivel === '' && (int) $profesor->ult_idNivel > 0) {
             $ultNivel = (int) $profesor->ult_idNivel;
-            if (Nivel::query()->whereKey($ultNivel)->exists()) {
+            if (NivelSistema::nivelPermitidoEnLogin($ultNivel)) {
                 $this->idNivel = $ultNivel;
             }
         }
@@ -99,7 +100,12 @@ class Login extends Component
         return [
             'dni' => ['required', 'digits_between:7,11'],
             'pwrd' => ['required', 'min:1'],
-            'idNivel' => ['required', 'integer', 'min:1'],
+            'idNivel' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::in(NivelSistema::nivelesParaLogin()->pluck('id')->all()),
+            ],
             'idTerlec' => ['required', 'integer', 'min:1'],
         ];
     }
@@ -136,7 +142,7 @@ class Login extends Component
             if ($profesor) {
                 if ($this->idNivel === '' && (int) $profesor->ult_idNivel > 0) {
                     $ultNivel = (int) $profesor->ult_idNivel;
-                    if (Nivel::query()->whereKey($ultNivel)->exists()) {
+                    if (NivelSistema::nivelPermitidoEnLogin($ultNivel)) {
                         $this->idNivel = $ultNivel;
                     }
                 }
@@ -215,7 +221,7 @@ class Login extends Component
 
     public function render()
     {
-        $niveles = Nivel::orderBy('id')->get(['id', 'nivel']);
+        $niveles = NivelSistema::nivelesParaLogin();
 
         return view('livewire.auth.login', compact('niveles'))
             ->layout('layouts.guest');

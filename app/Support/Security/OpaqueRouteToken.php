@@ -32,6 +32,10 @@ final class OpaqueRouteToken
 
     public const PURPOSE_COMUNICACION_HILO = 'comunicaciones.hilo-pdf';
 
+    public const PURPOSE_COOP_RECIBO = 'cooperadora.recibo';
+
+    public const PURPOSE_COOP_ORDEN_PAGO = 'cooperadora.orden-pago';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -84,6 +88,16 @@ final class OpaqueRouteToken
             'h' => $idHilo,
             'p' => $idProfesor,
         ]);
+    }
+
+    public static function forCoopRecibo(int $idIngreso): string
+    {
+        return self::encode(self::PURPOSE_COOP_RECIBO, $idIngreso, $idIngreso);
+    }
+
+    public static function forCoopOrdenPago(int $idEgreso): string
+    {
+        return self::encode(self::PURPOSE_COOP_ORDEN_PAGO, $idEgreso, $idEgreso);
     }
 
     /**

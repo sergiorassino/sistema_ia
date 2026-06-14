@@ -504,6 +504,19 @@ if (! function_exists('tenantCuotasFormulasInicialesPlantilla')) {
     }
 }
 
+if (! function_exists('tenantLoginNivelesIds')) {
+    /**
+     * IDs de `niveles` visibles en `/loginUsuario` para este colegio.
+     * `null` = sin filtro (todos los registros de la tabla).
+     *
+     * @return list<int>|null
+     */
+    function tenantLoginNivelesIds(): ?array
+    {
+        return \App\Support\NivelSistema::idsNivelesLoginConfigurados();
+    }
+}
+
 if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     /**
      * Si el colegio muestra el bloque de tercer materia en boletín y consulta de calificaciones.

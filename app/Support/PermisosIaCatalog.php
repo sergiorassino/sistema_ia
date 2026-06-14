@@ -77,6 +77,18 @@ final class PermisosIaCatalog
     /** Reserva de Material Didáctico — solo consulta del listado de reservas. */
     public const RESERVA_MATERIAL_LECTURA = 70;
 
+    /** Menú Administración — cooperadora: rubros, ítems, configuración y proveedores. */
+    public const COOP_PARAMETRIZACION = 72;
+
+    /** Menú Administración — cooperadora: registro de ingresos y recibos. */
+    public const COOP_INGRESOS = 73;
+
+    /** Menú Administración — cooperadora: registro de egresos y órdenes de pago. */
+    public const COOP_EGRESOS = 74;
+
+    /** Menú Administración — cooperadora: movimientos y listados PDF. */
+    public const COOP_MOVIMIENTOS = 75;
+
     public const INASISTENCIAS_DOCENTES = 23;
 
     public const INASISTENCIAS_SINCRO_CIDI = 24;
@@ -228,6 +240,10 @@ final class PermisosIaCatalog
             ['id' => 68, 'orden' => self::RESERVA_MATERIAL_ADMIN, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — préstamos espontáneos, gestión de todas las reservas, ABM de grupos/recursos/disponibilidad y registro de entregas/devoluciones.'],
             ['id' => 69, 'orden' => self::RESERVA_MATERIAL_PROFESOR, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — registrar, editar y cancelar pedidos propios (mientras el recurso no haya sido entregado).'],
             ['id' => 70, 'orden' => self::RESERVA_MATERIAL_LECTURA, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — consulta del listado de reservas (solo lectura).'],
+            ['id' => 72, 'orden' => self::COOP_PARAMETRIZACION, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: configuración, rubros e ítems de ingreso, proveedores.'],
+            ['id' => 73, 'orden' => self::COOP_INGRESOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: registro de ingresos y emisión de recibos PDF.'],
+            ['id' => 74, 'orden' => self::COOP_EGRESOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: registro de egresos y órdenes de pago PDF.'],
+            ['id' => 75, 'orden' => self::COOP_MOVIMIENTOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: consulta de movimientos por fecha y listado PDF con saldo.'],
         ];
     }
 
