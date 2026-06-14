@@ -19,6 +19,10 @@ class ConfigForm extends Component
 
     public string $telefono = '';
 
+    public string $cuit = '';
+
+    public string $repace = '';
+
     public string $descuentoHermanoPct = '0';
 
     public function mount(): void
@@ -29,6 +33,8 @@ class ConfigForm extends Component
         $this->direccion = (string) $cfg->direccion;
         $this->localidad = (string) $cfg->localidad;
         $this->telefono = (string) $cfg->telefono;
+        $this->cuit = (string) ($cfg->cuit ?? '');
+        $this->repace = (string) ($cfg->repace ?? '');
         $this->descuentoHermanoPct = (string) $cfg->descuento_hermano_pct;
     }
 
@@ -47,6 +53,8 @@ class ConfigForm extends Component
             'direccion' => ['nullable', 'string', 'max:200'],
             'localidad' => ['nullable', 'string', 'max:120'],
             'telefono' => ['nullable', 'string', 'max:80'],
+            'cuit' => ['nullable', 'string', 'max:20'],
+            'repace' => ['nullable', 'string', 'max:80'],
             'descuentoHermanoPct' => ['required', 'numeric', 'min:0', 'max:100'],
         ]);
 
@@ -56,6 +64,8 @@ class ConfigForm extends Component
             'direccion' => trim((string) ($validated['direccion'] ?? '')),
             'localidad' => trim((string) ($validated['localidad'] ?? '')),
             'telefono' => trim((string) ($validated['telefono'] ?? '')),
+            'cuit' => trim((string) ($validated['cuit'] ?? '')),
+            'repace' => trim((string) ($validated['repace'] ?? '')),
             'descuento_hermano_pct' => round((float) $validated['descuentoHermanoPct'], 2),
         ]);
     }

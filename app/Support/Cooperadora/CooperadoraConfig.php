@@ -22,6 +22,8 @@ final class CooperadoraConfig
                 'direccion' => '',
                 'localidad' => '',
                 'telefono' => '',
+                'cuit' => '',
+                'repace' => '',
                 'descuento_hermano_pct' => 0,
                 'recibo_proximo_num' => 1,
                 'orden_pago_proximo_num' => 1,
@@ -45,7 +47,7 @@ final class CooperadoraConfig
     }
 
     /**
-     * @return array{nombre: string, direccion: string, localidad: string, telefono: string, logo_file: ?string}
+     * @return array{nombre: string, direccion: string, localidad: string, telefono: string, cuit: string, repace: string, logo_file: ?string}
      */
     public static function datosPdfHeader(): array
     {
@@ -57,6 +59,8 @@ final class CooperadoraConfig
             'direccion' => trim((string) $cfg->direccion),
             'localidad' => trim((string) $cfg->localidad),
             'telefono' => trim((string) $cfg->telefono),
+            'cuit' => trim((string) ($cfg->cuit ?? '')),
+            'repace' => trim((string) ($cfg->repace ?? '')),
             'logo_file' => is_string($logoEscuela) && $logoEscuela !== '' ? $logoEscuela : null,
         ];
     }

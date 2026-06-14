@@ -15,6 +15,8 @@ class CoopConfig extends Model
         'direccion',
         'localidad',
         'telefono',
+        'cuit',
+        'repace',
         'descuento_hermano_pct',
         'recibo_proximo_num',
         'orden_pago_proximo_num',

@@ -33,6 +33,19 @@
                     @error('telefono') <p class="se-field-error">{{ $message }}</p> @enderror
                 </div>
             </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="se-label">CUIT</label>
+                    <input type="text" wire:model="cuit" class="se-input w-full" maxlength="20" placeholder="Ej. 30-12345678-9">
+                    @error('cuit') <p class="se-field-error">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="se-label">REPACE</label>
+                    <input type="text" wire:model="repace" class="se-input w-full" maxlength="80" placeholder="Ej. Res 0054/2019">
+                    <p class="mt-1 text-xs text-neutral-500">Número de identificación de la cooperadora escolar.</p>
+                    @error('repace') <p class="se-field-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
             <div class="max-w-xs">
                 <label class="se-label">Descuento hermanos (%)</label>
                 <input type="number" step="0.01" min="0" max="100" wire:model="descuentoHermanoPct" class="se-input w-full">

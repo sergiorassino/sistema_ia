@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Cooperadora;
 
 use App\Http\Controllers\Controller;
-use App\Models\CoopIngreso;
 use App\Support\Cooperadora\CooperadoraConfig;
 use App\Support\Cooperadora\NumeroDocumentoCooperadora;
 use App\Support\Cooperadora\PermisosCooperadora;
+use App\Support\Cooperadora\ReciboIngresosGrupo;
 use App\Support\Cooperadora\ReciboTcpdf;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
@@ -28,18 +28,20 @@ class ReciboPdfController extends Controller
         abort_unless($decoded !== null, 404);
         $id = (int) $decoded['id'];
 
-        $ingreso = CoopIngreso::query()
-            ->where('anulado', false)
-            ->findOrFail($id);
+        $ingresos = ReciboIngresosGrupo::ingresosDelRecibo($id);
+        abort_if($ingresos->isEmpty(), 404);
+
+        $lider = $ingresos->first();
+        $pdfDatos = ReciboIngresosGrupo::datosPdf($ingresos);
 
         $pdf = ReciboTcpdf::generar([
             'header' => CooperadoraConfig::datosPdfHeader(),
-            'recibo_numero_texto' => NumeroDocumentoCooperadora::formatearRecibo((int) $ingreso->recibo_numero),
-            'fecha_texto' => $ingreso->fecha->format('d/m/Y'),
-            'pagador_nombre' => $ingreso->pagador_nombre,
-            'importe_letras' => $ingreso->importe_letras,
-            'concepto' => $ingreso->concepto,
-            'importe' => (float) $ingreso->importe,
+            'recibo_numero_texto' => NumeroDocumentoCooperadora::formatearRecibo((int) $lider->recibo_numero),
+            'fecha_texto' => $lider->fecha->format('d/m/Y'),
+            'pagador_nombre' => $lider->pagador_nombre,
+            'importe_letras' => $pdfDatos['importe_letras'],
+            'importe' => $pdfDatos['importe_total'],
+            'lineas' => $pdfDatos['lineas'],
         ]);
 
         return ReciboTcpdf::respuestaHttp($pdf, 'recibo-cooperadora.pdf');

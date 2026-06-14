@@ -7,39 +7,40 @@ use App\Models\CoopRubroIngreso;
 use App\Support\Cooperadora\BusquedaEstudianteCooperadora;
 use App\Support\Cooperadora\CooperadoraConfig;
 use App\Support\Cooperadora\DescuentoHermanos;
+use App\Support\Cooperadora\EnvioReciboCooperadora;
 use App\Support\Cooperadora\MedioPagoCooperadora;
 use App\Support\Cooperadora\PermisosCooperadora;
+use App\Support\Cooperadora\ReciboIngresosGrupo;
 use App\Support\Cooperadora\RegistroIngresoService;
+use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use App\Support\Cooperadora\ValidacionFormularioCooperadora;
 use App\Support\ProfesorMenuPortal;
 use App\Support\Security\OpaqueRouteToken;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class IngresoForm extends Component
 {
-    public string $modo = 'por_alumno';
+    public string $modo = 'origen_estudiantes';
 
-    public int|string $idRubro = '';
-
-    public int|string $idItem = '';
-
-    public string $search = '';
+    /** @var list<array{idLegajo: string, idRubro: string, idItem: string, importeBruto: string, descuentoPct: string, importe: string, concepto: string}> */
+    public array $lineas = [];
 
     public ?int $idLegajo = null;
 
     public string $pagadorNombre = '';
 
+    public string $pagadorVinculo = '';
+
+    /** @var array{padre: array{apellido: string, nombre: string, dni: string, email: string}, madre: array{apellido: string, nombre: string, dni: string, email: string}, tutor: array{apellido: string, nombre: string, dni: string, email: string}} */
+    public array $pagadorResponsables = [];
+
+    public bool $modalPagadorAbierto = false;
+
     public string $fecha = '';
-
-    public string $concepto = '';
-
-    public string $importeBruto = '';
-
-    public string $descuentoPct = '0';
-
-    public string $importe = '';
 
     public int|string $idMedioPago = '';
 
@@ -47,60 +48,248 @@ class IngresoForm extends Component
     {
         abort_unless(PermisosCooperadora::puedeIngresos(), 403);
         $tipo = request()->query('tipo');
-        $this->modo = in_array($tipo, ['por_alumno', 'eventual', 'uniforme'], true) ? (string) $tipo : 'por_alumno';
+        $this->modo = in_array($tipo, CoopRubroIngreso::tiposValidos(), true) ? (string) $tipo : 'origen_estudiantes';
         $this->fecha = now()->format('Y-m-d');
+        $this->lineas = [$this->nuevaLineaVacia()];
+        $this->pagadorResponsables = ResponsablesLegajoCooperadora::estructuraVacia();
+
+        if (! $this->esOrigenEstudiantes()) {
+            $this->idLegajo = null;
+            $this->pagadorNombre = '';
+            $this->pagadorVinculo = '';
+        }
     }
 
-    public function updatedModo(): void
+    public function hydrate(): void
     {
-        $this->idRubro = '';
-        $this->idItem = '';
-        $this->resetEstudiante();
+        $this->sincronizarLineasConLegajoActivo();
     }
 
-    public function updatedIdRubro(): void
+    public function esOrigenEstudiantes(): bool
     {
-        $this->idItem = '';
-        $this->recalcularImporte();
+        return $this->modo === 'origen_estudiantes';
     }
 
-    public function updatedIdItem(): void
+    public function agregarLinea(): void
     {
-        $this->recalcularImporte();
+        $linea = $this->nuevaLineaVacia();
+        if ($this->idLegajo) {
+            $linea['idLegajo'] = (string) $this->idLegajo;
+        }
+        $this->lineas[] = $linea;
     }
 
-    public function updatedIdLegajo(): void
+    public function quitarLinea(int $index): void
     {
-        $this->recalcularImporte();
+        if (count($this->lineas) <= 1) {
+            return;
+        }
+        unset($this->lineas[$index]);
+        $this->lineas = array_values($this->lineas);
+    }
+
+    public function updated($property): void
+    {
+        if (preg_match('/^lineas\.(\d+)\.(idRubro|idItem|importeBruto|idLegajo)$/', (string) $property, $matches)) {
+            $this->recalcularLinea((int) $matches[1], true);
+        } elseif (! $this->esOrigenEstudiantes() && preg_match('/^lineas\.(\d+)\.importe$/', (string) $property, $matches)) {
+            $this->sincronizarImporteOtrosOrigenes((int) $matches[1]);
+        }
     }
 
     public function seleccionarLegajo(int $id): void
     {
         $legajo = BusquedaEstudianteCooperadora::legajo($id);
-        abort_unless($legajo !== null, 404);
-        $this->idLegajo = $id;
-        $this->search = '';
-        $this->pagadorNombre = BusquedaEstudianteCooperadora::nombrePagadorDesdeLegajo($legajo);
-        $this->recalcularImporte();
-    }
+        if ($legajo === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante seleccionado.');
 
-    public function recalcularImporte(): void
-    {
-        $bruto = 0.0;
-        if ($this->idItem !== '' && $this->idItem !== '0') {
-            $item = CoopItemIngreso::query()->find((int) $this->idItem);
-            $bruto = (float) ($item?->precio ?? 0);
-        } elseif ($this->importeBruto !== '') {
-            $bruto = (float) str_replace(',', '.', $this->importeBruto);
+            return;
         }
 
-        $pct = $this->idLegajo
-            ? DescuentoHermanos::porcentajeParaLegajo((int) $this->idLegajo)
-            : 0.0;
+        $this->idLegajo = $id;
+        $this->sincronizarLineasConLegajoActivo();
 
-        $this->descuentoPct = number_format($pct, 2, '.', '');
-        $this->importeBruto = number_format($bruto, 2, '.', '');
-        $this->importe = number_format(DescuentoHermanos::importeConDescuento($bruto, $pct), 2, '.', '');
+        foreach (array_keys($this->lineas) as $index) {
+            $this->recalcularLinea($index);
+        }
+
+        $this->pagadorResponsables = ResponsablesLegajoCooperadora::desdeLegajo($legajo);
+
+        if ($this->pagadorNombre === '' || $this->pagadorVinculo === '') {
+            $vinculo = ResponsablesLegajoCooperadora::vinculoPredeterminado($this->pagadorResponsables);
+            if ($vinculo !== null) {
+                $this->pagadorVinculo = $vinculo;
+                if ($this->pagadorNombre === '') {
+                    $this->pagadorNombre = ResponsablesLegajoCooperadora::nombrePagador($this->pagadorResponsables, $vinculo);
+                }
+            }
+        }
+    }
+
+    #[On('coop-alumno-elegido')]
+    public function onCoopAlumnoElegido(int $id): void
+    {
+        $this->seleccionarLegajo($id);
+    }
+
+    public function confirmarAlumnoActual(): void
+    {
+        if (! $this->idLegajo) {
+            return;
+        }
+
+        $idActual = $this->idLegajo;
+        $tieneItems = false;
+        foreach ($this->lineas as $linea) {
+            if ((int) ($linea['idLegajo'] ?? 0) !== $idActual) {
+                continue;
+            }
+            if (($linea['idRubro'] ?? '') !== '' || ($linea['idItem'] ?? '') !== '') {
+                $tieneItems = true;
+                break;
+            }
+        }
+
+        if (! $tieneItems) {
+            $this->dispatch('se-swal-aviso', mensaje: 'Agregue al menos un ítem para este alumno antes de buscar otro.');
+
+            return;
+        }
+
+        $this->idLegajo = null;
+        $this->lineas[] = $this->nuevaLineaVacia();
+    }
+
+    public function abrirModalPagador(): void
+    {
+        if (! $this->esOrigenEstudiantes()) {
+            return;
+        }
+
+        $idsLegajo = $this->legajosEnRecibo();
+        if ($idsLegajo === []) {
+            $this->dispatch('se-swal-aviso', mensaje: 'Seleccione al menos un alumno antes de designar el pagador.');
+
+            return;
+        }
+
+        $this->pagadorResponsables = ResponsablesLegajoCooperadora::cargarDatosDesdeLegajo($idsLegajo[0]);
+        if ($this->pagadorVinculo === '' || ! in_array($this->pagadorVinculo, ResponsablesLegajoCooperadora::VINCULOS, true)) {
+            $this->pagadorVinculo = ResponsablesLegajoCooperadora::vinculoPredeterminado($this->pagadorResponsables) ?? 'padre';
+        }
+        $this->modalPagadorAbierto = true;
+    }
+
+    public function cerrarModalPagador(): void
+    {
+        $this->modalPagadorAbierto = false;
+        $this->resetValidation(['pagadorResponsables', 'pagadorVinculo']);
+    }
+
+    public function guardarModalPagador(): void
+    {
+        if (! $this->esOrigenEstudiantes()) {
+            return;
+        }
+
+        $idsLegajo = $this->legajosEnRecibo();
+        if ($idsLegajo === []) {
+            $this->dispatch('se-swal-aviso', mensaje: 'Seleccione al menos un alumno antes de designar el pagador.');
+
+            return;
+        }
+
+        $rules = [
+            'pagadorVinculo' => ['required', Rule::in(ResponsablesLegajoCooperadora::VINCULOS)],
+        ];
+        foreach (ResponsablesLegajoCooperadora::VINCULOS as $vinculo) {
+            $rules['pagadorResponsables.'.$vinculo.'.apellido'] = ['nullable', 'string', 'max:80'];
+            $rules['pagadorResponsables.'.$vinculo.'.nombre'] = ['nullable', 'string', 'max:80'];
+            $rules['pagadorResponsables.'.$vinculo.'.dni'] = ['nullable', 'string', 'max:20'];
+            $rules['pagadorResponsables.'.$vinculo.'.email'] = ['nullable', 'email', 'max:120'];
+        }
+
+        $this->validate($rules, [
+            'pagadorVinculo.required' => 'Indique quién es el pagador del recibo.',
+            'pagadorVinculo.in' => 'El pagador seleccionado no es válido.',
+            'pagadorResponsables.*.email.email' => 'El email no es válido.',
+        ]);
+
+        $nombrePagador = ResponsablesLegajoCooperadora::nombrePagador($this->pagadorResponsables, $this->pagadorVinculo);
+        if ($nombrePagador === '') {
+            $this->addError('pagadorVinculo', 'El pagador elegido debe tener apellido o nombre.');
+
+            return;
+        }
+
+        ResponsablesLegajoCooperadora::guardarEnLegajos($this->pagadorResponsables, $idsLegajo);
+
+        $this->pagadorNombre = $nombrePagador;
+        $this->modalPagadorAbierto = false;
+        $this->resetValidation(['pagadorResponsables', 'pagadorVinculo']);
+    }
+
+    public function recalcularLinea(int $index, bool $forzarImporte = false): void
+    {
+        if (! isset($this->lineas[$index])) {
+            return;
+        }
+
+        $linea = &$this->lineas[$index];
+        if ($linea['idRubro'] !== '' && $linea['idRubro'] !== '0') {
+            $rubro = CoopRubroIngreso::query()->find((int) $linea['idRubro']);
+            if ($rubro !== null && (int) $linea['idItem'] > 0) {
+                $q = CoopItemIngreso::query()
+                    ->where('id_rubro', $rubro->id)
+                    ->where('activo', true);
+                if ($rubro->es_anual) {
+                    $q->where('anio', CooperadoraConfig::anioVigente());
+                }
+                $item = $q->find((int) $linea['idItem']);
+                if ($item === null) {
+                    $linea['idItem'] = '';
+                }
+            }
+        }
+
+        $bruto = 0.0;
+        if ($linea['idItem'] !== '' && $linea['idItem'] !== '0') {
+            $item = CoopItemIngreso::query()->find((int) $linea['idItem']);
+            $bruto = (float) ($item?->precio ?? 0);
+        } elseif ($linea['importeBruto'] !== '') {
+            $bruto = (float) str_replace(',', '.', $linea['importeBruto']);
+        }
+
+        if ($this->esOrigenEstudiantes()) {
+            $idLegajoLinea = (int) ($linea['idLegajo'] ?? 0);
+            $pct = $idLegajoLinea > 0
+                ? DescuentoHermanos::porcentajeParaLegajo($idLegajoLinea)
+                : 0.0;
+            $linea['descuentoPct'] = number_format($pct, 2, '.', '');
+            $linea['importeBruto'] = number_format($bruto, 2, '.', '');
+            $linea['importe'] = number_format(DescuentoHermanos::importeConDescuento($bruto, $pct), 2, '.', '');
+        } else {
+            $linea['descuentoPct'] = '0';
+            $linea['importeBruto'] = number_format($bruto, 2, '.', '');
+            if ($forzarImporte || $linea['importe'] === '') {
+                $linea['importe'] = number_format($bruto, 2, '.', '');
+            }
+        }
+    }
+
+    private function sincronizarImporteOtrosOrigenes(int $index): void
+    {
+        if (! isset($this->lineas[$index])) {
+            return;
+        }
+
+        $importe = (float) str_replace(',', '.', (string) ($this->lineas[$index]['importe'] ?? '0'));
+        $importe = max(0, $importe);
+        $formateado = number_format($importe, 2, '.', '');
+
+        $this->lineas[$index]['importe'] = $formateado;
+        $this->lineas[$index]['importeBruto'] = $formateado;
+        $this->lineas[$index]['descuentoPct'] = '0';
     }
 
     public function guardar(): void
@@ -113,125 +302,233 @@ class IngresoForm extends Component
         }
         RateLimiter::hit($key, 60);
 
-        $rubrosIds = CoopRubroIngreso::query()
-            ->where('tipo', $this->modo)
-            ->where('activo', true)
-            ->pluck('id')
-            ->all();
-
-        $rubro = CoopRubroIngreso::query()
-            ->where('tipo', $this->modo)
-            ->where('activo', true)
-            ->find((int) $this->idRubro);
-
-        $itemsIds = [];
-        if ($rubro !== null) {
-            $q = CoopItemIngreso::query()
-                ->where('id_rubro', $rubro->id)
-                ->where('activo', true);
-            if ($rubro->es_anual) {
-                $q->where('anio', CooperadoraConfig::anioVigente());
-            }
-            $itemsIds = $q->pluck('id')->map(fn ($id) => (int) $id)->all();
-        }
+        $rubros = $this->rubrosActivos()->keyBy('id');
+        $itemsMap = $this->itemsActivosPorRubro();
 
         $rules = [
-            'modo' => ['required', Rule::in(['por_alumno', 'eventual', 'uniforme'])],
-            'idRubro' => ['required', 'integer', Rule::in($rubrosIds)],
-            'idItem' => ['required', 'integer', Rule::in($itemsIds)],
             'fecha' => ['required', 'date'],
             'pagadorNombre' => ['required', 'string', 'max:200'],
-            'importe' => ['required', 'numeric', 'min:0.01'],
             'idMedioPago' => ['required', 'integer', Rule::in(MedioPagoCooperadora::idsActivos())],
-            'concepto' => ['nullable', 'string', 'max:2000'],
+            'lineas' => ['required', 'array', 'min:1'],
+            'lineas.*.idRubro' => ['required', 'integer'],
+            'lineas.*.idItem' => ['required', 'integer'],
+            'lineas.*.importe' => ['required', 'numeric', 'min:0.01'],
+            'lineas.*.concepto' => ['nullable', 'string', 'max:2000'],
         ];
 
-        if (in_array($this->modo, ['por_alumno', 'uniforme'], true)) {
-            $rules['idLegajo'] = ['required', 'integer', 'min:1'];
+        if ($this->esOrigenEstudiantes()) {
+            $rules['pagadorVinculo'] = ['required', Rule::in(ResponsablesLegajoCooperadora::VINCULOS)];
+        }
+
+        foreach ($this->lineas as $i => $linea) {
+            $rubroId = (int) ($linea['idRubro'] ?? 0);
+            $rubro = $rubros->get($rubroId);
+            if ($rubro === null) {
+                $rules['lineas.'.$i.'.idRubro'][] = Rule::in([]);
+            } else {
+                $rules['lineas.'.$i.'.idRubro'][] = Rule::in([$rubro->id]);
+                $itemsIds = ($itemsMap->get($rubro->id) ?? collect())->pluck('id')->map(fn ($id) => (int) $id)->all();
+                $rules['lineas.'.$i.'.idItem'][] = Rule::in($itemsIds);
+                if ($rubro->requiereAlumno() && $this->esOrigenEstudiantes()) {
+                    $rules['lineas.'.$i.'.idLegajo'] = ['required', 'integer', 'min:1'];
+                }
+            }
         }
 
         $validated = ValidacionFormularioCooperadora::validar($this, $rules, [
-            'idRubro' => 'Rubro',
-            'idItem' => 'Ítem',
-            'idLegajo' => 'Alumno',
-            'pagadorNombre' => 'Señor / pagador',
+            'lineas.*.idLegajo' => 'Alumno',
+            'pagadorNombre' => $this->esOrigenEstudiantes() ? 'Señor / pagador' : 'Pagador / entidad',
+            'pagadorVinculo' => 'Pagador del recibo',
             'fecha' => 'Fecha',
-            'importe' => 'Importe a cobrar',
             'idMedioPago' => 'Medio de pago',
+            'lineas.*.idRubro' => 'Rubro',
+            'lineas.*.idItem' => 'Ítem',
+            'lineas.*.importe' => 'Importe a cobrar',
         ]);
 
-        $matricula = null;
-        if (! empty($validated['idLegajo'])) {
-            $matricula = BusquedaEstudianteCooperadora::matriculaActiva((int) $validated['idLegajo']);
+        $lineasRegistro = [];
+        foreach ($validated['lineas'] as $i => $linea) {
+            $rubro = $rubros->get((int) $linea['idRubro']);
+            abort_unless($rubro !== null, 422);
+
+            $idLegajoLinea = null;
+            $idMatriculaLinea = null;
+            if ($this->esOrigenEstudiantes()) {
+                $idLegajoLinea = (int) ($this->lineas[$i]['idLegajo'] ?? 0);
+                abort_unless($idLegajoLinea > 0, 422);
+                abort_unless(BusquedaEstudianteCooperadora::legajo($idLegajoLinea) !== null, 422);
+                $idMatriculaLinea = BusquedaEstudianteCooperadora::matriculaActiva($idLegajoLinea)?->id;
+            }
+
+            $lineasRegistro[] = [
+                'tipo' => $rubro->tipo,
+                'id_rubro' => (int) $linea['idRubro'],
+                'id_item' => (int) $linea['idItem'],
+                'id_legajo' => $idLegajoLinea,
+                'id_matricula' => $idMatriculaLinea,
+                'concepto' => $linea['concepto'] ?? null,
+                'importe_bruto' => (float) ($this->lineas[$i]['importeBruto'] ?? 0),
+                'descuento_pct' => (float) ($this->lineas[$i]['descuentoPct'] ?? 0),
+                'importe' => (float) $linea['importe'],
+            ];
         }
 
-        $ingreso = RegistroIngresoService::registrar([
-            'tipo' => $validated['modo'],
-            'id_rubro' => (int) $validated['idRubro'],
-            'id_item' => (int) $validated['idItem'],
-            'id_legajo' => $validated['idLegajo'] ?? null,
-            'id_matricula' => $matricula?->id,
+        $resultado = RegistroIngresoService::registrarLote($lineasRegistro, [
             'pagador_nombre' => $validated['pagadorNombre'],
+            'pagador_vinculo' => $this->esOrigenEstudiantes() ? ($this->pagadorVinculo ?: null) : null,
+            'pagador_email' => $this->esOrigenEstudiantes()
+                ? ResponsablesLegajoCooperadora::emailPagador($this->pagadorResponsables, $this->pagadorVinculo)
+                : null,
             'fecha' => $validated['fecha'],
-            'concepto' => $validated['concepto'] ?? null,
-            'importe_bruto' => (float) $this->importeBruto,
-            'descuento_pct' => (float) $this->descuentoPct,
-            'importe' => (float) $validated['importe'],
             'id_medio_pago' => (int) $validated['idMedioPago'],
         ]);
 
-        $ref = OpaqueRouteToken::forCoopRecibo((int) $ingreso->id);
+        $lider = $resultado['lider'];
+        $idRef = ReciboIngresosGrupo::idReferenciaPdf($lider);
+        $emailEnviado = EnvioReciboCooperadora::enviar($idRef);
+        $ref = OpaqueRouteToken::forCoopRecibo($idRef);
         $urlPdf = route('cooperadora.recibo.pdf', ['ref' => $ref]);
 
-        session()->flash('success', 'Ingreso registrado. Recibo Nº '.$ingreso->recibo_numero);
+        $cantidad = count($lineasRegistro);
+        $mensaje = $cantidad > 1
+            ? 'Ingresos registrados. Recibo Nº '.$lider->recibo_numero.' ('.$cantidad.' ítems)'
+            : 'Ingreso registrado. Recibo Nº '.$lider->recibo_numero;
+
+        if ($this->esOrigenEstudiantes()) {
+            if ($emailEnviado && EnvioReciboCooperadora::RECIBO_EMAIL_SIMULADO) {
+                $mensaje .= '. Email al pagador registrado (modo simulado, no se envió correo real).';
+            } elseif (! $emailEnviado && ResponsablesLegajoCooperadora::emailPagador($this->pagadorResponsables, $this->pagadorVinculo) === '') {
+                $mensaje .= '. Sin email del pagador: podrá reenviarlo desde el listado cuando lo cargue.';
+            }
+        }
+
+        session()->flash('success', $mensaje);
         $this->dispatch('cooperadora-abrir-pdf', url: $urlPdf);
         $this->redirectRoute('cooperadora.ingresos', navigate: true);
     }
 
-    private function resetEstudiante(): void
+    private function sincronizarLineasConLegajoActivo(): void
     {
-        $this->search = '';
-        $this->idLegajo = null;
-        $this->pagadorNombre = '';
-        $this->descuentoPct = '0';
+        if (! $this->esOrigenEstudiantes() || ! $this->idLegajo) {
+            return;
+        }
+
+        $id = (string) $this->idLegajo;
+        foreach (array_keys($this->lineas) as $index) {
+            if (($this->lineas[$index]['idLegajo'] ?? '') === '') {
+                $this->lineas[$index]['idLegajo'] = $id;
+            }
+        }
+    }
+
+    /** @return list<int> */
+    private function legajosEnRecibo(): array
+    {
+        $ids = [];
+        foreach ($this->lineas as $linea) {
+            $id = (int) ($linea['idLegajo'] ?? 0);
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @return array{idLegajo: string, idRubro: string, idItem: string, importeBruto: string, descuentoPct: string, importe: string, concepto: string}
+     */
+    private function nuevaLineaVacia(): array
+    {
+        return [
+            'idLegajo' => '',
+            'idRubro' => '',
+            'idItem' => '',
+            'importeBruto' => '',
+            'descuentoPct' => '0',
+            'importe' => '',
+            'concepto' => '',
+        ];
+    }
+
+    /** @return Collection<int, CoopRubroIngreso> */
+    private function rubrosActivos(): Collection
+    {
+        return CoopRubroIngreso::query()
+            ->where('activo', true)
+            ->where('tipo', $this->modo)
+            ->orderBy('orden')
+            ->get();
+    }
+
+    /** @return Collection<int, Collection<int, CoopItemIngreso>> */
+    private function itemsActivosPorRubro(): Collection
+    {
+        $anio = CooperadoraConfig::anioVigente();
+        $rubros = $this->rubrosActivos();
+        $items = CoopItemIngreso::query()
+            ->where('activo', true)
+            ->whereIn('id_rubro', $rubros->pluck('id'))
+            ->orderBy('orden')
+            ->get();
+
+        return $items->groupBy('id_rubro')->map(function (Collection $grupo, int $idRubro) use ($rubros, $anio) {
+            $rubro = $rubros->firstWhere('id', $idRubro);
+            if ($rubro?->es_anual) {
+                return $grupo->where('anio', $anio)->values();
+            }
+
+            return $grupo->values();
+        });
     }
 
     public function render()
     {
-        $rubros = CoopRubroIngreso::query()
-            ->where('tipo', $this->modo)
-            ->where('activo', true)
-            ->orderBy('orden')
-            ->get();
-
-        $items = collect();
-        if ((int) $this->idRubro > 0) {
-            $rubro = CoopRubroIngreso::query()->find((int) $this->idRubro);
-            $q = CoopItemIngreso::query()
-                ->where('id_rubro', (int) $this->idRubro)
-                ->where('activo', true)
-                ->orderBy('orden');
-            if ($rubro?->es_anual) {
-                $q->where('anio', CooperadoraConfig::anioVigente());
-            }
-            $items = $q->get();
-        }
-
-        $legajos = trim($this->search) !== '' && in_array($this->modo, ['por_alumno', 'uniforme'], true)
-            ? BusquedaEstudianteCooperadora::buscarLegajos($this->search)
-            : null;
+        $rubros = $this->rubrosActivos();
+        $itemsPorRubro = $this->itemsActivosPorRubro();
 
         $legajoSel = $this->idLegajo ? BusquedaEstudianteCooperadora::legajo($this->idLegajo) : null;
         $matricula = $this->idLegajo ? BusquedaEstudianteCooperadora::matriculaActiva($this->idLegajo) : null;
 
+        $etiquetasLegajo = [];
+        $alumnosEnRecibo = [];
+        foreach ($this->lineas as $linea) {
+            $lid = (int) ($linea['idLegajo'] ?? 0);
+            if ($lid <= 0 || isset($etiquetasLegajo[$lid])) {
+                continue;
+            }
+            $leg = BusquedaEstudianteCooperadora::legajo($lid);
+            if ($leg === null) {
+                continue;
+            }
+            $etiquetasLegajo[$lid] = $leg->apellido.', '.$leg->nombre;
+            $mat = BusquedaEstudianteCooperadora::matriculaActiva($lid);
+            $alumnosEnRecibo[] = [
+                'id' => $lid,
+                'nombre' => $etiquetasLegajo[$lid],
+                'curso' => BusquedaEstudianteCooperadora::etiquetaCurso($mat),
+            ];
+        }
+
+        $totalImporte = 0.0;
+        foreach ($this->lineas as $linea) {
+            $totalImporte += (float) ($linea['importe'] !== '' ? $linea['importe'] : 0);
+        }
+
+        $titulo = $this->esOrigenEstudiantes()
+            ? 'Cooperadora — Ingreso (origen estudiantes)'
+            : 'Cooperadora — Ingreso (otros orígenes)';
+
         return view('livewire.cooperadora.ingreso-form', [
             'rubros' => $rubros,
-            'items' => $items,
-            'legajos' => $legajos,
+            'itemsPorRubro' => $itemsPorRubro,
             'legajoSel' => $legajoSel,
             'matricula' => $matricula,
             'etiquetaCurso' => BusquedaEstudianteCooperadora::etiquetaCurso($matricula),
+            'etiquetasLegajo' => $etiquetasLegajo,
+            'alumnosEnRecibo' => $alumnosEnRecibo,
             'mediosPago' => MedioPagoCooperadora::paraSelector(),
-        ])->layout(ProfesorMenuPortal::layoutStaff(), ['pageTitle' => 'Cooperadora — Nuevo ingreso']);
+            'totalImporte' => round($totalImporte, 2),
+        ])->layout(ProfesorMenuPortal::layoutStaff(), ['pageTitle' => $titulo]);
     }
 }

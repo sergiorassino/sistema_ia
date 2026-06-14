@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cooperadora;
 
 use App\Http\Controllers\Controller;
+use App\Models\CoopRubroIngreso;
 use App\Support\Cooperadora\CooperadoraConfig;
 use App\Support\Cooperadora\MovimientosConsulta;
 use App\Support\Cooperadora\MovimientosFiltros;
@@ -11,6 +12,7 @@ use App\Support\Cooperadora\PermisosCooperadora;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 
 class MovimientosPdfController extends Controller
 {
@@ -31,7 +33,7 @@ class MovimientosPdfController extends Controller
             'id_rubro' => ['nullable', 'integer', 'min:1'],
             'id_item' => ['nullable', 'integer', 'min:1'],
             'id_proveedor' => ['nullable', 'integer', 'min:1'],
-            'tipo_ingreso' => ['nullable', 'in:por_alumno,eventual,uniforme'],
+            'tipo_ingreso' => ['nullable', Rule::in(CoopRubroIngreso::tiposValidos())],
             'id_medio_pago' => ['nullable', 'integer', 'min:1'],
             'busqueda' => ['nullable', 'string', 'max:120'],
         ]);

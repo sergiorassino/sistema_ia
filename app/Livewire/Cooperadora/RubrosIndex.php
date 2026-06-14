@@ -17,7 +17,7 @@ class RubrosIndex extends Component
 
     public string $nombre = '';
 
-    public string $tipo = 'por_alumno';
+    public string $tipo = 'origen_estudiantes';
 
     public bool $esAnual = false;
 
@@ -66,13 +66,13 @@ class RubrosIndex extends Component
 
         $validated = $this->validate([
             'nombre' => ['required', 'string', 'max:120'],
-            'tipo' => ['required', Rule::in(['por_alumno', 'eventual', 'uniforme'])],
+            'tipo' => ['required', Rule::in(CoopRubroIngreso::tiposValidos())],
             'esAnual' => ['boolean'],
             'orden' => ['required', 'integer', 'min:0', 'max:999'],
             'activo' => ['boolean'],
         ]);
 
-        $esAnual = $validated['esAnual'] && in_array($validated['tipo'], ['por_alumno', 'uniforme'], true);
+        $esAnual = $validated['esAnual'] && $validated['tipo'] === 'origen_estudiantes';
 
         $data = [
             'nombre' => trim($validated['nombre']),
@@ -95,7 +95,7 @@ class RubrosIndex extends Component
     {
         $this->editId = null;
         $this->nombre = '';
-        $this->tipo = 'por_alumno';
+        $this->tipo = 'origen_estudiantes';
         $this->esAnual = false;
         $this->orden = '0';
         $this->activo = true;

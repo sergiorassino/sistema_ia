@@ -31,19 +31,36 @@ class CoopRubroIngreso extends Model
     }
 
     /**
+     * @return list<string>
+     */
+    public static function tiposValidos(): array
+    {
+        return ['origen_estudiantes', 'otros_origenes'];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function etiquetasTipo(): array
     {
         return [
-            'por_alumno' => 'Cuotas Sociales',
-            'uniforme' => 'Uniformes',
-            'eventual' => 'Eventual',
+            'origen_estudiantes' => 'Origen Estudiantes',
+            'otros_origenes' => 'Otros Orígenes',
         ];
     }
 
     public function etiquetaTipo(): string
     {
         return self::etiquetasTipo()[$this->tipo] ?? (string) $this->tipo;
+    }
+
+    public function requiereAlumno(): bool
+    {
+        return $this->tipo === 'origen_estudiantes';
+    }
+
+    public function permiteEsAnual(): bool
+    {
+        return $this->tipo === 'origen_estudiantes';
     }
 }

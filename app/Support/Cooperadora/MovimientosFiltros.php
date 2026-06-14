@@ -2,6 +2,8 @@
 
 namespace App\Support\Cooperadora;
 
+use App\Models\CoopRubroIngreso;
+
 final class MovimientosFiltros
 {
     public function __construct(
@@ -100,6 +102,6 @@ final class MovimientosFiltros
     {
         $tipo = is_scalar($valor) ? (string) $valor : '';
 
-        return in_array($tipo, ['por_alumno', 'eventual', 'uniforme'], true) ? $tipo : '';
+        return in_array($tipo, CoopRubroIngreso::tiposValidos(), true) ? $tipo : '';
     }
 }

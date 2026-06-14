@@ -36,7 +36,7 @@ return new class extends Migration
             Schema::create('coop_rubros_ingreso', function (Blueprint $table) {
                 $table->id();
                 $table->string('nombre', 120);
-                $table->enum('tipo', ['por_alumno', 'eventual', 'uniforme']);
+                $table->enum('tipo', ['origen_estudiantes', 'otros_origenes']);
                 $table->boolean('es_anual')->default(false);
                 $table->unsignedSmallInteger('orden')->default(0);
                 $table->boolean('activo')->default(true);
@@ -82,7 +82,7 @@ return new class extends Migration
         if (! Schema::hasTable('coop_ingresos')) {
             Schema::create('coop_ingresos', function (Blueprint $table) {
                 $table->id();
-                $table->enum('tipo', ['por_alumno', 'eventual', 'uniforme']);
+                $table->enum('tipo', ['origen_estudiantes', 'otros_origenes']);
                 $table->unsignedBigInteger('id_rubro');
                 $table->unsignedBigInteger('id_item')->nullable();
                 $table->unsignedInteger('id_legajo')->nullable();

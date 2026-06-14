@@ -65,7 +65,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        @if (in_array($tipo, ['por_alumno', 'uniforme'], true))
+                        @if ($tipo === 'origen_estudiantes')
                             <label class="flex items-center gap-2 text-sm">
                                 <input type="checkbox" wire:model="esAnual" class="rounded border-accent-300 text-primary-600">
                                 Ítems anuales (precio por año lectivo)
