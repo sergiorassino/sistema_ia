@@ -43,4 +43,13 @@ class RrdRecursoDisponibilidad extends Model
     {
         return self::DIAS[$this->dia_semana] ?? "Día {$this->dia_semana}";
     }
+
+    /** Etiqueta legible para listados (ej. "Lunes 08:00 – 12:00"). */
+    public function etiquetaHorario(): string
+    {
+        $desde = substr((string) $this->hora_inicio, 0, 5);
+        $hasta = substr((string) $this->hora_fin, 0, 5);
+
+        return "{$this->nombreDia()} {$desde} – {$hasta}";
+    }
 }

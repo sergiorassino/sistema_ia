@@ -69,6 +69,12 @@ class RrdRecurso extends Model
         return $query->where('activo', true);
     }
 
+    /** El recurso solo puede reservarse dentro de ventanas horarias configuradas. */
+    public function restringidoPorHorario(): bool
+    {
+        return ! $this->siempre_disponible;
+    }
+
     /** Recursos activos de un grupo, ordenados. */
     public static function paraGrupo(int $idGrupo): \Illuminate\Support\Collection
     {

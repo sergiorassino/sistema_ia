@@ -136,11 +136,67 @@
                                             <p class="font-medium text-neutral-800">{{ $recurso->nombre }}</p>
                                             <p class="text-xs text-neutral-500">{{ $recurso->grupo?->nombre }}</p>
                                         </div>
-                                        @if($recurso->antelacion_min_horas > 0)
-                                            <span class="se-pill shrink-0 bg-yellow-100 text-yellow-700 text-[10px]">
-                                                {{ $recurso->antelacion_min_horas }}h antelación
-                                            </span>
-                                        @endif
+                                        <div class="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                                            @if($recurso->antelacion_min_horas > 0)
+                                                <span class="se-pill bg-yellow-100 text-yellow-700 text-[10px]">
+                                                    {{ $recurso->antelacion_min_horas }}h antelación
+                                                </span>
+                                            @endif
+                                            @if($recurso->restringidoPorHorario())
+                                                <div class="relative"
+                                                     x-data="{
+                                                        open: false,
+                                                        pos: { top: 0, right: 0 },
+                                                        updatePos() {
+                                                            const btn = this.$refs.horarioAnchor;
+                                                            if (!btn) return;
+                                                            const r = btn.getBoundingClientRect();
+                                                            this.pos = {
+                                                                top: Math.round(r.bottom + 6),
+                                                                right: Math.max(8, Math.round(window.innerWidth - r.right)),
+                                                            };
+                                                        },
+                                                        toggle() {
+                                                            if (!this.open) this.updatePos();
+                                                            this.open = !this.open;
+                                                        },
+                                                     }"
+                                                     @resize.window="if (open) updatePos()"
+                                                     @scroll.window.passive="if (open) updatePos()">
+                                                    <button type="button"
+                                                            x-ref="horarioAnchor"
+                                                            @click.stop="toggle()"
+                                                            class="se-pill inline-flex items-center gap-0.5 bg-neutral-100 text-neutral-600 text-[10px] transition hover:bg-neutral-200"
+                                                            :aria-expanded="open"
+                                                            title="Ver horarios disponibles">
+                                                        Por horario
+                                                        <svg class="h-3 w-3 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                        </svg>
+                                                    </button>
+                                                    <template x-teleport="body">
+                                                        <div x-show="open"
+                                                             x-cloak
+                                                             @click.outside="open = false"
+                                                             :style="`top: ${pos.top}px; right: ${pos.right}px;`"
+                                                             class="fixed z-[9999] w-56 max-h-52 overflow-y-auto rounded-xl border border-accent-200 bg-white py-2 shadow-lg ring-1 ring-black/5">
+                                                            <p class="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                                                Horarios disponibles
+                                                            </p>
+                                                            @forelse($recurso->disponibilidades as $disp)
+                                                                <p class="px-3 py-1 text-xs text-neutral-700 tabular-nums" wire:key="disp-pedido-{{ $recurso->id }}-{{ $disp->id }}">
+                                                                    {{ $disp->etiquetaHorario() }}
+                                                                </p>
+                                                            @empty
+                                                                <p class="px-3 py-1 text-xs text-neutral-500">
+                                                                    Sin ventanas configuradas para este recurso.
+                                                                </p>
+                                                            @endforelse
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            @endif
+                                        </div>
                                         <button type="button"
                                                 wire:click="quitarRecursoDelPedido({{ $recurso->id }})"
                                                 class="btn-danger btn-sm shrink-0"

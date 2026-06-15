@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
  * Lógica de negocio para el módulo Reserva de Material Didáctico.
  *
  * Reglas:
- *  - Antelación mínima: ahora + antelacion_min_horas <= fecha+hora_inicio (admin la omite).
+ *  - Antelación mínima: ahora + antelacion_min_horas <= fecha+hora_inicio
+ *    (solo se omite en préstamo espontáneo: admin + entregado_directo).
  *  - Ventana de disponibilidad: el rango solicitado debe estar contenido
  *    en al menos una ventana rrd_recurso_disponibilidad del recurso en ese día de semana.
  *  - Sin solapamiento: lockForUpdate + re-validación dentro de transacción.
@@ -38,8 +39,9 @@ class RrdReservaService
         $horaInicio = $datos['hora_inicio'];    // string H:i
         $horaFin    = $datos['hora_fin'];       // string H:i
 
-        $inicioCarbon = Carbon::parse("{$fecha} {$horaInicio}");
-        $finCarbon    = Carbon::parse("{$fecha} {$horaFin}");
+        $tz = config('app.timezone');
+        $inicioCarbon = Carbon::parse("{$fecha} {$horaInicio}", $tz);
+        $finCarbon    = Carbon::parse("{$fecha} {$horaFin}", $tz);
 
         if ($finCarbon->lte($inicioCarbon)) {
             throw new RrdReservaException('La hora de fin debe ser posterior a la hora de inicio.');
@@ -58,9 +60,11 @@ class RrdReservaService
             throw new RrdReservaException('Uno o más recursos no son válidos o no pertenecen al nivel activo.');
         }
 
+        $omitirAntelacion = self::omitirAntelacion($esAdmin, $datos);
+
         // Validaciones pre-transacción (sin lock) por cada recurso
         foreach ($recursos as $recurso) {
-            if (! $esAdmin) {
+            if (! $omitirAntelacion) {
                 self::validarAntelacion($recurso, $inicioCarbon);
             }
             self::validarVentanaDisponibilidad($recurso, $inicioCarbon, $finCarbon);
@@ -162,8 +166,9 @@ class RrdReservaService
         $horaInicio = $datos['hora_inicio'];
         $horaFin    = $datos['hora_fin'];
 
-        $inicioCarbon = Carbon::parse("{$fecha} {$horaInicio}");
-        $finCarbon    = Carbon::parse("{$fecha} {$horaFin}");
+        $tz = config('app.timezone');
+        $inicioCarbon = Carbon::parse("{$fecha} {$horaInicio}", $tz);
+        $finCarbon    = Carbon::parse("{$fecha} {$horaFin}", $tz);
 
         if ($finCarbon->lte($inicioCarbon)) {
             throw new RrdReservaException('La hora de fin debe ser posterior a la hora de inicio.');
@@ -181,8 +186,10 @@ class RrdReservaService
             throw new RrdReservaException('Uno o más recursos no son válidos.');
         }
 
+        $omitirAntelacion = self::omitirAntelacion($esAdmin, $datos);
+
         foreach ($recursos as $recurso) {
-            if (! $esAdmin) {
+            if (! $omitirAntelacion) {
                 self::validarAntelacion($recurso, $inicioCarbon);
             }
             self::validarVentanaDisponibilidad($recurso, $inicioCarbon, $finCarbon);
@@ -293,6 +300,14 @@ class RrdReservaService
     // Validaciones internas
     // ---------------------------------------------------------------
 
+    /**
+     * Solo el préstamo espontáneo (admin marca entregado al guardar) omite la antelación.
+     */
+    private static function omitirAntelacion(bool $esAdmin, array $datos): bool
+    {
+        return $esAdmin && ! empty($datos['entregado_directo']);
+    }
+
     /** @throws RrdReservaException */
     private static function validarAntelacion(RrdRecurso $recurso, Carbon $inicio): void
     {
@@ -301,9 +316,11 @@ class RrdReservaService
             return;
         }
 
-        $minimoInicio = now()->addHours($horas);
+        $tz = config('app.timezone');
+        $inicio = $inicio->copy()->timezone($tz);
+        $minimoInicio = now($tz)->addHours($horas);
 
-        if ($inicio->lt($minimoInicio)) {
+        if (! $inicio->gte($minimoInicio)) {
             throw new RrdReservaException(
                 "El recurso \"{$recurso->nombre}\" requiere reservarse con al menos {$horas} hora(s) de antelación."
             );

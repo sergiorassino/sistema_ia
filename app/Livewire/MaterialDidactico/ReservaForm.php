@@ -223,7 +223,7 @@ class ReservaForm extends Component
         if ($this->recursosSeleccionados !== []) {
             $porId = RrdRecurso::query()
                 ->whereIn('id', $this->recursosSeleccionados)
-                ->with('grupo')
+                ->with(['grupo', 'disponibilidades'])
                 ->get()
                 ->keyBy('id');
 
