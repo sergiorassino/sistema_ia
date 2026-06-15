@@ -7,6 +7,20 @@
  */
 
 return [
+    'portal_docente' => [
+        'menu' => [
+            'inicial' => [
+                'recursos_didacticos_nueva_reserva' => true,
+            ],
+            'primario' => [
+                'recursos_didacticos_nueva_reserva' => true,
+            ],
+            'secundario' => [
+                'recursos_didacticos_nueva_reserva' => true,
+            ],
+        ],
+    ],
+
     'secretaria' => [
         'ficha_matricula' => [
             'habilitado' => true,

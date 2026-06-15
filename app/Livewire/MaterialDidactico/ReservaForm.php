@@ -10,6 +10,7 @@ use App\Models\RrdRecurso;
 use App\Models\RrdReserva;
 use App\Support\MaterialDidactico\RrdReservaException;
 use App\Support\MaterialDidactico\RrdReservaService;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Livewire\Component;
 
 class ReservaForm extends Component
@@ -33,8 +34,13 @@ class ReservaForm extends Component
 
     public function mount(?int $id = null): void
     {
-        $rol = rrdRol();
+        $rol = $this->rolMaterialDidactico();
         abort_unless($rol === 'admin' || $rol === 'profesor', 403);
+
+        if ($this->esPortalDocente()) {
+            abort_unless(tenantPortalDocenteRecursosDidacticosNuevaReserva(), 404);
+            abort_if($id !== null, 404);
+        }
 
         if ($id !== null) {
             $pedido = RrdPedido::queryEnContexto()->findOrFail($id);
@@ -134,7 +140,7 @@ class ReservaForm extends Component
 
     public function guardar(): void
     {
-        $rol = rrdRol();
+        $rol = $this->rolMaterialDidactico();
         abort_unless($rol === 'admin' || $rol === 'profesor', 403);
 
         $rules = [
@@ -152,7 +158,7 @@ class ReservaForm extends Component
             $rules['fecha'] .= '|after_or_equal:today';
         }
 
-        if ($rol === 'admin' && $this->esEntregaDirect) {
+        if ($rol === 'admin' && $this->esEntregaDirect && ! $this->esPortalDocente()) {
             $rules['entregadoA'] = 'required|string|max:100';
         }
 
@@ -171,7 +177,7 @@ class ReservaForm extends Component
             'sala_curso_grado' => trim($this->salaCursoGrado),
             'auxiliar'         => trim($this->auxiliar),
             'observaciones'    => trim($this->observaciones),
-            'entregado_directo' => $rol === 'admin' && $this->esEntregaDirect,
+            'entregado_directo' => $rol === 'admin' && $this->esEntregaDirect && ! $this->esPortalDocente(),
             'entregado_a'      => $this->entregadoA,
         ];
 
@@ -192,7 +198,7 @@ class ReservaForm extends Component
                 );
             }
 
-            $this->redirect(route('material-didactico.index'), navigate: true);
+            $this->redirect($this->rutaListadoMaterialDidactico(), navigate: true);
 
         } catch (RrdReservaException $e) {
             $this->dispatch('se-swal-error', mensaje: $e->getMessage());
@@ -248,6 +254,7 @@ class ReservaForm extends Component
             ?? '';
 
         $titulo = $this->pedidoId ? 'Editar reserva' : 'Nueva reserva';
+        $rol = $this->rolMaterialDidactico();
 
         return view('livewire.material-didactico.reserva-form', [
             'grupos'           => $grupos,
@@ -256,7 +263,37 @@ class ReservaForm extends Component
             'cursos'           => $cursos,
             'nivelAbrev'       => $nivelAbrev,
             'titulo'           => $titulo,
-            'rol'              => rrdRol(),
-        ])->layout(layoutMenuStaff(), ['pageTitle' => "Material Didáctico — {$titulo}"]);
+            'rol'              => $rol,
+            'rutaVolver'       => $this->rutaListadoMaterialDidactico(),
+            'mostrarPrestamoEspontaneo' => $rol === 'admin' && ! $this->esPortalDocente(),
+        ])->layout($this->layoutMaterialDidactico(), ['pageTitle' => "Material Didáctico — {$titulo}"]);
+    }
+
+    private function esPortalDocente(): bool
+    {
+        return PortalDocenteContext::esActivo();
+    }
+
+    private function rolMaterialDidactico(): ?string
+    {
+        if ($this->esPortalDocente()) {
+            return tenantPortalDocenteRecursosDidacticosNuevaReserva() ? 'profesor' : null;
+        }
+
+        return rrdRol();
+    }
+
+    private function layoutMaterialDidactico(): string
+    {
+        return $this->esPortalDocente() ? 'layouts.docente' : layoutMenuStaff();
+    }
+
+    private function rutaListadoMaterialDidactico(): string
+    {
+        if ($this->esPortalDocente()) {
+            return route('portalDocente.home');
+        }
+
+        return route('material-didactico.index');
     }
 }

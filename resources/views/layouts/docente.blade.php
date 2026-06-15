@@ -23,6 +23,8 @@
     $docenteComBandejaActiva = str_starts_with($route ?? '', 'portalDocente.comunicaciones')
         && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.revision'], true);
     $docentePushActivo = ($route ?? '') === 'portalDocente.push.suscribir';
+    $docenteRecursosDidacticosActivo = request()->routeIs('portalDocente.materialDidactico.*');
+    $docenteRecursosDidacticosVisible = tenantPortalDocenteRecursosDidacticosNuevaReserva();
 @endphp
 <body class="h-full">
 
@@ -154,6 +156,24 @@
         @foreach ($portalDocenteMenuItems as $item)
             @include('layouts.partials.sidebar-portal-docente-item', ['item' => $item])
         @endforeach
+
+        @if ($docenteRecursosDidacticosVisible)
+            <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
+                Recursos didácticos
+            </p>
+
+            <a href="{{ route('portalDocente.materialDidactico.reservar') }}"
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                   'is-active shadow-sm' => $docenteRecursosDidacticosActivo,
+               ])
+               title="Registrar nueva reserva de material didáctico">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nueva reserva</span>
+            </a>
+        @endif
 
         <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
             Comunicación institucional

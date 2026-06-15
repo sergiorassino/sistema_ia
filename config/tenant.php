@@ -140,6 +140,7 @@ return [
         'menu' => [
             'inicial' => [
                 'listado_estudiantes' => true,
+                'recursos_didacticos_nueva_reserva' => false,
             ],
             'primario' => [
                 'carga_estudiante' => false,
@@ -147,12 +148,14 @@ return [
                 'boletin_ipe' => false,
                 'planilla' => false,
                 'listado_estudiantes' => true,
+                'recursos_didacticos_nueva_reserva' => false,
             ],
             'secundario' => [
                 'calificaciones' => true,
                 'solicitud_evaluacion' => false,
                 'cuaderno_seguimiento_aulico' => false,
                 'listado_estudiantes' => true,
+                'recursos_didacticos_nueva_reserva' => false,
             ],
         ],
         /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */

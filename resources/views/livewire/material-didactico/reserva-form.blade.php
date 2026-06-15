@@ -10,7 +10,7 @@
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                     </p>
                 </div>
-                <a href="{{ route('material-didactico.index') }}"
+                <a href="{{ $rutaVolver }}"
                    class="inline-flex shrink-0 items-center justify-center rounded-xl bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/30">
                     ← Volver
                 </a>
@@ -42,7 +42,7 @@
                     </div>
                 </div>
 
-                @if($rol === 'admin')
+                @if($mostrarPrestamoEspontaneo)
                     <div class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
                         <input type="checkbox" id="entregaDirect" wire:model.live="esEntregaDirect"
                                class="h-4 w-4 rounded border-neutral-300 text-primary-600">
@@ -259,7 +259,7 @@
             </section>
 
             <div class="flex justify-between gap-3 pt-2 border-t border-accent-200">
-                <a href="{{ route('material-didactico.index') }}" class="btn-secondary">Cancelar</a>
+                <a href="{{ $rutaVolver }}" class="btn-secondary">Cancelar</a>
                 <button type="button" wire:click="guardar" class="btn-primary">
                     {{ $pedidoId ? 'Actualizar reserva' : 'Confirmar reserva' }}
                 </button>

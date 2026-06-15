@@ -609,6 +609,30 @@ if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
     }
 }
 
+if (! function_exists('tenantPortalDocenteRecursosDidacticosNuevaReserva')) {
+    /**
+     * Si el Menú de Docentes incluye «Nueva reserva» (grupo Recursos didácticos).
+     * Default false; activar en `config/tenants/{slug}.php` por nivel pedagógico.
+     */
+    function tenantPortalDocenteRecursosDidacticosNuevaReserva(): bool
+    {
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+
+        $claveNivel = match ($idNivel) {
+            \App\Support\NivelSistema::INICIAL => 'inicial',
+            \App\Support\NivelSistema::PRIMARIO => 'primario',
+            \App\Support\NivelSistema::SECUNDARIO => 'secundario',
+            default => null,
+        };
+
+        if ($claveNivel === null) {
+            return false;
+        }
+
+        return (bool) config("tenant.portal_docente.menu.{$claveNivel}.recursos_didacticos_nueva_reserva", false);
+    }
+}
+
 if (! function_exists('tenantSolicitudEvaluacionHabilitada')) {
     /**
      * Si el colegio usa el módulo Solicitud de evaluación (tabla evaluac).

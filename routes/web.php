@@ -399,6 +399,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
         ->name('portalDocente.listados.exportarExcel');
 
+    Route::get('/material-didactico/reservar', ReservaForm::class)
+        ->name('portalDocente.materialDidactico.reservar');
+
     Route::get('/comunicaciones', BandejaGestion::class)->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->name('portalDocente.comunicaciones.nuevo');
