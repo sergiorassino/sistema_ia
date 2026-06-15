@@ -12,15 +12,12 @@ final class ReciboIngresosGrupo
      */
     public static function ingresosDelRecibo(int $idReferencia): Collection
     {
-        $ingreso = CoopIngreso::query()
-            ->where('anulado', false)
-            ->findOrFail($idReferencia);
+        $ingreso = CoopIngreso::query()->findOrFail($idReferencia);
 
         $grupoId = (int) ($ingreso->recibo_grupo_id ?? $ingreso->id);
 
         return CoopIngreso::query()
             ->with(['rubro:id,nombre', 'item:id,nombre', 'legajo:id,apellido,nombre'])
-            ->where('anulado', false)
             ->where(function ($q) use ($grupoId) {
                 $q->where('id', $grupoId)
                     ->orWhere('recibo_grupo_id', $grupoId);
@@ -48,10 +45,14 @@ final class ReciboIngresosGrupo
         $total = 0.0;
 
         foreach ($ingresos as $ingreso) {
-            $importe = round((float) $ingreso->importe, 2);
+            $importe = $ingreso->anulado ? 0.0 : round((float) $ingreso->importe, 2);
             $total += $importe;
+            $concepto = self::conceptoLineaPdf($ingreso);
+            if ($ingreso->anulado) {
+                $concepto .= ' (ANULADO)';
+            }
             $lineas[] = [
-                'concepto' => self::conceptoLineaPdf($ingreso),
+                'concepto' => $concepto,
                 'importe' => $importe,
             ];
         }

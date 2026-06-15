@@ -3,6 +3,7 @@
 namespace App\Livewire\Cooperadora;
 
 use App\Models\CoopIngreso;
+use App\Support\Cooperadora\AnularMovimientoCooperadora;
 use App\Support\Cooperadora\EnvioReciboCooperadora;
 use App\Support\Cooperadora\PermisosCooperadora;
 use App\Support\Cooperadora\ReciboIngresosGrupo;
@@ -77,11 +78,31 @@ class IngresosIndex extends Component
         }
     }
 
+    public function anular(int $idIngreso): void
+    {
+        abort_unless(PermisosCooperadora::puedeIngresos(), 403);
+
+        $key = 'coop:anular-ingreso:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente de nuevo.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        if (! AnularMovimientoCooperadora::ingreso($idIngreso)) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo anular el ingreso.');
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Ingreso anulado. El registro permanece en el listado pero no afecta los saldos.');
+    }
+
     public function render()
     {
         $query = \App\Models\CoopIngreso::query()
             ->with(['rubro:id,nombre', 'item:id,nombre', 'legajo:id,apellido,nombre'])
-            ->where('anulado', false)
             ->orderByDesc('fecha')
             ->orderByDesc('recibo_numero');
 

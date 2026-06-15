@@ -41,9 +41,14 @@
                     $etiquetaEmail = \App\Support\Cooperadora\EnvioReciboCooperadora::etiquetaEstado($estadoEmail);
                     $tieneEmailPagador = trim((string) ($ingreso->pagador_email ?? '')) !== '';
                 @endphp
-                <div class="gf-row gf-row-hover" wire:key="ing-{{ $ingreso->id }}">
+                <div class="gf-row @if($ingreso->anulado) gf-row-anulado @else gf-row-hover @endif" wire:key="ing-{{ $ingreso->id }}">
                     <div class="gf-td gf-td-fecha">{{ $ingreso->fecha->format('d/m/Y') }}</div>
-                    <div class="gf-td gf-td-recibo tabular-nums">{{ $ingreso->recibo_numero }}</div>
+                    <div class="gf-td gf-td-recibo tabular-nums">
+                        {{ $ingreso->recibo_numero }}
+                        @if ($ingreso->anulado)
+                            <span class="mt-0.5 block se-pill bg-red-100 text-red-800 text-[10px]">Anulado</span>
+                        @endif
+                    </div>
                     <div class="gf-td gf-td-estudiante">
                         @if ($ingreso->tipo === 'origen_estudiantes' && $ingreso->legajo)
                             <span class="font-medium block" title="{{ trim($ingreso->legajo->apellido.', '.$ingreso->legajo->nombre) }}">
@@ -96,7 +101,7 @@
                            target="_blank"
                            rel="noopener noreferrer"
                            class="btn-secondary btn-sm">Recibo</a>
-                        @if ($ingreso->tipo === 'origen_estudiantes' && $tieneEmailPagador)
+                        @if ($ingreso->tipo === 'origen_estudiantes' && $tieneEmailPagador && ! $ingreso->anulado)
                             <button type="button"
                                     wire:click="reenviarReciboEmail({{ $ingreso->id }})"
                                     wire:loading.attr="disabled"
@@ -105,6 +110,18 @@
                                     title="Reenviar recibo por email al pagador">
                                 <span wire:loading.remove wire:target="reenviarReciboEmail({{ $ingreso->id }})">Email</span>
                                 <span wire:loading wire:target="reenviarReciboEmail({{ $ingreso->id }})">…</span>
+                            </button>
+                        @endif
+                        @if (! $ingreso->anulado)
+                            <button type="button"
+                                    class="btn-danger btn-sm"
+                                    title="Anular ingreso"
+                                    x-on:click="window.seSwalConfirmar(
+                                        'El ingreso quedará marcado como anulado y dejará de sumar en movimientos y saldos. ¿Continuar?',
+                                        'Anular ingreso',
+                                        { confirmButtonText: 'Sí, anular' }
+                                    ).then((ok) => { if (ok) $wire.anular({{ $ingreso->id }}); })">
+                                Anular
                             </button>
                         @endif
                     </div>

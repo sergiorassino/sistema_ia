@@ -31,7 +31,6 @@ class OrdenPagoPdfController extends Controller
 
         $egreso = CoopEgreso::query()
             ->with('proveedor:id,nombre')
-            ->where('anulado', false)
             ->findOrFail($id);
 
         $pdf = OrdenPagoTcpdf::generar([
@@ -43,6 +42,7 @@ class OrdenPagoPdfController extends Controller
             'concepto' => $egreso->concepto,
             'importe' => (float) $egreso->importe,
             'firmante' => $egreso->firmante,
+            'anulado' => (bool) $egreso->anulado,
         ]);
 
         return OrdenPagoTcpdf::respuestaHttp($pdf, 'orden-pago-cooperadora.pdf');

@@ -111,6 +111,12 @@ final class OrdenPagoTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, '', 9);
         $this->Cell($ancho - ($colDer - $x0) - 8, 5, 'N° '.(string) ($this->datos['orden_numero_texto'] ?? ''), 0, 2, 'L');
         $this->Cell($ancho - ($colDer - $x0) - 8, 5, 'Fecha '.(string) ($this->datos['fecha_texto'] ?? ''), 0, 2, 'L');
+        if (! empty($this->datos['anulado'])) {
+            TcpdfFuenteArial::aplicar($this, 'B', 10);
+            $this->SetTextColor(180, 0, 0);
+            $this->Cell($ancho - ($colDer - $x0) - 8, 6, 'ANULADO', 0, 2, 'L');
+            $this->SetTextColor(0, 0, 0);
+        }
 
         $y = $y0 + 30;
         $this->Line($x0, $y, $x0 + $ancho, $y);

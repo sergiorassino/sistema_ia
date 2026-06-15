@@ -102,12 +102,22 @@ final class MovimientosTcpdf extends TCPDF
         foreach ($filas as $fila) {
             $fecha = isset($fila->fecha) ? \Carbon\Carbon::parse($fila->fecha)->format('d/m/Y') : '';
             $tipo = ($fila->tipo_mov ?? '') === 'egreso' ? 'Egreso' : 'Ingreso';
+            $anulado = ! empty($fila->anulado);
+            $detalle = (string) ($fila->detalle ?? '');
+            if ($anulado) {
+                $tipo .= ' (Anulado)';
+            }
             $this->Cell($w[0], 5, $fecha, 1, 0, 'C');
             $this->Cell($w[1], 5, $tipo, 1, 0, 'C');
             $this->Cell($w[2], 5, (string) ($fila->numero ?? ''), 1, 0, 'R');
-            $this->Cell($w[3], 5, mb_substr((string) ($fila->detalle ?? ''), 0, $maxDetalle), 1, 0, 'L');
-            $this->Cell($w[4], 5, $fila->ingreso > 0 ? number_format((float) $fila->ingreso, 2, ',', '.') : '', 1, 0, 'R');
-            $this->Cell($w[5], 5, $fila->egreso > 0 ? number_format((float) $fila->egreso, 2, ',', '.') : '', 1, 0, 'R');
+            $this->Cell($w[3], 5, mb_substr($detalle, 0, $maxDetalle), 1, 0, 'L');
+            if ($anulado) {
+                $this->Cell($w[4], 5, '', 1, 0, 'R');
+                $this->Cell($w[5], 5, '', 1, 0, 'R');
+            } else {
+                $this->Cell($w[4], 5, $fila->ingreso > 0 ? number_format((float) $fila->ingreso, 2, ',', '.') : '', 1, 0, 'R');
+                $this->Cell($w[5], 5, $fila->egreso > 0 ? number_format((float) $fila->egreso, 2, ',', '.') : '', 1, 0, 'R');
+            }
             $this->Cell($w[6], 5, number_format((float) ($fila->saldo ?? 0), 2, ',', '.'), 1, 1, 'R');
         }
 

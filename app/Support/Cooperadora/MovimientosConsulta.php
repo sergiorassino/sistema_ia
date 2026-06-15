@@ -17,6 +17,8 @@ final class MovimientosConsulta
      *   detalle: string,
      *   ingreso: float,
      *   egreso: float,
+     *   anulado: bool,
+     *   importe_anulado: float,
      *   id_registro: int,
      * }>
      */
@@ -30,7 +32,6 @@ final class MovimientosConsulta
         if ($filtros->incluyeIngresos()) {
             $q = CoopIngreso::query()
                 ->with(['rubro:id,nombre', 'item:id,nombre'])
-                ->where('anulado', false)
                 ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
             if ((int) $filtros->idRubro > 0) {
@@ -59,22 +60,28 @@ final class MovimientosConsulta
                 ->orderBy('fecha')
                 ->orderBy('recibo_numero')
                 ->get()
-                ->map(fn (CoopIngreso $row) => (object) [
-                    'fecha' => $row->fecha->format('Y-m-d'),
-                    'tipo_mov' => 'ingreso',
-                    'numero' => (int) $row->recibo_numero,
-                    'detalle' => self::detalleIngreso($row),
-                    'ingreso' => (float) $row->importe,
-                    'egreso' => 0.0,
-                    'id_registro' => (int) $row->id,
-                ]);
+                ->map(function (CoopIngreso $row) {
+                    $anulado = (bool) $row->anulado;
+                    $importe = (float) $row->importe;
+
+                    return (object) [
+                        'fecha' => $row->fecha->format('Y-m-d'),
+                        'tipo_mov' => 'ingreso',
+                        'numero' => (int) $row->recibo_numero,
+                        'detalle' => self::detalleIngreso($row),
+                        'ingreso' => $anulado ? 0.0 : $importe,
+                        'egreso' => 0.0,
+                        'anulado' => $anulado,
+                        'importe_anulado' => $anulado ? $importe : 0.0,
+                        'id_registro' => (int) $row->id,
+                    ];
+                });
         }
 
         $egresos = collect();
         if ($filtros->incluyeEgresos()) {
             $q = CoopEgreso::query()
                 ->with(['proveedor:id,nombre'])
-                ->where('anulado', false)
                 ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
 
             if ((int) $filtros->idProveedor > 0) {
@@ -95,15 +102,22 @@ final class MovimientosConsulta
                 ->orderBy('fecha')
                 ->orderBy('orden_numero')
                 ->get()
-                ->map(fn (CoopEgreso $row) => (object) [
-                    'fecha' => $row->fecha->format('Y-m-d'),
-                    'tipo_mov' => 'egreso',
-                    'numero' => (int) $row->orden_numero,
-                    'detalle' => trim((string) ($row->proveedor?->nombre ?? '')).' — '.mb_substr((string) $row->concepto, 0, 80),
-                    'ingreso' => 0.0,
-                    'egreso' => (float) $row->importe,
-                    'id_registro' => (int) $row->id,
-                ]);
+                ->map(function (CoopEgreso $row) {
+                    $anulado = (bool) $row->anulado;
+                    $importe = (float) $row->importe;
+
+                    return (object) [
+                        'fecha' => $row->fecha->format('Y-m-d'),
+                        'tipo_mov' => 'egreso',
+                        'numero' => (int) $row->orden_numero,
+                        'detalle' => trim((string) ($row->proveedor?->nombre ?? '')).' — '.mb_substr((string) $row->concepto, 0, 80),
+                        'ingreso' => 0.0,
+                        'egreso' => $anulado ? 0.0 : $importe,
+                        'anulado' => $anulado,
+                        'importe_anulado' => $anulado ? $importe : 0.0,
+                        'id_registro' => (int) $row->id,
+                    ];
+                });
         }
 
         return $ingresos

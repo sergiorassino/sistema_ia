@@ -178,6 +178,12 @@
     .gf-row-hover {
         @apply hover:bg-primary-50 transition-colors;
     }
+    .gf-row-anulado {
+        @apply bg-neutral-50/80 text-neutral-500;
+    }
+    .gf-row-anulado .gf-td-importe {
+        @apply line-through decoration-neutral-400;
+    }
 
     /* Gestión de aranceles — búsqueda de estudiantes */
     .gf.gf-cuotas-busqueda {
@@ -863,8 +869,11 @@
     }
     .gf.gf-coop-ingresos-index .gf-th.gf-th-acciones,
     .gf.gf-coop-ingresos-index .gf-td.gf-td-acciones {
-        flex: 0 0 9rem;
+        flex: 0 0 13.5rem;
         text-align: right;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
     }
     .gf.gf-coop-ingresos-index .gf-td.gf-td-acciones {
         display: flex;
@@ -873,6 +882,10 @@
         align-items: center;
         justify-content: flex-end;
         gap: 0.25rem;
+    }
+    .gf.gf-coop-ingresos-index .gf-td.gf-td-acciones .btn-sm {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     /* Cooperadora — ítems del formulario de ingreso (ancho fluido) */

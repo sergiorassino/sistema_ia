@@ -106,16 +106,29 @@
                     <div class="gf-th w-28 text-right">Saldo</div>
                 </div>
                 @forelse ($filas as $fila)
-                    <div class="gf-row gf-row-hover">
+                    <div @class(['gf-row', 'gf-row-anulado' => ! empty($fila->anulado), 'gf-row-hover' => empty($fila->anulado)])>
                         <div class="gf-td w-24">{{ \Carbon\Carbon::parse($fila->fecha)->format('d/m/Y') }}</div>
-                        <div class="gf-td w-20 text-xs uppercase">{{ $fila->tipo_mov === 'egreso' ? 'Egreso' : 'Ingreso' }}</div>
+                        <div class="gf-td w-20 text-xs uppercase">
+                            {{ $fila->tipo_mov === 'egreso' ? 'Egreso' : 'Ingreso' }}
+                            @if (! empty($fila->anulado))
+                                <span class="mt-0.5 block se-pill bg-red-100 text-red-800 text-[10px] normal-case">Anulado</span>
+                            @endif
+                        </div>
                         <div class="gf-td w-20 text-right tabular-nums">{{ $fila->numero }}</div>
                         <div class="gf-td flex-1 truncate">{{ $fila->detalle }}</div>
                         <div class="gf-td w-28 text-right tabular-nums">
-                            @if ($fila->ingreso > 0) ${{ number_format($fila->ingreso, 2, ',', '.') }} @endif
+                            @if (! empty($fila->anulado) && $fila->tipo_mov === 'ingreso')
+                                <span class="line-through text-neutral-400">${{ number_format((float) $fila->importe_anulado, 2, ',', '.') }}</span>
+                            @elseif ($fila->ingreso > 0)
+                                ${{ number_format($fila->ingreso, 2, ',', '.') }}
+                            @endif
                         </div>
                         <div class="gf-td w-28 text-right tabular-nums">
-                            @if ($fila->egreso > 0) ${{ number_format($fila->egreso, 2, ',', '.') }} @endif
+                            @if (! empty($fila->anulado) && $fila->tipo_mov === 'egreso')
+                                <span class="line-through text-neutral-400">${{ number_format((float) $fila->importe_anulado, 2, ',', '.') }}</span>
+                            @elseif ($fila->egreso > 0)
+                                ${{ number_format($fila->egreso, 2, ',', '.') }}
+                            @endif
                         </div>
                         <div class="gf-td w-28 text-right tabular-nums font-medium">${{ number_format($fila->saldo, 2, ',', '.') }}</div>
                     </div>
