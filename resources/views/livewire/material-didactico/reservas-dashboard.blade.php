@@ -8,13 +8,19 @@
                     <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Listado de reservas</h1>
                     <p class="text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
-                        @if($rol !== 'admin') · Mis reservas @else · Todas las reservas @endif
+                        @if($soloConsultaPortal)
+                            · Consulta de reservas
+                        @elseif($rol !== 'admin')
+                            · Mis reservas
+                        @else
+                            · Todas las reservas
+                        @endif
                     </p>
                 </div>
-                @if($rol === 'admin' || $rol === 'profesor')
-                    <a href="{{ route('material-didactico.reservar') }}"
+                @if($rutaNuevaReserva)
+                    <a href="{{ $rutaNuevaReserva }}"
                        class="inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
-                        + REGISTRAR NUEVA RESERVA
+                        + {{ $soloConsultaPortal ? 'NUEVA RESERVA' : 'REGISTRAR NUEVA RESERVA' }}
                     </a>
                 @endif
             </div>
@@ -113,10 +119,12 @@
                             <div class="gf-th gf-rrd-auxiliar">Auxiliar</div>
                             <div class="gf-th gf-rrd-usuario">Reservado por</div>
                             <div class="gf-th gf-rrd-estado">Estado</div>
-                            @if($rol === 'admin')
+                            @if($rol === 'admin' && ! $soloConsultaPortal)
                                 <div class="gf-th gf-rrd-entregado">Entregado a</div>
                             @endif
-                            <div class="gf-th gf-rrd-acciones text-center">Acciones</div>
+                            @if(! $soloConsultaPortal)
+                                <div class="gf-th gf-rrd-acciones text-center">Acciones</div>
+                            @endif
                         </div>
 
                         @forelse($pedidosAgrupados as $grupo)
@@ -178,7 +186,7 @@
                                         @endforeach
                                     </div>
                                 </div>
-                                @if($rol === 'admin')
+                                @if($rol === 'admin' && ! $soloConsultaPortal)
                                     <div class="gf-td gf-rrd-entregado text-xs">
                                         <div class="gf-rrd-stack">
                                             @foreach($reservasGrupo as $reserva)
@@ -187,6 +195,7 @@
                                         </div>
                                     </div>
                                 @endif
+                                @if(! $soloConsultaPortal)
                                 <div class="gf-td-actions gf-rrd-acciones">
                                     <div class="gf-rrd-stack gf-rrd-stack--acciones">
                                         @foreach($reservasGrupo as $reserva)
@@ -224,6 +233,7 @@
                                         @endif
                                     </div>
                                 </div>
+                                @endif
                             </div>
                         @empty
                             <div class="gf-empty">
@@ -236,7 +246,8 @@
 
     </div>
 
-    {{-- Modales --}}
+    {{-- Modales (solo gestión en secretaría) --}}
+    @if(! $soloConsultaPortal)
     @teleport('body')
     <div>
         {{-- Modal entrega --}}
@@ -300,6 +311,7 @@
         @endif
     </div>
     @endteleport
+    @endif
 
     @script
     <script>

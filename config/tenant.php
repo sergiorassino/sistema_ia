@@ -141,6 +141,7 @@ return [
             'inicial' => [
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,
+                'recursos_didacticos_listado' => false,
             ],
             'primario' => [
                 'carga_estudiante' => false,
@@ -149,6 +150,7 @@ return [
                 'planilla' => false,
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,
+                'recursos_didacticos_listado' => false,
             ],
             'secundario' => [
                 'calificaciones' => true,
@@ -156,6 +158,7 @@ return [
                 'cuaderno_seguimiento_aulico' => false,
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,
+                'recursos_didacticos_listado' => false,
             ],
         ],
         /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */

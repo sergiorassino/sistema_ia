@@ -23,8 +23,9 @@
     $docenteComBandejaActiva = str_starts_with($route ?? '', 'portalDocente.comunicaciones')
         && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.revision'], true);
     $docentePushActivo = ($route ?? '') === 'portalDocente.push.suscribir';
-    $docenteRecursosDidacticosActivo = request()->routeIs('portalDocente.materialDidactico.*');
-    $docenteRecursosDidacticosVisible = tenantPortalDocenteRecursosDidacticosNuevaReserva();
+    $docenteRecursosDidacticosVisible = tenantPortalDocenteRecursosDidacticosVisible();
+    $docenteRecursosDidacticosListadoActivo = ($route ?? '') === 'portalDocente.materialDidactico.index';
+    $docenteRecursosDidacticosReservarActivo = ($route ?? '') === 'portalDocente.materialDidactico.reservar';
 @endphp
 <body class="h-full">
 
@@ -162,17 +163,34 @@
                 Recursos didácticos
             </p>
 
-            <a href="{{ route('portalDocente.materialDidactico.reservar') }}"
-               @class([
-                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
-                   'is-active shadow-sm' => $docenteRecursosDidacticosActivo,
-               ])
-               title="Registrar nueva reserva de material didáctico">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nueva reserva</span>
-            </a>
+            @if (tenantPortalDocenteRecursosDidacticosListado())
+                <a href="{{ route('portalDocente.materialDidactico.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                       'is-active shadow-sm' => $docenteRecursosDidacticosListadoActivo,
+                   ])
+                   title="Consultar reservas de material didáctico">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span x-show="!sidebarCollapsed" x-cloak class="truncate">Listado de reservas</span>
+                </a>
+            @endif
+
+            @if (tenantPortalDocenteRecursosDidacticosNuevaReserva())
+                <a href="{{ route('portalDocente.materialDidactico.reservar') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                       'is-active shadow-sm' => $docenteRecursosDidacticosReservarActivo,
+                   ])
+                   title="Registrar nueva reserva de material didáctico">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nueva reserva</span>
+                </a>
+            @endif
         @endif
 
         <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">

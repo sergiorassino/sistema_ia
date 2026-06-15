@@ -11,12 +11,15 @@ return [
         'menu' => [
             'inicial' => [
                 'recursos_didacticos_nueva_reserva' => true,
+                'recursos_didacticos_listado' => true,
             ],
             'primario' => [
                 'recursos_didacticos_nueva_reserva' => true,
+                'recursos_didacticos_listado' => true,
             ],
             'secundario' => [
                 'recursos_didacticos_nueva_reserva' => true,
+                'recursos_didacticos_listado' => true,
             ],
         ],
     ],

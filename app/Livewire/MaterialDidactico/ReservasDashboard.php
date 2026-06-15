@@ -9,6 +9,7 @@ use App\Models\RrdRecurso;
 use App\Models\RrdReserva;
 use App\Support\MaterialDidactico\RrdReservaException;
 use App\Support\MaterialDidactico\RrdReservaService;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Livewire\Component;
 
 class ReservasDashboard extends Component
@@ -33,7 +34,11 @@ class ReservasDashboard extends Component
 
     public function mount(): void
     {
-        abort_unless(rrdRol() !== null, 403);
+        if ($this->esPortalDocente()) {
+            abort_unless(tenantPortalDocenteRecursosDidacticosListado(), 404);
+        } else {
+            abort_unless(rrdRol() !== null, 403);
+        }
 
         $this->fecha = now()->format('Y-m-d');
     }
@@ -56,6 +61,7 @@ class ReservasDashboard extends Component
 
     public function abrirEntrega(int $id): void
     {
+        abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
         $this->reservaEntregaId = $id;
@@ -72,6 +78,7 @@ class ReservasDashboard extends Component
 
     public function confirmarEntrega(): void
     {
+        abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
         $this->validate(['entregadoA' => 'required|string|max:100'], [
@@ -103,6 +110,7 @@ class ReservasDashboard extends Component
 
     public function abrirDevolucion(int $id): void
     {
+        abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
         $this->reservaDevolucionId    = $id;
@@ -117,6 +125,7 @@ class ReservasDashboard extends Component
 
     public function confirmarDevolucion(): void
     {
+        abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
         $reserva = RrdReserva::queryEnContexto()->find($this->reservaDevolucionId);
@@ -142,6 +151,8 @@ class ReservasDashboard extends Component
 
     public function cancelarItemReserva(int $reservaId): void
     {
+        abort_if($this->esPortalDocente(), 403);
+
         $rol = rrdRol();
         abort_unless($rol === 'admin' || $rol === 'profesor', 403);
 
@@ -169,12 +180,13 @@ class ReservasDashboard extends Component
     public function render()
     {
         $ctx = schoolCtx();
-        $rol = rrdRol();
+        $rol = $this->esPortalDocente() ? 'lectura' : rrdRol();
+        $soloConsultaPortal = $this->esPortalDocente();
 
         $query = RrdReserva::queryEnContexto()
             ->with(['recurso.grupo', 'pedido.profesor', 'pedido.reservas']);
 
-        if ($rol !== 'admin') {
+        if (! $soloConsultaPortal && $rol !== 'admin') {
             $idProfesor = (int) ($ctx->idProfesor ?? 0);
             $query->whereHas('pedido', fn ($q) => $q->where('id_profesor', $idProfesor));
         }
@@ -260,10 +272,38 @@ class ReservasDashboard extends Component
         return view('livewire.material-didactico.reservas-dashboard', [
             'pedidosAgrupados' => $pedidosAgrupados,
             'rol'              => $rol,
-            'cursos'         => $cursos,
-            'nivelAbrev'     => $nivelAbrev,
-            'grupos'         => $grupos,
-            'recursosFiltro' => $recursosFiltro,
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Material Didáctico — Listado de reservas']);
+            'cursos'           => $cursos,
+            'nivelAbrev'       => $nivelAbrev,
+            'grupos'           => $grupos,
+            'recursosFiltro'   => $recursosFiltro,
+            'soloConsultaPortal' => $soloConsultaPortal,
+            'rutaNuevaReserva' => $this->rutaNuevaReservaMaterialDidactico(),
+        ])->layout($this->layoutMaterialDidactico(), ['pageTitle' => 'Material Didáctico — Listado de reservas']);
+    }
+
+    private function esPortalDocente(): bool
+    {
+        return PortalDocenteContext::esActivo();
+    }
+
+    private function layoutMaterialDidactico(): string
+    {
+        return $this->esPortalDocente() ? 'layouts.docente' : layoutMenuStaff();
+    }
+
+    private function rutaNuevaReservaMaterialDidactico(): ?string
+    {
+        if ($this->esPortalDocente()) {
+            return tenantPortalDocenteRecursosDidacticosNuevaReserva()
+                ? route('portalDocente.materialDidactico.reservar')
+                : null;
+        }
+
+        $rol = rrdRol();
+        if ($rol === 'admin' || $rol === 'profesor') {
+            return route('material-didactico.reservar');
+        }
+
+        return null;
     }
 }

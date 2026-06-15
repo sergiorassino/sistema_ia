@@ -399,6 +399,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
         ->name('portalDocente.listados.exportarExcel');
 
+    Route::get('/material-didactico', ReservasDashboard::class)
+        ->name('portalDocente.materialDidactico.index');
     Route::get('/material-didactico/reservar', ReservaForm::class)
         ->name('portalDocente.materialDidactico.reservar');
 

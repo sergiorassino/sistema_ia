@@ -291,7 +291,9 @@ class ReservaForm extends Component
     private function rutaListadoMaterialDidactico(): string
     {
         if ($this->esPortalDocente()) {
-            return route('portalDocente.home');
+            return tenantPortalDocenteRecursosDidacticosListado()
+                ? route('portalDocente.materialDidactico.index')
+                : route('portalDocente.home');
         }
 
         return route('material-didactico.index');

@@ -609,12 +609,11 @@ if (! function_exists('tenantPortalDocenteCuadernoSeguimientoAulico')) {
     }
 }
 
-if (! function_exists('tenantPortalDocenteRecursosDidacticosNuevaReserva')) {
+if (! function_exists('tenantPortalDocenteRecursosDidacticosMenuItem')) {
     /**
-     * Si el Menú de Docentes incluye «Nueva reserva» (grupo Recursos didácticos).
-     * Default false; activar en `config/tenants/{slug}.php` por nivel pedagógico.
+     * Ítem del grupo Recursos didácticos en el Menú de Docentes (`nueva_reserva` | `listado`).
      */
-    function tenantPortalDocenteRecursosDidacticosNuevaReserva(): bool
+    function tenantPortalDocenteRecursosDidacticosMenuItem(string $item): bool
     {
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
 
@@ -629,7 +628,39 @@ if (! function_exists('tenantPortalDocenteRecursosDidacticosNuevaReserva')) {
             return false;
         }
 
-        return (bool) config("tenant.portal_docente.menu.{$claveNivel}.recursos_didacticos_nueva_reserva", false);
+        return (bool) config("tenant.portal_docente.menu.{$claveNivel}.recursos_didacticos_{$item}", false);
+    }
+}
+
+if (! function_exists('tenantPortalDocenteRecursosDidacticosNuevaReserva')) {
+    /**
+     * Si el Menú de Docentes incluye «Nueva reserva» (grupo Recursos didácticos).
+     * Default false; activar en `config/tenants/{slug}.php` por nivel pedagógico.
+     */
+    function tenantPortalDocenteRecursosDidacticosNuevaReserva(): bool
+    {
+        return tenantPortalDocenteRecursosDidacticosMenuItem('nueva_reserva');
+    }
+}
+
+if (! function_exists('tenantPortalDocenteRecursosDidacticosListado')) {
+    /**
+     * Si el Menú de Docentes incluye «Listado de reservas» (solo consulta).
+     */
+    function tenantPortalDocenteRecursosDidacticosListado(): bool
+    {
+        return tenantPortalDocenteRecursosDidacticosMenuItem('listado');
+    }
+}
+
+if (! function_exists('tenantPortalDocenteRecursosDidacticosVisible')) {
+    /**
+     * Si el grupo Recursos didácticos debe mostrarse en el Menú de Docentes.
+     */
+    function tenantPortalDocenteRecursosDidacticosVisible(): bool
+    {
+        return tenantPortalDocenteRecursosDidacticosNuevaReserva()
+            || tenantPortalDocenteRecursosDidacticosListado();
     }
 }
 
