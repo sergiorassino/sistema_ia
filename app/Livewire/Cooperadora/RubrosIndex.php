@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cooperadora;
 
+use App\Models\CoopIngreso;
 use App\Models\CoopRubroIngreso;
 use App\Support\Cooperadora\PermisosCooperadora;
 use App\Support\ProfesorMenuPortal;
@@ -96,6 +97,49 @@ class RubrosIndex extends Component
         }
 
         $this->cerrarModal();
+    }
+
+    public function eliminar(int $id): void
+    {
+        abort_unless(PermisosCooperadora::puedeParametrizacion(), 403);
+
+        $key = 'coop:rubros-del:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente de nuevo.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $rubro = CoopRubroIngreso::query()->findOrFail($id);
+
+        $tieneItems = $rubro->items()->exists();
+        $tieneIngresos = CoopIngreso::query()->where('id_rubro', $rubro->id)->exists();
+
+        if ($tieneItems || $tieneIngresos) {
+            $partes = [];
+            if ($tieneItems) {
+                $partes[] = 'ítems asociados';
+            }
+            if ($tieneIngresos) {
+                $partes[] = 'ingresos registrados';
+            }
+            $this->dispatch(
+                'se-swal-aviso',
+                mensaje: 'No se puede eliminar el rubro porque tiene '.implode(' e ', $partes).'.',
+                titulo: 'Rubro en uso'
+            );
+
+            return;
+        }
+
+        $rubro->delete();
+
+        if ($this->editId === $id) {
+            $this->cerrarModal();
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Rubro eliminado.');
     }
 
     private function resetForm(): void

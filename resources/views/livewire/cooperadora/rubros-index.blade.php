@@ -21,7 +21,7 @@
                     <div class="gf-th w-20 text-center">Anual</div>
                     <div class="gf-th w-16 text-center">Ord.</div>
                     <div class="gf-th w-20 text-center">Activo</div>
-                    <div class="gf-th-right w-28">Acciones</div>
+                    <div class="gf-th-right w-40">Acciones</div>
                 </div>
                 @forelse ($rubros as $rubro)
                     <div class="gf-row gf-row-hover">
@@ -33,8 +33,20 @@
                         <div class="gf-td w-20 text-center">{{ $rubro->es_anual ? 'Sí' : '—' }}</div>
                         <div class="gf-td w-16 text-center">{{ $rubro->orden }}</div>
                         <div class="gf-td w-20 text-center">{{ $rubro->activo ? 'Sí' : 'No' }}</div>
-                        <div class="gf-td-actions w-28">
-                            <button type="button" wire:click="abrirEditar({{ $rubro->id }})" class="btn-secondary btn-sm">Editar</button>
+                        <div class="gf-td-actions w-40">
+                            <div class="flex justify-end gap-1">
+                                <button type="button" wire:click="abrirEditar({{ $rubro->id }})" class="btn-secondary btn-sm">Editar</button>
+                                <button type="button"
+                                        class="btn-danger btn-sm"
+                                        title="Eliminar rubro"
+                                        x-on:click="window.seSwalConfirmar(
+                                            @js('¿Eliminar el rubro «'.$rubro->nombre.'»? Esta acción no se puede deshacer.'),
+                                            'Eliminar rubro',
+                                            { confirmButtonText: 'Sí, eliminar' }
+                                        ).then((ok) => { if (ok) $wire.eliminar({{ $rubro->id }}); })">
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -101,4 +113,12 @@
             </div>
         @endteleport
     @endif
+
+    @script
+    <script>
+        $wire.on('se-swal-exito', ({ mensaje, titulo }) => window.seSwalExito(mensaje, titulo ?? 'Listo'));
+        $wire.on('se-swal-error', ({ mensaje, titulo }) => window.seSwalError(mensaje, titulo ?? 'Error'));
+        $wire.on('se-swal-aviso', ({ mensaje, titulo }) => window.seSwalAviso(mensaje, titulo ?? 'Atención'));
+    </script>
+    @endscript
 </div>

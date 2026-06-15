@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cooperadora;
 
+use App\Models\CoopIngreso;
 use App\Models\CoopItemIngreso;
 use App\Models\CoopRubroIngreso;
 use App\Support\Cooperadora\CooperadoraConfig;
@@ -158,6 +159,39 @@ class ItemsIndex extends Component
         }
 
         $this->cerrarModal();
+    }
+
+    public function eliminar(int $id): void
+    {
+        abort_unless(PermisosCooperadora::puedeParametrizacion(), 403);
+
+        $key = 'coop:items-del:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente de nuevo.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $item = CoopItemIngreso::query()->findOrFail($id);
+
+        if (CoopIngreso::query()->where('id_item', $item->id)->exists()) {
+            $this->dispatch(
+                'se-swal-aviso',
+                mensaje: 'No se puede eliminar el ítem porque tiene ingresos registrados.',
+                titulo: 'Ítem en uso'
+            );
+
+            return;
+        }
+
+        $item->delete();
+
+        if ($this->editId === $id) {
+            $this->cerrarModal();
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Ítem eliminado.');
     }
 
     private function resetForm(): void
