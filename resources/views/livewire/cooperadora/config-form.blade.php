@@ -49,7 +49,7 @@
             <div class="max-w-xs">
                 <label class="se-label">Descuento hermanos (%)</label>
                 <input type="number" step="0.01" min="0" max="100" wire:model="descuentoHermanoPct" class="se-input w-full">
-                <p class="mt-1 text-xs text-neutral-500">Se aplica cuando hay dos o más hermanos matriculados en el ciclo activo.</p>
+                <p class="mt-1 text-xs text-neutral-500">Solo aplica en ingresos de rubros marcados con «Aplica descuento por hermanos», a alumnos marcados como hermano en la matrícula del ciclo lectivo activo.</p>
                 @error('descuentoHermanoPct') <p class="se-field-error">{{ $message }}</p> @enderror
             </div>
             <div class="flex justify-end">

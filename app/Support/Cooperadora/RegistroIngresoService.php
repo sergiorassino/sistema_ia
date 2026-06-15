@@ -116,15 +116,23 @@ final class RegistroIngresoService
             ? round((float) $datos['importe_bruto'], 2)
             : round((float) ($item->precio ?? $datos['importe'] ?? 0), 2);
 
-        $descuentoPct = round((float) ($datos['descuento_pct'] ?? 0), 2);
-        $importe = isset($datos['importe'])
-            ? round((float) $datos['importe'], 2)
-            : DescuentoHermanos::importeConDescuento($importeBruto, $descuentoPct);
-
         $idLegajo = isset($datos['id_legajo'])
             ? (int) $datos['id_legajo']
             : (int) ($comun['id_legajo'] ?? 0);
         $idLegajo = $idLegajo > 0 ? $idLegajo : null;
+
+        $descuentoPct = ($tipo === 'origen_estudiantes' && $idLegajo !== null)
+            ? DescuentoHermanos::porcentajeParaLinea($idLegajo, $rubro->id)
+            : 0.0;
+        $descuentoPct = round($descuentoPct, 2);
+
+        if ($tipo === 'origen_estudiantes') {
+            $importe = DescuentoHermanos::importeConDescuento($importeBruto, $descuentoPct);
+        } else {
+            $importe = isset($datos['importe'])
+                ? round((float) $datos['importe'], 2)
+                : round($importeBruto, 2);
+        }
 
         $idMatricula = isset($datos['id_matricula'])
             ? (int) $datos['id_matricula']

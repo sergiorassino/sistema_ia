@@ -109,32 +109,31 @@
                 </div>
 
                 @if ($esOrigenEstudiantes)
-                    <div class="w-full overflow-x-auto rounded-2xl border border-accent-200">
-                        <div class="flex justify-start">
-                            <div class="gf min-w-[60rem]">
-                                <div class="gf-head">
-                                    <div class="gf-th w-8 text-center">#</div>
-                                    <div class="gf-th flex-1 min-w-[8rem]">Alumno</div>
-                                    <div class="gf-th flex-1 min-w-[7rem]">Rubro</div>
-                                    <div class="gf-th flex-1 min-w-[9rem]">Ítem</div>
-                                    <div class="gf-th w-24 text-right">Bruto</div>
-                                    <div class="gf-th w-14 text-center">Desc</div>
-                                    <div class="gf-th w-28 text-right">A cobrar</div>
-                                    <div class="gf-th flex-1 min-w-[6rem]">Concepto</div>
-                                    <div class="gf-th w-10"></div>
-                                </div>
+                    <div class="w-full min-w-0 rounded-2xl border border-accent-200">
+                        <div class="gf gf-coop-ingreso-lineas">
+                            <div class="gf-head">
+                                <div class="gf-th gf-th-num">#</div>
+                                <div class="gf-th gf-th-alumno">Alumno</div>
+                                <div class="gf-th gf-th-rubro">Rubro</div>
+                                <div class="gf-th gf-th-item">Ítem</div>
+                                <div class="gf-th gf-th-bruto text-right">Bruto</div>
+                                <div class="gf-th gf-th-dto">Desc</div>
+                                <div class="gf-th gf-th-cobrar text-right">A cobrar</div>
+                                <div class="gf-th gf-th-concepto">Concepto</div>
+                                <div class="gf-th gf-th-quitar"></div>
+                            </div>
 
-                                @foreach ($lineas as $index => $linea)
+                            @foreach ($lineas as $index => $linea)
                                     @php
                                         $itemsLinea = $itemsPorRubro->get((int) ($linea['idRubro'] ?? 0), collect());
                                         $idLegajoLinea = (int) ($linea['idLegajo'] ?? 0);
                                         $nombreAlumnoLinea = $etiquetasLegajo[$idLegajoLinea] ?? null;
                                     @endphp
                                     <div class="gf-row gf-row-hover" wire:key="linea-{{ $index }}">
-                                        <div class="gf-td w-8 text-center text-xs font-semibold text-neutral-500">
+                                        <div class="gf-td gf-td-num text-xs font-semibold text-neutral-500">
                                             {{ $index + 1 }}
                                         </div>
-                                        <div class="gf-td flex-1 min-w-[8rem]">
+                                        <div class="gf-td gf-td-alumno">
                                             @if ($nombreAlumnoLinea)
                                                 <span class="text-xs font-medium text-neutral-800">{{ $nombreAlumnoLinea }}</span>
                                             @else
@@ -142,7 +141,7 @@
                                             @endif
                                             @error('lineas.'.$index.'.idLegajo') <p class="text-[10px] text-red-600">{{ $message }}</p> @enderror
                                         </div>
-                                        <div class="gf-td flex-1 min-w-[7rem]">
+                                        <div class="gf-td gf-td-rubro">
                                             <select wire:model.live="lineas.{{ $index }}.idRubro"
                                                     class="gf-inline-select @error('lineas.'.$index.'.idRubro') ring-2 ring-red-400 @enderror">
                                                 <option value="">— Rubro —</option>
@@ -151,7 +150,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="gf-td flex-1 min-w-[9rem]">
+                                        <div class="gf-td gf-td-item">
                                             <select wire:model.live="lineas.{{ $index }}.idItem"
                                                     class="gf-inline-select @error('lineas.'.$index.'.idItem') ring-2 ring-red-400 @enderror"
                                                     @disabled($itemsLinea->isEmpty())>
@@ -161,31 +160,31 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="gf-td w-24">
+                                        <div class="gf-td gf-td-bruto">
                                             <input type="number"
                                                    step="0.01"
                                                    min="0"
                                                    wire:model.live="lineas.{{ $index }}.importeBruto"
                                                    class="gf-inline text-right tabular-nums">
                                         </div>
-                                        <div class="gf-td w-14 text-center">
+                                        <div class="gf-td gf-td-dto">
                                             <span class="text-xs tabular-nums text-neutral-600">{{ $linea['descuentoPct'] }}%</span>
                                         </div>
-                                        <div class="gf-td w-28">
+                                        <div class="gf-td gf-td-cobrar">
                                             <input type="number"
                                                    step="0.01"
                                                    min="0.01"
                                                    wire:model="lineas.{{ $index }}.importe"
                                                    class="gf-inline text-right tabular-nums font-semibold text-primary-700 @error('lineas.'.$index.'.importe') ring-2 ring-red-400 @enderror">
                                         </div>
-                                        <div class="gf-td flex-1 min-w-[6rem]">
+                                        <div class="gf-td gf-td-concepto">
                                             <input type="text"
                                                    wire:model="lineas.{{ $index }}.concepto"
                                                    maxlength="2000"
                                                    placeholder="Opcional"
                                                    class="gf-inline text-neutral-600 placeholder:text-neutral-400">
                                         </div>
-                                        <div class="gf-td gf-td-accion !py-1 w-10">
+                                        <div class="gf-td gf-td-quitar gf-td-accion !py-1">
                                             @if (count($lineas) > 1)
                                                 <button type="button"
                                                         wire:click="quitarLinea({{ $index }})"
@@ -207,8 +206,7 @@
                                             @error('lineas.'.$index.'.importe') <span>{{ $message }}</span> @enderror
                                         </div>
                                     @endif
-                                @endforeach
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                 @else

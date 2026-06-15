@@ -27,6 +27,8 @@ final class ContextoEstudianteSesion
 
     public const CUOTAS_GESTION = 'cuotas_gestion';
 
+    public const COOPERADORA_PAGOS_ESTUDIANTE = 'cooperadora_pagos_estudiante';
+
     private const SESSION_KEY = 'contexto_estudiante_navegacion';
 
     private const TTL_MINUTES = 120;

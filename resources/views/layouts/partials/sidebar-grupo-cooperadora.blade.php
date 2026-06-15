@@ -26,7 +26,7 @@
         <a href="{{ route('cooperadora.ingresos') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'cooperadora.ingresos') || ($route ?? '') === 'cooperadora.recibo.pdf',
+               'is-active shadow-sm' => ($route ?? '') === 'cooperadora.ingresos' || ($route ?? '') === 'cooperadora.recibo.pdf',
            ])
            title="Registro de ingresos y recibos">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,6 +62,24 @@
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
             <span class="truncate">Movimientos</span>
+        </a>
+        @endif
+        @if (\App\Support\Cooperadora\PermisosCooperadora::puedeIngresos())
+        <a href="{{ route('cooperadora.pagos-estudiante') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+               'is-active shadow-sm' => in_array($route ?? '', [
+                   'cooperadora.pagos-estudiante',
+                   'cooperadora.pagos-estudiante.ver',
+                   'cooperadora.pagos-estudiante.pdf',
+               ], true),
+           ])
+           title="Pagos registrados por estudiante">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span class="truncate">Pagos por estudiante</span>
         </a>
         @endif
         @if (\App\Support\Cooperadora\PermisosCooperadora::puedeParametrizacion())

@@ -19,6 +19,8 @@ class RubrosIndex extends Component
 
     public string $tipo = 'origen_estudiantes';
 
+    public bool $aplicaDescuentoHermano = false;
+
     public bool $esAnual = false;
 
     public string $orden = '0';
@@ -42,6 +44,7 @@ class RubrosIndex extends Component
         $this->editId = $id;
         $this->nombre = (string) $rubro->nombre;
         $this->tipo = (string) $rubro->tipo;
+        $this->aplicaDescuentoHermano = (bool) ($rubro->aplica_descuento_hermano ?? false);
         $this->esAnual = (bool) $rubro->es_anual;
         $this->orden = (string) $rubro->orden;
         $this->activo = (bool) $rubro->activo;
@@ -67,16 +70,20 @@ class RubrosIndex extends Component
         $validated = $this->validate([
             'nombre' => ['required', 'string', 'max:120'],
             'tipo' => ['required', Rule::in(CoopRubroIngreso::tiposValidos())],
+            'aplicaDescuentoHermano' => ['boolean'],
             'esAnual' => ['boolean'],
             'orden' => ['required', 'integer', 'min:0', 'max:999'],
             'activo' => ['boolean'],
         ]);
 
         $esAnual = $validated['esAnual'] && $validated['tipo'] === 'origen_estudiantes';
+        $aplicaDescuentoHermano = $validated['tipo'] === 'origen_estudiantes'
+            && (bool) $validated['aplicaDescuentoHermano'];
 
         $data = [
             'nombre' => trim($validated['nombre']),
             'tipo' => $validated['tipo'],
+            'aplica_descuento_hermano' => $aplicaDescuentoHermano,
             'es_anual' => $esAnual,
             'orden' => (int) $validated['orden'],
             'activo' => (bool) $validated['activo'],
@@ -96,6 +103,7 @@ class RubrosIndex extends Component
         $this->editId = null;
         $this->nombre = '';
         $this->tipo = 'origen_estudiantes';
+        $this->aplicaDescuentoHermano = false;
         $this->esAnual = false;
         $this->orden = '0';
         $this->activo = true;

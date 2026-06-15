@@ -11,11 +11,13 @@
             </div>
         </section>
 
-        <div class="w-full overflow-x-auto se-grid-angosta-wrap">
-            <div class="gf min-w-[40rem]">
+        <div class="w-full overflow-x-auto">
+            <div class="flex justify-start">
+            <div class="gf min-w-[44rem]">
                 <div class="gf-head">
                     <div class="gf-th flex-1">Nombre</div>
                     <div class="gf-th w-28">Tipo</div>
+                    <div class="gf-th w-24 text-center">Dto. hermanos</div>
                     <div class="gf-th w-20 text-center">Anual</div>
                     <div class="gf-th w-16 text-center">Ord.</div>
                     <div class="gf-th w-20 text-center">Activo</div>
@@ -25,6 +27,9 @@
                     <div class="gf-row gf-row-hover">
                         <div class="gf-td flex-1 font-medium">{{ $rubro->nombre }}</div>
                         <div class="gf-td w-28 text-xs">{{ $rubro->etiquetaTipo() }}</div>
+                        <div class="gf-td w-24 text-center text-xs">
+                            {{ $rubro->aplicaDescuentoHermano() ? 'Sí' : '—' }}
+                        </div>
                         <div class="gf-td w-20 text-center">{{ $rubro->es_anual ? 'Sí' : '—' }}</div>
                         <div class="gf-td w-16 text-center">{{ $rubro->orden }}</div>
                         <div class="gf-td w-20 text-center">{{ $rubro->activo ? 'Sí' : 'No' }}</div>
@@ -35,6 +40,7 @@
                 @empty
                     <div class="gf-empty">No hay rubros cargados.</div>
                 @endforelse
+            </div>
             </div>
         </div>
     </div>
@@ -66,6 +72,10 @@
                             </select>
                         </div>
                         @if ($tipo === 'origen_estudiantes')
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" wire:model="aplicaDescuentoHermano" class="rounded border-accent-300 text-primary-600">
+                                Aplica descuento por hermanos
+                            </label>
                             <label class="flex items-center gap-2 text-sm">
                                 <input type="checkbox" wire:model="esAnual" class="rounded border-accent-300 text-primary-600">
                                 Ítems anuales (precio por año lectivo)

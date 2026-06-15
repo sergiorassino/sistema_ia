@@ -80,7 +80,7 @@ class IngresosIndex extends Component
     public function render()
     {
         $query = \App\Models\CoopIngreso::query()
-            ->with(['rubro:id,nombre', 'item:id,nombre'])
+            ->with(['rubro:id,nombre', 'item:id,nombre', 'legajo:id,apellido,nombre'])
             ->where('anulado', false)
             ->orderByDesc('fecha')
             ->orderByDesc('recibo_numero');

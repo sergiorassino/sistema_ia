@@ -14,12 +14,14 @@ class CoopRubroIngreso extends Model
     protected $fillable = [
         'nombre',
         'tipo',
+        'aplica_descuento_hermano',
         'es_anual',
         'orden',
         'activo',
     ];
 
     protected $casts = [
+        'aplica_descuento_hermano' => 'boolean',
         'es_anual' => 'boolean',
         'activo' => 'boolean',
         'orden' => 'integer',
@@ -62,5 +64,11 @@ class CoopRubroIngreso extends Model
     public function permiteEsAnual(): bool
     {
         return $this->tipo === 'origen_estudiantes';
+    }
+
+    public function aplicaDescuentoHermano(): bool
+    {
+        return $this->tipo === 'origen_estudiantes'
+            && (bool) ($this->aplica_descuento_hermano ?? false);
     }
 }

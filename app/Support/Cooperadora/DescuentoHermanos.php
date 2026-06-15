@@ -2,13 +2,24 @@
 
 namespace App\Support\Cooperadora;
 
-use App\Models\Legajo;
+use App\Models\CoopRubroIngreso;
 
 /**
- * Descuento por hermanos matriculados en el ciclo activo.
+ * Descuento por hermanos en cooperadora — según marca en matrícula del ciclo activo ({@see Matricula::coop_es_hermano}).
+ * Solo aplica a rubros marcados con descuento por hermanos ({@see CoopRubroIngreso::aplicaDescuentoHermano()}).
  */
 final class DescuentoHermanos
 {
+    public static function porcentajeParaLinea(int $idLegajo, int $idRubro): float
+    {
+        $rubro = CoopRubroIngreso::query()->find($idRubro);
+        if ($rubro === null || ! $rubro->aplicaDescuentoHermano()) {
+            return 0.0;
+        }
+
+        return self::porcentajeParaLegajo($idLegajo);
+    }
+
     public static function porcentajeParaLegajo(int $idLegajo): float
     {
         $pctConfig = CooperadoraConfig::descuentoHermanosPct();
@@ -16,27 +27,11 @@ final class DescuentoHermanos
             return 0.0;
         }
 
-        $legajo = Legajo::query()->find($idLegajo);
-        if ($legajo === null || ! self::tieneFamiliaReal($legajo)) {
+        if (! BusquedaEstudianteCooperadora::esHermanoCooperadora($idLegajo)) {
             return 0.0;
         }
 
-        $idTerlec = (int) schoolCtx()->idTerlec;
-        $idFamilia = (int) $legajo->idFamilias;
-
-        $cantidad = Legajo::query()
-            ->where('idFamilias', $idFamilia)
-            ->whereHas('matriculas', function ($q) use ($idTerlec) {
-                $q->where('idTerlec', $idTerlec)
-                    ->where(function ($sub) {
-                        $sub->whereNull('fechaBaja')
-                            ->orWhere('fechaBaja', '0000-00-00')
-                            ->orWhere('fechaBaja', '');
-                    });
-            })
-            ->count();
-
-        return $cantidad >= 2 ? $pctConfig : 0.0;
+        return $pctConfig;
     }
 
     public static function importeConDescuento(float $importeBruto, float $descuentoPct): float
@@ -46,12 +41,5 @@ final class DescuentoHermanos
         }
 
         return round($importeBruto * (1 - ($descuentoPct / 100)), 2);
-    }
-
-    private static function tieneFamiliaReal(Legajo $legajo): bool
-    {
-        $id = (int) ($legajo->idFamilias ?? 0);
-
-        return $id > 1;
     }
 }

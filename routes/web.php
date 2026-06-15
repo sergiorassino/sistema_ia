@@ -125,6 +125,7 @@ use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Cooperadora\MovimientosPdfController;
 use App\Http\Controllers\Cooperadora\OrdenPagoPdfController;
+use App\Http\Controllers\Cooperadora\PagosEstudianteCooperadoraPdfController;
 use App\Http\Controllers\Cooperadora\ReciboPdfController;
 use App\Livewire\Cooperadora\ConfigForm;
 use App\Livewire\Cooperadora\EgresoForm;
@@ -133,6 +134,8 @@ use App\Livewire\Cooperadora\IngresoForm;
 use App\Livewire\Cooperadora\IngresosIndex;
 use App\Livewire\Cooperadora\ItemsIndex;
 use App\Livewire\Cooperadora\MediosPagoIndex;
+use App\Livewire\Cooperadora\PagosEstudianteCooperadoraIndex;
+use App\Livewire\Cooperadora\PagosEstudianteCooperadoraShow;
 use App\Livewire\Cooperadora\MovimientosIndex;
 use App\Livewire\Cooperadora\ProveedoresForm;
 use App\Livewire\Cooperadora\ProveedoresIndex;
@@ -562,6 +565,16 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->where('ref', '[A-Za-z0-9_-]+')
             ->middleware('permiso:'.$pi::COOP_INGRESOS)
             ->name('cooperadora.recibo.pdf');
+        Route::get('/pagos-estudiante', PagosEstudianteCooperadoraIndex::class)
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.pagos-estudiante');
+        Route::get('/pagos-estudiante/ver', PagosEstudianteCooperadoraShow::class)
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.pagos-estudiante.ver');
+        Route::get('/pagos-estudiante.pdf/{ref}', PagosEstudianteCooperadoraPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::COOP_INGRESOS)
+            ->name('cooperadora.pagos-estudiante.pdf');
 
         Route::get('/egresos', EgresosIndex::class)
             ->middleware('permiso:'.$pi::COOP_EGRESOS)

@@ -262,8 +262,9 @@ class IngresoForm extends Component
 
         if ($this->esOrigenEstudiantes()) {
             $idLegajoLinea = (int) ($linea['idLegajo'] ?? 0);
-            $pct = $idLegajoLinea > 0
-                ? DescuentoHermanos::porcentajeParaLegajo($idLegajoLinea)
+            $idRubroLinea = (int) ($linea['idRubro'] ?? 0);
+            $pct = ($idLegajoLinea > 0 && $idRubroLinea > 0)
+                ? DescuentoHermanos::porcentajeParaLinea($idLegajoLinea, $idRubroLinea)
                 : 0.0;
             $linea['descuentoPct'] = number_format($pct, 2, '.', '');
             $linea['importeBruto'] = number_format($bruto, 2, '.', '');
