@@ -16,8 +16,12 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('campos_aspirantes', function (Blueprint $table) {
-            $table->string('opciones', 500)->nullable()->after('etiqueta');
+        $columnaAncla = Schema::hasColumn('campos_aspirantes', 'etiqueta')
+            ? 'etiqueta'
+            : 'columna';
+
+        Schema::table('campos_aspirantes', function (Blueprint $table) use ($columnaAncla) {
+            $table->string('opciones', 500)->nullable()->after($columnaAncla);
         });
     }
 
