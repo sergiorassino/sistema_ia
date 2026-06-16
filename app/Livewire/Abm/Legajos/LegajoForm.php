@@ -290,16 +290,16 @@ class LegajoForm extends Component
             $r['cuil'] = ['nullable', 'string', 'max:13'];
         }
         if ($set === null || isset($set['email'])) {
-            $r['email'] = ['nullable', 'email', 'max:100'];
+            $r['email'] = ['nullable', 'string', 'max:100'];
         }
         if ($set === null || isset($set['emailmad'])) {
-            $r['emailmad'] = ['nullable', 'email', 'max:50'];
+            $r['emailmad'] = ['nullable', 'string', 'max:50'];
         }
         if ($set === null || isset($set['emailpad'])) {
-            $r['emailpad'] = ['nullable', 'email', 'max:50'];
+            $r['emailpad'] = ['nullable', 'string', 'max:50'];
         }
         if ($set === null || isset($set['emailtut'])) {
-            $r['emailtut'] = ['nullable', 'email', 'max:50'];
+            $r['emailtut'] = ['nullable', 'string', 'max:50'];
         }
 
         $r['legajoExtras'] = ['array'];
@@ -317,10 +317,6 @@ class LegajoForm extends Component
             'dni.digits_between' => 'El DNI debe tener entre 7 y 11 dígitos.',
             'dni.unique' => 'Ya existe un legajo con ese DNI.',
             'fechnaci.date' => 'Fecha de nacimiento inválida.',
-            'email.email' => 'El email del alumno no es válido.',
-            'emailmad.email' => 'El email de la madre no es válido.',
-            'emailpad.email' => 'El email del padre no es válido.',
-            'emailtut.email' => 'El email del tutor no es válido.',
         ];
     }
 

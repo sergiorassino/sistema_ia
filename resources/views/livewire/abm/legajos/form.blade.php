@@ -197,7 +197,7 @@
                     @if($showFieldEnTab('email'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
-                        <input wire:model="email" type="email" maxlength="100" class="form-input @error('email') border-red-400 @enderror">
+                        <input wire:model="email" type="text" maxlength="100" class="form-input @error('email') border-red-400 @enderror">
                         @error('email') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     @endif
@@ -305,7 +305,7 @@
                     @if($showFieldEnTab('emailmad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
-                        <input wire:model="emailmad" type="email" maxlength="50" class="form-input @error('emailmad') border-red-400 @enderror">
+                        <input wire:model="emailmad" type="text" maxlength="50" class="form-input @error('emailmad') border-red-400 @enderror">
                         @error('emailmad') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     @endif
@@ -385,7 +385,7 @@
                     @if($showFieldEnTab('emailpad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
-                        <input wire:model="emailpad" type="email" maxlength="50" class="form-input @error('emailpad') border-red-400 @enderror">
+                        <input wire:model="emailpad" type="text" maxlength="50" class="form-input @error('emailpad') border-red-400 @enderror">
                         @error('emailpad') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     @endif
@@ -418,7 +418,7 @@
                     @if($showFieldEnTab('emailtut'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
-                        <input wire:model="emailtut" type="email" maxlength="50" class="form-input @error('emailtut') border-red-400 @enderror">
+                        <input wire:model="emailtut" type="text" maxlength="50" class="form-input @error('emailtut') border-red-400 @enderror">
                         @error('emailtut') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     @endif
