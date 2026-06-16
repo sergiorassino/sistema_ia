@@ -325,6 +325,92 @@ class MateriasAnioIndex extends Component
         $this->resetValidation();
     }
 
+    public function syncFromMatplan(int $id): void
+    {
+        $key = 'materias-anio:sync-matplan:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 60)) {
+            session()->flash('error', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx = schoolCtx();
+
+        $m = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('id', $id)
+            ->first(['id', 'idMatPlan', 'materia', 'abrev']);
+
+        if (! $m) {
+            abort(404);
+        }
+
+        $idMatPlan = (int) ($m->idMatPlan ?? 0);
+        if ($idMatPlan <= 0) {
+            session()->flash('error', 'La materia no tiene idMatPlan asignado.');
+
+            return;
+        }
+
+        $planesIds = Plan::query()
+            ->where('idNivel', $ctx->idNivel)
+            ->pluck('id');
+
+        $curplanIds = Curplan::query()
+            ->whereIn('idPlan', $planesIds)
+            ->pluck('id')
+            ->map(fn ($v) => (int) $v)
+            ->values()
+            ->all();
+
+        $mp = Matplan::query()
+            ->whereIn('idCurPlan', $curplanIds)
+            ->where('id', $idMatPlan)
+            ->first(['id', 'matPlanMateria', 'abrev']);
+
+        if (! $mp) {
+            session()->flash('error', 'No se encontró la materia modelo (matplan) vinculada.');
+
+            return;
+        }
+
+        $nuevoNombre = trim((string) ($mp->matPlanMateria ?? ''));
+        if ($nuevoNombre === '') {
+            session()->flash('error', 'La materia modelo (matplan) no tiene nombre definido.');
+
+            return;
+        }
+
+        $nuevaAbrev = $mp->abrev !== null && trim((string) $mp->abrev) !== ''
+            ? trim((string) $mp->abrev)
+            : null;
+
+        $nombreActual = trim((string) ($m->materia ?? ''));
+        $abrevActual = trim((string) ($m->abrev ?? '')) !== '' ? trim((string) $m->abrev) : null;
+
+        if ($nombreActual === $nuevoNombre && $abrevActual === $nuevaAbrev) {
+            session()->flash('success', 'La materia ya coincide con matplan.');
+
+            return;
+        }
+
+        try {
+            DB::table('materias')->where('id', $id)->update([
+                'materia' => $nuevoNombre,
+                'abrev' => $nuevaAbrev,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudo actualizar la materia desde matplan.');
+
+            return;
+        }
+
+        session()->flash('success', "Materia actualizada desde matplan: «{$nuevoNombre}»" . ($nuevaAbrev !== null ? " ({$nuevaAbrev})" : '') . '.');
+    }
+
     public function toggleEsInstitucional(int $id): void
     {
         if (! Schema::hasColumn('materias', 'esInstitucional')) {

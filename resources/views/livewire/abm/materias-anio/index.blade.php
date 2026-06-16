@@ -59,7 +59,7 @@
     <div class="se-card overflow-hidden p-2 sm:p-3">
         <div class="w-full overflow-x-auto">
             <div class="flex justify-start">
-                <div class="gf" style="min-width: {{ $tieneEsInstitucional ? '88.75rem' : '82.5rem' }};" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
+                <div class="gf" style="min-width: {{ $tieneEsInstitucional ? '94.75rem' : '88.5rem' }};" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
                 <div class="gf-head">
                     <div class="gf-th w-20">ID</div>
                     <div class="gf-th w-20">Ord</div>
@@ -73,7 +73,7 @@
                     @if ($tieneEsInstitucional)
                         <div class="gf-th w-28" title="Materia extracurricular / proyecto institucional (IPE San José, máx. 2 por curso)">Extrac.</div>
                     @endif
-                    <div class="gf-th-right w-52">Acciones</div>
+                    <div class="gf-th-right w-64">Acciones</div>
                 </div>
 
                 @if ($creating)
@@ -154,7 +154,7 @@
                             </div>
                         @endif
 
-                        <div class="gf-td-actions w-52 whitespace-nowrap">
+                        <div class="gf-td-actions w-64 whitespace-nowrap">
                             <button type="button" wire:click="saveCreate" wire:loading.attr="disabled" class="btn-primary btn-sm">
                                 <span wire:loading.remove wire:target="saveCreate">Guardar</span>
                                 <span wire:loading wire:target="saveCreate">…</span>
@@ -275,7 +275,7 @@
                             </div>
                         @endif
 
-                        <div class="gf-td-actions w-52 whitespace-nowrap">
+                        <div class="gf-td-actions w-64 whitespace-nowrap">
                             @if ($editingId === $m->id)
                                 <button type="button" wire:click="saveRow({{ $m->id }})" wire:loading.attr="disabled" class="btn-primary btn-sm">
                                     <span wire:loading.remove wire:target="saveRow({{ $m->id }})">Guardar</span>
@@ -283,6 +283,14 @@
                                 </button>
                                 <button type="button" wire:click="cancelEdit" class="btn-secondary btn-sm">Cancelar</button>
                             @else
+                                <button type="button"
+                                        wire:click="syncFromMatplan({{ $m->id }})"
+                                        wire:loading.attr="disabled"
+                                        class="btn-secondary btn-sm"
+                                        title="Copiar nombre y abreviatura desde la materia modelo (matplan)">
+                                    <span wire:loading.remove wire:target="syncFromMatplan({{ $m->id }})">Desde matplan</span>
+                                    <span wire:loading wire:target="syncFromMatplan({{ $m->id }})">…</span>
+                                </button>
                                 <button type="button" wire:click="startEdit({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
                                 <button type="button" wire:click="confirmDelete({{ $m->id }})" class="btn-danger btn-sm">Eliminar</button>
                             @endif
