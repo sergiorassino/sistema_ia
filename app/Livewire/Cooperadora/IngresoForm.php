@@ -90,8 +90,8 @@ class IngresoForm extends Component
 
     public function updated($property): void
     {
-        if (preg_match('/^lineas\.(\d+)\.(idRubro|idItem|importeBruto|idLegajo)$/', (string) $property, $matches)) {
-            $this->recalcularLinea((int) $matches[1], true);
+        if (preg_match('/^lineas\.(\d+)\.(idRubro|idItem|idLegajo)$/', (string) $property, $matches)) {
+            $this->recalcularLinea((int) $matches[1], false);
         } elseif (! $this->esOrigenEstudiantes() && preg_match('/^lineas\.(\d+)\.importe$/', (string) $property, $matches)) {
             $this->sincronizarImporteOtrosOrigenes((int) $matches[1]);
         }
@@ -229,7 +229,45 @@ class IngresoForm extends Component
         $this->resetValidation(['pagadorResponsables', 'pagadorVinculo']);
     }
 
-    public function recalcularLinea(int $index, bool $forzarImporte = false): void
+    public function aplicarImporteBruto(int $index, string $valor): void
+    {
+        if (! isset($this->lineas[$index])) {
+            return;
+        }
+
+        $valor = trim(str_replace(',', '.', $valor));
+        if ($valor === '') {
+            $this->lineas[$index]['importeBruto'] = '';
+            $this->recalcularLinea($index, false);
+
+            return;
+        }
+
+        $this->lineas[$index]['importeBruto'] = $valor;
+        $this->recalcularLinea($index, true, false);
+    }
+
+    public function aplicarDescuentoPct(int $index, string $valor): void
+    {
+        if (! isset($this->lineas[$index]) || ! $this->esOrigenEstudiantes()) {
+            return;
+        }
+
+        $valor = trim(str_replace(['%', ','], ['', '.'], $valor));
+        $pct = $valor === '' ? 0.0 : max(0, min(100, (float) $valor));
+
+        $linea = &$this->lineas[$index];
+        $linea['descuentoPct'] = number_format($pct, 2, '.', '');
+
+        $bruto = $this->resolverImporteBrutoLinea($linea, true);
+        if ($bruto <= 0) {
+            $bruto = $this->resolverImporteBrutoLinea($linea, false);
+        }
+
+        $this->aplicarImporteNetoEnLinea($index, $bruto);
+    }
+
+    public function recalcularLinea(int $index, bool $desdeImporteBruto = false, bool $resetDescuento = true): void
     {
         if (! isset($this->lineas[$index])) {
             return;
@@ -252,30 +290,66 @@ class IngresoForm extends Component
             }
         }
 
-        $bruto = 0.0;
-        if ($linea['idItem'] !== '' && $linea['idItem'] !== '0') {
-            $item = CoopItemIngreso::query()->find((int) $linea['idItem']);
-            $bruto = (float) ($item?->precio ?? 0);
-        } elseif ($linea['importeBruto'] !== '') {
-            $bruto = (float) str_replace(',', '.', $linea['importeBruto']);
-        }
+        $bruto = $this->resolverImporteBrutoLinea($linea, $desdeImporteBruto);
+        $bruto = max(0, $bruto);
 
         if ($this->esOrigenEstudiantes()) {
-            $idLegajoLinea = (int) ($linea['idLegajo'] ?? 0);
-            $idRubroLinea = (int) ($linea['idRubro'] ?? 0);
-            $pct = ($idLegajoLinea > 0 && $idRubroLinea > 0)
-                ? DescuentoHermanos::porcentajeParaLinea($idLegajoLinea, $idRubroLinea)
-                : 0.0;
-            $linea['descuentoPct'] = number_format($pct, 2, '.', '');
-            $linea['importeBruto'] = number_format($bruto, 2, '.', '');
-            $linea['importe'] = number_format(DescuentoHermanos::importeConDescuento($bruto, $pct), 2, '.', '');
+            $descuentoPct = null;
+            if ($resetDescuento) {
+                $idLegajoLinea = (int) ($linea['idLegajo'] ?? 0);
+                $idRubroLinea = (int) ($linea['idRubro'] ?? 0);
+                $descuentoPct = ($idLegajoLinea > 0 && $idRubroLinea > 0)
+                    ? DescuentoHermanos::porcentajeParaLinea($idLegajoLinea, $idRubroLinea)
+                    : 0.0;
+            }
+            $this->aplicarImporteNetoEnLinea($index, $bruto, $descuentoPct);
         } else {
             $linea['descuentoPct'] = '0';
             $linea['importeBruto'] = number_format($bruto, 2, '.', '');
-            if ($forzarImporte || $linea['importe'] === '') {
-                $linea['importe'] = number_format($bruto, 2, '.', '');
-            }
+            $linea['importe'] = number_format($bruto, 2, '.', '');
         }
+    }
+
+    private function aplicarImporteNetoEnLinea(int $index, float $bruto, ?float $descuentoPct = null): void
+    {
+        if (! isset($this->lineas[$index])) {
+            return;
+        }
+
+        $linea = &$this->lineas[$index];
+        $bruto = max(0, $bruto);
+        $linea['importeBruto'] = number_format($bruto, 2, '.', '');
+
+        if ($descuentoPct !== null) {
+            $descuentoPct = max(0, min(100, $descuentoPct));
+            $linea['descuentoPct'] = number_format($descuentoPct, 2, '.', '');
+        }
+
+        $pct = (float) str_replace(',', '.', (string) ($linea['descuentoPct'] ?? '0'));
+        $pct = max(0, min(100, $pct));
+        $linea['importe'] = number_format(DescuentoHermanos::importeConDescuento($bruto, $pct), 2, '.', '');
+    }
+
+    /**
+     * @param  array{idLegajo: string, idRubro: string, idItem: string, importeBruto: string, descuentoPct: string, importe: string, concepto: string}  $linea
+     */
+    private function resolverImporteBrutoLinea(array $linea, bool $desdeImporteBruto): float
+    {
+        if ($desdeImporteBruto && $linea['importeBruto'] !== '') {
+            return (float) str_replace(',', '.', $linea['importeBruto']);
+        }
+
+        if ($linea['idItem'] !== '' && $linea['idItem'] !== '0') {
+            $item = CoopItemIngreso::query()->find((int) $linea['idItem']);
+
+            return (float) ($item?->precio ?? 0);
+        }
+
+        if ($linea['importeBruto'] !== '') {
+            return (float) str_replace(',', '.', $linea['importeBruto']);
+        }
+
+        return 0.0;
     }
 
     private function sincronizarImporteOtrosOrigenes(int $index): void

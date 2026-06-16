@@ -64,7 +64,13 @@
             </div>
         @endif
 
-        <form wire:submit="guardar" class="space-y-5 p-5 sm:p-6">
+        <form wire:submit="guardar"
+              class="space-y-5 p-5 sm:p-6"
+              @keydown.enter="
+                  if ($event.target.tagName === 'TEXTAREA') return;
+                  $event.preventDefault();
+                  if ($event.target.matches('input, select')) $event.target.blur();
+              ">
 
             @if (! $esOrigenEstudiantes)
                 <div class="rounded-2xl border border-accent-200 bg-accent-50/50 p-4 sm:p-5 space-y-4">
@@ -161,21 +167,33 @@
                                             </select>
                                         </div>
                                         <div class="gf-td gf-td-bruto">
-                                            <input type="number"
-                                                   step="0.01"
-                                                   min="0"
-                                                   wire:model.live="lineas.{{ $index }}.importeBruto"
-                                                   class="gf-inline text-right tabular-nums">
+                                            <input type="text"
+                                                   wire:key="linea-bruto-{{ $index }}-{{ $linea['importeBruto'] }}"
+                                                   inputmode="decimal"
+                                                   value="{{ $linea['importeBruto'] }}"
+                                                   wire:blur="aplicarImporteBruto({{ $index }}, $event.target.value)"
+                                                   class="gf-inline gf-inline-num text-right tabular-nums"
+                                                   placeholder="0,00"
+                                                   title="Importe bruto (editable)">
                                         </div>
                                         <div class="gf-td gf-td-dto">
-                                            <span class="text-xs tabular-nums text-neutral-600">{{ $linea['descuentoPct'] }}%</span>
+                                            <input type="text"
+                                                   wire:key="linea-dto-{{ $index }}-{{ $linea['descuentoPct'] }}"
+                                                   inputmode="decimal"
+                                                   value="{{ $linea['descuentoPct'] }}"
+                                                   wire:blur="aplicarDescuentoPct({{ $index }}, $event.target.value)"
+                                                   class="gf-inline gf-inline-num text-center tabular-nums"
+                                                   placeholder="0"
+                                                   title="Descuento % (editable)">
                                         </div>
                                         <div class="gf-td gf-td-cobrar">
-                                            <input type="number"
-                                                   step="0.01"
-                                                   min="0.01"
-                                                   wire:model="lineas.{{ $index }}.importe"
-                                                   class="gf-inline text-right tabular-nums font-semibold text-primary-700 @error('lineas.'.$index.'.importe') ring-2 ring-red-400 @enderror">
+                                            <input type="text"
+                                                   wire:key="linea-cobrar-{{ $index }}-{{ $linea['importe'] }}"
+                                                   value="{{ $linea['importe'] }}"
+                                                   readonly
+                                                   tabindex="-1"
+                                                   class="gf-inline gf-inline-num gf-inline-readonly text-right tabular-nums font-semibold text-primary-700 @error('lineas.'.$index.'.importe') ring-2 ring-red-400 @enderror"
+                                                   title="Importe a cobrar (se recalcula al modificar bruto o descuento)">
                                         </div>
                                         <div class="gf-td gf-td-concepto">
                                             <input type="text"

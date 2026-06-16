@@ -927,16 +927,30 @@
     }
     .gf.gf-coop-ingreso-lineas .gf-th.gf-th-bruto,
     .gf.gf-coop-ingreso-lineas .gf-td.gf-td-bruto {
-        flex: 0 0 4.5rem;
+        flex: 0 0 7rem;
     }
     .gf.gf-coop-ingreso-lineas .gf-th.gf-th-dto,
     .gf.gf-coop-ingreso-lineas .gf-td.gf-td-dto {
-        flex: 0 0 2.75rem;
+        flex: 0 0 4.75rem;
         text-align: center;
     }
     .gf.gf-coop-ingreso-lineas .gf-th.gf-th-cobrar,
     .gf.gf-coop-ingreso-lineas .gf-td.gf-td-cobrar {
-        flex: 0 0 5.5rem;
+        flex: 0 0 7rem;
+    }
+    .gf.gf-coop-ingreso-lineas .gf-inline-num {
+        font-size: 0.875rem;
+        line-height: 1.35;
+        min-height: 1.75rem;
+        padding: 0.125rem 0.25rem;
+    }
+    .gf.gf-coop-ingreso-lineas .gf-inline-readonly {
+        cursor: default;
+        background: rgba(244, 248, 249, 0.9);
+    }
+    .gf.gf-coop-ingreso-lineas .gf-inline-readonly:focus {
+        box-shadow: none;
+        background: rgba(244, 248, 249, 0.9);
     }
     .gf.gf-coop-ingreso-lineas .gf-th.gf-th-concepto,
     .gf.gf-coop-ingreso-lineas .gf-td.gf-td-concepto {

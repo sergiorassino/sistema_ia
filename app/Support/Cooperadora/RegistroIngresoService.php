@@ -121,13 +121,17 @@ final class RegistroIngresoService
             : (int) ($comun['id_legajo'] ?? 0);
         $idLegajo = $idLegajo > 0 ? $idLegajo : null;
 
-        $descuentoPct = ($tipo === 'origen_estudiantes' && $idLegajo !== null)
-            ? DescuentoHermanos::porcentajeParaLinea($idLegajo, $rubro->id)
-            : 0.0;
-        $descuentoPct = round($descuentoPct, 2);
+        $descuentoPct = isset($datos['descuento_pct'])
+            ? round((float) $datos['descuento_pct'], 2)
+            : (($tipo === 'origen_estudiantes' && $idLegajo !== null)
+                ? DescuentoHermanos::porcentajeParaLinea($idLegajo, $rubro->id)
+                : 0.0);
+        $descuentoPct = max(0, min(100, round($descuentoPct, 2)));
 
         if ($tipo === 'origen_estudiantes') {
-            $importe = DescuentoHermanos::importeConDescuento($importeBruto, $descuentoPct);
+            $importe = isset($datos['importe'])
+                ? round((float) $datos['importe'], 2)
+                : DescuentoHermanos::importeConDescuento($importeBruto, $descuentoPct);
         } else {
             $importe = isset($datos['importe'])
                 ? round((float) $datos['importe'], 2)
