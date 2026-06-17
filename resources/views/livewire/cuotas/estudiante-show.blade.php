@@ -26,7 +26,7 @@
                     <p class="mt-1 text-sm text-white/85">
                         {{ $encabezado['curso'] }} · Ciclo {{ $encabezado['terlecAno'] }}
                         @if ($mostrarHistorial)
-                            <span class="text-white/70">— historial de cuotas abonadas</span>
+                            <span class="text-white/70">— historial completo</span>
                         @endif
                     </p>
                     @if ($encabezado['becaResumen'] !== '')
@@ -69,9 +69,9 @@
         @if ($cuotas->isEmpty())
             <div class="py-14 text-center text-sm text-neutral-600">
                 @if ($mostrarHistorial)
-                    No hay cuotas abonadas registradas para este estudiante en ningún ciclo lectivo.
+                    No hay cuotas registradas para este estudiante en ningún ciclo lectivo.
                 @else
-                    No hay cuotas registradas para este estudiante en el ciclo lectivo {{ $encabezado['terlecAno'] ?? schoolCtx()->terlecAno() }}.
+                    No hay cuotas del ciclo {{ $encabezado['terlecAno'] ?? schoolCtx()->terlecAno() }} ni deudas de años anteriores para este estudiante.
                 @endif
             </div>
         @else
@@ -200,6 +200,57 @@
                                 @endif
                             </div>
                         @endforeach
+
+                        <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-estudiante-totales" wire:key="cg-totales-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                            @if (! $mostrarHistorial)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
+                            <div class="gf-td w-12" aria-hidden="true"></div>
+                            <div class="gf-td w-14" aria-hidden="true"></div>
+                            <div class="gf-td w-24" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-cuota gf-td-total-label justify-end">Total neto</div>
+                            <div class="gf-td w-14" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[5.25rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-importe gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">
+                                {{ CuotasFormato::formatearImporte($totalesAdeudados['neto']) }}
+                            </div>
+                            @if (! $mostrarHistorial)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
+                        </div>
+                        <div class="gf-row gf-row--totales gf-cuotas-estudiante-totales" wire:key="cg-totales-intereses-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                            @if (! $mostrarHistorial)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
+                            <div class="gf-td w-12" aria-hidden="true"></div>
+                            <div class="gf-td w-14" aria-hidden="true"></div>
+                            <div class="gf-td w-24" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-cuota gf-td-total-label justify-end">Total con intereses</div>
+                            <div class="gf-td w-14" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[5.25rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-th-right w-[4.75rem]" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-importe gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">
+                                {{ CuotasFormato::formatearImporte($totalesAdeudados['conIntereses']) }}
+                            </div>
+                            @if (! $mostrarHistorial)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
+                        </div>
                 </div>
             </div>
         @endif

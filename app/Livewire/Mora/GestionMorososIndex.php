@@ -3,8 +3,8 @@
 namespace App\Livewire\Mora;
 
 use App\Support\Mora\GestionMorososFiltros;
+use App\Support\Mora\GestionMorososPdfPedido;
 use App\Support\Mora\PermisosMora;
-use App\Support\Security\OpaqueRouteToken;
 use Carbon\Carbon;
 use Livewire\Component;
 
@@ -89,28 +89,28 @@ class GestionMorososIndex extends Component
         return GestionMorososFiltros::puedeGenerarPdf($this->filtrosCrudos());
     }
 
-    public function getPdfUrlProperty(): string
+    public function abrirPdfListado(): void
     {
-        return $this->urlPdfMorosos('mora.gestion-morosos.pdf', OpaqueRouteToken::forListadoMorosos(...));
+        $this->abrirPdf('mora.gestion-morosos.pdf', GestionMorososPdfPedido::TIPO_LISTADO);
     }
 
-    public function getPdfNotificacionUrlProperty(): string
+    public function abrirPdfNotificacion(): void
     {
-        return $this->urlPdfMorosos('mora.gestion-morosos.notificacion', OpaqueRouteToken::forNotificacionDeudaMorosos(...));
+        $this->abrirPdf('mora.gestion-morosos.notificacion', GestionMorososPdfPedido::TIPO_NOTIFICACION);
     }
 
-    /**
-     * @param  callable(array<string, mixed>): string  $crearRef
-     */
-    private function urlPdfMorosos(string $ruta, callable $crearRef): string
+    private function abrirPdf(string $ruta, string $tipo): void
     {
         if (! $this->puedeGenerarPdf()) {
-            return '#';
+            $this->dispatch('se-swal-error', mensaje: 'Revise los filtros activos antes de generar el PDF.');
+
+            return;
         }
 
         $filtros = GestionMorososFiltros::normalizarDesdeLivewire($this->filtrosCrudos());
+        $ref = GestionMorososPdfPedido::guardar($filtros, $tipo);
 
-        return route($ruta, ['ref' => $crearRef($filtros)]);
+        $this->dispatch('mora-gestion-morosos-abrir-pdf', url: se_route_url($ruta, ['ref' => $ref]));
     }
 
     /**
@@ -158,8 +158,6 @@ class GestionMorososIndex extends Component
             'terlecs' => GestionMorososFiltros::terlecsParaSelector(),
             'etiquetaCurso' => fn ($curso) => mb_strtoupper(trim((string) ($curso->cursec ?? $curso->nombreParaListado() ?? ''))),
             'puedeGenerarPdf' => $this->puedeGenerarPdf(),
-            'pdfUrl' => $this->pdfUrl,
-            'pdfNotificacionUrl' => $this->pdfNotificacionUrl,
             'anoContexto' => schoolCtx()->terlecAno(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Morosos']);
     }

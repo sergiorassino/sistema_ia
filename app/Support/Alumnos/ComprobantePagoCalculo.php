@@ -98,8 +98,11 @@ final class ComprobantePagoCalculo
             $diasRecargo4 = self::diasEntre($nuevoVenc, $venc1);
 
             if ($formula['signo4'] === '+' && $formula['porcan4'] === '%') {
-                $interes4 = ($faltapa * $formula['valor4']) / 100;
-                $nuevoImporte = $faltapa + ($interes4 * $diasRecargo4);
+                $nuevoImporte = $faltapa + self::interesRecargoPorcent(
+                    $faltapa,
+                    (float) $formula['valor4'],
+                    $diasRecargo4,
+                );
             } else {
                 $nuevoImporte = $faltapa + $formula['valor4'];
             }
@@ -308,7 +311,7 @@ final class ComprobantePagoCalculo
             $identConcepto = '1';
             $dias = self::diasEntre($venc2, $venc1);
             $interes = $formula['porcan2'] === '%'
-                ? (($faltapa * $formula['valor2']) / 100) * $dias
+                ? self::interesRecargoPorcent($faltapa, (float) $formula['valor2'], $dias)
                 : $formula['valor2'];
 
             return [$faltapa + $interes, $identConcepto];
@@ -337,7 +340,7 @@ final class ComprobantePagoCalculo
             $identConcepto = '1';
             $dias = self::diasEntre($venc3, $venc1);
             $interes = $formula['porcan3'] === '%'
-                ? (($faltapa * $formula['valor3']) / 100) * $dias
+                ? self::interesRecargoPorcent($faltapa, (float) $formula['valor3'], $dias)
                 : $formula['valor3'];
 
             return [$faltapa + $interes, $identConcepto];
@@ -437,6 +440,16 @@ final class ComprobantePagoCalculo
         }
 
         return max(0, $fechaMenor->diffInDays($fechaMayor, false));
+    }
+
+    /**
+     * Recargo porcentual sobre saldo; en modo diario se multiplica por días de mora.
+     */
+    private static function interesRecargoPorcent(float $faltapa, float $valorPorcent, int $dias): float
+    {
+        $base = ($faltapa * $valorPorcent) / 100;
+
+        return tenantCuotasInteresMoraEsDiario() ? $base * $dias : $base;
     }
 
     private static function carbon(mixed $fecha): ?CarbonInterface

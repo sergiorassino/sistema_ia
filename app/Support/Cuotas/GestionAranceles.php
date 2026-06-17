@@ -10,6 +10,7 @@ use App\Models\Matricula;
 use App\Models\Terlec;
 use App\Support\MatriculaNivelEstilo;
 use App\Support\SchoolAlcancePedagogico;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -26,7 +27,7 @@ final class GestionAranceles
     }
 
     /**
-     * Cuotas del estudiante en el ciclo lectivo activo (adeudadas y pagadas).
+     * Vista normal: todas las cuotas del ciclo activo y las impagas de años anteriores.
      *
      * @return Collection<int, CuotaGenerada>
      */
@@ -34,26 +35,68 @@ final class GestionAranceles
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
 
-        return self::consultaCuotasEstudiante($idLegajo)
-            ->where('idTerlec', $idTerlec)
-            ->orderBy('venc1')
-            ->orderBy('id')
-            ->get();
+        return self::aplicarOrdenCuotasPorAnoYCuota(
+            self::aplicarFiltroCuotasVistaNormal(
+                self::consultaCuotasEstudiante($idLegajo),
+                $idTerlec,
+            ),
+        )->get();
     }
 
     /**
-     * Cuotas abonadas del estudiante en cualquier ciclo lectivo (historial).
+     * Historial completo: todas las cuotas del estudiante en cualquier ciclo lectivo.
      *
      * @return Collection<int, CuotaGenerada>
      */
-    public static function cuotasAbonadasHistorial(int $idLegajo): Collection
+    public static function cuotasHistorial(int $idLegajo): Collection
     {
-        return self::consultaCuotasEstudiante($idLegajo)
-            ->where('faltapa', '<=', 0)
-            ->orderByDesc('idTerlec')
-            ->orderByDesc('venc1')
-            ->orderByDesc('id')
-            ->get();
+        return self::aplicarOrdenCuotasPorAnoYCuota(
+            self::consultaCuotasEstudiante($idLegajo),
+        )->get();
+    }
+
+    /**
+     * Ciclo activo completo + deudas de ciclos anteriores (faltapa > 0).
+     *
+     * @param  Builder<CuotaGenerada>  $query
+     * @return Builder<CuotaGenerada>
+     */
+    private static function aplicarFiltroCuotasVistaNormal(Builder $query, int $idTerlec): Builder
+    {
+        $tabla = self::tablaCuotasGeneradas();
+
+        return $query->where(function (Builder $q) use ($idTerlec, $tabla): void {
+            $q->where("{$tabla}.idTerlec", $idTerlec)
+                ->orWhere("{$tabla}.faltapa", '>', 0);
+        });
+    }
+
+    private static function tablaCuotasGeneradas(): string
+    {
+        return (new CuotaGenerada)->getTable();
+    }
+
+    /**
+     * Año lectivo → orden de plantilla (reserva/matrícula primero) → mes → vencimiento.
+     *
+     * @param  Builder<CuotaGenerada>  $query
+     * @return Builder<CuotaGenerada>
+     */
+    private static function aplicarOrdenCuotasPorAnoYCuota(Builder $query): Builder
+    {
+        $tabla = self::tablaCuotasGeneradas();
+        $reserva = GeneracionCuotaEstudianteService::TIPO_RESERVA;
+        $matricula = GeneracionCuotaEstudianteService::TIPO_MATRICULA;
+
+        return $query
+            ->leftJoin('cuotas', 'cuotas.id', '=', "{$tabla}.idCuotas")
+            ->orderBy("{$tabla}.idTerlec")
+            ->orderByRaw('COALESCE(cuotas.orden, 9999)')
+            ->orderByRaw("CASE WHEN {$tabla}.idCuotastipo = {$reserva} THEN 0 WHEN {$tabla}.idCuotastipo = {$matricula} THEN 1 ELSE 2 END")
+            ->orderBy("{$tabla}.idCuotasmeses")
+            ->orderBy("{$tabla}.venc1")
+            ->orderBy("{$tabla}.id")
+            ->select("{$tabla}.*");
     }
 
     /**
@@ -61,6 +104,8 @@ final class GestionAranceles
      */
     private static function consultaCuotasEstudiante(int $idLegajo): Builder
     {
+        $tabla = self::tablaCuotasGeneradas();
+
         return CuotaGenerada::query()
             ->with([
                 'legajo:id,apellido,nombre,dni',
@@ -69,26 +114,29 @@ final class GestionAranceles
                 'curso.curplan:id,curPlanCurso',
                 'curso.turnoClase:id,nombre',
                 'curso.nivel:id,nivel',
-                'cuota:id,nombre',
+                'cuota:id,nombre,orden,idCuotastipo',
             ])
-            ->where('idLegajos', $idLegajo);
+            ->where("{$tabla}.idLegajos", $idLegajo);
     }
 
     public static function cuotaParaGestion(int $idCuotaGenerada, int $idLegajo): ?CuotaGenerada
     {
-        return CuotaGenerada::query()
-            ->with([
-                'legajo:id,apellido,nombre,dni',
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
-                'curso.curplan:id,curPlanCurso',
-                'curso.turnoClase:id,nombre',
-                'curso.nivel:id,nivel',
-                'cuota:id,nombre',
-            ])
-            ->whereKey($idCuotaGenerada)
-            ->where('idLegajos', $idLegajo)
-            ->where('idTerlec', (int) schoolCtx()->idTerlec)
-            ->first();
+        $idTerlec = (int) schoolCtx()->idTerlec;
+
+        return self::aplicarFiltroCuotasVistaNormal(
+            CuotaGenerada::query()
+                ->with([
+                    'legajo:id,apellido,nombre,dni',
+                    'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                    'curso.curplan:id,curPlanCurso',
+                    'curso.turnoClase:id,nombre',
+                    'curso.nivel:id,nivel',
+                    'cuota:id,nombre',
+                ])
+                ->whereKey($idCuotaGenerada)
+                ->where('idLegajos', $idLegajo),
+            $idTerlec,
+        )->first();
     }
 
     /**
@@ -192,6 +240,64 @@ final class GestionAranceles
     public static function filaPagada(CuotaGenerada $registro): bool
     {
         return (float) ($registro->faltapa ?? 0) <= 0;
+    }
+
+    /**
+     * Totales de saldo neto (faltapa) y a pagar con interés/bonificación al día de hoy.
+     *
+     * @param  iterable<CuotaGenerada>  $registros
+     * @return array{neto: float, conIntereses: float}
+     */
+    public static function totalizarSaldosAdeudados(iterable $registros): array
+    {
+        $adeudadas = collect($registros)->filter(
+            fn (CuotaGenerada $registro) => (float) ($registro->faltapa ?? 0) > 0
+                && (float) ($registro->importe ?? 0) > 0,
+        );
+
+        if ($adeudadas->isEmpty()) {
+            return ['neto' => 0.0, 'conIntereses' => 0.0];
+        }
+
+        ImputacionPagoCalculo::precargarFormulas($adeudadas);
+
+        $neto = 0.0;
+        $conIntereses = 0.0;
+        $hoy = Carbon::today();
+
+        foreach ($adeudadas as $registro) {
+            $saldo = (float) ($registro->faltapa ?? 0);
+            $neto += $saldo;
+
+            $calc = ImputacionPagoCalculo::calcular(
+                $registro,
+                $saldo,
+                $hoy,
+                null,
+            );
+            $conIntereses += (float) $calc['aPagar'];
+        }
+
+        ImputacionPagoCalculo::limpiarCacheFormulas();
+
+        return [
+            'neto' => round($neto, 2),
+            'conIntereses' => round($conIntereses, 2),
+        ];
+    }
+
+    /**
+     * Total a pagar hoy por el estudiante (saldo + interés/bonificación), todos los ciclos y conceptos.
+     */
+    public static function totalAdeudadoEstudiante(int $idLegajo): float
+    {
+        $registros = CuotaGenerada::query()
+            ->where('idLegajos', $idLegajo)
+            ->where('faltapa', '>', 0)
+            ->where('importe', '>', 0)
+            ->get();
+
+        return self::totalizarSaldosAdeudados($registros)['conIntereses'];
     }
 
     public static function filaAvisoPago(CuotaGenerada $registro): bool

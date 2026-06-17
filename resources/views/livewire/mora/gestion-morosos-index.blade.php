@@ -1,4 +1,6 @@
-<div class="se-page max-w-5xl mx-auto">
+<div class="se-page max-w-5xl mx-auto"
+     x-data
+     x-on:mora-gestion-morosos-abrir-pdf.window="window.open($event.detail.url, '_blank')">
     <section class="se-hero mb-4">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-1">
@@ -14,16 +16,18 @@
     {{-- Barra de acciones --}}
     <div class="se-toolbar se-toolbar-pocos-campos mb-4 flex-wrap gap-2">
         @if ($puedeGenerarPdf)
-            <a href="{{ $pdfUrl }}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+            <button type="button"
+                    wire:click="abrirPdfListado"
+                    wire:loading.attr="disabled"
+                    wire:target="abrirPdfListado"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-60">
                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
-                Listado de Deuda
-            </a>
+                <span wire:loading.remove wire:target="abrirPdfListado">Listado de Deuda</span>
+                <span wire:loading wire:target="abrirPdfListado">Generando…</span>
+            </button>
         @else
             <button type="button"
                     disabled
@@ -38,16 +42,18 @@
         @endif
 
         @if ($puedeGenerarPdf)
-            <a href="{{ $pdfNotificacionUrl }}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+            <button type="button"
+                    wire:click="abrirPdfNotificacion"
+                    wire:loading.attr="disabled"
+                    wire:target="abrirPdfNotificacion"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-60">
                 <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Imprimir Notificación de Deuda
-            </a>
+                <span wire:loading.remove wire:target="abrirPdfNotificacion">Imprimir Notificación de Deuda</span>
+                <span wire:loading wire:target="abrirPdfNotificacion">Generando…</span>
+            </button>
         @else
             <button type="button"
                     disabled
@@ -254,7 +260,7 @@
             </div>
         </div>
 
-        @if ($pdfUrl === '#')
+        @if (! $puedeGenerarPdf)
             <div class="border-t border-accent-200 px-4 py-4 sm:px-5">
                 <p class="text-sm text-neutral-600">
                     Revise los filtros activos: debe completar los campos de cada casilla marcada y las fechas «hasta» ≥ «desde».

@@ -68,6 +68,8 @@ final class ListadoMorososTcpdf extends TCPDF
 
     private float $yActual = 0.0;
 
+    private ?string $logoArchivo = null;
+
     /**
      * @param  array<string, mixed>  $datos
      */
@@ -75,6 +77,7 @@ final class ListadoMorososTcpdf extends TCPDF
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->datos = $datos;
+        $this->logoArchivo = $this->resolverLogoArchivo((array) ($datos['pdfHeader'] ?? []));
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Listado de deuda');
@@ -164,9 +167,8 @@ final class ListadoMorososTcpdf extends TCPDF
 
         $this->Rect(self::MARGEN_IZQ, $y, self::ANCHO_BLOQUE, self::ALTO_ENC_INST);
 
-        $logo = $this->resolverLogoArchivo($header);
-        if ($logo !== null) {
-            $this->Image($logo, self::MARGEN_IZQ + 4, $y + 1, 16, 16, '', '', '', false, 300);
+        if ($this->logoArchivo !== null) {
+            $this->Image($this->logoArchivo, self::MARGEN_IZQ + 4, $y + 1, 16, 16, '', '', '', false, 300);
         }
 
         $this->SetXY(self::MARGEN_IZQ, $y + 2);

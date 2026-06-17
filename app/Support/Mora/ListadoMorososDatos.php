@@ -2,10 +2,8 @@
 
 namespace App\Support\Mora;
 
-use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\CuotasFormato;
-use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\ImputacionPagoCalculo;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,108 +32,100 @@ final class ListadoMorososDatos
                 'curso.nivel:id,abrev',
                 'beca:id,nombreBeca',
             ])
-            ->get()
-            ->sortBy([
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->familia?->apellido ?? ''))),
-                fn (CuotaGenerada $r) => (int) ($r->legajo?->familia?->id ?? 0),
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->apellido ?? ''))),
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->nombre ?? ''))),
-                fn (CuotaGenerada $r) => (int) ($r->cuota?->orden ?? 9999),
-                fn (CuotaGenerada $r) => (int) $r->id,
-            ])
-            ->values();
+            ->get();
 
         if ($registros->isEmpty()) {
             return null;
         }
 
-        /** @var Collection<int, Collection<int, CuotaGenerada>> $porFamilia */
-        $porFamilia = $registros->groupBy(fn (CuotaGenerada $r) => (int) ($r->legajo?->idFamilias ?? 0));
+        ImputacionPagoCalculo::precargarFormulas($registros);
 
-        $secciones = [];
+        try {
+            $porGrupo = GestionMorososAgrupacion::porFamiliaOEstudiante($registros)
+                ->sortBy(fn (Collection $items) => GestionMorososAgrupacion::claveOrden($items->first()));
 
-        foreach ($porFamilia as $idFamilia => $items) {
-            if ($idFamilia <= 0 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
-                continue;
-            }
+            $secciones = [];
 
-            $familia = $items->first()?->legajo?->familia;
-            $apellido = trim((string) ($familia?->apellido ?? ''));
-            $responsable = trim((string) ($familia?->responsable ?? ''));
-            $tituloFamilia = mb_strtoupper(trim(
-                'Familia / Responsable: '.$apellido
-                .($apellido !== '' && $responsable !== '' ? ' - ' : '')
-                .$responsable,
-            ));
-
-            $filas = [];
-            $totImporte = 0.0;
-            $totBonif = 0.0;
-            $totInter = 0.0;
-            $totPagado = 0.0;
-            $totSaldo = 0.0;
-            $totIntereses = 0.0;
-            $totAPagar = 0.0;
-
-            foreach ($items as $registro) {
-                $saldo = round((float) ($registro->faltapa ?? 0), 2);
-                $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fechaCalculo, null);
-
-                $importe = round((float) ($registro->importe ?? 0), 2);
-                $bonif = round((float) ($registro->bonificacion ?? 0), 2);
-                $inter = round((float) ($registro->interes ?? 0), 2);
-                $pagado = round((float) ($registro->pagado ?? 0), 2);
-                $intereses = round((float) $calc['interes'], 2);
-                $aPagar = round((float) $calc['aPagar'], 2);
-
-                $totImporte += $importe;
-                $totBonif += $bonif;
-                $totInter += $inter;
-                $totPagado += $pagado;
-                $totSaldo += $saldo;
-                $totIntereses += $intereses;
-                $totAPagar += $aPagar;
-
-                $legajo = $registro->legajo;
-                $curso = $registro->curso;
-                $becaEtiqueta = GestionAranceles::etiquetaBeca($registro);
-                if ($becaEtiqueta === '') {
-                    $becaEtiqueta = 'C/E';
+            foreach ($porGrupo as $clave => $items) {
+                if (! GestionMorososAgrupacion::claveEsValida($clave)) {
+                    continue;
                 }
 
-                $filas[] = [
-                    'estudiante' => mb_strtoupper(trim(
-                        trim((string) ($legajo?->apellido ?? '')).' '.trim((string) ($legajo?->nombre ?? '')),
-                    )),
-                    'curso' => mb_strtoupper(trim((string) ($curso?->cursec ?? $curso?->nombreParaListado() ?? ''))),
-                    'cuota' => mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? ''))),
-                    'ano' => (string) ($registro->terlec?->ano ?? ''),
-                    'beca' => mb_strtoupper($becaEtiqueta),
-                    'venc1' => CuotasFormato::formatearFecha($registro->venc1),
-                    'importe' => CuotasFormato::formatearImporte($importe),
-                    'bonificacion' => CuotasFormato::formatearImporte($bonif),
-                    'interes' => CuotasFormato::formatearImporte($inter),
-                    'pagado' => CuotasFormato::formatearImporte($pagado),
-                    'saldo' => CuotasFormato::formatearImporte($saldo),
-                    'intereses' => CuotasFormato::formatearImporte($intereses),
-                    'aPagar' => CuotasFormato::formatearImporte($aPagar),
+                $items = $items->sortBy([
+                    fn (CuotaGenerada $r) => (int) ($r->cuota?->orden ?? 9999),
+                    fn (CuotaGenerada $r) => (int) $r->id,
+                ])->values();
+
+                $tituloFamilia = GestionMorososAgrupacion::tituloSeccion($items);
+
+                $filas = [];
+                $totImporte = 0.0;
+                $totBonif = 0.0;
+                $totInter = 0.0;
+                $totPagado = 0.0;
+                $totSaldo = 0.0;
+                $totIntereses = 0.0;
+                $totAPagar = 0.0;
+
+                foreach ($items as $registro) {
+                    $saldo = round((float) ($registro->faltapa ?? 0), 2);
+                    $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fechaCalculo, null);
+
+                    $importe = round((float) ($registro->importe ?? 0), 2);
+                    $bonif = round((float) ($registro->bonificacion ?? 0), 2);
+                    $inter = round((float) ($registro->interes ?? 0), 2);
+                    $pagado = round((float) ($registro->pagado ?? 0), 2);
+                    $intereses = round((float) $calc['interes'], 2);
+                    $aPagar = round((float) $calc['aPagar'], 2);
+
+                    $totImporte += $importe;
+                    $totBonif += $bonif;
+                    $totInter += $inter;
+                    $totPagado += $pagado;
+                    $totSaldo += $saldo;
+                    $totIntereses += $intereses;
+                    $totAPagar += $aPagar;
+
+                    $legajo = $registro->legajo;
+                    $curso = $registro->curso;
+                    $becaEtiqueta = trim((string) ($registro->beca?->nombreBeca ?? ''));
+                    if ($becaEtiqueta === '') {
+                        $becaEtiqueta = (int) ($registro->idCuotasbecas ?? 0) === 1 ? 'C/E' : '';
+                    }
+
+                    $filas[] = [
+                        'estudiante' => mb_strtoupper(trim(
+                            trim((string) ($legajo?->apellido ?? '')).' '.trim((string) ($legajo?->nombre ?? '')),
+                        )),
+                        'curso' => mb_strtoupper(trim((string) ($curso?->cursec ?? $curso?->nombreParaListado() ?? ''))),
+                        'cuota' => mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? ''))),
+                        'ano' => (string) ($registro->terlec?->ano ?? ''),
+                        'beca' => mb_strtoupper($becaEtiqueta),
+                        'venc1' => CuotasFormato::formatearFecha($registro->venc1),
+                        'importe' => CuotasFormato::formatearImporte($importe),
+                        'bonificacion' => CuotasFormato::formatearImporte($bonif),
+                        'interes' => CuotasFormato::formatearImporte($inter),
+                        'pagado' => CuotasFormato::formatearImporte($pagado),
+                        'saldo' => CuotasFormato::formatearImporte($saldo),
+                        'intereses' => CuotasFormato::formatearImporte($intereses),
+                        'aPagar' => CuotasFormato::formatearImporte($aPagar),
+                    ];
+                }
+
+                $secciones[] = [
+                    'tituloFamilia' => $tituloFamilia,
+                    'filas' => $filas,
+                    'totales' => [
+                        'importe' => CuotasFormato::formatearImporte($totImporte),
+                        'bonificacion' => CuotasFormato::formatearImporte($totBonif),
+                        'interes' => CuotasFormato::formatearImporte($totInter),
+                        'pagado' => CuotasFormato::formatearImporte($totPagado),
+                        'saldo' => CuotasFormato::formatearImporte($totSaldo),
+                        'intereses' => CuotasFormato::formatearImporte($totIntereses),
+                        'aPagar' => CuotasFormato::formatearImporte($totAPagar),
+                    ],
                 ];
             }
-
-            $secciones[] = [
-                'tituloFamilia' => $tituloFamilia,
-                'filas' => $filas,
-                'totales' => [
-                    'importe' => CuotasFormato::formatearImporte($totImporte),
-                    'bonificacion' => CuotasFormato::formatearImporte($totBonif),
-                    'interes' => CuotasFormato::formatearImporte($totInter),
-                    'pagado' => CuotasFormato::formatearImporte($totPagado),
-                    'saldo' => CuotasFormato::formatearImporte($totSaldo),
-                    'intereses' => CuotasFormato::formatearImporte($totIntereses),
-                    'aPagar' => CuotasFormato::formatearImporte($totAPagar),
-                ],
-            ];
-        }
 
         if ($secciones === []) {
             return null;
@@ -147,6 +137,9 @@ final class ListadoMorososDatos
             'fechaInforme' => Carbon::now()->format('d/m/Y'),
             'secciones' => $secciones,
         ];
+        } finally {
+            ImputacionPagoCalculo::limpiarCacheFormulas();
+        }
     }
 
     /**

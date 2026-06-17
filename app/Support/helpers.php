@@ -504,6 +504,29 @@ if (! function_exists('tenantCuotasFormulasInicialesPlantilla')) {
     }
 }
 
+if (! function_exists('tenantCuotasInteresMoraEsDiario')) {
+    /**
+     * Si los % de recargo en mora (tramos 2–4) se interpretan como tasa diaria.
+     * Si es false, el % configurado es el total del tramo (`interes_mora_modo` = total).
+     */
+    function tenantCuotasInteresMoraEsDiario(): bool
+    {
+        return tenantCuotasInteresMoraModo() === 'diario';
+    }
+}
+
+if (! function_exists('tenantCuotasInteresMoraModo')) {
+    /**
+     * Modo de interpretación del % de mora: `diario` (default) o `total`.
+     */
+    function tenantCuotasInteresMoraModo(): string
+    {
+        $modo = (string) config('tenant.cuotas.interes_mora_modo', 'diario');
+
+        return in_array($modo, ['diario', 'total'], true) ? $modo : 'diario';
+    }
+}
+
 if (! function_exists('tenantLoginNivelesIds')) {
     /**
      * IDs de `niveles` visibles en `/loginUsuario` para este colegio.

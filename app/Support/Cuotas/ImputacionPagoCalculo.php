@@ -12,6 +12,63 @@ use Carbon\CarbonInterface;
  */
 final class ImputacionPagoCalculo
 {
+    /** @var array<string, array<string, mixed>> */
+    private static array $formulaCache = [];
+
+    /**
+     * Precarga fórmulas de interés/bonificación en una sola consulta (PDF morosos con miles de filas).
+     *
+     * @param  iterable<CuotaGenerada>  $registros
+     */
+    public static function precargarFormulas(iterable $registros): void
+    {
+        $pares = [];
+        foreach ($registros as $registro) {
+            if (! $registro instanceof CuotaGenerada) {
+                continue;
+            }
+            $idCuota = (int) $registro->idCuotas;
+            $idCurso = (int) $registro->idCursos;
+            if ($idCuota < 1) {
+                continue;
+            }
+            $pares[self::claveFormula($idCuota, $idCurso)] = [$idCuota, $idCurso];
+        }
+
+        if ($pares === []) {
+            return;
+        }
+
+        $idsCuotas = array_values(array_unique(array_map(fn (array $p) => $p[0], $pares)));
+
+        $importes = CuotasImporte::query()
+            ->whereIn('idCuotas', $idsCuotas)
+            ->get([
+                'idCuotas', 'idCursos',
+                'signo1v', 'valor1v', 'porcan1v',
+                'signo2v', 'valor2v', 'porcan2v',
+                'signo3v', 'valor3v', 'porcan3v',
+                'signo4v', 'valor4v', 'porcan4v',
+            ]);
+
+        foreach ($importes as $importe) {
+            $clave = self::claveFormula((int) $importe->idCuotas, (int) $importe->idCursos);
+            if (isset($pares[$clave])) {
+                self::$formulaCache[$clave] = self::formulaDesdeRegistro($importe);
+            }
+        }
+
+        foreach (array_keys($pares) as $clave) {
+            if (! array_key_exists($clave, self::$formulaCache)) {
+                self::$formulaCache[$clave] = self::formulaDesdeRegistro(null);
+            }
+        }
+    }
+
+    public static function limpiarCacheFormulas(): void
+    {
+        self::$formulaCache = [];
+    }
     /**
      * @return array{
      *     porcent: float,
@@ -36,12 +93,7 @@ final class ImputacionPagoCalculo
     ): array {
         $saldoAPagar = max(0, round($saldoAPagar, 2));
 
-        $formula = self::formulaDesdeRegistro(
-            CuotasImporte::query()
-                ->where('idCuotas', (int) $registro->idCuotas)
-                ->where('idCursos', (int) $registro->idCursos)
-                ->first(),
-        );
+        $formula = self::formulaParaRegistro($registro);
 
         $venc1 = self::carbon($registro->venc1);
         $venc2 = self::carbon($registro->venc2);
@@ -54,6 +106,7 @@ final class ImputacionPagoCalculo
         $porcan = $formula['porcan1'];
         $usaDias = false;
         $dias = 0;
+        $interesMoraDiario = tenantCuotasInteresMoraEsDiario();
 
         if ($venc1 !== null && $fecha->lte($venc1)) {
             $tramo = '1';
@@ -65,22 +118,27 @@ final class ImputacionPagoCalculo
             $signo = $formula['signo2'];
             $valor = $formula['valor2'];
             $porcan = $formula['porcan2'];
-            $usaDias = $signo === '+';
+            $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
         } elseif ($venc3 !== null && $fecha->lte($venc3)) {
             $tramo = '3';
             $signo = $formula['signo3'];
             $valor = $formula['valor3'];
             $porcan = $formula['porcan3'];
-            $usaDias = $signo === '+';
+            $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
         } else {
             $tramo = '4';
             $signo = $formula['signo4'];
             $valor = $formula['valor4'];
             $porcan = $formula['porcan4'];
-            $usaDias = $signo === '+' && $porcan === '%';
+            $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
         }
 
-        $diasMora = $usaDias ? self::diasMoraDesdeVenc1($fecha, $venc1) : 0;
+        $diasMora = 0;
+        if ($usaDias) {
+            $diasMora = $tramo === '4'
+                ? self::diasMoraTramo4($registro, $venc1, $venc3)
+                : self::diasMoraDesdeVenc1($fecha, $venc1);
+        }
         if ($usaDias) {
             $dias = $diasMora;
         }
@@ -163,6 +221,32 @@ final class ImputacionPagoCalculo
     /**
      * @return array<string, mixed>
      */
+    private static function formulaParaRegistro(CuotaGenerada $registro): array
+    {
+        $clave = self::claveFormula((int) $registro->idCuotas, (int) $registro->idCursos);
+        if (array_key_exists($clave, self::$formulaCache)) {
+            return self::$formulaCache[$clave];
+        }
+
+        $formula = self::formulaDesdeRegistro(
+            CuotasImporte::query()
+                ->where('idCuotas', (int) $registro->idCuotas)
+                ->where('idCursos', (int) $registro->idCursos)
+                ->first(),
+        );
+        self::$formulaCache[$clave] = $formula;
+
+        return $formula;
+    }
+
+    private static function claveFormula(int $idCuotas, int $idCursos): string
+    {
+        return $idCuotas.':'.$idCursos;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private static function formulaDesdeRegistro(?CuotasImporte $importes): array
     {
         return [
@@ -182,30 +266,53 @@ final class ImputacionPagoCalculo
     }
 
     /**
-     * Días de mora desde el primer vencimiento hasta la fecha de pago.
+     * Días de mora desde el 1.er venc. hasta la fecha de pago (tramos 2 y 3).
      */
     private static function diasMoraDesdeVenc1(CarbonInterface $fechaPago, ?CarbonInterface $venc1): int
     {
-        if ($venc1 === null || $fechaPago->lte($venc1)) {
+        return self::diasEntre($fechaPago, $venc1);
+    }
+
+    /**
+     * Tramo 4 (cupón vencido): días desde el 1.er venc. hasta nueVenc o, si no hay, venc3.
+     * Misma regla que {@see ComprobantePagoCalculo}.
+     */
+    private static function diasMoraTramo4(CuotaGenerada $registro, ?CarbonInterface $venc1, ?CarbonInterface $venc3): int
+    {
+        $nuevoVenc = self::carbon($registro->nueVenc) ?? $venc3;
+
+        return self::diasEntre($nuevoVenc, $venc1);
+    }
+
+    /**
+     * Días entre dos fechas inclusive del tramo (fechaMayor − fechaMenor).
+     */
+    private static function diasEntre(?CarbonInterface $fechaMayor, ?CarbonInterface $fechaMenor): int
+    {
+        if ($fechaMayor === null || $fechaMenor === null || $fechaMayor->lte($fechaMenor)) {
             return 0;
         }
 
-        return max(0, (int) $venc1->diffInDays($fechaPago));
+        return max(0, (int) $fechaMenor->diffInDays($fechaMayor));
     }
 
     private static function carbon(mixed $fecha): ?CarbonInterface
     {
         if ($fecha instanceof CarbonInterface) {
-            return $fecha->copy()->startOfDay();
+            $parsed = $fecha->copy()->startOfDay();
+
+            return $parsed->year >= 1900 ? $parsed : null;
         }
 
         $raw = trim((string) ($fecha ?? ''));
-        if ($raw === '' || $raw === '0000-00-00') {
+        if ($raw === '' || $raw === '0000-00-00' || str_starts_with($raw, '0000-') || str_starts_with($raw, '-0001')) {
             return null;
         }
 
         try {
-            return Carbon::parse($raw)->startOfDay();
+            $parsed = Carbon::parse($raw)->startOfDay();
+
+            return $parsed->year >= 1900 ? $parsed : null;
         } catch (\Throwable) {
             return null;
         }

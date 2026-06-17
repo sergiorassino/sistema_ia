@@ -81,6 +81,22 @@ return [
 
 Consumir con `tenantCuotasFormulasInicialesPlantilla()` o `CuotasImportesCatalog::valoresInicialesRegistro()`.
 
+Modo de interpretación del % de mora en tramos 2–4 (`config/tenant.php` → `cuotas.interes_mora_modo`):
+
+- `diario` (default): el % configurado es por día de mora (se multiplica por los días del tramo).
+- `total`: el % es fijo sobre el saldo en ese tramo, sin multiplicar por días.
+
+```php
+// config/tenants/institutoramallo.php
+return [
+    'cuotas' => [
+        'interes_mora_modo' => 'total',
+    ],
+];
+```
+
+Consumir con `tenantCuotasInteresMoraEsDiario()` o `tenantCuotasInteresMoraModo()`. Afecta imputación, PDF morosos y cupón de pago.
+
 El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
 
 ### 3.2 Parametrización en base de datos (principal)

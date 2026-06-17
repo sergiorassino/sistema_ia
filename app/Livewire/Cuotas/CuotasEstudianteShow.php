@@ -8,7 +8,7 @@ use App\Support\PermisosCuotas;
 use Livewire\Component;
 
 /**
- * Listado de cuotas del estudiante: ciclo activo o historial de abonadas (todos los años).
+ * Listado de cuotas del estudiante: vista normal (año actual + impagas anteriores) o historial completo.
  */
 class CuotasEstudianteShow extends Component
 {
@@ -33,11 +33,14 @@ class CuotasEstudianteShow extends Component
 
     public function render()
     {
+        $cuotas = $this->mostrarHistorial
+                ? GestionAranceles::cuotasHistorial($this->idLegajo)
+                : GestionAranceles::cuotasDelEstudiante($this->idLegajo);
+
         return view('livewire.cuotas.estudiante-show', [
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
-            'cuotas' => $this->mostrarHistorial
-                ? GestionAranceles::cuotasAbonadasHistorial($this->idLegajo)
-                : GestionAranceles::cuotasDelEstudiante($this->idLegajo),
+            'cuotas' => $cuotas,
+            'totalesAdeudados' => GestionAranceles::totalizarSaldosAdeudados($cuotas),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de aranceles']);
     }
 }

@@ -215,6 +215,14 @@ return [
      * Override parcial en `config/tenants/{slug}.php` (solo claves que difieran).
      */
     'cuotas' => [
+        /**
+         * Interpretación de valor2v..valor4v con signo + y porcan % en mora:
+         * - diario: % por día de mora (se multiplica por los días del tramo).
+         * - total: % fijo sobre el saldo en ese tramo (sin multiplicar por días).
+         * Override por colegio en config/tenants/{slug}.php.
+         */
+        'interes_mora_modo' => 'diario',
+
         'formulas_iniciales_plantilla' => [
             'importe' => 0.0,
             'signo1v' => '+',

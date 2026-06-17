@@ -2,7 +2,6 @@
 
 namespace App\Support\Mora;
 
-use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Models\CuotaGenerada;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,9 +18,7 @@ final class GestionMorososConsulta
      */
     public static function cuotasAdeudadas(array $filtros): Builder
     {
-        $query = CuotaGenerada::query()
-            ->whereHas('legajo', fn (Builder $leg) => $leg->whereKeyNot(LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR)
-                ->where('idFamilias', '>', 0));
+        $query = CuotaGenerada::query()->whereHas('legajo');
 
         GestionMorososFiltros::aplicarAConsulta($query, $filtros);
 

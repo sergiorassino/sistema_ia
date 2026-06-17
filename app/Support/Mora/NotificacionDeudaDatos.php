@@ -6,15 +6,11 @@ namespace App\Support\Mora;
 
 
 
-use App\Livewire\Abm\Legajos\LegajoFamilia;
-
 use App\Models\CuotaGenerada;
 
 use App\Models\DatoVario;
 
 use App\Support\Cuotas\CuotasFormato;
-
-use App\Support\Cuotas\GestionAranceles;
 
 use App\Support\Cuotas\ImputacionPagoCalculo;
 
@@ -72,25 +68,7 @@ final class NotificacionDeudaDatos
 
             ])
 
-            ->get()
-
-            ->sortBy([
-
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->familia?->apellido ?? ''))),
-
-                fn (CuotaGenerada $r) => (int) ($r->legajo?->familia?->id ?? 0),
-
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->apellido ?? ''))),
-
-                fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->nombre ?? ''))),
-
-                fn (CuotaGenerada $r) => (int) ($r->cuota?->orden ?? 9999),
-
-                fn (CuotaGenerada $r) => (int) $r->id,
-
-            ])
-
-            ->values();
+            ->get();
 
 
 
@@ -102,9 +80,17 @@ final class NotificacionDeudaDatos
 
 
 
-        /** @var Collection<int, Collection<int, CuotaGenerada>> $porFamilia */
+        ImputacionPagoCalculo::precargarFormulas($registros);
 
-        $porFamilia = $registros->groupBy(fn (CuotaGenerada $r) => (int) ($r->legajo?->idFamilias ?? 0));
+
+
+        try {
+
+
+
+        $porGrupo = GestionMorososAgrupacion::porFamiliaOEstudiante($registros)
+
+            ->sortBy(fn (Collection $items) => GestionMorososAgrupacion::claveOrden($items->first()));
 
 
 
@@ -114,9 +100,9 @@ final class NotificacionDeudaDatos
 
 
 
-        foreach ($porFamilia as $idFamilia => $items) {
+        foreach ($porGrupo as $clave => $items) {
 
-            if ($idFamilia <= 0 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
+            if (! GestionMorososAgrupacion::claveEsValida($clave)) {
 
                 continue;
 
@@ -124,31 +110,19 @@ final class NotificacionDeudaDatos
 
 
 
-            $familia = $items->first()?->legajo?->familia;
+            $items = $items->sortBy([
 
-            $apellido = trim((string) ($familia?->apellido ?? ''));
+                fn (CuotaGenerada $r) => (int) ($r->cuota?->orden ?? 9999),
 
-            $responsable = trim((string) ($familia?->responsable ?? ''));
+                fn (CuotaGenerada $r) => (int) $r->id,
 
-            $familiaLinea = trim(
+            ])->values();
 
-                $apellido
 
-                .($apellido !== '' && $responsable !== '' ? ' - ' : '')
 
-                .$responsable,
+            $familiaLinea = GestionMorososAgrupacion::familiaLinea($items);
 
-            );
-
-            $tituloFamilia = mb_strtoupper(trim(
-
-                'Familia / Responsable: '.$apellido
-
-                .($apellido !== '' && $responsable !== '' ? ' - ' : '')
-
-                .$responsable,
-
-            ));
+            $tituloFamilia = GestionMorososAgrupacion::tituloSeccion($items);
 
 
 
@@ -224,11 +198,11 @@ final class NotificacionDeudaDatos
 
                 $curso = $registro->curso;
 
-                $becaEtiqueta = GestionAranceles::etiquetaBeca($registro);
+                $becaEtiqueta = trim((string) ($registro->beca?->nombreBeca ?? ''));
 
                 if ($becaEtiqueta === '') {
 
-                    $becaEtiqueta = 'C/E';
+                    $becaEtiqueta = (int) ($registro->idCuotasbecas ?? 0) === 1 ? 'C/E' : '';
 
                 }
 
@@ -339,6 +313,12 @@ final class NotificacionDeudaDatos
             'paginas' => $paginas,
 
         ];
+
+        } finally {
+
+            ImputacionPagoCalculo::limpiarCacheFormulas();
+
+        }
 
     }
 
