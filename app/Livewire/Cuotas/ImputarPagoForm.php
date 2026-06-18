@@ -210,7 +210,7 @@ class ImputarPagoForm extends Component
         }
 
         if ($pago !== null && $saldo > 0) {
-            $url = route('cuotas.comprobante-imputacion', [
+            $url = se_route_url('cuotas.comprobante-imputacion', [
                 'ref' => OpaqueRouteToken::forComprobantePagoImputacionAdministracion((int) $pago->id, $this->idLegajo),
             ]);
             $this->dispatch('cuotas-imputar-pago-abrir-comprobante', url: $url);

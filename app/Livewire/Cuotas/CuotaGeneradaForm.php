@@ -58,9 +58,9 @@ class CuotaGeneradaForm extends Component
         $registro = $this->registro();
         abort_unless($registro !== null, 404);
 
-        $this->venc1 = optional($registro->venc1)?->format('Y-m-d') ?? '';
-        $this->venc2 = optional($registro->venc2)?->format('Y-m-d') ?? '';
-        $this->nueVenc = optional($registro->nueVenc)?->format('Y-m-d') ?? '';
+        $this->venc1 = CuotasFormato::fechaParaInputDate($registro->venc1);
+        $this->venc2 = CuotasFormato::fechaParaInputDate($registro->venc2);
+        $this->nueVenc = CuotasFormato::fechaParaInputDate($registro->nueVenc);
         $this->importe = CuotasFormato::importeParaInput($registro->importe);
         $this->bonificacion = CuotasFormato::importeParaInput($registro->bonificacion);
         $this->interes = CuotasFormato::importeParaInput($registro->interes);
@@ -104,13 +104,21 @@ class CuotaGeneradaForm extends Component
         $this->validate([
             'venc1' => ['required', 'date'],
             'venc2' => ['required', 'date'],
-            'nueVenc' => ['nullable', 'date'],
             'importe' => ['required', 'string'],
             'bonificacion' => ['required', 'string'],
             'interes' => ['required', 'string'],
             'pagado' => ['required', 'string'],
             'obs' => ['nullable', 'string', 'max:500'],
         ]);
+
+        $nueVencIncompleto = CuotasFormato::esFechaTextoIncompleto($this->nueVenc);
+        $nueVencParaGuardar = CuotasFormato::parseFechaOpcional($this->nueVenc);
+
+        if (! $nueVencIncompleto && trim($this->nueVenc) !== '' && $nueVencParaGuardar === null) {
+            $this->addError('nueVenc', 'La fecha del vencimiento actualizado no es válida.');
+
+            return;
+        }
 
         $importe = CuotasFormato::parseImporte($this->importe);
         $bonificacion = CuotasFormato::parseImporte($this->bonificacion);
@@ -143,18 +151,23 @@ class CuotaGeneradaForm extends Component
 
         $faltapa = CuotasFormato::calcularFaltapa($importe, $pagado, $bonificacion, $interes);
 
-        $registro->fill([
+        $datos = [
             'venc1' => $this->venc1,
             'venc2' => $this->venc2,
             'venc3' => $this->venc2,
-            'nueVenc' => $this->nueVenc !== '' ? $this->nueVenc : null,
             'importe' => $importe,
             'bonificacion' => $bonificacion,
             'interes' => $interes,
             'pagado' => $pagado,
             'faltapa' => $faltapa,
             'obs' => trim($this->obs),
-        ]);
+        ];
+
+        if (! $nueVencIncompleto) {
+            $datos['nueVenc'] = $nueVencParaGuardar;
+        }
+
+        $registro->fill($datos);
         $registro->save();
 
         session()->flash('success', 'Cuota actualizada correctamente.');

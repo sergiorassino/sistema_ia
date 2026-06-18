@@ -47,7 +47,7 @@ class ComprobantePagoImputacionPdfController extends Controller
         }
 
         $idCuotaGenerada = (int) ($pago->idCuotasGeneradas ?? 0);
-        if ($idCuotaGenerada <= 0 || GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo) === null) {
+        if ($idCuotaGenerada <= 0 || GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
             abort(404);
         }
 

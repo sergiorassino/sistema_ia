@@ -254,6 +254,8 @@ return [
             'nota_credito_tipo' => 12,
             'cbte_tipo_asociado' => 15,
             'produccion' => true,
+            /** Si true, no llama a AFIP (cualquier entorno). Para pruebas en un tenant concreto. */
+            'simular' => false,
             'simular_local' => true,
             'condicion_iva_alumno' => 'Consumidor Final',
             'condicion_iva_receptor_id' => 5,

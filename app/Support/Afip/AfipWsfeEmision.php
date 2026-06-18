@@ -36,9 +36,9 @@ final class AfipWsfeEmision
      */
     public static function emitirRecibo(array $config, array $comprobante): array
     {
-        if (! empty($config['simular_local'])) {
+        if (! empty($config['simular'])) {
             return [
-                'cae' => '86240089737637',
+                'cae' => 'SIM'.now()->format('ymdHis'),
                 'cae_fch_vto' => now()->addDays(10)->format('Ymd'),
                 'cbte_hasta' => 99999,
             ];

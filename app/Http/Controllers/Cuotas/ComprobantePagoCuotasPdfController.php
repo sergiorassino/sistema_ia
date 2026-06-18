@@ -22,7 +22,6 @@ class ComprobantePagoCuotasPdfController extends Controller
     public function __invoke(Request $request, string $ref)
     {
         abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
-        abort_unless(tenantAutogestionArancelesEscolaresHabilitada(), 404);
 
         $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_ADMIN_COMPROBANTE_PAGO);
         if ($decoded === null) {

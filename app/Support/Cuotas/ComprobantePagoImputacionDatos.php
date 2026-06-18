@@ -17,7 +17,7 @@ final class ComprobantePagoImputacionDatos
     {
         $idCuotaGenerada = (int) ($pago->idCuotasGeneradas ?? 0);
         $registro = $idCuotaGenerada > 0
-            ? GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo)
+            ? GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo)
             : null;
 
         if ($registro === null) {

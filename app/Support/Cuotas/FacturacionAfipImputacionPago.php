@@ -105,9 +105,11 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Error al facturar en AFIP: '.$e->getMessage()];
         }
 
+        $simulado = ! empty($config['simular']);
         $cae = (string) $emision['cae'];
         $vtoCaeYmd = (string) $emision['cae_fch_vto'];
         $nroRecibo = (int) $emision['cbte_hasta'];
+        $sufijoSimulado = $simulado ? ' (simulado, sin envío a AFIP)' : '';
         $codigoBarras = AfipCodigoBarras::generar(
             (string) $ento->cuit,
             (int) $config['cbte_tipo'],
@@ -142,6 +144,7 @@ final class FacturacionAfipImputacionPago
                 $nombreAlumno,
                 $docNro,
                 $condicionAlumno,
+                $sufijoSimulado,
             ): void {
                 ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
@@ -179,7 +182,7 @@ final class FacturacionAfipImputacionPago
                 ]);
 
                 $registro->nroComp = $nroRecibo;
-                $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae;
+                $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado;
                 $registro->save();
             });
         } catch (Throwable $e) {
@@ -188,7 +191,7 @@ final class FacturacionAfipImputacionPago
 
         return [
             'ok' => true,
-            'mensaje' => 'Comprobante AFIP emitido correctamente. CAE '.$cae.' — Recibo Nº '.$nroRecibo.'.',
+            'mensaje' => 'Comprobante AFIP emitido correctamente. CAE '.$cae.' — Recibo Nº '.$nroRecibo.'.'.$sufijoSimulado,
         ];
     }
 
