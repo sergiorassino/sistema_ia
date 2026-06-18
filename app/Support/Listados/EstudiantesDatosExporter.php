@@ -23,7 +23,9 @@ final class EstudiantesDatosExporter
         'FECHA NACIMIENTO',
         'DOMICILIO',
         'GRUPO SANGUÍNEO',
-        'TEL y DNI ADULTO RESPONSABLE*',
+        'ADULTO RESP. 1 (MADRE)',
+        'ADULTO RESP. 2 (PADRE)',
+        'TUTOR',
     ];
 
     /**
@@ -100,7 +102,7 @@ final class EstudiantesDatosExporter
             EstudiantesDatosConsulta::formatearFechaNacimiento($alumno->fechnaci ?? null),
             (string) ($alumno->domicilio ?? ''),
             trim((string) ($alumno->grupo_sanguineo ?? '')),
-            EstudiantesDatosConsulta::formatearTelDniResponsableDesdeLegajo($alumno),
+            ...EstudiantesDatosConsulta::valoresResponsablesExport($alumno),
         ];
     }
 
