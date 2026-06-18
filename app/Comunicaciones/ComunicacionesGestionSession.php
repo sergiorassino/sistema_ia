@@ -3,6 +3,7 @@
 namespace App\Comunicaciones;
 
 use App\Models\ComHilo;
+use App\Support\ComunicacionesRutasGestion;
 
 /**
  * Hilo activo en comunicaciones de personal (secretaría o portal docente), sin ID en la URL de lectura.
@@ -23,7 +24,7 @@ final class ComunicacionesGestionSession
 
     public static function puedeVerHilo(int $idHilo): bool
     {
-        if (! tienePermiso(3)) {
+        if (! ComunicacionesRutasGestion::accesoBandejaGestion()) {
             return false;
         }
 

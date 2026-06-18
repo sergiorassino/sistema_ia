@@ -30,6 +30,7 @@ class RrdReserva extends Model
         'entregado_por',
         'entregado_at',
         'devuelto_por',
+        'devuelto_a',
         'devuelto_at',
         'created_at',
     ];
@@ -41,6 +42,7 @@ class RrdReserva extends Model
         'id_terlec'    => 'integer',
         'fecha'        => 'date',
         'entregado_at' => 'datetime',
+        'devuelto_a'   => 'integer',
         'devuelto_at'  => 'datetime',
         'created_at'   => 'datetime',
     ];
@@ -57,6 +59,16 @@ class RrdReserva extends Model
     public function recurso(): BelongsTo
     {
         return $this->belongsTo(RrdRecurso::class, 'id_recurso');
+    }
+
+    public function entregadoPorProfesor(): BelongsTo
+    {
+        return $this->belongsTo(Profesor::class, 'entregado_por');
+    }
+
+    public function operadorDevolucion(): BelongsTo
+    {
+        return $this->belongsTo(Profesor::class, 'devuelto_a');
     }
 
     // ---------------------------------------------------------------
@@ -112,5 +124,19 @@ class RrdReserva extends Model
     public function puedeModificarse(): bool
     {
         return $this->estado === self::ESTADO_PENDIENTE;
+    }
+
+    /** Nombre de la persona que devolvió el material (columna devuelto_por). */
+    public function nombreQuienDevuelve(): string
+    {
+        $valor = $this->getAttributes()['devuelto_por'] ?? null;
+
+        if ($valor === null) {
+            return '';
+        }
+
+        $texto = trim((string) $valor);
+
+        return ($texto === '' || $texto === '0') ? '' : $texto;
     }
 }

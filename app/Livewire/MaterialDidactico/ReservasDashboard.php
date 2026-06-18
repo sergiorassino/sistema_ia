@@ -5,6 +5,7 @@ namespace App\Livewire\MaterialDidactico;
 use App\Models\Curso;
 use App\Models\Nivel;
 use App\Models\RrdGrupo;
+use App\Models\RrdPedido;
 use App\Models\RrdRecurso;
 use App\Models\RrdReserva;
 use App\Support\MaterialDidactico\RrdReservaException;
@@ -23,14 +24,17 @@ class ReservasDashboard extends Component
     public string $search           = '';
     public string $filtroEstado     = '';
 
-    // Modal entrega
+    // Modal entrega (por pedido: un campo por recurso activo)
     public bool $mostrarModalEntrega = false;
-    public ?int $reservaEntregaId = null;
-    public string $entregadoA = '';
+    public ?int $pedidoEntregaId = null;
+    /** @var array<int|string, string> */
+    public array $entregasPedido = [];
 
-    // Modal devolución (confirm simple)
+    // Modal devolución (por pedido: un campo por recurso activo)
     public bool $mostrarModalDevolucion = false;
-    public ?int $reservaDevolucionId = null;
+    public ?int $pedidoDevolucionId = null;
+    /** @var array<int|string, string> */
+    public array $devolucionesPedido = [];
 
     public function mount(): void
     {
@@ -59,21 +63,35 @@ class ReservasDashboard extends Component
     // Entrega
     // ---------------------------------------------------------------
 
-    public function abrirEntrega(int $id): void
+    public function abrirEntrega(int $pedidoId): void
     {
         abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
-        $this->reservaEntregaId = $id;
-        $this->entregadoA       = '';
+        RrdPedido::queryEnContexto()->findOrFail($pedidoId);
+
+        $reservas = $this->reservasActivasPedido($pedidoId);
+
+        if ($reservas->isEmpty()) {
+            return;
+        }
+
+        $this->pedidoEntregaId     = $pedidoId;
+        $this->entregasPedido      = $reservas->mapWithKeys(function (RrdReserva $r) {
+            $valor = $r->esPendiente()
+                ? ''
+                : trim((string) ($r->entregado_a ?? ''));
+
+            return [$r->id => $valor];
+        })->all();
         $this->mostrarModalEntrega = true;
     }
 
     public function cerrarEntrega(): void
     {
         $this->mostrarModalEntrega = false;
-        $this->reservaEntregaId   = null;
-        $this->entregadoA         = '';
+        $this->pedidoEntregaId     = null;
+        $this->entregasPedido      = [];
     }
 
     public function confirmarEntrega(): void
@@ -81,46 +99,94 @@ class ReservasDashboard extends Component
         abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
-        $this->validate(['entregadoA' => 'required|string|max:100'], [
-            'entregadoA.required' => 'Indique quién retira el material.',
-            'entregadoA.max'      => 'Máximo 100 caracteres.',
-        ]);
-
-        $reserva = RrdReserva::queryEnContexto()->find($this->reservaEntregaId);
-        if (! $reserva) {
+        if ($this->pedidoEntregaId === null) {
             $this->cerrarEntrega();
+
             return;
         }
 
-        try {
-            RrdReservaService::registrarEntrega(
-                $reserva,
-                $this->entregadoA,
-                (int) (schoolCtx()->idProfesor ?? 0)
-            );
-            $this->cerrarEntrega();
-        } catch (RrdReservaException $e) {
-            $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+        $this->validate([
+            'entregasPedido'   => 'array',
+            'entregasPedido.*' => 'nullable|string|max:100',
+        ], [
+            'entregasPedido.*.max' => 'Máximo 100 caracteres por recurso.',
+        ]);
+
+        $idOperador = (int) (schoolCtx()->idProfesor ?? 0);
+        $procesadas = 0;
+
+        foreach ($this->reservasActivasPedido($this->pedidoEntregaId) as $reserva) {
+            if ($reserva->esDevuelto()) {
+                continue;
+            }
+
+            $nombre = trim((string) ($this->entregasPedido[$reserva->id] ?? ''));
+
+            try {
+                if ($nombre !== '') {
+                    if ($reserva->esPendiente()) {
+                        RrdReservaService::registrarEntrega($reserva, $nombre, $idOperador);
+                        $procesadas++;
+                    } elseif (
+                        $reserva->esEntregado()
+                        && $nombre !== trim((string) ($reserva->entregado_a ?? ''))
+                    ) {
+                        RrdReservaService::actualizarEntrega($reserva, $nombre, $idOperador);
+                        $procesadas++;
+                    }
+                } elseif ($reserva->esEntregado()) {
+                    RrdReservaService::revertirEntrega($reserva);
+                    $procesadas++;
+                }
+            } catch (RrdReservaException $e) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
         }
+
+        if ($procesadas === 0) {
+            $this->dispatch('se-swal-error', mensaje: 'No hay cambios de entrega para guardar.');
+
+            return;
+        }
+
+        $this->cerrarEntrega();
     }
 
     // ---------------------------------------------------------------
     // Devolución
     // ---------------------------------------------------------------
 
-    public function abrirDevolucion(int $id): void
+    public function abrirDevolucion(int $pedidoId): void
     {
         abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
-        $this->reservaDevolucionId    = $id;
+        RrdPedido::queryEnContexto()->findOrFail($pedidoId);
+
+        $reservas = $this->reservasActivasPedido($pedidoId);
+
+        if ($reservas->isEmpty()) {
+            return;
+        }
+
+        $this->pedidoDevolucionId = $pedidoId;
+        $this->devolucionesPedido = $reservas->mapWithKeys(function (RrdReserva $r) {
+            if ($r->esDevuelto()) {
+                return [$r->id => $r->nombreQuienDevuelve()];
+            }
+
+            return [$r->id => ''];
+        })->all();
         $this->mostrarModalDevolucion = true;
     }
 
     public function cerrarDevolucion(): void
     {
-        $this->mostrarModalDevolucion  = false;
-        $this->reservaDevolucionId     = null;
+        $this->mostrarModalDevolucion = false;
+        $this->pedidoDevolucionId     = null;
+        $this->devolucionesPedido     = [];
     }
 
     public function confirmarDevolucion(): void
@@ -128,45 +194,81 @@ class ReservasDashboard extends Component
         abort_if($this->esPortalDocente(), 403);
         abort_unless(rrdRol() === 'admin', 403);
 
-        $reserva = RrdReserva::queryEnContexto()->find($this->reservaDevolucionId);
-        if (! $reserva) {
+        if ($this->pedidoDevolucionId === null) {
             $this->cerrarDevolucion();
+
             return;
         }
 
-        try {
-            RrdReservaService::registrarDevolucion(
-                $reserva,
-                (int) (schoolCtx()->idProfesor ?? 0)
-            );
-            $this->cerrarDevolucion();
-        } catch (RrdReservaException $e) {
-            $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+        $this->validate([
+            'devolucionesPedido'   => 'array',
+            'devolucionesPedido.*' => 'nullable|string|max:100',
+        ], [
+            'devolucionesPedido.*.max' => 'Máximo 100 caracteres por recurso.',
+        ]);
+
+        $idOperador = (int) (schoolCtx()->idProfesor ?? 0);
+        $procesadas = 0;
+
+        foreach ($this->reservasActivasPedido($this->pedidoDevolucionId) as $reserva) {
+            if ($reserva->esPendiente()) {
+                continue;
+            }
+
+            $nombre = trim((string) ($this->devolucionesPedido[$reserva->id] ?? ''));
+
+            try {
+                if ($nombre !== '') {
+                    if ($reserva->esEntregado()) {
+                        RrdReservaService::registrarDevolucion($reserva, $nombre, $idOperador);
+                        $procesadas++;
+                    } elseif (
+                        $reserva->esDevuelto()
+                        && $nombre !== $reserva->nombreQuienDevuelve()
+                    ) {
+                        RrdReservaService::actualizarDevolucion($reserva, $nombre, $idOperador);
+                        $procesadas++;
+                    }
+                } elseif ($reserva->esDevuelto()) {
+                    RrdReservaService::revertirDevolucion($reserva);
+                    $procesadas++;
+                }
+            } catch (RrdReservaException $e) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
         }
+
+        if ($procesadas === 0) {
+            $this->dispatch('se-swal-error', mensaje: 'No hay cambios de devolución para guardar.');
+
+            return;
+        }
+
+        $this->cerrarDevolucion();
     }
 
     // ---------------------------------------------------------------
     // Cancelación
     // ---------------------------------------------------------------
 
-    public function cancelarItemReserva(int $reservaId): void
+    public function cancelarPedidoReserva(int $pedidoId): void
     {
-        abort_if($this->esPortalDocente(), 403);
-
-        $rol = rrdRol();
+        $rol = $this->rolMaterialDidacticoListado();
         abort_unless($rol === 'admin' || $rol === 'profesor', 403);
 
-        $reserva = RrdReserva::queryEnContexto()->with('pedido')->findOrFail($reservaId);
+        $pedido = RrdPedido::queryEnContexto()->findOrFail($pedidoId);
 
         if ($rol === 'profesor') {
             abort_unless(
-                $reserva->pedido?->id_profesor === (int) (schoolCtx()->idProfesor ?? 0),
+                $pedido->id_profesor === (int) (schoolCtx()->idProfesor ?? 0),
                 403
             );
         }
 
         try {
-            RrdReservaService::cancelarReserva($reserva);
+            RrdReservaService::cancelarPedido($pedido);
             $this->dispatch('se-swal-exito', mensaje: 'Reserva cancelada.');
         } catch (RrdReservaException $e) {
             $this->dispatch('se-swal-error', mensaje: $e->getMessage());
@@ -180,13 +282,14 @@ class ReservasDashboard extends Component
     public function render()
     {
         $ctx = schoolCtx();
-        $rol = $this->esPortalDocente() ? 'lectura' : rrdRol();
-        $soloConsultaPortal = $this->esPortalDocente();
+        $rol = $this->rolMaterialDidacticoListado();
+        $puedeGestionarReservas = $this->puedeGestionarReservasPropias();
+        $soloConsultaPortal = $this->esPortalDocente() && ! $puedeGestionarReservas;
 
         $query = RrdReserva::queryEnContexto()
             ->with(['recurso.grupo', 'pedido.profesor', 'pedido.reservas']);
 
-        if (! $soloConsultaPortal && $rol !== 'admin') {
+        if (! $this->esPortalDocente() && $rol !== 'admin') {
             $idProfesor = (int) ($ctx->idProfesor ?? 0);
             $query->whereHas('pedido', fn ($q) => $q->where('id_profesor', $idProfesor));
         }
@@ -238,15 +341,31 @@ class ReservasDashboard extends Component
                 $pedido = $primera->pedido;
                 $todasPendientesPedido = $pedido?->reservas
                     ->every(fn (RrdReserva $r) => $r->esPendiente()) ?? false;
+                $algunaPendientePedido = $reservasGrupo->contains(
+                    fn (RrdReserva $r) => $r->esPendiente()
+                );
+                $algunaEntregadaPedido = $reservasGrupo->contains(
+                    fn (RrdReserva $r) => $r->esEntregado()
+                );
+                $algunaDevueltaPedido = $reservasGrupo->contains(
+                    fn (RrdReserva $r) => $r->esDevuelto()
+                );
+                $algunaActivaPedido = $reservasGrupo->contains(
+                    fn (RrdReserva $r) => ! $r->esCancelado()
+                );
 
                 return (object) [
-                    'id_pedido'             => (int) $primera->id_pedido,
-                    'pedido'                => $pedido,
-                    'fecha'                 => $primera->fecha,
-                    'hora_inicio'           => $primera->hora_inicio,
-                    'hora_fin'              => $primera->hora_fin,
-                    'reservas'              => $reservasGrupo->values(),
+                    'id_pedido'               => (int) $primera->id_pedido,
+                    'pedido'                  => $pedido,
+                    'fecha'                   => $primera->fecha,
+                    'hora_inicio'             => $primera->hora_inicio,
+                    'hora_fin'                => $primera->hora_fin,
+                    'reservas'                => $reservasGrupo->values(),
                     'todas_pendientes_pedido' => $todasPendientesPedido,
+                    'alguna_pendiente_pedido' => $algunaPendientePedido,
+                    'alguna_entregada_pedido' => $algunaEntregadaPedido,
+                    'alguna_devuelta_pedido'  => $algunaDevueltaPedido,
+                    'alguna_activa_pedido'    => $algunaActivaPedido,
                 ];
             })
             ->values();
@@ -269,6 +388,16 @@ class ReservasDashboard extends Component
             $recursosFiltro = RrdRecurso::paraGrupo((int) $this->filtroGrupoId);
         }
 
+        $modalEntregaReservas = collect();
+        if ($this->mostrarModalEntrega && $this->pedidoEntregaId) {
+            $modalEntregaReservas = $this->reservasActivasPedido($this->pedidoEntregaId, true);
+        }
+
+        $modalDevolucionReservas = collect();
+        if ($this->mostrarModalDevolucion && $this->pedidoDevolucionId) {
+            $modalDevolucionReservas = $this->reservasActivasPedido($this->pedidoDevolucionId, true);
+        }
+
         return view('livewire.material-didactico.reservas-dashboard', [
             'pedidosAgrupados' => $pedidosAgrupados,
             'rol'              => $rol,
@@ -277,8 +406,40 @@ class ReservasDashboard extends Component
             'grupos'           => $grupos,
             'recursosFiltro'   => $recursosFiltro,
             'soloConsultaPortal' => $soloConsultaPortal,
+            'puedeGestionarReservas' => $puedeGestionarReservas,
             'rutaNuevaReserva' => $this->rutaNuevaReservaMaterialDidactico(),
+            'modalEntregaReservas' => $modalEntregaReservas,
+            'modalDevolucionReservas' => $modalDevolucionReservas,
         ])->layout($this->layoutMaterialDidactico(), ['pageTitle' => 'Material Didáctico — Listado de reservas']);
+    }
+
+    private function reservasActivasPedido(int $pedidoId, bool $conRecurso = false)
+    {
+        $query = RrdReserva::queryEnContexto()
+            ->where('id_pedido', $pedidoId)
+            ->where('estado', '!=', RrdReserva::ESTADO_CANCELADO)
+            ->orderBy('id');
+
+        if ($conRecurso) {
+            $query->with('recurso');
+        }
+
+        return $query->get();
+    }
+
+    private function rolMaterialDidacticoListado(): ?string
+    {
+        if ($this->esPortalDocente()) {
+            return $this->puedeGestionarReservasPropias() ? 'profesor' : 'lectura';
+        }
+
+        return rrdRol();
+    }
+
+    private function puedeGestionarReservasPropias(): bool
+    {
+        return $this->esPortalDocente()
+            && tenantPortalDocenteRecursosDidacticosNuevaReserva();
     }
 
     private function esPortalDocente(): bool
