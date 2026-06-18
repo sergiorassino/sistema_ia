@@ -3,6 +3,7 @@
 namespace App\Support\Listados;
 
 use App\Models\Curso;
+use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -220,57 +221,88 @@ final class EstudiantesDatosConsulta
     }
 
     /**
-     * Madre → padre → tutor según nombre cargado en el legajo.
+     * Madre, padre y tutor del legajo (apellido y nombre separados desde el nombre completo legacy).
      *
-     * @return array{nombre: string, dni: string, tel: string}
+     * @return array{
+     *   madre: array{apellido: string, nombre: string, dni: string, tel: string},
+     *   padre: array{apellido: string, nombre: string, dni: string, tel: string},
+     *   tutor: array{apellido: string, nombre: string, dni: string, tel: string},
+     * }
      */
-    public static function datosAdultoResponsableLegajo(object $legajo): array
+    public static function responsablesDesdeLegajo(object $legajo): array
     {
-        $candidatos = [
-            ['nombremad', 'dnimad', 'telemad'],
-            ['nombrepad', 'dnipad', 'telepad'],
-            ['nombretut', 'dnitut', 'teletut'],
+        return [
+            'madre' => self::filaResponsableExport(
+                (string) ($legajo->nombremad ?? ''),
+                (string) ($legajo->dnimad ?? ''),
+                (string) ($legajo->telemad ?? ''),
+            ),
+            'padre' => self::filaResponsableExport(
+                (string) ($legajo->nombrepad ?? ''),
+                (string) ($legajo->dnipad ?? ''),
+                (string) ($legajo->telepad ?? ''),
+            ),
+            'tutor' => self::filaResponsableExport(
+                (string) ($legajo->nombretut ?? ''),
+                (string) ($legajo->dnitut ?? ''),
+                (string) ($legajo->teletut ?? ''),
+            ),
         ];
-
-        foreach ($candidatos as [$colNombre, $colDni, $colTel]) {
-            $nombre = trim((string) ($legajo->{$colNombre} ?? ''));
-            if ($nombre !== '') {
-                return [
-                    'nombre' => $nombre,
-                    'dni' => trim((string) ($legajo->{$colDni} ?? '')),
-                    'tel' => trim((string) ($legajo->{$colTel} ?? '')),
-                ];
-            }
-        }
-
-        return ['nombre' => '', 'dni' => '', 'tel' => ''];
     }
 
-    public static function formatearTelDniResponsableDesdeLegajo(object $legajo): string
+    /**
+     * @return list<string> Una columna por vínculo (madre, padre, tutor).
+     */
+    public static function valoresResponsablesExport(object $legajo): array
     {
-        $datos = self::datosAdultoResponsableLegajo($legajo);
+        $responsables = self::responsablesDesdeLegajo($legajo);
 
-        return self::formatearTelDniResponsable($datos['nombre'], $datos['dni'], $datos['tel']);
+        return array_map(
+            fn (string $vinculo) => self::formatearResponsableColumna($responsables[$vinculo]),
+            ['madre', 'padre', 'tutor'],
+        );
     }
 
-    public static function formatearTelDniResponsable(string $nombremad, string $dnimad, string $telemad): string
+    /**
+     * @param  array{apellido: string, nombre: string, dni: string, tel: string}  $fila
+     */
+    public static function formatearResponsableColumna(array $fila): string
     {
-        $nombre = trim($nombremad);
-        $dni = trim($dnimad);
-        $tel = trim($telemad);
+        $apellido = trim((string) ($fila['apellido'] ?? ''));
+        $nombre = trim((string) ($fila['nombre'] ?? ''));
+        $dni = trim((string) ($fila['dni'] ?? ''));
+        $tel = trim((string) ($fila['tel'] ?? ''));
 
+        $texto = trim($apellido.' '.$nombre);
         $partes = [];
-        if ($nombre !== '') {
-            $partes[] = mb_strtoupper($nombre, 'UTF-8');
-        }
-        if ($tel !== '') {
-            $partes[] = 'Tel: '.$tel;
+        if ($texto !== '') {
+            $partes[] = $texto;
         }
         if ($dni !== '') {
             $partes[] = 'DNI: '.$dni;
         }
+        if ($tel !== '') {
+            $partes[] = 'Tel: '.$tel;
+        }
 
         return implode(' — ', $partes);
+    }
+
+    /**
+     * @return array{apellido: string, nombre: string, dni: string, tel: string}
+     */
+    private static function filaResponsableExport(string $nombreCompleto, string $dni, string $tel): array
+    {
+        $partes = ResponsablesLegajoCooperadora::separarNombre($nombreCompleto);
+        $apellido = trim($partes['apellido']);
+        $nombre = trim($partes['nombre']);
+
+        return [
+            'apellido' => $apellido !== '' ? mb_strtoupper($apellido, 'UTF-8') : '',
+            'nombre' => $nombre !== '' ? mb_strtoupper($nombre, 'UTF-8') : '',
+            'dni' => trim($dni),
+            'tel' => trim($tel),
+        ];
     }
 
     public static function nombreArchivo(?Carbon $momento = null, string $extension = 'xlsx'): string

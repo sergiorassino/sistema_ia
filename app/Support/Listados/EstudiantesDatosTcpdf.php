@@ -34,13 +34,15 @@ final class EstudiantesDatosTcpdf extends TCPDF
     /** @var list<float> Suma = 281 mm */
     private const ANCHOS = [
         8.0,   // Nº
-        45.0,  // APELLIDO Y NOMBRES
-        22.0,  // DNI
-        28.0,  // CURSO y DIVISIÓN
-        20.0,  // FECHA NACIMIENTO
-        55.0,  // DOMICILIO
-        18.0,  // GRUPO SANGUÍNEO
-        85.0,  // TEL y DNI ADULTO RESPONSABLE*
+        41.0,  // APELLIDO Y NOMBRES
+        20.0,  // DNI
+        25.0,  // CURSO y DIVISIÓN
+        18.0,  // FECHA NACIMIENTO
+        43.0,  // DOMICILIO
+        15.0,  // GRUPO SANGUÍNEO
+        37.0,  // ADULTO RESP. 1 (MADRE)
+        37.0,  // ADULTO RESP. 2 (PADRE)
+        37.0,  // TUTOR
     ];
 
     /** @var array<string, mixed> */

@@ -105,7 +105,9 @@
                                         <th class="w-12 px-4 py-3 text-left">Incl.</th>
                                         <th class="px-4 py-3 text-left">Apellido y nombres</th>
                                         <th class="px-4 py-3 text-left">DNI</th>
-                                        <th class="px-4 py-3 text-left">Madre / responsable</th>
+                                        <th class="px-4 py-3 text-left">Madre (resp. 1)</th>
+                                        <th class="px-4 py-3 text-left">Padre (resp. 2)</th>
+                                        <th class="px-4 py-3 text-left">Tutor</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-accent-100">
@@ -123,17 +125,17 @@
                                                 {{ \App\Support\Listados\EstudiantesDatosConsulta::formatearApellidoNombre($alumno->apellido ?? '', $alumno->nombre ?? '') }}
                                             </td>
                                             <td class="px-4 py-2.5 tabular-nums text-neutral-700">{{ trim((string) ($alumno->dni ?? '')) }}</td>
+                                            @php
+                                                $responsables = \App\Support\Listados\EstudiantesDatosConsulta::responsablesDesdeLegajo($alumno);
+                                            @endphp
                                             <td class="px-4 py-2.5 text-neutral-600">
-                                                {{ trim((string) ($alumno->nombremad ?? '')) }}
-                                                @if (trim((string) ($alumno->telemad ?? '')) !== '' || trim((string) ($alumno->dnimad ?? '')) !== '')
-                                                    <span class="text-neutral-400">·</span>
-                                                    @if (trim((string) ($alumno->telemad ?? '')) !== '')
-                                                        Tel: {{ trim((string) $alumno->telemad) }}
-                                                    @endif
-                                                    @if (trim((string) ($alumno->dnimad ?? '')) !== '')
-                                                        DNI: {{ trim((string) $alumno->dnimad) }}
-                                                    @endif
-                                                @endif
+                                                {{ \App\Support\Listados\EstudiantesDatosConsulta::formatearResponsableColumna($responsables['madre']) ?: '—' }}
+                                            </td>
+                                            <td class="px-4 py-2.5 text-neutral-600">
+                                                {{ \App\Support\Listados\EstudiantesDatosConsulta::formatearResponsableColumna($responsables['padre']) ?: '—' }}
+                                            </td>
+                                            <td class="px-4 py-2.5 text-neutral-600">
+                                                {{ \App\Support\Listados\EstudiantesDatosConsulta::formatearResponsableColumna($responsables['tutor']) ?: '—' }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -147,7 +149,7 @@
 
         <div class="se-card mt-4 p-5 sm:p-6">
             <p class="text-sm text-neutral-500">
-                El campo de adulto responsable busca datos cargados en Madre (Responsable 1), Padre (Responsable 2) y Tutor, en ese orden.
+                El Excel y el PDF incluyen tres columnas — Madre (Adulto responsable 1), Padre (Adulto responsable 2) y Tutor — con apellido, nombre, DNI y teléfono en un mismo campo por cada uno.
             </p>
             <div class="mt-4 flex flex-wrap gap-3">
                 <a href="{{ $this->excelUrl }}"
