@@ -28,6 +28,7 @@ class SalidaViaje extends Model
 
     /**
      * Viajes del contexto activo (si la tabla legacy incluye idTerlec / idNivel).
+     * Valor 0 en esas columnas = registro legacy sin contexto asignado (visible en cualquier ciclo/nivel).
      */
     public static function queryEnContexto(): Builder
     {
@@ -35,11 +36,17 @@ class SalidaViaje extends Model
         $ctx = schoolCtx();
 
         if (Schema::hasColumn('salidasviajes', 'idTerlec') && (int) $ctx->idTerlec > 0) {
-            $query->where('idTerlec', (int) $ctx->idTerlec);
+            $idTerlec = (int) $ctx->idTerlec;
+            $query->where(function (Builder $q) use ($idTerlec) {
+                $q->where('idTerlec', $idTerlec)->orWhere('idTerlec', 0);
+            });
         }
 
         if (Schema::hasColumn('salidasviajes', 'idNivel') && (int) $ctx->idNivel > 0) {
-            $query->where('idNivel', (int) $ctx->idNivel);
+            $idNivel = (int) $ctx->idNivel;
+            $query->where(function (Builder $q) use ($idNivel) {
+                $q->where('idNivel', $idNivel)->orWhere('idNivel', 0);
+            });
         }
 
         return $query;
@@ -50,13 +57,15 @@ class SalidaViaje extends Model
         $ctx = schoolCtx();
 
         if (Schema::hasColumn('salidasviajes', 'idTerlec')) {
-            if ((int) $this->idTerlec !== (int) $ctx->idTerlec) {
+            $idTerlec = (int) $this->idTerlec;
+            if ($idTerlec !== 0 && $idTerlec !== (int) $ctx->idTerlec) {
                 return false;
             }
         }
 
         if (Schema::hasColumn('salidasviajes', 'idNivel')) {
-            if ((int) $this->idNivel !== (int) $ctx->idNivel) {
+            $idNivel = (int) $this->idNivel;
+            if ($idNivel !== 0 && $idNivel !== (int) $ctx->idNivel) {
                 return false;
             }
         }
