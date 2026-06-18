@@ -139,7 +139,10 @@
 
         <div class="se-card mt-4 p-5 sm:p-6">
             <p class="text-sm text-neutral-600">
-                Se generará un PDF con una ficha por alumno incluido (máximo {{ \App\Support\Alumnos\FichaMatriculaSecretariaLoteParams::MAX_MATRICULAS }} por descarga).
+                Puede generar un PDF único con todas las fichas incluidas o descargar un ZIP con un PDF por alumno
+                (máximo {{ \App\Support\Alumnos\FichaMatriculaSecretariaLoteParams::MAX_MATRICULAS }} por descarga).
+                Cada PDF se nombra como (curso y sección)_(nivel)_(apellido_nombre_compuesto)_fichaMatr.pdf
+                y el ZIP como (curso y sección)_(nivel)_fichasMatr.zip.
             </p>
             <div class="mt-4 flex flex-wrap items-center gap-3">
                 <a href="{{ $this->pdfUrl }}"
@@ -156,8 +159,20 @@
                     </svg>
                     Imprimir fichas PDF
                 </a>
+                <a href="{{ $this->zipUrl }}"
+                   @class([
+                       'inline-flex items-center justify-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border-primary-200 bg-white text-primary-700 hover:bg-accent-50' => $this->puedeGenerarZip(),
+                       'pointer-events-none border-neutral-200 bg-neutral-100 text-neutral-400' => ! $this->puedeGenerarZip(),
+                   ])>
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Descargar ZIP (un PDF por alumno)
+                </a>
                 @if (! $this->puedeGenerarPdf())
-                    <span class="text-sm text-neutral-500">Incluya al menos un alumno para imprimir.</span>
+                    <span class="text-sm text-neutral-500">Incluya al menos un alumno para generar las fichas.</span>
                 @endif
             </div>
         </div>

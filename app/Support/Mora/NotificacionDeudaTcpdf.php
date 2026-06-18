@@ -8,7 +8,7 @@ namespace App\Support\Mora;
 
 use App\Support\Pdf\TcpdfFuenteArial;
 
-use Illuminate\Support\Facades\Storage;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 
 use TCPDF;
 
@@ -313,13 +313,23 @@ final class NotificacionDeudaTcpdf extends TCPDF
 
 
 
-        $logo = $this->resolverLogoArchivo($header);
+        $logoFile = $header['logo_file'] ?? null;
 
-        if ($logo !== null) {
+        TcpdfLogoInstitucional::dibujar(
 
-            $this->Image($logo, self::MARGEN_IZQ + 2, $y + 2, 16, 16, '', '', '', false, 300);
+            $this,
 
-        }
+            self::MARGEN_IZQ + 2,
+
+            $y + 2,
+
+            16,
+
+            16,
+
+            is_string($logoFile) ? $logoFile : null,
+
+        );
 
 
 
@@ -665,56 +675,6 @@ final class NotificacionDeudaTcpdf extends TCPDF
     }
 
 
-
-    /**
-
-     * @param  array<string, mixed>  $header
-
-     */
-
-    private function resolverLogoArchivo(array $header): ?string
-
-    {
-
-        $logo = $header['logo_file'] ?? null;
-
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
-
-            return $logo;
-
-        }
-
-
-
-        $path = entoInstitutionalLogoStoragePath();
-
-        if (is_string($path) && $path !== '') {
-
-            $abs = Storage::disk('public')->path($path);
-
-            if (is_string($abs) && $abs !== '' && is_file($abs)) {
-
-                return $abs;
-
-            }
-
-        }
-
-
-
-        $fallback = public_path('img/3.png');
-
-        if (is_file($fallback)) {
-
-            return $fallback;
-
-        }
-
-
-
-        return null;
-
-    }
 
 }
 

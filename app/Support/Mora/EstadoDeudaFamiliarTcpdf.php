@@ -3,7 +3,7 @@
 namespace App\Support\Mora;
 
 use App\Support\Pdf\TcpdfFuenteArial;
-use Illuminate\Support\Facades\Storage;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -129,21 +129,15 @@ final class EstadoDeudaFamiliarTcpdf extends TCPDF
 
         $this->Rect(self::ORIGEN_X, $y, self::ANCHO_BLOQUE, self::ALTO_ENCABEZADO);
 
-        $logo = $this->resolverLogoArchivo($header);
-        if ($logo !== null) {
-            $this->Image(
-                $logo,
-                self::ORIGEN_X + 5,
-                $y + 1,
-                self::LOGO_ANCHO,
-                self::LOGO_ALTO,
-                '',
-                '',
-                '',
-                false,
-                300,
-            );
-        }
+        $logoFile = $header['logo_file'] ?? null;
+        TcpdfLogoInstitucional::dibujar(
+            $this,
+            self::ORIGEN_X + 5,
+            $y + 1,
+            self::LOGO_ANCHO,
+            self::LOGO_ALTO,
+            is_string($logoFile) ? $logoFile : null,
+        );
 
         $this->SetXY(self::ORIGEN_X, $y + 3);
         TcpdfFuenteArial::aplicar($this, 'B', 10);
@@ -228,31 +222,5 @@ final class EstadoDeudaFamiliarTcpdf extends TCPDF
         $this->Cell(self::ANCHOS[8], self::ALTO_FILA, (string) ($totales['importe'] ?? '0,00'), 1, 0, 'R');
         $this->Cell(self::ANCHOS[9], self::ALTO_FILA, (string) ($totales['interes'] ?? '0,00'), 1, 0, 'R');
         $this->Cell(self::ANCHOS[10], self::ALTO_FILA, (string) ($totales['aPagar'] ?? '0,00'), 1, 1, 'R');
-    }
-
-    /**
-     * @param  array<string, mixed>  $header
-     */
-    private function resolverLogoArchivo(array $header): ?string
-    {
-        $logo = $header['logo_file'] ?? null;
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            return $logo;
-        }
-
-        $path = entoInstitutionalLogoStoragePath();
-        if (is_string($path) && $path !== '') {
-            $abs = Storage::disk('public')->path($path);
-            if (is_string($abs) && $abs !== '' && is_file($abs)) {
-                return $abs;
-            }
-        }
-
-        $fallback = public_path('img/3.png');
-        if (is_file($fallback)) {
-            return $fallback;
-        }
-
-        return null;
     }
 }

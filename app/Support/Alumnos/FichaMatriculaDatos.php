@@ -40,7 +40,7 @@ final class FichaMatriculaDatos
 
         /** @var Matricula|null $matricula */
         $matricula = Matricula::query()
-            ->with('curso')
+            ->with(['curso.nivel'])
             ->where('id', $idMatricula)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
@@ -105,7 +105,8 @@ final class FichaMatriculaDatos
         bool $usarLegajoComoNroMatricula = false,
     ): array {
         $header = studentPdfHeaderData();
-        $curso = trim((string) ($matricula->curso?->nombreParaListado() ?? ''));
+        $cursoModel = $matricula->curso;
+        $curso = trim((string) ($cursoModel?->nombreParaListado() ?? ''));
         $nroMatricula = $usarLegajoComoNroMatricula
             ? trim((string) ($legajo->legajo ?? ''))
             : trim((string) ($matricula->nroMatricula ?? ''));
@@ -119,6 +120,9 @@ final class FichaMatriculaDatos
             'cicloLectivo' => $anoTerlec > 0 ? (string) $anoTerlec : '',
             'nroMatricula' => $nroMatricula,
             'curso' => $curso,
+            'cursoC' => trim((string) ($cursoModel?->c ?? '')),
+            'cursoS' => trim((string) ($cursoModel?->s ?? '')),
+            'nivelAbrev' => trim((string) ($cursoModel?->nivel?->abrev ?? '')),
             'idNivel' => $idNivel,
             'mostrarRetira2' => $idNivel !== 3,
             'apellido' => trim((string) ($legajo->apellido ?? '')),

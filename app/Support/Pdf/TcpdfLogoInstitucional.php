@@ -42,6 +42,17 @@ final class TcpdfLogoInstitucional
             return;
         }
 
-        $pdf->Image($logo, $x, $y, $ancho, $alto, '', '', '', false, 300);
+        $pdf->Image(
+            TcpdfImagenPng::fuenteTcpdf($logo),
+            $x,
+            $y,
+            $ancho,
+            $alto,
+            '',
+            '',
+            '',
+            false,
+            300,
+        );
     }
 }

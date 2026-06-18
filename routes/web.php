@@ -25,6 +25,7 @@ use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
 use App\Http\Controllers\ParteDiarioPreceptorPdfController;
 use App\Http\Controllers\FichaMatriculaSecretariaPdfController;
+use App\Http\Controllers\FichaMatriculaSecretariaZipController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\ListadoDocentesExcelController;
@@ -1078,6 +1079,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/listados/ficha-matricula', FichaMatriculaSecretaria::class)->name('listados.ficha-matricula');
     Route::get('/listados/ficha-matricula/pdf', FichaMatriculaSecretariaPdfController::class)
         ->name('listados.ficha-matricula.pdf');
+    Route::get('/listados/ficha-matricula/zip', FichaMatriculaSecretariaZipController::class)
+        ->name('listados.ficha-matricula.zip');
 
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->group(function () {
         Route::get('/listados/docentes', ListadoDocentes::class)->name('listados.docentes');

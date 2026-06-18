@@ -93,6 +93,9 @@ final class FichaMatriculaMontecristoDatos
             'nroMatricula' => trim((string) ($row->nro_matricula ?? '')),
             'matriculaCondicional' => self::esMatriculaCondicional($row),
             'curso' => trim((string) ($cursoActual['cursec'] ?? '')),
+            'cursoC' => trim((string) ($cursoActual['c'] ?? '')),
+            'cursoS' => trim((string) ($cursoActual['s'] ?? '')),
+            'nivelAbrev' => trim((string) ($cursoActual['nivelAbrev'] ?? '')),
             'nombreNivel' => trim((string) ($cursoActual['nivel'] ?? '')),
             'cursoAnterior' => trim((string) ($cursoAnterior['cursec'] ?? '')),
             'nombreNivelAnterior' => trim((string) ($cursoAnterior['nivel'] ?? '')),
@@ -165,24 +168,27 @@ final class FichaMatriculaMontecristoDatos
     }
 
     /**
-     * @return array{cursec: string, nivel: string}
+     * @return array{c: string, s: string, cursec: string, nivel: string, nivelAbrev: string}
      */
     private static function cursoConNivel(int $idCurso): array
     {
         if ($idCurso <= 0) {
-            return ['cursec' => '', 'nivel' => ''];
+            return ['c' => '', 's' => '', 'cursec' => '', 'nivel' => '', 'nivelAbrev' => ''];
         }
 
-        $curso = Curso::query()->find($idCurso, ['cursec', 'idNivel']);
+        $curso = Curso::query()->find($idCurso, ['cursec', 'c', 's', 'idNivel']);
         if ($curso === null) {
-            return ['cursec' => '', 'nivel' => ''];
+            return ['c' => '', 's' => '', 'cursec' => '', 'nivel' => '', 'nivelAbrev' => ''];
         }
 
-        $nivel = Nivel::query()->find((int) $curso->idNivel, ['nivel']);
+        $nivel = Nivel::query()->find((int) $curso->idNivel, ['nivel', 'abrev']);
 
         return [
+            'c' => trim((string) ($curso->c ?? '')),
+            's' => trim((string) ($curso->s ?? '')),
             'cursec' => trim((string) ($curso->cursec ?? '')),
             'nivel' => trim((string) ($nivel?->nivel ?? '')),
+            'nivelAbrev' => trim((string) ($nivel?->abrev ?? '')),
         ];
     }
 

@@ -3,7 +3,7 @@
 namespace App\Support\Mora;
 
 use App\Support\Pdf\TcpdfFuenteArial;
-use Illuminate\Support\Facades\Storage;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -68,8 +68,6 @@ final class ListadoMorososTcpdf extends TCPDF
 
     private float $yActual = 0.0;
 
-    private ?string $logoArchivo = null;
-
     /**
      * @param  array<string, mixed>  $datos
      */
@@ -77,7 +75,6 @@ final class ListadoMorososTcpdf extends TCPDF
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->datos = $datos;
-        $this->logoArchivo = $this->resolverLogoArchivo((array) ($datos['pdfHeader'] ?? []));
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Listado de deuda');
@@ -167,9 +164,15 @@ final class ListadoMorososTcpdf extends TCPDF
 
         $this->Rect(self::MARGEN_IZQ, $y, self::ANCHO_BLOQUE, self::ALTO_ENC_INST);
 
-        if ($this->logoArchivo !== null) {
-            $this->Image($this->logoArchivo, self::MARGEN_IZQ + 4, $y + 1, 16, 16, '', '', '', false, 300);
-        }
+        $logoFile = $header['logo_file'] ?? null;
+        TcpdfLogoInstitucional::dibujar(
+            $this,
+            self::MARGEN_IZQ + 4,
+            $y + 1,
+            16,
+            16,
+            is_string($logoFile) ? $logoFile : null,
+        );
 
         $this->SetXY(self::MARGEN_IZQ, $y + 2);
         TcpdfFuenteArial::aplicar($this, 'B', 10);
@@ -269,29 +272,4 @@ final class ListadoMorososTcpdf extends TCPDF
         $this->yActual += self::ALTO_FILA;
     }
 
-    /**
-     * @param  array<string, mixed>  $header
-     */
-    private function resolverLogoArchivo(array $header): ?string
-    {
-        $logo = $header['logo_file'] ?? null;
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            return $logo;
-        }
-
-        $path = entoInstitutionalLogoStoragePath();
-        if (is_string($path) && $path !== '') {
-            $abs = Storage::disk('public')->path($path);
-            if (is_string($abs) && $abs !== '' && is_file($abs)) {
-                return $abs;
-            }
-        }
-
-        $fallback = public_path('img/3.png');
-        if (is_file($fallback)) {
-            return $fallback;
-        }
-
-        return null;
-    }
 }

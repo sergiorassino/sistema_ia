@@ -84,7 +84,27 @@ class FichaMatriculaSecretaria extends Component
 
     public function getPdfUrlProperty(): string
     {
-        if (! Route::has('listados.ficha-matricula.pdf')) {
+        return $this->urlDescargaFichas('listados.ficha-matricula.pdf');
+    }
+
+    public function getZipUrlProperty(): string
+    {
+        return $this->urlDescargaFichas('listados.ficha-matricula.zip');
+    }
+
+    public function puedeGenerarPdf(): bool
+    {
+        return Route::has('listados.ficha-matricula.pdf') && $this->matriculasIncluidas() !== [];
+    }
+
+    public function puedeGenerarZip(): bool
+    {
+        return Route::has('listados.ficha-matricula.zip') && $this->matriculasIncluidas() !== [];
+    }
+
+    private function urlDescargaFichas(string $routeName): string
+    {
+        if (! Route::has($routeName)) {
             return '#';
         }
 
@@ -93,14 +113,9 @@ class FichaMatriculaSecretaria extends Component
             return '#';
         }
 
-        return route('listados.ficha-matricula.pdf', [
+        return route($routeName, [
             'matriculas' => implode(',', $ids),
         ]);
-    }
-
-    public function puedeGenerarPdf(): bool
-    {
-        return Route::has('listados.ficha-matricula.pdf') && $this->matriculasIncluidas() !== [];
     }
 
     /** @return list<int> */
