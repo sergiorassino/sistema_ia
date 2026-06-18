@@ -572,8 +572,10 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
         $cfg['doc_tipo'] = (int) ($cfg['doc_tipo'] ?? 96);
         $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
 
-        $simular = $cfg['simular_local'] ?? true;
-        $cfg['simular_local'] = app()->environment('local') && (bool) $simular;
+        $simularExplicito = (bool) ($cfg['simular'] ?? false);
+        $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
+        $cfg['simular'] = $simularExplicito
+            || (app()->environment('local') && $simularEnLocal);
 
         return $cfg;
     }

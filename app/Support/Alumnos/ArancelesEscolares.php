@@ -3,6 +3,7 @@
 namespace App\Support\Alumnos;
 
 use App\Models\CuotaGenerada;
+use App\Support\Cuotas\GestionAranceles;
 use App\Support\InformeInasistencias;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -123,23 +124,20 @@ final class ArancelesEscolares
 
     /**
      * Cuota con saldo pendiente — Gestión de aranceles (Administración).
+     *
+     * Mismo alcance que el listado del estudiante ({@see GestionAranceles::cuotaParaGestion}):
+     * ciclo activo por año lectivo e impagas de años anteriores (no solo idTerlec de sesión).
      */
     public static function cuotaPendienteParaAdministracion(int $idCuotaGenerada, int $idLegajo): ?CuotaGenerada
     {
-        return CuotaGenerada::query()
-            ->with([
-                'legajo:id,apellido,nombre,dni,legajo',
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
-                'curso.curplan:id,curPlanCurso',
-                'curso.turnoClase:id,nombre',
-                'curso.nivel:id,nivel',
-                'cuota:id,nombre',
-            ])
-            ->where('id', $idCuotaGenerada)
-            ->where('idLegajos', $idLegajo)
-            ->where('idTerlec', (int) schoolCtx()->idTerlec)
-            ->where('faltapa', '>', 0)
-            ->first();
+        $registro = GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo)
+            ?? GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo);
+
+        if ($registro === null || (float) ($registro->faltapa ?? 0) <= 0) {
+            return null;
+        }
+
+        return $registro;
     }
 
     public static function formatearImporte(float|int|string|null $valor): string
@@ -163,19 +161,49 @@ final class ArancelesEscolares
 
     public static function formatearFecha(mixed $fecha): string
     {
+        if (self::esFechaVacia($fecha)) {
+            return '';
+        }
+
         if ($fecha instanceof CarbonInterface) {
             return $fecha->format('d/m/Y');
         }
 
         $raw = trim((string) ($fecha ?? ''));
-        if ($raw === '' || $raw === '0000-00-00') {
-            return '';
-        }
 
         try {
             return Carbon::parse($raw)->format('d/m/Y');
         } catch (\Throwable) {
             return $raw;
+        }
+    }
+
+    /**
+     * Fecha sin valor en BD legacy (null, '', 0000-00-00 o Carbon inválido p. ej. año -1).
+     */
+    public static function esFechaVacia(mixed $fecha): bool
+    {
+        if ($fecha === null) {
+            return true;
+        }
+
+        if ($fecha instanceof CarbonInterface) {
+            return $fecha->year < 1900;
+        }
+
+        $raw = trim((string) $fecha);
+        if ($raw === '' || $raw === '0000-00-00') {
+            return true;
+        }
+
+        if (str_starts_with($raw, '0000-') || str_starts_with($raw, '-0001')) {
+            return true;
+        }
+
+        try {
+            return Carbon::parse($raw)->year < 1900;
+        } catch (\Throwable) {
+            return true;
         }
     }
 
@@ -214,14 +242,15 @@ final class ArancelesEscolares
 
     private static function parseFecha(mixed $fecha): ?CarbonInterface
     {
+        if (self::esFechaVacia($fecha)) {
+            return null;
+        }
+
         if ($fecha instanceof CarbonInterface) {
             return $fecha->copy()->startOfDay();
         }
 
         $raw = trim((string) ($fecha ?? ''));
-        if ($raw === '' || $raw === '0000-00-00') {
-            return null;
-        }
 
         try {
             return Carbon::parse($raw)->startOfDay();

@@ -19,6 +19,74 @@ final class CuotasFormato
         return ArancelesEscolares::formatearFecha($fecha);
     }
 
+    public static function esFechaVacia(mixed $fecha): bool
+    {
+        return ArancelesEscolares::esFechaVacia($fecha);
+    }
+
+    /**
+     * Valor para input type="date" (Y-m-d); vacío si la fecha legacy no tiene valor.
+     */
+    public static function fechaParaInputDate(mixed $fecha): string
+    {
+        if (self::esFechaVacia($fecha)) {
+            return '';
+        }
+
+        if ($fecha instanceof \Carbon\CarbonInterface) {
+            return $fecha->format('Y-m-d');
+        }
+
+        return self::parseFechaOpcional((string) $fecha) ?? '';
+    }
+
+    /**
+     * Fecha opcional ingresada en formularios (dd/mm/aaaa o aaaa-mm-dd) → Y-m-d para BD.
+     * Vacío → null. Texto incompleto (p. ej. "18/06/202") → null sin error.
+     */
+    public static function parseFechaOpcional(?string $texto): ?string
+    {
+        $texto = trim((string) ($texto ?? ''));
+        if ($texto === '' || $texto === '0000-00-00') {
+            return null;
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $texto)) {
+            try {
+                $parsed = \Carbon\Carbon::parse($texto);
+
+                return $parsed->year >= 1900 ? $parsed->format('Y-m-d') : null;
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $texto)) {
+            try {
+                $parsed = \Carbon\Carbon::createFromFormat('d/m/Y', $texto);
+
+                return $parsed->year >= 1900 ? $parsed->format('Y-m-d') : null;
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Texto con dígitos que no es una fecha completa válida (entrada a medias).
+     */
+    public static function esFechaTextoIncompleto(?string $texto): bool
+    {
+        $texto = trim((string) ($texto ?? ''));
+        if ($texto === '') {
+            return false;
+        }
+
+        return self::parseFechaOpcional($texto) === null && preg_match('/\d/', $texto) === 1;
+    }
+
     public static function formatearFechaHora(mixed $fecha): string
     {
         if ($fecha instanceof \Carbon\CarbonInterface) {

@@ -18,7 +18,8 @@ return [
             'cert_crt' => 'Sistemalaboratorio_2bbae7f592f630ba.crt',
             'cbte_tipo' => 15,
             'produccion' => true,
-            'simular_local' => false,
+            // Por ahora no envía a AFIP: genera comprobante simulado en BD.
+            'simular' => true,
         ],
     ],
 ];

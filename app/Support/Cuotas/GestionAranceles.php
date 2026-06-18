@@ -56,7 +56,7 @@ final class GestionAranceles
     }
 
     /**
-     * Ciclo activo completo + deudas de ciclos anteriores (faltapa > 0).
+     * Año del contexto (todas las cuotas, pagadas o no) + impagas de años lectivos anteriores.
      *
      * @param  Builder<CuotaGenerada>  $query
      * @return Builder<CuotaGenerada>
@@ -64,11 +64,33 @@ final class GestionAranceles
     private static function aplicarFiltroCuotasVistaNormal(Builder $query, int $idTerlec): Builder
     {
         $tabla = self::tablaCuotasGeneradas();
+        $anoActivo = schoolCtx()->terlecAno();
 
-        return $query->where(function (Builder $q) use ($idTerlec, $tabla): void {
-            $q->where("{$tabla}.idTerlec", $idTerlec)
-                ->orWhere("{$tabla}.faltapa", '>', 0);
+        if ($anoActivo === null) {
+            return $query->where(function (Builder $q) use ($idTerlec, $tabla): void {
+                $q->where("{$tabla}.idTerlec", $idTerlec)
+                    ->orWhere(function (Builder $q2) use ($idTerlec, $tabla): void {
+                        $q2->where("{$tabla}.faltapa", '>', 0)
+                            ->where("{$tabla}.idTerlec", '!=', $idTerlec);
+                    });
+            });
+        }
+
+        return $query->where(function (Builder $q) use ($tabla, $anoActivo): void {
+            $q->whereIn("{$tabla}.idTerlec", fn ($sub) => self::subqueryIdsTerlecPorAno($sub, '=', $anoActivo))
+                ->orWhere(function (Builder $q2) use ($tabla, $anoActivo): void {
+                    $q2->where("{$tabla}.faltapa", '>', 0)
+                        ->whereIn("{$tabla}.idTerlec", fn ($sub) => self::subqueryIdsTerlecPorAno($sub, '<', $anoActivo));
+                });
         });
+    }
+
+    /**
+     * @param  \Illuminate\Database\Query\Builder  $sub
+     */
+    private static function subqueryIdsTerlecPorAno($sub, string $operador, int $ano): void
+    {
+        $sub->select('id')->from('terlec')->where('ano', $operador, $ano);
     }
 
     private static function tablaCuotasGeneradas(): string
@@ -137,6 +159,25 @@ final class GestionAranceles
                 ->where('idLegajos', $idLegajo),
             $idTerlec,
         )->first();
+    }
+
+    /**
+     * Cuota del legajo sin filtro de ciclo activo / deuda pendiente (comprobantes PDF tras imputar).
+     */
+    public static function cuotaDelLegajo(int $idCuotaGenerada, int $idLegajo): ?CuotaGenerada
+    {
+        return CuotaGenerada::query()
+            ->with([
+                'legajo:id,apellido,nombre,dni',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                'curso.curplan:id,curPlanCurso',
+                'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
+                'cuota:id,nombre',
+            ])
+            ->whereKey($idCuotaGenerada)
+            ->where('idLegajos', $idLegajo)
+            ->first();
     }
 
     /**

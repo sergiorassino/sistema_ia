@@ -78,10 +78,8 @@
             <div class="w-full overflow-x-auto">
                 <div class="gf gf-vcenter gf-cuotas-estudiante">
                         <div class="gf-head">
-                            @if (! $mostrarHistorial)
-                                <div class="gf-th gf-th-accion" title="Editar"></div>
-                                <div class="gf-th gf-th-accion" title="Historial de pagos"></div>
-                            @endif
+                            <div class="gf-th gf-th-accion" title="Editar"></div>
+                            <div class="gf-th gf-th-accion" title="Historial de pagos"></div>
                             <div class="gf-th w-12">Año</div>
                             <div class="gf-th w-14 text-center">Nivel</div>
                             <div class="gf-th w-24">Curso</div>
@@ -95,10 +93,8 @@
                             <div class="gf-th gf-th-right w-[4.75rem]">Interés</div>
                             <div class="gf-th gf-th-right w-[4.75rem]">Pagado</div>
                             <div class="gf-th gf-th-right w-[4.75rem]">Saldo</div>
-                            @if (! $mostrarHistorial)
-                                <div class="gf-th gf-th-accion" title="Imputar pago"></div>
-                                <div class="gf-th gf-th-accion" title="Cupón"></div>
-                            @endif
+                            <div class="gf-th gf-th-accion" title="Imputar pago"></div>
+                            <div class="gf-th gf-th-accion" title="Cupón"></div>
                         </div>
 
                         @foreach ($cuotas as $c)
@@ -112,36 +108,34 @@
                                 [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
-                                @if (! $mostrarHistorial)
-                                    <div class="gf-td gf-td-accion !py-1">
-                                        <x-nav-contexto-estudiante
-                                            destino="cuotas.cuota.editar"
-                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
-                                            :id-legajos="$idLegajo"
-                                            :id-cuota-generada="$c->id"
-                                            class="inline">
-                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                                  title="Editar cuota">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                            </span>
-                                        </x-nav-contexto-estudiante>
-                                    </div>
-                                    <div class="gf-td gf-td-accion !py-1">
-                                        <x-nav-contexto-estudiante
-                                            destino="cuotas.cuota.historial-pagos"
-                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
-                                            :id-legajos="$idLegajo"
-                                            :id-cuota-generada="$c->id"
-                                            class="inline">
-                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                                  title="Historial de pagos">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                            </span>
-                                        </x-nav-contexto-estudiante>
-                                    </div>
-                                @endif
+                                <div class="gf-td gf-td-accion !py-1">
+                                    <x-nav-contexto-estudiante
+                                        destino="cuotas.cuota.editar"
+                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                        :id-legajos="$idLegajo"
+                                        :id-cuota-generada="$c->id"
+                                        class="inline">
+                                        <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                              title="Editar cuota">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </span>
+                                    </x-nav-contexto-estudiante>
+                                </div>
+                                <div class="gf-td gf-td-accion !py-1">
+                                    <x-nav-contexto-estudiante
+                                        destino="cuotas.cuota.historial-pagos"
+                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                        :id-legajos="$idLegajo"
+                                        :id-cuota-generada="$c->id"
+                                        class="inline">
+                                        <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                              title="Historial de pagos">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </span>
+                                    </x-nav-contexto-estudiante>
+                                </div>
                                 <div class="gf-td w-12 tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
                                 <div class="gf-td gf-td-nivel w-14" title="{{ $nivelTexto }}">
                                     @if ($nivelLinea1 !== '')
@@ -162,50 +156,46 @@
                                 <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->interes) }}</div>
                                 <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->pagado) }}</div>
                                 <div class="gf-td gf-th-right w-[4.75rem] font-bold tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->faltapa) }}</div>
-                                @if (! $mostrarHistorial)
-                                    <div class="gf-td gf-td-accion !py-1">
-                                        @if ((float) $c->faltapa > 0)
-                                            <x-nav-contexto-estudiante
-                                                destino="cuotas.cuota.imputar"
-                                                :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
-                                                :id-legajos="$idLegajo"
-                                                :id-cuota-generada="$c->id"
-                                                class="inline">
-                                                <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                                      title="Imputar pago">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                                </span>
-                                            </x-nav-contexto-estudiante>
+                                <div class="gf-td gf-td-accion !py-1">
+                                    @if ((float) $c->faltapa > 0)
+                                        <x-nav-contexto-estudiante
+                                            destino="cuotas.cuota.imputar"
+                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                            :id-legajos="$idLegajo"
+                                            :id-cuota-generada="$c->id"
+                                            class="inline">
+                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                  title="Imputar pago">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                            </span>
+                                        </x-nav-contexto-estudiante>
+                                    @endif
+                                </div>
+                                <div class="gf-td gf-td-accion !py-1">
+                                    @if ((float) $c->faltapa > 0)
+                                        @if (ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                            <button type="button"
+                                                    x-on:click="window.seSwalAviso(@js(ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
+                                                    class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                    title="Cupón no disponible">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            </button>
+                                        @else
+                                            <a href="{{ se_route_url('cuotas.comprobante', ['ref' => OpaqueRouteToken::forComprobantePagoCuotaAdministracion((int) $c->id, $idLegajo)]) }}"
+                                               target="_blank" rel="noopener noreferrer"
+                                               class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                               title="Emitir cupón de pago">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            </a>
                                         @endif
-                                    </div>
-                                    <div class="gf-td gf-td-accion !py-1">
-                                        @if ((float) $c->faltapa > 0)
-                                            @if (ArancelesEscolares::cuotaVencidaParaReimpresion($c))
-                                                <button type="button"
-                                                        x-on:click="window.seSwalAviso(@js(ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
-                                                        class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
-                                                        title="Cupón no disponible">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                                </button>
-                                            @else
-                                                <a href="{{ se_route_url('cuotas.comprobante', ['ref' => OpaqueRouteToken::forComprobantePagoCuotaAdministracion((int) $c->id, $idLegajo)]) }}"
-                                                   target="_blank" rel="noopener noreferrer"
-                                                   class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                                   title="Emitir cupón de pago">
-                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                                </a>
-                                            @endif
-                                        @endif
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
                         @endforeach
 
                         <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-estudiante-totales" wire:key="cg-totales-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
-                            @if (! $mostrarHistorial)
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                            @endif
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td w-12" aria-hidden="true"></div>
                             <div class="gf-td w-14" aria-hidden="true"></div>
                             <div class="gf-td w-24" aria-hidden="true"></div>
@@ -221,16 +211,12 @@
                             <div class="gf-td gf-td-total-importe gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">
                                 {{ CuotasFormato::formatearImporte($totalesAdeudados['neto']) }}
                             </div>
-                            @if (! $mostrarHistorial)
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                            @endif
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                         </div>
                         <div class="gf-row gf-row--totales gf-cuotas-estudiante-totales" wire:key="cg-totales-intereses-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
-                            @if (! $mostrarHistorial)
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                            @endif
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td w-12" aria-hidden="true"></div>
                             <div class="gf-td w-14" aria-hidden="true"></div>
                             <div class="gf-td w-24" aria-hidden="true"></div>
@@ -246,10 +232,8 @@
                             <div class="gf-td gf-td-total-importe gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">
                                 {{ CuotasFormato::formatearImporte($totalesAdeudados['conIntereses']) }}
                             </div>
-                            @if (! $mostrarHistorial)
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
-                            @endif
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                         </div>
                 </div>
             </div>

@@ -290,6 +290,24 @@
                 </a>
 
                 @php
+                    if (! \Illuminate\Support\Facades\Route::has('listados.estudiantes-formato')) {
+                        throw new \RuntimeException("Sidebar: falta la ruta 'listados.estudiantes-formato'.");
+                    }
+                @endphp
+                <a href="{{ route('listados.estudiantes-formato') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('listados.estudiantes-formato', 'listados.estudiantes-formato.pdf'),
+                   ])
+                   title="Listados de Estudiantes con Formato v1.0">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                    </svg>
+                    <span class="truncate">Listados de Estudiantes con Formato</span>
+                </a>
+
+                @php
                     if (! \Illuminate\Support\Facades\Route::has('listados.libro-matricula')) {
                         throw new \RuntimeException("Sidebar: falta la ruta 'listados.libro-matricula'.");
                     }
