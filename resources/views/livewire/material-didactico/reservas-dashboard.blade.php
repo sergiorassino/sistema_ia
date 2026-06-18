@@ -8,7 +8,7 @@
                     <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Listado de reservas</h1>
                     <p class="text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
-                        @if($soloConsultaPortal)
+                        @if($soloConsultaPortal || $puedeGestionarReservas)
                             · Consulta de reservas
                         @elseif($rol !== 'admin')
                             · Mis reservas
@@ -114,13 +114,13 @@
                             @endif
                             <div class="gf-th gf-rrd-horario">Horario</div>
                             <div class="gf-th gf-rrd-recurso">Recurso</div>
-                            <div class="gf-th gf-rrd-grupo">Grupo</div>
                             <div class="gf-th gf-rrd-sala">Sala / Curso</div>
-                            <div class="gf-th gf-rrd-auxiliar">Auxiliar</div>
                             <div class="gf-th gf-rrd-usuario">Reservado por</div>
+                            <div class="gf-th gf-rrd-observaciones">Observaciones</div>
                             <div class="gf-th gf-rrd-estado">Estado</div>
                             @if($rol === 'admin' && ! $soloConsultaPortal)
                                 <div class="gf-th gf-rrd-entregado">Entregado a</div>
+                                <div class="gf-th gf-rrd-devuelto">Devuelto por</div>
                             @endif
                             @if(! $soloConsultaPortal)
                                 <div class="gf-th gf-rrd-acciones text-center">Acciones</div>
@@ -134,8 +134,15 @@
                                 $idProfesorCtx = (int) (schoolCtx()->idProfesor ?? 0);
                                 $esDuenoPedido = $pedido?->id_profesor === $idProfesorCtx;
                                 $puedeGestionarPedido = $rol === 'admin' || ($rol === 'profesor' && $esDuenoPedido);
+                                $puedeEditarCancelarPedido = $puedeGestionarPedido && $grupo->todas_pendientes_pedido;
+                                $filasAcciones = max(1, $reservasGrupo->count());
                             @endphp
-                            <div class="gf-row gf-row-hover" wire:key="pedido-{{ $grupo->id_pedido }}">
+                            <div @class([
+                                    'gf-row gf-row-hover',
+                                    'gf-row-multirecurso' => $filasAcciones > 1,
+                                ])
+                                style="--rrd-filas: {{ $filasAcciones }}"
+                                wire:key="pedido-{{ $grupo->id_pedido }}">
                                 @if($modoFecha === 'todas')
                                     <div class="gf-td gf-rrd-fecha tabular-nums">
                                         {{ $grupo->fecha?->format('d/m/Y') }}
@@ -151,16 +158,28 @@
                                         @endforeach
                                     </div>
                                 </div>
-                                <div class="gf-td gf-rrd-grupo text-neutral-500 text-xs">
-                                    <div class="gf-rrd-stack">
-                                        @foreach($reservasGrupo as $reserva)
-                                            <div class="gf-rrd-stack-item">{{ $reserva->recurso?->grupo?->nombre ?: '—' }}</div>
-                                        @endforeach
-                                    </div>
-                                </div>
                                 <div class="gf-td gf-rrd-sala text-xs">{{ $pedido?->sala_curso_grado ?: '—' }}</div>
-                                <div class="gf-td gf-rrd-auxiliar text-xs">{{ $pedido?->auxiliar ?: '—' }}</div>
-                                <div class="gf-td gf-rrd-usuario text-xs">{{ $pedido?->profesor?->nombre_completo ?: '—' }}</div>
+                                <div class="gf-td gf-rrd-usuario">
+                                    @if($pedido?->profesor?->nombre_completo)
+                                        @php
+                                            $urlMensajeReservador = \App\Support\Comunicaciones\NuevoComunicadoDocenteDestino::urlParaProfesor(
+                                                (int) ($pedido->id_profesor ?? 0)
+                                            );
+                                        @endphp
+                                        <div class="gf-rrd-meta-line gf-rrd-reservado-por">
+                                            <span>{{ $pedido->profesor->nombre_completo }}</span>
+                                            @if($urlMensajeReservador)
+                                                <a href="{{ $urlMensajeReservador }}"
+                                                   class="gf-rrd-link-mensaje">
+                                                    Enviar mensaje
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @else
+                                        —
+                                    @endif
+                                </div>
+                                <div class="gf-td gf-rrd-observaciones text-xs">{{ $pedido?->observaciones ?: '—' }}</div>
                                 <div class="gf-td gf-rrd-estado">
                                     <div class="gf-rrd-stack">
                                         @foreach($reservasGrupo as $reserva)
@@ -190,46 +209,76 @@
                                     <div class="gf-td gf-rrd-entregado text-xs">
                                         <div class="gf-rrd-stack">
                                             @foreach($reservasGrupo as $reserva)
-                                                <div class="gf-rrd-stack-item">{{ $reserva->entregado_a ?: '—' }}</div>
+                                                <div class="gf-rrd-stack-item">
+                                                    @if($reserva->entregado_a || $reserva->entregado_at)
+                                                        <div class="gf-rrd-meta-line">
+                                                            @if($reserva->entregado_a)
+                                                                <span class="font-medium text-neutral-800">{{ $reserva->entregado_a }}</span>
+                                                            @endif
+                                                            @if($reserva->entregado_at)
+                                                                <span class="text-neutral-500 tabular-nums">{{ $reserva->entregado_at->format('d/m/Y H:i') }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="gf-td gf-rrd-devuelto text-xs">
+                                        <div class="gf-rrd-stack">
+                                            @foreach($reservasGrupo as $reserva)
+                                                @php
+                                                    $nombreDevuelve = $reserva->nombreQuienDevuelve();
+                                                @endphp
+                                                <div class="gf-rrd-stack-item">
+                                                    @if($nombreDevuelve !== '' || $reserva->devuelto_at)
+                                                        <div class="gf-rrd-meta-line">
+                                                            @if($nombreDevuelve !== '')
+                                                                <span class="font-medium text-neutral-800">{{ $nombreDevuelve }}</span>
+                                                            @endif
+                                                            @if($reserva->devuelto_at)
+                                                                <span class="text-neutral-500 tabular-nums">{{ $reserva->devuelto_at->format('d/m/Y H:i') }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </div>
                                             @endforeach
                                         </div>
                                     </div>
                                 @endif
                                 @if(! $soloConsultaPortal)
-                                <div class="gf-td-actions gf-rrd-acciones">
-                                    <div class="gf-rrd-stack gf-rrd-stack--acciones">
-                                        @foreach($reservasGrupo as $reserva)
-                                            <div class="gf-rrd-stack-item gf-rrd-stack-item--acciones">
-                                                @if($rol === 'admin' && $reserva->esPendiente())
-                                                    <button type="button"
-                                                            wire:click="abrirEntrega({{ $reserva->id }})"
-                                                            class="btn-secondary btn-sm">
-                                                        Entregar
-                                                    </button>
-                                                @endif
-                                                @if($rol === 'admin' && $reserva->esEntregado())
-                                                    <button type="button"
-                                                            wire:click="abrirDevolucion({{ $reserva->id }})"
-                                                            class="btn-secondary btn-sm">
-                                                        Devolver
-                                                    </button>
-                                                @endif
-                                                @if($puedeGestionarPedido && $reserva->esPendiente())
-                                                    <button type="button"
-                                                            x-on:click="seSwalConfirmar(@js('¿Cancelar la reserva de este recurso?')).then(ok => ok && $wire.cancelarItemReserva({{ $reserva->id }}))"
-                                                            class="btn-danger btn-sm">
-                                                        Cancelar
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                        @if($puedeGestionarPedido && $grupo->todas_pendientes_pedido)
-                                            <div class="gf-rrd-stack-item gf-rrd-stack-item--pedido">
-                                                <a href="{{ route('material-didactico.reservar.edit', $grupo->id_pedido) }}"
-                                                   class="btn-secondary btn-sm">
-                                                    Editar pedido
-                                                </a>
-                                            </div>
+                                <div class="gf-td gf-td-actions gf-rrd-acciones">
+                                    <div class="gf-rrd-acciones-inline">
+                                        @if($rol === 'admin' && $grupo->alguna_activa_pedido)
+                                            <button type="button"
+                                                    wire:click="abrirEntrega({{ $grupo->id_pedido }})"
+                                                    class="btn-secondary btn-sm">
+                                                Entregar
+                                            </button>
+                                        @endif
+                                        @if($rol === 'admin' && ($grupo->alguna_entregada_pedido || $grupo->alguna_devuelta_pedido))
+                                            <button type="button"
+                                                    wire:click="abrirDevolucion({{ $grupo->id_pedido }})"
+                                                    class="btn-secondary btn-sm">
+                                                Devolver
+                                            </button>
+                                        @endif
+                                        @if($puedeEditarCancelarPedido)
+                                            <a href="{{ $puedeGestionarReservas
+                                                ? route('portalDocente.materialDidactico.reservar.edit', $grupo->id_pedido)
+                                                : route('material-didactico.reservar.edit', $grupo->id_pedido) }}"
+                                               class="btn-secondary btn-sm">
+                                                Editar
+                                            </a>
+                                            <button type="button"
+                                                    x-on:click="seSwalConfirmar(@js('¿Cancelar toda la reserva?')).then(ok => ok && $wire.cancelarPedidoReserva({{ $grupo->id_pedido }}))"
+                                                    class="btn-danger btn-sm">
+                                                Cancelar
+                                            </button>
                                         @endif
                                     </div>
                                 </div>
@@ -255,8 +304,8 @@
             <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
                  role="dialog" aria-modal="true" aria-labelledby="modal-entrega-titulo">
                 <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarEntrega"></div>
-                <div class="relative z-10 my-auto flex w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-                    <div class="flex items-center justify-between border-b border-accent-200 px-5 py-4">
+                <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[min(90dvh,32rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+                    <div class="flex shrink-0 items-center justify-between border-b border-accent-200 px-5 py-4">
                         <h2 id="modal-entrega-titulo" class="text-base font-semibold text-neutral-800">Registrar entrega</h2>
                         <button type="button" wire:click="cerrarEntrega" class="text-neutral-400 hover:text-neutral-600">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,20 +313,55 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="px-5 py-4 space-y-4">
-                        <div>
-                            <label for="entregadoA" class="form-label">Quién retira el material <span class="text-red-500">*</span></label>
-                            <input id="entregadoA"
-                                   type="text"
-                                   wire:model="entregadoA"
-                                   maxlength="100"
-                                   placeholder="Nombre del docente, alumno u otra persona…"
-                                   class="form-input mt-1.5"
-                                   autofocus>
-                            @error('entregadoA') <p class="form-error">{{ $message }}</p> @enderror
-                        </div>
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                        <p class="text-xs text-neutral-500 leading-relaxed">
+                            Complete la entrega o corrija el nombre. Si borra un campo entregado, el recurso vuelve a pendiente. Los devueltos no se editan aquí.
+                        </p>
+                        @foreach($modalEntregaReservas as $reserva)
+                            @php
+                                $estadoEntregaLabel = match($reserva->estado) {
+                                    'pendiente' => 'Pendiente',
+                                    'entregado' => 'Entregado',
+                                    'devuelto'  => 'Devuelto',
+                                    default     => $reserva->estado,
+                                };
+                                $estadoEntregaClases = match($reserva->estado) {
+                                    'pendiente' => 'se-pill bg-yellow-100 text-yellow-700',
+                                    'entregado' => 'se-pill bg-blue-100 text-blue-700',
+                                    'devuelto'  => 'se-pill bg-green-100 text-green-700',
+                                    default     => 'se-pill bg-neutral-100 text-neutral-500',
+                                };
+                                $campoEntregaDeshabilitado = $reserva->esDevuelto();
+                            @endphp
+                            <div @class([
+                                'rounded-xl border px-4 py-3',
+                                'border-accent-200 bg-accent-50/40' => ! $campoEntregaDeshabilitado,
+                                'border-accent-200/70 bg-neutral-50/80' => $campoEntregaDeshabilitado,
+                            ])>
+                                <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                                    <label for="entrega-{{ $reserva->id }}" class="form-label mb-0">
+                                        {{ $reserva->recurso?->nombre ?: 'Recurso' }}
+                                    </label>
+                                    <span class="{{ $estadoEntregaClases }}">{{ $estadoEntregaLabel }}</span>
+                                </div>
+                                <input id="entrega-{{ $reserva->id }}"
+                                       type="text"
+                                       wire:model="entregasPedido.{{ $reserva->id }}"
+                                       maxlength="100"
+                                       placeholder="{{ $campoEntregaDeshabilitado ? 'Ya devuelto' : 'Quién retira este recurso…' }}"
+                                       class="form-input"
+                                       @disabled($campoEntregaDeshabilitado)
+                                       @if($loop->first && ! $campoEntregaDeshabilitado) autofocus @endif>
+                                @error('entregasPedido.'.$reserva->id)
+                                    <p class="form-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endforeach
+                        @error('entregasPedido')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
                     </div>
-                    <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50 px-5 py-4">
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-accent-200 bg-accent-50 px-5 py-4">
                         <button type="button" wire:click="cerrarEntrega" class="btn-secondary">Cancelar</button>
                         <button type="button" wire:click="confirmarEntrega" class="btn-primary">Confirmar entrega</button>
                     </div>
@@ -290,8 +374,8 @@
             <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
                  role="dialog" aria-modal="true" aria-labelledby="modal-devolucion-titulo">
                 <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarDevolucion"></div>
-                <div class="relative z-10 my-auto flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
-                    <div class="flex items-center justify-between border-b border-accent-200 px-5 py-4">
+                <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[min(90dvh,32rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+                    <div class="flex shrink-0 items-center justify-between border-b border-accent-200 px-5 py-4">
                         <h2 id="modal-devolucion-titulo" class="text-base font-semibold text-neutral-800">Registrar devolución</h2>
                         <button type="button" wire:click="cerrarDevolucion" class="text-neutral-400 hover:text-neutral-600">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,10 +383,56 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="px-5 py-4">
-                        <p class="text-sm text-neutral-700">¿Confirma la devolución de este recurso?</p>
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                        <p class="text-xs text-neutral-500 leading-relaxed">
+                            Registre devoluciones o corrija el nombre. Si borra un campo ya registrado, el recurso vuelve a entregado.
+                        </p>
+                        @foreach($modalDevolucionReservas as $reserva)
+                            @php
+                                $estadoDevolucionLabel = match($reserva->estado) {
+                                    'pendiente' => 'Pendiente',
+                                    'entregado' => 'Entregado',
+                                    'devuelto'  => 'Devuelto',
+                                    default     => $reserva->estado,
+                                };
+                                $estadoDevolucionClases = match($reserva->estado) {
+                                    'pendiente' => 'se-pill bg-yellow-100 text-yellow-700',
+                                    'entregado' => 'se-pill bg-blue-100 text-blue-700',
+                                    'devuelto'  => 'se-pill bg-green-100 text-green-700',
+                                    default     => 'se-pill bg-neutral-100 text-neutral-500',
+                                };
+                                $campoDevolucionDeshabilitado = $reserva->esPendiente();
+                            @endphp
+                            <div @class([
+                                'rounded-xl border px-4 py-3',
+                                'border-accent-200 bg-accent-50/40' => ! $campoDevolucionDeshabilitado,
+                                'border-accent-200/70 bg-neutral-50/80' => $campoDevolucionDeshabilitado,
+                            ])>
+                                <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                                    <label for="devolucion-{{ $reserva->id }}" class="form-label mb-0">
+                                        {{ $reserva->recurso?->nombre ?: 'Recurso' }}
+                                    </label>
+                                    <span class="{{ $estadoDevolucionClases }}">{{ $estadoDevolucionLabel }}</span>
+                                </div>
+                                <input id="devolucion-{{ $reserva->id }}"
+                                       type="text"
+                                       wire:model="devolucionesPedido.{{ $reserva->id }}"
+                                       wire:keydown.enter.prevent="confirmarDevolucion"
+                                       maxlength="100"
+                                       placeholder="{{ $campoDevolucionDeshabilitado ? 'Aún no entregado' : 'Quién devuelve este recurso…' }}"
+                                       class="form-input"
+                                       @disabled($campoDevolucionDeshabilitado)
+                                       @if($loop->first && ! $campoDevolucionDeshabilitado) autofocus @endif>
+                                @error('devolucionesPedido.'.$reserva->id)
+                                    <p class="form-error">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endforeach
+                        @error('devolucionesPedido')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
                     </div>
-                    <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50 px-5 py-4">
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-accent-200 bg-accent-50 px-5 py-4">
                         <button type="button" wire:click="cerrarDevolucion" class="btn-secondary">Cancelar</button>
                         <button type="button" wire:click="confirmarDevolucion" class="btn-primary">Confirmar devolución</button>
                     </div>

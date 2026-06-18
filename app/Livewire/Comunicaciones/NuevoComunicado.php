@@ -6,6 +6,7 @@ use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Push\DestinatariosRepository;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
+use App\Support\Comunicaciones\NuevoComunicadoDocenteDestino;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -85,6 +86,15 @@ class NuevoComunicado extends Component
                 CanalesPolicy::claveRolDeProfesor($profesor),
                 (int) $ctx->idNivel
             );
+        }
+
+        $idDestinatario = (int) request()->query('destinatario', 0);
+        if ($idDestinatario > 0) {
+            $prefill = NuevoComunicadoDocenteDestino::datosDestinatarioProfesor($idDestinatario);
+            if ($prefill !== null) {
+                $this->destinatarioTipo       = $prefill['destinatario_tipo'];
+                $this->docentesSeleccionados  = [$prefill['docente']];
+            }
         }
     }
 

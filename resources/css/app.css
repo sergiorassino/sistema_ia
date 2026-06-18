@@ -1107,50 +1107,48 @@
         max-width: 100%;
         grid-template-columns:
             minmax(4.25rem, 4.75rem)
-            minmax(3rem, 1.05fr)
-            minmax(2.75rem, 0.95fr)
+            minmax(3rem, 1.15fr)
             minmax(3rem, 1fr)
-            minmax(2.5rem, 0.8fr)
             minmax(3rem, 1.1fr)
+            minmax(3rem, 1.2fr)
             minmax(4.5rem, 5rem)
-            minmax(11.5rem, 13.5rem);
+            minmax(14rem, 16.5rem);
     }
     .gf.gf-rrd-listado.gf-rrd-listado--admin {
         grid-template-columns:
             minmax(4.25rem, 4.75rem)
             minmax(3rem, 1fr)
-            minmax(2.75rem, 0.9fr)
             minmax(3rem, 0.95fr)
-            minmax(2.5rem, 0.75fr)
             minmax(3rem, 1fr)
+            minmax(3rem, 1.15fr)
             minmax(4.5rem, 5rem)
-            minmax(2.75rem, 0.85fr)
-            minmax(15.5rem, 17rem);
+            minmax(7rem, 8.5rem)
+            minmax(7rem, 8.5rem)
+            minmax(18rem, 20.5rem);
     }
     .gf.gf-rrd-listado.gf-rrd-listado--todas {
         grid-template-columns:
             minmax(4.5rem, 5rem)
             minmax(4.25rem, 4.75rem)
             minmax(3rem, 1fr)
-            minmax(2.75rem, 0.9fr)
             minmax(3rem, 0.95fr)
-            minmax(2.5rem, 0.75fr)
             minmax(3rem, 1fr)
+            minmax(3rem, 1.15fr)
             minmax(4.5rem, 5rem)
-            minmax(11.5rem, 13.5rem);
+            minmax(14rem, 16.5rem);
     }
     .gf.gf-rrd-listado.gf-rrd-listado--todas.gf-rrd-listado--admin {
         grid-template-columns:
             minmax(4.5rem, 5rem)
             minmax(4.25rem, 4.75rem)
             minmax(3rem, 0.95fr)
-            minmax(2.75rem, 0.85fr)
             minmax(3rem, 0.9fr)
-            minmax(2.5rem, 0.7fr)
             minmax(3rem, 0.95fr)
+            minmax(3rem, 1.1fr)
             minmax(4.5rem, 5rem)
-            minmax(2.75rem, 0.8fr)
-            minmax(15.5rem, 17rem);
+            minmax(7rem, 8.5rem)
+            minmax(7rem, 8.5rem)
+            minmax(18rem, 20.5rem);
     }
     .gf.gf-rrd-listado .gf-head,
     .gf.gf-rrd-listado .gf-row {
@@ -1173,15 +1171,41 @@
         white-space: normal;
         line-height: 1.2;
     }
-    .gf.gf-rrd-listado .gf-td.gf-rrd-grupo,
+    .gf.gf-rrd-listado .gf-th.gf-rrd-usuario,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-usuario {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    .gf.gf-rrd-listado .gf-rrd-reservado-por {
+        align-items: flex-start;
+    }
+    .gf.gf-rrd-listado .gf-rrd-link-mensaje {
+        display: inline-block;
+        margin-top: 0.15rem;
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 1.2;
+        color: rgb(64 132 141);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+    .gf.gf-rrd-listado .gf-rrd-link-mensaje:hover {
+        color: rgb(51 106 114);
+    }
     .gf.gf-rrd-listado .gf-td.gf-rrd-sala,
     .gf.gf-rrd-listado .gf-td.gf-rrd-recurso,
-    .gf.gf-rrd-listado .gf-td.gf-rrd-auxiliar,
-    .gf.gf-rrd-listado .gf-td.gf-rrd-usuario,
-    .gf.gf-rrd-listado .gf-td.gf-rrd-entregado {
+    .gf.gf-rrd-listado .gf-td.gf-rrd-observaciones,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-entregado,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-devuelto {
         overflow-wrap: anywhere;
         word-break: break-word;
         line-height: 1.25;
+    }
+    .gf.gf-rrd-listado .gf-rrd-meta-line {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        min-width: 0;
     }
     .gf.gf-rrd-listado .gf-td.gf-rrd-estado .se-pill {
         font-size: 10px;
@@ -1197,22 +1221,33 @@
     .gf.gf-rrd-listado .gf-td.gf-rrd-acciones {
         overflow: visible;
     }
-    .gf.gf-rrd-listado.gf-vcenter .gf-th.gf-rrd-acciones,
-    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-acciones {
+    .gf.gf-rrd-listado .gf-td-actions.gf-rrd-acciones,
+    .gf.gf-rrd-listado .gf-td.gf-td-actions.gf-rrd-acciones {
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-wrap: nowrap;
-        gap: 0.2rem;
         padding-left: 0.2rem;
         padding-right: 0.2rem;
     }
-    .gf.gf-rrd-listado .gf-td.gf-rrd-acciones .btn-sm {
+    .gf.gf-rrd-listado.gf-vcenter .gf-th.gf-rrd-acciones,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td-actions.gf-rrd-acciones,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-td-actions.gf-rrd-acciones {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.2rem;
+    }
+    .gf.gf-rrd-listado .gf-td.gf-rrd-acciones :is(a, button).btn-secondary,
+    .gf.gf-rrd-listado .gf-td.gf-rrd-acciones :is(a, button).btn-danger {
         flex-shrink: 0;
         white-space: nowrap;
-        padding: 0.28rem 0.42rem;
-        font-size: 10px;
-        line-height: 1.15;
+        padding: 0.22rem 0.45rem !important;
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.01em;
+        border-radius: 0.375rem !important;
+        font-weight: 600;
     }
     .gf.gf-rrd-listado .gf-rrd-stack {
         display: flex;
@@ -1241,17 +1276,81 @@
         flex-wrap: wrap;
         gap: 0.2rem;
     }
-    .gf.gf-rrd-listado .gf-rrd-stack-item--pedido {
+    .gf.gf-rrd-listado .gf-rrd-acciones-inline {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: center;
-        margin-top: 0.15rem;
-        padding-top: 0.5rem;
-        border-top: 1px dashed rgb(193 215 218 / 0.65);
+        gap: 0.2rem;
+        width: 100%;
+    }
+
+    /* Pedido con varios recursos: filas sincronizadas entre columnas (CSS subgrid) */
+    .gf.gf-rrd-listado .gf-row-multirecurso {
+        grid-template-rows: repeat(var(--rrd-filas, 1), minmax(2.25rem, auto));
+        align-items: stretch;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-fecha,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-horario,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-sala,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-usuario,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-observaciones {
+        grid-row: 1 / -1;
+        align-self: center;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-recurso,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-estado,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-entregado,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-devuelto {
+        grid-row: 1 / -1;
+        display: grid;
+        grid-template-rows: subgrid;
+        align-items: stretch;
+        align-self: stretch;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td.gf-rrd-acciones,
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-td-actions.gf-rrd-acciones {
+        grid-row: 1 / -1;
+        align-self: center;
+        overflow: visible;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-stack {
+        grid-row: 1 / -1;
+        display: grid;
+        grid-template-rows: subgrid;
+        align-content: stretch;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-stack-item {
+        min-height: 0;
+        align-items: center;
+        box-sizing: border-box;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-stack-item:not(:last-child) {
+        border-bottom: 1px solid rgb(193 215 218 / 0.45);
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-stack-item:last-child {
         border-bottom: 0;
+        padding-bottom: 0.35rem;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-stack-item:first-child {
+        padding-top: 0.35rem;
+    }
+    .gf.gf-rrd-listado .gf-row-multirecurso .gf-rrd-meta-line {
+        justify-content: center;
+    }
+    .gf.gf-rrd-listado.gf-vcenter .gf-row-multirecurso .gf-td.gf-rrd-acciones,
+    .gf.gf-rrd-listado.gf-vcenter .gf-row-multirecurso .gf-td-actions.gf-rrd-acciones {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+        overflow: visible;
     }
     .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-recurso,
-    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-grupo,
     .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-estado,
-    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-entregado {
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-entregado,
+    .gf.gf-rrd-listado.gf-vcenter .gf-td.gf-rrd-devuelto {
         align-items: stretch;
     }
 

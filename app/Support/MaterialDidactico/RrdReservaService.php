@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\DB;
  *    (solo se omite en préstamo espontáneo: admin + entregado_directo).
  *  - Ventana de disponibilidad: el rango solicitado debe estar contenido
  *    en al menos una ventana rrd_recurso_disponibilidad del recurso en ese día de semana.
- *  - Sin solapamiento: lockForUpdate + re-validación dentro de transacción.
+ *  - Sin solapamiento: no puede existir otra reserva activa del mismo recurso
+ *    en el mismo horario (pendiente o entregado).
  *  - Multireserva atómica: todo o nada (N recursos, 1 pedido).
  */
 class RrdReservaService
@@ -205,7 +206,9 @@ class RrdReservaService
                 'hora_inicio'      => $horaInicio,
                 'hora_fin'         => $horaFin,
                 'sala_curso_grado' => trim((string) ($datos['sala_curso_grado'] ?? '')),
-                'auxiliar'         => trim((string) ($datos['auxiliar'] ?? '')),
+                'auxiliar'         => array_key_exists('auxiliar', $datos)
+                    ? trim((string) $datos['auxiliar'])
+                    : $pedido->auxiliar,
                 'observaciones'    => trim((string) ($datos['observaciones'] ?? '')) ?: null,
             ]);
 
@@ -279,19 +282,107 @@ class RrdReservaService
     }
 
     /**
+     * Corregir datos de entrega (recurso ya entregado o devuelto).
+     *
+     * @throws RrdReservaException
+     */
+    public static function actualizarEntrega(RrdReserva $reserva, string $entregadoA, int $idProfesorEntrega): void
+    {
+        if ($reserva->esPendiente() || $reserva->esCancelado()) {
+            throw new RrdReservaException('Use registrar entrega para recursos pendientes.');
+        }
+
+        if (! $reserva->esEntregado() && ! $reserva->esDevuelto()) {
+            throw new RrdReservaException('No se puede corregir la entrega de este recurso.');
+        }
+
+        $reserva->update([
+            'entregado_a'   => substr(trim($entregadoA), 0, 100),
+            'entregado_por' => $idProfesorEntrega,
+            'entregado_at'  => now(),
+        ]);
+    }
+
+    /**
+     * Corregir datos de devolución (recurso ya devuelto).
+     *
+     * @throws RrdReservaException
+     */
+    public static function actualizarDevolucion(
+        RrdReserva $reserva,
+        string $devueltoPor,
+        int $idOperadorRecibe
+    ): void {
+        if (! $reserva->esDevuelto()) {
+            throw new RrdReservaException('Use registrar devolución para recursos entregados.');
+        }
+
+        $reserva->update([
+            'devuelto_por' => substr(trim($devueltoPor), 0, 100),
+            'devuelto_a'   => max(0, $idOperadorRecibe) > 0 ? max(0, $idOperadorRecibe) : null,
+            'devuelto_at'  => now(),
+        ]);
+    }
+
+    /**
+     * Anular entrega: vuelve el recurso a pendiente y limpia datos de entrega/devolución.
+     *
+     * @throws RrdReservaException
+     */
+    public static function revertirEntrega(RrdReserva $reserva): void
+    {
+        if ($reserva->esPendiente() || $reserva->esCancelado()) {
+            throw new RrdReservaException('Este recurso ya está pendiente.');
+        }
+
+        $reserva->update([
+            'estado'        => RrdReserva::ESTADO_PENDIENTE,
+            'entregado_a'   => null,
+            'entregado_por' => null,
+            'entregado_at'  => null,
+            'devuelto_por'  => null,
+            'devuelto_a'    => null,
+            'devuelto_at'   => null,
+        ]);
+    }
+
+    /**
+     * Anular devolución: vuelve el recurso a entregado y limpia datos de devolución.
+     *
+     * @throws RrdReservaException
+     */
+    public static function revertirDevolucion(RrdReserva $reserva): void
+    {
+        if (! $reserva->esDevuelto()) {
+            throw new RrdReservaException('Solo se puede anular la devolución de recursos devueltos.');
+        }
+
+        $reserva->update([
+            'estado'       => RrdReserva::ESTADO_ENTREGADO,
+            'devuelto_por' => null,
+            'devuelto_a'   => null,
+            'devuelto_at'  => null,
+        ]);
+    }
+
+    /**
      * Registrar la devolución de una reserva.
      *
      * @throws RrdReservaException
      */
-    public static function registrarDevolucion(RrdReserva $reserva, int $idProfesorDevolucion): void
-    {
+    public static function registrarDevolucion(
+        RrdReserva $reserva,
+        string $devueltoPor,
+        int $idOperadorRecibe
+    ): void {
         if (! $reserva->esEntregado()) {
             throw new RrdReservaException('Solo se puede registrar la devolución de reservas en estado entregado.');
         }
 
         $reserva->update([
             'estado'       => RrdReserva::ESTADO_DEVUELTO,
-            'devuelto_por' => $idProfesorDevolucion,
+            'devuelto_por' => substr(trim($devueltoPor), 0, 100),
+            'devuelto_a'   => max(0, $idOperadorRecibe) > 0 ? max(0, $idOperadorRecibe) : null,
             'devuelto_at'  => now(),
         ]);
     }
@@ -301,11 +392,128 @@ class RrdReservaService
     // ---------------------------------------------------------------
 
     /**
+     * Indica si un recurso puede reservarse en el horario indicado
+     * (antelación, ventana de disponibilidad y sin solapamiento con otras reservas).
+     *
+     * @param  list<int>|null  $idsRecursosOcupados  IDs ya ocupados en ese horario (evita N consultas en listados).
+     */
+    public static function esReservableEnHorario(
+        RrdRecurso $recurso,
+        string $fecha,
+        string $horaInicio,
+        string $horaFin,
+        bool $omitirAntelacion = false,
+        ?int $excluirPedidoId = null,
+        ?array $idsRecursosOcupados = null
+    ): bool {
+        $tz = config('app.timezone');
+
+        try {
+            $inicio = Carbon::parse("{$fecha} {$horaInicio}", $tz);
+            $fin    = Carbon::parse("{$fecha} {$horaFin}", $tz);
+        } catch (\Throwable) {
+            return false;
+        }
+
+        if ($fin->lte($inicio)) {
+            return false;
+        }
+
+        if (! $omitirAntelacion && ! self::cumpleAntelacion($recurso, $inicio)) {
+            return false;
+        }
+
+        if (! self::cumpleVentanaDisponibilidad($recurso, $inicio, $fin)) {
+            return false;
+        }
+
+        if ($idsRecursosOcupados !== null) {
+            return ! in_array((int) $recurso->id, $idsRecursosOcupados, true);
+        }
+
+        return ! self::tieneSolapamientoReserva(
+            (int) $recurso->id,
+            $fecha,
+            $horaInicio,
+            $horaFin,
+            $excluirPedidoId
+        );
+    }
+
+    /**
+     * IDs de recursos con al menos una reserva activa que solapa el horario indicado.
+     *
+     * @return list<int>
+     */
+    public static function idsRecursosConSolapamientoEnHorario(
+        string $fecha,
+        string $horaInicio,
+        string $horaFin,
+        ?int $excluirPedidoId = null
+    ): array {
+        $query = RrdReserva::query()
+            ->enContexto()
+            ->where('fecha', $fecha)
+            ->activas()
+            ->where(function ($q) use ($horaInicio, $horaFin) {
+                $q->where('hora_inicio', '<', $horaFin)
+                  ->where('hora_fin', '>', $horaInicio);
+            });
+
+        if ($excluirPedidoId !== null && $excluirPedidoId > 0) {
+            $query->where('id_pedido', '!=', $excluirPedidoId);
+        }
+
+        return $query->pluck('id_recurso')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private static function tieneSolapamientoReserva(
+        int $idRecurso,
+        string $fecha,
+        string $horaInicio,
+        string $horaFin,
+        ?int $excluirPedidoId = null
+    ): bool {
+        $query = RrdReserva::query()
+            ->where('id_recurso', $idRecurso)
+            ->where('fecha', $fecha)
+            ->activas()
+            ->where(function ($q) use ($horaInicio, $horaFin) {
+                $q->where('hora_inicio', '<', $horaFin)
+                  ->where('hora_fin', '>', $horaInicio);
+            });
+
+        if ($excluirPedidoId !== null && $excluirPedidoId > 0) {
+            $query->where('id_pedido', '!=', $excluirPedidoId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
      * Solo el préstamo espontáneo (admin marca entregado al guardar) omite la antelación.
      */
     private static function omitirAntelacion(bool $esAdmin, array $datos): bool
     {
         return $esAdmin && ! empty($datos['entregado_directo']);
+    }
+
+    private static function cumpleAntelacion(RrdRecurso $recurso, Carbon $inicio): bool
+    {
+        $horas = (int) $recurso->antelacion_min_horas;
+        if ($horas <= 0) {
+            return true;
+        }
+
+        $tz = config('app.timezone');
+        $inicio = $inicio->copy()->timezone($tz);
+        $minimoInicio = now($tz)->addHours($horas);
+
+        return $inicio->gte($minimoInicio);
     }
 
     /** @throws RrdReservaException */
@@ -316,15 +524,36 @@ class RrdReservaService
             return;
         }
 
-        $tz = config('app.timezone');
-        $inicio = $inicio->copy()->timezone($tz);
-        $minimoInicio = now($tz)->addHours($horas);
-
-        if (! $inicio->gte($minimoInicio)) {
+        if (! self::cumpleAntelacion($recurso, $inicio)) {
             throw new RrdReservaException(
                 "El recurso \"{$recurso->nombre}\" requiere reservarse con al menos {$horas} hora(s) de antelación."
             );
         }
+    }
+
+    private static function cumpleVentanaDisponibilidad(
+        RrdRecurso $recurso,
+        Carbon $inicio,
+        Carbon $fin
+    ): bool {
+        if ($recurso->siempre_disponible) {
+            return true;
+        }
+
+        if ($recurso->disponibilidades->isEmpty()) {
+            return false;
+        }
+
+        $diaSemana = (int) $inicio->isoFormat('E');
+
+        return $recurso->disponibilidades
+            ->where('dia_semana', $diaSemana)
+            ->contains(function ($d) use ($inicio, $fin) {
+                $ventanaInicio = Carbon::parse($inicio->format('Y-m-d').' '.$d->hora_inicio);
+                $ventanaFin    = Carbon::parse($inicio->format('Y-m-d').' '.$d->hora_fin);
+
+                return $inicio->gte($ventanaInicio) && $fin->lte($ventanaFin);
+            });
     }
 
     /** @throws RrdReservaException */
@@ -333,34 +562,19 @@ class RrdReservaService
         Carbon $inicio,
         Carbon $fin
     ): void {
-        // Recursos marcados como "siempre disponible" no tienen restricción de ventana horaria
-        if ($recurso->siempre_disponible) {
+        if (self::cumpleVentanaDisponibilidad($recurso, $inicio, $fin)) {
             return;
         }
 
-        if ($recurso->disponibilidades->isEmpty()) {
+        if (! $recurso->siempre_disponible && $recurso->disponibilidades->isEmpty()) {
             throw new RrdReservaException(
                 "El recurso \"{$recurso->nombre}\" no tiene ventanas de disponibilidad configuradas."
             );
         }
 
-        // dia_semana ISO: 1=Lunes…7=Domingo
-        $diaSemana = (int) $inicio->isoFormat('E');
-
-        $dentroDeVentana = $recurso->disponibilidades
-            ->where('dia_semana', $diaSemana)
-            ->first(function ($d) use ($inicio, $fin) {
-                $ventanaInicio = Carbon::parse($inicio->format('Y-m-d').' '.$d->hora_inicio);
-                $ventanaFin    = Carbon::parse($inicio->format('Y-m-d').' '.$d->hora_fin);
-
-                return $inicio->gte($ventanaInicio) && $fin->lte($ventanaFin);
-            });
-
-        if (! $dentroDeVentana) {
-            throw new RrdReservaException(
-                "El recurso \"{$recurso->nombre}\" no está disponible en el horario solicitado para ese día."
-            );
-        }
+        throw new RrdReservaException(
+            "El recurso \"{$recurso->nombre}\" no está disponible en el horario solicitado para ese día."
+        );
     }
 
     /**

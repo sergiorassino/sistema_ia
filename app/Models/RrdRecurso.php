@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MaterialDidactico\RrdReservaService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -84,6 +85,47 @@ class RrdRecurso extends Model
             ->where('id_grupo', $idGrupo)
             ->orderBy('orden')
             ->orderBy('nombre')
-            ->get(['id', 'nombre', 'antelacion_min_horas']);
+            ->get(['id', 'nombre', 'antelacion_min_horas', 'siempre_disponible']);
+    }
+
+    /**
+     * Recursos activos de un grupo reservables en el horario indicado
+     * (antelación mínima, ventanas de disponibilidad y sin reservas solapadas).
+     */
+    public static function paraGrupoReservablesEnHorario(
+        int $idGrupo,
+        string $fecha,
+        string $horaInicio,
+        string $horaFin,
+        bool $omitirAntelacion = false,
+        ?int $excluirPedidoId = null
+    ): \Illuminate\Support\Collection {
+        $recursosOcupados = RrdReservaService::idsRecursosConSolapamientoEnHorario(
+            $fecha,
+            $horaInicio,
+            $horaFin,
+            $excluirPedidoId
+        );
+
+        return static::query()
+            ->enContexto()
+            ->activos()
+            ->where('id_grupo', $idGrupo)
+            ->with('disponibilidades')
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->get()
+            ->filter(
+                fn (self $recurso): bool => RrdReservaService::esReservableEnHorario(
+                    $recurso,
+                    $fecha,
+                    $horaInicio,
+                    $horaFin,
+                    $omitirAntelacion,
+                    $excluirPedidoId,
+                    $recursosOcupados
+                )
+            )
+            ->values();
     }
 }

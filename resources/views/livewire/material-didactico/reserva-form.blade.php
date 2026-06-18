@@ -25,22 +25,28 @@
 
                 <div>
                     <label class="form-label">Fecha <span class="text-red-500">*</span></label>
-                    <input type="date" wire:model="fecha" class="form-input mt-1.5 max-w-xs">
+                    <input type="date" wire:model.live="fecha" class="form-input mt-1.5 max-w-xs">
                     @error('fecha') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex gap-4 flex-wrap">
                     <div class="flex-1 min-w-[8rem]">
                         <label class="form-label">Hora inicio <span class="text-red-500">*</span></label>
-                        <input type="time" wire:model="horaInicio" class="form-input mt-1.5">
+                        <input type="time" wire:model.live="horaInicio" class="form-input mt-1.5">
                         @error('horaInicio') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex-1 min-w-[8rem]">
                         <label class="form-label">Hora fin <span class="text-red-500">*</span></label>
-                        <input type="time" wire:model="horaFin" class="form-input mt-1.5">
+                        <input type="time" wire:model.live="horaFin" class="form-input mt-1.5">
                         @error('horaFin') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
+
+                @if(! $horarioCompleto)
+                    <p class="text-xs text-neutral-500">
+                        Complete la fecha y el horario para ver los recursos que puede reservar.
+                    </p>
+                @endif
 
                 @if($mostrarPrestamoEspontaneo)
                     <div class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
@@ -68,10 +74,22 @@
             <section class="space-y-4">
                 <div>
                     <h2 class="text-base font-semibold text-neutral-800">Recursos del pedido</h2>
-                    <p class="mt-1 text-xs text-neutral-500">Elija grupo y recurso, agréguelos al pedido y repita si necesita más de uno.</p>
+                    <p class="mt-1 text-xs text-neutral-500">
+                        @if($horarioCompleto)
+                            Elija grupo y recurso disponible para el horario indicado (sin reservas previas en ese rango).
+                        @else
+                            Primero indique fecha y horario; luego podrá elegir los recursos disponibles.
+                        @endif
+                    </p>
                 </div>
 
-                @if($grupos->isEmpty())
+                @if(! $horarioCompleto)
+                    <div class="rounded-2xl border border-accent-200 bg-accent-50/60 px-4 py-6 text-center">
+                        <p class="text-sm text-neutral-600">
+                            Complete la fecha y el horario de la reserva para ver los recursos disponibles.
+                        </p>
+                    </div>
+                @elseif($grupos->isEmpty())
                     <p class="text-sm text-neutral-500">No hay grupos de recursos configurados para este nivel.</p>
                 @else
                     <div class="rounded-2xl border border-accent-200 bg-accent-50/60 p-4 space-y-3">
@@ -101,7 +119,9 @@
                                 </select>
                                 @error('recursoIdAgregar') <p class="form-error">{{ $message }}</p> @enderror
                                 @if($grupoId !== '' && $recursosDelGrupo->isEmpty())
-                                    <p class="mt-1 text-xs text-neutral-500">No hay recursos en este grupo.</p>
+                                    <p class="mt-1 text-xs text-neutral-500">
+                                        No hay recursos disponibles en este grupo para el horario seleccionado.
+                                    </p>
                                 @endif
                             </div>
                         </div>
@@ -219,10 +239,26 @@
                 <h2 class="text-base font-semibold text-neutral-800">Datos adicionales</h2>
 
                 <div>
-                    <label class="form-label">Sala / Curso / Grado</label>
-                    @if($cursos->isNotEmpty())
-                        <select wire:model="salaCursoGrado" class="form-input mt-1.5">
-                            <option value="">— Seleccione un curso —</option>
+                    <label for="rrd-form-nivel" class="form-label">Nivel</label>
+                    <select id="rrd-form-nivel" wire:model.live="nivelId" class="form-input mt-1.5 max-w-md">
+                        <option value="">— Seleccione nivel —</option>
+                        @foreach($niveles as $nivel)
+                            <option value="{{ $nivel->id }}">{{ $nivel->nivel }}</option>
+                        @endforeach
+                    </select>
+                    @error('nivelId') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="rrd-form-sala" class="form-label">Sala / Grado / Curso <span class="text-red-500">*</span></label>
+                    @if($nivelId === '')
+                        <select id="rrd-form-sala" class="form-input mt-1.5" disabled>
+                            <option value="">— Seleccione primero un nivel —</option>
+                        </select>
+                        <p class="mt-1 text-xs text-neutral-500">Elija el nivel antes de indicar sala, grado o curso.</p>
+                    @elseif($cursos->isNotEmpty())
+                        <select id="rrd-form-sala" wire:model.live="salaCursoGrado" class="form-input mt-1.5">
+                            <option value="">— Seleccione sala / grado / curso —</option>
                             @foreach($cursos as $curso)
                                 @php
                                     $label = $curso->nombreParaListado();
@@ -234,23 +270,16 @@
                             @endforeach
                         </select>
                     @else
-                        <input type="text" wire:model="salaCursoGrado" maxlength="120"
-                               placeholder="Ej: Aula 5, 3° A Secundario…"
+                        <input id="rrd-form-sala" type="text" wire:model.live="salaCursoGrado" maxlength="120"
+                               placeholder="Ej: Aula 5, 3° A…"
                                class="form-input mt-1.5">
+                        <p class="mt-1 text-xs text-neutral-500">No hay cursos cargados para este nivel en el ciclo activo.</p>
                     @endif
                     @error('salaCursoGrado') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="form-label">Auxiliar</label>
-                    <input type="text" wire:model="auxiliar" maxlength="100"
-                           placeholder="Nombre del auxiliar (opcional)"
-                           class="form-input mt-1.5">
-                    @error('auxiliar') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <label class="form-label">Observaciones</label>
+                    <label class="form-label">Observaciones: (Solo para aclaraciones. No agregar recursos en este espacio)</label>
                     <textarea wire:model="observaciones" rows="3"
                               placeholder="Notas adicionales (opcional)"
                               class="form-input mt-1.5 leading-relaxed"></textarea>

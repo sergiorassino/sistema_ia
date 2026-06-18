@@ -107,8 +107,9 @@ return new class extends Migration
                 $table->string('entregado_a', 100)->nullable();
                 $table->unsignedInteger('entregado_por')->nullable();
                 $table->timestamp('entregado_at')->nullable();
-                // Devolución
-                $table->unsignedInteger('devuelto_por')->nullable();
+                // Devolución: devuelto_por = quien devuelve; devuelto_a = operador que recibe
+                $table->string('devuelto_por', 100)->nullable();
+                $table->unsignedInteger('devuelto_a')->nullable();
                 $table->timestamp('devuelto_at')->nullable();
                 $table->timestamp('created_at')->useCurrent();
 
