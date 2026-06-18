@@ -134,6 +134,20 @@
                            wire:model.live="avisoPago"
                            class="h-5 w-10 rounded-full border-accent-300 text-primary-600 focus:ring-primary-500">
                 </label>
+
+                @if ($muestraFacturarAfip)
+                    <label class="inline-flex cursor-pointer items-center justify-between gap-3 rounded-xl border-2 border-primary-400 bg-primary-50 px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-900 shadow-sm ring-1 ring-primary-200">
+                        <span class="min-w-0">
+                            Facturar AFIP
+                            <span class="mt-0.5 block text-[10px] font-semibold normal-case tracking-normal text-primary-800/80">
+                                Emite recibo electrónico al registrar el pago
+                            </span>
+                        </span>
+                        <input type="checkbox"
+                               wire:model.live="facturarAfip"
+                               class="h-6 w-6 rounded border-primary-400 text-primary-600 focus:ring-primary-500">
+                    </label>
+                @endif
             </div>
 
             <div class="mx-auto max-w-md">

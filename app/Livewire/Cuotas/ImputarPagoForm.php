@@ -4,6 +4,7 @@ namespace App\Livewire\Cuotas;
 
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\CuotasFormato;
+use App\Support\Cuotas\FacturacionAfipImputacionPago;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\ImputacionPagoCalculo;
 use App\Support\Cuotas\ImputacionPagoService;
@@ -38,6 +39,8 @@ class ImputarPagoForm extends Component
 
     public bool $avisoPago = false;
 
+    public bool $facturarAfip = true;
+
     public string $fechaPago = '';
 
     /** Etiqueta dinámica del campo porcent según tramo (interés o bonificación). */
@@ -69,6 +72,7 @@ class ImputarPagoForm extends Component
         $this->fechaPago = Carbon::today()->format('Y-m-d');
         $this->saldoAPagar = CuotasFormato::importeParaInput($registro->faltapa);
         $this->avisoPago = (int) ($registro->avisoPago ?? 0) === 1;
+        $this->facturarAfip = tenantCuotasFacturacionAfipHabilitada();
 
         if (! in_array($this->idCuotastipopago, GestionAranceles::idsMediosPagoImputacion(), true)) {
             $this->idCuotastipopago = GestionAranceles::IDS_MEDIOS_PAGO_IMPUTACION[0];
@@ -145,6 +149,7 @@ class ImputarPagoForm extends Component
             'fechaPago' => ['required', 'date'],
             'obs' => ['nullable', 'string', 'max:500'],
             'avisoPago' => ['boolean'],
+            'facturarAfip' => ['boolean'],
         ]);
 
         $saldo = CuotasFormato::parseImporte($validated['saldoAPagar']);
@@ -185,6 +190,24 @@ class ImputarPagoForm extends Component
         ]);
 
         session()->flash('success', 'Pago imputado correctamente.');
+
+        $facturarAfip = tenantCuotasFacturacionAfipHabilitada()
+            && (bool) ($validated['facturarAfip'] ?? false)
+            && $saldo > 0
+            && $pago !== null;
+
+        if ($facturarAfip) {
+            $registro->loadMissing(['cuota', 'terlec']);
+            $resultadoAfip = FacturacionAfipImputacionPago::facturar(
+                $pago,
+                $registro,
+                $this->idLegajo,
+                $saldo,
+            );
+
+            session()->flash('afip_swal_tipo', $resultadoAfip['ok'] ? 'exito' : 'error');
+            session()->flash('afip_swal_mensaje', $resultadoAfip['mensaje']);
+        }
 
         if ($pago !== null && $saldo > 0) {
             $url = route('cuotas.comprobante-imputacion', [
@@ -269,6 +292,7 @@ class ImputarPagoForm extends Component
             'registro' => $registro,
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'mediosPago' => GestionAranceles::mediosDePagoImputacion(),
+            'muestraFacturarAfip' => tenantCuotasFacturacionAfipHabilitada(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Imputar pago']);
     }
 }

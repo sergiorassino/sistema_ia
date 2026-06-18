@@ -527,6 +527,58 @@ if (! function_exists('tenantCuotasInteresMoraModo')) {
     }
 }
 
+if (! function_exists('tenantCuotasFacturacionAfipHabilitada')) {
+    /**
+     * Si el formulario de imputación de pago ofrece facturación AFIP.
+     */
+    function tenantCuotasFacturacionAfipHabilitada(): bool
+    {
+        if (! (bool) config('tenant.cuotas.facturacion_afip.habilitado', false)) {
+            return false;
+        }
+
+        $cfg = tenantCuotasFacturacionAfipConfig();
+
+        return $cfg !== null;
+    }
+}
+
+if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
+    /**
+     * Configuración AFIP del tenant para imputación de pagos.
+     *
+     * @return array<string, mixed>|null
+     */
+    function tenantCuotasFacturacionAfipConfig(): ?array
+    {
+        $cfg = config('tenant.cuotas.facturacion_afip');
+        if (! is_array($cfg)) {
+            return null;
+        }
+
+        $certId = trim((string) ($cfg['cert_usuario_id'] ?? ''));
+        $certKey = trim((string) ($cfg['cert_key'] ?? ''));
+        $certCrt = trim((string) ($cfg['cert_crt'] ?? ''));
+
+        if ($certId === '' || $certKey === '' || $certCrt === '') {
+            return null;
+        }
+
+        $cfg['cert_usuario_id'] = $certId;
+        $cfg['cert_key'] = $certKey;
+        $cfg['cert_crt'] = $certCrt;
+        $cfg['cbte_tipo'] = (int) ($cfg['cbte_tipo'] ?? 15);
+        $cfg['concepto'] = (int) ($cfg['concepto'] ?? 2);
+        $cfg['doc_tipo'] = (int) ($cfg['doc_tipo'] ?? 96);
+        $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
+
+        $simular = $cfg['simular_local'] ?? true;
+        $cfg['simular_local'] = app()->environment('local') && (bool) $simular;
+
+        return $cfg;
+    }
+}
+
 if (! function_exists('tenantLoginNivelesIds')) {
     /**
      * IDs de `niveles` visibles en `/loginUsuario` para este colegio.

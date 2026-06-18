@@ -25,6 +25,7 @@ use Illuminate\Validation\ValidationException;
  * - «Solo / excepto fuera de colegio» usa matrícula del ciclo activo (`idLegajos` + `idTerlec`).
  * - «Año» es el id de {@see Terlec}, no el número de año suelto.
  * - Conteo «más de / hasta X cuotas» solo considera cuotas con saldo (`faltapa` > 0).
+ * - Solo entran cuotas vencidas al 2.º vencimiento (`venc2` anterior a la fecha de cálculo).
  */
 final class GestionMorososFiltros
 {
@@ -188,8 +189,12 @@ final class GestionMorososFiltros
      */
     public static function aplicarAConsulta(Builder $query, array $filtros): void
     {
+        $fechaCalculo = (string) ($filtros['fechaCalculo'] ?? Carbon::today()->format('Y-m-d'));
+
         $query->where('cuotasgeneradas.faltapa', '>', 0)
             ->where('cuotasgeneradas.importe', '>', 0);
+
+        self::aplicarFiltroVencidaSegundoVencimiento($query, $fechaCalculo);
 
         if ($filtros['chkAno'] ?? false) {
             $query->where('cuotasgeneradas.idTerlec', (int) ($filtros['idTerlec'] ?? 0));
@@ -224,7 +229,7 @@ final class GestionMorososFiltros
             }
         }
 
-        $query->whereHas('legajo', function (Builder $leg) use ($filtros) {
+        $query->whereHas('legajo', function (Builder $leg) use ($filtros, $fechaCalculo) {
             if ($filtros['chkFamilia'] ?? false) {
                 $leg->where('idFamilias', (int) ($filtros['idFamilia'] ?? 0));
             }
@@ -249,18 +254,31 @@ final class GestionMorososFiltros
 
             if ($filtros['chkMasDe'] ?? false) {
                 $leg->whereRaw(
-                    '(SELECT COUNT(*) FROM cuotasgeneradas cg WHERE cg.idLegajos = legajos.id AND cg.faltapa > 0) > ?',
-                    [(int) ($filtros['masDe'] ?? 0)],
+                    '(SELECT COUNT(*) FROM cuotasgeneradas cg WHERE cg.idLegajos = legajos.id AND '.self::sqlCuotaMorosaVencidaSegundoVencimiento('cg').') > ?',
+                    [$fechaCalculo, (int) ($filtros['masDe'] ?? 0)],
                 );
             }
 
             if ($filtros['chkHasta'] ?? false) {
                 $leg->whereRaw(
-                    '(SELECT COUNT(*) FROM cuotasgeneradas cg WHERE cg.idLegajos = legajos.id AND cg.faltapa > 0) <= ?',
-                    [(int) ($filtros['hasta'] ?? 0)],
+                    '(SELECT COUNT(*) FROM cuotasgeneradas cg WHERE cg.idLegajos = legajos.id AND '.self::sqlCuotaMorosaVencidaSegundoVencimiento('cg').') <= ?',
+                    [$fechaCalculo, (int) ($filtros['hasta'] ?? 0)],
                 );
             }
         });
+    }
+
+    /**
+     * Cuota morosa: saldo positivo y 2.º vencimiento anterior a la fecha de cálculo.
+     */
+    private static function aplicarFiltroVencidaSegundoVencimiento(Builder $query, string $fechaCalculo, string $tabla = 'cuotasgeneradas'): void
+    {
+        $query->whereDate("{$tabla}.venc2", '<', $fechaCalculo);
+    }
+
+    private static function sqlCuotaMorosaVencidaSegundoVencimiento(string $alias): string
+    {
+        return "{$alias}.faltapa > 0 AND {$alias}.importe > 0 AND {$alias}.venc2 IS NOT NULL AND {$alias}.venc2 < ?";
     }
 
     /**

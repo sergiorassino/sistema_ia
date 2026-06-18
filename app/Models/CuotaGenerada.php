@@ -32,6 +32,7 @@ class CuotaGenerada extends Model
         'ultUpload',
         'nueVenc',
         'nroComp',
+        'mensajeResultado',
         'difePlan',
         'fechaDifePlan',
         'avisoPago',

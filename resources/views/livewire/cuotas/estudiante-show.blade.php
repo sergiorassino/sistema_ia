@@ -265,6 +265,16 @@
                 window.seSwalAviso(@js(session('cuotas_cuota_vencida')), 'Cuota vencida');
             }
         @endif
+
+        @if (session('afip_swal_mensaje'))
+            const afipMensaje = @js(session('afip_swal_mensaje'));
+            const afipTipo = @js(session('afip_swal_tipo', 'exito'));
+            if (afipTipo === 'error' && typeof window.seSwalError === 'function') {
+                window.seSwalError(afipMensaje, 'Facturación AFIP');
+            } else if (typeof window.seSwalExito === 'function') {
+                window.seSwalExito(afipMensaje, 'Facturación AFIP');
+            }
+        @endif
     })();
 </script>
 @endscript

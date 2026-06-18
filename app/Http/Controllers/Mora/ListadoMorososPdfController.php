@@ -50,7 +50,7 @@ class ListadoMorososPdfController extends Controller
 
         $datos = ListadoMorososDatos::build($filtros);
         if ($datos === null) {
-            abort(404, 'No hay registros de deuda para los filtros indicados.');
+            return response()->view('mora.pdf-sin-registros', status: 200);
         }
 
         $slug = Str::slug('listado-deuda-'.($datos['fechaCalculo'] ?? ''), '_');

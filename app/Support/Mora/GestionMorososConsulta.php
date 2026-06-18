@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 final class GestionMorososConsulta
 {
     /**
-     * Sin filtros opcionales activos: todas las familias con saldo (mismo criterio que el listado legacy).
+     * Sin filtros opcionales activos: familias con saldo en cuotas vencidas al 2.º vencimiento.
      *
      * @param  array<string, mixed>  $filtros  Normalizados con {@see GestionMorososFiltros::normalizarDesdeLivewire}
      * @return Builder<CuotaGenerada>
@@ -23,5 +23,13 @@ final class GestionMorososConsulta
         GestionMorososFiltros::aplicarAConsulta($query, $filtros);
 
         return $query;
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros  Normalizados con {@see GestionMorososFiltros::normalizarDesdeLivewire}
+     */
+    public static function tieneCuotasAdeudadas(array $filtros): bool
+    {
+        return self::cuotasAdeudadas($filtros)->exists();
     }
 }

@@ -238,6 +238,27 @@ return [
             'valor4v' => 0.0,
             'porcan4v' => '%',
         ],
+
+        /**
+         * Facturación AFIP al imputar pago (Aranceles por estudiante).
+         * Activar solo en `config/tenants/{slug}.php` para colegios que facturan con WSFE.
+         */
+        'facturacion_afip' => [
+            'habilitado' => false,
+            'cert_usuario_id' => null,
+            'cert_key' => null,
+            'cert_crt' => null,
+            'cbte_tipo' => 15,
+            'concepto' => 2,
+            'doc_tipo' => 96,
+            'nota_credito_tipo' => 12,
+            'cbte_tipo_asociado' => 15,
+            'produccion' => true,
+            'simular_local' => true,
+            'condicion_iva_alumno' => 'Consumidor Final',
+            'condicion_iva_receptor_id' => 5,
+            'condicion_venta' => 'contado',
+        ],
     ],
 
 ];

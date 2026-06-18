@@ -82,7 +82,7 @@
         <div class="border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:px-5">
             <p class="text-sm text-neutral-700">
                 Active cada filtro con su casilla. La <strong>fecha de cálculo</strong> define intereses y total a pagar en el PDF.
-                Si no activa ningún filtro opcional, el listado y la notificación incluyen <strong>todas las familias</strong> con cuotas adeudadas (saldo mayor a cero).
+                Si no activa ningún filtro opcional, el listado y la notificación incluyen familias con cuotas adeudadas <strong>vencidas al 2.º vencimiento</strong> (según la fecha de cálculo), con saldo mayor a cero.
             </p>
         </div>
 
@@ -268,4 +268,11 @@
             </div>
         @endif
     </div>
+
+    @script
+    <script>
+        $wire.on('se-swal-aviso', ({ mensaje, titulo }) => window.seSwalAviso(mensaje, titulo ?? 'Atención'));
+        $wire.on('se-swal-error', ({ mensaje, titulo }) => window.seSwalError(mensaje, titulo ?? 'Error'));
+    </script>
+    @endscript
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Mora;
 
+use App\Support\Mora\GestionMorososConsulta;
 use App\Support\Mora\GestionMorososFiltros;
 use App\Support\Mora\GestionMorososPdfPedido;
 use App\Support\Mora\PermisosMora;
@@ -108,6 +109,13 @@ class GestionMorososIndex extends Component
         }
 
         $filtros = GestionMorososFiltros::normalizarDesdeLivewire($this->filtrosCrudos());
+
+        if (! GestionMorososConsulta::tieneCuotasAdeudadas($filtros)) {
+            $this->dispatch('se-swal-aviso', mensaje: 'No hay registros.');
+
+            return;
+        }
+
         $ref = GestionMorososPdfPedido::guardar($filtros, $tipo);
 
         $this->dispatch('mora-gestion-morosos-abrir-pdf', url: se_route_url($ruta, ['ref' => $ref]));
