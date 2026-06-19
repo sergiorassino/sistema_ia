@@ -31,7 +31,7 @@
                 @if ($cargos->isNotEmpty())
                     <div class="sm:col-span-2 min-w-0">
                         <label class="form-label">Cargo *</label>
-                        <select wire:model="idCargosXProfesor" class="form-input mt-1 w-full min-w-0">
+                        <select wire:model.live="idCargosXProfesor" class="form-input mt-1 w-full min-w-0">
                             <option value="">— Seleccionar —</option>
                             @foreach ($cargos as $c)
                                 <option value="{{ $c['id'] }}">{{ $c['cargo'] }}</option>
@@ -48,21 +48,31 @@
 
                 <div>
                     <label class="form-label">Fecha *</label>
-                    <input type="date" wire:model="fecha" class="form-input mt-1 w-full max-w-[11rem]">
+                    <input type="date" wire:model.live="fecha" class="form-input mt-1 w-full max-w-[11rem]">
                     @error('fecha') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
                 @if ($inaLic === 1)
                     <div>
                         <label class="form-label">Fecha hasta (licencia) *</label>
-                        <input type="date" wire:model="hasta" class="form-input mt-1 w-full max-w-[11rem]">
+                        <input type="date" wire:model.live="hasta" class="form-input mt-1 w-full max-w-[11rem]">
                         @error('hasta') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                 @endif
 
-                <div>
+                <div class="sm:col-span-2">
                     <label class="form-label">Cant. oblig. inasistidas *</label>
-                    <input type="number" step="0.1" min="0" wire:model="cantObligIna" class="form-input mt-1 w-full max-w-[7rem] tabular-nums">
+                    <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <input type="number" step="0.1" min="0" wire:model="cantObligIna" class="form-input w-full max-w-[7rem] tabular-nums">
+                        @if ($obligacionesEsperadas)
+                            <p class="text-xs text-neutral-600">
+                                <span class="font-semibold uppercase tracking-wide text-neutral-500">{{ $obligacionesEsperadas['etiqueta'] }}:</span>
+                                <span class="tabular-nums text-neutral-800">{{ $obligacionesEsperadas['detalle'] }}</span>
+                            </p>
+                        @elseif ($cargos->isNotEmpty() && ! (int) $idCargosXProfesor)
+                            <p class="text-xs text-neutral-500">Seleccioná el cargo para ver las obligaciones del día o del período.</p>
+                        @endif
+                    </div>
                     @error('cantObligIna') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 

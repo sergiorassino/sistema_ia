@@ -8,6 +8,7 @@ use App\Models\Profesor;
 use App\Models\TipoInaDoc;
 use App\Support\InasistenciasDocentes\CalculoFaltasDescuento;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -430,6 +431,158 @@ final class InasistenciasDocentes
     public static function formatearCantidad(float|int|string|null $valor): string
     {
         return number_format((float) ($valor ?? 0), 1, ',', '.');
+    }
+
+    /**
+     * Obligaciones que correspondían al docente en la fecha o período indicado.
+     * Profesor/a (cargo 6): módulos del horario por día.
+     * Demás cargos: horas semanales (cargosxprofesor.cant) ÷ 5 por cada día hábil.
+     *
+     * @return array{
+     *   total: float,
+     *   esProfesor: bool,
+     *   esLicencia: bool,
+     *   diasContados: int,
+     *   cargaDiaria: float|null,
+     *   horasSemanales: int|null
+     * }|null
+     */
+    public static function calcularObligacionesEsperadas(
+        int $idProfesor,
+        int $idCargosXProfesor,
+        string $fechaDesde,
+        ?string $fechaHasta = null,
+        bool $esLicencia = false,
+    ): ?array {
+        $fechaDesde = trim($fechaDesde);
+        if ($fechaDesde === '') {
+            return null;
+        }
+
+        try {
+            $desde = Carbon::parse($fechaDesde)->startOfDay();
+            $hasta = $esLicencia && trim((string) $fechaHasta) !== ''
+                ? Carbon::parse($fechaHasta)->startOfDay()
+                : $desde->copy();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($hasta->lt($desde)) {
+            return null;
+        }
+
+        $esProfesor = true;
+        $horasSemanales = null;
+        $cargaDiaria = null;
+
+        if (self::tieneCargos()) {
+            if ($idCargosXProfesor <= 0) {
+                return null;
+            }
+
+            $cargo = DB::table('cargosxprofesor')
+                ->where('id', $idCargosXProfesor)
+                ->where('idProfesores', $idProfesor)
+                ->first(['idCargos', 'cant']);
+
+            if ($cargo === null) {
+                return null;
+            }
+
+            $esProfesor = (int) $cargo->idCargos === CalculoFaltasDescuento::ID_CARGO_PROFESOR;
+            if (! $esProfesor) {
+                $horasSemanales = (int) ($cargo->cant ?? 0);
+                $cargaDiaria = $horasSemanales / 5;
+            }
+        }
+
+        $total = 0.0;
+        $diasContados = 0;
+
+        foreach (CarbonPeriod::create($desde, $hasta) as $dia) {
+            if (! $esProfesor && $dia->dayOfWeekIso > 5) {
+                continue;
+            }
+
+            $diasContados++;
+            $total += $esProfesor
+                ? HorariosProfesores::contarModulosDiaProfesor($idProfesor, $dia->dayOfWeekIso)
+                : $cargaDiaria;
+        }
+
+        return [
+            'total' => round($total, 1),
+            'esProfesor' => $esProfesor,
+            'esLicencia' => $esLicencia && $hasta->gt($desde),
+            'diasContados' => $diasContados,
+            'cargaDiaria' => $cargaDiaria,
+            'horasSemanales' => $horasSemanales,
+        ];
+    }
+
+    /**
+     * Texto auxiliar para el formulario de carga (junto a cant. oblig. inasistidas).
+     *
+     * @return array{total: float, etiqueta: string, detalle: string}|null
+     */
+    public static function resumenObligacionesEsperadasForm(
+        int $idProfesor,
+        int $idCargosXProfesor,
+        string $fecha,
+        string $hasta,
+        int $inaLic,
+    ): ?array {
+        $calc = self::calcularObligacionesEsperadas(
+            $idProfesor,
+            $idCargosXProfesor,
+            $fecha,
+            (int) $inaLic === 1 ? $hasta : null,
+            (int) $inaLic === 1,
+        );
+
+        if ($calc === null) {
+            return null;
+        }
+
+        $totalFmt = self::formatearCantidad($calc['total']);
+
+        if ($calc['esProfesor']) {
+            if ($calc['esLicencia']) {
+                $detalle = $calc['diasContados'] === 1
+                    ? 'según horario del día'
+                    : 'según horario · '.$calc['diasContados'].' días';
+
+                return [
+                    'total' => $calc['total'],
+                    'etiqueta' => 'Oblig. en el período',
+                    'detalle' => $totalFmt.' ('.$detalle.')',
+                ];
+            }
+
+            return [
+                'total' => $calc['total'],
+                'etiqueta' => 'Oblig. del día',
+                'detalle' => $totalFmt.' (según horario)',
+            ];
+        }
+
+        $cargaFmt = self::formatearCantidad($calc['cargaDiaria'] ?? 0);
+        $horasSem = (int) ($calc['horasSemanales'] ?? 0);
+
+        if ($calc['esLicencia']) {
+            return [
+                'total' => $calc['total'],
+                'etiqueta' => 'Oblig. en el período',
+                'detalle' => $totalFmt.' ('.$calc['diasContados'].' días hábiles × '.$cargaFmt.' h/día · '.$horasSem.' h sem. ÷ 5)',
+            ];
+        }
+
+        return [
+            'total' => $calc['total'],
+            'etiqueta' => 'Oblig. del día',
+            'detalle' => $cargaFmt.' ('.$horasSem.' h sem. ÷ 5)',
+        ];
     }
 
     public static function rangoBimestre(int $bimestre, int $anio): array
