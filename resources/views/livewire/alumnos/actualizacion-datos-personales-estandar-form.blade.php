@@ -204,6 +204,167 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="se-card p-4 sm:p-5" aria-labelledby="seccion-tut">
+                    <p id="seccion-tut" class="se-section-title mb-4">Datos del tutor</p>
+                    <p class="mb-4 text-xs text-neutral-500">
+                        Si el estudiante no tiene tutor legal, complete cada campo con un guión (-).
+                    </p>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="form-label" for="campo-nombretut">Apellidos y nombres *</label>
+                            <input id="campo-nombretut" wire:model="nombretut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            @error('nombretut') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="form-label" for="campo-dnitut">DNI *</label>
+                                <input id="campo-dnitut" wire:model="dnitut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                @error('dnitut') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="form-label" for="campo-teletut">Celular *</label>
+                                <input id="campo-teletut" wire:model="teletut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                @error('teletut') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="form-label" for="campo-emailtut">E-mail *</label>
+                                <input id="campo-emailtut" wire:model="emailtut" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
+                                @error('emailtut') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="form-label" for="campo-ocupactut">Ocupación *</label>
+                                <input id="campo-ocupactut" wire:model="ocupactut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                @error('ocupactut') <p class="form-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                @if ($documentosEstudianteHabilitados && count($tiposDocumentoEstudiante) > 0)
+                    <section class="se-card p-4 sm:p-5" aria-labelledby="seccion-documentos-estudiante">
+                        <p id="seccion-documentos-estudiante" class="se-section-title mb-2">Documentación del estudiante</p>
+                        <p class="mb-4 text-xs leading-relaxed text-neutral-600">
+                            Suba fotos (JPG) o archivos PDF en cada casillero.
+                            Al presionar <strong>Subir archivos</strong>, el sistema los unifica en un único PDF por documento.
+                        </p>
+
+                        <div class="space-y-5">
+                            @foreach ($tiposDocumentoEstudiante as $tipo)
+                                @php
+                                    $clave = $tipo['clave'];
+                                    $estado = $estadoDocumentos[$clave] ?? ['existe' => false, 'actualizado_en' => null, 'nombre' => ''];
+                                    $maxArchivos = (int) $tipo['max_archivos'];
+                                @endphp
+                                <div class="rounded-xl border border-accent-200 bg-accent-50/40 p-4"
+                                     id="campo-archivosDocumento-{{ $clave }}">
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-neutral-900">
+                                                {{ $tipo['label'] }}
+                                                @if ($tipo['obligatorio'])
+                                                    <span class="text-red-600">*</span>
+                                                @endif
+                                            </p>
+                                            <p class="mt-1 text-[11px] text-neutral-500">
+                                                {{ $maxArchivos === 1 ? '1 archivo' : $maxArchivos.' archivos' }} —
+                                                {{ strtoupper(implode(', ', $tipo['extensiones'])) }}
+                                                · máx. {{ $tipo['max_mb'] }} MB c/u
+                                            </p>
+                                            @if (! empty($tipo['explicacion']))
+                                                <p class="mt-2 rounded-lg border border-accent-200 bg-white/80 px-3 py-2 text-sm leading-relaxed text-neutral-700">
+                                                    {{ $tipo['explicacion'] }}
+                                                </p>
+                                            @endif
+                                            @if ($estado['existe'])
+                                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                                    <p class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                        Documento recibido
+                                                        @if ($estado['actualizado_en'])
+                                                            · {{ $estado['actualizado_en'] }}
+                                                        @endif
+                                                    </p>
+                                                    @if (! empty($estado['url_ver']))
+                                                        <a href="{{ $estado['url_ver'] }}"
+                                                           target="_blank"
+                                                           rel="noopener noreferrer"
+                                                           class="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-white px-2.5 py-1 text-xs font-semibold text-primary-700 shadow-sm hover:bg-primary-50">
+                                                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                            </svg>
+                                                            Ver PDF subido
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 space-y-3"
+                                         wire:key="doc-slots-{{ $clave }}-{{ $revisionInputsDocumento[$clave] ?? 0 }}">
+                                        @for ($i = 0; $i < $maxArchivos; $i++)
+                                            @php
+                                                $inputId = 'doc-estudiante-'.$clave.'-'.$i.'-'.($revisionInputsDocumento[$clave] ?? 0);
+                                                $etiquetaArchivo = $maxArchivos === 1
+                                                    ? 'Archivo'
+                                                    : 'Archivo '.($i + 1);
+                                            @endphp
+                                            <div wire:key="doc-input-{{ $clave }}-{{ $i }}-{{ $revisionInputsDocumento[$clave] ?? 0 }}">
+                                                <label class="form-label" for="{{ $inputId }}">{{ $etiquetaArchivo }}</label>
+                                                <input id="{{ $inputId }}"
+                                                       type="file"
+                                                       wire:model="archivosDocumento.{{ $clave }}.{{ $i }}"
+                                                       accept="{{ \App\Support\Alumnos\DocumentosEstudianteAutogestion::acceptAttribute($tipo['extensiones']) }}"
+                                                       @disabled($bloqueado)
+                                                       class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+                                                <div wire:loading wire:target="archivosDocumento.{{ $clave }}.{{ $i }}" class="mt-1 text-xs text-neutral-500">
+                                                    Subiendo archivo…
+                                                </div>
+                                                @error('archivosDocumento.'.$clave.'.'.$i)
+                                                    <p class="form-error">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        @endfor
+                                    </div>
+
+                                    <div class="mt-4 flex flex-wrap justify-end gap-2">
+                                        @if ($estado['existe'])
+                                            <button type="button"
+                                                    x-on:click="window.seSwalConfirmar(@js('Se eliminará el PDF completo de este documento. Si es obligatorio, deberá volver a subirlo.'), @js('Eliminar documento'), { confirmButtonText: 'Sí, eliminar' }).then(ok => ok && $wire.eliminarDocumento(@js($clave)))"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="eliminarDocumento"
+                                                    @disabled($bloqueado)
+                                                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-50">
+                                                <span wire:loading.remove wire:target="eliminarDocumento">Eliminar PDF subido</span>
+                                                <span wire:loading wire:target="eliminarDocumento">Eliminando…</span>
+                                            </button>
+                                        @endif
+                                        <button type="button"
+                                                wire:click="subirDocumento('{{ $clave }}')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="subirDocumento"
+                                                @disabled($bloqueado)
+                                                class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50 disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="subirDocumento">Subir archivos</span>
+                                            <span wire:loading wire:target="subirDocumento">Procesando…</span>
+                                        </button>
+                                    </div>
+                                    @error('archivosDocumento.'.$clave)
+                                        <p class="form-error mt-2">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
             </div>
 
             <div class="sticky bottom-0 z-10 -mx-2 mt-6 border-t border-accent-200 bg-[#F4F8F9]/95 px-2 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0">

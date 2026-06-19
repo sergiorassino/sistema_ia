@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -73,7 +74,7 @@ class CargaCalificacionesPrimarioMateria extends Component
 
         if (! $this->modoPortalDocente) {
             PortalDocenteContext::abortSiStaffSinPermisoIa(
-                \App\Support\PermisosIaCatalog::CALIF_CARGA,
+                PermisosIaCatalog::CALIF_CARGA,
                 'Sin permiso para cargar calificaciones.',
             );
         }
@@ -139,11 +140,13 @@ class CargaCalificacionesPrimarioMateria extends Component
             abort(404);
         }
 
-        $materiaOk = DB::table('materias')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
-            ->where('idCursos', (int) $this->cursoId)
-            ->where('id', (int) $this->materiaId)
+        $materiaOk = DB::table('materias as m')
+            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            ->where('m.id', (int) $this->materiaId)
+            ->where('m.idCursos', (int) $this->cursoId)
+            ->where('m.idNivel', (int) $ctx->idNivel)
+            ->where('cu.idNivel', (int) $ctx->idNivel)
+            ->where('cu.idTerlec', (int) $ctx->idTerlec)
             ->exists();
 
         if (! $materiaOk) {
@@ -229,7 +232,7 @@ class CargaCalificacionesPrimarioMateria extends Component
     #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
-        PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
+        PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesPrimario:carga-materia:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
@@ -352,24 +355,11 @@ class CargaCalificacionesPrimarioMateria extends Component
         }
 
         $ctx = schoolCtx();
-        $curso = Curso::query()
-            ->with('curplan')
-            ->where('idNivel', $ctx->idNivel)
-            ->where('idTerlec', $ctx->idTerlec)
-            ->where('Id', (int) $this->cursoId)
-            ->first();
 
-        if ($curso === null) {
-            return collect();
-        }
-
-        $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($curso);
-
-        return CalificacionesPrimarioCatalogo::materiasParaCurso(
-            (int) $curso->Id,
+        return CalificacionesPrimarioCatalogo::materiasParaSelectorAnio(
+            (int) $this->cursoId,
             (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
-            $ciclo,
         )->when($this->modoPortalDocente, function (Collection $materias) {
             $idProfesor = (int) (schoolCtx()->idProfesor ?? 0);
 

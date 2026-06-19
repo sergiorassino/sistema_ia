@@ -99,9 +99,11 @@ return [
          * Cuaderno de comunicados institucional (portal familia).
          * Incluye bandeja, nuevo comunicado, push y preferencias de contacto.
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         * `niveles_deshabilitados`: IDs de `niveles` sin módulo (p. ej. `[2]` solo primario).
          */
         'comunicaciones' => [
             'habilitado' => true,
+            'niveles_deshabilitados' => [],
         ],
 
         /**

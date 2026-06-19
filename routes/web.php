@@ -4,6 +4,7 @@ use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
 use App\Http\Controllers\Alumnos\ComprobantePagoPdfController;
+use App\Http\Controllers\Alumnos\DocumentoEstudianteAutogestionPdfController;
 use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
 use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
 use App\Http\Controllers\Alumnos\HorarioClasePdfController;
@@ -226,6 +227,7 @@ use App\Livewire\Parametrizacion\CamposProfesorIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
 use App\Livewire\MatriculaWeb\DocumentosAceptacionForm;
+use App\Livewire\MatriculaWeb\DocumentosEstudianteTiposIndex;
 use App\Http\Controllers\MatriculaWeb\DocumentoAceptacionArchivoController;
 use App\Support\PermisosMatriculaWeb;
 use App\Livewire\PortalDocente\CalificacionesIndex as PortalDocenteCalificacionesIndex;
@@ -319,6 +321,9 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
 
     Route::get('/actualizacion-datos', tenantAutogestionActualizacionDatosLivewireComponent())
         ->name('alumnos.actualizacion-datos');
+    Route::get('/actualizacion-datos/documento-estudiante/{ref}', DocumentoEstudianteAutogestionPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('alumnos.actualizacion-datos.documento-estudiante');
     Route::get('/actualizacion-datos/aceptacion/{tipo}', AceptacionDocumentoFamilia::class)
         ->where('tipo', 'compromiso|aec|normas|traslado')
         ->name('alumnos.actualizacion-datos.aceptacion');
@@ -688,6 +693,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::middleware('permiso:'.PermisosMatriculaWeb::DOCUMENTOS_ACEPTACION)->prefix('matricula-web')->group(function () {
         Route::get('/documentos', DocumentosAceptacionForm::class)->name('matricula-web.documentos');
+        Route::get('/documentos-estudiante-tipos', DocumentosEstudianteTiposIndex::class)
+            ->name('matricula-web.documentos-estudiante-tipos');
         Route::get('/documentos/{tipo}/archivo', DocumentoAceptacionArchivoController::class)
             ->where('tipo', 'compromiso|aec|normas|traslado')
             ->name('matricula-web.documentos.archivo');

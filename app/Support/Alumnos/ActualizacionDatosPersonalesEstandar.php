@@ -3,14 +3,17 @@
 namespace App\Support\Alumnos;
 
 use App\Models\Legajo;
+use App\Models\Matricula;
+use Carbon\Carbon;
+use Illuminate\Support\MessageBag;
 
 /**
- * Actualización de datos personales — variante estándar (padre y madre).
+ * Actualización de datos personales — variante estándar (padre, madre y tutor).
  */
 final class ActualizacionDatosPersonalesEstandar
 {
     /**
-     * @return array{legajo: Legajo, matricula: \App\Models\Matricula}|null
+     * @return array{legajo: Legajo, matricula: Matricula}|null
      */
     public static function contexto(): ?array
     {
@@ -46,6 +49,11 @@ final class ActualizacionDatosPersonalesEstandar
             'emailmad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailmad ?? ''),
             'ocupacmad' => (string) ($legajo->ocupacmad ?? ''),
             'telltm' => (string) ($legajo->telltm ?? ''),
+            'nombretut' => (string) ($legajo->nombretut ?? ''),
+            'dnitut' => (string) ($legajo->dnitut ?? ''),
+            'teletut' => (string) ($legajo->teletut ?? ''),
+            'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailtut ?? ''),
+            'ocupactut' => (string) ($legajo->ocupactut ?? ''),
         ];
     }
 
@@ -74,6 +82,11 @@ final class ActualizacionDatosPersonalesEstandar
             'emailmad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailmad'] ?? ''),
             'ocupacmad' => self::trimCampo($state['ocupacmad'] ?? ''),
             'telltm' => self::trimCampo($state['telltm'] ?? ''),
+            'nombretut' => self::trimCampo($state['nombretut'] ?? ''),
+            'dnitut' => self::trimCampo($state['dnitut'] ?? ''),
+            'teletut' => self::trimCampo($state['teletut'] ?? ''),
+            'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailtut'] ?? ''),
+            'ocupactut' => self::trimCampo($state['ocupactut'] ?? ''),
             'fechActDatos' => now(),
         ];
     }
@@ -124,6 +137,11 @@ final class ActualizacionDatosPersonalesEstandar
             'emailmad' => $reqEmail,
             'ocupacmad' => $req,
             'telltm' => $opc,
+            'nombretut' => $req,
+            'dnitut' => $req,
+            'teletut' => $req,
+            'emailtut' => $reqEmail,
+            'ocupactut' => $req,
         ];
     }
 
@@ -137,6 +155,7 @@ final class ActualizacionDatosPersonalesEstandar
             'fechnacmad.date' => 'La fecha de nacimiento de la madre no es válida.',
             'emailpad.email' => 'El e-mail del padre no es válido.',
             'emailmad.email' => 'El e-mail de la madre no es válido.',
+            'emailtut.email' => 'El e-mail del tutor no es válido.',
             '*.required' => 'Este campo es obligatorio. Si no corresponde, escriba un guión (-).',
         ];
     }
@@ -165,13 +184,18 @@ final class ActualizacionDatosPersonalesEstandar
             'emailmad' => 'Madre — E-mail',
             'ocupacmad' => 'Madre — Ocupación',
             'telltm' => 'Madre — Teléfono laboral',
+            'nombretut' => 'Tutor — Apellidos y nombres',
+            'dnitut' => 'Tutor — DNI',
+            'teletut' => 'Tutor — Celular',
+            'emailtut' => 'Tutor — E-mail',
+            'ocupactut' => 'Tutor — Ocupación',
         ];
     }
 
     /**
      * @return list<array{campo: string, etiqueta: string}>
      */
-    public static function camposIncompletosDesdeErrores(\Illuminate\Support\MessageBag $errors): array
+    public static function camposIncompletosDesdeErrores(MessageBag $errors): array
     {
         $etiquetas = self::etiquetasCampos();
         $lista = [];
@@ -210,7 +234,7 @@ final class ActualizacionDatosPersonalesEstandar
 
     private static function fechaInput(mixed $valor): string
     {
-        if ($valor instanceof \Carbon\Carbon) {
+        if ($valor instanceof Carbon) {
             return $valor->format('Y-m-d');
         }
 
@@ -219,7 +243,7 @@ final class ActualizacionDatosPersonalesEstandar
         }
 
         try {
-            return \Carbon\Carbon::parse((string) $valor)->format('Y-m-d');
+            return Carbon::parse((string) $valor)->format('Y-m-d');
         } catch (\Throwable) {
             return trim((string) $valor);
         }
@@ -237,7 +261,7 @@ final class ActualizacionDatosPersonalesEstandar
         }
 
         try {
-            return \Carbon\Carbon::createFromFormat('d/m/Y', $texto)->format('Y-m-d');
+            return Carbon::createFromFormat('d/m/Y', $texto)->format('Y-m-d');
         } catch (\Throwable) {
             return null;
         }

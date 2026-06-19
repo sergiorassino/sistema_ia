@@ -337,12 +337,14 @@ final class CalificacionesPrimarioDatos
             ];
         }
 
-        $materia = DB::table('materias')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
-            ->where('idCursos', $cursoId)
-            ->where('id', $materiaId)
-            ->first(['id', 'ord', 'materia']);
+        $materia = DB::table('materias as m')
+            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            ->where('m.id', $materiaId)
+            ->where('m.idCursos', $cursoId)
+            ->where('m.idNivel', (int) $ctx->idNivel)
+            ->where('cu.idNivel', (int) $ctx->idNivel)
+            ->where('cu.idTerlec', (int) $ctx->idTerlec)
+            ->first(['m.id', 'm.ord', 'm.materia']);
 
         if ($materia === null) {
             return [

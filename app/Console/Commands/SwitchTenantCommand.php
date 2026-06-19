@@ -34,7 +34,7 @@ class SwitchTenantCommand extends Command
      */
     private array $dbMap = [
         'sistemaprueba' => 'ia_demo',
-        'demo'          => 'ia_demo',
+        'demo' => 'ia_demo',
     ];
 
     public function handle(): int
@@ -47,10 +47,11 @@ class SwitchTenantCommand extends Command
 
         if (! $slug) {
             $current = env('TENANT_SLUG', '(no definido)');
-            $db      = env('DB_DATABASE', '(no definido)');
+            $db = env('DB_DATABASE', '(no definido)');
             $this->info("Tenant activo: <comment>{$current}</comment>  |  BD: <comment>{$db}</comment>");
             $this->line('');
             $this->line('Uso: php artisan se:switch <slug>');
+
             return self::SUCCESS;
         }
 
@@ -59,7 +60,8 @@ class SwitchTenantCommand extends Command
         $envPath = base_path('.env');
 
         if (! file_exists($envPath)) {
-            $this->error('.env no encontrado en: ' . $envPath);
+            $this->error('.env no encontrado en: '.$envPath);
+
             return self::FAILURE;
         }
 
@@ -80,7 +82,7 @@ class SwitchTenantCommand extends Command
         $this->newLine();
         $this->line("  <info>✓</info> TENANT_SLUG  → <comment>{$slug}</comment>");
         $this->line("  <info>✓</info> DB_DATABASE  → <comment>{$db}</comment>");
-        $this->line("  <info>✓</info> Config y views cache limpiados");
+        $this->line('  <info>✓</info> Config y views cache limpiados');
         $this->newLine();
         $this->line('  Siguiente: recargar el navegador (F5).');
         $this->newLine();
@@ -96,13 +98,13 @@ class SwitchTenantCommand extends Command
     {
         // Descomentar si estaba comentada y actualizar valor
         $content = preg_replace(
-            '/^#?' . preg_quote($key, '/') . '=.*/m',
+            '/^#?'.preg_quote($key, '/').'=.*/m',
             "{$key}={$value}",
             $content
         );
 
         // Si la clave no existía en el archivo, agregarla al final
-        if (! preg_match('/^' . preg_quote($key, '/') . '=/m', $content)) {
+        if (! preg_match('/^'.preg_quote($key, '/').'=/m', $content)) {
             $content .= "\n{$key}={$value}";
         }
 
@@ -115,7 +117,7 @@ class SwitchTenantCommand extends Command
 
         $known = array_merge(
             array_keys($this->dbMap),
-            ['iess', 'montecristo', 'nssc'],
+            ['iess', 'montecristo', 'nssc', 'caixalsf', 'caiaxalsf'],
         );
         $known = array_unique($known);
         sort($known);
@@ -124,7 +126,7 @@ class SwitchTenantCommand extends Command
         $this->line('  <comment>Tenants conocidos:</comment>');
 
         foreach ($known as $slug) {
-            $db     = $this->dbMap[$slug] ?? "ia_{$slug}";
+            $db = $this->dbMap[$slug] ?? "ia_{$slug}";
             $marker = $slug === $current ? ' ← activo' : '';
             $this->line("    <info>{$slug}</info>  (BD: {$db}){$marker}");
         }
