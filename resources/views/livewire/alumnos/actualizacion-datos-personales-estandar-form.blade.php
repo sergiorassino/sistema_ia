@@ -347,10 +347,16 @@
                                                 <span wire:loading wire:target="eliminarDocumento">Eliminando…</span>
                                             </button>
                                         @endif
+                                        @php
+                                            $uploadTargets = ['subirDocumento'];
+                                            for ($u = 0; $u < $maxArchivos; $u++) {
+                                                $uploadTargets[] = 'archivosDocumento.'.$clave.'.'.$u;
+                                            }
+                                        @endphp
                                         <button type="button"
                                                 wire:click="subirDocumento('{{ $clave }}')"
                                                 wire:loading.attr="disabled"
-                                                wire:target="subirDocumento"
+                                                wire:target="{{ implode(', ', $uploadTargets) }}"
                                                 @disabled($bloqueado)
                                                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50 disabled:opacity-50">
                                             <span wire:loading.remove wire:target="subirDocumento">Subir archivos</span>

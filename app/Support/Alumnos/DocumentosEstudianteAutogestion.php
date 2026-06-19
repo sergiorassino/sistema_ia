@@ -382,13 +382,47 @@ final class DocumentosEstudianteAutogestion
             throw new \InvalidArgumentException('El estudiante no tiene DNI registrado.');
         }
 
+        $validos = self::archivosDesdeSlots($archivos);
         $dirTemp = null;
+
         try {
-            $tempPaths = [];
-            foreach ($archivos as $archivo) {
-                if ($archivo instanceof TemporaryUploadedFile) {
-                    $tempPaths[] = $archivo->getRealPath();
+            self::asegurarRaizDiscoPrivado();
+
+            $relDir = self::storageDir();
+            $nombreFinal = self::nombreArchivoPdf($dniSan, $clave);
+            $pathFinal = $relDir.'/'.$nombreFinal;
+            $disk = Storage::disk(self::DISK);
+            self::asegurarDirectorioEnDisco($disk, $relDir);
+
+            if (count($validos) === 1) {
+                $archivo = $validos[0];
+                $ext = strtolower((string) $archivo->getClientOriginalExtension());
+                $origen = $archivo->getRealPath();
+                if ($origen === false || ! is_file($origen)) {
+                    throw new \RuntimeException('El archivo temporal ya no está disponible. Vuelva a seleccionarlo.');
                 }
+
+                if ($ext === 'pdf') {
+                    $contenido = file_get_contents($origen);
+                    if ($contenido === false || $contenido === '') {
+                        throw new \RuntimeException('No se pudo leer el PDF seleccionado.');
+                    }
+
+                    if (! $disk->put($pathFinal, $contenido)) {
+                        throw new \RuntimeException('No se pudo guardar el documento en el servidor.');
+                    }
+
+                    return;
+                }
+            }
+
+            $tempPaths = [];
+            foreach ($validos as $archivo) {
+                $ruta = $archivo->getRealPath();
+                if ($ruta === false || ! is_file($ruta)) {
+                    throw new \RuntimeException('Uno de los archivos temporales ya no está disponible. Vuelva a seleccionarlos.');
+                }
+                $tempPaths[] = $ruta;
             }
 
             $dirTemp = storage_path('app/temp/doc-estudiante/'.uniqid('merge_', true));
@@ -403,28 +437,21 @@ final class DocumentosEstudianteAutogestion
                 throw new \RuntimeException('No se pudo generar el PDF final.');
             }
 
-            $relDir = self::storageDir();
-            $nombreFinal = self::nombreArchivoPdf($dniSan, $clave);
-            $disk = Storage::disk(self::DISK);
-
-            if (! $disk->exists($relDir)) {
-                $disk->makeDirectory($relDir);
-            }
-
             $contenido = file_get_contents($salidaTemp);
             if ($contenido === false) {
                 throw new \RuntimeException('No se pudo leer el PDF generado.');
             }
 
-            $ok = $disk->put($relDir.'/'.$nombreFinal, $contenido);
-            if (! $ok) {
+            if (! $disk->put($pathFinal, $contenido)) {
                 throw new \RuntimeException('No se pudo guardar el documento en el servidor.');
             }
         } catch (\Throwable $e) {
             Log::warning('doc-estudiante-autogestion: error al guardar', [
-                'dni' => $dniSan ?? null,
+                'dni' => $dniSan,
                 'clave' => $clave,
                 'message' => $e->getMessage(),
+                'path' => self::pathRelativo($dniSan, $clave),
+                'disk_root' => (string) config('filesystems.disks.'.self::DISK.'.root'),
             ]);
             throw $e;
         } finally {
@@ -434,6 +461,29 @@ final class DocumentosEstudianteAutogestion
                 }
                 @rmdir($dirTemp);
             }
+        }
+    }
+
+    private static function asegurarRaizDiscoPrivado(): void
+    {
+        $root = storage_path('app/private');
+        if (is_dir($root)) {
+            return;
+        }
+
+        if (! mkdir($root, 0755, true) && ! is_dir($root)) {
+            throw new \RuntimeException('No se pudo crear la carpeta privada de almacenamiento.');
+        }
+    }
+
+    private static function asegurarDirectorioEnDisco(\Illuminate\Contracts\Filesystem\Filesystem $disk, string $relDir): void
+    {
+        if ($disk->exists($relDir)) {
+            return;
+        }
+
+        if (! $disk->makeDirectory($relDir)) {
+            throw new \RuntimeException('No se pudo crear el directorio de documentos del colegio.');
         }
     }
 
