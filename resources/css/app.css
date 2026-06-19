@@ -917,6 +917,94 @@
         white-space: nowrap;
     }
 
+    /* Matrícula web — documentos a subir (familia): grilla ancha fluida */
+    .gf.gf-doc-estudiante-tipos {
+        width: 100%;
+        min-width: 0;
+        display: block;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-head,
+    .gf.gf-doc-estudiante-tipos .gf-row {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th,
+    .gf.gf-doc-estudiante-tipos .gf-td {
+        min-width: 0;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-clave,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-clave {
+        flex: 0 0 6.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-etiqueta,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-etiqueta {
+        flex: 0 0 10rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-explicacion,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-explicacion {
+        flex: 1 1 14rem;
+        min-width: 10rem;
+        white-space: normal;
+        line-height: 1.35;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-explicacion {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-ext,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-ext {
+        flex: 0 0 7.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-arch,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-arch {
+        flex: 0 0 4.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-mb,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-mb {
+        flex: 0 0 3.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-oblig,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-oblig {
+        flex: 0 0 4rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-activo,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-activo {
+        flex: 0 0 4.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-th.gf-th-doc-acciones,
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-acciones {
+        flex: 0 0 11rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+    .gf.gf-doc-estudiante-tipos .gf-td.gf-td-doc-acciones {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.25rem;
+    }
+
     /* Cooperadora — ítems del formulario de ingreso (ancho fluido) */
     .gf.gf-coop-ingreso-lineas {
         width: 100%;

@@ -193,11 +193,7 @@
                 <select id="se-calif-prim-mat-materia" wire:model.live="materiaId" class="form-select mt-1.5 w-full" @disabled(! $cursoId)>
                     <option value="">— Seleccione —</option>
                     @foreach ($materias as $m)
-                        <option value="{{ $m->id }}">
-                            {{ CalificacionesPrimarioCatalogo::etiquetaEncabezadoColumna($m) !== '—'
-                                ? CalificacionesPrimarioCatalogo::etiquetaEncabezadoColumna($m).' — '
-                                : '' }}{{ trim((string) ($m->materia ?? '')) !== '' ? $m->materia : ('Ord '.$m->ord) }}
-                        </option>
+                        <option value="{{ $m->id }}">{{ CalificacionesPrimarioCatalogo::etiquetaSelectorMateria($m) }}</option>
                     @endforeach
                 </select>
             </div>

@@ -121,10 +121,26 @@ final class CalificacionesPrimarioCatalogo
     }
 
     /**
+     * Materias del curso en el ciclo lectivo activo para selectores de carga (sin tope de `ord` por grado).
+     * Alineado a «Asignaturas del año»: incluye institucionales y filas con `ord` alto del año vigente.
+     *
      * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
      */
-    private static function consultaMateriasCurso(int $idCurso, int $idNivel, int $idTerlec, ?int $maxOrd): Collection
+    public static function materiasParaSelectorAnio(int $idCurso, int $idNivel, int $idTerlec): Collection
     {
+        return self::consultaMateriasCurso($idCurso, $idNivel, $idTerlec, null, ordenarParaColumnasIpe: false);
+    }
+
+    /**
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     */
+    private static function consultaMateriasCurso(
+        int $idCurso,
+        int $idNivel,
+        int $idTerlec,
+        ?int $maxOrd,
+        bool $ordenarParaColumnasIpe = true,
+    ): Collection {
         $columnas = [
             'm.id',
             'm.ord',
@@ -148,9 +164,10 @@ final class CalificacionesPrimarioCatalogo
                 $join->on('mp_ord.idCurPlan', '=', 'cu.idCurPlan')
                     ->on('mp_ord.ord', '=', 'm.ord');
             })
+            ->where('m.idCursos', $idCurso)
             ->where('m.idNivel', $idNivel)
-            ->where('m.idTerlec', $idTerlec)
-            ->where('m.idCursos', $idCurso);
+            ->where('cu.idNivel', $idNivel)
+            ->where('cu.idTerlec', $idTerlec);
 
         if ($maxOrd !== null) {
             $query->where('m.ord', '<=', $maxOrd);
@@ -179,7 +196,22 @@ final class CalificacionesPrimarioCatalogo
                 ];
             });
 
-        return self::ordenarMateriasParaColumnas($materias);
+        return $ordenarParaColumnasIpe
+            ? self::ordenarMateriasParaColumnas($materias)
+            : self::ordenarMateriasPorOrd($materias);
+    }
+
+    /**
+     * Orden estricto por `ord` (y `id` como desempate).
+     *
+     * @param  Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, esInstitucional?: int}>  $materias
+     * @return Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, esInstitucional?: int}>
+     */
+    public static function ordenarMateriasPorOrd(Collection $materias): Collection
+    {
+        return $materias
+            ->sortBy(fn (object $m) => [(int) $m->ord, (int) $m->id])
+            ->values();
     }
 
     /**
@@ -190,9 +222,7 @@ final class CalificacionesPrimarioCatalogo
      */
     public static function ordenarMateriasParaColumnas(Collection $materias): Collection
     {
-        $ordenadas = $materias
-            ->sortBy(fn (object $m) => [(int) $m->ord, (int) $m->id])
-            ->values();
+        $ordenadas = self::ordenarMateriasPorOrd($materias);
 
         $tieneInstitucional = $ordenadas->contains(
             fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1,
@@ -226,6 +256,28 @@ final class CalificacionesPrimarioCatalogo
         }
 
         return '';
+    }
+
+    /**
+     * Texto para `<select>` de materia: nombre completo y abreviatura al final entre paréntesis.
+     *
+     * @param  object|array{id?: int, ord?: int, abrev?: string, materia?: string}  $materia
+     */
+    public static function etiquetaSelectorMateria(object|array $materia): string
+    {
+        $nombre = is_array($materia)
+            ? trim((string) ($materia['materia'] ?? ''))
+            : trim((string) ($materia->materia ?? ''));
+        $ord = is_array($materia)
+            ? (int) ($materia['ord'] ?? 0)
+            : (int) ($materia->ord ?? 0);
+        $abrev = is_array($materia)
+            ? trim((string) ($materia['abrev'] ?? ''))
+            : trim((string) ($materia->abrev ?? ''));
+
+        $base = $nombre !== '' ? $nombre : ($ord > 0 ? 'Ord '.$ord : '—');
+
+        return $abrev !== '' ? $base.' ('.$abrev.')' : $base;
     }
 
     /**

@@ -1159,7 +1159,7 @@
                     <a href="{{ route('matricula-web.documentos') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => str_starts_with($route ?? '', 'matricula-web.documentos'),
+                           'is-active shadow-sm' => ($route ?? '') === 'matricula-web.documentos',
                        ])
                        title="PDF de aceptación por nivel (compromiso, AEC, normas, traslado)">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1167,6 +1167,18 @@
                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                         </svg>
                         <span class="truncate">Documentos de aceptación</span>
+                    </a>
+                    <a href="{{ route('matricula-web.documentos-estudiante-tipos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'matricula-web.documentos-estudiante-tipos',
+                       ])
+                       title="Documentación que sube la familia en actualización de datos">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        <span class="truncate">Documentos a subir (familia)</span>
                     </a>
                 @endif
             </div>

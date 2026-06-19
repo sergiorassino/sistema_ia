@@ -129,25 +129,29 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
     );
 
     public static $prefixLengthsPsr4 = array (
-        'v' =>
+        'v' => 
         array (
             'voku\\' => 5,
         ),
-        'Z' =>
+        's' => 
+        array (
+            'setasign\\Fpdi\\' => 14,
+        ),
+        'Z' => 
         array (
             'ZipStream\\' => 10,
         ),
-        'W' =>
+        'W' => 
         array (
             'Whoops\\' => 7,
         ),
-        'T' =>
+        'T' => 
         array (
             'TijsVerkoyen\\CssToInlineStyles\\' => 31,
             'Tests\\' => 6,
             'Termwind\\' => 9,
         ),
-        'S' =>
+        'S' => 
         array (
             'Symfony\\Polyfill\\Uuid\\' => 22,
             'Symfony\\Polyfill\\Php85\\' => 23,
@@ -187,12 +191,12 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'Spatie\\Backtrace\\' => 17,
             'Sabberworm\\CSS\\' => 15,
         ),
-        'R' =>
+        'R' => 
         array (
             'Ramsey\\Uuid\\' => 12,
             'Ramsey\\Collection\\' => 18,
         ),
-        'P' =>
+        'P' => 
         array (
             'Psy\\' => 4,
             'Psr\\SimpleCache\\' => 16,
@@ -206,12 +210,12 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'PhpOption\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
-        'N' =>
+        'N' => 
         array (
             'NunoMaduro\\Collision\\' => 21,
             'Nette\\' => 6,
         ),
-        'M' =>
+        'M' => 
         array (
             'Monolog\\' => 8,
             'Mockery\\' => 8,
@@ -219,7 +223,7 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
         ),
-        'L' =>
+        'L' => 
         array (
             'Livewire\\' => 9,
             'League\\Uri\\' => 11,
@@ -233,16 +237,16 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'Laravel\\Sail\\' => 13,
             'Laravel\\Prompts\\' => 16,
         ),
-        'J' =>
+        'J' => 
         array (
             'Jose\\Component\\' => 15,
         ),
-        'I' =>
+        'I' => 
         array (
             'Illuminate\\Support\\' => 19,
             'Illuminate\\' => 11,
         ),
-        'G' =>
+        'G' => 
         array (
             'GuzzleHttp\\UriTemplate\\' => 23,
             'GuzzleHttp\\Psr7\\' => 16,
@@ -250,17 +254,17 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'GuzzleHttp\\' => 11,
             'GrahamCampbell\\ResultType\\' => 26,
         ),
-        'F' =>
+        'F' => 
         array (
             'Fruitcake\\Cors\\' => 15,
             'FontLib\\' => 8,
             'Faker\\' => 6,
         ),
-        'E' =>
+        'E' => 
         array (
             'Egulias\\EmailValidator\\' => 23,
         ),
-        'D' =>
+        'D' => 
         array (
             'Dotenv\\' => 7,
             'Dompdf\\' => 7,
@@ -271,7 +275,7 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'Database\\Seeders\\' => 17,
             'Database\\Factories\\' => 19,
         ),
-        'C' =>
+        'C' => 
         array (
             'Cron\\' => 5,
             'Composer\\Pcre\\' => 14,
@@ -279,437 +283,441 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
             'Carbon\\Doctrine\\' => 16,
             'Carbon\\' => 7,
         ),
-        'B' =>
+        'B' => 
         array (
             'Brick\\Math\\' => 11,
             'Base64Url\\' => 10,
             'Barryvdh\\DomPDF\\' => 16,
         ),
-        'A' =>
+        'A' => 
         array (
             'App\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'voku\\' =>
+        'voku\\' => 
         array (
             0 => __DIR__ . '/..' . '/voku/portable-ascii/src/voku',
         ),
-        'ZipStream\\' =>
+        'setasign\\Fpdi\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/setasign/fpdi/src',
+        ),
+        'ZipStream\\' => 
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
-        'Whoops\\' =>
+        'Whoops\\' => 
         array (
             0 => __DIR__ . '/..' . '/filp/whoops/src/Whoops',
         ),
-        'TijsVerkoyen\\CssToInlineStyles\\' =>
+        'TijsVerkoyen\\CssToInlineStyles\\' => 
         array (
             0 => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src',
         ),
-        'Tests\\' =>
+        'Tests\\' => 
         array (
             0 => __DIR__ . '/../..' . '/tests',
         ),
-        'Termwind\\' =>
+        'Termwind\\' => 
         array (
             0 => __DIR__ . '/..' . '/nunomaduro/termwind/src',
         ),
-        'Symfony\\Polyfill\\Uuid\\' =>
+        'Symfony\\Polyfill\\Uuid\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-uuid',
         ),
-        'Symfony\\Polyfill\\Php85\\' =>
+        'Symfony\\Polyfill\\Php85\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php85',
         ),
-        'Symfony\\Polyfill\\Php83\\' =>
+        'Symfony\\Polyfill\\Php83\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php83',
         ),
-        'Symfony\\Polyfill\\Php80\\' =>
+        'Symfony\\Polyfill\\Php80\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Mbstring\\' =>
+        'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-        'Symfony\\Polyfill\\Intl\\Normalizer\\' =>
+        'Symfony\\Polyfill\\Intl\\Normalizer\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer',
         ),
-        'Symfony\\Polyfill\\Intl\\Idn\\' =>
+        'Symfony\\Polyfill\\Intl\\Idn\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-idn',
         ),
-        'Symfony\\Polyfill\\Intl\\Grapheme\\' =>
+        'Symfony\\Polyfill\\Intl\\Grapheme\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme',
         ),
-        'Symfony\\Polyfill\\Ctype\\' =>
+        'Symfony\\Polyfill\\Ctype\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
-        'Symfony\\Contracts\\Translation\\' =>
+        'Symfony\\Contracts\\Translation\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/translation-contracts',
         ),
-        'Symfony\\Contracts\\Service\\' =>
+        'Symfony\\Contracts\\Service\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/service-contracts',
         ),
-        'Symfony\\Contracts\\EventDispatcher\\' =>
+        'Symfony\\Contracts\\EventDispatcher\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher-contracts',
         ),
-        'Symfony\\Component\\Yaml\\' =>
+        'Symfony\\Component\\Yaml\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/yaml',
         ),
-        'Symfony\\Component\\VarDumper\\' =>
+        'Symfony\\Component\\VarDumper\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/var-dumper',
         ),
-        'Symfony\\Component\\Uid\\' =>
+        'Symfony\\Component\\Uid\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/uid',
         ),
-        'Symfony\\Component\\Translation\\' =>
+        'Symfony\\Component\\Translation\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/translation',
         ),
-        'Symfony\\Component\\String\\' =>
+        'Symfony\\Component\\String\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/string',
         ),
-        'Symfony\\Component\\Routing\\' =>
+        'Symfony\\Component\\Routing\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/routing',
         ),
-        'Symfony\\Component\\Process\\' =>
+        'Symfony\\Component\\Process\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
         ),
-        'Symfony\\Component\\Mime\\' =>
+        'Symfony\\Component\\Mime\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/mime',
         ),
-        'Symfony\\Component\\Mailer\\' =>
+        'Symfony\\Component\\Mailer\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/mailer',
         ),
-        'Symfony\\Component\\HttpKernel\\' =>
+        'Symfony\\Component\\HttpKernel\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/http-kernel',
         ),
-        'Symfony\\Component\\HttpFoundation\\' =>
+        'Symfony\\Component\\HttpFoundation\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/http-foundation',
         ),
-        'Symfony\\Component\\Finder\\' =>
+        'Symfony\\Component\\Finder\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/finder',
         ),
-        'Symfony\\Component\\EventDispatcher\\' =>
+        'Symfony\\Component\\EventDispatcher\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
         ),
-        'Symfony\\Component\\ErrorHandler\\' =>
+        'Symfony\\Component\\ErrorHandler\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/error-handler',
         ),
-        'Symfony\\Component\\CssSelector\\' =>
+        'Symfony\\Component\\CssSelector\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/css-selector',
         ),
-        'Symfony\\Component\\Console\\' =>
+        'Symfony\\Component\\Console\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/console',
         ),
-        'Symfony\\Component\\Clock\\' =>
+        'Symfony\\Component\\Clock\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/clock',
         ),
-        'Svg\\' =>
+        'Svg\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
         ),
-        'SpomkyLabs\\Pki\\' =>
+        'SpomkyLabs\\Pki\\' => 
         array (
             0 => __DIR__ . '/..' . '/spomky-labs/pki-framework/src',
         ),
-        'Spatie\\LaravelIgnition\\' =>
+        'Spatie\\LaravelIgnition\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/laravel-ignition/src',
             1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/laravel-ignition',
         ),
-        'Spatie\\Ignition\\' =>
+        'Spatie\\Ignition\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/ignition/src',
             1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
         ),
-        'Spatie\\FlareClient\\' =>
+        'Spatie\\FlareClient\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/flare-client-php/src',
         ),
-        'Spatie\\ErrorSolutions\\' =>
+        'Spatie\\ErrorSolutions\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/error-solutions/src',
         ),
-        'Spatie\\Backtrace\\' =>
+        'Spatie\\Backtrace\\' => 
         array (
             0 => __DIR__ . '/..' . '/spatie/backtrace/src',
         ),
-        'Sabberworm\\CSS\\' =>
+        'Sabberworm\\CSS\\' => 
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
-        'Ramsey\\Uuid\\' =>
+        'Ramsey\\Uuid\\' => 
         array (
             0 => __DIR__ . '/..' . '/ramsey/uuid/src',
         ),
-        'Ramsey\\Collection\\' =>
+        'Ramsey\\Collection\\' => 
         array (
             0 => __DIR__ . '/..' . '/ramsey/collection/src',
         ),
-        'Psy\\' =>
+        'Psy\\' => 
         array (
             0 => __DIR__ . '/..' . '/psy/psysh/src',
         ),
-        'Psr\\SimpleCache\\' =>
+        'Psr\\SimpleCache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
         ),
-        'Psr\\Log\\' =>
+        'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Http\\Message\\' =>
+        'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\Http\\Client\\' =>
+        'Psr\\Http\\Client\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
-        'Psr\\EventDispatcher\\' =>
+        'Psr\\EventDispatcher\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/event-dispatcher/src',
         ),
-        'Psr\\Container\\' =>
+        'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'Psr\\Clock\\' =>
+        'Psr\\Clock\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/clock/src',
         ),
-        'PhpParser\\' =>
+        'PhpParser\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOption\\' =>
+        'PhpOption\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
         ),
-        'PhpOffice\\PhpSpreadsheet\\' =>
+        'PhpOffice\\PhpSpreadsheet\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
-        'NunoMaduro\\Collision\\' =>
+        'NunoMaduro\\Collision\\' => 
         array (
             0 => __DIR__ . '/..' . '/nunomaduro/collision/src',
         ),
-        'Nette\\' =>
+        'Nette\\' => 
         array (
             0 => __DIR__ . '/..' . '/nette/schema/src',
             1 => __DIR__ . '/..' . '/nette/utils/src',
         ),
-        'Monolog\\' =>
+        'Monolog\\' => 
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
-        'Mockery\\' =>
+        'Mockery\\' => 
         array (
             0 => __DIR__ . '/..' . '/mockery/mockery/library/Mockery',
         ),
-        'Minishlink\\WebPush\\' =>
+        'Minishlink\\WebPush\\' => 
         array (
             0 => __DIR__ . '/..' . '/minishlink/web-push/src',
         ),
-        'Matrix\\' =>
+        'Matrix\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
-        'Masterminds\\' =>
+        'Masterminds\\' => 
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
-        'Livewire\\' =>
+        'Livewire\\' => 
         array (
             0 => __DIR__ . '/..' . '/livewire/livewire/src',
         ),
-        'League\\Uri\\' =>
+        'League\\Uri\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/uri',
             1 => __DIR__ . '/..' . '/league/uri-interfaces',
         ),
-        'League\\MimeTypeDetection\\' =>
+        'League\\MimeTypeDetection\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/mime-type-detection/src',
         ),
-        'League\\Flysystem\\Local\\' =>
+        'League\\Flysystem\\Local\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/flysystem-local',
         ),
-        'League\\Flysystem\\' =>
+        'League\\Flysystem\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/flysystem/src',
         ),
-        'League\\Config\\' =>
+        'League\\Config\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/config/src',
         ),
-        'League\\CommonMark\\' =>
+        'League\\CommonMark\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/commonmark/src',
         ),
-        'Laravel\\Tinker\\' =>
+        'Laravel\\Tinker\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/tinker/src',
         ),
-        'Laravel\\SerializableClosure\\' =>
+        'Laravel\\SerializableClosure\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/serializable-closure/src',
         ),
-        'Laravel\\Sail\\' =>
+        'Laravel\\Sail\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/sail/src',
         ),
-        'Laravel\\Prompts\\' =>
+        'Laravel\\Prompts\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/prompts/src',
         ),
-        'Jose\\Component\\' =>
+        'Jose\\Component\\' => 
         array (
             0 => __DIR__ . '/..' . '/web-token/jwt-library',
         ),
-        'Illuminate\\Support\\' =>
+        'Illuminate\\Support\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Macroable',
             1 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Collections',
             2 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Conditionable',
         ),
-        'Illuminate\\' =>
+        'Illuminate\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate',
         ),
-        'GuzzleHttp\\UriTemplate\\' =>
+        'GuzzleHttp\\UriTemplate\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/uri-template/src',
         ),
-        'GuzzleHttp\\Psr7\\' =>
+        'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' =>
+        'GuzzleHttp\\Promise\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
         ),
-        'GuzzleHttp\\' =>
+        'GuzzleHttp\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
-        'GrahamCampbell\\ResultType\\' =>
+        'GrahamCampbell\\ResultType\\' => 
         array (
             0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
         ),
-        'Fruitcake\\Cors\\' =>
+        'Fruitcake\\Cors\\' => 
         array (
             0 => __DIR__ . '/..' . '/fruitcake/php-cors/src',
         ),
-        'FontLib\\' =>
+        'FontLib\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-font-lib/src/FontLib',
         ),
-        'Faker\\' =>
+        'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
-        'Egulias\\EmailValidator\\' =>
+        'Egulias\\EmailValidator\\' => 
         array (
             0 => __DIR__ . '/..' . '/egulias/email-validator/src',
         ),
-        'Dotenv\\' =>
+        'Dotenv\\' => 
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
-        'Dompdf\\' =>
+        'Dompdf\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
-        'Doctrine\\Inflector\\' =>
+        'Doctrine\\Inflector\\' => 
         array (
             0 => __DIR__ . '/..' . '/doctrine/inflector/src',
         ),
-        'Doctrine\\Common\\Lexer\\' =>
+        'Doctrine\\Common\\Lexer\\' => 
         array (
             0 => __DIR__ . '/..' . '/doctrine/lexer/src',
         ),
-        'Dflydev\\DotAccessData\\' =>
+        'Dflydev\\DotAccessData\\' => 
         array (
             0 => __DIR__ . '/..' . '/dflydev/dot-access-data/src',
         ),
-        'DeepCopy\\' =>
+        'DeepCopy\\' => 
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'Database\\Seeders\\' =>
+        'Database\\Seeders\\' => 
         array (
             0 => __DIR__ . '/../..' . '/database/seeders',
             1 => __DIR__ . '/..' . '/laravel/pint/database/seeders',
         ),
-        'Database\\Factories\\' =>
+        'Database\\Factories\\' => 
         array (
             0 => __DIR__ . '/../..' . '/database/factories',
             1 => __DIR__ . '/..' . '/laravel/pint/database/factories',
         ),
-        'Cron\\' =>
+        'Cron\\' => 
         array (
             0 => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron',
         ),
-        'Composer\\Pcre\\' =>
+        'Composer\\Pcre\\' => 
         array (
             0 => __DIR__ . '/..' . '/composer/pcre/src',
         ),
-        'Complex\\' =>
+        'Complex\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'Carbon\\Doctrine\\' =>
+        'Carbon\\Doctrine\\' => 
         array (
             0 => __DIR__ . '/..' . '/carbonphp/carbon-doctrine-types/src/Carbon/Doctrine',
         ),
-        'Carbon\\' =>
+        'Carbon\\' => 
         array (
             0 => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon',
         ),
-        'Brick\\Math\\' =>
+        'Brick\\Math\\' => 
         array (
             0 => __DIR__ . '/..' . '/brick/math/src',
         ),
-        'Base64Url\\' =>
+        'Base64Url\\' => 
         array (
             0 => __DIR__ . '/..' . '/spomky-labs/base64url/src',
         ),
-        'Barryvdh\\DomPDF\\' =>
+        'Barryvdh\\DomPDF\\' => 
         array (
             0 => __DIR__ . '/..' . '/barryvdh/laravel-dompdf/src',
         ),
-        'App\\' =>
+        'App\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app',
             1 => __DIR__ . '/..' . '/laravel/pint/app',
@@ -723,6 +731,9 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Comunicaciones\\Adapters\\PushAdapter' => __DIR__ . '/../..' . '/app/Comunicaciones/Adapters/PushAdapter.php',
         'App\\Comunicaciones\\Adapters\\WhatsappAdapter' => __DIR__ . '/../..' . '/app/Comunicaciones/Adapters/WhatsappAdapter.php',
         'App\\Comunicaciones\\CanalesPolicy' => __DIR__ . '/../..' . '/app/Comunicaciones/CanalesPolicy.php',
+        'App\\Comunicaciones\\ComAuditoriaLogger' => __DIR__ . '/../..' . '/app/Comunicaciones/ComAuditoriaLogger.php',
+        'App\\Comunicaciones\\ComunicacionesFamiliaSession' => __DIR__ . '/../..' . '/app/Comunicaciones/ComunicacionesFamiliaSession.php',
+        'App\\Comunicaciones\\ComunicacionesGestionSession' => __DIR__ . '/../..' . '/app/Comunicaciones/ComunicacionesGestionSession.php',
         'App\\Comunicaciones\\ComunicacionesRepository' => __DIR__ . '/../..' . '/app/Comunicaciones/ComunicacionesRepository.php',
         'App\\Comunicaciones\\Distribuidor' => __DIR__ . '/../..' . '/app/Comunicaciones/Distribuidor.php',
         'App\\Comunicaciones\\Whatsapp\\WaLinkAdapter' => __DIR__ . '/../..' . '/app/Comunicaciones/Whatsapp/WaLinkAdapter.php',
@@ -730,45 +741,114 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Console\\Commands\\GenerarManualSistemaPdfCommand' => __DIR__ . '/../..' . '/app/Console/Commands/GenerarManualSistemaPdfCommand.php',
         'App\\Console\\Commands\\MigrateLegacyCommand' => __DIR__ . '/../..' . '/app/Console/Commands/MigrateLegacyCommand.php',
         'App\\Console\\Commands\\SwitchTenantCommand' => __DIR__ . '/../..' . '/app/Console/Commands/SwitchTenantCommand.php',
+        'App\\Http\\Controllers\\Alumnos\\AbrirHiloComunicacionFamiliaController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/AbrirHiloComunicacionFamiliaController.php',
+        'App\\Http\\Controllers\\Alumnos\\BoletinIpePrimarioPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/BoletinIpePrimarioPdfController.php',
         'App\\Http\\Controllers\\Alumnos\\CalificacionesController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/CalificacionesController.php',
+        'App\\Http\\Controllers\\Alumnos\\ComprobantePagoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/ComprobantePagoPdfController.php',
+        'App\\Http\\Controllers\\Alumnos\\DashboardController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/DashboardController.php',
+        'App\\Http\\Controllers\\Alumnos\\FichaMatriculaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/FichaMatriculaPdfController.php',
+        'App\\Http\\Controllers\\Alumnos\\FormularioDebitoAutomaticoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/FormularioDebitoAutomaticoPdfController.php',
+        'App\\Http\\Controllers\\Alumnos\\HorarioClasePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/HorarioClasePdfController.php',
         'App\\Http\\Controllers\\Alumnos\\InformeInasistenciasController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/InformeInasistenciasController.php',
         'App\\Http\\Controllers\\Alumnos\\PushApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/PushApiController.php',
         'App\\Http\\Controllers\\Alumnos\\PushController' => __DIR__ . '/../..' . '/app/Http/Controllers/Alumnos/PushController.php',
         'App\\Http\\Controllers\\AntecedentesDisciplinariosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/AntecedentesDisciplinariosPdfController.php',
+        'App\\Http\\Controllers\\Aspirantes\\RegistroAspiranteController' => __DIR__ . '/../..' . '/app/Http/Controllers/Aspirantes/RegistroAspiranteController.php',
         'App\\Http\\Controllers\\BoletinesSecundario\\BoletinSecundarioLotePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/BoletinesSecundario/BoletinSecundarioLotePdfController.php',
         'App\\Http\\Controllers\\BoletinesSecundario\\BoletinSecundarioPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/BoletinesSecundario/BoletinSecundarioPdfController.php',
+        'App\\Http\\Controllers\\CalificacionesInicial\\InformeProgresoInicialLotePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesInicial/InformeProgresoInicialLotePdfController.php',
+        'App\\Http\\Controllers\\CalificacionesInicial\\InformeProgresoInicialPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesInicial/InformeProgresoInicialPdfController.php',
+        'App\\Http\\Controllers\\CalificacionesPrimario\\BoletinIpeLotePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesPrimario/BoletinIpeLotePdfController.php',
+        'App\\Http\\Controllers\\CalificacionesPrimario\\BoletinIpePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesPrimario/BoletinIpePdfController.php',
+        'App\\Http\\Controllers\\CalificacionesPrimario\\PlanillaCalificacionesPrimarioPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesPrimario/PlanillaCalificacionesPrimarioPdfController.php',
         'App\\Http\\Controllers\\CalificacionesSecundario\\ActaVolanteColoquiosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesSecundario/ActaVolanteColoquiosPdfController.php',
         'App\\Http\\Controllers\\CalificacionesSecundario\\ConsultaCalificacionesSecundarioPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesSecundario/ConsultaCalificacionesSecundarioPdfController.php',
         'App\\Http\\Controllers\\CalificacionesSecundario\\PlanillaCalificacionesPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesSecundario/PlanillaCalificacionesPdfController.php',
         'App\\Http\\Controllers\\CalificacionesSecundario\\PlanillaResumenCalificacionesPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/CalificacionesSecundario/PlanillaResumenCalificacionesPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\CertificadoAlumnoRegularPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/CertificadoAlumnoRegularPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\CertificadoAsistenciaProfesorPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/CertificadoAsistenciaProfesorPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\CertificadoEstudiosTramitePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/CertificadoEstudiosTramitePdfController.php',
+        'App\\Http\\Controllers\\Certificados\\ConstanciaDocumentosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/ConstanciaDocumentosPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\CusIsaVozImagenPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/CusIsaVozImagenPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\PaseParcialPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/PaseParcialPdfController.php',
+        'App\\Http\\Controllers\\Certificados\\SolicitudDePasePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Certificados/SolicitudDePasePdfController.php',
+        'App\\Http\\Controllers\\Comunicaciones\\AbrirHiloComunicacionGestionController' => __DIR__ . '/../..' . '/app/Http/Controllers/Comunicaciones/AbrirHiloComunicacionGestionController.php',
+        'App\\Http\\Controllers\\Comunicaciones\\ComunicacionHiloPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Comunicaciones/ComunicacionHiloPdfController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Controllers\\Cooperadora\\MovimientosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cooperadora/MovimientosPdfController.php',
+        'App\\Http\\Controllers\\Cooperadora\\OrdenPagoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cooperadora/OrdenPagoPdfController.php',
+        'App\\Http\\Controllers\\Cooperadora\\PagosEstudianteCooperadoraPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cooperadora/PagosEstudianteCooperadoraPdfController.php',
+        'App\\Http\\Controllers\\Cooperadora\\ReciboPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cooperadora/ReciboPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\ComprobantePagoCuotasPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ComprobantePagoCuotasPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\ComprobantePagoImputacionPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ComprobantePagoImputacionPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\LibroArancelesPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/LibroArancelesPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\ListadoEstudiantesPorCuotaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ListadoEstudiantesPorCuotaPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\ListadoPagosPorFechaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ListadoPagosPorFechaPdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\ResumenBecasPorNivelCsvController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ResumenBecasPorNivelCsvController.php',
+        'App\\Http\\Controllers\\Cuotas\\ResumenPagosEstudiantePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/ResumenPagosEstudiantePdfController.php',
+        'App\\Http\\Controllers\\Cuotas\\SolicitudAyudaFamiliarPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Cuotas/SolicitudAyudaFamiliarPdfController.php',
         'App\\Http\\Controllers\\DashboardController' => __DIR__ . '/../..' . '/app/Http/Controllers/DashboardController.php',
+        'App\\Http\\Controllers\\Docentes\\InformeInasistenciasDocentePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Docentes/InformeInasistenciasDocentePdfController.php',
+        'App\\Http\\Controllers\\Docentes\\RankingInasistenciasMateriasCursosCsvController' => __DIR__ . '/../..' . '/app/Http/Controllers/Docentes/RankingInasistenciasMateriasCursosCsvController.php',
+        'App\\Http\\Controllers\\EstudiantesDatosExcelController' => __DIR__ . '/../..' . '/app/Http/Controllers/EstudiantesDatosExcelController.php',
+        'App\\Http\\Controllers\\EstudiantesDatosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/EstudiantesDatosPdfController.php',
         'App\\Http\\Controllers\\EstudiantesExcelController' => __DIR__ . '/../..' . '/app/Http/Controllers/EstudiantesExcelController.php',
+        'App\\Http\\Controllers\\Examenes\\ActaCompromisoTercerMateriaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/ActaCompromisoTercerMateriaPdfController.php',
         'App\\Http\\Controllers\\Examenes\\ActaVolantePreviosPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/ActaVolantePreviosPdfController.php',
         'App\\Http\\Controllers\\Examenes\\MateriasAdeudadasEntradaController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/MateriasAdeudadasEntradaController.php',
         'App\\Http\\Controllers\\Examenes\\MateriasAdeudadasPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/MateriasAdeudadasPdfController.php',
         'App\\Http\\Controllers\\Examenes\\PermisoExamenPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/PermisoExamenPdfController.php',
+        'App\\Http\\Controllers\\Examenes\\TercerMateriaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Examenes/TercerMateriaPdfController.php',
+        'App\\Http\\Controllers\\FichaMatriculaSecretariaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/FichaMatriculaSecretariaPdfController.php',
+        'App\\Http\\Controllers\\FichaMatriculaSecretariaZipController' => __DIR__ . '/../..' . '/app/Http/Controllers/FichaMatriculaSecretariaZipController.php',
         'App\\Http\\Controllers\\Horarios\\HorarioCursoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Horarios/HorarioCursoPdfController.php',
         'App\\Http\\Controllers\\Horarios\\HorarioProfesorPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Horarios/HorarioProfesorPdfController.php',
+        'App\\Http\\Controllers\\InformeInasistenciasLotePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/InformeInasistenciasLotePdfController.php',
         'App\\Http\\Controllers\\InformeInasistenciasPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/InformeInasistenciasPdfController.php',
+        'App\\Http\\Controllers\\InstitutionalIconController' => __DIR__ . '/../..' . '/app/Http/Controllers/InstitutionalIconController.php',
         'App\\Http\\Controllers\\LibroMatriculaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/LibroMatriculaPdfController.php',
         'App\\Http\\Controllers\\ListadoCursoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ListadoCursoPdfController.php',
+        'App\\Http\\Controllers\\ListadoDocentesExcelController' => __DIR__ . '/../..' . '/app/Http/Controllers/ListadoDocentesExcelController.php',
+        'App\\Http\\Controllers\\ListadoDocentesPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ListadoDocentesPdfController.php',
+        'App\\Http\\Controllers\\ListadoEstudiantesFormatoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ListadoEstudiantesFormatoPdfController.php',
+        'App\\Http\\Controllers\\ManualComunicacionInstitucionalPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ManualComunicacionInstitucionalPdfController.php',
         'App\\Http\\Controllers\\ManualSistemaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ManualSistemaPdfController.php',
+        'App\\Http\\Controllers\\MatriculaWeb\\DocumentoAceptacionArchivoController' => __DIR__ . '/../..' . '/app/Http/Controllers/MatriculaWeb/DocumentoAceptacionArchivoController.php',
+        'App\\Http\\Controllers\\MatrizAnaliticos\\AnaliticoFrentePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/MatrizAnaliticos/AnaliticoFrentePdfController.php',
+        'App\\Http\\Controllers\\MatrizAnaliticos\\AnaliticoReversoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/MatrizAnaliticos/AnaliticoReversoPdfController.php',
+        'App\\Http\\Controllers\\Mora\\EstadoDeudaFamiliarPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mora/EstadoDeudaFamiliarPdfController.php',
+        'App\\Http\\Controllers\\Mora\\ListadoMorososPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mora/ListadoMorososPdfController.php',
+        'App\\Http\\Controllers\\Mora\\NotificacionDeudaPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Mora/NotificacionDeudaPdfController.php',
+        'App\\Http\\Controllers\\Navegacion\\AutogestionDocenteController' => __DIR__ . '/../..' . '/app/Http/Controllers/Navegacion/AutogestionDocenteController.php',
+        'App\\Http\\Controllers\\Navegacion\\EstablecerContextoEstudianteController' => __DIR__ . '/../..' . '/app/Http/Controllers/Navegacion/EstablecerContextoEstudianteController.php',
         'App\\Http\\Controllers\\ParteDiarioPreceptorPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/ParteDiarioPreceptorPdfController.php',
+        'App\\Http\\Controllers\\PortalDocente\\PortalDocentePlanillaCalificacionesPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/PortalDocente/PortalDocentePlanillaCalificacionesPdfController.php',
         'App\\Http\\Controllers\\Push\\SuscribirController' => __DIR__ . '/../..' . '/app/Http/Controllers/Push/SuscribirController.php',
         'App\\Http\\Controllers\\SancionComunicadoPdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/SancionComunicadoPdfController.php',
+        'App\\Http\\Controllers\\Viajes\\SalidaViajePdfController' => __DIR__ . '/../..' . '/app/Http/Controllers/Viajes/SalidaViajePdfController.php',
         'App\\Http\\Middleware\\CheckPermiso' => __DIR__ . '/../..' . '/app/Http/Middleware/CheckPermiso.php',
+        'App\\Http\\Middleware\\CheckPermisoConfiguracion' => __DIR__ . '/../..' . '/app/Http/Middleware/CheckPermisoConfiguracion.php',
+        'App\\Http\\Middleware\\EnsureAutogestionComunicaciones' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureAutogestionComunicaciones.php',
+        'App\\Http\\Middleware\\EnsureMenuPortal' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureMenuPortal.php',
+        'App\\Http\\Middleware\\EnsureNivelAdministracion' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureNivelAdministracion.php',
         'App\\Http\\Middleware\\EnsureSchoolContext' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureSchoolContext.php',
         'App\\Http\\Middleware\\EnsureStudentContext' => __DIR__ . '/../..' . '/app/Http/Middleware/EnsureStudentContext.php',
+        'App\\Http\\Middleware\\ForceHttpsBehindProxy' => __DIR__ . '/../..' . '/app/Http/Middleware/ForceHttpsBehindProxy.php',
+        'App\\Http\\Middleware\\LimpiarSesionEnPaginaLogin' => __DIR__ . '/../..' . '/app/Http/Middleware/LimpiarSesionEnPaginaLogin.php',
         'App\\Http\\Middleware\\NoStoreResponse' => __DIR__ . '/../..' . '/app/Http/Middleware/NoStoreResponse.php',
         'App\\Jobs\\EnviarComunicadoMailLoteJob' => __DIR__ . '/../..' . '/app/Jobs/EnviarComunicadoMailLoteJob.php',
         'App\\Listados\\CamposLegajoSync' => __DIR__ . '/../..' . '/app/Listados/CamposLegajoSync.php',
         'App\\Listados\\CamposProfesorSync' => __DIR__ . '/../..' . '/app/Listados/CamposProfesorSync.php',
         'App\\Livewire\\Abm\\Curplan\\CurplanForm' => __DIR__ . '/../..' . '/app/Livewire/Abm/Curplan/CurplanForm.php',
         'App\\Livewire\\Abm\\Curplan\\CurplanIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/Curplan/CurplanIndex.php',
+        'App\\Livewire\\Abm\\CursosPorProfesor\\CursosPorProfesorIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/CursosPorProfesor/CursosPorProfesorIndex.php',
         'App\\Livewire\\Abm\\Cursos\\CursosIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/Cursos/CursosIndex.php',
         'App\\Livewire\\Abm\\LegajosProfesor\\LegajoProfesorForm' => __DIR__ . '/../..' . '/app/Livewire/Abm/LegajosProfesor/LegajoProfesorForm.php',
         'App\\Livewire\\Abm\\LegajosProfesor\\LegajosProfesorIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/LegajosProfesor/LegajosProfesorIndex.php',
+        'App\\Livewire\\Abm\\Legajos\\Concerns\\LegajoCargaPorCursoPanel' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/Concerns/LegajoCargaPorCursoPanel.php',
+        'App\\Livewire\\Abm\\Legajos\\LegajoBuscarFamilias' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/LegajoBuscarFamilias.php',
+        'App\\Livewire\\Abm\\Legajos\\LegajoCargaPorCurso' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/LegajoCargaPorCurso.php',
+        'App\\Livewire\\Abm\\Legajos\\LegajoFamilia' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/LegajoFamilia.php',
         'App\\Livewire\\Abm\\Legajos\\LegajoForm' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/LegajoForm.php',
         'App\\Livewire\\Abm\\Legajos\\LegajosIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/Legajos/LegajosIndex.php',
         'App\\Livewire\\Abm\\MateriasAnio\\MateriasAnioIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/MateriasAnio/MateriasAnioIndex.php',
@@ -777,28 +857,110 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Livewire\\Abm\\Planes\\PlanesIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/Planes/PlanesIndex.php',
         'App\\Livewire\\Abm\\ProfesoresPorMateria\\ProfesoresPorMateriaIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/ProfesoresPorMateria/ProfesoresPorMateriaIndex.php',
         'App\\Livewire\\Abm\\Terlec\\TerlecIndex' => __DIR__ . '/../..' . '/app/Livewire/Abm/Terlec/TerlecIndex.php',
+        'App\\Livewire\\Administracion\\Permisos\\PermisosPorUsuarioIndex' => __DIR__ . '/../..' . '/app/Livewire/Administracion/Permisos/PermisosPorUsuarioIndex.php',
+        'App\\Livewire\\Administracion\\Permisos\\PermisosUsuarioEditor' => __DIR__ . '/../..' . '/app/Livewire/Administracion/Permisos/PermisosUsuarioEditor.php',
         'App\\Livewire\\Administracion\\Permisos\\PermisosUsuariosIndex' => __DIR__ . '/../..' . '/app/Livewire/Administracion/Permisos/PermisosUsuariosIndex.php',
+        'App\\Livewire\\Alumnos\\AceptacionDocumentoFamilia' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/AceptacionDocumentoFamilia.php',
+        'App\\Livewire\\Alumnos\\ActualizacionDatosPersonalesEstandarForm' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/ActualizacionDatosPersonalesEstandarForm.php',
+        'App\\Livewire\\Alumnos\\ActualizacionDatosPersonalesSanFranciscoAsisForm' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/ActualizacionDatosPersonalesSanFranciscoAsisForm.php',
+        'App\\Livewire\\Alumnos\\ArancelesEscolaresIndex' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/ArancelesEscolaresIndex.php',
         'App\\Livewire\\Alumnos\\Auth\\Login' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/Auth/Login.php',
         'App\\Livewire\\Alumnos\\Comunicaciones\\BandejaFamilia' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/Comunicaciones/BandejaFamilia.php',
         'App\\Livewire\\Alumnos\\Comunicaciones\\HiloShowFamilia' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/Comunicaciones/HiloShowFamilia.php',
         'App\\Livewire\\Alumnos\\Comunicaciones\\NuevoComunicadoFamilia' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/Comunicaciones/NuevoComunicadoFamilia.php',
         'App\\Livewire\\Alumnos\\Comunicaciones\\PreferenciasMedios' => __DIR__ . '/../..' . '/app/Livewire/Alumnos/Comunicaciones/PreferenciasMedios.php',
+        'App\\Livewire\\Aspirantes\\AspirantesIndex' => __DIR__ . '/../..' . '/app/Livewire/Aspirantes/AspirantesIndex.php',
+        'App\\Livewire\\Aspirantes\\CursosModeloIndex' => __DIR__ . '/../..' . '/app/Livewire/Aspirantes/CursosModeloIndex.php',
+        'App\\Livewire\\Aspirantes\\InstanciaForm' => __DIR__ . '/../..' . '/app/Livewire/Aspirantes/InstanciaForm.php',
+        'App\\Livewire\\Aspirantes\\InstanciaIndex' => __DIR__ . '/../..' . '/app/Livewire/Aspirantes/InstanciaIndex.php',
+        'App\\Livewire\\Aspirantes\\RegistroAspiranteForm' => __DIR__ . '/../..' . '/app/Livewire/Aspirantes/RegistroAspiranteForm.php',
         'App\\Livewire\\Auth\\Login' => __DIR__ . '/../..' . '/app/Livewire/Auth/Login.php',
         'App\\Livewire\\BoletinesSecundario\\BoletinesSecundarioIndex' => __DIR__ . '/../..' . '/app/Livewire/BoletinesSecundario/BoletinesSecundarioIndex.php',
+        'App\\Livewire\\CalificacionesInicial\\CargaObservacionesInicialAlumnos' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/CargaObservacionesInicialAlumnos.php',
+        'App\\Livewire\\CalificacionesInicial\\CargaObservacionesInicialForm' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/CargaObservacionesInicialForm.php',
+        'App\\Livewire\\CalificacionesInicial\\CargaObservacionesInicialIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/CargaObservacionesInicialIndex.php',
+        'App\\Livewire\\CalificacionesInicial\\EditarIndicadoresForm' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/EditarIndicadoresForm.php',
+        'App\\Livewire\\CalificacionesInicial\\EditarIndicadoresIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/EditarIndicadoresIndex.php',
+        'App\\Livewire\\CalificacionesInicial\\InformeProgresoInicialIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesInicial/InformeProgresoInicialIndex.php',
+        'App\\Livewire\\CalificacionesPrimario\\BoletinIpeIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/BoletinIpeIndex.php',
+        'App\\Livewire\\CalificacionesPrimario\\CargaCalificacionesPrimarioForm' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/CargaCalificacionesPrimarioForm.php',
+        'App\\Livewire\\CalificacionesPrimario\\CargaCalificacionesPrimarioIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/CargaCalificacionesPrimarioIndex.php',
+        'App\\Livewire\\CalificacionesPrimario\\CargaCalificacionesPrimarioMateria' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/CargaCalificacionesPrimarioMateria.php',
+        'App\\Livewire\\CalificacionesPrimario\\PlanillaCalificacionesPrimario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/PlanillaCalificacionesPrimario.php',
+        'App\\Livewire\\CalificacionesPrimario\\SincroDesempenos' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/SincroDesempenos.php',
+        'App\\Livewire\\CalificacionesPrimario\\SincroGe' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesPrimario/SincroGe.php',
         'App\\Livewire\\CalificacionesSecundario\\ActaVolanteColoquiosSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/ActaVolanteColoquiosSecundario.php',
         'App\\Livewire\\CalificacionesSecundario\\CargaCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/CargaCalificacionesSecundario.php',
         'App\\Livewire\\CalificacionesSecundario\\CargaColoquiosSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/CargaColoquiosSecundario.php',
+        'App\\Livewire\\CalificacionesSecundario\\CierreAnualHistorial' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/CierreAnualHistorial.php',
+        'App\\Livewire\\CalificacionesSecundario\\CierreAnualIndex' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/CierreAnualIndex.php',
         'App\\Livewire\\CalificacionesSecundario\\ConsultaCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/ConsultaCalificacionesSecundario.php',
         'App\\Livewire\\CalificacionesSecundario\\PlanillaCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/PlanillaCalificacionesSecundario.php',
         'App\\Livewire\\CalificacionesSecundario\\PlanillaResumenCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/PlanillaResumenCalificacionesSecundario.php',
         'App\\Livewire\\CalificacionesSecundario\\SincroGe' => __DIR__ . '/../..' . '/app/Livewire/CalificacionesSecundario/SincroGe.php',
+        'App\\Livewire\\Certificados\\CertificadoAlumnoRegularIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/CertificadoAlumnoRegularIndex.php',
+        'App\\Livewire\\Certificados\\CertificadoAsistenciaProfesorIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/CertificadoAsistenciaProfesorIndex.php',
+        'App\\Livewire\\Certificados\\CertificadoEstudiosTramiteIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/CertificadoEstudiosTramiteIndex.php',
+        'App\\Livewire\\Certificados\\ConstanciaDocumentosIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/ConstanciaDocumentosIndex.php',
+        'App\\Livewire\\Certificados\\CusIsaVozImagenIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/CusIsaVozImagenIndex.php',
+        'App\\Livewire\\Certificados\\PaseParcialIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/PaseParcialIndex.php',
+        'App\\Livewire\\Certificados\\SolicitudDePaseIndex' => __DIR__ . '/../..' . '/app/Livewire/Certificados/SolicitudDePaseIndex.php',
         'App\\Livewire\\Components\\TerlecSelector' => __DIR__ . '/../..' . '/app/Livewire/Components/TerlecSelector.php',
         'App\\Livewire\\Comunicaciones\\BandejaGestion' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/BandejaGestion.php',
         'App\\Livewire\\Comunicaciones\\BandejaRevision' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/BandejaRevision.php',
+        'App\\Livewire\\Comunicaciones\\ComAuditoriaIndex' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/ComAuditoriaIndex.php',
         'App\\Livewire\\Comunicaciones\\HiloShow' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/HiloShow.php',
         'App\\Livewire\\Comunicaciones\\InformeEnvioComunicado' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/InformeEnvioComunicado.php',
         'App\\Livewire\\Comunicaciones\\NuevoComunicado' => __DIR__ . '/../..' . '/app/Livewire/Comunicaciones/NuevoComunicado.php',
+        'App\\Livewire\\Concerns\\DetalleLecturaDestinatariosModal' => __DIR__ . '/../..' . '/app/Livewire/Concerns/DetalleLecturaDestinatariosModal.php',
         'App\\Livewire\\Concerns\\RequiresPermisoConfiguracion' => __DIR__ . '/../..' . '/app/Livewire/Concerns/RequiresPermisoConfiguracion.php',
+        'App\\Livewire\\Concerns\\RequiresPermisoMatriculaWeb' => __DIR__ . '/../..' . '/app/Livewire/Concerns/RequiresPermisoMatriculaWeb.php',
+        'App\\Livewire\\Cooperadora\\BuscarAlumnoIngreso' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/BuscarAlumnoIngreso.php',
+        'App\\Livewire\\Cooperadora\\ConfigForm' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/ConfigForm.php',
+        'App\\Livewire\\Cooperadora\\EgresoForm' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/EgresoForm.php',
+        'App\\Livewire\\Cooperadora\\EgresosIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/EgresosIndex.php',
+        'App\\Livewire\\Cooperadora\\IngresoForm' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/IngresoForm.php',
+        'App\\Livewire\\Cooperadora\\IngresosIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/IngresosIndex.php',
+        'App\\Livewire\\Cooperadora\\ItemsIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/ItemsIndex.php',
+        'App\\Livewire\\Cooperadora\\MediosPagoIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/MediosPagoIndex.php',
+        'App\\Livewire\\Cooperadora\\MovimientosIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/MovimientosIndex.php',
+        'App\\Livewire\\Cooperadora\\PagosEstudianteCooperadoraIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/PagosEstudianteCooperadoraIndex.php',
+        'App\\Livewire\\Cooperadora\\PagosEstudianteCooperadoraShow' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/PagosEstudianteCooperadoraShow.php',
+        'App\\Livewire\\Cooperadora\\ProveedoresForm' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/ProveedoresForm.php',
+        'App\\Livewire\\Cooperadora\\ProveedoresIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/ProveedoresIndex.php',
+        'App\\Livewire\\Cooperadora\\RubrosIndex' => __DIR__ . '/../..' . '/app/Livewire/Cooperadora/RubrosIndex.php',
+        'App\\Livewire\\Cuotas\\AsignacionBecasIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/AsignacionBecasIndex.php',
+        'App\\Livewire\\Cuotas\\CancelarTodasReservas' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CancelarTodasReservas.php',
+        'App\\Livewire\\Cuotas\\CuotaGeneradaForm' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotaGeneradaForm.php',
+        'App\\Livewire\\Cuotas\\CuotasEstudianteShow' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotasEstudianteShow.php',
+        'App\\Livewire\\Cuotas\\CuotasImportesForm' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotasImportesForm.php',
+        'App\\Livewire\\Cuotas\\CuotasImportesIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotasImportesIndex.php',
+        'App\\Livewire\\Cuotas\\CuotasIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotasIndex.php',
+        'App\\Livewire\\Cuotas\\CuotasPlantillaIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/CuotasPlantillaIndex.php',
+        'App\\Livewire\\Cuotas\\EdicionCuotasGeneradasIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/EdicionCuotasGeneradasIndex.php',
+        'App\\Livewire\\Cuotas\\EliminacionMasivaCuotas' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/EliminacionMasivaCuotas.php',
+        'App\\Livewire\\Cuotas\\GeneracionMasivaCuotas' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/GeneracionMasivaCuotas.php',
+        'App\\Livewire\\Cuotas\\GenerarCuotaEstudiante' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/GenerarCuotaEstudiante.php',
+        'App\\Livewire\\Cuotas\\HistorialPagosCuota' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/HistorialPagosCuota.php',
+        'App\\Livewire\\Cuotas\\ImputarPagoForm' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/ImputarPagoForm.php',
+        'App\\Livewire\\Cuotas\\LibroArancelesIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/LibroArancelesIndex.php',
+        'App\\Livewire\\Cuotas\\ListadoEstudiantesPorCuotaIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/ListadoEstudiantesPorCuotaIndex.php',
+        'App\\Livewire\\Cuotas\\ListadoPagosPorFechaIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/ListadoPagosPorFechaIndex.php',
+        'App\\Livewire\\Cuotas\\ResumenBecasPorNivelIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/ResumenBecasPorNivelIndex.php',
+        'App\\Livewire\\Cuotas\\SolicitudAyudaFamiliarIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/SolicitudAyudaFamiliarIndex.php',
+        'App\\Livewire\\Cuotas\\TiposBecaIndex' => __DIR__ . '/../..' . '/app/Livewire/Cuotas/TiposBecaIndex.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\CargosDocenteIndex' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/CargosDocenteIndex.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\EnvioMasivoInasistenciasDocentes' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/EnvioMasivoInasistenciasDocentes.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\InasistenciaDocenteForm' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/InasistenciaDocenteForm.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\InasistenciasDocenteShow' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/InasistenciasDocenteShow.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\InasistenciasDocentesIndex' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/InasistenciasDocentesIndex.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\InformeBimestreShow' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/InformeBimestreShow.php',
+        'App\\Livewire\\Docentes\\Inasistencias\\RankingInasistenciasMateriasCursos' => __DIR__ . '/../..' . '/app/Livewire/Docentes/Inasistencias/RankingInasistenciasMateriasCursos.php',
+        'App\\Livewire\\Estadistica\\Concerns\\RequiresPermisoEstadisticaRendimiento' => __DIR__ . '/../..' . '/app/Livewire/Estadistica/Concerns/RequiresPermisoEstadisticaRendimiento.php',
+        'App\\Livewire\\Estadistica\\PorDocente' => __DIR__ . '/../..' . '/app/Livewire/Estadistica/PorDocente.php',
+        'App\\Livewire\\Estadistica\\PorEstudiante' => __DIR__ . '/../..' . '/app/Livewire/Estadistica/PorEstudiante.php',
+        'App\\Livewire\\Estadistica\\PorMateria' => __DIR__ . '/../..' . '/app/Livewire/Estadistica/PorMateria.php',
+        'App\\Livewire\\Estadistica\\RendimientoEscolarIndex' => __DIR__ . '/../..' . '/app/Livewire/Estadistica/RendimientoEscolarIndex.php',
         'App\\Livewire\\Examenes\\ActaVolantePreviosIndex' => __DIR__ . '/../..' . '/app/Livewire/Examenes/ActaVolantePreviosIndex.php',
         'App\\Livewire\\Examenes\\BorrarInscripcionesExamenIndex' => __DIR__ . '/../..' . '/app/Livewire/Examenes/BorrarInscripcionesExamenIndex.php',
         'App\\Livewire\\Examenes\\Concerns\\PreparaMateriasAdeudadasExamenes' => __DIR__ . '/../..' . '/app/Livewire/Examenes/Concerns/PreparaMateriasAdeudadasExamenes.php',
@@ -811,64 +973,144 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Livewire\\Examenes\\MateriasAdeudadasNotasIndex' => __DIR__ . '/../..' . '/app/Livewire/Examenes/MateriasAdeudadasNotasIndex.php',
         'App\\Livewire\\Examenes\\MateriasAdeudadasPreparacionPanel' => __DIR__ . '/../..' . '/app/Livewire/Examenes/MateriasAdeudadasPreparacionPanel.php',
         'App\\Livewire\\Examenes\\PermisoExamenIndex' => __DIR__ . '/../..' . '/app/Livewire/Examenes/PermisoExamenIndex.php',
+        'App\\Livewire\\Examenes\\TercerMateriaIndex' => __DIR__ . '/../..' . '/app/Livewire/Examenes/TercerMateriaIndex.php',
         'App\\Livewire\\Horarios\\Concerns\\RequiresPermisoHorariosConfigCarga' => __DIR__ . '/../..' . '/app/Livewire/Horarios/Concerns/RequiresPermisoHorariosConfigCarga.php',
         'App\\Livewire\\Horarios\\HorariosCargaIndex' => __DIR__ . '/../..' . '/app/Livewire/Horarios/HorariosCargaIndex.php',
         'App\\Livewire\\Horarios\\HorariosConfigIndex' => __DIR__ . '/../..' . '/app/Livewire/Horarios/HorariosConfigIndex.php',
         'App\\Livewire\\Horarios\\HorariosImpresionIndex' => __DIR__ . '/../..' . '/app/Livewire/Horarios/HorariosImpresionIndex.php',
+        'App\\Livewire\\Listados\\EstudiantesDatosExport' => __DIR__ . '/../..' . '/app/Livewire/Listados/EstudiantesDatosExport.php',
+        'App\\Livewire\\Listados\\FichaMatriculaSecretaria' => __DIR__ . '/../..' . '/app/Livewire/Listados/FichaMatriculaSecretaria.php',
         'App\\Livewire\\Listados\\LibroMatricula' => __DIR__ . '/../..' . '/app/Livewire/Listados/LibroMatricula.php',
+        'App\\Livewire\\Listados\\ListadoDocentes' => __DIR__ . '/../..' . '/app/Livewire/Listados/ListadoDocentes.php',
+        'App\\Livewire\\Listados\\ListadoEstudiantesFormato' => __DIR__ . '/../..' . '/app/Livewire/Listados/ListadoEstudiantesFormato.php',
         'App\\Livewire\\Listados\\ListadoPorCurso' => __DIR__ . '/../..' . '/app/Livewire/Listados/ListadoPorCurso.php',
+        'App\\Livewire\\MaterialDidactico\\RecursosAdmin' => __DIR__ . '/../..' . '/app/Livewire/MaterialDidactico/RecursosAdmin.php',
+        'App\\Livewire\\MaterialDidactico\\ReservaForm' => __DIR__ . '/../..' . '/app/Livewire/MaterialDidactico/ReservaForm.php',
+        'App\\Livewire\\MaterialDidactico\\ReservasDashboard' => __DIR__ . '/../..' . '/app/Livewire/MaterialDidactico/ReservasDashboard.php',
+        'App\\Livewire\\MatriculaWeb\\DocumentosAceptacionForm' => __DIR__ . '/../..' . '/app/Livewire/MatriculaWeb/DocumentosAceptacionForm.php',
+        'App\\Livewire\\MatrizAnaliticos\\LibroMatrizDatosAdicionales' => __DIR__ . '/../..' . '/app/Livewire/MatrizAnaliticos/LibroMatrizDatosAdicionales.php',
+        'App\\Livewire\\MatrizAnaliticos\\LibroMatrizEditar' => __DIR__ . '/../..' . '/app/Livewire/MatrizAnaliticos/LibroMatrizEditar.php',
+        'App\\Livewire\\MatrizAnaliticos\\LibroMatrizIndex' => __DIR__ . '/../..' . '/app/Livewire/MatrizAnaliticos/LibroMatrizIndex.php',
+        'App\\Livewire\\Mora\\EstadoDeudaFamiliarIndex' => __DIR__ . '/../..' . '/app/Livewire/Mora/EstadoDeudaFamiliarIndex.php',
+        'App\\Livewire\\Mora\\GestionMorososIndex' => __DIR__ . '/../..' . '/app/Livewire/Mora/GestionMorososIndex.php',
+        'App\\Livewire\\Mora\\TextosNotificacionDeudaForm' => __DIR__ . '/../..' . '/app/Livewire/Mora/TextosNotificacionDeudaForm.php',
+        'App\\Livewire\\Parametrizacion\\CamposAspirantesIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/CamposAspirantesIndex.php',
         'App\\Livewire\\Parametrizacion\\CamposLegajoIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/CamposLegajoIndex.php',
         'App\\Livewire\\Parametrizacion\\CamposProfesorIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/CamposProfesorIndex.php',
         'App\\Livewire\\Parametrizacion\\ComCanalesIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/ComCanalesIndex.php',
         'App\\Livewire\\Parametrizacion\\ParametrosSistemaForm' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/ParametrosSistemaForm.php',
         'App\\Livewire\\Parametrizacion\\SolapaLegajoIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/SolapaLegajoIndex.php',
         'App\\Livewire\\Parametrizacion\\SolapaLegajoProfesorIndex' => __DIR__ . '/../..' . '/app/Livewire/Parametrizacion/SolapaLegajoProfesorIndex.php',
+        'App\\Livewire\\PortalDocente\\CalificacionesIndex' => __DIR__ . '/../..' . '/app/Livewire/PortalDocente/CalificacionesIndex.php',
+        'App\\Livewire\\PortalDocente\\CuadernoSeguimientoIndex' => __DIR__ . '/../..' . '/app/Livewire/PortalDocente/CuadernoSeguimientoIndex.php',
+        'App\\Livewire\\PortalDocente\\RegistroSituacionAulicaIndex' => __DIR__ . '/../..' . '/app/Livewire/PortalDocente/RegistroSituacionAulicaIndex.php',
+        'App\\Livewire\\PortalDocente\\SituacionAulicaAlumnoShow' => __DIR__ . '/../..' . '/app/Livewire/PortalDocente/SituacionAulicaAlumnoShow.php',
+        'App\\Livewire\\Programas\\ProgramasExamenPublico' => __DIR__ . '/../..' . '/app/Livewire/Programas/ProgramasExamenPublico.php',
         'App\\Livewire\\Push\\EnviarPush' => __DIR__ . '/../..' . '/app/Livewire/Push/EnviarPush.php',
         'App\\Livewire\\School\\ContextSwitcher' => __DIR__ . '/../..' . '/app/Livewire/School/ContextSwitcher.php',
         'App\\Livewire\\Seguimiento\\Disciplinario\\AntecedentesIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Disciplinario/AntecedentesIndex.php',
+        'App\\Livewire\\Seguimiento\\Disciplinario\\Concerns\\RequiresPermisoSeguimientoDisciplinario' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Disciplinario/Concerns/RequiresPermisoSeguimientoDisciplinario.php',
         'App\\Livewire\\Seguimiento\\Disciplinario\\DisciplinarioIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Disciplinario/DisciplinarioIndex.php',
         'App\\Livewire\\Seguimiento\\Disciplinario\\SancionForm' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Disciplinario/SancionForm.php',
+        'App\\Livewire\\Seguimiento\\Inasistencias\\Concerns\\RequiresPermisoInasistenciasEstudiantesGestion' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/Concerns/RequiresPermisoInasistenciasEstudiantesGestion.php',
         'App\\Livewire\\Seguimiento\\Inasistencias\\InasistenciaForm' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/InasistenciaForm.php',
         'App\\Livewire\\Seguimiento\\Inasistencias\\InasistenciasIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/InasistenciasIndex.php',
+        'App\\Livewire\\Seguimiento\\Inasistencias\\InformeInasistenciasLoteIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/InformeInasistenciasLoteIndex.php',
         'App\\Livewire\\Seguimiento\\Inasistencias\\PartesDiariosIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/PartesDiariosIndex.php',
+        'App\\Livewire\\Seguimiento\\Inasistencias\\SincroCidiInasistencias' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/SincroCidiInasistencias.php',
+        'App\\Livewire\\Seguimiento\\Inasistencias\\TomaAsistenciaClaseIndex' => __DIR__ . '/../..' . '/app/Livewire/Seguimiento/Inasistencias/TomaAsistenciaClaseIndex.php',
+        'App\\Livewire\\SolicitudEvaluacion\\Concerns\\RequiresPermisoGestionSolicitudEvaluacion' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/Concerns/RequiresPermisoGestionSolicitudEvaluacion.php',
+        'App\\Livewire\\SolicitudEvaluacion\\Concerns\\RequiresSolicitudEvaluacion' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/Concerns/RequiresSolicitudEvaluacion.php',
+        'App\\Livewire\\SolicitudEvaluacion\\Gestion\\GestionSolicitudEvaluacionForm' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/Gestion/GestionSolicitudEvaluacionForm.php',
+        'App\\Livewire\\SolicitudEvaluacion\\Gestion\\GestionSolicitudEvaluacionIndex' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/Gestion/GestionSolicitudEvaluacionIndex.php',
+        'App\\Livewire\\SolicitudEvaluacion\\SolicitudEvaluacionForm' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/SolicitudEvaluacionForm.php',
+        'App\\Livewire\\SolicitudEvaluacion\\SolicitudEvaluacionIndex' => __DIR__ . '/../..' . '/app/Livewire/SolicitudEvaluacion/SolicitudEvaluacionIndex.php',
+        'App\\Livewire\\Viajes\\SalidaViajeForm' => __DIR__ . '/../..' . '/app/Livewire/Viajes/SalidaViajeForm.php',
+        'App\\Livewire\\Viajes\\SalidaViajeImpresion' => __DIR__ . '/../..' . '/app/Livewire/Viajes/SalidaViajeImpresion.php',
+        'App\\Livewire\\Viajes\\SalidasViajesIndex' => __DIR__ . '/../..' . '/app/Livewire/Viajes/SalidasViajesIndex.php',
         'App\\Mail\\ComunicadoMail' => __DIR__ . '/../..' . '/app/Mail/ComunicadoMail.php',
+        'App\\Mail\\InformeInasistenciasDocenteMail' => __DIR__ . '/../..' . '/app/Mail/InformeInasistenciasDocenteMail.php',
+        'App\\Models\\AnaliticoDato' => __DIR__ . '/../..' . '/app/Models/AnaliticoDato.php',
+        'App\\Models\\AspiCursoModelo' => __DIR__ . '/../..' . '/app/Models/AspiCursoModelo.php',
+        'App\\Models\\Aspicurso' => __DIR__ . '/../..' . '/app/Models/Aspicurso.php',
+        'App\\Models\\Aspiento' => __DIR__ . '/../..' . '/app/Models/Aspiento.php',
+        'App\\Models\\Aspirante' => __DIR__ . '/../..' . '/app/Models/Aspirante.php',
         'App\\Models\\Calificacion' => __DIR__ . '/../..' . '/app/Models/Calificacion.php',
+        'App\\Models\\CampoAspirante' => __DIR__ . '/../..' . '/app/Models/CampoAspirante.php',
+        'App\\Models\\CampoAspiranteNivel' => __DIR__ . '/../..' . '/app/Models/CampoAspiranteNivel.php',
         'App\\Models\\CampoLegajo' => __DIR__ . '/../..' . '/app/Models/CampoLegajo.php',
         'App\\Models\\CampoProfesor' => __DIR__ . '/../..' . '/app/Models/CampoProfesor.php',
+        'App\\Models\\CertAluReg' => __DIR__ . '/../..' . '/app/Models/CertAluReg.php',
+        'App\\Models\\CertAsistProf' => __DIR__ . '/../..' . '/app/Models/CertAsistProf.php',
+        'App\\Models\\CertEstuTram' => __DIR__ . '/../..' . '/app/Models/CertEstuTram.php',
+        'App\\Models\\ComAuditoria' => __DIR__ . '/../..' . '/app/Models/ComAuditoria.php',
         'App\\Models\\ComCanal' => __DIR__ . '/../..' . '/app/Models/ComCanal.php',
         'App\\Models\\ComHilo' => __DIR__ . '/../..' . '/app/Models/ComHilo.php',
-        'App\\Models\\ComHiloParticipante' => __DIR__ . '/../..' . '/app/Models/ComHiloParticipante.php',
         'App\\Models\\ComMensaje' => __DIR__ . '/../..' . '/app/Models/ComMensaje.php',
         'App\\Models\\ComMensajeDestinatario' => __DIR__ . '/../..' . '/app/Models/ComMensajeDestinatario.php',
         'App\\Models\\ComMensajeEnvio' => __DIR__ . '/../..' . '/app/Models/ComMensajeEnvio.php',
         'App\\Models\\ComPreferencia' => __DIR__ . '/../..' . '/app/Models/ComPreferencia.php',
+        'App\\Models\\ComprobanteAfip' => __DIR__ . '/../..' . '/app/Models/ComprobanteAfip.php',
         'App\\Models\\Condicion' => __DIR__ . '/../..' . '/app/Models/Condicion.php',
+        'App\\Models\\ConstDocu' => __DIR__ . '/../..' . '/app/Models/ConstDocu.php',
+        'App\\Models\\CoopConfig' => __DIR__ . '/../..' . '/app/Models/CoopConfig.php',
+        'App\\Models\\CoopEgreso' => __DIR__ . '/../..' . '/app/Models/CoopEgreso.php',
+        'App\\Models\\CoopIngreso' => __DIR__ . '/../..' . '/app/Models/CoopIngreso.php',
+        'App\\Models\\CoopItemIngreso' => __DIR__ . '/../..' . '/app/Models/CoopItemIngreso.php',
+        'App\\Models\\CoopMedioPago' => __DIR__ . '/../..' . '/app/Models/CoopMedioPago.php',
+        'App\\Models\\CoopProveedor' => __DIR__ . '/../..' . '/app/Models/CoopProveedor.php',
+        'App\\Models\\CoopRubroIngreso' => __DIR__ . '/../..' . '/app/Models/CoopRubroIngreso.php',
+        'App\\Models\\Cuota' => __DIR__ . '/../..' . '/app/Models/Cuota.php',
+        'App\\Models\\CuotaGenerada' => __DIR__ . '/../..' . '/app/Models/CuotaGenerada.php',
+        'App\\Models\\CuotaPago' => __DIR__ . '/../..' . '/app/Models/CuotaPago.php',
+        'App\\Models\\CuotaTipoPago' => __DIR__ . '/../..' . '/app/Models/CuotaTipoPago.php',
+        'App\\Models\\CuotasBeca' => __DIR__ . '/../..' . '/app/Models/CuotasBeca.php',
+        'App\\Models\\CuotasImporte' => __DIR__ . '/../..' . '/app/Models/CuotasImporte.php',
+        'App\\Models\\CuotasMes' => __DIR__ . '/../..' . '/app/Models/CuotasMes.php',
+        'App\\Models\\CuotasTipo' => __DIR__ . '/../..' . '/app/Models/CuotasTipo.php',
         'App\\Models\\Curplan' => __DIR__ . '/../..' . '/app/Models/Curplan.php',
         'App\\Models\\Curso' => __DIR__ . '/../..' . '/app/Models/Curso.php',
+        'App\\Models\\DatoVario' => __DIR__ . '/../..' . '/app/Models/DatoVario.php',
         'App\\Models\\Ento' => __DIR__ . '/../..' . '/app/Models/Ento.php',
         'App\\Models\\EstadoCivil' => __DIR__ . '/../..' . '/app/Models/EstadoCivil.php',
+        'App\\Models\\Evaluac' => __DIR__ . '/../..' . '/app/Models/Evaluac.php',
         'App\\Models\\Familia' => __DIR__ . '/../..' . '/app/Models/Familia.php',
         'App\\Models\\HorariosConfig' => __DIR__ . '/../..' . '/app/Models/HorariosConfig.php',
+        'App\\Models\\InasDocente' => __DIR__ . '/../..' . '/app/Models/InasDocente.php',
+        'App\\Models\\InasDocenteDetalle' => __DIR__ . '/../..' . '/app/Models/InasDocenteDetalle.php',
         'App\\Models\\Inasistencia' => __DIR__ . '/../..' . '/app/Models/Inasistencia.php',
         'App\\Models\\InasistenciaValor' => __DIR__ . '/../..' . '/app/Models/InasistenciaValor.php',
+        'App\\Models\\Indicador' => __DIR__ . '/../..' . '/app/Models/Indicador.php',
         'App\\Models\\ItemBoletin' => __DIR__ . '/../..' . '/app/Models/ItemBoletin.php',
         'App\\Models\\Legajo' => __DIR__ . '/../..' . '/app/Models/Legajo.php',
+        'App\\Models\\ListadoPlantilla' => __DIR__ . '/../..' . '/app/Models/ListadoPlantilla.php',
         'App\\Models\\Matplan' => __DIR__ . '/../..' . '/app/Models/Matplan.php',
         'App\\Models\\Matricula' => __DIR__ . '/../..' . '/app/Models/Matricula.php',
         'App\\Models\\Nivel' => __DIR__ . '/../..' . '/app/Models/Nivel.php',
         'App\\Models\\NotasExamen' => __DIR__ . '/../..' . '/app/Models/NotasExamen.php',
+        'App\\Models\\PaseProvisorio' => __DIR__ . '/../..' . '/app/Models/PaseProvisorio.php',
         'App\\Models\\PermisoIa' => __DIR__ . '/../..' . '/app/Models/PermisoIa.php',
         'App\\Models\\PermisoUsuario' => __DIR__ . '/../..' . '/app/Models/PermisoUsuario.php',
         'App\\Models\\Plan' => __DIR__ . '/../..' . '/app/Models/Plan.php',
         'App\\Models\\Ppc' => __DIR__ . '/../..' . '/app/Models/Ppc.php',
         'App\\Models\\Profesor' => __DIR__ . '/../..' . '/app/Models/Profesor.php',
         'App\\Models\\ProfesorTipo' => __DIR__ . '/../..' . '/app/Models/ProfesorTipo.php',
+        'App\\Models\\RrdGrupo' => __DIR__ . '/../..' . '/app/Models/RrdGrupo.php',
+        'App\\Models\\RrdPedido' => __DIR__ . '/../..' . '/app/Models/RrdPedido.php',
+        'App\\Models\\RrdRecurso' => __DIR__ . '/../..' . '/app/Models/RrdRecurso.php',
+        'App\\Models\\RrdRecursoDisponibilidad' => __DIR__ . '/../..' . '/app/Models/RrdRecursoDisponibilidad.php',
+        'App\\Models\\RrdReserva' => __DIR__ . '/../..' . '/app/Models/RrdReserva.php',
+        'App\\Models\\SalidaViaje' => __DIR__ . '/../..' . '/app/Models/SalidaViaje.php',
         'App\\Models\\Sancion' => __DIR__ . '/../..' . '/app/Models/Sancion.php',
         'App\\Models\\SancionTipo' => __DIR__ . '/../..' . '/app/Models/SancionTipo.php',
         'App\\Models\\Sexo' => __DIR__ . '/../..' . '/app/Models/Sexo.php',
+        'App\\Models\\SituacionRevista' => __DIR__ . '/../..' . '/app/Models/SituacionRevista.php',
         'App\\Models\\SolapaLegajo' => __DIR__ . '/../..' . '/app/Models/SolapaLegajo.php',
         'App\\Models\\SolapaLegajoProfesor' => __DIR__ . '/../..' . '/app/Models/SolapaLegajoProfesor.php',
+        'App\\Models\\SolibecaHist' => __DIR__ . '/../..' . '/app/Models/SolibecaHist.php',
+        'App\\Models\\SolicitudPase' => __DIR__ . '/../..' . '/app/Models/SolicitudPase.php',
         'App\\Models\\Terlec' => __DIR__ . '/../..' . '/app/Models/Terlec.php',
+        'App\\Models\\TipoInaDoc' => __DIR__ . '/../..' . '/app/Models/TipoInaDoc.php',
         'App\\Models\\TurnoClase' => __DIR__ . '/../..' . '/app/Models/TurnoClase.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\ComunicacionesServiceProvider' => __DIR__ . '/../..' . '/app/Providers/ComunicacionesServiceProvider.php',
@@ -879,13 +1121,158 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Push\\PushSubscriptionRepository' => __DIR__ . '/../..' . '/app/Push/PushSubscriptionRepository.php',
         'App\\Push\\PushUserKey' => __DIR__ . '/../..' . '/app/Push/PushUserKey.php',
         'App\\Push\\WebPushService' => __DIR__ . '/../..' . '/app/Push/WebPushService.php',
+        'App\\Services\\SincroCidiInasistencias\\CidiInasistenciaTipoMapper' => __DIR__ . '/../..' . '/app/Services/SincroCidiInasistencias/CidiInasistenciaTipoMapper.php',
+        'App\\Services\\SincroCidiInasistencias\\CidiInasistenciasCsvImportResult' => __DIR__ . '/../..' . '/app/Services/SincroCidiInasistencias/CidiInasistenciasCsvImportResult.php',
+        'App\\Services\\SincroCidiInasistencias\\CidiInasistenciasCsvImporter' => __DIR__ . '/../..' . '/app/Services/SincroCidiInasistencias/CidiInasistenciasCsvImporter.php',
+        'App\\Services\\SincroDesempenos\\DesempenosCsvImportResult' => __DIR__ . '/../..' . '/app/Services/SincroDesempenos/DesempenosCsvImportResult.php',
+        'App\\Services\\SincroDesempenos\\DesempenosCsvImporter' => __DIR__ . '/../..' . '/app/Services/SincroDesempenos/DesempenosCsvImporter.php',
         'App\\Services\\SincroGe\\GeCsvImportResult' => __DIR__ . '/../..' . '/app/Services/SincroGe/GeCsvImportResult.php',
         'App\\Services\\SincroGe\\GeCsvImporter' => __DIR__ . '/../..' . '/app/Services/SincroGe/GeCsvImporter.php',
+        'App\\Services\\SincroGe\\GeCsvImporterPrimario' => __DIR__ . '/../..' . '/app/Services/SincroGe/GeCsvImporterPrimario.php',
         'App\\Support\\ActaVolanteColoquiosSecundario' => __DIR__ . '/../..' . '/app/Support/ActaVolanteColoquiosSecundario.php',
+        'App\\Support\\Afip\\AfipCodigoBarras' => __DIR__ . '/../..' . '/app/Support/Afip/AfipCodigoBarras.php',
+        'App\\Support\\Afip\\AfipCondicionIvaReceptor' => __DIR__ . '/../..' . '/app/Support/Afip/AfipCondicionIvaReceptor.php',
+        'App\\Support\\Afip\\AfipTokenAcceso' => __DIR__ . '/../..' . '/app/Support/Afip/AfipTokenAcceso.php',
+        'App\\Support\\Afip\\AfipWsfeEmision' => __DIR__ . '/../..' . '/app/Support/Afip/AfipWsfeEmision.php',
+        'App\\Support\\Alumnos\\ActualizacionDatosPersonalesComun' => __DIR__ . '/../..' . '/app/Support/Alumnos/ActualizacionDatosPersonalesComun.php',
+        'App\\Support\\Alumnos\\ActualizacionDatosPersonalesEstandar' => __DIR__ . '/../..' . '/app/Support/Alumnos/ActualizacionDatosPersonalesEstandar.php',
+        'App\\Support\\Alumnos\\ActualizacionDatosPersonalesSanFranciscoAsis' => __DIR__ . '/../..' . '/app/Support/Alumnos/ActualizacionDatosPersonalesSanFranciscoAsis.php',
+        'App\\Support\\Alumnos\\ArancelesEscolares' => __DIR__ . '/../..' . '/app/Support/Alumnos/ArancelesEscolares.php',
+        'App\\Support\\Alumnos\\ComprobantePagoCalculo' => __DIR__ . '/../..' . '/app/Support/Alumnos/ComprobantePagoCalculo.php',
+        'App\\Support\\Alumnos\\ComprobantePagoCodigoBarras' => __DIR__ . '/../..' . '/app/Support/Alumnos/ComprobantePagoCodigoBarras.php',
+        'App\\Support\\Alumnos\\ComprobantePagoDatos' => __DIR__ . '/../..' . '/app/Support/Alumnos/ComprobantePagoDatos.php',
+        'App\\Support\\Alumnos\\ComprobantePagoSiroQr' => __DIR__ . '/../..' . '/app/Support/Alumnos/ComprobantePagoSiroQr.php',
+        'App\\Support\\Alumnos\\ComprobantePagoTcpdf' => __DIR__ . '/../..' . '/app/Support/Alumnos/ComprobantePagoTcpdf.php',
+        'App\\Support\\Alumnos\\FichaMatriculaConAceptacionTcpdf' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaConAceptacionTcpdf.php',
+        'App\\Support\\Alumnos\\FichaMatriculaDatos' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaDatos.php',
+        'App\\Support\\Alumnos\\FichaMatriculaMontecristoDatos' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaMontecristoDatos.php',
+        'App\\Support\\Alumnos\\FichaMatriculaSecretariaLoteParams' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaSecretariaLoteParams.php',
+        'App\\Support\\Alumnos\\FichaMatriculaSecretariaPdf' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaSecretariaPdf.php',
+        'App\\Support\\Alumnos\\FichaMatriculaSecretariaZip' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaSecretariaZip.php',
+        'App\\Support\\Alumnos\\FichaMatriculaSolicitudMontecristoTcpdf' => __DIR__ . '/../..' . '/app/Support/Alumnos/FichaMatriculaSolicitudMontecristoTcpdf.php',
+        'App\\Support\\Alumnos\\PortalFamiliaBoletinIpe' => __DIR__ . '/../..' . '/app/Support/Alumnos/PortalFamiliaBoletinIpe.php',
+        'App\\Support\\Alumnos\\PortalFamiliaDashboard' => __DIR__ . '/../..' . '/app/Support/Alumnos/PortalFamiliaDashboard.php',
+        'App\\Support\\AnoEnLetrasEs' => __DIR__ . '/../..' . '/app/Support/AnoEnLetrasEs.php',
+        'App\\Support\\Aspirantes\\AspirantesColumnaTipo' => __DIR__ . '/../..' . '/app/Support/Aspirantes/AspirantesColumnaTipo.php',
+        'App\\Support\\Aspirantes\\AspirantesTokenService' => __DIR__ . '/../..' . '/app/Support/Aspirantes/AspirantesTokenService.php',
+        'App\\Support\\Aspirantes\\CampoAspiranteOpciones' => __DIR__ . '/../..' . '/app/Support/Aspirantes/CampoAspiranteOpciones.php',
+        'App\\Support\\Aspirantes\\CamposAspirantesSync' => __DIR__ . '/../..' . '/app/Support/Aspirantes/CamposAspirantesSync.php',
+        'App\\Support\\Auth\\CerrarSesionAplicacion' => __DIR__ . '/../..' . '/app/Support/Auth/CerrarSesionAplicacion.php',
         'App\\Support\\BoletinSecundarioLoteParams' => __DIR__ . '/../..' . '/app/Support/BoletinSecundarioLoteParams.php',
+        'App\\Support\\BoletinesSecundario\\BoletinConsultaCalificacionesTcpdf' => __DIR__ . '/../..' . '/app/Support/BoletinesSecundario/BoletinConsultaCalificacionesTcpdf.php',
         'App\\Support\\CalificacionesColoquioSecundario' => __DIR__ . '/../..' . '/app/Support/CalificacionesColoquioSecundario.php',
+        'App\\Support\\CalificacionesInicial\\CalificacionesInicialIndicadoresCatalogo' => __DIR__ . '/../..' . '/app/Support/CalificacionesInicial/CalificacionesInicialIndicadoresCatalogo.php',
+        'App\\Support\\CalificacionesInicial\\CalificacionesInicialIndicadoresDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesInicial/CalificacionesInicialIndicadoresDatos.php',
+        'App\\Support\\CalificacionesInicial\\CalificacionesInicialObservacionesDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesInicial/CalificacionesInicialObservacionesDatos.php',
+        'App\\Support\\CalificacionesInicial\\InformeProgresoInicialDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesInicial/InformeProgresoInicialDatos.php',
+        'App\\Support\\CalificacionesInicial\\InformeProgresoInicialTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesInicial/InformeProgresoInicialTcpdf.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeDatos.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeMontecristoDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeMontecristoDatos.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeMontecristoTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeMontecristoTcpdf.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpePrimarioGenerador' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpePrimarioGenerador.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeSanJoseDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeSanJoseDatos.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeSanJoseLayout' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeSanJoseLayout.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeSanJoseTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeSanJoseTcpdf.php',
+        'App\\Support\\CalificacionesPrimario\\BoletinIpeTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/BoletinIpeTcpdf.php',
+        'App\\Support\\CalificacionesPrimario\\CalificacionesPrimarioCatalogo' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/CalificacionesPrimarioCatalogo.php',
+        'App\\Support\\CalificacionesPrimario\\CalificacionesPrimarioDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/CalificacionesPrimarioDatos.php',
+        'App\\Support\\CalificacionesPrimario\\CalificacionesPrimarioModulos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/CalificacionesPrimarioModulos.php',
+        'App\\Support\\CalificacionesPrimario\\PlanillaCalificacionesPrimarioDatos' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/PlanillaCalificacionesPrimarioDatos.php',
+        'App\\Support\\CalificacionesPrimario\\PlanillaCalificacionesPrimarioTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesPrimario/PlanillaCalificacionesPrimarioTcpdf.php',
+        'App\\Support\\CalificacionesSecundario\\CierreAnualSecundario' => __DIR__ . '/../..' . '/app/Support/CalificacionesSecundario/CierreAnualSecundario.php',
+        'App\\Support\\CalificacionesSecundario\\PlanillaCalificacionesTcpdf' => __DIR__ . '/../..' . '/app/Support/CalificacionesSecundario/PlanillaCalificacionesTcpdf.php',
+        'App\\Support\\Certificados\\CertificadoAlumnoRegular' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAlumnoRegular.php',
+        'App\\Support\\Certificados\\CertificadoAlumnoRegularDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAlumnoRegularDatos.php',
+        'App\\Support\\Certificados\\CertificadoAlumnoRegularTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAlumnoRegularTcpdf.php',
+        'App\\Support\\Certificados\\CertificadoAsistenciaProfesor' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAsistenciaProfesor.php',
+        'App\\Support\\Certificados\\CertificadoAsistenciaProfesorDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAsistenciaProfesorDatos.php',
+        'App\\Support\\Certificados\\CertificadoAsistenciaProfesorTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoAsistenciaProfesorTcpdf.php',
+        'App\\Support\\Certificados\\CertificadoEstudiosTramite' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoEstudiosTramite.php',
+        'App\\Support\\Certificados\\CertificadoEstudiosTramiteDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoEstudiosTramiteDatos.php',
+        'App\\Support\\Certificados\\CertificadoEstudiosTramiteTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoEstudiosTramiteTcpdf.php',
+        'App\\Support\\Certificados\\CertificadoUnicoSaludTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/CertificadoUnicoSaludTcpdf.php',
+        'App\\Support\\Certificados\\ConstanciaDocumentos' => __DIR__ . '/../..' . '/app/Support/Certificados/ConstanciaDocumentos.php',
+        'App\\Support\\Certificados\\ConstanciaDocumentosDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/ConstanciaDocumentosDatos.php',
+        'App\\Support\\Certificados\\ConstanciaDocumentosTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/ConstanciaDocumentosTcpdf.php',
+        'App\\Support\\Certificados\\CusIsaVozImagenDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/CusIsaVozImagenDatos.php',
+        'App\\Support\\Certificados\\InformeSaludAnualTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/InformeSaludAnualTcpdf.php',
+        'App\\Support\\Certificados\\PaseParcial' => __DIR__ . '/../..' . '/app/Support/Certificados/PaseParcial.php',
+        'App\\Support\\Certificados\\PaseParcialDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/PaseParcialDatos.php',
+        'App\\Support\\Certificados\\PaseParcialTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/PaseParcialTcpdf.php',
+        'App\\Support\\Certificados\\SolicitudDePase' => __DIR__ . '/../..' . '/app/Support/Certificados/SolicitudDePase.php',
+        'App\\Support\\Certificados\\SolicitudDePaseDatos' => __DIR__ . '/../..' . '/app/Support/Certificados/SolicitudDePaseDatos.php',
+        'App\\Support\\Certificados\\SolicitudDePaseTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/SolicitudDePaseTcpdf.php',
+        'App\\Support\\Certificados\\UsoImagenVozTcpdf' => __DIR__ . '/../..' . '/app/Support/Certificados/UsoImagenVozTcpdf.php',
+        'App\\Support\\ComunicacionesRutasGestion' => __DIR__ . '/../..' . '/app/Support/ComunicacionesRutasGestion.php',
+        'App\\Support\\Comunicaciones\\ComCanalRolCatalog' => __DIR__ . '/../..' . '/app/Support/Comunicaciones/ComCanalRolCatalog.php',
+        'App\\Support\\Comunicaciones\\ComunicacionHiloPdfDatos' => __DIR__ . '/../..' . '/app/Support/Comunicaciones/ComunicacionHiloPdfDatos.php',
+        'App\\Support\\Comunicaciones\\ComunicacionHiloTcpdf' => __DIR__ . '/../..' . '/app/Support/Comunicaciones/ComunicacionHiloTcpdf.php',
+        'App\\Support\\Comunicaciones\\NuevoComunicadoDocenteDestino' => __DIR__ . '/../..' . '/app/Support/Comunicaciones/NuevoComunicadoDocenteDestino.php',
         'App\\Support\\ConsultaCalificacionesAlumno' => __DIR__ . '/../..' . '/app/Support/ConsultaCalificacionesAlumno.php',
+        'App\\Support\\Cooperadora\\AnularMovimientoCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/AnularMovimientoCooperadora.php',
+        'App\\Support\\Cooperadora\\BusquedaEstudianteCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/BusquedaEstudianteCooperadora.php',
+        'App\\Support\\Cooperadora\\CooperadoraConfig' => __DIR__ . '/../..' . '/app/Support/Cooperadora/CooperadoraConfig.php',
+        'App\\Support\\Cooperadora\\DescuentoHermanos' => __DIR__ . '/../..' . '/app/Support/Cooperadora/DescuentoHermanos.php',
+        'App\\Support\\Cooperadora\\EnvioReciboCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/EnvioReciboCooperadora.php',
+        'App\\Support\\Cooperadora\\ImporteEnLetrasEs' => __DIR__ . '/../..' . '/app/Support/Cooperadora/ImporteEnLetrasEs.php',
+        'App\\Support\\Cooperadora\\MedioPagoCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/MedioPagoCooperadora.php',
+        'App\\Support\\Cooperadora\\MovimientosConsulta' => __DIR__ . '/../..' . '/app/Support/Cooperadora/MovimientosConsulta.php',
+        'App\\Support\\Cooperadora\\MovimientosFiltros' => __DIR__ . '/../..' . '/app/Support/Cooperadora/MovimientosFiltros.php',
+        'App\\Support\\Cooperadora\\MovimientosTcpdf' => __DIR__ . '/../..' . '/app/Support/Cooperadora/MovimientosTcpdf.php',
+        'App\\Support\\Cooperadora\\NumeroDocumentoCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/NumeroDocumentoCooperadora.php',
+        'App\\Support\\Cooperadora\\OrdenPagoTcpdf' => __DIR__ . '/../..' . '/app/Support/Cooperadora/OrdenPagoTcpdf.php',
+        'App\\Support\\Cooperadora\\PagosEstudianteCooperadoraConsulta' => __DIR__ . '/../..' . '/app/Support/Cooperadora/PagosEstudianteCooperadoraConsulta.php',
+        'App\\Support\\Cooperadora\\PagosEstudianteCooperadoraDatos' => __DIR__ . '/../..' . '/app/Support/Cooperadora/PagosEstudianteCooperadoraDatos.php',
+        'App\\Support\\Cooperadora\\PagosEstudianteCooperadoraTcpdf' => __DIR__ . '/../..' . '/app/Support/Cooperadora/PagosEstudianteCooperadoraTcpdf.php',
+        'App\\Support\\Cooperadora\\PermisosCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/PermisosCooperadora.php',
+        'App\\Support\\Cooperadora\\ReciboIngresosGrupo' => __DIR__ . '/../..' . '/app/Support/Cooperadora/ReciboIngresosGrupo.php',
+        'App\\Support\\Cooperadora\\ReciboTcpdf' => __DIR__ . '/../..' . '/app/Support/Cooperadora/ReciboTcpdf.php',
+        'App\\Support\\Cooperadora\\RegistroEgresoService' => __DIR__ . '/../..' . '/app/Support/Cooperadora/RegistroEgresoService.php',
+        'App\\Support\\Cooperadora\\RegistroIngresoService' => __DIR__ . '/../..' . '/app/Support/Cooperadora/RegistroIngresoService.php',
+        'App\\Support\\Cooperadora\\ResponsablesLegajoCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/ResponsablesLegajoCooperadora.php',
+        'App\\Support\\Cooperadora\\ValidacionFormularioCooperadora' => __DIR__ . '/../..' . '/app/Support/Cooperadora/ValidacionFormularioCooperadora.php',
+        'App\\Support\\Cuotas\\AsignacionBecasConsulta' => __DIR__ . '/../..' . '/app/Support/Cuotas/AsignacionBecasConsulta.php',
+        'App\\Support\\Cuotas\\AsignacionBecasService' => __DIR__ . '/../..' . '/app/Support/Cuotas/AsignacionBecasService.php',
+        'App\\Support\\Cuotas\\CancelarTodasReservasService' => __DIR__ . '/../..' . '/app/Support/Cuotas/CancelarTodasReservasService.php',
+        'App\\Support\\Cuotas\\ComprobantePagoImputacionDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/ComprobantePagoImputacionDatos.php',
+        'App\\Support\\Cuotas\\ComprobantePagoImputacionTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/ComprobantePagoImputacionTcpdf.php',
+        'App\\Support\\Cuotas\\CuotasFormato' => __DIR__ . '/../..' . '/app/Support/Cuotas/CuotasFormato.php',
+        'App\\Support\\Cuotas\\CuotasImportesCatalog' => __DIR__ . '/../..' . '/app/Support/Cuotas/CuotasImportesCatalog.php',
+        'App\\Support\\Cuotas\\CuotasPlantillaCatalog' => __DIR__ . '/../..' . '/app/Support/Cuotas/CuotasPlantillaCatalog.php',
+        'App\\Support\\Cuotas\\EdicionCuotasGeneradasCatalog' => __DIR__ . '/../..' . '/app/Support/Cuotas/EdicionCuotasGeneradasCatalog.php',
+        'App\\Support\\Cuotas\\EdicionCuotasGeneradasConsulta' => __DIR__ . '/../..' . '/app/Support/Cuotas/EdicionCuotasGeneradasConsulta.php',
+        'App\\Support\\Cuotas\\EliminacionCuotaGeneradaService' => __DIR__ . '/../..' . '/app/Support/Cuotas/EliminacionCuotaGeneradaService.php',
+        'App\\Support\\Cuotas\\EliminacionMasivaCuotasService' => __DIR__ . '/../..' . '/app/Support/Cuotas/EliminacionMasivaCuotasService.php',
+        'App\\Support\\Cuotas\\FacturacionAfipImputacionPago' => __DIR__ . '/../..' . '/app/Support/Cuotas/FacturacionAfipImputacionPago.php',
+        'App\\Support\\Cuotas\\FiltroComparacionNumerica' => __DIR__ . '/../..' . '/app/Support/Cuotas/FiltroComparacionNumerica.php',
+        'App\\Support\\Cuotas\\GeneracionCuotaEstudianteService' => __DIR__ . '/../..' . '/app/Support/Cuotas/GeneracionCuotaEstudianteService.php',
+        'App\\Support\\Cuotas\\GeneracionCuotaResultado' => __DIR__ . '/../..' . '/app/Support/Cuotas/GeneracionCuotaResultado.php',
+        'App\\Support\\Cuotas\\GeneracionMasivaCuotasConsulta' => __DIR__ . '/../..' . '/app/Support/Cuotas/GeneracionMasivaCuotasConsulta.php',
+        'App\\Support\\Cuotas\\GeneracionMasivaCuotasService' => __DIR__ . '/../..' . '/app/Support/Cuotas/GeneracionMasivaCuotasService.php',
+        'App\\Support\\Cuotas\\GestionAranceles' => __DIR__ . '/../..' . '/app/Support/Cuotas/GestionAranceles.php',
+        'App\\Support\\Cuotas\\HistorialPagosCuotaService' => __DIR__ . '/../..' . '/app/Support/Cuotas/HistorialPagosCuotaService.php',
+        'App\\Support\\Cuotas\\ImputacionPagoCalculo' => __DIR__ . '/../..' . '/app/Support/Cuotas/ImputacionPagoCalculo.php',
+        'App\\Support\\Cuotas\\ImputacionPagoService' => __DIR__ . '/../..' . '/app/Support/Cuotas/ImputacionPagoService.php',
+        'App\\Support\\Cuotas\\LibroArancelesDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/LibroArancelesDatos.php',
+        'App\\Support\\Cuotas\\LibroArancelesTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/LibroArancelesTcpdf.php',
+        'App\\Support\\Cuotas\\ListadoEstudiantesPorCuotaDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/ListadoEstudiantesPorCuotaDatos.php',
+        'App\\Support\\Cuotas\\ListadoEstudiantesPorCuotaTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/ListadoEstudiantesPorCuotaTcpdf.php',
+        'App\\Support\\Cuotas\\ListadoPagosPorFechaDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/ListadoPagosPorFechaDatos.php',
+        'App\\Support\\Cuotas\\ListadoPagosPorFechaTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/ListadoPagosPorFechaTcpdf.php',
+        'App\\Support\\Cuotas\\ResumenBecasPorNivelConsulta' => __DIR__ . '/../..' . '/app/Support/Cuotas/ResumenBecasPorNivelConsulta.php',
+        'App\\Support\\Cuotas\\ResumenPagosEstudianteDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/ResumenPagosEstudianteDatos.php',
+        'App\\Support\\Cuotas\\ResumenPagosEstudianteTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/ResumenPagosEstudianteTcpdf.php',
+        'App\\Support\\Cuotas\\SolicitudAyudaFamiliarDatos' => __DIR__ . '/../..' . '/app/Support/Cuotas/SolicitudAyudaFamiliarDatos.php',
+        'App\\Support\\Cuotas\\SolicitudAyudaFamiliarService' => __DIR__ . '/../..' . '/app/Support/Cuotas/SolicitudAyudaFamiliarService.php',
+        'App\\Support\\Cuotas\\SolicitudAyudaFamiliarTcpdf' => __DIR__ . '/../..' . '/app/Support/Cuotas/SolicitudAyudaFamiliarTcpdf.php',
+        'App\\Support\\DniInput' => __DIR__ . '/../..' . '/app/Support/DniInput.php',
+        'App\\Support\\EntoCargaNotas' => __DIR__ . '/../..' . '/app/Support/EntoCargaNotas.php',
+        'App\\Support\\EntoTerlecVerNotas' => __DIR__ . '/../..' . '/app/Support/EntoTerlecVerNotas.php',
+        'App\\Support\\Estadistica\\AprobacionEstadistica' => __DIR__ . '/../..' . '/app/Support/Estadistica/AprobacionEstadistica.php',
+        'App\\Support\\Estadistica\\EstadisticaRendimientoConsulta' => __DIR__ . '/../..' . '/app/Support/Estadistica/EstadisticaRendimientoConsulta.php',
+        'App\\Support\\Examenes\\ActaCompromisoTercerMateriaTcpdf' => __DIR__ . '/../..' . '/app/Support/Examenes/ActaCompromisoTercerMateriaTcpdf.php',
         'App\\Support\\Examenes\\ActaVolantePrevios' => __DIR__ . '/../..' . '/app/Support/Examenes/ActaVolantePrevios.php',
+        'App\\Support\\Examenes\\ActaVolantePreviosTcpdf' => __DIR__ . '/../..' . '/app/Support/Examenes/ActaVolantePreviosTcpdf.php',
         'App\\Support\\Examenes\\BorrarInscripcionesExamen' => __DIR__ . '/../..' . '/app/Support/Examenes/BorrarInscripcionesExamen.php',
         'App\\Support\\Examenes\\HistorialExamenes' => __DIR__ . '/../..' . '/app/Support/Examenes/HistorialExamenes.php',
         'App\\Support\\Examenes\\MateriasAdeudadasAlumnosListado' => __DIR__ . '/../..' . '/app/Support/Examenes/MateriasAdeudadasAlumnosListado.php',
@@ -899,24 +1286,114 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'App\\Support\\Examenes\\PermisoExamen' => __DIR__ . '/../..' . '/app/Support/Examenes/PermisoExamen.php',
         'App\\Support\\Examenes\\PermisoExamenPdfPedido' => __DIR__ . '/../..' . '/app/Support/Examenes/PermisoExamenPdfPedido.php',
         'App\\Support\\Examenes\\PermisoExamenTcpdf' => __DIR__ . '/../..' . '/app/Support/Examenes/PermisoExamenTcpdf.php',
+        'App\\Support\\Examenes\\TercerMateriaGestor' => __DIR__ . '/../..' . '/app/Support/Examenes/TercerMateriaGestor.php',
+        'App\\Support\\Examenes\\TercerMateriaGrillaTcpdf' => __DIR__ . '/../..' . '/app/Support/Examenes/TercerMateriaGrillaTcpdf.php',
         'App\\Support\\HorariosProfesores' => __DIR__ . '/../..' . '/app/Support/HorariosProfesores.php',
+        'App\\Support\\Horarios\\HorarioCursoPdfExport' => __DIR__ . '/../..' . '/app/Support/Horarios/HorarioCursoPdfExport.php',
+        'App\\Support\\InasistenciasDocentes' => __DIR__ . '/../..' . '/app/Support/InasistenciasDocentes.php',
+        'App\\Support\\InasistenciasDocentes\\CalculoFaltasDescuento' => __DIR__ . '/../..' . '/app/Support/InasistenciasDocentes/CalculoFaltasDescuento.php',
+        'App\\Support\\InasistenciasDocentes\\EnvioMasivoInformes' => __DIR__ . '/../..' . '/app/Support/InasistenciasDocentes/EnvioMasivoInformes.php',
+        'App\\Support\\InasistenciasDocentes\\InformeInasistenciasDocenteTcpdf' => __DIR__ . '/../..' . '/app/Support/InasistenciasDocentes/InformeInasistenciasDocenteTcpdf.php',
+        'App\\Support\\InasistenciasDocentes\\RankingMateriasCursos' => __DIR__ . '/../..' . '/app/Support/InasistenciasDocentes/RankingMateriasCursos.php',
         'App\\Support\\InasistenciasResumen' => __DIR__ . '/../..' . '/app/Support/InasistenciasResumen.php',
         'App\\Support\\InformeInasistencias' => __DIR__ . '/../..' . '/app/Support/InformeInasistencias.php',
+        'App\\Support\\InformeInasistenciasLoteParams' => __DIR__ . '/../..' . '/app/Support/InformeInasistenciasLoteParams.php',
+        'App\\Support\\InformeInasistenciasTcpdf' => __DIR__ . '/../..' . '/app/Support/InformeInasistenciasTcpdf.php',
+        'App\\Support\\Legajos\\LegajoCargaPorCursoCatalog' => __DIR__ . '/../..' . '/app/Support/Legajos/LegajoCargaPorCursoCatalog.php',
+        'App\\Support\\Listados\\EstudiantesDatosConsulta' => __DIR__ . '/../..' . '/app/Support/Listados/EstudiantesDatosConsulta.php',
+        'App\\Support\\Listados\\EstudiantesDatosExporter' => __DIR__ . '/../..' . '/app/Support/Listados/EstudiantesDatosExporter.php',
+        'App\\Support\\Listados\\EstudiantesDatosTcpdf' => __DIR__ . '/../..' . '/app/Support/Listados/EstudiantesDatosTcpdf.php',
         'App\\Support\\Listados\\EstudiantesExcelExportSpec' => __DIR__ . '/../..' . '/app/Support/Listados/EstudiantesExcelExportSpec.php',
         'App\\Support\\Listados\\EstudiantesExcelExporter' => __DIR__ . '/../..' . '/app/Support/Listados/EstudiantesExcelExporter.php',
         'App\\Support\\Listados\\LibroMatriculaExporter' => __DIR__ . '/../..' . '/app/Support/Listados/LibroMatriculaExporter.php',
         'App\\Support\\Listados\\LibroMatriculaPdfColumnas' => __DIR__ . '/../..' . '/app/Support/Listados/LibroMatriculaPdfColumnas.php',
         'App\\Support\\Listados\\LibroMatriculaSexoGrupo' => __DIR__ . '/../..' . '/app/Support/Listados/LibroMatriculaSexoGrupo.php',
         'App\\Support\\Listados\\ListadoCursoCondicionFiltro' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoCondicionFiltro.php',
+        'App\\Support\\Listados\\ListadoCursoConsulta' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoConsulta.php',
         'App\\Support\\Listados\\ListadoCursoExportParams' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoExportParams.php',
+        'App\\Support\\Listados\\ListadoCursoPdfColumnWidths' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoPdfColumnWidths.php',
         'App\\Support\\Listados\\ListadoCursoPdfFieldCatalog' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoPdfFieldCatalog.php',
+        'App\\Support\\Listados\\ListadoCursoTcpdf' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoCursoTcpdf.php',
+        'App\\Support\\Listados\\ListadoDocentesConsulta' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesConsulta.php',
+        'App\\Support\\Listados\\ListadoDocentesExcelExportSpec' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesExcelExportSpec.php',
+        'App\\Support\\Listados\\ListadoDocentesExcelExporter' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesExcelExporter.php',
+        'App\\Support\\Listados\\ListadoDocentesExportParams' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesExportParams.php',
+        'App\\Support\\Listados\\ListadoDocentesPdfFieldCatalog' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesPdfFieldCatalog.php',
+        'App\\Support\\Listados\\ListadoDocentesTcpdf' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoDocentesTcpdf.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoCalendarioTcpdf' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoCalendarioTcpdf.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoCatalog' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoCatalog.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoCuadriculadoTcpdf' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoCuadriculadoTcpdf.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoDatos' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoDatos.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoMes' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoMes.php',
+        'App\\Support\\Listados\\ListadoEstudiantesFormatoTcpdfComun' => __DIR__ . '/../..' . '/app/Support/Listados/ListadoEstudiantesFormatoTcpdfComun.php',
+        'App\\Support\\LivewireDeploymentScripts' => __DIR__ . '/../..' . '/app/Support/LivewireDeploymentScripts.php',
+        'App\\Support\\ManualSistema\\ManualComunicacionInstitucionalTcpdf' => __DIR__ . '/../..' . '/app/Support/ManualSistema/ManualComunicacionInstitucionalTcpdf.php',
         'App\\Support\\ManualSistema\\ManualSistemaCatalog' => __DIR__ . '/../..' . '/app/Support/ManualSistema/ManualSistemaCatalog.php',
+        'App\\Support\\MaterialDidactico\\RrdReservaException' => __DIR__ . '/../..' . '/app/Support/MaterialDidactico/RrdReservaException.php',
+        'App\\Support\\MaterialDidactico\\RrdReservaService' => __DIR__ . '/../..' . '/app/Support/MaterialDidactico/RrdReservaService.php',
+        'App\\Support\\MatriculaNivelEstilo' => __DIR__ . '/../..' . '/app/Support/MatriculaNivelEstilo.php',
+        'App\\Support\\MatriculaWeb\\MatriculaWebDocumentos' => __DIR__ . '/../..' . '/app/Support/MatriculaWeb/MatriculaWebDocumentos.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoCalificacionesDatos' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoCalificacionesDatos.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoFrenteDatos' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoFrenteDatos.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoFrenteTcpdf' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoFrenteTcpdf.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoReversoDatos' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoReversoDatos.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoReversoTcpdf' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoReversoTcpdf.php',
+        'App\\Support\\MatrizAnaliticos\\AnaliticoTcpdfGrilla' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/AnaliticoTcpdfGrilla.php',
+        'App\\Support\\MatrizAnaliticos\\CalificacionEnLetras' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/CalificacionEnLetras.php',
+        'App\\Support\\MatrizAnaliticos\\LibroMatrizAnalitico' => __DIR__ . '/../..' . '/app/Support/MatrizAnaliticos/LibroMatrizAnalitico.php',
+        'App\\Support\\Mora\\EstadoDeudaFamiliarDatos' => __DIR__ . '/../..' . '/app/Support/Mora/EstadoDeudaFamiliarDatos.php',
+        'App\\Support\\Mora\\EstadoDeudaFamiliarListado' => __DIR__ . '/../..' . '/app/Support/Mora/EstadoDeudaFamiliarListado.php',
+        'App\\Support\\Mora\\EstadoDeudaFamiliarTcpdf' => __DIR__ . '/../..' . '/app/Support/Mora/EstadoDeudaFamiliarTcpdf.php',
+        'App\\Support\\Mora\\GestionMorososAgrupacion' => __DIR__ . '/../..' . '/app/Support/Mora/GestionMorososAgrupacion.php',
+        'App\\Support\\Mora\\GestionMorososConsulta' => __DIR__ . '/../..' . '/app/Support/Mora/GestionMorososConsulta.php',
+        'App\\Support\\Mora\\GestionMorososFiltros' => __DIR__ . '/../..' . '/app/Support/Mora/GestionMorososFiltros.php',
+        'App\\Support\\Mora\\GestionMorososPdfPedido' => __DIR__ . '/../..' . '/app/Support/Mora/GestionMorososPdfPedido.php',
+        'App\\Support\\Mora\\ListadoMorososDatos' => __DIR__ . '/../..' . '/app/Support/Mora/ListadoMorososDatos.php',
+        'App\\Support\\Mora\\ListadoMorososTcpdf' => __DIR__ . '/../..' . '/app/Support/Mora/ListadoMorososTcpdf.php',
+        'App\\Support\\Mora\\NotificacionDeudaDatos' => __DIR__ . '/../..' . '/app/Support/Mora/NotificacionDeudaDatos.php',
+        'App\\Support\\Mora\\NotificacionDeudaTcpdf' => __DIR__ . '/../..' . '/app/Support/Mora/NotificacionDeudaTcpdf.php',
+        'App\\Support\\Mora\\PermisosMora' => __DIR__ . '/../..' . '/app/Support/Mora/PermisosMora.php',
+        'App\\Support\\Navegacion\\ContextoCuotasImportesSesion' => __DIR__ . '/../..' . '/app/Support/Navegacion/ContextoCuotasImportesSesion.php',
+        'App\\Support\\Navegacion\\ContextoEstudianteSesion' => __DIR__ . '/../..' . '/app/Support/Navegacion/ContextoEstudianteSesion.php',
+        'App\\Support\\Navegacion\\MenuSecretariaPerfil' => __DIR__ . '/../..' . '/app/Support/Navegacion/MenuSecretariaPerfil.php',
+        'App\\Support\\Navegacion\\PortalDocenteMenu' => __DIR__ . '/../..' . '/app/Support/Navegacion/PortalDocenteMenu.php',
+        'App\\Support\\Navegacion\\PortalDocenteMenuCatalog' => __DIR__ . '/../..' . '/app/Support/Navegacion/PortalDocenteMenuCatalog.php',
+        'App\\Support\\NivelSistema' => __DIR__ . '/../..' . '/app/Support/NivelSistema.php',
+        'App\\Support\\Pdf\\PdfMateriaEncabezadoLineas' => __DIR__ . '/../..' . '/app/Support/Pdf/PdfMateriaEncabezadoLineas.php',
+        'App\\Support\\Pdf\\PdfPost' => __DIR__ . '/../..' . '/app/Support/Pdf/PdfPost.php',
+        'App\\Support\\Pdf\\TcpdfFuenteArial' => __DIR__ . '/../..' . '/app/Support/Pdf/TcpdfFuenteArial.php',
+        'App\\Support\\Pdf\\TcpdfImagenPng' => __DIR__ . '/../..' . '/app/Support/Pdf/TcpdfImagenPng.php',
+        'App\\Support\\Pdf\\TcpdfLogoInstitucional' => __DIR__ . '/../..' . '/app/Support/Pdf/TcpdfLogoInstitucional.php',
+        'App\\Support\\Pdf\\TcpdfMultiCellJustificado' => __DIR__ . '/../..' . '/app/Support/Pdf/TcpdfMultiCellJustificado.php',
+        'App\\Support\\PermisosConfiguracion' => __DIR__ . '/../..' . '/app/Support/PermisosConfiguracion.php',
+        'App\\Support\\PermisosCuotas' => __DIR__ . '/../..' . '/app/Support/PermisosCuotas.php',
+        'App\\Support\\PermisosIaCatalog' => __DIR__ . '/../..' . '/app/Support/PermisosIaCatalog.php',
+        'App\\Support\\PermisosMatriculaWeb' => __DIR__ . '/../..' . '/app/Support/PermisosMatriculaWeb.php',
         'App\\Support\\PlanillaCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Support/PlanillaCalificacionesSecundario.php',
         'App\\Support\\PlanillaResumenCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Support/PlanillaResumenCalificacionesSecundario.php',
+        'App\\Support\\PortalDocente\\CalificacionesDocenteSecundario' => __DIR__ . '/../..' . '/app/Support/PortalDocente/CalificacionesDocenteSecundario.php',
+        'App\\Support\\PortalDocente\\CalificacionesPrimarioPortalDocente' => __DIR__ . '/../..' . '/app/Support/PortalDocente/CalificacionesPrimarioPortalDocente.php',
+        'App\\Support\\PortalDocente\\CuadernoSeguimientoAulicoDocente' => __DIR__ . '/../..' . '/app/Support/PortalDocente/CuadernoSeguimientoAulicoDocente.php',
+        'App\\Support\\PortalDocente\\ListadoPorCursoPortalDocente' => __DIR__ . '/../..' . '/app/Support/PortalDocente/ListadoPorCursoPortalDocente.php',
+        'App\\Support\\PortalDocente\\NotificarPreceptorSituacionAulica' => __DIR__ . '/../..' . '/app/Support/PortalDocente/NotificarPreceptorSituacionAulica.php',
+        'App\\Support\\PortalDocente\\PortalDocenteContext' => __DIR__ . '/../..' . '/app/Support/PortalDocente/PortalDocenteContext.php',
+        'App\\Support\\PortalDocente\\SituacionAulicaTipo' => __DIR__ . '/../..' . '/app/Support/PortalDocente/SituacionAulicaTipo.php',
+        'App\\Support\\PreceptoresPorCurso' => __DIR__ . '/../..' . '/app/Support/PreceptoresPorCurso.php',
         'App\\Support\\ProfesorLegajoFieldCatalog' => __DIR__ . '/../..' . '/app/Support/ProfesorLegajoFieldCatalog.php',
+        'App\\Support\\ProfesorMenuPortal' => __DIR__ . '/../..' . '/app/Support/ProfesorMenuPortal.php',
         'App\\Support\\PromedioAnualCalificacionesSecundario' => __DIR__ . '/../..' . '/app/Support/PromedioAnualCalificacionesSecundario.php',
+        'App\\Support\\SchoolAlcancePedagogico' => __DIR__ . '/../..' . '/app/Support/SchoolAlcancePedagogico.php',
         'App\\Support\\SchoolContext' => __DIR__ . '/../..' . '/app/Support/SchoolContext.php',
+        'App\\Support\\Security\\OpaqueRouteToken' => __DIR__ . '/../..' . '/app/Support/Security/OpaqueRouteToken.php',
+        'App\\Support\\Seguimiento\\TomaAsistenciaClase' => __DIR__ . '/../..' . '/app/Support/Seguimiento/TomaAsistenciaClase.php',
+        'App\\Support\\SincroDesempenos\\DesempenosCsvColumnMapper' => __DIR__ . '/../..' . '/app/Support/SincroDesempenos/DesempenosCsvColumnMapper.php',
+        'App\\Support\\SolicitudEvaluacion\\SolicitudEvaluacionConsulta' => __DIR__ . '/../..' . '/app/Support/SolicitudEvaluacion/SolicitudEvaluacionConsulta.php',
         'App\\Support\\StudentContext' => __DIR__ . '/../..' . '/app/Support/StudentContext.php',
+        'App\\Support\\Viajes\\SalidaViajeDatos' => __DIR__ . '/../..' . '/app/Support/Viajes/SalidaViajeDatos.php',
+        'App\\Support\\Viajes\\SalidaViajeHtmlParaPdf' => __DIR__ . '/../..' . '/app/Support/Viajes/SalidaViajeHtmlParaPdf.php',
+        'App\\Support\\Viajes\\SalidaViajeHtmlSanitizer' => __DIR__ . '/../..' . '/app/Support/Viajes/SalidaViajeHtmlSanitizer.php',
+        'App\\Support\\Viajes\\SalidaViajeTcpdf' => __DIR__ . '/../..' . '/app/Support/Viajes/SalidaViajeTcpdf.php',
+        'App\\Support\\Viajes\\SalidaViajeTextoPlantilla' => __DIR__ . '/../..' . '/app/Support/Viajes/SalidaViajeTextoPlantilla.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Barryvdh\\DomPDF\\Facade\\Pdf' => __DIR__ . '/..' . '/barryvdh/laravel-dompdf/src/Facade/Pdf.php',
         'Barryvdh\\DomPDF\\PDF' => __DIR__ . '/..' . '/barryvdh/laravel-dompdf/src/PDF.php',
@@ -9040,6 +9517,7 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'Termwind\\ValueObjects\\Styles' => __DIR__ . '/..' . '/nunomaduro/termwind/src/ValueObjects/Styles.php',
         'Tests\\Feature\\ExampleTest' => __DIR__ . '/../..' . '/tests/Feature/ExampleTest.php',
         'Tests\\TestCase' => __DIR__ . '/../..' . '/tests/TestCase.php',
+        'Tests\\Unit\\DniInputTest' => __DIR__ . '/../..' . '/tests/Unit/DniInputTest.php',
         'Tests\\Unit\\ExampleTest' => __DIR__ . '/../..' . '/tests/Unit/ExampleTest.php',
         'TheSeer\\Tokenizer\\Exception' => __DIR__ . '/..' . '/theseer/tokenizer/src/Exception.php',
         'TheSeer\\Tokenizer\\NamespaceUri' => __DIR__ . '/..' . '/theseer/tokenizer/src/NamespaceUri.php',
@@ -9105,6 +9583,57 @@ class ComposerStaticInite5fbbe6137dc77bcd5b6646b5dd75b52
         'ZipStream\\Zip64\\ExtendedInformationExtraField' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zip64/ExtendedInformationExtraField.php',
         'ZipStream\\ZipStream' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/ZipStream.php',
         'ZipStream\\Zs\\ExtendedInformationExtraField' => __DIR__ . '/..' . '/maennchen/zipstream-php/src/Zs/ExtendedInformationExtraField.php',
+        'setasign\\Fpdi\\FpdfTpl' => __DIR__ . '/..' . '/setasign/fpdi/src/FpdfTpl.php',
+        'setasign\\Fpdi\\FpdfTplTrait' => __DIR__ . '/..' . '/setasign/fpdi/src/FpdfTplTrait.php',
+        'setasign\\Fpdi\\FpdfTrait' => __DIR__ . '/..' . '/setasign/fpdi/src/FpdfTrait.php',
+        'setasign\\Fpdi\\Fpdi' => __DIR__ . '/..' . '/setasign/fpdi/src/Fpdi.php',
+        'setasign\\Fpdi\\FpdiException' => __DIR__ . '/..' . '/setasign/fpdi/src/FpdiException.php',
+        'setasign\\Fpdi\\FpdiTrait' => __DIR__ . '/..' . '/setasign/fpdi/src/FpdiTrait.php',
+        'setasign\\Fpdi\\GraphicsState' => __DIR__ . '/..' . '/setasign/fpdi/src/GraphicsState.php',
+        'setasign\\Fpdi\\Math\\Matrix' => __DIR__ . '/..' . '/setasign/fpdi/src/Math/Matrix.php',
+        'setasign\\Fpdi\\Math\\Vector' => __DIR__ . '/..' . '/setasign/fpdi/src/Math/Vector.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\AbstractReader' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/AbstractReader.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\CrossReference' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/CrossReference.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\CrossReferenceException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/CrossReferenceException.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\FixedReader' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/FixedReader.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\LineReader' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/LineReader.php',
+        'setasign\\Fpdi\\PdfParser\\CrossReference\\ReaderInterface' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/CrossReference/ReaderInterface.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\Ascii85' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/Ascii85.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\Ascii85Exception' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/Ascii85Exception.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\AsciiHex' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/AsciiHex.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\FilterException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/FilterException.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\FilterInterface' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/FilterInterface.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\Flate' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/Flate.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\FlateException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/FlateException.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\Lzw' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/Lzw.php',
+        'setasign\\Fpdi\\PdfParser\\Filter\\LzwException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Filter/LzwException.php',
+        'setasign\\Fpdi\\PdfParser\\PdfParser' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/PdfParser.php',
+        'setasign\\Fpdi\\PdfParser\\PdfParserException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/PdfParserException.php',
+        'setasign\\Fpdi\\PdfParser\\StreamReader' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/StreamReader.php',
+        'setasign\\Fpdi\\PdfParser\\Tokenizer' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Tokenizer.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfArray' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfArray.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfBoolean' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfBoolean.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfDictionary' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfDictionary.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfHexString' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfHexString.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfIndirectObject' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfIndirectObject.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfIndirectObjectReference' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfIndirectObjectReference.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfName' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfName.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfNull' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfNull.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfNumeric' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfNumeric.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfStream' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfStream.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfString' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfString.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfToken' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfToken.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfType' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfType.php',
+        'setasign\\Fpdi\\PdfParser\\Type\\PdfTypeException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfParser/Type/PdfTypeException.php',
+        'setasign\\Fpdi\\PdfReader\\DataStructure\\Rectangle' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfReader/DataStructure/Rectangle.php',
+        'setasign\\Fpdi\\PdfReader\\Page' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfReader/Page.php',
+        'setasign\\Fpdi\\PdfReader\\PageBoundaries' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfReader/PageBoundaries.php',
+        'setasign\\Fpdi\\PdfReader\\PdfReader' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfReader/PdfReader.php',
+        'setasign\\Fpdi\\PdfReader\\PdfReaderException' => __DIR__ . '/..' . '/setasign/fpdi/src/PdfReader/PdfReaderException.php',
+        'setasign\\Fpdi\\TcpdfFpdi' => __DIR__ . '/..' . '/setasign/fpdi/src/TcpdfFpdi.php',
+        'setasign\\Fpdi\\Tcpdf\\Fpdi' => __DIR__ . '/..' . '/setasign/fpdi/src/Tcpdf/Fpdi.php',
+        'setasign\\Fpdi\\Tfpdf\\FpdfTpl' => __DIR__ . '/..' . '/setasign/fpdi/src/Tfpdf/FpdfTpl.php',
+        'setasign\\Fpdi\\Tfpdf\\Fpdi' => __DIR__ . '/..' . '/setasign/fpdi/src/Tfpdf/Fpdi.php',
         'voku\\helper\\ASCII' => __DIR__ . '/..' . '/voku/portable-ascii/src/voku/helper/ASCII.php',
     );
 

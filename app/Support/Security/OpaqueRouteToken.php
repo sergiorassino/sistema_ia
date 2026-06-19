@@ -38,6 +38,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_COOP_PAGOS_ESTUDIANTE = 'cooperadora.pagos-estudiante';
 
+    public const PURPOSE_DOC_ESTUDIANTE_AUTOGESTION = 'alumnos.doc-estudiante';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -105,6 +107,11 @@ final class OpaqueRouteToken
     public static function forCoopPagosEstudiante(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COOP_PAGOS_ESTUDIANTE, $idLegajo, $idLegajo);
+    }
+
+    public static function forDocumentoEstudianteAutogestion(int $idDocEstudianteTipo, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_DOC_ESTUDIANTE_AUTOGESTION, $idDocEstudianteTipo, $idLegajo);
     }
 
     /**

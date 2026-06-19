@@ -5,6 +5,7 @@ use App\Livewire\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsisForm;
 use App\Models\Ento;
 use App\Models\Profesor;
 use App\Push\WebPushService;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Cuotas\CuotasImportesCatalog;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use App\Support\NivelSistema;
@@ -600,7 +601,7 @@ if (! function_exists('tenantLoginNivelesIds')) {
      */
     function tenantLoginNivelesIds(): ?array
     {
-        return \App\Support\NivelSistema::idsNivelesLoginConfigurados();
+        return NivelSistema::idsNivelesLoginConfigurados();
     }
 }
 
@@ -645,8 +646,8 @@ if (! function_exists('tenantCalificacionesPrimarioCargaEstudianteImplementacion
     /** Variante activa de carga por estudiante (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioCargaEstudianteImplementacion(): ?string
     {
-        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
-            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
+        return CalificacionesPrimarioModulos::implementacionConfigurada(
+            CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
         );
     }
 }
@@ -655,8 +656,8 @@ if (! function_exists('tenantCalificacionesPrimarioCargaMateriaImplementacion'))
     /** Variante activa de carga por materia (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioCargaMateriaImplementacion(): ?string
     {
-        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
-            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_MATERIA,
+        return CalificacionesPrimarioModulos::implementacionConfigurada(
+            CalificacionesPrimarioModulos::CARGA_MATERIA,
         );
     }
 }
@@ -665,8 +666,8 @@ if (! function_exists('tenantCalificacionesPrimarioPlanillaImplementacion')) {
     /** Variante activa de planilla (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioPlanillaImplementacion(): ?string
     {
-        return \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::implementacionConfigurada(
-            \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA,
+        return CalificacionesPrimarioModulos::implementacionConfigurada(
+            CalificacionesPrimarioModulos::PLANILLA,
         );
     }
 }
@@ -705,9 +706,9 @@ if (! function_exists('tenantPortalDocenteRecursosDidacticosMenuItem')) {
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
 
         $claveNivel = match ($idNivel) {
-            \App\Support\NivelSistema::INICIAL => 'inicial',
-            \App\Support\NivelSistema::PRIMARIO => 'primario',
-            \App\Support\NivelSistema::SECUNDARIO => 'secundario',
+            NivelSistema::INICIAL => 'inicial',
+            NivelSistema::PRIMARIO => 'primario',
+            NivelSistema::SECUNDARIO => 'secundario',
             default => null,
         };
 
@@ -880,11 +881,26 @@ if (! function_exists('tenantAutogestionComunicacionesHabilitada')) {
     /**
      * Si el portal familia incluye el módulo de comunicación institucional
      * (cuaderno de comunicados, push y preferencias de contacto).
-     * Default habilitado; desactivar en `config/tenants/{slug}.php`.
+     * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`
+     * o `niveles_deshabilitados` (IDs de `niveles`, p. ej. primario = 2).
      */
     function tenantAutogestionComunicacionesHabilitada(): bool
     {
-        return (bool) config('tenant.autogestion.comunicaciones.habilitado', true);
+        if (! (bool) config('tenant.autogestion.comunicaciones.habilitado', true)) {
+            return false;
+        }
+
+        $nivelesDeshabilitados = config('tenant.autogestion.comunicaciones.niveles_deshabilitados', []);
+        if (! is_array($nivelesDeshabilitados) || $nivelesDeshabilitados === []) {
+            return true;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+            return false;
+        }
+
+        return true;
     }
 }
 
