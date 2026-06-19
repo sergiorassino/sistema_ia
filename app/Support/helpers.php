@@ -72,6 +72,16 @@ if (! function_exists('studentEsNivelSecundario')) {
     }
 }
 
+if (! function_exists('studentEsNivelPrimario')) {
+    /**
+     * Nivel primario en el portal alumno (`niveles.id` = 2).
+     */
+    function studentEsNivelPrimario(): bool
+    {
+        return NivelSistema::esPrimario((int) (studentCtx()->idNivel ?? 0));
+    }
+}
+
 if (! function_exists('profesorEsSecretario')) {
     function profesorEsSecretario(?Profesor $profesor = null): bool
     {
@@ -863,6 +873,39 @@ if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
             'sanfranciscoasis' => 'Ficha de Matrícula',
             default => 'Ficha de Matrícula',
         };
+    }
+}
+
+if (! function_exists('tenantAutogestionComunicacionesHabilitada')) {
+    /**
+     * Si el portal familia incluye el módulo de comunicación institucional
+     * (cuaderno de comunicados, push y preferencias de contacto).
+     * Default habilitado; desactivar en `config/tenants/{slug}.php`.
+     */
+    function tenantAutogestionComunicacionesHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.comunicaciones.habilitado', true);
+    }
+}
+
+if (! function_exists('tenantAutogestionRutaInicio')) {
+    /**
+     * Ruta de destino tras login o acceso a `/alumnos`.
+     */
+    function tenantAutogestionRutaInicio(): string
+    {
+        return 'alumnos.home';
+    }
+}
+
+if (! function_exists('tenantAutogestionBoletinIpePrimarioHabilitada')) {
+    /**
+     * Boletín IPE por etapas en autogestión familia (nivel primario).
+     * Activar en `config/tenants/{slug}.php` → `autogestion.boletin_ipe_primario.habilitado`.
+     */
+    function tenantAutogestionBoletinIpePrimarioHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.boletin_ipe_primario.habilitado', false);
     }
 }
 

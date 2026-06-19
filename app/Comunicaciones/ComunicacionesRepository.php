@@ -1894,4 +1894,97 @@ class ComunicacionesRepository
             'hilos_total'                         => $hilosTotal,
         ];
     }
+
+    /**
+     * Resumen de bandeja para el escritorio del portal familia.
+     *
+     * @return array{
+     *   mensajes_no_leidos:int,
+     *   hilos_con_no_leidos:int,
+     *   destinatarios_sin_leer:int,
+     *   hilos_enviados_pendientes_lectura:int,
+     *   hilos_total:int
+     * }
+     */
+    public static function resumenBandejaFamilia(int $idLegajo, int $idNivel, int $idTerlec): array
+    {
+        $mensajesNoLeidos = (int) DB::table('com_mensajes_destinatarios as d')
+            ->join('com_hilos as h', 'h.id', '=', 'd.id_hilo')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('d.tipo_destinatario', 'familia')
+            ->where('d.id_legajo', $idLegajo)
+            ->whereNull('d.leido_at')
+            ->count();
+
+        $hilosConNoLeidos = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idLegajo) {
+                $q->where('h.creado_por_tipo', '!=', 'familia')
+                    ->orWhere('h.creado_por_id', '!=', $idLegajo);
+            })
+            ->whereExists(function ($sub) use ($idLegajo) {
+                $sub->select(DB::raw(1))
+                    ->from('com_mensajes_destinatarios as d')
+                    ->whereColumn('d.id_hilo', 'h.id')
+                    ->where('d.tipo_destinatario', 'familia')
+                    ->where('d.id_legajo', $idLegajo)
+                    ->whereNull('d.leido_at');
+            })
+            ->count();
+
+        $destSinLeer = (int) DB::table('com_mensajes_destinatarios as d')
+            ->join('com_mensajes as m', 'm.id', '=', 'd.id_mensaje')
+            ->join('com_hilos as h', 'h.id', '=', 'm.id_hilo')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('m.tipo_remitente', 'familia')
+            ->where('m.id_legajo', $idLegajo)
+            ->whereNull('d.leido_at')
+            ->where('d.tipo_destinatario', 'profesor')
+            ->count();
+
+        $hilosEnviadosPendientes = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where('h.creado_por_tipo', 'familia')
+            ->where('h.creado_por_id', $idLegajo)
+            ->whereExists(function ($sub) use ($idLegajo) {
+                $sub->select(DB::raw(1))
+                    ->from('com_mensajes as m')
+                    ->join('com_mensajes_destinatarios as d', 'd.id_mensaje', '=', 'm.id')
+                    ->whereColumn('m.id_hilo', 'h.id')
+                    ->where('m.tipo_remitente', 'familia')
+                    ->where('m.id_legajo', $idLegajo)
+                    ->whereNull('d.leido_at')
+                    ->where('d.tipo_destinatario', 'profesor');
+            })
+            ->count();
+
+        $hilosTotal = (int) DB::table('com_hilos as h')
+            ->where('h.id_nivel', $idNivel)
+            ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idLegajo) {
+                $q->where(function ($q2) use ($idLegajo) {
+                    $q2->where('h.creado_por_tipo', 'familia')
+                        ->where('h.creado_por_id', $idLegajo);
+                })->orWhereExists(function ($sub) use ($idLegajo) {
+                    $sub->select(DB::raw(1))
+                        ->from('com_mensajes_destinatarios as d2')
+                        ->whereColumn('d2.id_hilo', 'h.id')
+                        ->where('d2.tipo_destinatario', 'familia')
+                        ->where('d2.id_legajo', $idLegajo);
+                });
+            })
+            ->count();
+
+        return [
+            'mensajes_no_leidos'                  => $mensajesNoLeidos,
+            'hilos_con_no_leidos'                 => $hilosConNoLeidos,
+            'destinatarios_sin_leer'              => $destSinLeer,
+            'hilos_enviados_pendientes_lectura'   => $hilosEnviadosPendientes,
+            'hilos_total'                         => $hilosTotal,
+        ];
+    }
 }

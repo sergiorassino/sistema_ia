@@ -130,7 +130,7 @@ class Login extends Component
 
             RateLimiter::clear($throttleKey);
 
-            return redirect()->route('alumnos.comunicaciones.index');
+            return redirect()->route(tenantAutogestionRutaInicio());
         }
 
         RateLimiter::hit($throttleKey, 60);

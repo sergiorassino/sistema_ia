@@ -243,6 +243,25 @@ final class CalificacionesPrimarioDatos
     }
 
     /**
+     * Matrícula del estudiante autenticado en el ciclo de autogestión activo.
+     */
+    public static function matriculaAlumnoEnSesion(): ?Matricula
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        return Matricula::query()
+            ->with(['legajo', 'curso.curplan', 'terlec'])
+            ->where('idLegajos', (int) $ctx->idLegajo)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
      * Materia del curso por `ord` (revalidación en cada guardado; no depender de estado Livewire).
      *
      * @return object{id: int, ord: int}|null
