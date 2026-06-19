@@ -47,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permiso-config' => \App\Http\Middleware\CheckPermisoConfiguracion::class,
             'menu.portal'    => EnsureMenuPortal::class,
             'administracion.nivel' => \App\Http\Middleware\EnsureNivelAdministracion::class,
+            'autogestion.comunicaciones' => \App\Http\Middleware\EnsureAutogestionComunicaciones::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

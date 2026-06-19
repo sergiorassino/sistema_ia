@@ -49,6 +49,25 @@ final class BoletinIpePrimarioGenerador
     }
 
     /**
+     * Mismos datos que {@see buildDatos()} para la matrícula del alumno en sesión (portal familia).
+     */
+    public static function buildDatosParaAlumno(int $etapa = 1): array
+    {
+        $etapa = $etapa === 2 ? 2 : 1;
+
+        $mat = CalificacionesPrimarioDatos::matriculaAlumnoEnSesion();
+        if ($mat === null) {
+            return ['ok' => false, 'error' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.'];
+        }
+
+        return match (self::implementacion()) {
+            'sanjose' => BoletinIpeSanJoseDatos::buildDesdeMatricula($mat),
+            'montecristo' => BoletinIpeMontecristoDatos::buildDesdeMatricula($mat, $etapa),
+            default => BoletinIpeDatos::buildDesdeMatricula($mat, $etapa),
+        };
+    }
+
+    /**
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */

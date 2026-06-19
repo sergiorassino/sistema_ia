@@ -1,6 +1,8 @@
 ﻿<?php
 
+use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\CalificacionesController;
+use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
 use App\Http\Controllers\Alumnos\ComprobantePagoPdfController;
 use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
 use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
@@ -299,11 +301,12 @@ Route::post('/alumnos/logout', function () {
 
 // Área alumnos (autogestión)
 Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('alumnos.comunicaciones.index');
-    })->name('alumnos.home');
+    Route::get('/', AlumnosDashboardController::class)->name('alumnos.home');
 
     Route::get('/calificaciones', CalificacionesController::class)->name('alumnos.calificaciones');
+    Route::get('/boletin-calificaciones-primario/{etapa}', BoletinIpePrimarioPdfController::class)
+        ->whereNumber('etapa')
+        ->name('alumnos.boletin-ipe-primario');
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
@@ -323,15 +326,17 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
         ->where('tipo', 'compromiso|aec|normas|traslado')
         ->name('alumnos.documentos-aceptacion.archivo');
 
-    Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
+    Route::middleware('autogestion.comunicaciones')->group(function () {
+        Route::get('/notificaciones', [PushController::class, 'index'])->name('alumnos.push.index');
 
-    Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
-    Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
-    Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
-    Route::get('/comunicaciones/hilo', HiloShowFamilia::class)->name('alumnos.comunicaciones.hilo');
-    Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionFamiliaController::class)
-        ->whereNumber('id')
-        ->name('alumnos.comunicaciones.abrir');
+        Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
+        Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
+        Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
+        Route::get('/comunicaciones/hilo', HiloShowFamilia::class)->name('alumnos.comunicaciones.hilo');
+        Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionFamiliaController::class)
+            ->whereNumber('id')
+            ->name('alumnos.comunicaciones.abrir');
+    });
 });
 
 // API Push (sesión alumno o docente; fuera del prefix /alumnos para que el SW tenga scope simple)

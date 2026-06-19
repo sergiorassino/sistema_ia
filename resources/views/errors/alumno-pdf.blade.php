@@ -16,7 +16,7 @@
     <div class="box">
         <h1>No se pudo generar el PDF</h1>
         <p>{{ $mensaje }}</p>
-        <p><a href="{{ se_route_url('alumnos.comunicaciones.index') }}">Volver al portal de estudiantes</a></p>
+        <p><a href="{{ se_route_url(tenantAutogestionRutaInicio()) }}">Volver al portal de estudiantes</a></p>
     </div>
 </body>
 </html>

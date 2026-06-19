@@ -47,6 +47,12 @@ return [
 
     'autogestion' => [
         'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
+        'comunicaciones' => [
+            'habilitado' => false,
+        ],
+        'boletin_ipe_primario' => [
+            'habilitado' => true,
+        ],
     ],
 
     'modulos' => [

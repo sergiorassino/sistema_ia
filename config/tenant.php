@@ -94,6 +94,24 @@ return [
             /** URL del servicio SIRO para QR (legacy obtenerQR). Opcional. */
             'siro_qr_url' => null,
         ],
+
+        /**
+         * Cuaderno de comunicados institucional (portal familia).
+         * Incluye bandeja, nuevo comunicado, push y preferencias de contacto.
+         * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         */
+        'comunicaciones' => [
+            'habilitado' => true,
+        ],
+
+        /**
+         * Boletín IPE / síntesis y calificaciones por etapa (portal familia, nivel primario).
+         * Requiere `boletin_primario.ipe_implementacion` con selector de etapa (p. ej. montecristo).
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         */
+        'boletin_ipe_primario' => [
+            'habilitado' => false,
+        ],
     ],
 
     /**

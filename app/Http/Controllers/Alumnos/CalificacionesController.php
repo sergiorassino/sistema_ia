@@ -17,6 +17,8 @@ class CalificacionesController extends Controller
 {
     public function __invoke(Request $request)
     {
+        abort_unless(studentEsNivelSecundario(), 404);
+
         $key = 'alumnos-consulta-calificaciones-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 20)) {
             abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');
