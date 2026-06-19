@@ -175,6 +175,15 @@ class InasistenciaDocenteForm extends Component
 
         $profesor = InasistenciasDocentes::profesorDelContexto($this->idProfesor);
 
+        $obligaciones = InasistenciasDocentes::calcularObligacionesEsperadas(
+            $this->idProfesor,
+            (int) $this->idCargosXProfesor,
+            $this->fecha,
+            (int) $this->inaLic === 1 ? $this->hasta : null,
+            (int) $this->inaLic === 1,
+        );
+        $this->cantOblig = $obligaciones !== null ? (int) round($obligaciones['total']) : 0;
+
         InasistenciasDocentes::guardarInasistencia([
             'idNivel' => $this->idNivel,
             'inaLic' => $this->inaLic,
@@ -234,6 +243,14 @@ class InasistenciaDocenteForm extends Component
     {
         $profesor = InasistenciasDocentes::profesorDelContexto($this->idProfesor);
 
+        $obligacionesEsperadas = InasistenciasDocentes::resumenObligacionesEsperadasForm(
+            $this->idProfesor,
+            (int) $this->idCargosXProfesor,
+            $this->fecha,
+            $this->hasta,
+            $this->inaLic,
+        );
+
         return view('livewire.docentes.inasistencias.form', [
             'profesor' => $profesor,
             'tipos' => InasistenciasDocentes::tiposMotivo(),
@@ -242,6 +259,7 @@ class InasistenciaDocenteForm extends Component
             'filasDetalle' => $this->filasDetalleIds(),
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'urlVolver' => $this->urlVolver(),
+            'obligacionesEsperadas' => $obligacionesEsperadas,
         ])->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar inasistencia docente' : 'Nueva inasistencia docente']);
     }
 }

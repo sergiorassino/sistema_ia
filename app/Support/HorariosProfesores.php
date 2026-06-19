@@ -1335,6 +1335,56 @@ final class HorariosProfesores
     }
 
     /**
+     * Módulos/obligaciones del docente en un día de semana (1 = lunes … 7 = domingo),
+     * según horarios26 y asignaciones PPC del ciclo activo.
+     */
+    public static function contarModulosDiaProfesor(int $idProfesor, int $diaSemana): int
+    {
+        if ($diaSemana < 1 || $diaSemana > 7 || ! Schema::hasTable('horarios26')) {
+            return 0;
+        }
+
+        $idsMat = self::idsMateriasPermitidasImpresionProfesor($idProfesor);
+        if ($idsMat === []) {
+            return 0;
+        }
+
+        $q = DB::table('horarios26 as h')
+            ->where('h.idProfesores', $idProfesor);
+        self::aplicarFiltroHorarios26ProfesorSoloMateriasAsignadas($q, $idsMat);
+        self::aplicarFiltroDiasLegacyEnQuery($q, 'h.idDia', [$diaSemana]);
+
+        $cols = ['h.idDia', 'h.idHora', 'h.idMaterias', 'h.idCursos'];
+        if (self::horarios26UsaIdTurnoClase()) {
+            $cols[] = 'h.idTurnoClase as horarioIdTurnoClase';
+        }
+
+        $rows = $q->get($cols);
+        $activos = array_flip(self::diasActivosLegacy());
+        $unicos = [];
+
+        foreach ($rows as $r) {
+            $diaCanon = self::normalizarIdDiaCanonico((string) ($r->idDia ?? ''));
+            if ($diaCanon === null || ! isset($activos[$diaCanon])) {
+                continue;
+            }
+            if (self::diaFromLegacy($diaCanon) !== $diaSemana) {
+                continue;
+            }
+            $idCursoFila = (int) ($r->idCursos ?? 0);
+            $interp = self::interpretarFilaHorarios26($r, $idCursoFila > 0 ? $idCursoFila : null);
+            $slot = (int) ($interp['slot'] ?? 0);
+            if ($slot < 1) {
+                continue;
+            }
+            $turno = (int) ($interp['idTurnoClase'] ?? 0);
+            $unicos[$turno.'-'.$slot] = true;
+        }
+
+        return count($unicos);
+    }
+
+    /**
      * Indica si el docente tiene al menos una celda en la grilla del turno (sin armar la grilla completa).
      */
     public static function profesorTieneCeldasEnTurno(int $idProfesor, int $idTurnoClase, bool $filtrarTurno = true): bool
