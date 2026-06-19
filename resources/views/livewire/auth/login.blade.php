@@ -21,7 +21,7 @@
             {{-- DNI: sin name= para que un envío HTML accidental no lleve datos en la URL --}}
             <div>
                 <label class="se-auth-label" for="dni">DNI (usuario)</label>
-                <input wire:model.live="dni"
+                <input wire:model.blur="dni"
                        id="dni"
                        type="text"
                        inputmode="numeric"
@@ -39,7 +39,7 @@
             <div x-data="{ showPassword: false }">
                 <label class="se-auth-label" for="pwrd">Contraseña</label>
                 <div class="relative">
-                    <input wire:model.live="pwrd"
+                    <input wire:model="pwrd"
                            id="pwrd"
                            x-bind:type="showPassword ? 'text' : 'password'"
                            autocomplete="current-password"
