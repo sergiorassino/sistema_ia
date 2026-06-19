@@ -181,6 +181,15 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
 
         try {
             DocumentosEstudianteAutogestion::guardarDesdeUploads($this->dni, $clave, $archivos);
+        } catch (\InvalidArgumentException $e) {
+            $this->addError('archivosDocumento.'.$clave, $e->getMessage());
+
+            return;
+        } catch (\RuntimeException $e) {
+            report($e);
+            $this->addError('archivosDocumento.'.$clave, self::mensajeErrorDocumentoParaUsuario($e));
+
+            return;
         } catch (\Throwable $e) {
             report($e);
             $this->addError('archivosDocumento.'.$clave, 'No se pudo guardar el documento. Intente nuevamente.');
@@ -374,6 +383,29 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         for ($i = 0; $i < $def['max_archivos']; $i++) {
             $this->resetValidation('archivosDocumento.'.$clave.'.'.$i);
         }
+    }
+
+    private static function mensajeErrorDocumentoParaUsuario(\RuntimeException $e): string
+    {
+        $mensaje = trim($e->getMessage());
+        $mensajesSeguros = [
+            'El archivo temporal ya no está disponible. Vuelva a seleccionarlo.',
+            'Uno de los archivos temporales ya no está disponible. Vuelva a seleccionarlos.',
+            'No se pudo leer el PDF seleccionado.',
+            'No se pudo generar el PDF final.',
+            'El PDF no pudo leerse o está protegido.',
+            'La imagen no es válida.',
+            'La imagen no tiene dimensiones válidas.',
+            'Archivo no encontrado:',
+        ];
+
+        foreach ($mensajesSeguros as $seguro) {
+            if ($mensaje === $seguro || str_starts_with($mensaje, $seguro)) {
+                return $mensaje;
+            }
+        }
+
+        return 'No se pudo guardar el documento. Intente nuevamente.';
     }
 
     private function refrescarEstadoDocumentos(): void
