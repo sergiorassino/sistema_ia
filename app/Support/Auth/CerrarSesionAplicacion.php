@@ -17,6 +17,33 @@ use Illuminate\Support\Facades\Auth;
 final class CerrarSesionAplicacion
 {
     /**
+     * ¿Hay datos de autenticación o contexto que deban borrarse al abrir login?
+     *
+     * Si no hay nada, evitar flush/regenerateToken en cada GET: reduce carreras de CSRF
+     * (doble carga, autocompletar + Livewire) que provocan 419 en bucle.
+     */
+    public static function haySesionAutenticadaOLegacy(?Request $request = null): bool
+    {
+        $request ??= request();
+
+        if (Auth::check() || Auth::guard('alumno')->check()) {
+            return true;
+        }
+
+        foreach (array_keys($request->session()->all()) as $key) {
+            if (
+                str_starts_with($key, 'login_')
+                || str_starts_with($key, 'student.')
+                || str_starts_with($key, 'school.')
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @param  bool  $invalidarSesion  Si es false, conserva el id de sesión (cookie) y solo vacía datos + CSRF.
      *                                  Usar false al abrir login: evita 419 si el navegador envía el POST
      *                                  antes de aplicar la cookie de sesión nueva tras invalidate().

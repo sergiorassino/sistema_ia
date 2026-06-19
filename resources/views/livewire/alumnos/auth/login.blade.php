@@ -19,7 +19,7 @@
               autocomplete="on">
             <div>
                 <label class="form-label text-xs" for="dni">DNI (usuario)</label>
-                <input wire:model.live="dni"
+                <input wire:model="dni"
                        id="dni"
                        type="text"
                        inputmode="numeric"
@@ -36,7 +36,7 @@
             <div x-data="{ showPassword: false }">
                 <label class="form-label text-xs" for="pwrd">Contraseña</label>
                 <div class="relative">
-                    <input wire:model.live="pwrd"
+                    <input wire:model="pwrd"
                            id="pwrd"
                            x-bind:type="showPassword ? 'text' : 'password'"
                            autocomplete="current-password"

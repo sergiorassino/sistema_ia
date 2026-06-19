@@ -15,6 +15,8 @@
             return el ? String(el.value || '') : '';
         };
 
+        let syncTimer = null;
+
         const syncAutofill = () => {
             const dniVal = readField('dni').replace(/\D/g, '').slice(0, 11);
             if (dniVal.length >= 7 && $wire.get('dni') !== dniVal) {
@@ -27,10 +29,26 @@
             }
         };
 
-        form.querySelector('#dni')?.addEventListener('change', syncAutofill);
-        form.querySelector('#pwrd')?.addEventListener('change', syncAutofill);
+        const scheduleSyncAutofill = () => {
+            if (syncTimer) {
+                window.clearTimeout(syncTimer);
+            }
+            syncTimer = window.setTimeout(syncAutofill, 120);
+        };
 
-        [50, 150, 400, 800].forEach((ms) => window.setTimeout(syncAutofill, ms));
+        form.querySelector('#dni')?.addEventListener('change', scheduleSyncAutofill);
+        form.querySelector('#pwrd')?.addEventListener('change', scheduleSyncAutofill);
+
+        const boot = () => {
+            if (boot.started) {
+                return;
+            }
+            boot.started = true;
+            [300, 800].forEach((ms) => window.setTimeout(scheduleSyncAutofill, ms));
+        };
+
+        document.addEventListener('livewire:initialized', boot, { once: true });
+        window.setTimeout(boot, 150);
     })();
 </script>
 @endscript

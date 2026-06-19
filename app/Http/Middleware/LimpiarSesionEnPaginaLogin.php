@@ -17,9 +17,13 @@ class LimpiarSesionEnPaginaLogin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // No invalidar el id de sesión: el HTML ya trae el CSRF nuevo y una cookie distinta
-        // provoca 419 si el usuario envía el formulario enseguida (p. ej. con autocompletar).
-        CerrarSesionAplicacion::ejecutar($request, invalidarSesion: false);
+        // Solo limpiar cuando quedó sesión previa (equipos compartidos). En visitas anónimas
+        // no rotar CSRF: evita 419 si hay doble GET o Livewire autocompletar justo al cargar.
+        if (CerrarSesionAplicacion::haySesionAutenticadaOLegacy($request)) {
+            // No invalidar el id de sesión: el HTML ya trae el CSRF nuevo y una cookie distinta
+            // provoca 419 si el usuario envía el formulario enseguida (p. ej. con autocompletar).
+            CerrarSesionAplicacion::ejecutar($request, invalidarSesion: false);
+        }
 
         return $next($request);
     }

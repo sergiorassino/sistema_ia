@@ -1613,6 +1613,45 @@ document.addEventListener('livewire:init', () => {
             queueMicrotask(triggerSeSidebarOverflowSync);
         });
     }
+
+    if (L && typeof L.interceptRequest === 'function') {
+        let se419Recargando = false;
+
+        L.interceptRequest(({ onError }) => {
+            onError(({ response, preventDefault }) => {
+                if (response.status !== 419) {
+                    return;
+                }
+
+                preventDefault();
+
+                if (se419Recargando) {
+                    return;
+                }
+
+                const storageKey = 'se-lw419-recarga';
+                const ahora = Date.now();
+                const ultima = Number.parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+
+                if (ultima > 0 && ahora - ultima < 4000) {
+                    if (typeof window.seSwalError === 'function') {
+                        window.seSwalError(
+                            'No se pudo restablecer la sesión. Cierre el navegador por completo e intente de nuevo.',
+                            'Sesión expirada',
+                        );
+                    }
+                    return;
+                }
+
+                sessionStorage.setItem(storageKey, String(ahora));
+                se419Recargando = true;
+
+                const url = new URL(window.location.href);
+                url.searchParams.set('_ses', String(ahora));
+                window.location.replace(url.toString());
+            });
+        });
+    }
 });
 
 // Alpine.js es inyectado y gestionado por Livewire 4.
