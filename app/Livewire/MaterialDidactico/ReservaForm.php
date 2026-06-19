@@ -94,6 +94,14 @@ class ReservaForm extends Component
     public function updatedNivelId(): void
     {
         $this->salaCursoGrado = '';
+        $this->resetValidation('salaCursoGrado');
+    }
+
+    public function updatedSalaCursoGrado(): void
+    {
+        if (trim($this->salaCursoGrado) !== '') {
+            $this->resetValidation('salaCursoGrado');
+        }
     }
 
     public function updatedGrupoId(): void
