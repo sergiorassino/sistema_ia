@@ -65,7 +65,51 @@
                 <input wire:model="categoria" type="text" maxlength="80" class="form-input mt-1.5 @error('categoria') border-red-400 @enderror">
                 @error('categoria') <p class="form-error">{{ $message }}</p> @enderror
             </div>
+        </div>
 
+        <div class="mt-8 border-t border-accent-200 pt-6">
+            <p class="se-section-title mb-1">Facturación AFIP</p>
+            <p class="mb-4 text-xs text-neutral-500">
+                Datos del emisor para comprobantes electrónicos al imputar pagos de aranceles.
+                La condición frente a IVA del destinatario se aplica por defecto en cada factura.
+            </p>
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                    <label class="form-label">Punto de venta</label>
+                    <input wire:model="ptoVta" type="number" min="1" max="9999" step="1"
+                           class="form-input mt-1.5 font-mono @error('ptoVta') border-red-400 @enderror"
+                           placeholder="Ej. 5">
+                    @error('ptoVta') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="form-label">Ingresos brutos</label>
+                    <input wire:model="ingresosBrutos" type="text" maxlength="40"
+                           class="form-input mt-1.5 @error('ingresosBrutos') border-red-400 @enderror"
+                           placeholder="Ej. Exento">
+                    @error('ingresosBrutos') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="form-label">Condición frente a IVA del destinatario</label>
+                    <input wire:model="condicionIva" type="text" maxlength="80"
+                           class="form-input mt-1.5 @error('condicionIva') border-red-400 @enderror"
+                           placeholder="Ej. IVA Consumidor Final">
+                    @error('condicionIva') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="form-label">Inicio de actividades</label>
+                    <input wire:model="fechaInicioAct" type="date"
+                           class="form-input mt-1.5 @error('fechaInicioAct') border-red-400 @enderror">
+                    @error('fechaInicioAct') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 border-t border-accent-200 pt-6">
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div class="md:col-span-2">
                 <label class="form-label">Dirección</label>
                 <input wire:model="direccion" type="text" maxlength="150" class="form-input mt-1.5 @error('direccion') border-red-400 @enderror">
@@ -106,6 +150,7 @@
                 <label class="form-label">Rep. legal</label>
                 <input wire:model="replegal" type="text" maxlength="120" class="form-input mt-1.5 @error('replegal') border-red-400 @enderror">
                 @error('replegal') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
             </div>
         </div>
 

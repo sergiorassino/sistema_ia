@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class ComprobanteAfip extends Model
@@ -56,4 +57,15 @@ class ComprobanteAfip extends Model
         'idCbteAsoc' => 'integer',
         'idCuotasPagos' => 'integer',
     ];
+
+    /**
+     * Pago principal (`idCuotasPagos`) o cobro múltiple (`saldoRestante` = IDs separados por coma).
+     */
+    public function scopeVinculadoAPago(Builder $query, int $idCuotaPago): Builder
+    {
+        return $query->where(function (Builder $q) use ($idCuotaPago): void {
+            $q->where('idCuotasPagos', $idCuotaPago)
+                ->orWhereRaw('FIND_IN_SET(?, saldoRestante)', [$idCuotaPago]);
+        });
+    }
 }

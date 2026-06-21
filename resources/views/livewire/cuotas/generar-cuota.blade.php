@@ -19,11 +19,9 @@
                     </p>
                 @endif
             </div>
-            <a href="{{ route('cuotas.estudiante') }}"
-               wire:navigate
-               class="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
-                Volver
-            </a>
+            <x-volver-cuotas-estudiante
+                :id-legajos="$idLegajo"
+                class="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20" />
         </div>
     </section>
 
@@ -108,11 +106,10 @@
             @enderror
 
             <div class="flex flex-wrap items-center justify-end gap-2 border-t border-accent-200 bg-accent-50/60 px-4 py-3 sm:px-5">
-                <a href="{{ route('cuotas.estudiante') }}"
-                   wire:navigate
-                   class="inline-flex items-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-accent-50">
-                    Cancelar
-                </a>
+                <x-volver-cuotas-estudiante
+                    :id-legajos="$idLegajo"
+                    etiqueta="Cancelar"
+                    class="inline-flex items-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-accent-50" />
                 <button type="submit"
                         wire:loading.attr="disabled"
                         class="inline-flex items-center rounded-xl bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60">

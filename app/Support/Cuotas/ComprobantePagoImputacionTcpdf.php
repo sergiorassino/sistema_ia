@@ -80,6 +80,8 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
     private function dibujarDocumento(): void
     {
         $header = (array) ($this->datos['pdfHeader'] ?? []);
+        $lineas = (array) ($this->datos['lineas'] ?? []);
+        $esMultiple = (bool) ($this->datos['esMultiple'] ?? false) || count($lineas) > 1;
 
         TcpdfFuenteArial::aplicar($this, '', 6);
         $this->Cell(160, 3, (string) ($this->datos['fechaImpresion'] ?? ''), 0, 1, 'R');
@@ -88,20 +90,25 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $y = $this->dibujarHeaderInstitucional($y, $header);
         $y0 = $y + 4;
 
-        $altoTotal = self::ALTO_SECCION_ALUMNO + self::ALTO_SECCION_PAGO;
+        $altoAlumno = self::ALTO_SECCION_ALUMNO;
+        $altoPago = $esMultiple
+            ? max(self::ALTO_SECCION_PAGO, 34.0 + (count($lineas) * 14.0))
+            : self::ALTO_SECCION_PAGO;
+        $altoTotal = $altoAlumno + $altoPago;
+
         $this->Rect(self::ORIGEN_X, $y0, self::ANCHO_BLOQUE, $altoTotal, 'D');
         $this->Line(
             self::ORIGEN_X,
-            $y0 + self::ALTO_SECCION_ALUMNO,
+            $y0 + $altoAlumno,
             self::ORIGEN_X + self::ANCHO_BLOQUE,
-            $y0 + self::ALTO_SECCION_ALUMNO,
+            $y0 + $altoAlumno,
         );
 
-        $this->dibujarSeccionAlumno($y0);
-        $this->dibujarSeccionPago($y0);
+        $this->dibujarSeccionAlumno($y0, $esMultiple);
+        $this->dibujarSeccionPago($y0, $esMultiple);
     }
 
-    private function dibujarSeccionAlumno(float $y0): void
+    private function dibujarSeccionAlumno(float $y0, bool $esMultiple): void
     {
         $this->SetXY(self::MARGEN_IZQ, $y0 + 8);
         TcpdfFuenteArial::aplicar($this, '', 6);
@@ -115,8 +122,13 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
             ['texto' => 'SALA / GRADO / CURSO: ', 'estilo' => '', 'size' => 7.0, 'alto' => 5.0],
             ['texto' => (string) ($this->datos['cursec'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0],
             ['texto' => (string) ($this->datos['nivel'] ?? ''), 'estilo' => '', 'size' => 8.0, 'alto' => 5.0],
-            ['texto' => (string) ($this->datos['cuotaNombre'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0],
         ];
+
+        if (! $esMultiple) {
+            $lineas[] = ['texto' => (string) ($this->datos['cuotaNombre'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0];
+        } else {
+            $lineas[] = ['texto' => 'CUOTAS ABONADAS: VARIAS', 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0];
+        }
 
         $hContenido = array_sum(array_column($lineas, 'alto'));
         $y = $y0 + (($hContenido < self::ALTO_SECCION_ALUMNO ? (self::ALTO_SECCION_ALUMNO - $hContenido) / 2 : 8));
@@ -129,21 +141,22 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         }
     }
 
-    private function dibujarSeccionPago(float $y0): void
+    private function dibujarSeccionPago(float $y0, bool $esMultiple): void
     {
         $yTop = $y0 + self::ALTO_SECCION_ALUMNO;
         $x = self::ORIGEN_X;
         $w = self::ANCHO_BLOQUE;
         $padX = 6.0;
+        $lineas = (array) ($this->datos['lineas'] ?? []);
 
         $importeOriginal = trim((string) ($this->datos['importeOriginalFmt'] ?? ''));
-        if ($importeOriginal !== '') {
+        if (! $esMultiple && $importeOriginal !== '') {
             $this->SetXY($x, $yTop + 6);
             TcpdfFuenteArial::aplicar($this, '', 8);
             $this->Cell($w, 5, '(Importe Original: $ '.$importeOriginal.')', 0, 1, 'C');
         }
 
-        $y = $this->GetY() + 4;
+        $y = $this->GetY() + ($esMultiple ? 6 : 4);
         $this->SetXY($x + $padX, $y);
         TcpdfFuenteArial::aplicar($this, 'B', 8);
         $this->Cell(90, 5, 'DETALLE DEL PAGO REALIZADO', 0, 0, 'L');
@@ -151,6 +164,31 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $this->Cell($w - ($padX * 2) - 90, 5, (string) ($this->datos['medioPago'] ?? ''), 0, 1, 'R');
 
         $yDetalle = $this->GetY() + 2;
+
+        if ($esMultiple && $lineas !== []) {
+            foreach ($lineas as $linea) {
+                $this->SetXY($x + $padX, $yDetalle);
+                TcpdfFuenteArial::aplicar($this, 'B', 7.5);
+                $this->Cell($w - ($padX * 2), 4.5, (string) ($linea['cuotaNombre'] ?? ''), 0, 1, 'L');
+                $yDetalle = $this->GetY();
+                $this->dibujarFilaDetalle($x + $padX + 4, $yDetalle, 'Importe:', (string) ($linea['importeFmt'] ?? ''));
+                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Intereses:', (string) ($linea['interesFmt'] ?? ''));
+                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Bonificación:', (string) ($linea['bonificacionFmt'] ?? ''));
+                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Abonado:', (string) ($linea['abonadoFmt'] ?? ''), true);
+                $yDetalle = $this->GetY() + 1.5;
+            }
+
+            $this->Line($x + $padX, $yDetalle, $x + $w - $padX, $yDetalle);
+            $yDetalle += 2;
+            $this->dibujarFilaDetalle($x + $padX, $yDetalle, 'Total importe:', (string) ($this->datos['importeFmt'] ?? ''));
+            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Total bonificación:', (string) ($this->datos['bonificacionFmt'] ?? ''));
+            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Total intereses:', (string) ($this->datos['interesFmt'] ?? ''));
+            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Importe abonado:', (string) ($this->datos['abonadoFmt'] ?? ''), true);
+            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Fecha de Pago:', (string) ($this->datos['fechaPagoEsp'] ?? ''));
+
+            return;
+        }
+
         $this->dibujarFilaDetalle($x + $padX, $yDetalle, 'Importe:', (string) ($this->datos['importeFmt'] ?? ''));
         $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Bonificación:', (string) ($this->datos['bonificacionFmt'] ?? ''));
         $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Intereses:', (string) ($this->datos['interesFmt'] ?? ''));

@@ -2,7 +2,7 @@
     use App\Support\Cuotas\CuotasFormato;
 @endphp
 
-<div class="se-page max-w-xl mx-auto"
+<div class="se-page {{ $esUnaCuota ? 'max-w-xl' : 'max-w-5xl' }} mx-auto"
      x-on:cuotas-imputar-pago-abrir-comprobante.window="window.open($event.detail.url, '_blank')"
      x-data="{
         showDatosCuota: false,
@@ -27,23 +27,25 @@
         <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-0.5">
                 <p class="se-eyebrow">Gestión de aranceles</p>
-                <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Imputar pago</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                    {{ $esUnaCuota ? 'Imputar pago' : 'Cobrar cuotas seleccionadas' }}
+                </h1>
                 @if ($encabezado)
                     <p class="text-xs font-semibold uppercase tracking-wide text-white/90 sm:text-sm">
                         {{ $encabezado['apellido'] }} {{ $encabezado['nombre'] }}
                     </p>
-                    @if ($registro)
+                    @if ($esUnaCuota && $registro)
                         <p class="text-xs text-white/75">
                             {{ trim((string) ($registro->cuota?->nombre ?? '')) }}
                         </p>
+                    @elseif (! $esUnaCuota)
+                        <p class="text-xs text-white/75">{{ $cantidadCuotas }} cuotas · podés ajustar saldo e interés/bonificación por fila</p>
                     @endif
                 @endif
             </div>
-            <a href="{{ route('cuotas.estudiante') }}"
-               wire:navigate
-               class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20">
-                Volver
-            </a>
+            <x-volver-cuotas-estudiante
+                :id-legajos="$idLegajo"
+                class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20" />
         </div>
     </section>
 
@@ -68,6 +70,7 @@
         <div class="space-y-2.5">
             <p class="se-section-title text-center">Importe a imputar</p>
 
+            @if ($esUnaCuota)
             <div class="grid gap-3">
                 <div>
                     <label class="form-label" for="saldoAPagar">Saldo a pagar</label>
@@ -121,8 +124,74 @@
                     </div>
                 </div>
             </div>
+            @else
+                @if ($resumenMultiples)
+                    <div class="w-full overflow-x-auto rounded-xl border border-accent-200">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-accent-50 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Año</th>
+                                    <th class="px-3 py-2 text-left">Cuota</th>
+                                    <th class="px-3 py-2 text-right">Saldo</th>
+                                    <th class="px-3 py-2 text-right">% Int./Bonif.</th>
+                                    <th class="px-3 py-2 text-right">Interés</th>
+                                    <th class="px-3 py-2 text-right">Bonif.</th>
+                                    <th class="px-3 py-2 text-right">A pagar</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-accent-100">
+                                @foreach ($resumenMultiples['lineas'] as $linea)
+                                    <tr wire:key="imputar-linea-{{ $linea['id'] }}">
+                                        <td class="px-3 py-2 tabular-nums">{{ $linea['ano'] }}</td>
+                                        <td class="px-3 py-2 font-semibold uppercase text-primary-800">{{ $linea['nombre'] }}</td>
+                                        <td class="px-2 py-1.5 text-right">
+                                            <input type="text"
+                                                   wire:model.live="lineasImputacion.{{ $linea['id'] }}.saldo"
+                                                   class="form-input w-full min-w-[5.5rem] tabular-nums text-right text-xs py-1.5"
+                                                   aria-label="Saldo a pagar — {{ $linea['nombre'] }}">
+                                            @error('lineasImputacion.'.$linea['id'].'.saldo')
+                                                <p class="form-error mt-0.5 text-left">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-2 py-1.5 text-right">
+                                            <input type="text"
+                                                   wire:model.live="lineasImputacion.{{ $linea['id'] }}.porcent"
+                                                   title="{{ $linea['etiquetaPorcent'] }}"
+                                                   class="form-input w-full min-w-[4.5rem] tabular-nums text-right text-xs py-1.5"
+                                                   aria-label="{{ $linea['etiquetaPorcent'] }} — {{ $linea['nombre'] }}">
+                                        </td>
+                                        <td class="px-3 py-2 text-right tabular-nums">{{ $linea['interesFmt'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums">{{ $linea['bonificacionFmt'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums font-bold">{{ $linea['totalFmt'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="bg-primary-50 font-semibold text-primary-900">
+                                <tr>
+                                    <td colspan="2" class="px-3 py-2 text-right uppercase">Total</td>
+                                    <td class="px-3 py-2 text-right tabular-nums">{{ CuotasFormato::formatearImporte($resumenMultiples['neto']) }}</td>
+                                    <td class="px-3 py-2"></td>
+                                    <td class="px-3 py-2 text-right tabular-nums">{{ CuotasFormato::formatearImporte($resumenMultiples['interes']) }}</td>
+                                    <td class="px-3 py-2 text-right tabular-nums">{{ CuotasFormato::formatearImporte($resumenMultiples['bonificacion']) }}</td>
+                                    <td class="px-3 py-2 text-right tabular-nums text-base">{{ CuotasFormato::formatearImporte($resumenMultiples['total']) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                @endif
+
+                <div class="mx-auto max-w-sm">
+                    <label class="form-label" for="fechaPagoMulti">Fecha pago</label>
+                    <input id="fechaPagoMulti"
+                           type="date"
+                           wire:model.live="fechaPago"
+                           class="form-input w-full">
+                    @error('fechaPago') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            @endif
 
             <div class="grid gap-3">
+                @if ($esUnaCuota)
                 <label class="inline-flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-accent-200 bg-accent-50/40 px-4 py-3 text-xs font-semibold text-neutral-800">
                     <span class="min-w-0">
                         Aviso de pago
@@ -134,19 +203,41 @@
                            wire:model.live="avisoPago"
                            class="h-5 w-10 rounded-full border-accent-300 text-primary-600 focus:ring-primary-500">
                 </label>
+                @endif
 
-                @if ($muestraFacturarAfip)
-                    <label class="inline-flex cursor-pointer items-center justify-between gap-3 rounded-xl border-2 border-primary-400 bg-primary-50 px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-900 shadow-sm ring-1 ring-primary-200">
-                        <span class="min-w-0">
-                            Facturar AFIP
-                            <span class="mt-0.5 block text-[10px] font-semibold normal-case tracking-normal text-primary-800/80">
-                                Emite recibo electrónico al registrar el pago
-                            </span>
-                        </span>
-                        <input type="checkbox"
-                               wire:model.live="facturarAfip"
-                               class="h-6 w-6 rounded border-primary-400 text-primary-600 focus:ring-primary-500">
-                    </label>
+                @if ($muestraOpcionesComprobante)
+                    <div class="space-y-2 rounded-xl border-2 border-primary-400 bg-primary-50 px-4 py-3.5 shadow-sm ring-1 ring-primary-200">
+                        <p class="text-sm font-bold uppercase tracking-wide text-primary-900">
+                            Comprobante al registrar el pago
+                        </p>
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <label class="inline-flex cursor-pointer items-start gap-3 rounded-xl border border-primary-300 bg-white px-3 py-3 text-xs font-semibold text-primary-900 transition hover:bg-primary-50/60">
+                                <input type="radio"
+                                       wire:model.live="tipoComprobanteImputacion"
+                                       value="afip"
+                                       class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 focus:ring-primary-500">
+                                <span class="min-w-0">
+                                    Factura AFIP
+                                    <span class="mt-0.5 block text-[10px] font-medium normal-case tracking-normal text-primary-800/80">
+                                        Emite recibo electrónico y abre el comprobante AFIP
+                                    </span>
+                                </span>
+                            </label>
+                            <label class="inline-flex cursor-pointer items-start gap-3 rounded-xl border border-accent-200 bg-white px-3 py-3 text-xs font-semibold text-neutral-800 transition hover:bg-accent-50">
+                                <input type="radio"
+                                       wire:model.live="tipoComprobanteImputacion"
+                                       value="interno"
+                                       class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 focus:ring-primary-500">
+                                <span class="min-w-0">
+                                    Recibo interno
+                                    <span class="mt-0.5 block text-[10px] font-medium normal-case tracking-normal text-neutral-500">
+                                        Comprobante institucional del sistema (sin AFIP)
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        @error('tipoComprobanteImputacion') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
                 @endif
             </div>
 
@@ -161,7 +252,7 @@
             </div>
         </div>
 
-        @if ($registro)
+        @if ($esUnaCuota && $registro)
             <div class="rounded-xl border border-accent-200 bg-white">
                 <button type="button"
                         x-on:click="showDatosCuota = !showDatosCuota"
@@ -185,14 +276,12 @@
         @endif
 
         <div class="mx-auto flex w-full max-w-md flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-            <a href="{{ route('cuotas.estudiante') }}"
-               wire:navigate
-               class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50">
-                Cancelar
-            </a>
+            <x-volver-cuotas-estudiante
+                :id-legajos="$idLegajo"
+                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50" />
             <button type="submit"
                     class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700">
-                Registrar pago
+                {{ $esUnaCuota ? 'Registrar pago' : 'Cobrar cuotas' }}
             </button>
         </div>
     </form>

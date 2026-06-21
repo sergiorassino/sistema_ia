@@ -3,7 +3,12 @@
     use App\Support\Alumnos\ArancelesEscolares;
     use App\Support\Cuotas\CuotasFormato;
     use App\Support\Cuotas\GestionAranceles;
+    use App\Support\Navegacion\ContextoEstudianteSesion;
     use App\Support\Security\OpaqueRouteToken;
+
+    $vistaCuotasNav = $mostrarHistorial
+        ? ContextoEstudianteSesion::VISTA_CUOTAS_HISTORIAL
+        : ContextoEstudianteSesion::VISTA_CUOTAS_ANIO;
 @endphp
 
 <div class="se-page max-w-[90rem] mx-auto">
@@ -38,14 +43,27 @@
                 @if (! $mostrarHistorial)
                     <x-nav-contexto-estudiante
                         destino="cuotas.estudiante.generar"
-                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                        :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
                         :id-legajos="$idLegajo"
+                        :vista-cuotas="$vistaCuotasNav"
                         tag="a"
                         class="inline">
                         <span class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 cursor-pointer">
                             Generar cuota
                         </span>
                     </x-nav-contexto-estudiante>
+                @endif
+                @if ($cantidadSeleccionadas > 0)
+                    <button type="button"
+                            wire:click="irImputarSeleccionadas"
+                            class="inline-flex items-center rounded-xl border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-primary-800 hover:bg-white/90">
+                        Cobrar {{ $cantidadSeleccionadas }} {{ $cantidadSeleccionadas === 1 ? 'cuota' : 'cuotas' }}
+                    </button>
+                    <button type="button"
+                            wire:click="limpiarSeleccion"
+                            class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20">
+                        Limpiar
+                    </button>
                 @endif
                 <a href="{{ se_route_url('cuotas.resumen-pagos', ['ref' => OpaqueRouteToken::forResumenPagosEstudiante($idLegajo)]) }}"
                    target="_blank" rel="noopener noreferrer"
@@ -75,9 +93,22 @@
                 @endif
             </div>
         @else
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-accent-200 bg-accent-50/60 px-4 py-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                    Seleccioná una o varias cuotas adeudadas para cobrarlas juntas
+                </p>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button"
+                            wire:click="seleccionarTodasAdeudadas"
+                            class="inline-flex items-center rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50">
+                        Seleccionar adeudadas
+                    </button>
+                </div>
+            </div>
             <div class="w-full overflow-x-auto">
                 <div class="gf gf-vcenter gf-cuotas-estudiante">
                         <div class="gf-head">
+                            <div class="gf-th gf-th-accion w-8" title="Seleccionar"></div>
                             <div class="gf-th gf-th-accion" title="Editar"></div>
                             <div class="gf-th gf-th-accion" title="Historial de pagos"></div>
                             <div class="gf-th w-12">Año</div>
@@ -108,12 +139,24 @@
                                 [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                                <div class="gf-td gf-td-accion w-8 !py-1">
+                                    @if ((float) $c->faltapa > 0)
+                                        <label class="inline-flex h-6 w-6 cursor-pointer items-center justify-center">
+                                            <input type="checkbox"
+                                                   wire:model.live="cuotasSeleccionadas"
+                                                   value="{{ (int) $c->id }}"
+                                                   class="h-4 w-4 rounded border-gray-400 text-primary-600 focus:ring-primary-500"
+                                                   title="Seleccionar para cobro múltiple">
+                                        </label>
+                                    @endif
+                                </div>
                                 <div class="gf-td gf-td-accion !py-1">
                                     <x-nav-contexto-estudiante
                                         destino="cuotas.cuota.editar"
-                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                        :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
                                         :id-legajos="$idLegajo"
                                         :id-cuota-generada="$c->id"
+                                        :vista-cuotas="$vistaCuotasNav"
                                         class="inline">
                                         <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
                                               title="Editar cuota">
@@ -124,9 +167,10 @@
                                 <div class="gf-td gf-td-accion !py-1">
                                     <x-nav-contexto-estudiante
                                         destino="cuotas.cuota.historial-pagos"
-                                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                        :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
                                         :id-legajos="$idLegajo"
                                         :id-cuota-generada="$c->id"
+                                        :vista-cuotas="$vistaCuotasNav"
                                         class="inline">
                                         <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
                                               title="Historial de pagos">
@@ -160,9 +204,10 @@
                                     @if ((float) $c->faltapa > 0)
                                         <x-nav-contexto-estudiante
                                             destino="cuotas.cuota.imputar"
-                                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::CUOTAS_GESTION"
+                                            :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
                                             :id-legajos="$idLegajo"
                                             :id-cuota-generada="$c->id"
+                                            :vista-cuotas="$vistaCuotasNav"
                                             class="inline">
                                             <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
                                                   title="Imputar pago">
@@ -194,6 +239,7 @@
                         @endforeach
 
                         <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-estudiante-totales" wire:key="cg-totales-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                            <div class="gf-td gf-td-accion w-8" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td w-12" aria-hidden="true"></div>
@@ -215,12 +261,13 @@
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                         </div>
                         <div class="gf-row gf-row--totales gf-cuotas-estudiante-totales" wire:key="cg-totales-intereses-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                            <div class="gf-td gf-td-accion w-8" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td w-12" aria-hidden="true"></div>
                             <div class="gf-td w-14" aria-hidden="true"></div>
                             <div class="gf-td w-24" aria-hidden="true"></div>
-                            <div class="gf-td gf-td-cuota gf-td-total-label justify-end">Total con intereses</div>
+                            <div class="gf-td gf-td-cuota gf-td-total-label justify-end">Total con intereses al día de hoy</div>
                             <div class="gf-td w-14" aria-hidden="true"></div>
                             <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
                             <div class="gf-td gf-td-fecha" aria-hidden="true"></div>
@@ -259,6 +306,18 @@
                 window.seSwalExito(afipMensaje, 'Facturación AFIP');
             }
         @endif
+
+        $wire.on('se-swal-aviso', (event) => {
+            if (typeof window.seSwalAviso === 'function') {
+                window.seSwalAviso(event.mensaje ?? '', event.titulo ?? 'Aviso');
+            }
+        });
+
+        $wire.on('se-swal-error', (event) => {
+            if (typeof window.seSwalError === 'function') {
+                window.seSwalError(event.mensaje ?? '', event.titulo ?? 'Error');
+            }
+        });
     })();
 </script>
 @endscript

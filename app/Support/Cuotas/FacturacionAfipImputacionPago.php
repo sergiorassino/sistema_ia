@@ -82,10 +82,16 @@ final class FacturacionAfipImputacionPago
         $hoy = Carbon::today();
         $fechaYmd = $hoy->format('Ymd');
 
-        $condicionAlumno = (string) ($config['condicion_iva_alumno'] ?? 'Consumidor Final');
+        $condicionAlumno = trim((string) ($ento->condicionIva ?? ''));
+        if ($condicionAlumno === '') {
+            $condicionAlumno = (string) ($config['condicion_iva_alumno'] ?? 'Consumidor Final');
+        }
         $condicionIvaId = AfipCondicionIvaReceptor::idDesdeEtiqueta(
             $condicionAlumno,
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
+        );
+        $condicionIvaEmisor = ComprobanteAfipDatos::etiquetaCondicionIvaEmisor(
+            (string) ($ento->ingresosBrutos ?? ''),
         );
 
         try {
@@ -123,7 +129,9 @@ final class FacturacionAfipImputacionPago
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
 
         try {
+            $idComprobanteAfip = 0;
             DB::transaction(function () use (
+                &$idComprobanteAfip,
                 $pago,
                 $registro,
                 $ento,
@@ -144,14 +152,15 @@ final class FacturacionAfipImputacionPago
                 $nombreAlumno,
                 $docNro,
                 $condicionAlumno,
+                $condicionIvaEmisor,
                 $sufijoSimulado,
             ): void {
-                ComprobanteAfip::query()->create([
+                $comprobante = ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
                     'razonSocial' => trim((string) $ento->insti),
                     'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
-                    'domicilioComercial' => trim((string) $ento->direccion),
-                    'condicionIvaInstitucion' => trim((string) ($ento->condicionIva ?? '')),
+                    'domicilioComercial' => $ento->domicilioComercialCompleto(),
+                    'condicionIvaInstitucion' => $condicionIvaEmisor,
                     'puntoVenta' => $ptoVta,
                     'ingresosBrutos' => trim((string) ($ento->ingresosBrutos ?? '')),
                     'fechaInicioActividades' => self::formatearFechaEnto($ento->fechaInicioAct ?? null),
@@ -181,6 +190,8 @@ final class FacturacionAfipImputacionPago
                     'idCuotasPagos' => (int) $pago->id,
                 ]);
 
+                $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
+
                 $registro->nroComp = $nroRecibo;
                 $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado;
                 $registro->save();
@@ -192,6 +203,440 @@ final class FacturacionAfipImputacionPago
         return [
             'ok' => true,
             'mensaje' => 'Comprobante AFIP emitido correctamente. CAE '.$cae.' — Recibo Nº '.$nroRecibo.'.'.$sufijoSimulado,
+            'idComprobanteAfip' => $idComprobanteAfip,
+        ];
+    }
+
+    /**
+     * Emite un único comprobante AFIP por varias cuotas imputadas en el mismo cobro.
+     *
+     * @param  list<array{pago: CuotaPago, registro: CuotaGenerada, importe: float}>  $items
+     * @return array{ok: bool, mensaje: string, idComprobanteAfip?: int}
+     */
+    public static function facturarLote(array $items, int $idLegajo): array
+    {
+        if ($items === []) {
+            return ['ok' => false, 'mensaje' => 'No hay cuotas para facturar en AFIP.'];
+        }
+
+        if (count($items) === 1) {
+            $item = $items[0];
+
+            return self::facturar(
+                $item['pago'],
+                $item['registro'],
+                $idLegajo,
+                (float) $item['importe'],
+            );
+        }
+
+        if (! tenantCuotasFacturacionAfipHabilitada()) {
+            return ['ok' => false, 'mensaje' => 'La facturación AFIP no está habilitada para este colegio.'];
+        }
+
+        if (! Schema::hasTable('comprobanteafip')) {
+            return ['ok' => false, 'mensaje' => 'La tabla comprobanteafip no existe en esta base de datos.'];
+        }
+
+        $importeTotal = 0.0;
+        $interesTotal = 0.0;
+        $conceptos = [];
+        $importesLinea = [];
+        $registros = [];
+
+        foreach ($items as $item) {
+            $pago = $item['pago'] ?? null;
+            $registro = $item['registro'] ?? null;
+            $importe = round((float) ($item['importe'] ?? 0), 2);
+
+            if (! $pago instanceof CuotaPago || ! $registro instanceof CuotaGenerada || $importe <= 0) {
+                continue;
+            }
+
+            $importeTotal += $importe;
+            $interesTotal += round((float) ($pago->interes ?? 0), 2);
+            $conceptos[] = mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? 'CUOTA')));
+            $importesLinea[] = number_format($importe, 2, '.', '');
+            $registros[] = $registro;
+        }
+
+        $importeTotal = round($importeTotal, 2);
+        if ($importeTotal <= 0 || $registros === []) {
+            return ['ok' => false, 'mensaje' => 'No hay importe para facturar en AFIP.'];
+        }
+
+        $config = tenantCuotasFacturacionAfipConfig();
+        if ($config === null) {
+            return ['ok' => false, 'mensaje' => 'Falta configurar la facturación AFIP del colegio.'];
+        }
+
+        $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+        if ($legajo === null) {
+            return ['ok' => false, 'mensaje' => 'No se encontró el legajo del estudiante.'];
+        }
+
+        $ento = Ento::query()
+            ->where('idNivel', (int) schoolCtx()->idNivel)
+            ->first([
+                'insti',
+                'direccion',
+                'cuit',
+                'condicionIva',
+                'ptoVta',
+                'ingresosBrutos',
+                'fechaInicioAct',
+            ]);
+
+        if ($ento === null || trim((string) $ento->cuit) === '') {
+            return ['ok' => false, 'mensaje' => 'Faltan datos AFIP institucionales (CUIT / ento).'];
+        }
+
+        $ptoVta = (int) ($ento->ptoVta ?? 0);
+        if ($ptoVta <= 0) {
+            return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
+        }
+
+        $docNro = self::documentoNumerico($legajo->dni ?? null);
+        if ($docNro <= 0) {
+            return ['ok' => false, 'mensaje' => 'El estudiante no tiene DNI válido para facturar.'];
+        }
+
+        [$fechaDesde, $fechaHasta] = self::periodoServicioLote($registros);
+        $hoy = Carbon::today();
+        $fechaYmd = $hoy->format('Ymd');
+
+        $condicionAlumno = trim((string) ($ento->condicionIva ?? ''));
+        if ($condicionAlumno === '') {
+            $condicionAlumno = (string) ($config['condicion_iva_alumno'] ?? 'Consumidor Final');
+        }
+        $condicionIvaId = AfipCondicionIvaReceptor::idDesdeEtiqueta(
+            $condicionAlumno,
+            (int) ($config['condicion_iva_receptor_id'] ?? 5),
+        );
+        $condicionIvaEmisor = ComprobanteAfipDatos::etiquetaCondicionIvaEmisor(
+            (string) ($ento->ingresosBrutos ?? ''),
+        );
+
+        try {
+            $emision = AfipWsfeEmision::emitirRecibo($config, [
+                'cuit' => (string) $ento->cuit,
+                'pto_vta' => $ptoVta,
+                'doc_nro' => $docNro,
+                'importe' => $importeTotal,
+                'fecha_yyyymmdd' => $fechaYmd,
+                'fch_serv_desde' => $fechaDesde,
+                'fch_serv_hasta' => $fechaHasta,
+                'condicion_iva_receptor_id' => $condicionIvaId,
+            ]);
+        } catch (Throwable $e) {
+            foreach ($registros as $registro) {
+                self::guardarMensajeCuota($registro, 'Error AFIP: '.$e->getMessage());
+            }
+
+            return ['ok' => false, 'mensaje' => 'Error al facturar en AFIP: '.$e->getMessage()];
+        }
+
+        $simulado = ! empty($config['simular']);
+        $cae = (string) $emision['cae'];
+        $vtoCaeYmd = (string) $emision['cae_fch_vto'];
+        $nroRecibo = (int) $emision['cbte_hasta'];
+        $sufijoSimulado = $simulado ? ' (simulado, sin envío a AFIP)' : '';
+        $codigoBarras = AfipCodigoBarras::generar(
+            (string) $ento->cuit,
+            (int) $config['cbte_tipo'],
+            $ptoVta,
+            $cae,
+            $vtoCaeYmd,
+        );
+
+        [$nombreResp, $dniResp] = self::responsablePago($legajo);
+        $conceptoPrincipal = count($conceptos) === 1
+            ? $conceptos[0]
+            : 'CUOTAS ESCOLARES';
+        $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
+        $primerPago = $items[0]['pago'];
+        $primerRegistro = $registros[0];
+        $subConceptos = implode('|', $conceptos);
+        $importeSubConceptos = implode('|', $importesLinea);
+
+        try {
+            $idComprobanteAfip = 0;
+            DB::transaction(function () use (
+                &$idComprobanteAfip,
+                $items,
+                $registros,
+                $ento,
+                $legajo,
+                $ptoVta,
+                $config,
+                $importeTotal,
+                $interesTotal,
+                $fechaDesde,
+                $fechaHasta,
+                $hoy,
+                $cae,
+                $vtoCaeYmd,
+                $nroRecibo,
+                $codigoBarras,
+                $nombreResp,
+                $dniResp,
+                $conceptoPrincipal,
+                $subConceptos,
+                $importeSubConceptos,
+                $nombreAlumno,
+                $docNro,
+                $condicionAlumno,
+                $condicionIvaEmisor,
+                $sufijoSimulado,
+                $primerPago,
+                $primerRegistro,
+            ): void {
+                $comprobante = ComprobanteAfip::query()->create([
+                    'nombreInstitucion' => trim((string) $ento->insti),
+                    'razonSocial' => trim((string) $ento->insti),
+                    'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
+                    'domicilioComercial' => $ento->domicilioComercialCompleto(),
+                    'condicionIvaInstitucion' => $condicionIvaEmisor,
+                    'puntoVenta' => $ptoVta,
+                    'ingresosBrutos' => trim((string) ($ento->ingresosBrutos ?? '')),
+                    'fechaInicioActividades' => self::formatearFechaEnto($ento->fechaInicioAct ?? null),
+                    'nombreAlumno' => $nombreAlumno,
+                    'dni' => (string) $docNro,
+                    'nombreResp' => $nombreResp,
+                    'dniResp' => $dniResp,
+                    'domicilioAlumno' => trim((string) ($legajo->callenum ?? '')),
+                    'condicionIvaAlumno' => $condicionAlumno,
+                    'condicionVenta' => (string) ($config['condicion_venta'] ?? 'contado'),
+                    'fechaDesde' => self::formatearFechaBarra($fechaDesde),
+                    'fechaHasta' => self::formatearFechaBarra($fechaHasta),
+                    'fechaEmision' => $hoy->format('Y/m/d'),
+                    'fechaVencimiento' => $hoy->format('Y/m/d'),
+                    'tipoComprobante' => (int) $config['cbte_tipo'],
+                    'codigoBarras' => $codigoBarras,
+                    'nroRecibo' => $nroRecibo,
+                    'cae' => $cae,
+                    'vtoCae' => self::formatearFechaBarra($vtoCaeYmd),
+                    'importePagado' => $importeTotal,
+                    'interesPagado' => $interesTotal,
+                    'idCbteAsoc' => (int) $primerRegistro->id,
+                    'concepto' => $conceptoPrincipal,
+                    'subConceptos' => $subConceptos,
+                    'importeSubConceptos' => $importeSubConceptos,
+                    'saldoRestante' => implode(',', array_map(
+                        fn (array $item) => (int) ($item['pago']->id ?? 0),
+                        $items,
+                    )),
+                    'idCuotasPagos' => (int) $primerPago->id,
+                ]);
+
+                $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
+
+                foreach ($registros as $registro) {
+                    $registro->nroComp = $nroRecibo;
+                    $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado;
+                    $registro->save();
+                }
+            });
+        } catch (Throwable $e) {
+            return ['ok' => false, 'mensaje' => 'AFIP autorizó el comprobante pero no se pudo guardar: '.$e->getMessage()];
+        }
+
+        return [
+            'ok' => true,
+            'mensaje' => 'Comprobante AFIP emitido correctamente. CAE '.$cae.' — Recibo Nº '.$nroRecibo.'.'.$sufijoSimulado,
+            'idComprobanteAfip' => $idComprobanteAfip,
+        ];
+    }
+
+    /**
+     * @param  list<CuotaGenerada>  $registros
+     * @return array{0: string, 1: string}
+     */
+    private static function periodoServicioLote(array $registros): array
+    {
+        $desde = null;
+        $hasta = null;
+
+        foreach ($registros as $registro) {
+            [$ini, $fin] = self::periodoServicio($registro);
+            if ($desde === null || $ini < $desde) {
+                $desde = $ini;
+            }
+            if ($hasta === null || $fin > $hasta) {
+                $hasta = $fin;
+            }
+        }
+
+        if ($desde === null || $hasta === null) {
+            $hoy = Carbon::today()->format('Ymd');
+
+            return [$hoy, $hoy];
+        }
+
+        return [$desde, $hasta];
+    }
+
+    /**
+     * Emite nota de crédito AFIP anulando la factura vigente de la cuota.
+     *
+     * @return array{ok: bool, mensaje: string, idComprobanteAfip?: int}
+     */
+    public static function emitirNotaCredito(
+        CuotaGenerada $registro,
+        int $idLegajo,
+        ComprobanteAfip $factura,
+    ): array {
+        if (! tenantCuotasFacturacionAfipHabilitada()) {
+            return ['ok' => false, 'mensaje' => 'La facturación AFIP no está habilitada para este colegio.'];
+        }
+
+        if (! Schema::hasTable('comprobanteafip')) {
+            return ['ok' => false, 'mensaje' => 'La tabla comprobanteafip no existe en esta base de datos.'];
+        }
+
+        $config = tenantCuotasFacturacionAfipConfig();
+        if ($config === null) {
+            return ['ok' => false, 'mensaje' => 'Falta configurar la facturación AFIP del colegio.'];
+        }
+
+        $tipoNc = (int) ($config['nota_credito_tipo'] ?? 12);
+        if ($tipoNc <= 0) {
+            return ['ok' => false, 'mensaje' => 'Falta configurar el tipo de nota de crédito AFIP.'];
+        }
+
+        $importe = round((float) ($factura->importePagado ?? 0), 2);
+        if ($importe <= 0) {
+            return ['ok' => false, 'mensaje' => 'La factura no tiene importe para anular.'];
+        }
+
+        $ptoVta = (int) ($factura->puntoVenta ?? 0);
+        if ($ptoVta <= 0) {
+            return ['ok' => false, 'mensaje' => 'La factura no tiene punto de venta válido.'];
+        }
+
+        $nroFactura = (int) ($factura->nroRecibo ?? 0);
+        if ($nroFactura <= 0) {
+            return ['ok' => false, 'mensaje' => 'La factura no tiene número válido.'];
+        }
+
+        $tipoFactura = (int) ($factura->tipoComprobante ?? $config['cbte_tipo']);
+        $docNro = self::documentoNumerico($factura->dni ?? null);
+        if ($docNro <= 0) {
+            return ['ok' => false, 'mensaje' => 'La factura no tiene DNI válido del destinatario.'];
+        }
+
+        $condicionIvaId = AfipCondicionIvaReceptor::idDesdeEtiqueta(
+            (string) ($factura->condicionIvaAlumno ?? ''),
+            (int) ($config['condicion_iva_receptor_id'] ?? 5),
+        );
+
+        [$fechaDesde, $fechaHasta] = self::periodoServicio($registro);
+        $hoy = Carbon::today();
+        $fechaYmd = $hoy->format('Ymd');
+
+        try {
+            $emision = AfipWsfeEmision::emitirRecibo($config, [
+                'cuit' => (string) ($factura->cuitInstitucion ?? ''),
+                'pto_vta' => $ptoVta,
+                'doc_nro' => $docNro,
+                'importe' => $importe,
+                'fecha_yyyymmdd' => $fechaYmd,
+                'fch_serv_desde' => $fechaDesde,
+                'fch_serv_hasta' => $fechaHasta,
+                'condicion_iva_receptor_id' => $condicionIvaId,
+                'tipo_cbte' => $tipoNc,
+                'cbte_asoc_tipo' => $tipoFactura,
+                'cbte_asoc_pto_vta' => $ptoVta,
+                'cbte_asoc_nro' => $nroFactura,
+            ]);
+        } catch (Throwable $e) {
+            self::guardarMensajeCuota($registro, 'Error AFIP NC: '.$e->getMessage());
+
+            return ['ok' => false, 'mensaje' => 'Error al emitir nota de crédito en AFIP: '.$e->getMessage()];
+        }
+
+        $simulado = ! empty($config['simular']);
+        $cae = (string) $emision['cae'];
+        $vtoCaeYmd = (string) $emision['cae_fch_vto'];
+        $nroNc = (int) $emision['cbte_hasta'];
+        $sufijoSimulado = $simulado ? ' (simulado, sin envío a AFIP)' : '';
+        $codigoBarras = AfipCodigoBarras::generar(
+            (string) ($factura->cuitInstitucion ?? ''),
+            $tipoNc,
+            $ptoVta,
+            $cae,
+            $vtoCaeYmd,
+        );
+
+        $idPago = (int) ($factura->idCuotasPagos ?? 0);
+
+        try {
+            $idComprobanteAfip = 0;
+            DB::transaction(function () use (
+                &$idComprobanteAfip,
+                $factura,
+                $registro,
+                $config,
+                $importe,
+                $fechaDesde,
+                $fechaHasta,
+                $hoy,
+                $cae,
+                $vtoCaeYmd,
+                $nroNc,
+                $codigoBarras,
+                $tipoNc,
+                $idPago,
+                $sufijoSimulado,
+            ): void {
+                $comprobante = ComprobanteAfip::query()->create([
+                    'nombreInstitucion' => trim((string) $factura->nombreInstitucion),
+                    'razonSocial' => trim((string) ($factura->razonSocial ?? $factura->nombreInstitucion)),
+                    'cuitInstitucion' => preg_replace('/\D/', '', (string) ($factura->cuitInstitucion ?? '')),
+                    'domicilioComercial' => trim((string) ($factura->domicilioComercial ?? '')),
+                    'condicionIvaInstitucion' => trim((string) ($factura->condicionIvaInstitucion ?? '')),
+                    'puntoVenta' => (int) ($factura->puntoVenta ?? 0),
+                    'ingresosBrutos' => trim((string) ($factura->ingresosBrutos ?? '')),
+                    'fechaInicioActividades' => trim((string) ($factura->fechaInicioActividades ?? '')),
+                    'nombreAlumno' => trim((string) ($factura->nombreAlumno ?? '')),
+                    'dni' => trim((string) ($factura->dni ?? '')),
+                    'nombreResp' => trim((string) ($factura->nombreResp ?? '')),
+                    'dniResp' => trim((string) ($factura->dniResp ?? '')),
+                    'domicilioAlumno' => trim((string) ($factura->domicilioAlumno ?? '')),
+                    'condicionIvaAlumno' => trim((string) ($factura->condicionIvaAlumno ?? '')),
+                    'condicionVenta' => trim((string) ($factura->condicionVenta ?? 'contado')),
+                    'fechaDesde' => trim((string) ($factura->fechaDesde ?? self::formatearFechaBarra($fechaDesde))),
+                    'fechaHasta' => trim((string) ($factura->fechaHasta ?? self::formatearFechaBarra($fechaHasta))),
+                    'fechaEmision' => $hoy->format('Y/m/d'),
+                    'fechaVencimiento' => $hoy->format('Y/m/d'),
+                    'tipoComprobante' => $tipoNc,
+                    'codigoBarras' => $codigoBarras,
+                    'nroRecibo' => $nroNc,
+                    'cae' => $cae,
+                    'vtoCae' => self::formatearFechaBarra($vtoCaeYmd),
+                    'importePagado' => $importe,
+                    'interesPagado' => round((float) ($factura->interesPagado ?? 0), 2),
+                    'idCbteAsoc' => (int) $registro->id,
+                    'concepto' => trim((string) ($factura->concepto ?? '')),
+                    'subConceptos' => (string) (int) $factura->idComprobanteAfip,
+                    'importeSubConceptos' => '',
+                    'saldoRestante' => trim((string) ($factura->saldoRestante ?? '')),
+                    'idCuotasPagos' => $idPago > 0 ? $idPago : (int) ($factura->idCuotasPagos ?? 0),
+                ]);
+
+                $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
+
+                $registro->mensajeResultado = 'Nota de crédito AFIP emitida. CAE '.$cae.$sufijoSimulado;
+                $registro->save();
+            });
+        } catch (Throwable $e) {
+            return ['ok' => false, 'mensaje' => 'AFIP autorizó la nota de crédito pero no se pudo guardar: '.$e->getMessage()];
+        }
+
+        return [
+            'ok' => true,
+            'mensaje' => 'Nota de crédito AFIP emitida correctamente. CAE '.$cae.' — Nº '.$nroNc.'.'.$sufijoSimulado,
+            'idComprobanteAfip' => $idComprobanteAfip,
         ];
     }
 

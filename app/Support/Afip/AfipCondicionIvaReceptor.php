@@ -22,4 +22,14 @@ final class AfipCondicionIvaReceptor
             default => $default,
         };
     }
+
+    public static function etiquetaDesdeId(int $id): string
+    {
+        return match ($id) {
+            4 => 'IVA SUJETO EXENTO',
+            5 => 'IVA CONSUMIDOR FINAL',
+            6 => 'IVA RESPONSABLE MONOTRIBUTO',
+            default => 'SIN DATOS',
+        };
+    }
 }

@@ -20,11 +20,9 @@
                     </p>
                 @endif
             </div>
-            <a href="{{ route('cuotas.estudiante') }}"
-               wire:navigate
-               class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20">
-                Volver
-            </a>
+            <x-volver-cuotas-estudiante
+                :id-legajos="$idLegajo"
+                class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20" />
         </div>
     </section>
 
@@ -99,11 +97,9 @@
 
         <div class="mx-auto mt-5 flex w-full max-w-md flex-col gap-2">
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-                <a href="{{ route('cuotas.estudiante') }}"
-                   wire:navigate
-                   class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50">
-                    Cancelar
-                </a>
+                <x-volver-cuotas-estudiante
+                    :id-legajos="$idLegajo"
+                    class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50" />
                 <button type="submit"
                         wire:loading.attr="disabled"
                         class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-60">

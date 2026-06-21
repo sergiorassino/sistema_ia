@@ -5,12 +5,14 @@
     'curso' => null,
     'idLegajos' => null,
     'idCuotaGenerada' => null,
+    'idCuotaPago' => null,
     'materia' => null,
     'tipo' => null,
     'desde' => null,
     'hasta' => null,
     'abrirMatriculas' => false,
     'buscar' => null,
+    'vistaCuotas' => null,
     'tag' => 'button',
 ])
 
@@ -36,6 +38,9 @@
     @if ($idCuotaGenerada)
         <input type="hidden" name="idCuotaGenerada" value="{{ (int) $idCuotaGenerada }}">
     @endif
+    @if ($idCuotaPago)
+        <input type="hidden" name="idCuotaPago" value="{{ (int) $idCuotaPago }}">
+    @endif
     @if ($materia)
         <input type="hidden" name="materia" value="{{ (int) $materia }}">
     @endif
@@ -53,6 +58,9 @@
     @endif
     @if ($buscar !== null && trim((string) $buscar) !== '')
         <input type="hidden" name="buscar" value="{{ trim((string) $buscar) }}">
+    @endif
+    @if ($vistaCuotas !== null && in_array($vistaCuotas, ['anio', 'historial'], true))
+        <input type="hidden" name="vista_cuotas" value="{{ $vistaCuotas }}">
     @endif
     @if ($tag === 'a')
         <button type="submit" class="inline p-0 border-0 bg-transparent font-inherit text-inherit cursor-pointer">

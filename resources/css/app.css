@@ -659,55 +659,187 @@
     /* Historial de pagos de una cuota */
     .gf.gf-cuotas-historial-pagos {
         width: max-content;
-        min-width: 42rem;
+        min-width: 100%;
     }
     .gf.gf-cuotas-historial-pagos .gf-head,
     .gf.gf-cuotas-historial-pagos .gf-row {
-        width: 100%;
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th,
+    .gf.gf-cuotas-historial-pagos .gf-td {
+        box-sizing: border-box;
+        flex-shrink: 0;
     }
     .gf.gf-cuotas-historial-pagos .gf-th.gf-th-cuota-nombre,
     .gf.gf-cuotas-historial-pagos .gf-td.gf-td-cuota-nombre {
-        flex: 0 0 8rem;
-        width: 8rem;
-        min-width: 8rem;
+        flex: 0 0 7.5rem;
+        width: 7.5rem;
+        min-width: 7.5rem;
+        max-width: 7.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .gf.gf-cuotas-historial-pagos .gf-th.gf-th-fecha-hora,
     .gf.gf-cuotas-historial-pagos .gf-td.gf-td-fecha-hora {
-        flex: 0 0 11.5rem;
-        width: 11.5rem;
-        min-width: 11.5rem;
+        flex: 0 0 10.5rem;
+        width: 10.5rem;
+        min-width: 10.5rem;
+        max-width: 10.5rem;
         text-align: center;
         white-space: nowrap;
     }
     .gf.gf-cuotas-historial-pagos .gf-th.gf-th-mp,
     .gf.gf-cuotas-historial-pagos .gf-td.gf-td-mp {
-        flex: 0 0 3rem;
-        width: 3rem;
-        min-width: 3rem;
+        flex: 0 0 4.75rem;
+        width: 4.75rem;
+        min-width: 4.75rem;
+        max-width: 4.75rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .gf.gf-cuotas-historial-pagos .gf-th.gf-th-importe,
     .gf.gf-cuotas-historial-pagos .gf-td.gf-td-importe {
-        flex: 0 0 5.5rem;
-        width: 5.5rem;
-        min-width: 5.5rem;
+        flex: 0 0 6.25rem;
+        width: 6.25rem;
+        min-width: 6.25rem;
+        max-width: 6.25rem;
         text-align: right;
+        white-space: nowrap;
     }
     .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion,
     .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion {
         box-sizing: border-box;
+        padding-left: 0.125rem;
+        padding-right: 0.125rem;
+        font-size: 8px;
+        line-height: 1.15;
+        text-align: center;
+        white-space: normal;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion-reimp,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion-reimp {
+        flex: 0 0 3.25rem !important;
+        width: 3.25rem !important;
+        min-width: 3.25rem !important;
+        max-width: 3.25rem !important;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion-afip,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion-afip {
+        flex: 0 0 4rem !important;
+        width: 4rem !important;
+        min-width: 4rem !important;
+        max-width: 4rem !important;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion-borrar,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion-borrar {
+        flex: 0 0 3.5rem !important;
+        width: 3.5rem !important;
+        min-width: 3.5rem !important;
+        max-width: 3.5rem !important;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion-fecha,
+    .gf.gf-cuotas-historial-pagos .gf-td.gf-td-accion-fecha {
+        flex: 0 0 3.25rem !important;
+        width: 3.25rem !important;
+        min-width: 3.25rem !important;
+        max-width: 3.25rem !important;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th-accion-fecha-label span {
+        display: block;
+        line-height: 1.1;
+    }
+    .gf.gf-cuotas-historial-pagos .gf-th.gf-th-accion-label {
+        letter-spacing: 0;
+        text-transform: none;
+    }
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Comprobantes AFIP de un pago */
+    .gf.gf-cuotas-comprobantes-afip {
+        width: max-content;
+        min-width: 100%;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-head,
+    .gf.gf-cuotas-comprobantes-afip .gf-row {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th,
+    .gf.gf-cuotas-comprobantes-afip .gf-td {
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-fecha,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-fecha {
+        flex: 0 0 6.5rem;
+        width: 6.5rem;
+        min-width: 6.5rem;
+        max-width: 6.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-tipo,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-tipo {
+        flex: 0 0 10.5rem;
+        width: 10.5rem;
+        min-width: 10.5rem;
+        max-width: 10.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-numero,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-numero {
+        flex: 0 0 9rem;
+        width: 9rem;
+        min-width: 9rem;
+        max-width: 9rem;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-importe,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-importe {
+        flex: 0 0 6.25rem;
+        width: 6.25rem;
+        min-width: 6.25rem;
+        max-width: 6.25rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-cae,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-cae {
+        flex: 0 0 8.5rem;
+        width: 8.5rem;
+        min-width: 8.5rem;
+        max-width: 8.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-cuotas-comprobantes-afip .gf-th.gf-th-accion,
+    .gf.gf-cuotas-comprobantes-afip .gf-td.gf-td-accion {
         flex: 0 0 2.75rem !important;
         width: 2.75rem !important;
         min-width: 2.75rem !important;
         max-width: 2.75rem !important;
         padding-left: 0;
         padding-right: 0;
-        font-size: 9px;
-        line-height: 1.1;
         text-align: center;
-        white-space: normal;
     }
-    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-th.gf-th-accion,
-    .gf.gf-cuotas-historial-pagos.gf-vcenter .gf-td.gf-td-accion {
+    .gf.gf-cuotas-comprobantes-afip.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-cuotas-comprobantes-afip.gf-vcenter .gf-td.gf-td-accion {
         display: flex;
         align-items: center;
         justify-content: center;

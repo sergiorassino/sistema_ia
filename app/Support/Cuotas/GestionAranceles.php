@@ -181,6 +181,42 @@ final class GestionAranceles
     }
 
     /**
+     * Varias cuotas del estudiante para imputación (misma relación que cuotaParaGestion).
+     *
+     * @param  list<int>  $idsCuotasGeneradas
+     * @return \Illuminate\Support\Collection<int, CuotaGenerada>
+     */
+    public static function cuotasParaImputacion(array $idsCuotasGeneradas, int $idLegajo): \Illuminate\Support\Collection
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $idsCuotasGeneradas), fn (int $id) => $id > 0)));
+        if ($ids === []) {
+            return collect();
+        }
+
+        $idTerlec = (int) schoolCtx()->idTerlec;
+        $tabla = self::tablaCuotasGeneradas();
+
+        return self::aplicarOrdenCuotasPorAnoYCuota(
+            self::aplicarFiltroCuotasVistaNormal(
+                CuotaGenerada::query()
+                    ->with([
+                        'legajo:id,apellido,nombre,dni',
+                        'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                        'curso.curplan:id,curPlanCurso',
+                        'curso.turnoClase:id,nombre',
+                        'curso.nivel:id,nivel',
+                        'cuota:id,nombre',
+                        'terlec:id,ano',
+                    ])
+                    ->whereIn("{$tabla}.id", $ids)
+                    ->where("{$tabla}.idLegajos", $idLegajo)
+                    ->where("{$tabla}.faltapa", '>', 0),
+                $idTerlec,
+            ),
+        )->get();
+    }
+
+    /**
      * @return array{
      *     apellido: string,
      *     nombre: string,

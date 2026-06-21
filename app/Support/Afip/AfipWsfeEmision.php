@@ -52,7 +52,7 @@ final class AfipWsfeEmision
 
         $cuit = preg_replace('/\D/', '', (string) $comprobante['cuit']) ?? '';
         $ptoVta = (int) $comprobante['pto_vta'];
-        $tipoCmp = (int) $config['cbte_tipo'];
+        $tipoCmp = (int) ($comprobante['tipo_cbte'] ?? $config['cbte_tipo']);
         $importe = round((float) $comprobante['importe'], 2);
 
         if ($importe <= 0) {
@@ -111,14 +111,18 @@ final class AfipWsfeEmision
 
             $notaCreditoTipo = (int) ($config['nota_credito_tipo'] ?? 0);
             if ($tipoCmp === $notaCreditoTipo && $notaCreditoTipo > 0) {
+                $nroAsoc = (int) ($comprobante['cbte_asoc_nro'] ?? 0);
+                if ($nroAsoc <= 0) {
+                    throw new RuntimeException('Falta el comprobante asociado para la nota de crédito.');
+                }
                 $detalles['CbtesAsoc'] = [
                     'CbteAsoc' => [[
-                        'Tipo' => (int) ($config['cbte_tipo_asociado'] ?? 15),
-                        'PtoVta' => $ptoVta,
-                        'Nro' => max(1, $nroSiguiente - 1),
+                        'Tipo' => (int) ($comprobante['cbte_asoc_tipo'] ?? $config['cbte_tipo_asociado'] ?? $config['cbte_tipo']),
+                        'PtoVta' => (int) ($comprobante['cbte_asoc_pto_vta'] ?? $ptoVta),
+                        'Nro' => $nroAsoc,
                     ]],
                 ];
-                $detalles['Motivo'] = 'Anulación de recibo C por error de facturación';
+                $detalles['Motivo'] = (string) ($comprobante['motivo_nc'] ?? 'Anulación de comprobante por error de facturación');
             }
 
             $respuesta = $client->FECAESolicitar([
