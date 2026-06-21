@@ -100,6 +100,7 @@ use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
+use App\Http\Controllers\Cuotas\ComprobanteAfipPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\LibroArancelesPdfController;
@@ -127,6 +128,7 @@ use App\Livewire\Cuotas\AsignacionBecasIndex;
 use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
 use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
+use App\Livewire\Cuotas\ComprobantesAfipCuota;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Cooperadora\MovimientosPdfController;
 use App\Http\Controllers\Cooperadora\OrdenPagoPdfController;
@@ -511,12 +513,16 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             Route::get('/estudiante/cuota/editar', CuotaGeneradaForm::class)->name('cuotas.cuota.editar');
             Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
             Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
+            Route::get('/estudiante/cuota/comprobantes-afip', ComprobantesAfipCuota::class)->name('cuotas.cuota.comprobantes-afip');
             Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
                 ->where('ref', '[A-Za-z0-9_-]+')
                 ->name('cuotas.comprobante');
             Route::get('/comprobante-imputacion/{ref}', ComprobantePagoImputacionPdfController::class)
                 ->where('ref', '[A-Za-z0-9_-]+')
                 ->name('cuotas.comprobante-imputacion');
+            Route::get('/comprobante-afip/{ref}', ComprobanteAfipPdfController::class)
+                ->where('ref', '[A-Za-z0-9_-]+')
+                ->name('cuotas.comprobante-afip');
             Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
                 ->where('ref', '[A-Za-z0-9_-]+')
                 ->name('cuotas.resumen-pagos');

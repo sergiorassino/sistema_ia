@@ -26,6 +26,65 @@ final class ImputacionPagoService
      */
     public static function registrar(CuotaGenerada $registro, array $datos): ?CuotaPago
     {
+        $pagoCreado = null;
+
+        DB::transaction(function () use ($registro, $datos, &$pagoCreado) {
+            $pagoCreado = self::registrarInterno($registro, $datos);
+        });
+
+        return $pagoCreado;
+    }
+
+    /**
+     * Imputa varias cuotas en una sola transacción.
+     *
+     * @param  list<array{registro: CuotaGenerada, datos: array{
+     *     idCuotastipopago: int,
+     *     saldoAPagar: float,
+     *     interes: float,
+     *     bonificacion: float,
+     *     aPagar: float,
+     *     fechaPago: string,
+     *     obs: string,
+     *     avisoPago: bool
+     * }>  $items
+     * @return list<CuotaPago>
+     */
+    public static function registrarLote(array $items): array
+    {
+        $pagos = [];
+
+        DB::transaction(function () use ($items, &$pagos) {
+            foreach ($items as $item) {
+                $registro = $item['registro'] ?? null;
+                if (! $registro instanceof CuotaGenerada) {
+                    continue;
+                }
+
+                $pago = self::registrarInterno($registro, $item['datos']);
+                if ($pago !== null) {
+                    $pagos[] = $pago;
+                }
+            }
+        });
+
+        return $pagos;
+    }
+
+    /**
+     * @param  array{
+     *     idCuotastipopago: int,
+     *     saldoAPagar: float,
+     *     interes: float,
+     *     bonificacion: float,
+     *     aPagar: float,
+     *     fechaPago: string,
+     *     obs: string,
+     *     avisoPago: bool
+     * }  $datos
+     */
+    private static function registrarInterno(CuotaGenerada $registro, array $datos): ?CuotaPago
+    {
         $saldo = round(max(0, (float) $datos['saldoAPagar']), 2);
         $interes = round(max(0, (float) $datos['interes']), 2);
         $bonificacion = round(max(0, (float) $datos['bonificacion']), 2);
@@ -36,40 +95,38 @@ final class ImputacionPagoService
 
         $pagoCreado = null;
 
-        DB::transaction(function () use ($registro, $saldo, $interes, $bonificacion, $aPagar, $fechaPago, $avisoPago, $obs, $datos, &$pagoCreado) {
-            $locked = CuotaGenerada::query()->whereKey($registro->id)->lockForUpdate()->firstOrFail();
+        $locked = CuotaGenerada::query()->whereKey($registro->id)->lockForUpdate()->firstOrFail();
 
-            if ($saldo > 0 || $aPagar > 0) {
-                $pagoCreado = CuotaPago::query()->create([
-                    'idCuotasGeneradas' => (int) $locked->id,
-                    'idCuotastipopago' => (int) $datos['idCuotastipopago'],
-                    'fechhora' => $fechaPago->format('Y-m-d H:i:s'),
-                    'importe' => $saldo,
-                    'bonificacion' => $bonificacion,
-                    'interes' => $interes,
-                    'nombreArchivo' => 'Imputación manual',
-                    'cadenaPago' => '',
-                ]);
+        if ($saldo > 0 || $aPagar > 0) {
+            $pagoCreado = CuotaPago::query()->create([
+                'idCuotasGeneradas' => (int) $locked->id,
+                'idCuotastipopago' => (int) $datos['idCuotastipopago'],
+                'fechhora' => $fechaPago->format('Y-m-d H:i:s'),
+                'importe' => $saldo,
+                'bonificacion' => $bonificacion,
+                'interes' => $interes,
+                'nombreArchivo' => 'Imputación manual',
+                'cadenaPago' => '',
+            ]);
 
-                $nuevoPagado = round((float) $locked->pagado + $aPagar, 2);
-                $nuevoFaltapa = round(max(0, (float) $locked->faltapa - $saldo), 2);
-                $nuevoInteres = round((float) $locked->interes + $interes, 2);
-                $nuevoBonif = round((float) $locked->bonificacion + $bonificacion, 2);
+            $nuevoPagado = round((float) $locked->pagado + $aPagar, 2);
+            $nuevoFaltapa = round(max(0, (float) $locked->faltapa - $saldo), 2);
+            $nuevoInteres = round((float) $locked->interes + $interes, 2);
+            $nuevoBonif = round((float) $locked->bonificacion + $bonificacion, 2);
 
-                $locked->pagado = $nuevoPagado;
-                $locked->faltapa = $nuevoFaltapa;
-                $locked->interes = $nuevoInteres;
-                $locked->bonificacion = $nuevoBonif;
-                $locked->fechaPago = $fechaPago->format('Y-m-d H:i:s');
-            }
+            $locked->pagado = $nuevoPagado;
+            $locked->faltapa = $nuevoFaltapa;
+            $locked->interes = $nuevoInteres;
+            $locked->bonificacion = $nuevoBonif;
+            $locked->fechaPago = $fechaPago->format('Y-m-d H:i:s');
+        }
 
-            if ($obs !== '') {
-                $locked->obs = $obs;
-            }
+        if ($obs !== '') {
+            $locked->obs = $obs;
+        }
 
-            $locked->avisoPago = $avisoPago ? 1 : 0;
-            $locked->save();
-        });
+        $locked->avisoPago = $avisoPago ? 1 : 0;
+        $locked->save();
 
         return $pagoCreado;
     }

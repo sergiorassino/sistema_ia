@@ -20,6 +20,12 @@ final class OpaqueRouteToken
 
     public const PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION = 'cuotas.comprobante-pago-imputacion';
 
+    public const PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION_MULTI = 'cuotas.comprobante-pago-imputacion-multi';
+
+    public const PURPOSE_ADMIN_COMPROBANTE_AFIP = 'cuotas.comprobante-afip';
+
+    public const PURPOSE_ADMIN_COMPROBANTE_AFIP_REG = 'cuotas.comprobante-afip-reg';
+
     public const PURPOSE_ADMIN_RESUMEN_PAGOS = 'cuotas.resumen-pagos';
 
     public const PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR = 'cuotas.solicitud-ayuda-familiar';
@@ -53,6 +59,32 @@ final class OpaqueRouteToken
     public static function forComprobantePagoImputacionAdministracion(int $idCuotaPago, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION, $idCuotaPago, $idLegajo);
+    }
+
+    /**
+     * @param  list<int>  $idsCuotasPagos
+     */
+    public static function forComprobantePagoImputacionMultipleAdministracion(array $idsCuotasPagos, int $idLegajo): string
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $idsCuotasPagos), fn (int $id) => $id > 0)));
+        if ($ids === []) {
+            throw new \InvalidArgumentException('Se requiere al menos un pago para el comprobante.');
+        }
+
+        return self::encodePayload(self::PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION_MULTI, [
+            'p' => $ids,
+            'l' => $idLegajo,
+        ]);
+    }
+
+    public static function forComprobanteAfipAdministracion(int $idCuotaPago, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_AFIP, $idCuotaPago, $idLegajo);
+    }
+
+    public static function forComprobanteAfipRegistro(int $idComprobanteAfip, int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_COMPROBANTE_AFIP_REG, $idComprobanteAfip, $idLegajo);
     }
 
     public static function forResumenPagosEstudiante(int $idLegajo): string

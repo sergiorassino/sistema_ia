@@ -26,6 +26,10 @@ class ParametrosSistemaForm extends Component
     public string $cue = '';
     public string $ee = '';
     public string $cuit = '';
+    public string $ptoVta = '';
+    public string $condicionIva = '';
+    public string $ingresosBrutos = '';
+    public string $fechaInicioAct = '';
     public string $categoria = '';
     public string $direccion = '';
     public string $localidad = '';
@@ -53,6 +57,10 @@ class ParametrosSistemaForm extends Component
         $this->cue = (string) ($ento->cue ?? '');
         $this->ee = (string) ($ento->ee ?? '');
         $this->cuit = (string) ($ento->cuit ?? '');
+        $this->ptoVta = (string) ((int) ($ento->ptoVta ?? 0) ?: '');
+        $this->condicionIva = (string) ($ento->condicionIva ?? '');
+        $this->ingresosBrutos = (string) ($ento->ingresosBrutos ?? '');
+        $this->fechaInicioAct = self::fechaAfipParaInput($ento->getAttributes()['fechaInicioAct'] ?? null);
         $this->categoria = (string) ($ento->categoria ?? '');
         $this->direccion = (string) ($ento->direccion ?? '');
         $this->localidad = (string) ($ento->localidad ?? '');
@@ -72,6 +80,10 @@ class ParametrosSistemaForm extends Component
             'cue' => ['nullable', 'string', 'max:30'],
             'ee' => ['nullable', 'string', 'max:30'],
             'cuit' => ['nullable', 'string', 'max:20'],
+            'ptoVta' => ['nullable', 'integer', 'min:1', 'max:9999'],
+            'condicionIva' => ['nullable', 'string', 'max:80'],
+            'ingresosBrutos' => ['nullable', 'string', 'max:40'],
+            'fechaInicioAct' => ['nullable', 'date'],
             'categoria' => ['nullable', 'string', 'max:80'],
             'direccion' => ['nullable', 'string', 'max:150'],
             'localidad' => ['nullable', 'string', 'max:80'],
@@ -158,6 +170,10 @@ class ParametrosSistemaForm extends Component
             'cue' => ($v = trim($this->cue)) !== '' ? $v : null,
             'ee' => ($v = trim($this->ee)) !== '' ? $v : null,
             'cuit' => ($v = trim($this->cuit)) !== '' ? $v : null,
+            'ptoVta' => ($v = trim($this->ptoVta)) !== '' ? (int) $v : null,
+            'condicionIva' => ($v = trim($this->condicionIva)) !== '' ? $v : null,
+            'ingresosBrutos' => ($v = trim($this->ingresosBrutos)) !== '' ? $v : null,
+            'fechaInicioAct' => ($v = trim($this->fechaInicioAct)) !== '' ? $v : null,
             'categoria' => ($v = trim($this->categoria)) !== '' ? $v : null,
             'direccion' => ($v = trim($this->direccion)) !== '' ? $v : null,
             'localidad' => ($v = trim($this->localidad)) !== '' ? $v : null,
@@ -310,6 +326,26 @@ class ParametrosSistemaForm extends Component
         return view('livewire.parametrizacion.parametros-sistema-form', [
             'nivelNombre' => schoolCtx()->nivelNombre(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
+    }
+
+    private static function fechaAfipParaInput(mixed $valor): string
+    {
+        $raw = trim((string) ($valor ?? ''));
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $raw)) {
+            [$d, $m, $y] = explode('/', $raw);
+
+            return sprintf('%04d-%02d-%02d', (int) $y, (int) $m, (int) $d);
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($raw)->format('Y-m-d');
+        } catch (\Throwable) {
+            return '';
+        }
     }
 }
 

@@ -24,6 +24,10 @@ class Ento extends Model
         'cue',
         'ee',
         'cuit',
+        'ptoVta',
+        'condicionIva',
+        'ingresosBrutos',
+        'fechaInicioAct',
         'categoria',
         'direccion',
         'localidad',
@@ -45,5 +49,24 @@ class Ento extends Model
         'documAcept3',
         'documAcept4',
     ];
+
+    protected $casts = [
+        'ptoVta' => 'integer',
+    ];
+
+    /**
+     * Domicilio comercial para comprobantes AFIP (dirección + localidad).
+     */
+    public function domicilioComercialCompleto(): string
+    {
+        $direccion = trim((string) ($this->direccion ?? ''));
+        $localidad = trim((string) ($this->localidad ?? ''));
+
+        if ($direccion !== '' && $localidad !== '') {
+            return $direccion.' - '.$localidad;
+        }
+
+        return $direccion !== '' ? $direccion : $localidad;
+    }
 }
 

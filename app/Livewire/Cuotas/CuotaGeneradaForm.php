@@ -48,7 +48,7 @@ class CuotaGeneradaForm extends Component
 
         abort_if(
             GestionAranceles::legajoParaGestion($idLegajo) === null
-            || GestionAranceles::cuotaParaGestion($idCuotaGenerada, $idLegajo) === null,
+            || GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null,
             404,
         );
 
@@ -218,7 +218,7 @@ class CuotaGeneradaForm extends Component
 
     private function registro(): ?CuotaGenerada
     {
-        return GestionAranceles::cuotaParaGestion($this->idCuotaGenerada, $this->idLegajo);
+        return GestionAranceles::cuotaDelLegajo($this->idCuotaGenerada, $this->idLegajo);
     }
 
     public function render()

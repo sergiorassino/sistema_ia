@@ -8,6 +8,7 @@ use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rule;
 
 class EstablecerContextoEstudianteController extends Controller
 {
@@ -20,12 +21,14 @@ class EstablecerContextoEstudianteController extends Controller
             'curso' => ['nullable', 'integer', 'min:1'],
             'idLegajos' => ['nullable', 'integer', 'min:1'],
             'idCuotaGenerada' => ['nullable', 'integer', 'min:1'],
+            'idCuotaPago' => ['nullable', 'integer', 'min:1'],
             'materia' => ['nullable', 'integer', 'min:1'],
             'tipo' => ['nullable'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d'],
             'abrir_matriculas' => ['nullable', 'boolean'],
             'buscar' => ['nullable', 'string', 'max:120'],
+            'vista_cuotas' => ['nullable', 'string', Rule::in(['anio', 'historial'])],
         ]);
 
         $destino = (string) $validated['destino'];
@@ -45,6 +48,16 @@ class EstablecerContextoEstudianteController extends Controller
             $datosContexto['idCuotaGenerada'] = (int) $validated['idCuotaGenerada'];
         } elseif (in_array($destino, ['cuotas.estudiante', 'cuotas.estudiante.generar'], true)) {
             $datosContexto['idCuotaGenerada'] = 0;
+        }
+
+        if (isset($validated['idCuotaPago'])) {
+            $datosContexto['idCuotaPago'] = (int) $validated['idCuotaPago'];
+        } elseif (in_array($destino, ['cuotas.cuota.historial-pagos', 'cuotas.estudiante', 'cuotas.estudiante.generar'], true)) {
+            $datosContexto['idCuotaPago'] = 0;
+        }
+
+        if (isset($validated['vista_cuotas'])) {
+            $datosContexto['vistaCuotas'] = (string) $validated['vista_cuotas'];
         }
 
         ContextoEstudianteSesion::fijar((string) $validated['alcance'], $datosContexto);
