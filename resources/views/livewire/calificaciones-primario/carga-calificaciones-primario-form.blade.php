@@ -64,7 +64,7 @@
 
     @if ($materiasLista === [])
         <div class="se-card px-5 py-8 text-center text-sm text-neutral-600">
-            Este curso no tiene materias configuradas en el ciclo lectivo activo. Revise la asignación de materias del plan.
+            Este curso no tiene materias configuradas en el ciclo lectivo activo. Revise las asignaturas del año en el ABM de materias.
         </div>
     @else
     <div class="se-card overflow-x-auto p-4">

@@ -329,14 +329,8 @@ final class ComprobantesAfipCuotaService
      */
     private static function comprobantesPorCuotaGenerada(int $idCuotaGenerada): Collection
     {
-        $registro = CuotaGenerada::query()
-            ->with('cuota:id,nombre')
-            ->whereKey($idCuotaGenerada)
-            ->first();
-        $nombreCuota = mb_strtoupper(trim((string) ($registro?->cuota?->nombre ?? '')));
-
         return ComprobanteAfip::query()
-            ->where(function (Builder $q) use ($idCuotaGenerada, $nombreCuota): void {
+            ->where(function (Builder $q) use ($idCuotaGenerada): void {
                 $q->where('idCbteAsoc', $idCuotaGenerada)
                     ->orWhereIn('idCuotasPagos', function ($sub) use ($idCuotaGenerada): void {
                         $sub->select('id')
@@ -349,15 +343,6 @@ final class ComprobantesAfipCuotaService
                             ->where('cp_batch.idCuotasGeneradas', $idCuotaGenerada)
                             ->whereRaw('FIND_IN_SET(cp_batch.id, comprobanteafip.saldoRestante)');
                     });
-
-                if ($nombreCuota !== '') {
-                    $q->orWhere(function (Builder $sub) use ($nombreCuota): void {
-                        $sub->where('subConceptos', $nombreCuota)
-                            ->orWhere('subConceptos', 'like', $nombreCuota.'|%')
-                            ->orWhere('subConceptos', 'like', '%|'.$nombreCuota.'|%')
-                            ->orWhere('subConceptos', 'like', '%|'.$nombreCuota);
-                    });
-                }
             })
             ->orderByDesc('idComprobanteAfip')
             ->get();
