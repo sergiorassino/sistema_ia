@@ -25,6 +25,11 @@ return [
 
     'portal_docente' => [
         'menu' => [
+            'inicial' => [
+                'indicadores' => true,
+                'observaciones' => true,
+                'informe_progreso' => true,
+            ],
             'primario' => [
                 'carga_estudiante' => true,
                 'carga_materia' => true,
@@ -55,6 +60,9 @@ return [
             'habilitado' => false,
         ],
         'boletin_ipe_primario' => [
+            'habilitado' => true,
+        ],
+        'informe_progreso_inicial' => [
             'habilitado' => true,
         ],
         // Sin informe de inasistencias en inicial ni primario.

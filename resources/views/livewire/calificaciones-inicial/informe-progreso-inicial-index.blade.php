@@ -9,7 +9,7 @@
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                 </p>
             </div>
-            <a href="{{ route('dashboard') }}"
+            <a href="{{ \App\Support\PortalDocente\CalificacionesInicialPortalDocente::urlInicio() }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -67,7 +67,7 @@
                     </div>
                     @if ($puedePdfLote ?? false)
                         <form method="POST"
-                              action="{{ route('calificacionesInicial.informeProgreso.pdfLote') }}"
+                              action="{{ \App\Support\PortalDocente\CalificacionesInicialPortalDocente::rutaInformeProgreso('pdfLote') }}"
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline">
@@ -121,7 +121,7 @@
                                 </td>
                                 <td class="py-3 pl-2 pr-5 text-right align-middle">
                                     <x-pdf-post-matricula
-                                        :action="route('calificacionesInicial.informeProgreso.pdf')"
+                                        :action="\App\Support\PortalDocente\CalificacionesInicialPortalDocente::rutaInformeProgreso('pdf')"
                                         :matricula="$mat->id"
                                         :fields="['etapa' => $etapaPdf]">
                                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

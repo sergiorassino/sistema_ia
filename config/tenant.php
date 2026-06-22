@@ -114,6 +114,15 @@ return [
         ],
 
         /**
+         * Informe de progreso escolar por etapa (portal familia, nivel inicial).
+         * Usa el mismo PDF que secretaría/docentes con marca «SIN VALOR LEGAL».
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         */
+        'informe_progreso_inicial' => [
+            'habilitado' => false,
+        ],
+
+        /**
          * Consulta de calificaciones en autogestión (primario: boletín IPE; secundario: consulta PDF).
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `niveles_habilitados`: IDs de `niveles` con el módulo (p. ej. `[3]` solo secundario).
@@ -191,6 +200,9 @@ return [
     'portal_docente' => [
         'menu' => [
             'inicial' => [
+                'indicadores' => false,
+                'observaciones' => false,
+                'informe_progreso' => false,
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,
                 'recursos_didacticos_listado' => false,

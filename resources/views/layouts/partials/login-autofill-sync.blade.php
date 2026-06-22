@@ -1,10 +1,14 @@
 {{--
     Autocompletar del navegador rellena el DOM pero no dispara wire:model ni updatedDni.
     Sincroniza valores al componente Livewire del formulario de login.
+
+    $loginAutofillSugerirAcceso: solo login staff (nivel + año lectivo desde último acceso).
 --}}
 @script
 <script>
     (() => {
+        const sugerirUltimoAcceso = @json($loginAutofillSugerirAcceso ?? true);
+
         const form = $wire.$el.querySelector('form');
         if (!form) {
             return;
@@ -31,7 +35,7 @@
                 await $wire.set('pwrd', pwrdVal);
             }
 
-            if (dniCambio || (dniVal.length >= 7 && pwrdVal !== '')) {
+            if (sugerirUltimoAcceso && (dniCambio || (dniVal.length >= 7 && pwrdVal !== ''))) {
                 await $wire.sugerirUltimoAccesoDesdeDni();
             }
         };

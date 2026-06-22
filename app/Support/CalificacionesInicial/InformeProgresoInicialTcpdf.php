@@ -22,15 +22,18 @@ final class InformeProgresoInicialTcpdf extends TCPDF
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $header;
 
+    private bool $mostrarMarcaAgua;
+
     private ?string $escudoProvincia = null;
 
     /**
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    private function __construct(array $header)
+    private function __construct(array $header, bool $mostrarMarcaAgua = false)
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->header = $header;
+        $this->mostrarMarcaAgua = $mostrarMarcaAgua;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Informe de Progreso Escolar');
@@ -45,9 +48,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generar(array $datos, array $header): self
+    public static function generar(array $datos, array $header, bool $mostrarMarcaAgua = false): self
     {
-        $pdf = new self($header);
+        $pdf = new self($header, $mostrarMarcaAgua);
         $pdf->dibujarInformeAlumno($datos);
 
         return $pdf;
@@ -57,9 +60,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
      * @param  list<array<string, mixed>>  $hojas
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarLote(array $hojas, array $header): self
+    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = false): self
     {
-        $pdf = new self($header);
+        $pdf = new self($header, $mostrarMarcaAgua);
         foreach ($hojas as $datos) {
             $pdf->dibujarInformeAlumno($datos);
         }
@@ -246,7 +249,8 @@ final class InformeProgresoInicialTcpdf extends TCPDF
 
         $this->AddPage('P', 'A4');
 
-        $this->SetXY(self::MARGEN_IZQ, 20);
+        $yInicioMarca = 20.0;
+        $this->SetXY(self::MARGEN_IZQ, $yInicioMarca);
         TcpdfFuenteArial::aplicar($this, 'B', 13);
 
         if ($esObservaciones) {
@@ -290,6 +294,29 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             TcpdfFuenteArial::aplicar($this, '', 10);
             TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $etapa2);
         }
+
+        if ($this->mostrarMarcaAgua) {
+            $yFinMarca = min($this->GetY() + 4, 285.0);
+            $this->dibujarMarcaAgua($yInicioMarca, $yFinMarca);
+        }
+    }
+
+    /**
+     * Marca «SIN VALOR LEGAL» sobre indicadores y observaciones (autogestión familia).
+     */
+    private function dibujarMarcaAgua(float $yTop, float $yBottom): void
+    {
+        $cx = self::MARGEN_IZQ + self::ANCHO_CONTENIDO / 2;
+        $cy = $yTop + max(12.0, ($yBottom - $yTop) * 0.52);
+        $this->SetAlpha(0.52);
+        $this->SetTextColor(168, 168, 168);
+        TcpdfFuenteArial::aplicar($this, 'B', 22);
+        $this->StartTransform();
+        $this->Rotate(-29, $cx, $cy);
+        $this->Text($cx - 38, $cy - 2, 'SIN VALOR LEGAL');
+        $this->StopTransform();
+        $this->SetAlpha(1);
+        $this->SetTextColor(0, 0, 0);
     }
 
     private function paginaCierre(string $nombreEtapa): void
