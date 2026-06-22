@@ -101,7 +101,7 @@ final class CalificacionesPrimarioCatalogo
     /**
      * Materias del curso en el ciclo lectivo activo (`materias` del año vigente; misma fuente que secundario).
      *
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
     public static function materiasParaCurso(int $idCurso, int $idNivel, int $idTerlec, int $ciclo): Collection
     {
@@ -112,7 +112,7 @@ final class CalificacionesPrimarioCatalogo
      * Todas las materias del curso (sin tope de `ord` por grado).
      * Usado por el boletín Montecristo para incluir extracurriculares institucionales con `ord` alto.
      *
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
     public static function materiasParaCursoTodasOrd(int $idCurso, int $idNivel, int $idTerlec): Collection
     {
@@ -123,7 +123,7 @@ final class CalificacionesPrimarioCatalogo
      * Materias del curso en el ciclo lectivo activo para selectores de carga (sin tope de `ord` por grado).
      * Alineado a «Asignaturas del año»: incluye institucionales y filas con `ord` alto del año vigente.
      *
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
     public static function materiasParaSelectorAnio(int $idCurso, int $idNivel, int $idTerlec): Collection
     {
@@ -131,7 +131,7 @@ final class CalificacionesPrimarioCatalogo
     }
 
     /**
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
     private static function consultaMateriasCurso(
         int $idCurso,
@@ -154,6 +154,9 @@ final class CalificacionesPrimarioCatalogo
         if (Schema::hasColumn('materias', 'esInstitucional')) {
             $columnas[] = 'esInstitucional';
         }
+        if (Schema::hasColumn('materias', 'infoCalif')) {
+            $columnas[] = 'infoCalif';
+        }
 
         $query = DB::table('materias')
             ->where('idNivel', $idNivel)
@@ -174,6 +177,7 @@ final class CalificacionesPrimarioCatalogo
                 'abrev' => trim((string) ($r->abrev ?? '')),
                 'materia' => trim((string) ($r->materia ?? '')),
                 'esInstitucional' => (int) ($r->esInstitucional ?? 0),
+                'infoCalif' => (int) ($r->infoCalif ?? 0),
             ]);
 
         return $ordenarParaColumnasIpe
@@ -184,8 +188,8 @@ final class CalificacionesPrimarioCatalogo
     /**
      * Orden estricto por `ord` (y `id` como desempate).
      *
-     * @param  Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, esInstitucional?: int}>  $materias
-     * @return Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, esInstitucional?: int}>
+     * @param  Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, infoCalif?: int}>  $materias
+     * @return Collection<int, object{id: int, ord: int, abrev?: string, materia?: string, infoCalif?: int}>
      */
     public static function ordenarMateriasPorOrd(Collection $materias): Collection
     {
@@ -195,20 +199,20 @@ final class CalificacionesPrimarioCatalogo
     }
 
     /**
-     * Orden de columnas alineado al IPE: por `ord` y, si hay institucionales, al final del bloque curricular.
+     * Orden de columnas alineado al IPE: por `ord` y, si hay extracurriculares (`esInstitucional`), al final del bloque curricular.
      *
-     * @param  Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional?: int}>  $materias
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @param  Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional?: int, infoCalif?: int}>  $materias
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int, infoCalif?: int}>
      */
     public static function ordenarMateriasParaColumnas(Collection $materias): Collection
     {
         $ordenadas = self::ordenarMateriasPorOrd($materias);
 
-        $tieneInstitucional = $ordenadas->contains(
+        $tieneExtracurricular = $ordenadas->contains(
             fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1,
         );
 
-        if (! $tieneInstitucional) {
+        if (! $tieneExtracurricular) {
             return $ordenadas;
         }
 
@@ -216,11 +220,11 @@ final class CalificacionesPrimarioCatalogo
             ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) !== 1)
             ->values();
 
-        $institucionales = $ordenadas
+        $extracurriculares = $ordenadas
             ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1)
             ->values();
 
-        return $curriculares->concat($institucionales);
+        return $curriculares->concat($extracurriculares);
     }
 
     /**

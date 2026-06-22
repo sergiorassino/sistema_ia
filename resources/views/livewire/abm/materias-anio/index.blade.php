@@ -59,7 +59,11 @@
     <div class="se-card overflow-hidden p-2 sm:p-3">
         <div class="w-full overflow-x-auto">
             <div class="flex justify-start">
-                <div class="gf" style="min-width: {{ $tieneEsInstitucional ? '94.75rem' : '88.5rem' }};" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
+                @php
+                    $colsExtra = (int) $tieneEsInstitucional + (int) $tieneInfoCalif;
+                    $gfMinWidth = 88.5 + ($colsExtra * 6.25);
+                @endphp
+                <div class="gf" style="min-width: {{ $gfMinWidth }}rem;" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
                 <div class="gf-head">
                     <div class="gf-th w-20">ID</div>
                     <div class="gf-th w-20">Ord</div>
@@ -71,7 +75,10 @@
                     <div class="gf-th flex-1 min-w-[20rem]">Materia</div>
                     <div class="gf-th w-28">Abrev</div>
                     @if ($tieneEsInstitucional)
-                        <div class="gf-th w-28" title="Materia extracurricular / proyecto institucional (IPE San José, máx. 2 por curso)">Extrac.</div>
+                        <div class="gf-th w-28" title="Materia extracurricular (boletín IPE San José, máx. 2 por curso)">Extracurric.</div>
+                    @endif
+                    @if ($tieneInfoCalif)
+                        <div class="gf-th w-28" title="La materia aparece en síntesis y calificaciones del informe">Al informe</div>
                     @endif
                     <div class="gf-th-right w-64">Acciones</div>
                 </div>
@@ -149,7 +156,17 @@
                                 <label class="inline-flex items-center gap-2">
                                     <input type="checkbox" wire:model.defer="create.esInstitucional"
                                            class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extrac.</span>
+                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extracurric.</span>
+                                </label>
+                            </div>
+                        @endif
+
+                        @if ($tieneInfoCalif)
+                            <div class="gf-td w-28">
+                                <label class="inline-flex items-center gap-2">
+                                    <input type="checkbox" wire:model.defer="create.infoCalif"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Al informe</span>
                                 </label>
                             </div>
                         @endif
@@ -258,7 +275,7 @@
                                     <label class="inline-flex items-center gap-2">
                                         <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.esInstitucional"
                                                class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extrac.</span>
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extracurric.</span>
                                     </label>
                                 @else
                                     <label class="inline-flex cursor-pointer items-center gap-2" title="Marcar como materia extracurricular (máx. 2 en el boletín IPE)">
@@ -269,6 +286,29 @@
                                                class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                         <span class="text-[10px] font-semibold uppercase tracking-wide {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'text-primary-700' : 'text-neutral-400' }}">
                                             {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'Sí' : 'No' }}
+                                        </span>
+                                    </label>
+                                @endif
+                            </div>
+                        @endif
+
+                        @if ($tieneInfoCalif)
+                            <div class="gf-td w-28">
+                                @if ($editingId === $m->id)
+                                    <label class="inline-flex items-center gap-2">
+                                        <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.infoCalif"
+                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Al informe</span>
+                                    </label>
+                                @else
+                                    <label class="inline-flex cursor-pointer items-center gap-2" title="Marcar si la materia aparece en síntesis y calificaciones del informe">
+                                        <input type="checkbox"
+                                               wire:key="materia-anio-info-calif-{{ $m->id }}-{{ (int) ($m->infoCalif ?? 0) }}"
+                                               wire:click="toggleInfoCalif({{ $m->id }})"
+                                               @checked((int) ($m->infoCalif ?? 0) === 1)
+                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-[10px] font-semibold uppercase tracking-wide {{ (int) ($m->infoCalif ?? 0) === 1 ? 'text-primary-700' : 'text-neutral-400' }}">
+                                            {{ (int) ($m->infoCalif ?? 0) === 1 ? 'Sí' : 'No' }}
                                         </span>
                                     </label>
                                 @endif

@@ -59,7 +59,7 @@ final class BoletinIpeSanJoseLayout
         ];
     }
 
-    /** Materia marcada como extracurricular / proyecto institucional en Gestión de asignaturas del año. */
+    /** Materia marcada como extracurricular en Gestión de asignaturas del año (`esInstitucional`). */
     public static function materiaEsExtracurricular(object $materia): bool
     {
         return (int) ($materia->esInstitucional ?? 0) === 1;
