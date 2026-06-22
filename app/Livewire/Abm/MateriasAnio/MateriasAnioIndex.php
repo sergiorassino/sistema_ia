@@ -351,7 +351,7 @@ class MateriasAnioIndex extends Component
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->where('id', $id)
-            ->first(['id', 'idMatPlan', 'materia', 'abrev']);
+            ->first(['id', 'idMatPlan', 'ord', 'materia', 'abrev']);
 
         if (! $m) {
             abort(404);
@@ -378,7 +378,7 @@ class MateriasAnioIndex extends Component
         $mp = Matplan::query()
             ->whereIn('idCurPlan', $curplanIds)
             ->where('id', $idMatPlan)
-            ->first(['id', 'matPlanMateria', 'abrev']);
+            ->first(['id', 'ord', 'matPlanMateria', 'abrev']);
 
         if (! $mp) {
             session()->flash('error', 'No se encontró la materia modelo (matplan) vinculada.');
@@ -397,10 +397,13 @@ class MateriasAnioIndex extends Component
             ? trim((string) $mp->abrev)
             : null;
 
+        $nuevoOrd = max(0, min(999, (int) ($mp->ord ?? 0)));
+
         $nombreActual = trim((string) ($m->materia ?? ''));
         $abrevActual = trim((string) ($m->abrev ?? '')) !== '' ? trim((string) $m->abrev) : null;
+        $ordActual = (int) ($m->ord ?? 0);
 
-        if ($nombreActual === $nuevoNombre && $abrevActual === $nuevaAbrev) {
+        if ($nombreActual === $nuevoNombre && $abrevActual === $nuevaAbrev && $ordActual === $nuevoOrd) {
             session()->flash('success', 'La materia ya coincide con matplan.');
 
             return;
@@ -410,6 +413,7 @@ class MateriasAnioIndex extends Component
             DB::table('materias')->where('id', $id)->update([
                 'materia' => $nuevoNombre,
                 'abrev' => $nuevaAbrev,
+                'ord' => $nuevoOrd,
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -418,7 +422,12 @@ class MateriasAnioIndex extends Component
             return;
         }
 
-        session()->flash('success', "Materia actualizada desde matplan: «{$nuevoNombre}»" . ($nuevaAbrev !== null ? " ({$nuevaAbrev})" : '') . '.');
+        session()->flash(
+            'success',
+            "Materia actualizada desde matplan: «{$nuevoNombre}»"
+            .($nuevaAbrev !== null ? " ({$nuevaAbrev})" : '')
+            ." · orden {$nuevoOrd}.",
+        );
     }
 
     public function toggleEsInstitucional(int $id): void

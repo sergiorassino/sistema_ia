@@ -60,8 +60,8 @@ final class BoletinIpeDatos
         $indice = 0;
         foreach ($form['materias'] as $m) {
             $indice++;
-            $ord = (int) $m->ord;
-            $nota = $form['notas'][$ord] ?? ['ic01' => '', 'ic02' => '', 'ic03' => ''];
+            $idMaterias = (int) $m->id;
+            $nota = $form['notas'][$idMaterias] ?? ['ic01' => '', 'ic02' => '', 'ic03' => ''];
 
             $filas[] = [
                 'materia' => (string) $m->materia,

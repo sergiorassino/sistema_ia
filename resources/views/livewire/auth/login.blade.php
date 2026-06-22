@@ -21,7 +21,7 @@
             {{-- DNI: sin name= para que un envío HTML accidental no lleve datos en la URL --}}
             <div>
                 <label class="se-auth-label" for="dni">DNI (usuario)</label>
-                <input wire:model.blur="dni"
+                <input wire:model.live.debounce.400ms="dni"
                        id="dni"
                        type="text"
                        inputmode="numeric"

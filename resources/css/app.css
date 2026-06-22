@@ -1652,6 +1652,100 @@
         padding-right: 1rem; /* espacio para el caret */
     }
 
+    /* Asignaturas del año — grilla compacta a ancho útil */
+    .gf.gf-materias-anio {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        display: block;
+    }
+    .gf.gf-materias-anio .gf-head,
+    .gf.gf-materias-anio .gf-row {
+        width: 100%;
+        min-width: 0;
+    }
+    .gf.gf-materias-anio .gf-th,
+    .gf.gf-materias-anio .gf-td {
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+    }
+    .gf.gf-materias-anio .gf-th {
+        font-size: 9px;
+        letter-spacing: 0.02em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .gf.gf-materias-anio .gf-ma-col-id {
+        flex: 0 0 2.75rem;
+        width: 2.75rem;
+        min-width: 2.75rem;
+    }
+    .gf.gf-materias-anio .gf-ma-col-ord {
+        flex: 0 0 2.5rem;
+        width: 2.5rem;
+        min-width: 2.5rem;
+        text-align: center;
+    }
+    .gf.gf-materias-anio .gf-ma-col-fk-xs {
+        flex: 0 0 2.35rem;
+        width: 2.35rem;
+        min-width: 2.35rem;
+        text-align: center;
+    }
+    .gf.gf-materias-anio .gf-ma-col-fk {
+        flex: 0 0 3.1rem;
+        width: 3.1rem;
+        min-width: 3.1rem;
+        text-align: center;
+    }
+    .gf.gf-materias-anio .gf-ma-col-fk-xs > div,
+    .gf.gf-materias-anio .gf-ma-col-fk > div,
+    .gf.gf-materias-anio .gf-ma-col-fk .gf-inline-select {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-materias-anio .gf-ma-col-materia {
+        flex: 1 1 5rem;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .gf.gf-materias-anio .gf-ma-col-materia .gf-inline,
+    .gf.gf-materias-anio .gf-ma-col-materia > div {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-materias-anio .gf-ma-col-abrev {
+        flex: 0 0 3.25rem;
+        width: 3.25rem;
+        min-width: 3.25rem;
+    }
+    .gf.gf-materias-anio .gf-ma-col-flag {
+        flex: 0 0 3.1rem;
+        width: 3.1rem;
+        min-width: 3.1rem;
+        text-align: center;
+    }
+    .gf.gf-materias-anio .gf-ma-col-acciones {
+        flex: 0 1 12.5rem;
+        min-width: 9rem;
+        max-width: 14rem;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        row-gap: 0.35rem;
+        white-space: normal;
+        justify-content: flex-end;
+        align-content: center;
+    }
+    .gf.gf-materias-anio .gf-ma-col-acciones .btn-sm {
+        padding-left: 0.45rem;
+        padding-right: 0.45rem;
+        font-size: 10px;
+        line-height: 1.2;
+    }
+
     /* Celda de etiqueta (formularios) */
     .gf-label {
         @apply bg-gray-100 border-r border-gray-300 px-2 py-1.5 font-medium text-gray-600

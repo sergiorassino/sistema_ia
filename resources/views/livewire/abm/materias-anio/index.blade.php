@@ -57,290 +57,272 @@
     </div>
 
     <div class="se-card overflow-hidden p-2 sm:p-3">
-        <div class="w-full overflow-x-auto">
-            <div class="flex justify-start">
-                @php
-                    $colsExtra = (int) $tieneEsInstitucional + (int) $tieneInfoCalif;
-                    $gfMinWidth = 88.5 + ($colsExtra * 6.25);
-                @endphp
-                <div class="gf" style="min-width: {{ $gfMinWidth }}rem;" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
-                <div class="gf-head">
-                    <div class="gf-th w-20">ID</div>
-                    <div class="gf-th w-20">Ord</div>
-                    <div class="gf-th w-24">idNivel</div>
-                    <div class="gf-th w-28">idCursos</div>
-                    <div class="gf-th w-24">idTerlec</div>
-                    <div class="gf-th w-28">idCurPlan</div>
-                    <div class="gf-th w-28">idMatPlan</div>
-                    <div class="gf-th flex-1 min-w-[20rem]">Materia</div>
-                    <div class="gf-th w-28">Abrev</div>
+        <div class="gf gf-materias-anio gf-vcenter" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
+            <div class="gf-head">
+                <div class="gf-th gf-ma-col-id" title="id">ID</div>
+                <div class="gf-th gf-ma-col-ord" title="ord">Ord</div>
+                <div class="gf-th gf-ma-col-fk-xs" title="idNivel">Niv</div>
+                <div class="gf-th gf-ma-col-fk" title="idCursos">Curso</div>
+                <div class="gf-th gf-ma-col-fk-xs" title="idTerlec">Ter</div>
+                <div class="gf-th gf-ma-col-fk" title="idCurPlan">CPl</div>
+                <div class="gf-th gf-ma-col-fk" title="idMatPlan">MPl</div>
+                <div class="gf-th gf-ma-col-materia">Materia</div>
+                <div class="gf-th gf-ma-col-abrev">Abrev</div>
+                @if ($tieneEsInstitucional)
+                    <div class="gf-th gf-ma-col-flag" title="Materia extracurricular (boletín IPE San José, máx. 2 por curso)">Extr.</div>
+                @endif
+                @if ($tieneInfoCalif)
+                    <div class="gf-th gf-ma-col-flag" title="La materia aparece en síntesis y calificaciones del informe">Inf.</div>
+                @endif
+                <div class="gf-th-right gf-ma-col-acciones">Acciones</div>
+            </div>
+
+            @if ($creating)
+                <div class="gf-row gf-row-hover bg-amber-50/40" wire:key="materias-anio-create-row">
+                    <div class="gf-td gf-ma-col-id font-mono text-neutral-500">—</div>
+
+                    <div class="gf-td gf-ma-col-ord">
+                        <input type="text" inputmode="numeric" maxlength="3" wire:model.defer="create.ord"
+                               class="gf-inline font-mono text-neutral-700 @error('create.ord') ring-2 ring-red-400 @enderror">
+                        @error('create.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-fk-xs">
+                        <div class="font-mono text-neutral-700" title="idNivel">{{ $create['idNivel'] ?? '—' }}</div>
+                        @error('create.idNivel') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-fk">
+                        <select wire:model.defer="create.idCursos"
+                                class="gf-inline-select font-mono text-neutral-700 @error('create.idCursos') ring-2 ring-red-400 @enderror">
+                            <option value="">—</option>
+                            @foreach ($cursos as $c)
+                                <option value="{{ $c->Id }}">{{ $c->Id }}</option>
+                            @endforeach
+                        </select>
+                        @error('create.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-fk-xs">
+                        <div class="font-mono text-neutral-700" title="idTerlec">{{ $create['idTerlec'] ?? '—' }}</div>
+                        @error('create.idTerlec') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-fk">
+                        <select wire:model.live="create.idCurPlan"
+                                class="gf-inline-select font-mono text-neutral-700 @error('create.idCurPlan') ring-2 ring-red-400 @enderror">
+                            <option value="">—</option>
+                            @foreach ($curplanes as $cp)
+                                <option value="{{ $cp->id }}">{{ $cp->id }}</option>
+                            @endforeach
+                        </select>
+                        @error('create.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-fk">
+                        @php $cpId = (int) ($create['idCurPlan'] ?? 0); @endphp
+                        <select wire:model.defer="create.idMatPlan"
+                                class="gf-inline-select font-mono text-neutral-700 @error('create.idMatPlan') ring-2 ring-red-400 @enderror">
+                            <option value="">—</option>
+                            @foreach (($matplanesByCurplan[$cpId] ?? collect()) as $mp)
+                                <option value="{{ $mp->id }}">{{ $mp->id }}</option>
+                            @endforeach
+                        </select>
+                        @error('create.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-materia">
+                        <input type="text" maxlength="70" wire:model.defer="create.materia"
+                               class="gf-inline text-neutral-700 @error('create.materia') ring-2 ring-red-400 @enderror">
+                        @error('create.materia') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="gf-td gf-ma-col-abrev">
+                        <input type="text" maxlength="5" wire:model.defer="create.abrev"
+                               class="gf-inline font-mono text-neutral-700 @error('create.abrev') ring-2 ring-red-400 @enderror">
+                        @error('create.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                    </div>
+
                     @if ($tieneEsInstitucional)
-                        <div class="gf-th w-28" title="Materia extracurricular (boletín IPE San José, máx. 2 por curso)">Extracurric.</div>
+                        <div class="gf-td gf-ma-col-flag">
+                            <label class="inline-flex items-center justify-center" title="Extracurricular">
+                                <input type="checkbox" wire:model.defer="create.esInstitucional"
+                                       class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            </label>
+                        </div>
                     @endif
+
                     @if ($tieneInfoCalif)
-                        <div class="gf-th w-28" title="La materia aparece en síntesis y calificaciones del informe">Al informe</div>
+                        <div class="gf-td gf-ma-col-flag">
+                            <label class="inline-flex items-center justify-center" title="Al informe">
+                                <input type="checkbox" wire:model.defer="create.infoCalif"
+                                       class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            </label>
+                        </div>
                     @endif
-                    <div class="gf-th-right w-64">Acciones</div>
+
+                    <div class="gf-td-actions gf-ma-col-acciones">
+                        <button type="button" wire:click="saveCreate" wire:loading.attr="disabled" class="btn-primary btn-sm">
+                            <span wire:loading.remove wire:target="saveCreate">Guardar</span>
+                            <span wire:loading wire:target="saveCreate">…</span>
+                        </button>
+                        <button type="button" wire:click="cancelCreate" class="btn-secondary btn-sm">Cancelar</button>
+                    </div>
                 </div>
+            @endif
 
-                @if ($creating)
-                    <div class="gf-row gf-row-hover bg-amber-50/40" wire:key="materias-anio-create-row">
-                        <div class="gf-td w-20 font-mono text-neutral-500">—</div>
+            @forelse ($materias as $m)
+                <div class="gf-row gf-row-hover" wire:key="materia-anio-row-{{ $m->id }}">
+                    <div class="gf-td gf-ma-col-id font-mono text-neutral-600">{{ $m->id }}</div>
 
-                        <div class="gf-td w-20">
-                            <input type="text" inputmode="numeric" maxlength="3" wire:model.defer="create.ord"
-                                   class="gf-inline font-mono text-neutral-700 @error('create.ord') ring-2 ring-red-400 @enderror">
-                            @error('create.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
+                    <div class="gf-td gf-ma-col-ord">
+                        @if ($editingId === $m->id)
+                            <input type="text" inputmode="numeric" maxlength="3"
+                                   wire:model.defer="draft.{{ $m->id }}.ord"
+                                   class="gf-inline font-mono text-neutral-700 @error('draft.'.$m->id.'.ord') ring-2 ring-red-400 @enderror">
+                            @error('draft.'.$m->id.'.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="font-mono text-neutral-700">{{ $m->ord }}</div>
+                        @endif
+                    </div>
 
-                        <div class="gf-td w-24">
-                            <div class="font-mono text-neutral-700">{{ $create['idNivel'] ?? '—' }}</div>
-                            @error('create.idNivel') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
+                    <div class="gf-td gf-ma-col-fk-xs">
+                        <div class="font-mono text-neutral-700" title="idNivel">{{ $m->idNivel }}</div>
+                    </div>
 
-                        <div class="gf-td w-28">
-                            <select wire:model.defer="create.idCursos"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('create.idCursos') ring-2 ring-red-400 @enderror">
-                                <option value="">—</option>
+                    <div class="gf-td gf-ma-col-fk">
+                        @if ($editingId === $m->id)
+                            <select wire:model.defer="draft.{{ $m->id }}.idCursos"
+                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCursos') ring-2 ring-red-400 @enderror">
                                 @foreach ($cursos as $c)
-                                    <option value="{{ $c->Id }}">
-                                        {{ $c->Id }}
-                                    </option>
+                                    <option value="{{ $c->Id }}">{{ $c->Id }}</option>
                                 @endforeach
                             </select>
-                            @error('create.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
+                            @error('draft.'.$m->id.'.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="font-mono text-neutral-700" title="idCursos">{{ $m->idCursos }}</div>
+                        @endif
+                    </div>
 
-                        <div class="gf-td w-24">
-                            <div class="font-mono text-neutral-700">{{ $create['idTerlec'] ?? '—' }}</div>
-                            @error('create.idTerlec') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
+                    <div class="gf-td gf-ma-col-fk-xs">
+                        <div class="font-mono text-neutral-700" title="idTerlec">{{ $m->idTerlec }}</div>
+                    </div>
 
-                        <div class="gf-td w-28">
-                            <select wire:model.live="create.idCurPlan"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('create.idCurPlan') ring-2 ring-red-400 @enderror">
-                                <option value="">—</option>
+                    <div class="gf-td gf-ma-col-fk">
+                        @if ($editingId === $m->id)
+                            <select wire:model.live="draft.{{ $m->id }}.idCurPlan"
+                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCurPlan') ring-2 ring-red-400 @enderror">
                                 @foreach ($curplanes as $cp)
                                     <option value="{{ $cp->id }}">{{ $cp->id }}</option>
                                 @endforeach
                             </select>
-                            @error('create.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
+                            @error('draft.'.$m->id.'.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="font-mono text-neutral-700" title="idCurPlan">{{ $m->idCurPlan }}</div>
+                        @endif
+                    </div>
 
-                        <div class="gf-td w-28">
-                            @php $cpId = (int) ($create['idCurPlan'] ?? 0); @endphp
-                            <select wire:model.defer="create.idMatPlan"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('create.idMatPlan') ring-2 ring-red-400 @enderror">
-                                <option value="">—</option>
+                    <div class="gf-td gf-ma-col-fk">
+                        @if ($editingId === $m->id)
+                            @php $cpId = (int) ($draft[$m->id]['idCurPlan'] ?? 0); @endphp
+                            <select wire:model.defer="draft.{{ $m->id }}.idMatPlan"
+                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idMatPlan') ring-2 ring-red-400 @enderror">
                                 @foreach (($matplanesByCurplan[$cpId] ?? collect()) as $mp)
                                     <option value="{{ $mp->id }}">{{ $mp->id }}</option>
                                 @endforeach
                             </select>
-                            @error('create.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="gf-td flex-1 min-w-[20rem]">
-                            <input type="text" maxlength="70" wire:model.defer="create.materia"
-                                   class="gf-inline text-neutral-700 @error('create.materia') ring-2 ring-red-400 @enderror">
-                            @error('create.materia') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="gf-td w-28">
-                            <input type="text" maxlength="5" wire:model.defer="create.abrev"
-                                   class="gf-inline font-mono text-neutral-700 @error('create.abrev') ring-2 ring-red-400 @enderror">
-                            @error('create.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                        </div>
-
-                        @if ($tieneEsInstitucional)
-                            <div class="gf-td w-28">
-                                <label class="inline-flex items-center gap-2">
-                                    <input type="checkbox" wire:model.defer="create.esInstitucional"
-                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extracurric.</span>
-                                </label>
-                            </div>
+                            @error('draft.'.$m->id.'.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="font-mono text-neutral-700" title="idMatPlan">{{ $m->idMatPlan }}</div>
                         @endif
+                    </div>
 
-                        @if ($tieneInfoCalif)
-                            <div class="gf-td w-28">
-                                <label class="inline-flex items-center gap-2">
-                                    <input type="checkbox" wire:model.defer="create.infoCalif"
-                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                    <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Al informe</span>
-                                </label>
-                            </div>
+                    <div class="gf-td gf-ma-col-materia">
+                        @if ($editingId === $m->id)
+                            <input type="text" maxlength="70"
+                                   wire:model.defer="draft.{{ $m->id }}.materia"
+                                   class="gf-inline text-neutral-700 @error('draft.'.$m->id.'.materia') ring-2 ring-red-400 @enderror">
+                            @error('draft.'.$m->id.'.materia') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="text-neutral-800" title="{{ $m->materia }}">{{ $m->materia }}</div>
                         @endif
+                    </div>
 
-                        <div class="gf-td-actions w-64 whitespace-nowrap">
-                            <button type="button" wire:click="saveCreate" wire:loading.attr="disabled" class="btn-primary btn-sm">
-                                <span wire:loading.remove wire:target="saveCreate">Guardar</span>
-                                <span wire:loading wire:target="saveCreate">…</span>
+                    <div class="gf-td gf-ma-col-abrev">
+                        @if ($editingId === $m->id)
+                            <input type="text" maxlength="5"
+                                   wire:model.defer="draft.{{ $m->id }}.abrev"
+                                   class="gf-inline font-mono text-neutral-700 @error('draft.'.$m->id.'.abrev') ring-2 ring-red-400 @enderror">
+                            @error('draft.'.$m->id.'.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                        @else
+                            <div class="font-mono text-neutral-700">{{ $m->abrev ?: '—' }}</div>
+                        @endif
+                    </div>
+
+                    @if ($tieneEsInstitucional)
+                        <div class="gf-td gf-ma-col-flag">
+                            @if ($editingId === $m->id)
+                                <label class="inline-flex items-center justify-center" title="Extracurricular">
+                                    <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.esInstitucional"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                </label>
+                            @else
+                                <label class="inline-flex cursor-pointer items-center justify-center" title="Marcar como materia extracurricular (máx. 2 en el boletín IPE)">
+                                    <input type="checkbox"
+                                           wire:key="materia-anio-instit-{{ $m->id }}-{{ (int) ($m->esInstitucional ?? 0) }}"
+                                           wire:click="toggleEsInstitucional({{ $m->id }})"
+                                           @checked((int) ($m->esInstitucional ?? 0) === 1)
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                </label>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if ($tieneInfoCalif)
+                        <div class="gf-td gf-ma-col-flag">
+                            @if ($editingId === $m->id)
+                                <label class="inline-flex items-center justify-center" title="Al informe">
+                                    <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.infoCalif"
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                </label>
+                            @else
+                                <label class="inline-flex cursor-pointer items-center justify-center" title="Marcar si la materia aparece en síntesis y calificaciones del informe">
+                                    <input type="checkbox"
+                                           wire:key="materia-anio-info-calif-{{ $m->id }}-{{ (int) ($m->infoCalif ?? 0) }}"
+                                           wire:click="toggleInfoCalif({{ $m->id }})"
+                                           @checked((int) ($m->infoCalif ?? 0) === 1)
+                                           class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                </label>
+                            @endif
+                        </div>
+                    @endif
+
+                    <div class="gf-td-actions gf-ma-col-acciones">
+                        @if ($editingId === $m->id)
+                            <button type="button" wire:click="saveRow({{ $m->id }})" wire:loading.attr="disabled" class="btn-primary btn-sm">
+                                <span wire:loading.remove wire:target="saveRow({{ $m->id }})">Guardar</span>
+                                <span wire:loading wire:target="saveRow({{ $m->id }})">…</span>
                             </button>
-                            <button type="button" wire:click="cancelCreate" class="btn-secondary btn-sm">Cancelar</button>
-                        </div>
-                    </div>
-                @endif
-
-                @forelse ($materias as $m)
-                    <div class="gf-row gf-row-hover" wire:key="materia-anio-row-{{ $m->id }}">
-                        <div class="gf-td w-20 font-mono text-neutral-600">{{ $m->id }}</div>
-
-                        <div class="gf-td w-20">
-                            @if ($editingId === $m->id)
-                                <input type="text" inputmode="numeric" maxlength="3"
-                                       wire:model.defer="draft.{{ $m->id }}.ord"
-                                       class="gf-inline font-mono text-neutral-700 @error('draft.'.$m->id.'.ord') ring-2 ring-red-400 @enderror">
-                                @error('draft.'.$m->id.'.ord') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="font-mono text-neutral-700">{{ $m->ord }}</div>
-                            @endif
-                        </div>
-
-                        <div class="gf-td w-24">
-                            <div class="font-mono text-neutral-700">{{ $m->idNivel }}</div>
-                        </div>
-
-                        <div class="gf-td w-28">
-                            @if ($editingId === $m->id)
-                                <select wire:model.defer="draft.{{ $m->id }}.idCursos"
-                                        class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCursos') ring-2 ring-red-400 @enderror">
-                                    @foreach ($cursos as $c)
-                                        <option value="{{ $c->Id }}">{{ $c->Id }}</option>
-                                    @endforeach
-                                </select>
-                                @error('draft.'.$m->id.'.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="font-mono text-neutral-700">{{ $m->idCursos }}</div>
-                            @endif
-                        </div>
-
-                        <div class="gf-td w-24">
-                            <div class="font-mono text-neutral-700">{{ $m->idTerlec }}</div>
-                        </div>
-
-                        <div class="gf-td w-28">
-                            @if ($editingId === $m->id)
-                                <select wire:model.live="draft.{{ $m->id }}.idCurPlan"
-                                        class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCurPlan') ring-2 ring-red-400 @enderror">
-                                    @foreach ($curplanes as $cp)
-                                        <option value="{{ $cp->id }}">{{ $cp->id }}</option>
-                                    @endforeach
-                                </select>
-                                @error('draft.'.$m->id.'.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="font-mono text-neutral-700">{{ $m->idCurPlan }}</div>
-                            @endif
-                        </div>
-
-                        <div class="gf-td w-28">
-                            @if ($editingId === $m->id)
-                                @php $cpId = (int) ($draft[$m->id]['idCurPlan'] ?? 0); @endphp
-                                <select wire:model.defer="draft.{{ $m->id }}.idMatPlan"
-                                        class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idMatPlan') ring-2 ring-red-400 @enderror">
-                                    @foreach (($matplanesByCurplan[$cpId] ?? collect()) as $mp)
-                                        <option value="{{ $mp->id }}">{{ $mp->id }}</option>
-                                    @endforeach
-                                </select>
-                                @error('draft.'.$m->id.'.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="font-mono text-neutral-700">{{ $m->idMatPlan }}</div>
-                            @endif
-                        </div>
-
-                        <div class="gf-td flex-1 min-w-[20rem]">
-                            @if ($editingId === $m->id)
-                                <input type="text" maxlength="70"
-                                       wire:model.defer="draft.{{ $m->id }}.materia"
-                                       class="gf-inline text-neutral-700 @error('draft.'.$m->id.'.materia') ring-2 ring-red-400 @enderror">
-                                @error('draft.'.$m->id.'.materia') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="text-neutral-800">{{ $m->materia }}</div>
-                            @endif
-                        </div>
-
-                        <div class="gf-td w-28">
-                            @if ($editingId === $m->id)
-                                <input type="text" maxlength="5"
-                                       wire:model.defer="draft.{{ $m->id }}.abrev"
-                                       class="gf-inline font-mono text-neutral-700 @error('draft.'.$m->id.'.abrev') ring-2 ring-red-400 @enderror">
-                                @error('draft.'.$m->id.'.abrev') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
-                            @else
-                                <div class="font-mono text-neutral-700">{{ $m->abrev ?: '—' }}</div>
-                            @endif
-                        </div>
-
-                        @if ($tieneEsInstitucional)
-                            <div class="gf-td w-28">
-                                @if ($editingId === $m->id)
-                                    <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.esInstitucional"
-                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Extracurric.</span>
-                                    </label>
-                                @else
-                                    <label class="inline-flex cursor-pointer items-center gap-2" title="Marcar como materia extracurricular (máx. 2 en el boletín IPE)">
-                                        <input type="checkbox"
-                                               wire:key="materia-anio-instit-{{ $m->id }}-{{ (int) ($m->esInstitucional ?? 0) }}"
-                                               wire:click="toggleEsInstitucional({{ $m->id }})"
-                                               @checked((int) ($m->esInstitucional ?? 0) === 1)
-                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'text-primary-700' : 'text-neutral-400' }}">
-                                            {{ (int) ($m->esInstitucional ?? 0) === 1 ? 'Sí' : 'No' }}
-                                        </span>
-                                    </label>
-                                @endif
-                            </div>
+                            <button type="button" wire:click="cancelEdit" class="btn-secondary btn-sm">Cancelar</button>
+                        @else
+                            <button type="button"
+                                    wire:click="syncFromMatplan({{ $m->id }})"
+                                    wire:loading.attr="disabled"
+                                    class="btn-secondary btn-sm"
+                                    title="Copiar nombre, abreviatura y orden desde la materia modelo (matplan)">
+                                <span wire:loading.remove wire:target="syncFromMatplan({{ $m->id }})">Matplan</span>
+                                <span wire:loading wire:target="syncFromMatplan({{ $m->id }})">…</span>
+                            </button>
+                            <button type="button" wire:click="startEdit({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
+                            <button type="button" wire:click="confirmDelete({{ $m->id }})" class="btn-danger btn-sm">Eliminar</button>
                         @endif
-
-                        @if ($tieneInfoCalif)
-                            <div class="gf-td w-28">
-                                @if ($editingId === $m->id)
-                                    <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" wire:model.defer="draft.{{ $m->id }}.infoCalif"
-                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Al informe</span>
-                                    </label>
-                                @else
-                                    <label class="inline-flex cursor-pointer items-center gap-2" title="Marcar si la materia aparece en síntesis y calificaciones del informe">
-                                        <input type="checkbox"
-                                               wire:key="materia-anio-info-calif-{{ $m->id }}-{{ (int) ($m->infoCalif ?? 0) }}"
-                                               wire:click="toggleInfoCalif({{ $m->id }})"
-                                               @checked((int) ($m->infoCalif ?? 0) === 1)
-                                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
-                                        <span class="text-[10px] font-semibold uppercase tracking-wide {{ (int) ($m->infoCalif ?? 0) === 1 ? 'text-primary-700' : 'text-neutral-400' }}">
-                                            {{ (int) ($m->infoCalif ?? 0) === 1 ? 'Sí' : 'No' }}
-                                        </span>
-                                    </label>
-                                @endif
-                            </div>
-                        @endif
-
-                        <div class="gf-td-actions w-64 whitespace-nowrap">
-                            @if ($editingId === $m->id)
-                                <button type="button" wire:click="saveRow({{ $m->id }})" wire:loading.attr="disabled" class="btn-primary btn-sm">
-                                    <span wire:loading.remove wire:target="saveRow({{ $m->id }})">Guardar</span>
-                                    <span wire:loading wire:target="saveRow({{ $m->id }})">…</span>
-                                </button>
-                                <button type="button" wire:click="cancelEdit" class="btn-secondary btn-sm">Cancelar</button>
-                            @else
-                                <button type="button"
-                                        wire:click="syncFromMatplan({{ $m->id }})"
-                                        wire:loading.attr="disabled"
-                                        class="btn-secondary btn-sm"
-                                        title="Copiar nombre y abreviatura desde la materia modelo (matplan)">
-                                    <span wire:loading.remove wire:target="syncFromMatplan({{ $m->id }})">Desde matplan</span>
-                                    <span wire:loading wire:target="syncFromMatplan({{ $m->id }})">…</span>
-                                </button>
-                                <button type="button" wire:click="startEdit({{ $m->id }})" class="btn-secondary btn-sm">Editar</button>
-                                <button type="button" wire:click="confirmDelete({{ $m->id }})" class="btn-danger btn-sm">Eliminar</button>
-                            @endif
-                        </div>
                     </div>
-                @empty
-                    <div class="gf-empty">No hay materias registradas para el año lectivo actual.</div>
-                @endforelse
                 </div>
-            </div>
+            @empty
+                @unless ($creating)
+                    <div class="gf-empty">No hay materias registradas para el año lectivo actual.</div>
+                @endunless
+            @endforelse
         </div>
     </div>
 

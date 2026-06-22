@@ -1,4 +1,4 @@
-{{-- Formulario por alumno: materias (ord) × ic01/ic02/ic03 + obs matrícula. Guardado por celda al salir del campo. --}}
+{{-- Formulario por alumno: materias (id) × ic01/ic02/ic03 + obs matrícula. Guardado por celda al salir del campo. --}}
 @php
     use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 @endphp
@@ -91,14 +91,14 @@
                         </td>
                         @foreach ($materiasLista as $m)
                             @php
-                                $ord = (int) $m['ord'];
-                                $valor = $notas[$ord][$campo] ?? '';
+                                $idMaterias = (int) $m['id'];
+                                $valor = $notas[$idMaterias][$campo] ?? '';
                             @endphp
                             <td class="border border-accent-200 p-0.5">
                                 @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
-                                    'id' => 'se-calif-prim-'.$ord.'-'.$campo,
+                                    'id' => 'se-calif-prim-'.$idMaterias.'-'.$campo,
                                     'value' => $valor,
-                                    'wireKey' => 'prim-cell-'.$idMatricula.'-'.$ord.'-'.$campo,
+                                    'wireKey' => 'prim-cell-'.$idMatricula.'-'.$idMaterias.'-'.$campo,
                                     'notasPermitidasActiva' => $notasPermitidasActiva,
                                     'notasPermitidasLista' => $notasPermitidasLista ?? [],
                                 ])

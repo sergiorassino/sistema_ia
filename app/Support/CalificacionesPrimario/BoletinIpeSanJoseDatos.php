@@ -126,11 +126,11 @@ final class BoletinIpeSanJoseDatos
      */
     private static function columnaDesdeMateria(object $m, array $form): array
     {
-        $ord = (int) $m->ord;
-        $nota = $form['notas'][$ord] ?? ['ic01' => '', 'ic02' => '', 'ic03' => ''];
+        $idMaterias = (int) $m->id;
+        $nota = $form['notas'][$idMaterias] ?? ['ic01' => '', 'ic02' => '', 'ic03' => ''];
 
         return [
-            'ord' => $ord,
+            'ord' => (int) $m->ord,
             'materia' => trim((string) ($m->materia ?? '')),
             'ic01' => (string) ($nota['ic01'] ?? ''),
             'ic02' => (string) ($nota['ic02'] ?? ''),

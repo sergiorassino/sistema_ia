@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Catálogo de columnas (materias por `ord`) y reglas de visibilidad del formulario legacy de primario.
+ * Catálogo de columnas (materias por `id`) y reglas de visibilidad del formulario legacy de primario.
  */
 final class CalificacionesPrimarioCatalogo
 {
