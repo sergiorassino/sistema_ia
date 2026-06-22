@@ -33,6 +33,7 @@ final class CalificacionesPrimarioDatos
         $idCurso = (int) $matricula->idCursos;
         $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($matricula->curso);
 
+        // Mismas materias y orden que «Asignaturas del año»: `materias.ord` ascendente (sin reorden IPE).
         $materias = CalificacionesPrimarioCatalogo::materiasParaSelectorAnio(
             $idCurso,
             (int) $matricula->idNivel,
