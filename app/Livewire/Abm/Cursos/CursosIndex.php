@@ -177,6 +177,9 @@ class CursosIndex extends Component
                         if (Schema::hasColumn('materias', 'esInstitucional')) {
                             $row['esInstitucional'] = 0;
                         }
+                        if (Schema::hasColumn('materias', 'infoCalif')) {
+                            $row['infoCalif'] = 0;
+                        }
 
                         return $row;
                     })->all();
@@ -305,6 +308,9 @@ class CursosIndex extends Component
                 ];
                 if (Schema::hasColumn('materias', 'esInstitucional')) {
                     $row['esInstitucional'] = 0;
+                }
+                if (Schema::hasColumn('materias', 'infoCalif')) {
+                    $row['infoCalif'] = 0;
                 }
 
                 return $row;

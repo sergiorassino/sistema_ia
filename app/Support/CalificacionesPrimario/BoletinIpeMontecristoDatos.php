@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Boletín de calificaciones — variante Montecristo (primario).
- * Espacios extracurriculares institucionales (`materias.esInstitucional = 1`).
+ * Espacios con síntesis y calificación en boletín (`materias.infoCalif = 1`).
  *
  * Esquema de notas alineado al resto del primario:
  * - 1ª etapa: parciales ic05–ic10, final ic01
@@ -63,12 +63,12 @@ final class BoletinIpeMontecristoDatos
             (int) $matricula->idNivel,
             (int) $matricula->idTerlec,
         );
-        $materiasInstit = self::materiasInstitucionales($materiasCurso);
-        $ords = $materiasInstit->pluck('ord')->map(fn ($o) => (int) $o)->all();
+        $materiasInfoCalif = self::materiasConInfoCalif($materiasCurso);
+        $ords = $materiasInfoCalif->pluck('ord')->map(fn ($o) => (int) $o)->all();
         $notasPorOrd = CalificacionesPrimarioDatos::calificacionesCompletasPorOrd($idMatricula, $ords);
 
         $filas = [];
-        foreach ($materiasInstit as $m) {
+        foreach ($materiasInfoCalif as $m) {
             $ord = (int) $m->ord;
             $nombre = trim((string) ($m->materia ?? ''));
             $nota = $notasPorOrd[$ord] ?? self::notaVacia();
@@ -106,10 +106,10 @@ final class BoletinIpeMontecristoDatos
     }
 
     /**
-     * @param  Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>  $materias
-     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * @param  Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>  $materias
+     * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
-    private static function materiasInstitucionales(Collection $materias): Collection
+    private static function materiasConInfoCalif(Collection $materias): Collection
     {
         return $materias
             ->filter(function (object $m): bool {
@@ -118,7 +118,7 @@ final class BoletinIpeMontecristoDatos
                     return true;
                 }
 
-                return (int) ($m->esInstitucional ?? 0) === 1;
+                return (int) ($m->infoCalif ?? 0) === 1;
             })
             ->sortBy(fn (object $m) => [(int) $m->ord, (int) $m->id])
             ->values();
