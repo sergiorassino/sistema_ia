@@ -13,12 +13,15 @@ class CheckPermiso
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $orden): Response
+    public function handle(Request $request, Closure $next, string $ordenes): Response
     {
-        if (! tienePermiso((int) $orden)) {
-            abort(403, 'No tiene permiso para acceder a esta sección.');
+        foreach (explode(',', $ordenes) as $orden) {
+            $orden = trim($orden);
+            if ($orden !== '' && tienePermiso((int) $orden)) {
+                return $next($request);
+            }
         }
 
-        return $next($request);
+        abort(403, 'No tiene permiso para acceder a esta sección.');
     }
 }
