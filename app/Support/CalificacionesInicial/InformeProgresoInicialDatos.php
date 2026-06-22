@@ -5,6 +5,8 @@ namespace App\Support\CalificacionesInicial;
 use App\Models\Curso;
 use App\Models\Ento;
 use App\Models\Matricula;
+use App\Models\Terlec;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Carbon\Carbon;
@@ -72,6 +74,48 @@ final class InformeProgresoInicialDatos
     }
 
     /**
+     * Datos del informe para la matrícula del estudiante en sesión (portal familia).
+     *
+     * @return array{
+     *     ok: bool,
+     *     error?: string,
+     *     etapa?: int,
+     *     nombreEtapa?: string,
+     *     ano?: int,
+     *     insti?: string,
+     *     direccion?: string,
+     *     localidad?: string,
+     *     departamento?: string,
+     *     escudoProvincia?: ?string,
+     *     alumno?: array<string, mixed>,
+     *     materias?: list<array<string, mixed>>
+     * }
+     */
+    public static function buildDatosParaAlumno(int $etapa = 1): array
+    {
+        self::abortSiColumnaInfoCalifInexistente();
+
+        $etapa = $etapa === 2 ? 2 : 1;
+        $mat = CalificacionesPrimarioDatos::matriculaAlumnoEnSesion();
+        if ($mat === null) {
+            return ['ok' => false, 'error' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.'];
+        }
+
+        if ($mat->fechaBaja !== null) {
+            return ['ok' => false, 'error' => 'La matrícula no está activa en este ciclo lectivo.'];
+        }
+
+        $idsCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES,
+        );
+        if (! in_array((int) $mat->idCondiciones, $idsCondiciones, true)) {
+            return ['ok' => false, 'error' => 'La matrícula no está en condición regular.'];
+        }
+
+        return self::buildDesdeMatricula($mat, $etapa);
+    }
+
+    /**
      * @return array{
      *     ok: bool,
      *     error?: string,
@@ -94,12 +138,13 @@ final class InformeProgresoInicialDatos
 
         $etapa = $etapa === 2 ? 2 : 1;
 
-        $ctx = schoolCtx();
+        $idNivel = (int) $matricula->idNivel;
+        $idTerlec = (int) $matricula->idTerlec;
         $idMatricula = (int) $matricula->id;
         $idCurso = (int) $matricula->idCursos;
 
         $ento = Ento::query()
-            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idNivel', $idNivel)
             ->first(['insti', 'direccion', 'localidad', 'departamento']);
 
         $curso = $matricula->curso;
@@ -107,10 +152,19 @@ final class InformeProgresoInicialDatos
             $curso = Curso::query()
                 ->with('turnoClase')
                 ->where('Id', $idCurso)
-                ->where('idNivel', (int) $ctx->idNivel)
-                ->where('idTerlec', (int) $ctx->idTerlec)
+                ->where('idNivel', $idNivel)
+                ->where('idTerlec', $idTerlec)
                 ->first();
         }
+
+        if (! $matricula->relationLoaded('terlec')) {
+            $matricula->load('terlec');
+        }
+        $anoTerlec = $matricula->terlec?->ano;
+        if ($anoTerlec === null && $idTerlec > 0) {
+            $anoTerlec = Terlec::query()->whereKey($idTerlec)->value('ano');
+        }
+        $ano = (int) ($anoTerlec ?? now()->year);
 
         $cursec = trim((string) ($curso?->cursec ?? ''));
         $legajo = $matricula->legajo;
@@ -146,8 +200,8 @@ final class InformeProgresoInicialDatos
 
         $materiasRows = DB::table('materias')
             ->where('idCursos', $idCurso)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->orderBy('ord')
             ->orderBy('id')
             ->get(['id', 'ord', 'materia', 'infoCalif']);
@@ -183,7 +237,7 @@ final class InformeProgresoInicialDatos
             'ok' => true,
             'etapa' => $etapa,
             'nombreEtapa' => $etapa === 1 ? 'PRIMERA ETAPA' : 'SEGUNDA ETAPA',
-            'ano' => (int) ($ctx->terlecAno() ?? now()->year),
+            'ano' => $ano,
             'insti' => trim((string) ($ento?->insti ?? '')),
             'direccion' => trim((string) ($ento?->direccion ?? '')),
             'localidad' => trim((string) ($ento?->localidad ?? '')),

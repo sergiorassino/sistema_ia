@@ -4,7 +4,9 @@ namespace App\Livewire\CalificacionesInicial;
 
 use App\Support\CalificacionesInicial\CalificacionesInicialIndicadoresCatalogo;
 use App\Support\CalificacionesInicial\CalificacionesInicialIndicadoresDatos;
-use App\Support\NivelSistema;
+use App\Support\PermisosIaCatalog;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
@@ -13,6 +15,8 @@ use Livewire\Component;
  */
 class EditarIndicadoresForm extends Component
 {
+    public bool $modoPortalDocente = false;
+
     public int $idMateria;
 
     public string $materiaNombre = '';
@@ -28,12 +32,18 @@ class EditarIndicadoresForm extends Component
 
     public function mount(int $materia): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
-        abort_unless(
-            NivelSistema::esInicial((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel inicial.'
-        );
+        $this->modoPortalDocente = CalificacionesInicialPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_INDICADORES);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para calificaciones.',
+            );
+        }
+
+        CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialIndicadoresCatalogo::abortSiTablaInexistente();
 
         $ctx = schoolCtx();
@@ -43,6 +53,13 @@ class EditarIndicadoresForm extends Component
             (int) $ctx->idTerlec,
         );
         abort_if($mat === null, 404);
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinMateria(
+                (int) $mat->id,
+                (int) $mat->idCursos,
+            );
+        }
 
         $this->idMateria = (int) $mat->id;
         $this->materiaNombre = (string) $mat->materia;
@@ -57,7 +74,9 @@ class EditarIndicadoresForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
+        if (! $this->modoPortalDocente) {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
+        }
 
         $key = 'calif-inicial-indicadores:save:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 30)) {
@@ -84,13 +103,16 @@ class EditarIndicadoresForm extends Component
 
         session()->flash('success', 'Indicadores guardados correctamente.');
 
-        $this->redirect(route('calificacionesInicial.indicadores'), navigate: true);
+        $this->redirect(
+            CalificacionesInicialPortalDocente::route('indicadores'),
+            navigate: true,
+        );
     }
 
     public function render()
     {
         return view('livewire.calificaciones-inicial.editar-indicadores-form', [
             'etapas' => CalificacionesInicialIndicadoresCatalogo::etapasDisponibles(),
-        ])->layout('layouts.app', ['pageTitle' => 'Indicadores — espacio curricular']);
+        ])->layout(CalificacionesInicialPortalDocente::layout(), ['pageTitle' => 'Indicadores — espacio curricular']);
     }
 }

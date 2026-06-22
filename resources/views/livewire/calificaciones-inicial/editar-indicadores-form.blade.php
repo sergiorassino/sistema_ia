@@ -21,7 +21,7 @@
                 <span wire:loading.remove wire:target="guardar">Guardar</span>
                 <span wire:loading wire:target="guardar">Guardando…</span>
             </button>
-            <a href="{{ route('calificacionesInicial.indicadores') }}"
+            <a href="{{ \App\Support\PortalDocente\CalificacionesInicialPortalDocente::route('indicadores') }}"
                wire:navigate
                class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

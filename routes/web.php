@@ -313,6 +313,9 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/boletin-calificaciones-primario/{etapa}', BoletinIpePrimarioPdfController::class)
         ->whereNumber('etapa')
         ->name('alumnos.boletin-ipe-primario');
+    Route::get('/informe-progreso-escolar/{etapa}', \App\Http\Controllers\Alumnos\InformeProgresoInicialPdfController::class)
+        ->whereNumber('etapa')
+        ->name('alumnos.informe-progreso-inicial');
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
@@ -421,6 +424,26 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->name('portalDocente.listados.porCurso.pdf');
     Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
         ->name('portalDocente.listados.exportarExcel');
+
+    Route::get('/calificaciones-inicial/indicadores', EditarIndicadoresIndex::class)
+        ->name('portalDocente.calificacionesInicial.indicadores');
+    Route::get('/calificaciones-inicial/indicadores/{materia}', EditarIndicadoresForm::class)
+        ->whereNumber('materia')
+        ->name('portalDocente.calificacionesInicial.indicadores.materia');
+    Route::get('/calificaciones-inicial/observaciones', CargaObservacionesInicialIndex::class)
+        ->name('portalDocente.calificacionesInicial.observaciones');
+    Route::get('/calificaciones-inicial/observaciones/{materia}', CargaObservacionesInicialAlumnos::class)
+        ->whereNumber('materia')
+        ->name('portalDocente.calificacionesInicial.observaciones.alumnos');
+    Route::get('/calificaciones-inicial/observaciones/{materia}/{matricula}', CargaObservacionesInicialForm::class)
+        ->whereNumber(['materia', 'matricula'])
+        ->name('portalDocente.calificacionesInicial.observaciones.carga');
+    Route::get('/calificaciones-inicial/informe-progreso', InformeProgresoInicialIndex::class)
+        ->name('portalDocente.calificacionesInicial.informeProgreso');
+    Route::post('/calificaciones-inicial/informe-progreso/pdf', InformeProgresoInicialPdfController::class)
+        ->name('portalDocente.calificacionesInicial.informeProgreso.pdf');
+    Route::post('/calificaciones-inicial/informe-progreso/pdf-lote', InformeProgresoInicialLotePdfController::class)
+        ->name('portalDocente.calificacionesInicial.informeProgreso.pdfLote');
 
     Route::get('/material-didactico', ReservasDashboard::class)
         ->name('portalDocente.materialDidactico.index');

@@ -4,7 +4,9 @@ namespace App\Livewire\CalificacionesInicial;
 
 use App\Support\CalificacionesInicial\CalificacionesInicialIndicadoresCatalogo;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
-use App\Support\NivelSistema;
+use App\Support\PermisosIaCatalog;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Livewire\Component;
 
 /**
@@ -12,14 +14,22 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialIndex extends Component
 {
+    public bool $modoPortalDocente = false;
+
     public function mount(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
-        abort_unless(
-            NivelSistema::esInicial((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel inicial. Cambie el contexto de nivel en el menú lateral.'
-        );
+        $this->modoPortalDocente = CalificacionesInicialPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_OBSERVACIONES);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para calificaciones.',
+            );
+        }
+
+        CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
     }
 
@@ -30,9 +40,10 @@ class CargaObservacionesInicialIndex extends Component
             (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
         );
+        $grupos = CalificacionesInicialPortalDocente::filtrarGruposMaterias($grupos);
 
         return view('livewire.calificaciones-inicial.carga-observaciones-inicial-index', [
             'grupos' => $grupos,
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de observaciones (inicial)']);
+        ])->layout(CalificacionesInicialPortalDocente::layout(), ['pageTitle' => 'Carga de observaciones (inicial)']);
     }
 }

@@ -5,7 +5,9 @@ namespace App\Livewire\CalificacionesInicial;
 use App\Models\Matricula;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
-use App\Support\NivelSistema;
+use App\Support\PermisosIaCatalog;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -14,6 +16,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialAlumnos extends Component
 {
+    public bool $modoPortalDocente = false;
+
     public int $idMateria;
 
     public string $materiaNombre = '';
@@ -22,12 +26,18 @@ class CargaObservacionesInicialAlumnos extends Component
 
     public function mount(int $materia): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
-        abort_unless(
-            NivelSistema::esInicial((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel inicial.'
-        );
+        $this->modoPortalDocente = CalificacionesInicialPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_OBSERVACIONES);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para calificaciones.',
+            );
+        }
+
+        CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
 
         $ctx = schoolCtx();
@@ -37,6 +47,13 @@ class CargaObservacionesInicialAlumnos extends Component
             (int) $ctx->idTerlec,
         );
         abort_if($mat === null, 404);
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinMateria(
+                (int) $mat->id,
+                (int) $mat->idCursos,
+            );
+        }
 
         $this->idMateria = (int) $mat->id;
         $this->materiaNombre = (string) $mat->materia;
@@ -83,6 +100,6 @@ class CargaObservacionesInicialAlumnos extends Component
     {
         return view('livewire.calificaciones-inicial.carga-observaciones-inicial-alumnos', [
             'matriculas' => $this->matriculas(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de observaciones — alumnos']);
+        ])->layout(CalificacionesInicialPortalDocente::layout(), ['pageTitle' => 'Carga de observaciones — alumnos']);
     }
 }

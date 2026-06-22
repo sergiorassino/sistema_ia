@@ -8,7 +8,9 @@ use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
-use App\Support\NivelSistema;
+use App\Support\PermisosIaCatalog;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -17,6 +19,8 @@ use Livewire\Component;
  */
 class InformeProgresoInicialIndex extends Component
 {
+    public bool $modoPortalDocente = false;
+
     public ?int $cursoId = null;
 
     /** 1 = primera etapa, 2 = segunda etapa. */
@@ -27,19 +31,37 @@ class InformeProgresoInicialIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para informes de calificaciones.');
-        abort_unless(
-            NivelSistema::esInicial((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel inicial. Cambie el contexto de nivel en el menú lateral.'
-        );
+        $this->modoPortalDocente = CalificacionesInicialPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_INFORME_PROGRESO);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para informes de calificaciones.',
+            );
+        }
+
+        CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
         InformeProgresoInicialDatos::abortSiColumnaInfoCalifInexistente();
+
+        $curso = (int) request()->query('curso', 0);
+        if ($curso > 0) {
+            if ($this->modoPortalDocente) {
+                CalificacionesInicialPortalDocente::abortSiProfesorSinCurso($curso);
+            }
+            $this->cursoId = $curso;
+        }
     }
 
     public function updatedCursoId(mixed $value): void
     {
-        $this->cursoId = ((int) $value) > 0 ? (int) $value : null;
+        $id = ((int) $value) > 0 ? (int) $value : null;
+        if ($id !== null && $this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinCurso($id);
+        }
+        $this->cursoId = $id;
         $this->matriculasSeleccionadas = [];
     }
 
@@ -161,6 +183,7 @@ class InformeProgresoInicialIndex extends Component
         return Curso::query()
             ->where('idNivel', $ctx->idNivel)
             ->where('idTerlec', $ctx->idTerlec)
+            ->when($this->modoPortalDocente, fn ($q) => $q->whereIn('Id', CalificacionesInicialPortalDocente::idsCursosAsignados()))
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id')
             ->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -200,6 +223,6 @@ class InformeProgresoInicialIndex extends Component
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'etapaPdf' => $etapa,
         ])
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Informe de progreso escolar (inicial)']);
+            ->layout(CalificacionesInicialPortalDocente::layout(), ['pageTitle' => 'Informe de progreso escolar (inicial)']);
     }
 }

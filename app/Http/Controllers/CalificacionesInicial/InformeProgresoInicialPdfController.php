@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\CalificacionesInicial\InformeProgresoInicialTcpdf;
 use App\Support\NivelSistema;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -17,6 +20,12 @@ class InformeProgresoInicialPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
+        if (CalificacionesInicialPortalDocente::esPortalDocente()) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_INFORME_PROGRESO);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
+        }
+
         abort_unless(
             NivelSistema::esInicial((int) schoolCtx()->idNivel),
             403,
@@ -30,6 +39,10 @@ class InformeProgresoInicialPdfController extends Controller
 
         $idMatricula = (int) $validated['matricula'];
         $etapa = (int) ($validated['etapa'] ?? 1);
+
+        if (CalificacionesInicialPortalDocente::esPortalDocente()) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinMatricula($idMatricula);
+        }
 
         $uid = (string) (auth()->id() ?? '');
         $key = 'staff-informe-progreso-inicial-pdf:'.$uid.':'.($request->ip() ?? '');

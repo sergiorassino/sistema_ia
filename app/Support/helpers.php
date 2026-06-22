@@ -1063,6 +1063,17 @@ if (! function_exists('tenantAutogestionBoletinIpePrimarioHabilitada')) {
     }
 }
 
+if (! function_exists('tenantAutogestionInformeProgresoInicialHabilitada')) {
+    /**
+     * Informe de progreso escolar por etapa en autogestión familia (nivel inicial).
+     * Activar en `config/tenants/{slug}.php` → `autogestion.informe_progreso_inicial.habilitado`.
+     */
+    function tenantAutogestionInformeProgresoInicialHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.informe_progreso_inicial.habilitado', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionArancelesEscolaresHabilitada')) {
     /**
      * Si el portal familia incluye aranceles escolares (cuotas pendientes + comprobante).

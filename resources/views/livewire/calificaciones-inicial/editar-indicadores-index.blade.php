@@ -18,7 +18,7 @@
                     {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                 </p>
             </div>
-            <a href="{{ route('dashboard') }}"
+            <a href="{{ \App\Support\PortalDocente\CalificacionesInicialPortalDocente::urlInicio() }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -60,7 +60,7 @@
                                         {{ $m->materia }}
                                     </td>
                                     <td class="py-3 pl-3 pr-4 text-right align-middle">
-                                        <a href="{{ route('calificacionesInicial.indicadores.materia', ['materia' => $m->id]) }}"
+                                        <a href="{{ \App\Support\PortalDocente\CalificacionesInicialPortalDocente::route('indicadores.materia', ['materia' => $m->id]) }}"
                                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
                                             Editar indicadores
                                         </a>

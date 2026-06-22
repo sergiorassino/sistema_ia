@@ -3,7 +3,9 @@
 namespace App\Livewire\CalificacionesInicial;
 
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
-use App\Support\NivelSistema;
+use App\Support\PermisosIaCatalog;
+use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
+use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
@@ -12,6 +14,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialForm extends Component
 {
+    public bool $modoPortalDocente = false;
+
     public int $idMateria;
 
     public int $idMatricula;
@@ -38,12 +42,18 @@ class CargaObservacionesInicialForm extends Component
 
     public function mount(int $materia, int $matricula): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403, 'Sin permiso para calificaciones.');
-        abort_unless(
-            NivelSistema::esInicial((int) schoolCtx()->idNivel),
-            403,
-            'Este módulo corresponde al nivel inicial.'
-        );
+        $this->modoPortalDocente = CalificacionesInicialPortalDocente::esPortalDocente();
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_OBSERVACIONES);
+        } else {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(
+                PermisosIaCatalog::CALIF_CARGA,
+                'Sin permiso para calificaciones.',
+            );
+        }
+
+        CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
 
         $ctx = schoolCtx();
@@ -54,11 +64,22 @@ class CargaObservacionesInicialForm extends Component
         );
         abort_if($mat === null, 404);
 
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinMateria(
+                (int) $mat->id,
+                (int) $mat->idCursos,
+            );
+        }
+
         $matriculaModel = CalificacionesInicialObservacionesDatos::matriculaEnCursoDeMateria(
             $matricula,
             (int) $mat->idCursos,
         );
         abort_if($matriculaModel === null, 404);
+
+        if ($this->modoPortalDocente) {
+            CalificacionesInicialPortalDocente::abortSiProfesorSinMatricula((int) $matriculaModel->id);
+        }
 
         $this->idMateria = (int) $mat->id;
         $this->idMatricula = (int) $matriculaModel->id;
@@ -77,7 +98,9 @@ class CargaObservacionesInicialForm extends Component
 
     public function guardar(): void
     {
-        abort_unless(tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA), 403);
+        if (! $this->modoPortalDocente) {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
+        }
 
         $key = 'calif-inicial-obs:save:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 30)) {
@@ -126,7 +149,7 @@ class CargaObservacionesInicialForm extends Component
         session()->flash('success', 'Observaciones guardadas correctamente.');
 
         $this->redirect(
-            route('calificacionesInicial.observaciones.alumnos', ['materia' => $this->idMateria]),
+            CalificacionesInicialPortalDocente::route('observaciones.alumnos', ['materia' => $this->idMateria]),
             navigate: true,
         );
     }
@@ -135,6 +158,6 @@ class CargaObservacionesInicialForm extends Component
     {
         return view('livewire.calificaciones-inicial.carga-observaciones-inicial-form', [
             'etapas' => CalificacionesInicialObservacionesDatos::etapasCarga(),
-        ])->layout('layouts.app', ['pageTitle' => 'Carga de observaciones']);
+        ])->layout(CalificacionesInicialPortalDocente::layout(), ['pageTitle' => 'Carga de observaciones']);
     }
 }
