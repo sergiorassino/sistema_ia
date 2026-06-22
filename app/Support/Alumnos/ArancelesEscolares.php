@@ -2,7 +2,9 @@
 
 namespace App\Support\Alumnos;
 
+use App\Models\ComprobanteAfip;
 use App\Models\CuotaGenerada;
+use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\InformeInasistencias;
 use Carbon\Carbon;
@@ -25,19 +27,27 @@ final class ArancelesEscolares
         }
 
         return CuotaGenerada::query()
-            ->with([
-                'legajo:id,apellido,nombre,dni',
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
-                'curso.curplan:id,curPlanCurso',
-                'curso.turnoClase:id,nombre',
-                'curso.nivel:id,nivel',
-                'cuota:id,nombre',
-            ])
+            ->with(self::relacionesCuotaListado())
             ->where('idLegajos', (int) $ctx->idLegajo)
             ->where('faltapa', '>', 0)
             ->orderBy('venc1')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Historial completo del estudiante en sesión (pagadas e impagas, todos los ciclos).
+     *
+     * @return Collection<int, CuotaGenerada>
+     */
+    public static function cuotasHistorial(): Collection
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return collect();
+        }
+
+        return GestionAranceles::cuotasHistorial((int) $ctx->idLegajo);
     }
 
     /**
@@ -96,7 +106,9 @@ final class ArancelesEscolares
             'dni' => self::formatearDni($legajo->dni ?? ''),
             'curso' => mb_strtoupper($curso),
             'nivel' => mb_strtoupper(trim((string) $ctx->nivelNombre())),
-            'codigoPagoElectronico' => ComprobantePagoCalculo::codigoPagoElectronico($idLegajo, $idNivel),
+            'codigoPagoElectronico' => tenantCuotasSiroHabilitado()
+                ? ComprobantePagoCalculo::codigoPagoElectronico($idLegajo, $idNivel)
+                : '',
         ];
     }
 
@@ -108,14 +120,9 @@ final class ArancelesEscolares
         }
 
         return CuotaGenerada::query()
-            ->with([
+            ->with(array_merge(self::relacionesCuotaListado(), [
                 'legajo:id,apellido,nombre,dni,legajo',
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
-                'curso.curplan:id,curPlanCurso',
-                'curso.turnoClase:id,nombre',
-                'curso.nivel:id,nivel',
-                'cuota:id,nombre',
-            ])
+            ]))
             ->where('id', $idCuotaGenerada)
             ->where('idLegajos', (int) $ctx->idLegajo)
             ->where('faltapa', '>', 0)
@@ -238,6 +245,52 @@ final class ArancelesEscolares
     {
         return 'Esta cuota está vencida y no puede reimprimirse. '
             .'Comuníquese con administración para obtener un cupón actualizado.';
+    }
+
+    /**
+     * Facturas AFIP vigentes por cuota pagada — portal familia (historial).
+     *
+     * @param  Collection<int, CuotaGenerada>  $cuotas
+     * @return array<int, ComprobanteAfip> idCuotaGenerada => factura
+     */
+    public static function facturasAfipVigentesHistorial(Collection $cuotas): array
+    {
+        if (! ComprobantesAfipCuotaService::moduloDisponible() || $cuotas->isEmpty()) {
+            return [];
+        }
+
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return [];
+        }
+
+        $idLegajo = (int) $ctx->idLegajo;
+        $idsCuotasPagadas = $cuotas
+            ->filter(function (CuotaGenerada $cuota) use ($idLegajo): bool {
+                return (int) ($cuota->idLegajos ?? 0) === $idLegajo
+                    && (float) ($cuota->faltapa ?? 0) <= 0;
+            })
+            ->map(fn (CuotaGenerada $cuota) => (int) $cuota->id)
+            ->values()
+            ->all();
+
+        return ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas($idsCuotasPagadas);
+    }
+
+    /**
+     * @return array<int, string|\Closure>
+     */
+    private static function relacionesCuotaListado(): array
+    {
+        return [
+            'legajo:id,apellido,nombre,dni',
+            'terlec:id,ano',
+            'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+            'curso.curplan:id,curPlanCurso',
+            'curso.turnoClase:id,nombre',
+            'curso.nivel:id,nivel',
+            'cuota:id,nombre,orden',
+        ];
     }
 
     private static function parseFecha(mixed $fecha): ?CarbonInterface

@@ -363,6 +363,57 @@
     .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
         background-color: #d4e8ec;
     }
+    /* Portal familia — aranceles escolares (filas sin wrap, iconos de acción fijos) */
+    .gf.gf-cuotas-autogestion {
+        width: max-content;
+        min-width: 100%;
+    }
+    .gf.gf-cuotas-autogestion .gf-head,
+    .gf.gf-cuotas-autogestion .gf-row {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-cuotas-autogestion .gf-th,
+    .gf.gf-cuotas-autogestion .gf-td {
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .gf.gf-cuotas-autogestion .gf-row.gf-row--pagada {
+        background-color: #bbf7d0;
+    }
+    .gf.gf-cuotas-autogestion .gf-row.gf-row--adeudada {
+        background-color: #ffffff;
+    }
+    .gf.gf-cuotas-autogestion .gf-row-hover.gf-row--pagada:hover {
+        background-color: #b8e8c8;
+    }
+    .gf.gf-cuotas-autogestion .gf-row-hover.gf-row--adeudada:hover {
+        background-color: #d4e8ec;
+    }
+    .gf.gf-cuotas-autogestion .gf-th.gf-th-accion-cupon,
+    .gf.gf-cuotas-autogestion .gf-td.gf-td-accion-cupon {
+        flex: 0 0 3.25rem !important;
+        width: 3.25rem !important;
+        min-width: 3.25rem !important;
+        max-width: 3.25rem !important;
+    }
+    .gf.gf-cuotas-autogestion .gf-th.gf-th-accion-afip,
+    .gf.gf-cuotas-autogestion .gf-td.gf-td-accion-afip {
+        flex: 0 0 3.25rem !important;
+        width: 3.25rem !important;
+        min-width: 3.25rem !important;
+        max-width: 3.25rem !important;
+    }
+    .gf.gf-cuotas-autogestion.gf-vcenter .gf-th.gf-th-accion-cupon,
+    .gf.gf-cuotas-autogestion.gf-vcenter .gf-td.gf-td-accion-cupon,
+    .gf.gf-cuotas-autogestion.gf-vcenter .gf-th.gf-th-accion-afip,
+    .gf.gf-cuotas-autogestion.gf-vcenter .gf-td.gf-td-accion-afip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     .gf.gf-cuotas-estudiante.gf-vcenter .gf-td.gf-td-nivel {
         display: flex;
         flex-direction: column;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
+use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class CalificacionesController extends Controller
 {
     public function __invoke(Request $request)
     {
-        abort_unless(studentEsNivelSecundario(), 404);
+        abort_unless(PortalFamiliaBoletinIpe::consultaSecundariaVisible(), 404);
 
         $key = 'alumnos-consulta-calificaciones-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 20)) {

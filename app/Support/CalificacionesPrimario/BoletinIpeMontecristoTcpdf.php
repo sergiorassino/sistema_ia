@@ -57,10 +57,13 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $header;
 
-    public function __construct(array $header)
+    private bool $mostrarMarcaAgua;
+
+    public function __construct(array $header, bool $mostrarMarcaAgua = true)
     {
         parent::__construct('L', 'mm', 'A4', true, 'UTF-8', false);
         $this->header = $header;
+        $this->mostrarMarcaAgua = $mostrarMarcaAgua;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Boletín de calificaciones');
@@ -75,9 +78,9 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarHoja(array $datos, array $header): self
+    public static function generarHoja(array $datos, array $header, bool $mostrarMarcaAgua = true): self
     {
-        $pdf = new self($header);
+        $pdf = new self($header, $mostrarMarcaAgua);
         $pdf->AddPage();
         $pdf->dibujarHoja($datos);
 
@@ -88,9 +91,9 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
      * @param  list<array<string, mixed>>  $hojas
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarLote(array $hojas, array $header): self
+    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = true): self
     {
-        $pdf = new self($header);
+        $pdf = new self($header, $mostrarMarcaAgua);
         $primera = true;
         foreach ($hojas as $datos) {
             if (! $primera) {
@@ -128,8 +131,13 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
         $etapa = $etapa === 2 ? 2 : 1;
 
         $this->dibujarEncabezado($datos);
-        $y = $this->dibujarEncabezadoCuerpo($etapa);
-        $y = $this->dibujarFilas($y, $datos, $etapa);
+        $yTopGrilla = $this->GetY();
+        $yGrilla = $this->dibujarEncabezadoCuerpo($etapa);
+        if ($this->mostrarMarcaAgua) {
+            $yFinGrillaEst = $yGrilla + $this->estimarAlturaFilas($datos, $etapa);
+            $this->dibujarMarcaAgua($yTopGrilla, $yFinGrillaEst);
+        }
+        $y = $this->dibujarFilas($yGrilla, $datos, $etapa);
         $this->dibujarBloquesInferiores($y + self::SEPARACION_PIE, $datos);
     }
 
@@ -320,6 +328,47 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
         $this->SetXY($x, $y);
         TcpdfFuenteArial::aplicar($this, '', $fuente);
         $this->MultiCell($ancho, $alto, $texto, 1, 'C', false, 0, $x, $y, true, 0, false, true, $alto, 'M');
+    }
+
+    /**
+     * @param  array<string, mixed>  $datos
+     */
+    private function estimarAlturaFilas(array $datos, int $etapa): float
+    {
+        /** @var list<array{materia: string, tipo: string, sintesis: string, ic01: string, ic02: string, dic: string}> $filas */
+        $filas = $datos['filas'] ?? [];
+        $altura = 0.0;
+
+        foreach ($filas as $fila) {
+            $tipo = (string) ($fila['tipo'] ?? 'materia');
+            if ($tipo === 'justificadas' || $tipo === 'injustificadas') {
+                continue;
+            }
+
+            $sintesis = trim((string) ($fila['sintesis'] ?? ''));
+            $anchoSintesis = $etapa === 1 ? self::ANCHO_SINTESIS_ETAPA1 : self::ANCHO_SINTESIS_ETAPA2;
+            $altura += max($this->medirAltoSintesis($sintesis, $anchoSintesis), 7.0);
+        }
+
+        return $altura > 0.0 ? $altura : 7.0;
+    }
+
+    /**
+     * Marca centrada en la grilla. Se invoca antes de dibujar filas para quedar detrás de los datos.
+     */
+    private function dibujarMarcaAgua(float $yTop, float $yBottom): void
+    {
+        $cx = self::MARGEN_IZQ + self::ANCHO_TABLA / 2;
+        $cy = $yTop + ($yBottom - $yTop) * 0.54;
+        $this->SetAlpha(0.52);
+        $this->SetTextColor(168, 168, 168);
+        TcpdfFuenteArial::aplicar($this, 'B', 22);
+        $this->StartTransform();
+        $this->Rotate(-29, $cx, $cy);
+        $this->Text($cx - 38, $cy - 2, 'SIN VALOR LEGAL');
+        $this->StopTransform();
+        $this->SetAlpha(1);
+        $this->SetTextColor(0, 0, 0);
     }
 
     /**

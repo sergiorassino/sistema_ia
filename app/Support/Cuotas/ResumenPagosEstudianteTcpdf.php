@@ -3,6 +3,9 @@
 namespace App\Support\Cuotas;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Cuotas\ResumenPagosEstudianteDatos;
+use App\Support\Cuotas\ResumenPagosEstudianteTcpdf;
+use App\Support\Pdf\TcpdfImagenPng;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
@@ -268,7 +271,7 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
         $logo = $this->resolverLogoArchivo($header);
         if ($logo !== null) {
             $this->Image(
-                $logo,
+                TcpdfImagenPng::fuenteTcpdf($logo),
                 $x + 3,
                 $y + (($h - self::LOGO_ALTO) / 2),
                 self::LOGO_ANCHO,

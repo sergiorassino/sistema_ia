@@ -191,7 +191,7 @@
             @endif
 
             <div class="grid gap-3">
-                @if ($esUnaCuota)
+                @if ($esUnaCuota && tenantCuotasSiroHabilitado())
                 <label class="inline-flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-accent-200 bg-accent-50/40 px-4 py-3 text-xs font-semibold text-neutral-800">
                     <span class="min-w-0">
                         Aviso de pago

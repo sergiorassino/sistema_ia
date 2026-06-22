@@ -10,6 +10,11 @@ return [
     'cuotas' => [
         // % de mora en tramos 2–4: tasa diaria × días (default del sistema).
         'interes_mora_modo' => 'diario',
+
+        'siro' => [
+            'habilitado' => true,
+            'qr_url' => null,
+        ],
     ],
 
     'portal_docente' => [

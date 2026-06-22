@@ -11,14 +11,16 @@ final class PortalFamiliaBoletinIpe
 {
     public static function habilitadoEnMenu(): bool
     {
-        return tenantAutogestionBoletinIpePrimarioHabilitada()
+        return tenantAutogestionConsultaCalificacionesHabilitada()
+            && tenantAutogestionBoletinIpePrimarioHabilitada()
             && studentEsNivelPrimario()
             && BoletinIpePrimarioGenerador::usaSelectorEtapa();
     }
 
     public static function consultaSecundariaVisible(): bool
     {
-        return studentEsNivelSecundario();
+        return tenantAutogestionConsultaCalificacionesHabilitada()
+            && studentEsNivelSecundario();
     }
 
     /**

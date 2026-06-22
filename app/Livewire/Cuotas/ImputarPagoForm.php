@@ -194,6 +194,8 @@ class ImputarPagoForm extends Component
             'tipoComprobanteImputacion' => ['required', Rule::in(['afip', 'interno'])],
         ]);
 
+        $avisoPago = tenantCuotasSiroHabilitado() && (bool) ($validated['avisoPago'] ?? false);
+
         $saldo = CuotasFormato::parseImporte($validated['saldoAPagar']);
         $faltapa = (float) ($registro->faltapa ?? 0);
 
@@ -208,8 +210,8 @@ class ImputarPagoForm extends Component
         $porcentManual = $porcentRaw !== '' ? (float) $validated['porcent'] : null;
         $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fecha, $porcentManual);
 
-        if ($saldo <= 0 && ! $validated['avisoPago']) {
-            $this->addError('saldoAPagar', 'Indique un importe a abonar o active aviso de pago.');
+        if ($saldo <= 0 && ! $avisoPago) {
+            $this->addError('saldoAPagar', 'Indique un importe a abonar'.(tenantCuotasSiroHabilitado() ? ' o active aviso de pago.' : '.'));
 
             return;
         }
@@ -228,7 +230,7 @@ class ImputarPagoForm extends Component
             'aPagar' => $calc['aPagar'],
             'fechaPago' => $fecha->format('Y-m-d'),
             'obs' => trim((string) ($validated['obs'] ?? '')),
-            'avisoPago' => (bool) $validated['avisoPago'],
+            'avisoPago' => $avisoPago,
         ]);
 
         $this->finalizarGuardado(

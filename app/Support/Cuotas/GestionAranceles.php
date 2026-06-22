@@ -44,7 +44,8 @@ final class GestionAranceles
     }
 
     /**
-     * Historial completo: todas las cuotas del estudiante en cualquier ciclo lectivo.
+     * Historial completo: todas las cuotas del estudiante en cualquier ciclo lectivo,
+     * ordenadas por año lectivo y concepto (reserva y matrícula primero en cada año).
      *
      * @return Collection<int, CuotaGenerada>
      */
@@ -99,7 +100,7 @@ final class GestionAranceles
     }
 
     /**
-     * Año lectivo → orden de plantilla (reserva/matrícula primero) → mes → vencimiento.
+     * Año lectivo (terlec.ano) → orden de plantilla → reserva/matrícula primero → mes → vencimiento.
      *
      * @param  Builder<CuotaGenerada>  $query
      * @return Builder<CuotaGenerada>
@@ -111,8 +112,9 @@ final class GestionAranceles
         $matricula = GeneracionCuotaEstudianteService::TIPO_MATRICULA;
 
         return $query
+            ->leftJoin('terlec', 'terlec.id', '=', "{$tabla}.idTerlec")
             ->leftJoin('cuotas', 'cuotas.id', '=', "{$tabla}.idCuotas")
-            ->orderBy("{$tabla}.idTerlec")
+            ->orderBy('terlec.ano')
             ->orderByRaw('COALESCE(cuotas.orden, 9999)')
             ->orderByRaw("CASE WHEN {$tabla}.idCuotastipo = {$reserva} THEN 0 WHEN {$tabla}.idCuotastipo = {$matricula} THEN 1 ELSE 2 END")
             ->orderBy("{$tabla}.idCuotasmeses")

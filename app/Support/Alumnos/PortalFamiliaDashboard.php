@@ -48,14 +48,16 @@ final class PortalFamiliaDashboard
             ];
         }
 
-        $accesos[] = [
-            'id' => 'inasistencias',
-            'titulo' => 'Informe de inasistencias',
-            'descripcion' => 'Resumen de inasistencias del estudiante.',
-            'url' => se_route_url('alumnos.inasistencias.informe'),
-            'externo' => true,
-            'icono' => 'inasistencias',
-        ];
+        if (tenantAutogestionInformeInasistenciasHabilitada()) {
+            $accesos[] = [
+                'id' => 'inasistencias',
+                'titulo' => 'Informe de inasistencias',
+                'descripcion' => 'Resumen de inasistencias del estudiante.',
+                'url' => se_route_url('alumnos.inasistencias.informe'),
+                'externo' => true,
+                'icono' => 'inasistencias',
+            ];
+        }
 
         if (tenantAutogestionActualizacionDatosHabilitada()) {
             $accesos[] = [
@@ -102,7 +104,7 @@ final class PortalFamiliaDashboard
             ];
         }
 
-        if (studentEsNivelSecundario()) {
+        if (tenantAutogestionHorarioClaseHabilitada()) {
             $accesos[] = [
                 'id' => 'horario-clase',
                 'titulo' => 'Horario de clase',

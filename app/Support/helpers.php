@@ -515,6 +515,36 @@ if (! function_exists('tenantCuotasFormulasInicialesPlantilla')) {
     }
 }
 
+if (! function_exists('tenantCuotasSiroHabilitado')) {
+    /**
+     * Si el colegio usa SIRO como medio de pago (código electrónico, QR y barras en cupones).
+     * Default false; activar en `config/tenants/{slug}.php` → `cuotas.siro.habilitado`.
+     */
+    function tenantCuotasSiroHabilitado(): bool
+    {
+        return (bool) config('tenant.cuotas.siro.habilitado', false);
+    }
+}
+
+if (! function_exists('tenantCuotasSiroQrUrl')) {
+    /**
+     * URL del servicio SIRO para QR en cupones (legacy obtenerQR).
+     */
+    function tenantCuotasSiroQrUrl(): string
+    {
+        if (! tenantCuotasSiroHabilitado()) {
+            return '';
+        }
+
+        $url = trim((string) config('tenant.cuotas.siro.qr_url', ''));
+        if ($url !== '') {
+            return $url;
+        }
+
+        return trim((string) config('tenant.autogestion.aranceles_escolares.siro_qr_url', ''));
+    }
+}
+
 if (! function_exists('tenantCuotasInteresMoraEsDiario')) {
     /**
      * Si los % de recargo en mora (tramos 2–4) se interpretan como tasa diaria.
@@ -874,6 +904,84 @@ if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
             'sanfranciscoasis' => 'Ficha de Matrícula',
             default => 'Ficha de Matrícula',
         };
+    }
+}
+
+if (! function_exists('tenantAutogestionInformeInasistenciasHabilitada')) {
+    /**
+     * Si el portal familia incluye informe de inasistencias en PDF.
+     * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+     * `niveles_habilitados`: IDs de `niveles` (p. ej. `[3]` solo secundario). Vacío = todos los niveles.
+     */
+    function tenantAutogestionInformeInasistenciasHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.informe_inasistencias.habilitado', true)) {
+            return false;
+        }
+
+        $nivelesHabilitados = config('tenant.autogestion.informe_inasistencias.niveles_habilitados', []);
+        if (! is_array($nivelesHabilitados) || $nivelesHabilitados === []) {
+            return true;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        return in_array($idNivel, array_map('intval', $nivelesHabilitados), true);
+    }
+}
+
+if (! function_exists('tenantAutogestionConsultaCalificacionesHabilitada')) {
+    /**
+     * Si el portal familia incluye consulta de calificaciones (boletín IPE primario o consulta secundario).
+     * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+     * `niveles_habilitados`: IDs de `niveles` (p. ej. `[3]` solo secundario). Vacío = todos los niveles.
+     */
+    function tenantAutogestionConsultaCalificacionesHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.consulta_calificaciones.habilitado', true)) {
+            return false;
+        }
+
+        $nivelesHabilitados = config('tenant.autogestion.consulta_calificaciones.niveles_habilitados', []);
+        if (! is_array($nivelesHabilitados) || $nivelesHabilitados === []) {
+            return true;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        return in_array($idNivel, array_map('intval', $nivelesHabilitados), true);
+    }
+}
+
+if (! function_exists('tenantAutogestionHorarioClaseHabilitada')) {
+    /**
+     * Si el portal familia incluye horario de clase en PDF.
+     * Default deshabilitado; activar en `config/tenants/{slug}.php` con `habilitado => true`.
+     * `niveles_habilitados`: IDs de `niveles` (p. ej. `[3]` solo secundario). Vacío = todos los niveles.
+     */
+    function tenantAutogestionHorarioClaseHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.horario_clase.habilitado', false)) {
+            return false;
+        }
+
+        $nivelesHabilitados = config('tenant.autogestion.horario_clase.niveles_habilitados', []);
+        if (! is_array($nivelesHabilitados) || $nivelesHabilitados === []) {
+            return true;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        return in_array($idNivel, array_map('intval', $nivelesHabilitados), true);
     }
 }
 

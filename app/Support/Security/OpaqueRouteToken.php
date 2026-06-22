@@ -16,6 +16,10 @@ final class OpaqueRouteToken
 {
     public const PURPOSE_COMPROBANTE_PAGO = 'alumnos.comprobante-pago';
 
+    public const PURPOSE_ALUMNOS_RESUMEN_PAGOS = 'alumnos.aranceles-escolares.resumen-pagos';
+
+    public const PURPOSE_ALUMNOS_COMPROBANTE_AFIP_REG = 'alumnos.comprobante-afip-reg';
+
     public const PURPOSE_ADMIN_COMPROBANTE_PAGO = 'cuotas.comprobante-pago';
 
     public const PURPOSE_ADMIN_COMPROBANTE_PAGO_IMPUTACION = 'cuotas.comprobante-pago-imputacion';
@@ -49,6 +53,20 @@ final class OpaqueRouteToken
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
+    }
+
+    public static function forResumenPagosAutogestion(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ALUMNOS_RESUMEN_PAGOS, $idLegajo, $idLegajo);
+    }
+
+    public static function forComprobanteAfipAutogestion(int $idComprobanteAfip, int $idCuotaGenerada, int $idLegajo): string
+    {
+        return self::encodePayload(self::PURPOSE_ALUMNOS_COMPROBANTE_AFIP_REG, [
+            'a' => $idComprobanteAfip,
+            'c' => $idCuotaGenerada,
+            'l' => $idLegajo,
+        ]);
     }
 
     public static function forComprobantePagoCuotaAdministracion(int $idCuotaGenerada, int $idLegajo): string

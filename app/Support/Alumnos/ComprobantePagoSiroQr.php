@@ -14,7 +14,7 @@ final class ComprobantePagoSiroQr
 {
     public static function obtenerCadena(string $nroClienteEmpresa, string $nroComprobante): string
     {
-        $url = trim((string) config('tenant.autogestion.aranceles_escolares.siro_qr_url', ''));
+        $url = tenantCuotasSiroQrUrl();
         if ($url === '') {
             return '';
         }

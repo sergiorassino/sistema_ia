@@ -19,16 +19,95 @@ final class ComprobanteAfipDatos
     public static function paraComprobanteRegistro(int $idComprobanteAfip, int $idLegajo): ?array
     {
         $comprobante = ComprobanteAfip::query()->find($idComprobanteAfip);
-        if ($comprobante === null) {
-            return null;
-        }
-
-        $idCuotaGenerada = (int) ($comprobante->idCbteAsoc ?? 0);
-        if ($idCuotaGenerada <= 0 || GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
+        if ($comprobante === null || ! self::comprobantePerteneceAlLegajo($comprobante, $idLegajo)) {
             return null;
         }
 
         return self::datosDesdeModelo($comprobante);
+    }
+
+    public static function comprobantePerteneceAlLegajo(ComprobanteAfip $comprobante, int $idLegajo): bool
+    {
+        $idCuotaAsoc = (int) ($comprobante->idCbteAsoc ?? 0);
+        if ($idCuotaAsoc > 0 && GestionAranceles::cuotaDelLegajo($idCuotaAsoc, $idLegajo) !== null) {
+            return true;
+        }
+
+        foreach (self::idsPagosVinculados($comprobante) as $idPago) {
+            $pago = CuotaPago::query()->find($idPago);
+            if ($pago === null) {
+                continue;
+            }
+
+            $idCuotaGenerada = (int) ($pago->idCuotasGeneradas ?? 0);
+            if ($idCuotaGenerada > 0 && GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) !== null) {
+                return true;
+            }
+        }
+
+        $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+        if ($legajo !== null) {
+            $dniComprobante = preg_replace('/\D/', '', (string) ($comprobante->dni ?? ''));
+            $dniLegajo = preg_replace('/\D/', '', (string) ($legajo->dni ?? ''));
+            if ($dniComprobante !== '' && $dniLegajo !== '' && $dniComprobante === $dniLegajo) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * PDF comprobante AFIP — portal familia (validación alineada al listado de cuotas).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function paraAutogestion(int $idComprobanteAfip, int $idCuotaGenerada): ?array
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        $idLegajo = (int) $ctx->idLegajo;
+        if (! ComprobantesAfipCuotaService::comprobanteVinculadoACuotaDelEstudiante(
+            $idComprobanteAfip,
+            $idCuotaGenerada,
+            $idLegajo,
+        )) {
+            return null;
+        }
+
+        $comprobante = ComprobanteAfip::query()->find($idComprobanteAfip);
+        if ($comprobante === null) {
+            return null;
+        }
+
+        return self::datosDesdeModelo($comprobante);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function idsPagosVinculados(ComprobanteAfip $comprobante): array
+    {
+        $ids = [];
+        $principal = (int) ($comprobante->idCuotasPagos ?? 0);
+        if ($principal > 0) {
+            $ids[] = $principal;
+        }
+
+        $saldo = trim((string) ($comprobante->saldoRestante ?? ''));
+        if ($saldo !== '') {
+            foreach (explode(',', $saldo) as $parte) {
+                $id = (int) trim($parte);
+                if ($id > 0) {
+                    $ids[] = $id;
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

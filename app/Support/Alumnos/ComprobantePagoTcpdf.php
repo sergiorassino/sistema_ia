@@ -3,6 +3,7 @@
 namespace App\Support\Alumnos;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
@@ -181,20 +182,24 @@ final class ComprobantePagoTcpdf extends TCPDF
         $w = self::ANCHO_BLOQUE;
 
         $leyendaBonificada = (string) ($this->datos['leyendaBonificada'] ?? '');
-        $lineasCodigo = [
-            [
-                'texto' => 'Código de Pago Electrónico:   '.(string) ($this->datos['codigoPagoElectronico'] ?? ''),
-                'estilo' => 'B',
-                'size' => 8.0,
-                'alto' => 4.5,
-            ],
-            [
-                'texto' => '(Link Pagos y Pago Mis Cuentas): Rubro: INSTITUCIONES EDUCATIVAS',
-                'estilo' => '',
-                'size' => 6.0,
-                'alto' => 4.0,
-            ],
-        ];
+        $codigoPago = trim((string) ($this->datos['codigoPagoElectronico'] ?? ''));
+        $lineasCodigo = [];
+        if ($codigoPago !== '') {
+            $lineasCodigo = [
+                [
+                    'texto' => 'Código de Pago Electrónico:   '.$codigoPago,
+                    'estilo' => 'B',
+                    'size' => 8.0,
+                    'alto' => 4.5,
+                ],
+                [
+                    'texto' => '(Link Pagos y Pago Mis Cuentas): Rubro: INSTITUCIONES EDUCATIVAS',
+                    'estilo' => '',
+                    'size' => 6.0,
+                    'alto' => 4.0,
+                ],
+            ];
+        }
         $lineasVencimientos = [
             [
                 'texto' => '1º Venc '.$leyendaBonificada.': '.(string) ($this->datos['venc1Esp'] ?? '')
@@ -222,7 +227,7 @@ final class ComprobantePagoTcpdf extends TCPDF
             ];
         }
 
-        $espacioCodigoVencimientos = 10.0;
+        $espacioCodigoVencimientos = $lineasCodigo !== [] ? 10.0 : 0.0;
         $hContenido = array_sum(array_column($lineasCodigo, 'alto'))
             + $espacioCodigoVencimientos
             + array_sum(array_column($lineasVencimientos, 'alto'));
@@ -287,6 +292,10 @@ final class ComprobantePagoTcpdf extends TCPDF
         $x = self::ORIGEN_X;
         $w = self::ANCHO_BLOQUE;
         $barra = trim((string) ($this->datos['barra'] ?? ''));
+
+        if ($barra === '') {
+            return;
+        }
 
         $altoAgentes1 = 5.0;
         $altoAgentes2 = 5.0;
@@ -404,7 +413,7 @@ final class ComprobantePagoTcpdf extends TCPDF
         $logo = $this->resolverLogoArchivo($header);
         if ($logo !== null) {
             $this->Image(
-                $logo,
+                TcpdfImagenPng::fuenteTcpdf($logo),
                 $x + 3,
                 $y + (($h - self::LOGO_ALTO) / 2),
                 self::LOGO_ANCHO,
