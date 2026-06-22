@@ -912,6 +912,7 @@ if (! function_exists('tenantAutogestionInformeInasistenciasHabilitada')) {
      * Si el portal familia incluye informe de inasistencias en PDF.
      * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
      * `niveles_habilitados`: IDs de `niveles` (p. ej. `[3]` solo secundario). Vacío = todos los niveles.
+     * `niveles_deshabilitados`: IDs de `niveles` sin el módulo (p. ej. `[1, 2]` inicial y primario).
      */
     function tenantAutogestionInformeInasistenciasHabilitada(): bool
     {
@@ -919,17 +920,46 @@ if (! function_exists('tenantAutogestionInformeInasistenciasHabilitada')) {
             return false;
         }
 
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+
+        $nivelesDeshabilitados = config('tenant.autogestion.informe_inasistencias.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== [] && $idNivel > 0) {
+            if (in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
         $nivelesHabilitados = config('tenant.autogestion.informe_inasistencias.niveles_habilitados', []);
         if (! is_array($nivelesHabilitados) || $nivelesHabilitados === []) {
             return true;
         }
 
-        $idNivel = (int) (studentCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
             return false;
         }
 
         return in_array($idNivel, array_map('intval', $nivelesHabilitados), true);
+    }
+}
+
+if (! function_exists('tenantSecretariaInformeInasistenciasHabilitada')) {
+    /**
+     * Si el Menú de Secretaría incluye informe de inasistencias por curso (PDF).
+     * `niveles_deshabilitados`: IDs de `niveles` sin ítem ni PDF (p. ej. `[1, 2]` inicial y primario).
+     */
+    function tenantSecretariaInformeInasistenciasHabilitada(): bool
+    {
+        $nivelesDeshabilitados = config('tenant.secretaria.informe_inasistencias.niveles_deshabilitados', []);
+        if (! is_array($nivelesDeshabilitados) || $nivelesDeshabilitados === []) {
+            return true;
+        }
+
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return true;
+        }
+
+        return ! in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true);
     }
 }
 

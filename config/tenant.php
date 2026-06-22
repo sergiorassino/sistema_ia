@@ -128,10 +128,12 @@ return [
          * Informe de inasistencias en PDF (portal familia).
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `niveles_habilitados`: IDs de `niveles` con el módulo. Vacío = todos los niveles.
+         * `niveles_deshabilitados`: IDs de `niveles` sin el módulo (p. ej. `[1, 2]` inicial y primario).
          */
         'informe_inasistencias' => [
             'habilitado' => true,
             'niveles_habilitados' => [],
+            'niveles_deshabilitados' => [],
         ],
 
         /**
@@ -224,6 +226,13 @@ return [
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
+        ],
+        /**
+         * Informe de inasistencias por curso (Menú de Secretaría → ASISTENCIA ESTUDIANTES).
+         * `niveles_deshabilitados`: IDs de `niveles` sin ítem ni PDF (p. ej. `[1, 2]` inicial y primario).
+         */
+        'informe_inasistencias' => [
+            'niveles_deshabilitados' => [],
         ],
     ],
 

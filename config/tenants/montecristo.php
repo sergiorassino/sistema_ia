@@ -43,6 +43,10 @@ return [
             'habilitado' => true,
             'implementacion' => 'montecristo',
         ],
+        // Sin informe de inasistencias en inicial ni primario.
+        'informe_inasistencias' => [
+            'niveles_deshabilitados' => [1, 2],
+        ],
     ],
 
     'autogestion' => [
@@ -52,6 +56,10 @@ return [
         ],
         'boletin_ipe_primario' => [
             'habilitado' => true,
+        ],
+        // Sin informe de inasistencias en inicial ni primario.
+        'informe_inasistencias' => [
+            'niveles_deshabilitados' => [1, 2],
         ],
     ],
 
