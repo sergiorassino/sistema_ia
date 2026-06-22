@@ -83,11 +83,10 @@ final class PlanillaCalificacionesPrimarioDatos
         $secciones = [];
         foreach ($cursoIds as $cursoId) {
             $curso = Curso::query()
-                ->with('curplan')
                 ->where('idNivel', (int) $ctx->idNivel)
                 ->where('idTerlec', (int) $ctx->idTerlec)
                 ->where('Id', $cursoId)
-                ->first(['Id', 'cursec', 'c', 's', 'idCurPlan']);
+                ->first(['Id', 'cursec', 'c', 's']);
 
             if (! $curso) {
                 continue;
@@ -95,24 +94,36 @@ final class PlanillaCalificacionesPrimarioDatos
 
             $grado = (int) ($curso->c ?? 0);
             $cicloGrado = $grado < 4 ? 'PRIMERO' : 'SEGUNDO';
-            $cicloPlan = CalificacionesPrimarioCatalogo::cicloDesdeCurso($curso);
 
-            $materias = CalificacionesPrimarioCatalogo::materiasParaCurso(
+            $bloquesMaterias = CalificacionesPrimarioCatalogo::materiasParaPlanilla(
                 (int) $curso->Id,
                 (int) $ctx->idNivel,
                 (int) $ctx->idTerlec,
-                $cicloPlan,
             );
 
-            $materiasLista = $materias
+            $materiasCurriculares = $bloquesMaterias['curriculares']
                 ->map(fn (object $m) => [
                     'id' => (int) $m->id,
                     'ord' => (int) $m->ord,
                     'materia' => (string) $m->materia,
                     'abrev' => (string) $m->abrev,
+                    'esInstitucional' => 0,
                 ])
                 ->values()
                 ->all();
+
+            $materiasInstitucionales = $bloquesMaterias['institucionales']
+                ->map(fn (object $m) => [
+                    'id' => (int) $m->id,
+                    'ord' => (int) $m->ord,
+                    'materia' => (string) $m->materia,
+                    'abrev' => (string) $m->abrev,
+                    'esInstitucional' => 1,
+                ])
+                ->values()
+                ->all();
+
+            $materiasLista = array_merge($materiasCurriculares, $materiasInstitucionales);
 
             $ords = array_column($materiasLista, 'ord');
 
@@ -163,6 +174,8 @@ final class PlanillaCalificacionesPrimarioDatos
                 'division' => trim((string) ($curso->s ?? '')),
                 'cicloGrado' => $cicloGrado,
                 'esCicloPrimero' => $cicloGrado === 'PRIMERO',
+                'materiasCurriculares' => $materiasCurriculares,
+                'materiasInstitucionales' => $materiasInstitucionales,
                 'materias' => $materiasLista,
                 'alumnos' => $alumnos,
             ];

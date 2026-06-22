@@ -131,6 +131,35 @@ final class CalificacionesPrimarioCatalogo
     }
 
     /**
+     * Materias para la planilla PDF: solo tabla `materias` del curso, orden `ord`, sin matplan ni tope por grado.
+     * Las institucionales (`esInstitucional = 1`) quedan en bloque aparte (mismo criterio de orden dentro del bloque).
+     *
+     * @return array{
+     *     curriculares: Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>,
+     *     institucionales: Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>,
+     *     columnas: Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
+     * }
+     */
+    public static function materiasParaPlanilla(int $idCurso, int $idNivel, int $idTerlec): array
+    {
+        $todas = self::consultaMateriasCurso($idCurso, $idNivel, $idTerlec, null, ordenarParaColumnasIpe: false);
+
+        $curriculares = $todas
+            ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) !== 1)
+            ->values();
+
+        $institucionales = $todas
+            ->filter(fn (object $m): bool => (int) ($m->esInstitucional ?? 0) === 1)
+            ->values();
+
+        return [
+            'curriculares' => $curriculares,
+            'institucionales' => $institucionales,
+            'columnas' => $curriculares->concat($institucionales),
+        ];
+    }
+
+    /**
      * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, infoCalif: int}>
      */
     private static function consultaMateriasCurso(
