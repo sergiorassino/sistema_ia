@@ -33,11 +33,10 @@ final class CalificacionesPrimarioDatos
         $idCurso = (int) $matricula->idCursos;
         $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($matricula->curso);
 
-        $materias = CalificacionesPrimarioCatalogo::materiasParaCurso(
+        $materias = CalificacionesPrimarioCatalogo::materiasParaSelectorAnio(
             $idCurso,
             (int) $matricula->idNivel,
             (int) $matricula->idTerlec,
-            $ciclo,
         );
 
         $ords = $materias->pluck('ord')->map(fn ($o) => (int) $o)->all();
@@ -266,9 +265,9 @@ final class CalificacionesPrimarioDatos
      *
      * @return object{id: int, ord: int}|null
      */
-    public static function materiaDelCursoPorOrd(int $idCurso, int $idNivel, int $idTerlec, int $ord, int $ciclo): ?object
+    public static function materiaDelCursoPorOrd(int $idCurso, int $idNivel, int $idTerlec, int $ord): ?object
     {
-        if ($ord < 1 || $ord > CalificacionesPrimarioCatalogo::maxOrdVisible($ciclo)) {
+        if ($ord < 1) {
             return null;
         }
 
@@ -337,14 +336,12 @@ final class CalificacionesPrimarioDatos
             ];
         }
 
-        $materia = DB::table('materias as m')
-            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
-            ->where('m.id', $materiaId)
-            ->where('m.idCursos', $cursoId)
-            ->where('m.idNivel', (int) $ctx->idNivel)
-            ->where('cu.idNivel', (int) $ctx->idNivel)
-            ->where('cu.idTerlec', (int) $ctx->idTerlec)
-            ->first(['m.id', 'm.ord', 'm.materia']);
+        $materia = DB::table('materias')
+            ->where('id', $materiaId)
+            ->where('idCursos', $cursoId)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->first(['id', 'ord', 'materia']);
 
         if ($materia === null) {
             return [

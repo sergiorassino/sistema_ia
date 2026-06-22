@@ -140,13 +140,11 @@ class CargaCalificacionesPrimarioMateria extends Component
             abort(404);
         }
 
-        $materiaOk = DB::table('materias as m')
-            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
-            ->where('m.id', (int) $this->materiaId)
-            ->where('m.idCursos', (int) $this->cursoId)
-            ->where('m.idNivel', (int) $ctx->idNivel)
-            ->where('cu.idNivel', (int) $ctx->idNivel)
-            ->where('cu.idTerlec', (int) $ctx->idTerlec)
+        $materiaOk = DB::table('materias')
+            ->where('id', (int) $this->materiaId)
+            ->where('idCursos', (int) $this->cursoId)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
             ->exists();
 
         if (! $materiaOk) {

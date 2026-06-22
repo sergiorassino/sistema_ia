@@ -99,8 +99,7 @@ final class CalificacionesPrimarioCatalogo
     }
 
     /**
-     * Materias del curso en el ciclo lectivo activo, ordenadas por `ord` (misma fuente que secundario).
-     * La abreviatura del encabezado prioriza `materias.abrev` y, si falta, `matplan.abrev` (plan del curso).
+     * Materias del curso en el ciclo lectivo activo (`materias` del año vigente; misma fuente que secundario).
      *
      * @return Collection<int, object{id: int, ord: int, abrev: string, materia: string, esInstitucional: int}>
      */
@@ -141,60 +140,41 @@ final class CalificacionesPrimarioCatalogo
         ?int $maxOrd,
         bool $ordenarParaColumnasIpe = true,
     ): Collection {
-        $columnas = [
-            'm.id',
-            'm.ord',
-            'm.abrev as m_abrev',
-            'm.materia',
-            'mp_id.abrev as mp_id_abrev',
-            'mp_ord.abrev as mp_ord_abrev',
-            'mp_ord.matPlanMateria as mp_ord_nombre',
-        ];
-        if (Schema::hasColumn('materias', 'esInstitucional')) {
-            $columnas[] = 'm.esInstitucional';
+        $cursoOk = Curso::query()
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('Id', $idCurso)
+            ->exists();
+
+        if (! $cursoOk) {
+            return collect();
         }
 
-        $query = DB::table('materias as m')
-            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
-            ->leftJoin('matplan as mp_id', function ($join) {
-                $join->on('mp_id.id', '=', 'm.idMatPlan')
-                    ->where('m.idMatPlan', '>', 0);
-            })
-            ->leftJoin('matplan as mp_ord', function ($join) {
-                $join->on('mp_ord.idCurPlan', '=', 'cu.idCurPlan')
-                    ->on('mp_ord.ord', '=', 'm.ord');
-            })
-            ->where('m.idCursos', $idCurso)
-            ->where('m.idNivel', $idNivel)
-            ->where('cu.idNivel', $idNivel)
-            ->where('cu.idTerlec', $idTerlec);
+        $columnas = ['id', 'ord', 'abrev', 'materia'];
+        if (Schema::hasColumn('materias', 'esInstitucional')) {
+            $columnas[] = 'esInstitucional';
+        }
+
+        $query = DB::table('materias')
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('idCursos', $idCurso);
 
         if ($maxOrd !== null) {
-            $query->where('m.ord', '<=', $maxOrd);
+            $query->where('ord', '<=', $maxOrd);
         }
 
         $materias = $query
-            ->orderBy('m.ord')
-            ->orderBy('m.id')
+            ->orderBy('ord')
+            ->orderBy('id')
             ->get($columnas)
-            ->map(function ($r) {
-                $materia = trim((string) ($r->materia ?? ''));
-                if ($materia === '') {
-                    $materia = trim((string) ($r->mp_ord_nombre ?? ''));
-                }
-
-                return (object) [
-                    'id' => (int) $r->id,
-                    'ord' => (int) $r->ord,
-                    'abrev' => self::resolverAbrevEncabezado(
-                        (string) ($r->m_abrev ?? ''),
-                        (string) ($r->mp_id_abrev ?? ''),
-                        (string) ($r->mp_ord_abrev ?? ''),
-                    ),
-                    'materia' => $materia,
-                    'esInstitucional' => (int) ($r->esInstitucional ?? 0),
-                ];
-            });
+            ->map(fn ($r) => (object) [
+                'id' => (int) $r->id,
+                'ord' => (int) $r->ord,
+                'abrev' => trim((string) ($r->abrev ?? '')),
+                'materia' => trim((string) ($r->materia ?? '')),
+                'esInstitucional' => (int) ($r->esInstitucional ?? 0),
+            ]);
 
         return $ordenarParaColumnasIpe
             ? self::ordenarMateriasParaColumnas($materias)

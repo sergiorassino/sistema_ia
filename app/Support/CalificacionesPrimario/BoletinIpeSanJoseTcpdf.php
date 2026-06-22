@@ -83,12 +83,8 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
     public static function generarLote(array $hojas, array $header): self
     {
         $pdf = new self($header);
-        $primera = true;
         foreach ($hojas as $datos) {
-            if (! $primera) {
-                $pdf->AddPage();
-            }
-            $primera = false;
+            $pdf->AddPage();
             $pdf->dibujarHoja($datos);
         }
 

@@ -160,14 +160,12 @@ class CargaCalificacionesPrimarioForm extends Component
             abort(404, 'Matrícula no encontrada en el contexto activo.');
         }
 
-        $mat->loadMissing('curso.curplan');
         $ctx = schoolCtx();
         $materia = CalificacionesPrimarioDatos::materiaDelCursoPorOrd(
             (int) $mat->idCursos,
             (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
             $ord,
-            CalificacionesPrimarioCatalogo::cicloDesdeCurso($mat->curso),
         );
         if ($materia === null) {
             abort(404, 'Materia no encontrada para este curso y orden.');
