@@ -85,12 +85,15 @@ class CargaCalificacionesPrimarioForm extends Component
     {
         $data = CalificacionesPrimarioDatos::cargarFormulario($mat);
         $this->ciclo = (int) $data['ciclo'];
-        $this->materiasLista = $data['materias']->map(fn ($m) => [
-            'id' => (int) $m->id,
-            'ord' => (int) $m->ord,
-            'abrev' => (string) $m->abrev,
-            'materia' => (string) $m->materia,
-        ])->values()->all();
+        $this->materiasLista = CalificacionesPrimarioCatalogo::ordenarMateriasPorOrd($data['materias'])
+            ->map(fn ($m) => [
+                'id' => (int) $m->id,
+                'ord' => (int) $m->ord,
+                'abrev' => (string) $m->abrev,
+                'materia' => (string) $m->materia,
+            ])
+            ->values()
+            ->all();
         $this->notas = $data['notas'];
         $this->obs1 = $data['obs1'];
         $this->obs2 = $data['obs2'];
