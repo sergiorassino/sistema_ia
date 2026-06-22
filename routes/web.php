@@ -749,13 +749,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         // Listado: cualquiera con algún permiso del módulo puede ver
         Route::get('/', ReservasDashboard::class)->name('material-didactico.index');
 
-        // Registrar y editar: Admin o Profesor
+        // Registrar y editar: Admin (68) o Profesor (69)
         Route::get('/reservar', ReservaForm::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN.','.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
             ->name('material-didactico.reservar');
         Route::get('/reservar/{id}/editar', ReservaForm::class)
             ->whereNumber('id')
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN.','.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
             ->name('material-didactico.reservar.edit');
 
         // Recursos (ABM): solo Admin
