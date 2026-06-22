@@ -9,15 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
- * Horario de clase del curso del alumno en el ciclo lectivo de autogestión (solo nivel secundario / medio).
+ * Horario de clase del curso del alumno en el ciclo lectivo de autogestión (si el tenant lo habilita).
  */
 class HorarioClasePdfController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (! studentEsNivelSecundario()) {
-            abort(403);
-        }
+        abort_unless(tenantAutogestionHorarioClaseHabilitada(), 404);
 
         $key = 'alumnos-horario-clase-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 20)) {

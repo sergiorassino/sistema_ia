@@ -91,8 +91,6 @@ return [
                 'banner' => null,
                 'url' => null,
             ],
-            /** URL del servicio SIRO para QR (legacy obtenerQR). Opcional. */
-            'siro_qr_url' => null,
         ],
 
         /**
@@ -113,6 +111,38 @@ return [
          */
         'boletin_ipe_primario' => [
             'habilitado' => false,
+        ],
+
+        /**
+         * Consulta de calificaciones en autogestión (primario: boletín IPE; secundario: consulta PDF).
+         * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         * `niveles_habilitados`: IDs de `niveles` con el módulo (p. ej. `[3]` solo secundario).
+         * Si está habilitado y la lista está vacía, aplica a todos los niveles.
+         */
+        'consulta_calificaciones' => [
+            'habilitado' => true,
+            'niveles_habilitados' => [],
+        ],
+
+        /**
+         * Informe de inasistencias en PDF (portal familia).
+         * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         * `niveles_habilitados`: IDs de `niveles` con el módulo. Vacío = todos los niveles.
+         */
+        'informe_inasistencias' => [
+            'habilitado' => true,
+            'niveles_habilitados' => [],
+        ],
+
+        /**
+         * Horario de clase en PDF (portal familia).
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         * `niveles_habilitados`: IDs de `niveles` con el ítem (p. ej. `[3]` solo secundario).
+         * Si está habilitado y la lista está vacía, aplica a todos los niveles.
+         */
+        'horario_clase' => [
+            'habilitado' => false,
+            'niveles_habilitados' => [],
         ],
     ],
 
@@ -242,6 +272,16 @@ return [
          * Override por colegio en config/tenants/{slug}.php.
          */
         'interes_mora_modo' => 'diario',
+
+        /**
+         * Medio de pago SIRO (código de pago electrónico, QR y código de barras en cupones).
+         * Activar en `config/tenants/{slug}.php` cuando el colegio cobra por SIRO.
+         */
+        'siro' => [
+            'habilitado' => false,
+            /** URL del servicio legacy obtenerQR (solo si `habilitado` es true). */
+            'qr_url' => null,
+        ],
 
         'formulas_iniciales_plantilla' => [
             'importe' => 0.0,

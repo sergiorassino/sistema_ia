@@ -3,6 +3,7 @@
 namespace App\Support\Cuotas;
 
 use App\Models\ComprobanteAfip;
+use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -82,6 +83,95 @@ final class ComprobantesAfipCuotaService
 
                 return ! $anuladas->contains((int) $c->idComprobanteAfip);
             });
+    }
+
+    /**
+     * Factura AFIP vigente vinculada a la cuota generada (pago simple o cobro múltiple).
+     */
+    public static function facturaVigentePorCuotaGenerada(int $idCuotaGenerada): ?ComprobanteAfip
+    {
+        if (! self::moduloDisponible() || $idCuotaGenerada <= 0) {
+            return null;
+        }
+
+        $comprobantes = self::comprobantesPorCuotaGenerada($idCuotaGenerada);
+        if ($comprobantes->isEmpty()) {
+            return null;
+        }
+
+        $idsPagos = CuotaPago::query()
+            ->where('idCuotasGeneradas', $idCuotaGenerada)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $anuladas = collect();
+        foreach ($idsPagos as $idPago) {
+            $anuladas = $anuladas->merge(self::idsFacturasAnuladas($idPago));
+        }
+        $anuladas = $anuladas->unique()->values();
+
+        return $comprobantes->first(function (ComprobanteAfip $c) use ($anuladas): bool {
+            if (! self::esFactura($c)) {
+                return false;
+            }
+
+            return ! $anuladas->contains((int) $c->idComprobanteAfip);
+        });
+    }
+
+    /**
+     * @param  list<int>  $idsCuotasGeneradas
+     * @return array<int, ComprobanteAfip>
+     */
+    public static function facturasVigentesPorCuotasGeneradas(array $idsCuotasGeneradas): array
+    {
+        if (! self::moduloDisponible() || $idsCuotasGeneradas === []) {
+            return [];
+        }
+
+        $idsCuotasGeneradas = array_values(array_unique(array_filter(
+            array_map('intval', $idsCuotasGeneradas),
+            fn (int $id) => $id > 0,
+        )));
+
+        $map = [];
+        foreach ($idsCuotasGeneradas as $idCuota) {
+            $factura = self::facturaVigentePorCuotaGenerada($idCuota);
+            if ($factura !== null) {
+                $map[$idCuota] = $factura;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * El comprobante está vinculado a la cuota generada del estudiante (mismo criterio que el listado).
+     */
+    public static function comprobanteVinculadoACuotaDelEstudiante(
+        int $idComprobanteAfip,
+        int $idCuotaGenerada,
+        int $idLegajo,
+    ): bool {
+        if (! self::moduloDisponible()
+            || $idComprobanteAfip <= 0
+            || $idCuotaGenerada <= 0
+            || $idLegajo <= 0) {
+            return false;
+        }
+
+        $perteneceAlLegajo = CuotaGenerada::query()
+            ->whereKey($idCuotaGenerada)
+            ->where('idLegajos', $idLegajo)
+            ->exists();
+
+        if (! $perteneceAlLegajo) {
+            return false;
+        }
+
+        return self::comprobantesPorCuotaGenerada($idCuotaGenerada)
+            ->contains(fn (ComprobanteAfip $c) => (int) $c->idComprobanteAfip === $idComprobanteAfip);
     }
 
     /**
@@ -230,6 +320,47 @@ final class ComprobantesAfipCuotaService
             ->whereKey($idCuotaPago)
             ->where('idCuotasGeneradas', $idCuotaGenerada)
             ->first();
+    }
+
+    /**
+     * Comprobantes AFIP asociados a una cuota (idCbteAsoc, pago principal o cobro múltiple).
+     *
+     * @return Collection<int, ComprobanteAfip>
+     */
+    private static function comprobantesPorCuotaGenerada(int $idCuotaGenerada): Collection
+    {
+        $registro = CuotaGenerada::query()
+            ->with('cuota:id,nombre')
+            ->whereKey($idCuotaGenerada)
+            ->first();
+        $nombreCuota = mb_strtoupper(trim((string) ($registro?->cuota?->nombre ?? '')));
+
+        return ComprobanteAfip::query()
+            ->where(function (Builder $q) use ($idCuotaGenerada, $nombreCuota): void {
+                $q->where('idCbteAsoc', $idCuotaGenerada)
+                    ->orWhereIn('idCuotasPagos', function ($sub) use ($idCuotaGenerada): void {
+                        $sub->select('id')
+                            ->from('cuotaspagos')
+                            ->where('idCuotasGeneradas', $idCuotaGenerada);
+                    })
+                    ->orWhereExists(function ($sub) use ($idCuotaGenerada): void {
+                        $sub->selectRaw('1')
+                            ->from('cuotaspagos as cp_batch')
+                            ->where('cp_batch.idCuotasGeneradas', $idCuotaGenerada)
+                            ->whereRaw('FIND_IN_SET(cp_batch.id, comprobanteafip.saldoRestante)');
+                    });
+
+                if ($nombreCuota !== '') {
+                    $q->orWhere(function (Builder $sub) use ($nombreCuota): void {
+                        $sub->where('subConceptos', $nombreCuota)
+                            ->orWhere('subConceptos', 'like', $nombreCuota.'|%')
+                            ->orWhere('subConceptos', 'like', '%|'.$nombreCuota.'|%')
+                            ->orWhere('subConceptos', 'like', '%|'.$nombreCuota);
+                    });
+                }
+            })
+            ->orderByDesc('idComprobanteAfip')
+            ->get();
     }
 
     /**

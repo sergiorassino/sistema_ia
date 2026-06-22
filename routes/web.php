@@ -3,7 +3,9 @@
 use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
+use App\Http\Controllers\Alumnos\ComprobanteAfipPdfController as AlumnosComprobanteAfipPdfController;
 use App\Http\Controllers\Alumnos\ComprobantePagoPdfController;
+use App\Http\Controllers\Alumnos\ResumenPagosPdfController;
 use App\Http\Controllers\Alumnos\DocumentoEstudianteAutogestionPdfController;
 use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
 use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
@@ -318,6 +320,12 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/aranceles-escolares/comprobante/{ref}', ComprobantePagoPdfController::class)
         ->where('ref', '[A-Za-z0-9_-]+')
         ->name('alumnos.aranceles-escolares.comprobante');
+    Route::get('/aranceles-escolares/comprobante-afip/{ref}', AlumnosComprobanteAfipPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('alumnos.aranceles-escolares.comprobante-afip');
+    Route::get('/aranceles-escolares/resumen-pagos/{ref}', ResumenPagosPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('alumnos.aranceles-escolares.resumen-pagos');
     Route::get('/aranceles-escolares/formulario-debito-automatico', FormularioDebitoAutomaticoPdfController::class)
         ->name('alumnos.aranceles-escolares.formulario-debito-automatico');
 

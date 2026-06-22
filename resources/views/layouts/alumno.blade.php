@@ -157,6 +157,7 @@
 
         @include('layouts.partials.alumno-nav-calificaciones')
 
+        @if (tenantAutogestionInformeInasistenciasHabilitada())
         <a href="{{ se_route_url('alumnos.inasistencias.informe') }}"
            target="_blank"
            rel="noopener noreferrer"
@@ -168,6 +169,7 @@
             </svg>
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Informe de inasistencias</span>
         </a>
+        @endif
 
         @if (tenantAutogestionActualizacionDatosHabilitada())
             <a href="{{ route('alumnos.actualizacion-datos') }}"
@@ -213,7 +215,7 @@
             </a>
         @endif
 
-        @if(studentEsNivelSecundario())
+        @if (tenantAutogestionHorarioClaseHabilitada())
             <a href="{{ se_route_url('alumnos.horario-clase') }}"
                target="_blank"
                rel="noopener noreferrer"

@@ -3,6 +3,7 @@
 namespace App\Support\Cuotas;
 
 use App\Models\CuotaPago;
+use App\Support\Alumnos\ArancelesEscolares;
 use Illuminate\Support\Collection;
 
 /**
@@ -34,6 +35,39 @@ final class ResumenPagosEstudianteDatos
             'dni' => (string) ($encabezado['dni'] ?? ''),
             'curso' => (string) ($encabezado['curso'] ?? ''),
             'terlecAno' => (string) ($encabezado['terlecAno'] ?? schoolCtx()->terlecAno()),
+            'filas' => $filas,
+            'totales' => $totales,
+        ];
+    }
+
+    /**
+     * Portal familia — resumen de pagos del estudiante en sesión.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function paraAutogestion(): ?array
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        $idLegajo = (int) $ctx->idLegajo;
+        $encabezado = ArancelesEscolares::encabezadoAutogestion();
+        if ($encabezado === null) {
+            return null;
+        }
+
+        $filas = self::filasPagos($idLegajo);
+        $totales = self::calcularTotales($filas);
+
+        return [
+            'pdfHeader' => studentPdfHeaderData(),
+            'fechaImpresion' => now()->format('d/m/Y H:i'),
+            'apellidoNombre' => mb_strtoupper(trim($encabezado['apellido'].', '.$encabezado['nombre'])),
+            'dni' => (string) ($encabezado['dni'] ?? ''),
+            'curso' => (string) ($encabezado['curso'] ?? ''),
+            'terlecAno' => (string) ($ctx->terlecAno() ?? ''),
             'filas' => $filas,
             'totales' => $totales,
         ];

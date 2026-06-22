@@ -52,6 +52,7 @@ final class ComprobantePagoCalculo
         $attrsEnto = $entoAdmin?->getAttributes() ?? [];
         $siroIniPrim = trim((string) ($attrsEnto['siroIniPrim'] ?? ''));
         $siroSecu = trim((string) ($attrsEnto['siroSecu'] ?? ''));
+        $siroHabilitado = tenantCuotasSiroHabilitado();
 
         $importes = CuotasImporte::query()
             ->where('idCuotas', $idCuotas)
@@ -109,38 +110,45 @@ final class ComprobantePagoCalculo
 
             $importeVenc3 = $nuevoImporte;
             $venc3 = $nuevoVenc;
-
-            $barraPartes = self::partesCodigoBarrasVencido(
-                $identConcepto,
-                $idLegajos,
-                $idCuotas,
-                $nuevoVenc,
-                $nuevoImporte,
-                $idNivel,
-                $siroIniPrim,
-                $siroSecu,
-            );
-        } else {
-            $barraPartes = self::partesCodigoBarrasVigente(
-                $identConcepto,
-                $idLegajos,
-                $idCuotas,
-                $venc1,
-                $importeVenc1,
-                $venc2,
-                $importeVenc2,
-                $venc3,
-                $importeVenc3,
-                $idNivel,
-                $siroIniPrim,
-                $siroSecu,
-            );
         }
 
-        $numeroCuenta = $barraPartes['numeroCuenta'];
-        $barra = ComprobantePagoCodigoBarras::armar($barraPartes);
+        if ($siroHabilitado) {
+            if ($cuponVencido) {
+                $barraPartes = self::partesCodigoBarrasVencido(
+                    $identConcepto,
+                    $idLegajos,
+                    $idCuotas,
+                    $nuevoVenc ?? $venc3,
+                    (float) $nuevoImporte,
+                    $idNivel,
+                    $siroIniPrim,
+                    $siroSecu,
+                );
+            } else {
+                $barraPartes = self::partesCodigoBarrasVigente(
+                    $identConcepto,
+                    $idLegajos,
+                    $idCuotas,
+                    $venc1,
+                    $importeVenc1,
+                    $venc2,
+                    $importeVenc2,
+                    $venc3,
+                    $importeVenc3,
+                    $idNivel,
+                    $siroIniPrim,
+                    $siroSecu,
+                );
+            }
 
-        $codigoPagoElectronico = self::codigoPagoElectronicoConSiro($idLegajos, $idNivel, $siroIniPrim, $siroSecu);
+            $numeroCuenta = $barraPartes['numeroCuenta'];
+            $barra = ComprobantePagoCodigoBarras::armar($barraPartes);
+            $codigoPagoElectronico = self::codigoPagoElectronicoConSiro($idLegajos, $idNivel, $siroIniPrim, $siroSecu);
+        } else {
+            $numeroCuenta = '';
+            $barra = '';
+            $codigoPagoElectronico = '';
+        }
 
         $idCuotasbecas = (int) ($registro->idCuotasbecas ?? 0);
         $leyendaBeca = '';
@@ -164,10 +172,12 @@ final class ComprobantePagoCalculo
             .str_pad((string) $ultUpload, 2, '0', STR_PAD_LEFT)
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT);
 
-        $cadenaQr = ComprobantePagoSiroQr::obtenerCadena(
-            $nroCliente.$numeroCuenta,
-            $nroComprobanteQr,
-        );
+        $cadenaQr = $siroHabilitado
+            ? ComprobantePagoSiroQr::obtenerCadena(
+                $nroCliente.$numeroCuenta,
+                $nroComprobanteQr,
+            )
+            : '';
 
         $cuit = self::formatearCuit(trim((string) ($attrsEnto['cuit'] ?? '')));
 
@@ -215,6 +225,10 @@ final class ComprobantePagoCalculo
 
     public static function codigoPagoElectronico(int $idLegajos, int $idNivel): string
     {
+        if (! tenantCuotasSiroHabilitado()) {
+            return '';
+        }
+
         $entoAdmin = Ento::query()
             ->where('idNivel', self::ID_NIVEL_ADMINISTRACION)
             ->first();
