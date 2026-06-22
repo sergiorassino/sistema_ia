@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
+use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\NivelSistema;
 use Illuminate\Support\Collection;
@@ -33,6 +34,7 @@ class InformeProgresoInicialIndex extends Component
             'Este módulo corresponde al nivel inicial. Cambie el contexto de nivel en el menú lateral.'
         );
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+        InformeProgresoInicialDatos::abortSiColumnaInfoCalifInexistente();
     }
 
     public function updatedCursoId(mixed $value): void
