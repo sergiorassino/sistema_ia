@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Lectura y persistencia del formulario manual de calificaciones (primario).
+ *
+ * Vínculo materia ↔ calificación: `calificaciones.idMaterias` (como secundario y Sincro GE).
+ * `calificaciones.ord` se mantiene como copia desnormalizada de `materias.ord` al insertar;
+ * en lectura legacy se acepta fallback por `ord` solo si `idMaterias` está vacío en la fila.
  */
 final class CalificacionesPrimarioDatos
 {
@@ -33,21 +37,19 @@ final class CalificacionesPrimarioDatos
         $idCurso = (int) $matricula->idCursos;
         $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($matricula->curso);
 
-        // Mismas materias y orden que «Asignaturas del año»: `materias.ord` ascendente (sin reorden IPE).
         $materias = CalificacionesPrimarioCatalogo::materiasParaSelectorAnio(
             $idCurso,
             (int) $matricula->idNivel,
             (int) $matricula->idTerlec,
         );
 
-        $ords = $materias->pluck('ord')->map(fn ($o) => (int) $o)->all();
-        $porOrd = self::calificacionesPorOrd($idMatricula, $ords);
+        $porMateria = self::calificacionesPorMaterias($idMatricula, $materias);
 
         $notas = [];
         foreach ($materias as $m) {
-            $ord = (int) $m->ord;
-            $fila = $porOrd[$ord] ?? null;
-            $notas[$ord] = [
+            $idMaterias = (int) $m->id;
+            $fila = $porMateria[$idMaterias] ?? null;
+            $notas[$idMaterias] = [
                 'id' => $fila !== null ? (int) $fila->id : null,
                 'ic01' => (string) ($fila->ic01 ?? ''),
                 'ic02' => (string) ($fila->ic02 ?? ''),
@@ -76,7 +78,64 @@ final class CalificacionesPrimarioDatos
     }
 
     /**
-     * Notas completas por `ord` (todos los campos del esquema primario).
+     * Notas completas por `idMaterias` (todos los campos del esquema primario).
+     *
+     * @param  list<int>  $idsMaterias
+     * @return array<int, array<string, string>>
+     */
+    public static function calificacionesCompletasPorIdMaterias(int $idMatricula, array $idsMaterias): array
+    {
+        if ($idsMaterias === []) {
+            return [];
+        }
+
+        $campos = array_merge(
+            CalificacionesPrimarioCatalogo::camposNotaTodos(),
+            CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
+            [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
+        );
+        $columnas = array_merge(['id', 'idMaterias', 'ord'], $campos);
+
+        $filas = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->get($columnas);
+
+        $porIdMaterias = [];
+        $porOrdLegacy = [];
+        foreach ($filas as $r) {
+            $idMat = (int) ($r->idMaterias ?? 0);
+            if ($idMat > 0) {
+                $porIdMaterias[$idMat] = $r;
+
+                continue;
+            }
+            $porOrdLegacy[(int) $r->ord] = $r;
+        }
+
+        $materias = DB::table('materias')
+            ->whereIn('id', $idsMaterias)
+            ->get(['id', 'ord']);
+
+        $out = [];
+        foreach ($materias as $m) {
+            $idMaterias = (int) $m->id;
+            $r = $porIdMaterias[$idMaterias] ?? $porOrdLegacy[(int) $m->ord] ?? null;
+            if ($r === null) {
+                continue;
+            }
+
+            $nota = [];
+            foreach ($campos as $campo) {
+                $nota[$campo] = (string) ($r->{$campo} ?? '');
+            }
+            $out[$idMaterias] = $nota;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @deprecated Use calificacionesCompletasPorIdMaterias()
      *
      * @param  list<int>  $ords
      * @return array<int, array<string, string>>
@@ -87,48 +146,53 @@ final class CalificacionesPrimarioDatos
             return [];
         }
 
-        $campos = array_merge(
-            CalificacionesPrimarioCatalogo::camposNotaTodos(),
-            CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
-            [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
-        );
-        $columnas = array_merge(['ord'], $campos);
-
-        $filas = DB::table('calificaciones')
-            ->where('idMatricula', $idMatricula)
+        $idsMaterias = DB::table('materias')
             ->whereIn('ord', $ords)
-            ->get($columnas);
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
+        $porId = self::calificacionesCompletasPorIdMaterias($idMatricula, $idsMaterias);
         $out = [];
-        foreach ($filas as $r) {
-            $nota = [];
-            foreach ($campos as $campo) {
-                $nota[$campo] = (string) ($r->{$campo} ?? '');
+        foreach ($idsMaterias as $i => $idMaterias) {
+            if (isset($porId[$idMaterias], $ords[$i])) {
+                $out[(int) $ords[$i]] = $porId[$idMaterias];
             }
-            $out[(int) $r->ord] = $nota;
         }
 
         return $out;
     }
 
     /**
-     * @param  list<int>  $ords
+     * @param  Collection<int, object{id: int, ord: int}>  $materias
      * @return array<int, object{id: int, ic01: ?string, ic02: ?string, ic03: ?string}>
      */
-    private static function calificacionesPorOrd(int $idMatricula, array $ords): array
+    private static function calificacionesPorMaterias(int $idMatricula, Collection $materias): array
     {
-        if ($ords === []) {
+        if ($materias->isEmpty()) {
             return [];
         }
 
         $filas = DB::table('calificaciones')
             ->where('idMatricula', $idMatricula)
-            ->whereIn('ord', $ords)
-            ->get(['id', 'ord', 'ic01', 'ic02', 'ic03']);
+            ->get(['id', 'idMaterias', 'ord', 'ic01', 'ic02', 'ic03']);
+
+        $porIdMaterias = [];
+        $porOrdLegacy = [];
+        foreach ($filas as $r) {
+            $idMat = (int) ($r->idMaterias ?? 0);
+            if ($idMat > 0) {
+                $porIdMaterias[$idMat] = $r;
+
+                continue;
+            }
+            $porOrdLegacy[(int) $r->ord] = $r;
+        }
 
         $out = [];
-        foreach ($filas as $r) {
-            $out[(int) $r->ord] = $r;
+        foreach ($materias as $m) {
+            $idMaterias = (int) $m->id;
+            $out[$idMaterias] = $porIdMaterias[$idMaterias] ?? $porOrdLegacy[(int) $m->ord] ?? null;
         }
 
         return $out;
@@ -136,31 +200,42 @@ final class CalificacionesPrimarioDatos
 
     public static function guardarNota(
         Matricula $matricula,
-        int $ord,
+        int $idMaterias,
         string $campo,
         string $valor,
-        ?int $idMaterias = null,
     ): void {
         if (! CalificacionesPrimarioCatalogo::esCampoNotaGrillaPersistible($campo)) {
             abort(400);
         }
 
+        $materia = self::materiaDelCursoPorId(
+            (int) $matricula->idCursos,
+            (int) $matricula->idNivel,
+            (int) $matricula->idTerlec,
+            $idMaterias,
+        );
+        if ($materia === null) {
+            abort(404, 'Materia no encontrada para este curso.');
+        }
+
         $matricula->loadMissing('curso.curplan');
         $ciclo = CalificacionesPrimarioCatalogo::cicloDesdeCurso($matricula->curso);
-        if (CalificacionesPrimarioCatalogo::celdaInhabilitada($ciclo, $ord, $campo)) {
+        if (CalificacionesPrimarioCatalogo::celdaInhabilitada($ciclo, (int) $materia->ord, $campo)) {
             return;
         }
 
         $idMatricula = (int) $matricula->id;
-        $existente = DB::table('calificaciones')
-            ->where('idMatricula', $idMatricula)
-            ->where('ord', $ord)
-            ->first(['id']);
+        $existente = self::buscarCalificacion($idMatricula, $idMaterias, (int) $materia->ord);
 
-        if ($existente) {
+        if ($existente !== null) {
+            $payload = [$campo => $valor];
+            if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
+                $payload['idMaterias'] = $idMaterias;
+            }
+
             DB::table('calificaciones')
                 ->where('id', (int) $existente->id)
-                ->update([$campo => $valor]);
+                ->update($payload);
 
             return;
         }
@@ -171,7 +246,7 @@ final class CalificacionesPrimarioDatos
             'idTerlec' => (int) $matricula->idTerlec,
             'idCursos' => (int) $matricula->idCursos,
             'idMaterias' => $idMaterias,
-            'ord' => $ord,
+            'ord' => (int) $materia->ord,
             'ic01' => $campo === 'ic01' ? $valor : '',
             'ic02' => $campo === 'ic02' ? $valor : '',
             'ic03' => $campo === 'ic03' ? $valor : '',
@@ -181,25 +256,36 @@ final class CalificacionesPrimarioDatos
 
     public static function guardarObservacionCalificacion(
         Matricula $matricula,
-        int $ord,
+        int $idMaterias,
         string $campo,
         string $valor,
-        ?int $idMaterias = null,
     ): void {
         if (! CalificacionesPrimarioCatalogo::esCampoObservacionCalificacion($campo)) {
             abort(400);
         }
 
-        $idMatricula = (int) $matricula->id;
-        $existente = DB::table('calificaciones')
-            ->where('idMatricula', $idMatricula)
-            ->where('ord', $ord)
-            ->first(['id']);
+        $materia = self::materiaDelCursoPorId(
+            (int) $matricula->idCursos,
+            (int) $matricula->idNivel,
+            (int) $matricula->idTerlec,
+            $idMaterias,
+        );
+        if ($materia === null) {
+            abort(404, 'Materia no encontrada para este curso.');
+        }
 
-        if ($existente) {
+        $idMatricula = (int) $matricula->id;
+        $existente = self::buscarCalificacion($idMatricula, $idMaterias, (int) $materia->ord);
+
+        if ($existente !== null) {
+            $payload = [$campo => $valor];
+            if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
+                $payload['idMaterias'] = $idMaterias;
+            }
+
             DB::table('calificaciones')
                 ->where('id', (int) $existente->id)
-                ->update([$campo => $valor]);
+                ->update($payload);
 
             return;
         }
@@ -210,10 +296,31 @@ final class CalificacionesPrimarioDatos
             'idTerlec' => (int) $matricula->idTerlec,
             'idCursos' => (int) $matricula->idCursos,
             'idMaterias' => $idMaterias,
-            'ord' => $ord,
+            'ord' => (int) $materia->ord,
             'obs01' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_1 ? $valor : '',
             'obs02' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_2 ? $valor : '',
         ]);
+    }
+
+    /**
+     * Valor persistido de un campo en la fila materia × matrícula (con fallback legacy por `ord`).
+     */
+    public static function valorCampoCalificacion(
+        int $idMatricula,
+        int $idMaterias,
+        int $ordMateria,
+        string $campo,
+    ): string {
+        $fila = self::buscarCalificacion($idMatricula, $idMaterias, $ordMateria);
+        if ($fila === null) {
+            return '';
+        }
+
+        $valor = DB::table('calificaciones')
+            ->where('id', (int) $fila->id)
+            ->value($campo);
+
+        return trim((string) ($valor ?? ''));
     }
 
     public static function guardarObservacionMatricula(int $idMatricula, string $campo, string $valor): void
@@ -262,7 +369,35 @@ final class CalificacionesPrimarioDatos
     }
 
     /**
-     * Materia del curso por `ord` (revalidación en cada guardado; no depender de estado Livewire).
+     * Materia del curso por `id` (revalidación en cada guardado; no depender de estado Livewire).
+     *
+     * @return object{id: int, ord: int}|null
+     */
+    public static function materiaDelCursoPorId(int $idCurso, int $idNivel, int $idTerlec, int $idMaterias): ?object
+    {
+        if ($idMaterias < 1) {
+            return null;
+        }
+
+        $fila = DB::table('materias')
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('idCursos', $idCurso)
+            ->where('id', $idMaterias)
+            ->first(['id', 'ord']);
+
+        if ($fila === null) {
+            return null;
+        }
+
+        return (object) [
+            'id' => (int) $fila->id,
+            'ord' => (int) $fila->ord,
+        ];
+    }
+
+    /**
+     * @deprecated Use materiaDelCursoPorId()
      *
      * @return object{id: int, ord: int}|null
      */
@@ -375,7 +510,7 @@ final class CalificacionesPrimarioDatos
             ->get();
 
         $idsMatricula = $matriculas->map(fn (Matricula $m) => (int) $m->id)->all();
-        $porMatricula = self::calificacionesPorMatriculaOrd($idsMatricula, $ord);
+        $porMatricula = self::calificacionesPorMatriculaIdMaterias($idsMatricula, $materiaId, $ord);
 
         $filas = [];
         foreach ($matriculas as $mat) {
@@ -406,28 +541,78 @@ final class CalificacionesPrimarioDatos
     }
 
     /**
-     * @param  list<int>  $idsMatricula
-     * @return array<int, object{id: int, ic01: ?string, ic02: ?string, ic03: ?string, ic05: ?string, ic06: ?string, ic07: ?string, ic08: ?string, ic09: ?string, ic10: ?string, ic11: ?string, ic12: ?string, ic13: ?string, ic14: ?string, ic15: ?string, ic16: ?string}>
+     * @return object{id: int, idMaterias: ?int, ord: ?int}|null
      */
-    private static function calificacionesPorMatriculaOrd(array $idsMatricula, int $ord): array
+    private static function buscarCalificacion(int $idMatricula, int $idMaterias, int $ordMateria): ?object
     {
-        if ($idsMatricula === []) {
+        $columnas = ['id', 'idMaterias', 'ord'];
+
+        if ($idMaterias > 0) {
+            $fila = DB::table('calificaciones')
+                ->where('idMatricula', $idMatricula)
+                ->where('idMaterias', $idMaterias)
+                ->first($columnas);
+
+            if ($fila !== null) {
+                return $fila;
+            }
+        }
+
+        if ($ordMateria < 1) {
+            return null;
+        }
+
+        return DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->where('ord', $ordMateria)
+            ->where(function ($q): void {
+                $q->whereNull('idMaterias')
+                    ->orWhere('idMaterias', 0);
+            })
+            ->first($columnas);
+    }
+
+    /**
+     * @param  list<int>  $idsMatricula
+     * @return array<int, object{id: int, idMatricula: int, ic01: ?string, ic02: ?string, ic03: ?string, ic05: ?string, ic06: ?string, ic07: ?string, ic08: ?string, ic09: ?string, ic10: ?string, ic11: ?string, ic12: ?string, ic13: ?string, ic14: ?string, ic15: ?string, ic16: ?string}>
+     */
+    private static function calificacionesPorMatriculaIdMaterias(array $idsMatricula, int $idMaterias, int $ordMateria): array
+    {
+        if ($idsMatricula === [] || $idMaterias < 1) {
             return [];
         }
 
+        $columnas = array_merge(
+            ['id', 'idMatricula', 'idMaterias', 'ord'],
+            CalificacionesPrimarioCatalogo::camposNotaTodos(),
+            CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
+            [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
+        );
+
         $filas = DB::table('calificaciones')
             ->whereIn('idMatricula', $idsMatricula)
-            ->where('ord', $ord)
-            ->get(array_merge(
-                ['id', 'idMatricula', 'ord'],
-                CalificacionesPrimarioCatalogo::camposNotaTodos(),
-                CalificacionesPrimarioCatalogo::camposObservacionCalificacion(),
-                [CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION],
-            ));
+            ->where(function ($q) use ($idMaterias, $ordMateria): void {
+                $q->where('idMaterias', $idMaterias);
+                if ($ordMateria > 0) {
+                    $q->orWhere(function ($q2) use ($ordMateria): void {
+                        $q2->where('ord', $ordMateria)
+                            ->where(function ($q3): void {
+                                $q3->whereNull('idMaterias')
+                                    ->orWhere('idMaterias', 0);
+                            });
+                    });
+                }
+            })
+            ->get($columnas);
 
         $out = [];
         foreach ($filas as $r) {
-            $out[(int) $r->idMatricula] = $r;
+            $idMatricula = (int) $r->idMatricula;
+            $esPorId = (int) ($r->idMaterias ?? 0) === $idMaterias;
+
+            if ($esPorId || ! isset($out[$idMatricula])) {
+                $out[$idMatricula] = $r;
+            }
         }
 
         return $out;

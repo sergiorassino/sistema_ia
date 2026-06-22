@@ -256,6 +256,10 @@ class CargaCalificacionesPrimarioMateria extends Component
             abort(404, 'Matrícula no encontrada en el curso activo.');
         }
 
+        if (! $this->materiaId) {
+            abort(400);
+        }
+
         $value = is_string($value) ? trim($value) : (string) ($value ?? '');
 
         if ($esObsCalificacion) {
@@ -268,10 +272,9 @@ class CargaCalificacionesPrimarioMateria extends Component
 
             CalificacionesPrimarioDatos::guardarObservacionCalificacion(
                 $mat,
-                $this->ordMateria,
+                (int) $this->materiaId,
                 $campo,
                 $value,
-                (int) $this->materiaId,
             );
 
             if (isset($this->filas[$idMatricula])) {
@@ -279,7 +282,7 @@ class CargaCalificacionesPrimarioMateria extends Component
                 if ($this->filas[$idMatricula]['idCalificacion'] === null) {
                     $idCalif = DB::table('calificaciones')
                         ->where('idMatricula', $idMatricula)
-                        ->where('ord', $this->ordMateria)
+                        ->where('idMaterias', (int) $this->materiaId)
                         ->value('id');
                     $this->filas[$idMatricula]['idCalificacion'] = $idCalif !== null ? (int) $idCalif : null;
                 }
@@ -296,10 +299,12 @@ class CargaCalificacionesPrimarioMateria extends Component
         )->validate();
 
         if (! $this->notaPermitida($value)) {
-            $guardado = (string) (DB::table('calificaciones')
-                ->where('idMatricula', $idMatricula)
-                ->where('ord', $this->ordMateria)
-                ->value($campo) ?? '');
+            $guardado = CalificacionesPrimarioDatos::valorCampoCalificacion(
+                $idMatricula,
+                (int) $this->materiaId,
+                $this->ordMateria,
+                $campo,
+            );
             if (isset($this->filas[$idMatricula])) {
                 $this->filas[$idMatricula]['notas'][$campo] = $guardado;
             }
@@ -309,10 +314,9 @@ class CargaCalificacionesPrimarioMateria extends Component
 
         CalificacionesPrimarioDatos::guardarNota(
             $mat,
-            $this->ordMateria,
+            (int) $this->materiaId,
             $campo,
             $value,
-            (int) $this->materiaId,
         );
 
         if (isset($this->filas[$idMatricula])) {
@@ -320,7 +324,7 @@ class CargaCalificacionesPrimarioMateria extends Component
             if ($this->filas[$idMatricula]['idCalificacion'] === null) {
                 $idCalif = DB::table('calificaciones')
                     ->where('idMatricula', $idMatricula)
-                    ->where('ord', $this->ordMateria)
+                    ->where('idMaterias', (int) $this->materiaId)
                     ->value('id');
                 $this->filas[$idMatricula]['idCalificacion'] = $idCalif !== null ? (int) $idCalif : null;
             }

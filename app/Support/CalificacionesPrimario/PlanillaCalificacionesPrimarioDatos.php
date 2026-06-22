@@ -125,7 +125,7 @@ final class PlanillaCalificacionesPrimarioDatos
 
             $materiasLista = array_merge($materiasCurriculares, $materiasInstitucionales);
 
-            $ords = array_column($materiasLista, 'ord');
+            $idsMaterias = array_column($materiasLista, 'id');
 
             $matriculas = Matricula::query()
                 ->with('legajo')
@@ -140,7 +140,8 @@ final class PlanillaCalificacionesPrimarioDatos
 
             $notasPorMatricula = self::notasPorMatricula(
                 $matriculas->map(fn (Matricula $m) => (int) $m->id)->all(),
-                $ords,
+                $idsMaterias,
+                $materiasLista,
                 $campoNota,
             );
 
@@ -155,8 +156,8 @@ final class PlanillaCalificacionesPrimarioDatos
 
                 $notas = [];
                 foreach ($materiasLista as $matDef) {
-                    $ord = (int) $matDef['ord'];
-                    $notas[] = (string) ($notasPorMatricula[$idMatricula][$ord] ?? '');
+                    $idMaterias = (int) $matDef['id'];
+                    $notas[] = (string) ($notasPorMatricula[$idMatricula][$idMaterias] ?? '');
                 }
 
                 $alumnos[] = [
@@ -186,12 +187,13 @@ final class PlanillaCalificacionesPrimarioDatos
 
     /**
      * @param  list<int>  $idMatriculas
-     * @param  list<int>  $ords
+     * @param  list<int>  $idsMaterias
+     * @param  list<array{id: int, ord: int}>  $materiasLista
      * @return array<int, array<int, string>>
      */
-    private static function notasPorMatricula(array $idMatriculas, array $ords, string $campoNota): array
+    private static function notasPorMatricula(array $idMatriculas, array $idsMaterias, array $materiasLista, string $campoNota): array
     {
-        if ($idMatriculas === [] || $ords === []) {
+        if ($idMatriculas === [] || $idsMaterias === []) {
             return [];
         }
 
@@ -199,16 +201,50 @@ final class PlanillaCalificacionesPrimarioDatos
             return [];
         }
 
+        $ordsLegacy = array_column($materiasLista, 'ord', 'id');
+
         $filas = DB::table('calificaciones')
             ->whereIn('idMatricula', $idMatriculas)
-            ->whereIn('ord', $ords)
-            ->get(['idMatricula', 'ord', $campoNota]);
+            ->where(function ($q) use ($idsMaterias, $ordsLegacy): void {
+                $q->whereIn('idMaterias', $idsMaterias);
+                $ords = array_values(array_filter(array_map('intval', $ordsLegacy)));
+                if ($ords !== []) {
+                    $q->orWhere(function ($q2) use ($ords): void {
+                        $q2->whereIn('ord', $ords)
+                            ->where(function ($q3): void {
+                                $q3->whereNull('idMaterias')
+                                    ->orWhere('idMaterias', 0);
+                            });
+                    });
+                }
+            })
+            ->get(['idMatricula', 'idMaterias', 'ord', $campoNota]);
 
-        $out = [];
+        $porIdMaterias = [];
+        $porOrdLegacy = [];
         foreach ($filas as $r) {
             $idMat = (int) $r->idMatricula;
-            $ord = (int) $r->ord;
-            $out[$idMat][$ord] = trim((string) ($r->{$campoNota} ?? ''));
+            $idMaterias = (int) ($r->idMaterias ?? 0);
+            $valor = trim((string) ($r->{$campoNota} ?? ''));
+
+            if ($idMaterias > 0) {
+                $porIdMaterias[$idMat][$idMaterias] = $valor;
+
+                continue;
+            }
+
+            $porOrdLegacy[$idMat][(int) $r->ord] = $valor;
+        }
+
+        $out = [];
+        foreach ($idMatriculas as $idMatricula) {
+            foreach ($materiasLista as $matDef) {
+                $idMaterias = (int) $matDef['id'];
+                $ord = (int) $matDef['ord'];
+                $out[$idMatricula][$idMaterias] = $porIdMaterias[$idMatricula][$idMaterias]
+                    ?? $porOrdLegacy[$idMatricula][$ord]
+                    ?? '';
+            }
         }
 
         return $out;

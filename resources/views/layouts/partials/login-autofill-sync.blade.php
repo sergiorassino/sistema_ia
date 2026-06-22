@@ -17,15 +17,22 @@
 
         let syncTimer = null;
 
-        const syncAutofill = () => {
+        const syncAutofill = async () => {
             const dniVal = readField('dni').replace(/\D/g, '').slice(0, 11);
+            const pwrdVal = readField('pwrd');
+            let dniCambio = false;
+
             if (dniVal.length >= 7 && $wire.get('dni') !== dniVal) {
-                $wire.set('dni', dniVal);
+                await $wire.set('dni', dniVal);
+                dniCambio = true;
             }
 
-            const pwrdVal = readField('pwrd');
             if (pwrdVal !== '' && $wire.get('pwrd') !== pwrdVal) {
-                $wire.set('pwrd', pwrdVal);
+                await $wire.set('pwrd', pwrdVal);
+            }
+
+            if (dniCambio || (dniVal.length >= 7 && pwrdVal !== '')) {
+                await $wire.sugerirUltimoAccesoDesdeDni();
             }
         };
 
@@ -36,15 +43,17 @@
             syncTimer = window.setTimeout(syncAutofill, 120);
         };
 
-        form.querySelector('#dni')?.addEventListener('change', scheduleSyncAutofill);
-        form.querySelector('#pwrd')?.addEventListener('change', scheduleSyncAutofill);
+        ['change', 'input'].forEach((eventName) => {
+            form.querySelector('#dni')?.addEventListener(eventName, scheduleSyncAutofill);
+            form.querySelector('#pwrd')?.addEventListener(eventName, scheduleSyncAutofill);
+        });
 
         const boot = () => {
             if (boot.started) {
                 return;
             }
             boot.started = true;
-            [300, 800].forEach((ms) => window.setTimeout(scheduleSyncAutofill, ms));
+            [100, 300, 600, 1200].forEach((ms) => window.setTimeout(scheduleSyncAutofill, ms));
         };
 
         document.addEventListener('livewire:initialized', boot, { once: true });

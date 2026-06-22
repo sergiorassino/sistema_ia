@@ -64,14 +64,14 @@ final class BoletinIpeMontecristoDatos
             (int) $matricula->idTerlec,
         );
         $materiasInfoCalif = self::materiasConInfoCalif($materiasCurso);
-        $ords = $materiasInfoCalif->pluck('ord')->map(fn ($o) => (int) $o)->all();
-        $notasPorOrd = CalificacionesPrimarioDatos::calificacionesCompletasPorOrd($idMatricula, $ords);
+        $idsMaterias = $materiasInfoCalif->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $notasPorIdMaterias = CalificacionesPrimarioDatos::calificacionesCompletasPorIdMaterias($idMatricula, $idsMaterias);
 
         $filas = [];
         foreach ($materiasInfoCalif as $m) {
-            $ord = (int) $m->ord;
+            $idMaterias = (int) $m->id;
             $nombre = trim((string) ($m->materia ?? ''));
-            $nota = $notasPorOrd[$ord] ?? self::notaVacia();
+            $nota = $notasPorIdMaterias[$idMaterias] ?? self::notaVacia();
             $campoObs = CalificacionesPrimarioCatalogo::campoObsCalificacionPorEtapa($etapa);
 
             $filas[] = [

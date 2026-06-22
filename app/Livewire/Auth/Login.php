@@ -61,7 +61,19 @@ class Login extends Component
             $this->dni = $dni;
         }
 
-        // Evitar consultas si el DNI todavía no es válido
+        $this->sugerirUltimoAccesoDesdeDni();
+    }
+
+    public function updatedPwrd(): void
+    {
+        $this->resetErrorBag('dni');
+        $this->sugerirUltimoAccesoDesdeDni();
+    }
+
+    /** Sugiere nivel y año lectivo según el último acceso guardado en `profesores`. */
+    public function sugerirUltimoAccesoDesdeDni(): void
+    {
+        $dni = DniInput::digitsOnly($this->dni);
         if ($dni === '' || strlen($dni) < 7) {
             return;
         }
@@ -88,11 +100,6 @@ class Login extends Component
                 $this->idTerlec = $ultTerlec;
             }
         }
-    }
-
-    public function updatedPwrd(): void
-    {
-        $this->resetErrorBag('dni');
     }
 
     public function rules(): array
@@ -127,34 +134,7 @@ class Login extends Component
     {
         $this->dni = DniInput::digitsOnly($this->dni);
 
-        // Si el usuario no seleccionó nivel/año, intentar sugerirlos desde el último acceso guardado.
-        $dni = $this->dni;
-        if (
-            $dni !== ''
-            && strlen($dni) >= 7
-            && ($this->idNivel === '' || $this->idTerlec === '')
-        ) {
-            $profesor = Profesor::query()
-                ->where('dni', $dni)
-                ->orderBy('id', 'asc')
-                ->first(['ult_idNivel', 'ult_idTerlec']);
-
-            if ($profesor) {
-                if ($this->idNivel === '' && (int) $profesor->ult_idNivel > 0) {
-                    $ultNivel = (int) $profesor->ult_idNivel;
-                    if (NivelSistema::nivelPermitidoEnLogin($ultNivel)) {
-                        $this->idNivel = $ultNivel;
-                    }
-                }
-
-                if ($this->idTerlec === '' && (int) $profesor->ult_idTerlec > 0) {
-                    $ultTerlec = (int) $profesor->ult_idTerlec;
-                    if (Terlec::query()->whereKey($ultTerlec)->exists()) {
-                        $this->idTerlec = $ultTerlec;
-                    }
-                }
-            }
-        }
+        $this->sugerirUltimoAccesoDesdeDni();
 
         $this->validate();
 

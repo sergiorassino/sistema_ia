@@ -139,7 +139,7 @@ class CargaCalificacionesPrimarioForm extends Component
     }
 
     #[Renderless]
-    public function saveCell(int $ord, string $campo, mixed $value): void
+    public function saveCell(int $idMaterias, string $campo, mixed $value): void
     {
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
@@ -154,24 +154,24 @@ class CargaCalificacionesPrimarioForm extends Component
             abort(400);
         }
 
-        if (CalificacionesPrimarioCatalogo::celdaInhabilitada($this->ciclo, $ord, $campo)) {
-            return;
-        }
-
         $mat = CalificacionesPrimarioDatos::matriculaEnContexto($this->idMatricula);
         if ($mat === null) {
             abort(404, 'Matrícula no encontrada en el contexto activo.');
         }
 
         $ctx = schoolCtx();
-        $materia = CalificacionesPrimarioDatos::materiaDelCursoPorOrd(
+        $materia = CalificacionesPrimarioDatos::materiaDelCursoPorId(
             (int) $mat->idCursos,
             (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
-            $ord,
+            $idMaterias,
         );
         if ($materia === null) {
-            abort(404, 'Materia no encontrada para este curso y orden.');
+            abort(404, 'Materia no encontrada para este curso.');
+        }
+
+        if (CalificacionesPrimarioCatalogo::celdaInhabilitada($this->ciclo, (int) $materia->ord, $campo)) {
+            return;
         }
 
         $value = is_string($value) ? trim($value) : (string) ($value ?? '');
@@ -184,12 +184,14 @@ class CargaCalificacionesPrimarioForm extends Component
         )->validate();
 
         if (! $this->notaPermitida($value)) {
-            $guardado = (string) (DB::table('calificaciones')
-                ->where('idMatricula', $this->idMatricula)
-                ->where('ord', $ord)
-                ->value($campo) ?? '');
-            if (isset($this->notas[$ord])) {
-                $this->notas[$ord][$campo] = $guardado;
+            $guardado = CalificacionesPrimarioDatos::valorCampoCalificacion(
+                $this->idMatricula,
+                $idMaterias,
+                (int) $materia->ord,
+                $campo,
+            );
+            if (isset($this->notas[$idMaterias])) {
+                $this->notas[$idMaterias][$campo] = $guardado;
             }
 
             return;
@@ -197,14 +199,13 @@ class CargaCalificacionesPrimarioForm extends Component
 
         CalificacionesPrimarioDatos::guardarNota(
             $mat,
-            $ord,
+            $idMaterias,
             $campo,
             $value,
-            $materia->id,
         );
 
-        if (isset($this->notas[$ord])) {
-            $this->notas[$ord][$campo] = $value;
+        if (isset($this->notas[$idMaterias])) {
+            $this->notas[$idMaterias][$campo] = $value;
         }
     }
 
