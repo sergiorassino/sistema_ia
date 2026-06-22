@@ -13,9 +13,19 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Datos del Informe de Progreso Escolar — nivel inicial (layout provincial).
+ * Espacios curriculares: solo `materias.infoCalif = 1` (sin JUSTIFICADAS / INJUSTIFICADAS).
  */
 final class InformeProgresoInicialDatos
 {
+    public static function abortSiColumnaInfoCalifInexistente(): void
+    {
+        abort_unless(
+            Schema::hasColumn('materias', 'infoCalif'),
+            503,
+            'Falta aplicar la migración del campo «Síntesis y calificaciones» (infoCalif) en materias.'
+        );
+    }
+
     /**
      * @return array{
      *     ok: bool,
@@ -29,12 +39,13 @@ final class InformeProgresoInicialDatos
      *     departamento?: string,
      *     escudoProvincia?: ?string,
      *     alumno?: array<string, mixed>,
-     *     materias?: list<array<string, mixed>>,
-     *     inasistencias?: array{just1e: string, just2e: string, inju1e: string, inju2e: string}
+     *     materias?: list<array<string, mixed>>
      * }
      */
     public static function buildForMatriculaEnContextoEscolar(int $idMatricula, int $etapa): array
     {
+        self::abortSiColumnaInfoCalifInexistente();
+
         $etapa = $etapa === 2 ? 2 : 1;
         $ctx = schoolCtx();
 
@@ -73,14 +84,15 @@ final class InformeProgresoInicialDatos
      *     departamento: string,
      *     escudoProvincia: ?string,
      *     alumno: array<string, mixed>,
-     *     materias: list<array<string, mixed>>,
-     *     inasistencias: array{just1e: string, just2e: string, inju1e: string, inju2e: string}
+     *     materias: list<array<string, mixed>>
      * }
      */
     public static function buildDesdeMatricula(Matricula $matricula, int $etapa): array
     {
-        $etapa = $etapa === 2 ? 2 : 1;
+        self::abortSiColumnaInfoCalifInexistente();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+
+        $etapa = $etapa === 2 ? 2 : 1;
 
         $ctx = schoolCtx();
         $idMatricula = (int) $matricula->id;
@@ -138,14 +150,7 @@ final class InformeProgresoInicialDatos
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->orderBy('ord')
             ->orderBy('id')
-            ->get(['id', 'ord', 'materia']);
-
-        $inasistencias = [
-            'just1e' => '',
-            'just2e' => '',
-            'inju1e' => '',
-            'inju2e' => '',
-        ];
+            ->get(['id', 'ord', 'materia', 'infoCalif']);
 
         $materiasPdf = [];
         foreach ($materiasRows as $row) {
@@ -153,22 +158,17 @@ final class InformeProgresoInicialDatos
             $idMateria = (int) $row->id;
             $ord = (int) $row->ord;
 
+            $materiaUpper = mb_strtoupper($nombreMateria);
+            if (in_array($materiaUpper, ['JUSTIFICADAS', 'INJUSTIFICADAS'], true)) {
+                continue;
+            }
+
+            if ((int) ($row->infoCalif ?? 0) !== 1) {
+                continue;
+            }
+
             $obs = self::observacionesPorMateria($idMatricula, $idMateria, $ord);
             $indicadores = self::indicadoresPorMateria($idMateria);
-
-            $materiaUpper = mb_strtoupper($nombreMateria);
-            if ($materiaUpper === 'JUSTIFICADAS') {
-                $inasistencias['just1e'] = (string) ($obs['etapa1'] ?? '');
-                $inasistencias['just2e'] = (string) ($obs['etapa2'] ?? '');
-
-                continue;
-            }
-            if ($materiaUpper === 'INJUSTIFICADAS') {
-                $inasistencias['inju1e'] = (string) ($obs['etapa1'] ?? '');
-                $inasistencias['inju2e'] = (string) ($obs['etapa2'] ?? '');
-
-                continue;
-            }
 
             $materiasPdf[] = [
                 'materia' => $nombreMateria,
@@ -191,7 +191,6 @@ final class InformeProgresoInicialDatos
             'escudoProvincia' => PlanillaCalificacionesPrimarioDatos::rutaEscudoProvincia(),
             'alumno' => $alumno,
             'materias' => $materiasPdf,
-            'inasistencias' => $inasistencias,
         ];
     }
 

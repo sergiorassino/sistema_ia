@@ -104,9 +104,7 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             $this->paginaMateria($materia, $etapa, $nombreEtapa);
         }
 
-        /** @var array{just1e: string, just2e: string, inju1e: string, inju2e: string} $inas */
-        $inas = (array) ($datos['inasistencias'] ?? []);
-        $this->paginaInasistencias($inas, $etapa, $nombreEtapa);
+        $this->paginaCierre($nombreEtapa);
     }
 
     private function dibujarEncabezadoProvincial(float $yInicio = 43.0): void
@@ -294,30 +292,13 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         }
     }
 
-    /**
-     * @param  array{just1e: string, just2e: string, inju1e: string, inju2e: string}  $inas
-     */
-    private function paginaInasistencias(array $inas, int $etapa, string $nombreEtapa): void
+    private function paginaCierre(string $nombreEtapa): void
     {
         $this->AddPage('P', 'A4');
         $this->Ln(30);
 
         TcpdfFuenteArial::aplicar($this, '', 13);
         $this->Cell(170, 7, $nombreEtapa, 0, 2, 'C');
-        $this->Ln(10);
-
-        TcpdfFuenteArial::aplicar($this, '', 11);
-        $this->Cell(50, 10, 'ASISTENCIAS', 1, 0, 'C');
-        $this->Cell(120, 5, 'INASISTENCIAS', 1, 2, 'C');
-        $this->Cell(60, 5, 'JUSTIFICADAS', 1, 0, 'C');
-        $this->Cell(60, 5, 'INJUSTIFICADAS', 1, 1, 'C');
-
-        $just = $etapa === 1 ? trim((string) ($inas['just1e'] ?? '')) : trim((string) ($inas['just2e'] ?? ''));
-        $inju = $etapa === 1 ? trim((string) ($inas['inju1e'] ?? '')) : trim((string) ($inas['inju2e'] ?? ''));
-
-        $this->Cell(50, 8, '', 1, 0, 'C');
-        $this->Cell(60, 8, $just, 1, 0, 'C');
-        $this->Cell(60, 8, $inju, 1, 1, 'C');
         $this->Ln(20);
 
         TcpdfFuenteArial::aplicar($this, '', 9);
