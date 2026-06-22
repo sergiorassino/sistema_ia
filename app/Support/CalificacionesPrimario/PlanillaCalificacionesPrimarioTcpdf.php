@@ -12,11 +12,22 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 {
     private const MARGEN_IZQ = 15.0;
 
+    private const ANCHO_UTIL = 180.0;
+
     private const FILL_GRIS = [232, 232, 232];
 
     private const ANCHO_NRO = 7.0;
 
-    private const ANCHO_NOMBRE = 50.0;
+    /** Legacy 50 mm; ajustado para A4 vertical (40 mm + 10 %). */
+    private const ANCHO_NOMBRE = 44.0;
+
+    private const ANCHO_GRADO_LABEL = 13.2;
+
+    private const ANCHO_GRADO_VALOR = 8.8;
+
+    private const ANCHO_DIVISION_LABEL = 13.2;
+
+    private const ANCHO_DIVISION_VALOR = 8.8;
 
     private const ANCHO_NOTA = 5.0;
 
@@ -26,9 +37,15 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
     private const ALTURA_FILA_ALUMNO = 4.0;
 
-    private const ALTURA_ENC_MATERIAS = 40.0;
+    private const ALTURA_ENC_MATERIAS = 52.0;
 
-    private const Y_INICIO_FILAS = 97.0;
+    private const Y_ENC_MATERIAS = 61.0;
+
+    private const X_INICIO_MATERIAS = self::MARGEN_IZQ + self::ANCHO_NRO + self::ANCHO_NOMBRE;
+
+    private const FUENTE_ENC_MATERIA_MAX = 5.0;
+
+    private const FUENTE_ENC_MATERIA_MIN = 3.5;
 
     /** @var array<string, mixed> */
     private array $contexto;
@@ -99,6 +116,29 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
     /**
      * @param  array<string, mixed>  $sec
+     * @return array{cantCurr: int, cantInst: int, anchoCurr: float, anchoInst: float, xDni: float, xObs: float}
+     */
+    private function layoutMaterias(array $sec): array
+    {
+        $cantCurr = count($sec['materiasCurriculares'] ?? []);
+        $cantInst = count($sec['materiasInstitucionales'] ?? []);
+        $anchoCurr = $cantCurr * self::ANCHO_NOTA;
+        $anchoInst = $cantInst * self::ANCHO_NOTA;
+        $xDni = self::X_INICIO_MATERIAS + $anchoCurr + $anchoInst;
+        $xObs = $xDni + self::ANCHO_DNI;
+
+        return [
+            'cantCurr' => $cantCurr,
+            'cantInst' => $cantInst,
+            'anchoCurr' => $anchoCurr,
+            'anchoInst' => $anchoInst,
+            'xDni' => $xDni,
+            'xObs' => $xObs,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $sec
      */
     private function dibujarEncabezado(array $sec): void
     {
@@ -108,7 +148,7 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         }
 
         $cicloGrado = (string) ($sec['cicloGrado'] ?? 'PRIMERO');
-        $esCicloPrimero = (bool) ($sec['esCicloPrimero'] ?? true);
+        $layout = $this->layoutMaterias($sec);
 
         $this->SetXY(120, 12);
         TcpdfFuenteArial::aplicar($this, 'B', 16);
@@ -149,37 +189,65 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             .'                                                 CORRESPONDIENTE AL AÑO: '.$anoLetras;
 
         $this->SetXY(self::MARGEN_IZQ, 50);
-        $this->Cell(180, 4, $lineaCiclo, 0, 2, 'L');
+        $this->Cell(self::ANCHO_UTIL, 4, $lineaCiclo, 0, 2, 'L');
 
         $grado = (string) ($sec['grado'] ?? '');
         $division = (string) ($sec['division'] ?? '');
 
         $this->SetX(self::MARGEN_IZQ);
         TcpdfFuenteArial::aplicar($this, '', 6);
-        $this->Cell(7, 7, '', 1, 0, 'C');
-        $this->Cell(15, 7, 'Grado', 1, 0, 'C');
-        $this->Cell(10, 7, $grado, 1, 0, 'C');
-        $this->Cell(15, 7, 'División', 1, 0, 'C');
-        $this->Cell(10, 7, $division, 1, 0, 'C');
+        $this->Cell(self::ANCHO_NRO, 7, '', 1, 0, 'C');
+        $this->Cell(self::ANCHO_GRADO_LABEL, 7, 'Grado', 1, 0, 'C');
+        $this->Cell(self::ANCHO_GRADO_VALOR, 7, $grado, 1, 0, 'C');
+        $this->Cell(self::ANCHO_DIVISION_LABEL, 7, 'División', 1, 0, 'C');
+        $this->Cell(self::ANCHO_DIVISION_VALOR, 7, $division, 1, 0, 'C');
 
-        $anchoEspacios = $esCicloPrimero ? 50.0 : 55.0;
-        $this->Cell($anchoEspacios, 7, 'Espacios Curriculares', 1, 0, 'C');
-
-        $x = $this->GetX();
-        $y = $this->GetY();
-
-        if ($esCicloPrimero) {
-            $this->MultiCell(20, 3.5, 'Espac. Curric. Proyecto Instit.', 1, 'C');
-            $this->SetXY($x + 20, $y);
-        } else {
-            $this->MultiCell(30, 3.5, 'Espacios Curriculares Proyecto Instititucional', 1, 'C');
-            $this->SetXY($x + 30, $y);
+        $anchoCurr = max($layout['anchoCurr'], self::ANCHO_NOTA);
+        if ($layout['cantCurr'] > 0) {
+            $anchoCurr = $layout['anchoCurr'];
+            $this->Cell($anchoCurr, 7, 'Espacios Curriculares', 1, 0, 'C');
         }
 
-        $this->Cell(10, 7, '', 1, 0, 'C');
-        $this->Cell(self::ANCHO_DNI, 7, 'D.N.I.', 1, 0, 'C');
-        $this->Cell(self::ANCHO_OBS, 7, 'Observaciones', 1, 0, 'C');
-        $this->Ln(20);
+        $xInst = $this->GetX();
+        $yInst = $this->GetY();
+        $altoFilaEnc = 7.0;
+        $anchoInst = $layout['anchoInst'];
+        if ($layout['cantInst'] > 0) {
+            $anchoInst = max($layout['anchoInst'], self::ANCHO_NOTA);
+            $this->dibujarEtiquetaInstitucionalEncabezado($xInst, $yInst, $anchoInst, $altoFilaEnc);
+            $this->SetXY($xInst + $anchoInst, $yInst);
+        } elseif ($layout['cantCurr'] === 0) {
+            $this->dibujarEtiquetaInstitucionalEncabezado($xInst, $yInst, self::ANCHO_NOTA, $altoFilaEnc);
+            $this->SetXY($xInst + self::ANCHO_NOTA, $yInst);
+        }
+
+        $this->SetXY($layout['xDni'], $yInst);
+        $this->Cell(self::ANCHO_DNI, $altoFilaEnc, 'D.N.I.', 1, 0, 'C');
+        $this->Cell(self::ANCHO_OBS, $altoFilaEnc, 'Observaciones', 1, 0, 'C');
+        $this->Ln($altoFilaEnc);
+    }
+
+    private function dibujarEtiquetaInstitucionalEncabezado(float $x, float $y, float $ancho, float $alto): void
+    {
+        $this->Rect($x, $y, $ancho, $alto);
+        TcpdfFuenteArial::aplicar($this, '', 5);
+        $this->MultiCell(
+            $ancho,
+            $alto / 2,
+            "Espacios Curric. Proyecto\ninstitucional",
+            0,
+            'C',
+            false,
+            0,
+            $x,
+            $y,
+            true,
+            0,
+            false,
+            true,
+            $alto,
+            'M',
+        );
     }
 
     /**
@@ -187,29 +255,49 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
      */
     private function dibujarCuerpo(array $sec): float
     {
-        /** @var list<array{materia: string, abrev: string}> $materias */
-        $materias = $sec['materias'] ?? [];
+        /** @var list<array{materia: string, abrev: string}> $materiasCurriculares */
+        $materiasCurriculares = $sec['materiasCurriculares'] ?? [];
+        /** @var list<array{materia: string, abrev: string}> $materiasInstitucionales */
+        $materiasInstitucionales = $sec['materiasInstitucionales'] ?? [];
         /** @var list<array{nro: int, nombre: string, dni: string, obsAnual: string, notas: list<string>}> $alumnos */
         $alumnos = $sec['alumnos'] ?? [];
-        $cantMate = count($materias);
+        $layout = $this->layoutMaterias($sec);
+        $cantMate = $layout['cantCurr'] + $layout['cantInst'];
+        $yInicioFilas = self::Y_ENC_MATERIAS + self::ALTURA_ENC_MATERIAS - self::ALTURA_FILA_ALUMNO;
 
-        $this->SetXY(self::MARGEN_IZQ, 61);
+        $this->SetXY(self::MARGEN_IZQ, self::Y_ENC_MATERIAS);
         TcpdfFuenteArial::aplicar($this, '', 6);
         $this->Cell(self::ANCHO_NRO, self::ALTURA_ENC_MATERIAS, 'Nº', 1, 0, 'C');
         $this->Cell(self::ANCHO_NOMBRE, self::ALTURA_ENC_MATERIAS, 'APELLIDO Y NOMBRES', 1, 0, 'C');
 
-        $xBase = 70.0;
-        $x = $xBase;
-        foreach ($materias as $m) {
-            $x += 5.0;
-            $nombre = trim((string) ($m['materia'] ?? ''));
-            $this->SetXY($x - 3, 61);
+        $x = self::X_INICIO_MATERIAS;
+        foreach ($materiasCurriculares as $m) {
+            $xCentro = $x + (self::ANCHO_NOTA / 2);
+            $this->SetXY($x, self::Y_ENC_MATERIAS);
             $this->Cell(self::ANCHO_NOTA, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
-            $this->dibujarTextoVertical($x, 100, $nombre);
+            $this->dibujarTextoVerticalEnCelda(
+                $xCentro,
+                self::Y_ENC_MATERIAS,
+                self::ALTURA_ENC_MATERIAS,
+                trim((string) ($m['materia'] ?? '')),
+            );
+            $x += self::ANCHO_NOTA;
         }
 
-        $xFinMaterias = 72.0 + ($cantMate * self::ANCHO_NOTA);
-        $this->SetXY($xFinMaterias, 61);
+        foreach ($materiasInstitucionales as $m) {
+            $xCentro = $x + (self::ANCHO_NOTA / 2);
+            $this->SetXY($x, self::Y_ENC_MATERIAS);
+            $this->Cell(self::ANCHO_NOTA, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
+            $this->dibujarTextoVerticalEnCelda(
+                $xCentro,
+                self::Y_ENC_MATERIAS,
+                self::ALTURA_ENC_MATERIAS,
+                trim((string) ($m['materia'] ?? '')),
+            );
+            $x += self::ANCHO_NOTA;
+        }
+
+        $this->SetXY($layout['xDni'], self::Y_ENC_MATERIAS);
         $this->Cell(self::ANCHO_DNI, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
         $this->Cell(self::ANCHO_OBS, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
 
@@ -219,18 +307,18 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $f = 0;
         foreach ($alumnos as $alumno) {
             $f++;
-            $y = self::Y_INICIO_FILAS + ($f * self::ALTURA_FILA_ALUMNO);
+            $y = $yInicioFilas + ($f * self::ALTURA_FILA_ALUMNO);
 
             $this->SetXY(self::MARGEN_IZQ, $y);
             TcpdfFuenteArial::aplicar($this, '', 6);
             $this->Cell(self::ANCHO_NRO, self::ALTURA_FILA_ALUMNO, (string) ($alumno['nro'] ?? $f), 1, 0, 'C');
             $this->Cell(self::ANCHO_NOMBRE, self::ALTURA_FILA_ALUMNO, (string) ($alumno['nombre'] ?? ''), 1, 0, 'L');
 
-            $this->SetXY(72, $y);
+            $this->SetXY(self::X_INICIO_MATERIAS, $y);
             $notas = is_array($alumno['notas'] ?? null) ? $alumno['notas'] : [];
             for ($i = 0; $i < $cantMate; $i++) {
                 $valor = (string) ($notas[$i] ?? '');
-                $resaltar = $esApreciacionFinal && $i < 3;
+                $resaltar = $esApreciacionFinal && $i < 3 && $i < $layout['cantCurr'];
                 if ($resaltar) {
                     $this->SetFillColor(...self::FILL_GRIS);
                 }
@@ -240,22 +328,25 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
                 }
             }
 
+            $this->SetXY($layout['xDni'], $y);
             $this->Cell(self::ANCHO_DNI, self::ALTURA_FILA_ALUMNO, (string) ($alumno['dni'] ?? ''), 1, 0, 'C');
-            $this->dibujarCeldaObservaciones($alumno, $esApreciacionFinal);
+            $this->dibujarCeldaObservaciones($alumno, $esApreciacionFinal, $layout['xObs'], $y);
         }
 
         if ($f === 0) {
-            return self::Y_INICIO_FILAS + self::ALTURA_FILA_ALUMNO;
+            return $yInicioFilas + self::ALTURA_FILA_ALUMNO;
         }
 
-        return self::Y_INICIO_FILAS + ($f * self::ALTURA_FILA_ALUMNO) + self::ALTURA_FILA_ALUMNO;
+        return $yInicioFilas + ($f * self::ALTURA_FILA_ALUMNO) + self::ALTURA_FILA_ALUMNO;
     }
 
     /**
      * @param  array<string, mixed>  $alumno
      */
-    private function dibujarCeldaObservaciones(array $alumno, bool $esApreciacionFinal): void
+    private function dibujarCeldaObservaciones(array $alumno, bool $esApreciacionFinal, float $xObs, float $y): void
     {
+        $this->SetXY($xObs, $y);
+
         if (! $esApreciacionFinal) {
             $this->Cell(self::ANCHO_OBS, self::ALTURA_FILA_ALUMNO, '', 1, 0, 'L');
 
@@ -272,16 +363,29 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         }
     }
 
-    private function dibujarTextoVertical(float $x, float $yBase, string $texto): void
+    private function dibujarTextoVerticalEnCelda(float $xCentro, float $yCelda, float $altoCelda, string $texto): void
     {
         if ($texto === '') {
             return;
         }
 
-        TcpdfFuenteArial::aplicar($this, 'I', 5);
+        $fuentePt = self::FUENTE_ENC_MATERIA_MAX;
+        $maxLong = $altoCelda - 3.0;
+
+        TcpdfFuenteArial::aplicar($this, 'I', $fuentePt);
+        $longitud = $this->GetStringWidth($texto);
+        while ($longitud > $maxLong && $fuentePt > self::FUENTE_ENC_MATERIA_MIN) {
+            $fuentePt -= 0.25;
+            TcpdfFuenteArial::aplicar($this, 'I', $fuentePt);
+            $longitud = $this->GetStringWidth($texto);
+        }
+
+        $yCentro = $yCelda + ($altoCelda / 2);
+        $yAncla = $yCentro + ($longitud / 2);
+
         $this->StartTransform();
-        $this->Rotate(90, $x, $yBase);
-        $this->Text($x - 1, $yBase - 1, $texto);
+        $this->Rotate(90, $xCentro, $yAncla);
+        $this->Text($xCentro - 0.5, $yAncla - 0.5, $texto);
         $this->StopTransform();
     }
 
@@ -337,6 +441,6 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
         $this->SetXY($x + 120, $y + 18);
         $this->Cell(3, 3, '............................                                         .............................', 0, 2, 'L');
-        $this->Cell(3, 3, 'Mestra de Grado                                               Director/a', 0, 2, 'L');
+        $this->Cell(3, 3, 'Mestra/o de Grado                                               Director/a', 0, 2, 'L');
     }
 }
