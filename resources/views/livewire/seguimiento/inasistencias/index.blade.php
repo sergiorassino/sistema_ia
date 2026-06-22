@@ -60,6 +60,7 @@
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
+                        @if (tenantSecretariaInformeInasistenciasHabilitada())
                         <x-pdf-post
                             :action="route('seguimiento.inasistencias.informe.pdf')"
                             :fields="array_filter([
@@ -71,6 +72,7 @@
                             button-class="btn-secondary btn-sm">
                             Informe PDF
                         </x-pdf-post>
+                        @endif
                         <x-nav-contexto-estudiante
                             destino="seguimiento.inasistencias.create"
                             :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_INASISTENCIAS"

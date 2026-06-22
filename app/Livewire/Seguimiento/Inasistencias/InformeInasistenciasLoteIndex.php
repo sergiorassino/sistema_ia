@@ -13,6 +13,11 @@ use Livewire\Component;
  */
 class InformeInasistenciasLoteIndex extends Component
 {
+    public function mount(): void
+    {
+        abort_unless(tenantSecretariaInformeInasistenciasHabilitada(), 404);
+    }
+
     /** Curso confirmado (`cursos.Id`); null = paso de selección de curso. */
     public ?int $cursoId = null;
 

@@ -717,6 +717,7 @@
                     </svg>
                     <span class="truncate">Parte diario del preceptor</span>
                 </a>
+                @if (tenantSecretariaInformeInasistenciasHabilitada())
                 <a href="{{ route('seguimiento.inasistencias.informe') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -729,6 +730,7 @@
                     </svg>
                     <span class="truncate">Informe de Inasistencias</span>
                 </a>
+                @endif
             </div>
         @endunless
 

@@ -19,6 +19,7 @@ class InformeInasistenciasPdfController extends Controller
             403,
             'Sin permiso para gestión de inasistencias de estudiantes.'
         );
+        abort_unless(tenantSecretariaInformeInasistenciasHabilitada(), 404);
 
         $validated = $request->validate([
             'matricula' => ['required', 'integer', 'min:1'],
