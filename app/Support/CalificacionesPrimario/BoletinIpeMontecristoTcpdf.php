@@ -59,7 +59,7 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
 
     private bool $mostrarMarcaAgua;
 
-    public function __construct(array $header, bool $mostrarMarcaAgua = true)
+    public function __construct(array $header, bool $mostrarMarcaAgua = false)
     {
         parent::__construct('L', 'mm', 'A4', true, 'UTF-8', false);
         $this->header = $header;
@@ -78,7 +78,7 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarHoja(array $datos, array $header, bool $mostrarMarcaAgua = true): self
+    public static function generarHoja(array $datos, array $header, bool $mostrarMarcaAgua = false): self
     {
         $pdf = new self($header, $mostrarMarcaAgua);
         $pdf->AddPage();
@@ -91,7 +91,7 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
      * @param  list<array<string, mixed>>  $hojas
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = true): self
+    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = false): self
     {
         $pdf = new self($header, $mostrarMarcaAgua);
         $primera = true;

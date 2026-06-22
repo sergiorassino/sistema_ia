@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 
 /**
  * Boletín IPE / síntesis y calificaciones — primario, portal familia (misma variante que secretaría).
+ * Incluye marca «SIN VALOR LEGAL» (no aplica en impresión desde secretaría o docentes).
  */
 class BoletinIpePrimarioPdfController extends Controller
 {
@@ -45,7 +46,7 @@ class BoletinIpePrimarioPdfController extends Controller
             $slug = $prefijo.'_etapa'.$etapa;
         }
 
-        $pdf = BoletinIpePrimarioGenerador::generarHoja($data, studentPdfHeaderData());
+        $pdf = BoletinIpePrimarioGenerador::generarHoja($data, studentPdfHeaderData(), true);
 
         return BoletinIpePrimarioGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }

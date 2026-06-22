@@ -71,7 +71,7 @@ final class BoletinIpePrimarioGenerador
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarHoja(array $datos, array $header, bool $mostrarMarcaAgua = true): TCPDF
+    public static function generarHoja(array $datos, array $header, bool $mostrarMarcaAgua = false): TCPDF
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarHoja($datos, $header),
@@ -84,7 +84,7 @@ final class BoletinIpePrimarioGenerador
      * @param  list<array<string, mixed>>  $hojas
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = true): TCPDF
+    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = false): TCPDF
     {
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarLote($hojas, $header),
