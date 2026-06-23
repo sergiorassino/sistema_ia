@@ -34,6 +34,14 @@
                    class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
                     Resumen de Pagos
                 </a>
+                @if (! $mostrarHistorial && ($totalesAdeudados['neto'] ?? 0) > 0)
+                    <a href="{{ se_route_url('alumnos.aranceles-escolares.cuotas-adeudadas', ['ref' => \App\Support\Security\OpaqueRouteToken::forCuotasAdeudadasAutogestion((int) studentCtx()->idLegajo)]) }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
+                        Imprimir adeudadas
+                    </a>
+                @endif
                 <button type="button"
                         wire:click="alternarVistaCuotas"
                         class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
@@ -93,15 +101,13 @@
         @else
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div class="gf gf-vcenter gf-cuotas-autogestion min-w-[1060px]">
+                    <div class="gf gf-vcenter gf-cuotas-autogestion min-w-[1108px]">
                         <div class="gf-head">
-                            @if ($mostrarHistorial)
-                                <div class="gf-th w-12">Año</div>
-                            @endif
                             <div class="gf-th w-[180px]">Apellido y nombre</div>
                             <div class="gf-th w-[95px]">Dni</div>
                             <div class="gf-th w-[115px]">Sala/Grado/Curso</div>
                             <div class="gf-th w-[100px]">Nivel</div>
+                            <div class="gf-th w-12">Año</div>
                             <div class="gf-th w-[120px]">Cuota</div>
                             <div class="gf-th w-[85px]">Venc 1</div>
                             <div class="gf-th w-[85px]">Venc 2</div>
@@ -128,13 +134,11 @@
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
                                  wire:key="cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}">
-                                @if ($mostrarHistorial)
-                                    <div class="gf-td w-12 tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
-                                @endif
                                 <div class="gf-td w-[180px] uppercase">{{ trim(trim((string) ($c->legajo->apellido ?? '')).', '.trim((string) ($c->legajo->nombre ?? ''))) }}</div>
                                 <div class="gf-td w-[95px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</div>
                                 <div class="gf-td w-[115px] uppercase">{{ trim((string) ($c->curso?->nombreParaListado() ?? '')) }}</div>
                                 <div class="gf-td w-[100px] uppercase">{{ trim((string) ($c->curso?->nivel?->nivel ?? '')) }}</div>
+                                <div class="gf-td w-12 tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
                                 <div class="gf-td w-[120px] font-bold uppercase text-primary-800">{{ trim((string) ($c->cuota?->nombre ?? '')) }}</div>
                                 <div class="gf-td w-[85px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</div>
                                 <div class="gf-td w-[85px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</div>
@@ -195,6 +199,41 @@
                                 @endif
                             </div>
                         @endforeach
+
+                        @if (! $mostrarHistorial)
+                            <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-autogestion-totales"
+                                 wire:key="ae-totales-neto">
+                                <div class="gf-td w-[180px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[95px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[115px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[100px]" aria-hidden="true"></div>
+                                <div class="gf-td w-12" aria-hidden="true"></div>
+                                <div class="gf-td w-[120px] gf-td-total-label justify-end">Total neto</div>
+                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[105px]" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-total-importe gf-th-right w-[95px] tabular-nums whitespace-nowrap">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['neto']) }}
+                                </div>
+                                <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                            </div>
+                            <div class="gf-row gf-row--totales gf-cuotas-autogestion-totales"
+                                 wire:key="ae-totales-intereses">
+                                <div class="gf-td w-[180px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[95px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[115px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[100px]" aria-hidden="true"></div>
+                                <div class="gf-td w-12" aria-hidden="true"></div>
+                                <div class="gf-td w-[120px] gf-td-total-label justify-end">Total con intereses al día de hoy</div>
+                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
+                                <div class="gf-td w-[105px]" aria-hidden="true"></div>
+                                <div class="gf-td gf-td-total-importe gf-th-right w-[95px] tabular-nums whitespace-nowrap">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['conIntereses']) }}
+                                </div>
+                                <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

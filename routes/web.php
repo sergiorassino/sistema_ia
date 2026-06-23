@@ -5,6 +5,7 @@ use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
 use App\Http\Controllers\Alumnos\ComprobanteAfipPdfController as AlumnosComprobanteAfipPdfController;
 use App\Http\Controllers\Alumnos\ComprobantePagoPdfController;
+use App\Http\Controllers\Alumnos\CuotasAdeudadasPdfController;
 use App\Http\Controllers\Alumnos\ResumenPagosPdfController;
 use App\Http\Controllers\Alumnos\DocumentoEstudianteAutogestionPdfController;
 use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
@@ -109,6 +110,7 @@ use App\Http\Controllers\Cuotas\LibroArancelesPdfController;
 use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
+use App\Http\Controllers\Cuotas\CuotasAdeudadasEstudiantePdfController;
 use App\Http\Controllers\Cuotas\ResumenPagosEstudiantePdfController;
 use App\Http\Controllers\Cuotas\SolicitudAyudaFamiliarPdfController;
 use App\Livewire\Cuotas\CuotaGeneradaForm;
@@ -329,6 +331,9 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/aranceles-escolares/resumen-pagos/{ref}', ResumenPagosPdfController::class)
         ->where('ref', '[A-Za-z0-9_-]+')
         ->name('alumnos.aranceles-escolares.resumen-pagos');
+    Route::get('/aranceles-escolares/cuotas-adeudadas/{ref}', CuotasAdeudadasPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('alumnos.aranceles-escolares.cuotas-adeudadas');
     Route::get('/aranceles-escolares/formulario-debito-automatico', FormularioDebitoAutomaticoPdfController::class)
         ->name('alumnos.aranceles-escolares.formulario-debito-automatico');
 
@@ -557,6 +562,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             Route::get('/resumen-pagos/{ref}', ResumenPagosEstudiantePdfController::class)
                 ->where('ref', '[A-Za-z0-9_-]+')
                 ->name('cuotas.resumen-pagos');
+            Route::get('/cuotas-adeudadas/{ref}', CuotasAdeudadasEstudiantePdfController::class)
+                ->where('ref', '[A-Za-z0-9_-]+')
+                ->name('cuotas.cuotas-adeudadas');
         });
     });
 

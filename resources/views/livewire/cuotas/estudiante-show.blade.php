@@ -70,6 +70,13 @@
                    class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
                     Resumen de Pagos
                 </a>
+                @if (! $mostrarHistorial && ($totalesAdeudados['neto'] ?? 0) > 0)
+                    <a href="{{ se_route_url('cuotas.cuotas-adeudadas', ['ref' => OpaqueRouteToken::forCuotasAdeudadasEstudiante($idLegajo)]) }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
+                        Imprimir adeudadas
+                    </a>
+                @endif
                 <button type="button"
                         wire:click="alternarVistaCuotas"
                         class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
