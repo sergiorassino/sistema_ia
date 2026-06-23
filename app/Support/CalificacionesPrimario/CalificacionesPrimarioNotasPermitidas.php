@@ -2,6 +2,7 @@
 
 namespace App\Support\CalificacionesPrimario;
 
+use App\Support\NivelSistema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * Catálogo de notas permitidas por nivel y escala (`notaspermitidas.escala`).
  *
  * Escala 1: conceptos (E, MB, …) y guion «-».
- * Escala 2: literales (ML, L, EL, P, EP, PPI).
+ * Escala 2: literales (ML, L, EL, P, EP, PPI) y guion «-».
  * Celda vacía: válida en carga manual (borrar nota); no se persiste en `notaspermitidas`.
  */
 final class CalificacionesPrimarioNotasPermitidas
@@ -17,6 +18,8 @@ final class CalificacionesPrimarioNotasPermitidas
     public const ESCALA_CONCEPTOS = 1;
 
     public const ESCALA_LITERALES = 2;
+
+    public const NOTA_GUION = '-';
 
     /** @var array<string, array<int, list<string>>> */
     private static array $cache = [];
@@ -44,6 +47,8 @@ final class CalificacionesPrimarioNotasPermitidas
         ];
 
         if (! Schema::hasTable('notaspermitidas')) {
+            $vacias = self::completarGuionEnPrimario($idNivel, $vacias);
+
             return self::$cache[$key] = $vacias;
         }
 
@@ -73,7 +78,30 @@ final class CalificacionesPrimarioNotasPermitidas
             }
         }
 
+        $vacias = self::completarGuionEnPrimario($idNivel, $vacias);
+
         return self::$cache[$key] = $vacias;
+    }
+
+    /**
+     * El guion es válido en ambas escalas del primario (marcar sin calificación / corregir carga).
+     *
+     * @param  array<int, list<string>>  $porEscala
+     * @return array<int, list<string>>
+     */
+    private static function completarGuionEnPrimario(int $idNivel, array $porEscala): array
+    {
+        if ($idNivel !== NivelSistema::PRIMARIO) {
+            return $porEscala;
+        }
+
+        foreach ([self::ESCALA_CONCEPTOS, self::ESCALA_LITERALES] as $escala) {
+            if (! in_array(self::NOTA_GUION, $porEscala[$escala], true)) {
+                $porEscala[$escala][] = self::NOTA_GUION;
+            }
+        }
+
+        return $porEscala;
     }
 
     /**
