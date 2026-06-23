@@ -255,6 +255,21 @@ window.seCalifToastInvalida = function (anchorEl) {
 
 const SECALIF_PRIM_INPUT_ID = /^se-calif-prim-(\d+)-(ic0[123])$/;
 
+function seCalifPrimAllowedSetForInput(el, tbody) {
+    let allowed = [];
+    try {
+        const attr = el?.getAttribute?.('data-se-calif-prim-allowed');
+        if (attr !== null) {
+            allowed = JSON.parse(attr);
+        } else if (tbody) {
+            allowed = JSON.parse(tbody.getAttribute('data-se-calif-prim-allowed') || '[]');
+        }
+    } catch {
+        allowed = [];
+    }
+    return new Set(allowed.map((x) => String(x).trim()));
+}
+
 function seCalifPrimCampoConCatalogo(field) {
     return field === 'ic01' || field === 'ic02' || field === 'ic03';
 }
@@ -268,7 +283,10 @@ function seCalifPrimNotaPickerOptions(menu) {
 function seCalifPrimSyncNotaPickerSelection(menu, value) {
     const val = String(value ?? '').trim();
     seCalifPrimNotaPickerOptions(menu).forEach((opt) => {
-        const match = String(opt.dataset.nota ?? '').trim() === val && val !== '';
+        const optNota = opt.dataset.nota !== undefined
+            ? String(opt.dataset.nota).trim()
+            : String(opt.textContent ?? '').trim();
+        const match = opt.dataset.nota !== undefined ? optNota === val : optNota === val && val !== '';
         opt.classList.toggle('is-selected', match);
         opt.setAttribute('aria-selected', match ? 'true' : 'false');
         opt.classList.remove('is-focused');
@@ -301,7 +319,12 @@ function seCalifPrimFocusNotaPickerOption(menu, index) {
 function seCalifPrimFocusNotaPickerInitial(menu, input) {
     const val = String(input?.value ?? '').trim();
     const options = seCalifPrimNotaPickerOptions(menu);
-    let idx = options.findIndex((opt) => String(opt.dataset.nota ?? '').trim() === val);
+    let idx = options.findIndex((opt) => {
+        if (opt.dataset.nota !== undefined) {
+            return String(opt.dataset.nota).trim() === val;
+        }
+        return String(opt.textContent ?? '').trim() === val;
+    });
     if (idx < 0) {
         idx = 0;
     }
@@ -476,10 +499,10 @@ function seCalifPrimHandleNotaPickerClick(e) {
         e.preventDefault();
         e.stopPropagation();
         const { menu, input, btn } = seCalifPrimNotaPickerOpen;
-        const nota = String(opt.dataset.nota ?? opt.textContent ?? '').trim();
-        if (nota !== '') {
-            seCalifPrimApplyNotaFromPicker(input, nota, menu);
-        }
+        const nota = opt.dataset.nota !== undefined
+            ? String(opt.dataset.nota).trim()
+            : String(opt.textContent ?? '').trim();
+        seCalifPrimApplyNotaFromPicker(input, nota, menu);
         if (btn?.isConnected) {
             btn.focus({ preventScroll: true });
         }
@@ -594,10 +617,10 @@ function seCalifPrimBindNotaPickerDocClose() {
                 return;
             }
             e.preventDefault();
-            const nota = String(focused.dataset.nota ?? '').trim();
-            if (nota !== '') {
-                seCalifPrimApplyNotaFromPicker(input, nota, menu);
-            }
+            const nota = focused.dataset.nota !== undefined
+                ? String(focused.dataset.nota).trim()
+                : String(focused.textContent ?? '').trim();
+            seCalifPrimApplyNotaFromPicker(input, nota, menu);
             if (btn?.isConnected) {
                 btn.focus({ preventScroll: true });
             }
@@ -757,14 +780,8 @@ function bindCalifPrimarioTablas() {
                 const field = m[2];
                 const val = (el.value || '').trim();
 
-                const activa = tbody.getAttribute('data-se-calif-prim-activa') === '1';
-                let allowed = [];
-                try {
-                    allowed = JSON.parse(tbody.getAttribute('data-se-calif-prim-allowed') || '[]');
-                } catch {
-                    allowed = [];
-                }
-                const set = new Set(allowed.map((x) => String(x).trim()));
+                const set = seCalifPrimAllowedSetForInput(el, tbody);
+                const activa = el.hasAttribute('data-se-calif-prim-allowed') && set.size > 0;
 
                 if (activa && seCalifPrimCampoConCatalogo(field) && val !== '' && !set.has(val)) {
                     el.value = el.dataset.seCalifPrimLast ?? '';
@@ -1031,8 +1048,12 @@ function seCalifPrimMatHandleFocusout(e) {
     const field = m[2];
     const val = seCalifPrimMatEsObsTextarea(el) ? String(el.value ?? '') : (el.value || '').trim();
 
-    const activa = tbody.getAttribute('data-se-calif-prim-mat-activa') === '1';
-    const set = seCalifPrimMatGetAllowedSet(tbody);
+    const set = seCalifPrimMatEsObsTextarea(el)
+        ? seCalifPrimMatGetAllowedSet(tbody)
+        : seCalifPrimAllowedSetForInput(el, tbody);
+    const activa = ! seCalifPrimMatEsObsTextarea(el)
+        && el.hasAttribute('data-se-calif-prim-allowed')
+        && set.size > 0;
 
     if (activa && seCalifPrimMatCampoConCatalogo(field) && val !== '' && !set.has(val)) {
         el.value = el.dataset.seCalifPrimMatLast ?? '';

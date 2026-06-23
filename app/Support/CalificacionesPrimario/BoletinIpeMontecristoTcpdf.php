@@ -218,15 +218,35 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
         $this->Cell(self::ANCHO_TABLA, 6, $subtitulo, 0, 1, 'C');
 
         TcpdfFuenteArial::aplicar($this, '', 6);
-        $this->Cell(self::ANCHO_MATERIA, 6, 'Espacio Extracurricular', 1, 0, 'C');
+        $yEncabezado = $this->GetY();
+        $altoEncabezado = 8.0;
+        $this->MultiCell(
+            self::ANCHO_MATERIA,
+            $altoEncabezado,
+            'Espacios Curriculares/Extracurriculares',
+            1,
+            'C',
+            false,
+            0,
+            self::MARGEN_IZQ,
+            $yEncabezado,
+            true,
+            0,
+            false,
+            true,
+            $altoEncabezado,
+            'M'
+        );
 
         if ($etapa === 1) {
-            $this->Cell(self::ANCHO_SINTESIS_ETAPA1, 6, 'Síntesis 1º Etapa', 1, 0, 'C');
-            $this->Cell(self::ANCHO_CALIF, 6, 'Calif.1º Etapa', 1, 1, 'C');
+            $this->SetXY(self::MARGEN_IZQ + self::ANCHO_MATERIA, $yEncabezado);
+            $this->Cell(self::ANCHO_SINTESIS_ETAPA1, $altoEncabezado, 'Síntesis 1º Etapa', 1, 0, 'C');
+            $this->Cell(self::ANCHO_CALIF, $altoEncabezado, 'Calif.1º Etapa', 1, 1, 'C');
         } else {
-            $this->Cell(self::ANCHO_SINTESIS_ETAPA2, 6, 'Síntesis 2º Etapa', 1, 0, 'C');
-            $this->Cell(self::ANCHO_CALIF, 6, 'Calif.2º Etapa', 1, 0, 'C');
-            $this->Cell(self::ANCHO_INTENSIF, 6, 'Intensif.', 1, 1, 'C');
+            $this->SetXY(self::MARGEN_IZQ + self::ANCHO_MATERIA, $yEncabezado);
+            $this->Cell(self::ANCHO_SINTESIS_ETAPA2, $altoEncabezado, 'Síntesis 2º Etapa', 1, 0, 'C');
+            $this->Cell(self::ANCHO_CALIF, $altoEncabezado, 'Calif.2º Etapa', 1, 0, 'C');
+            $this->Cell(self::ANCHO_INTENSIF, $altoEncabezado, 'Intensif.', 1, 1, 'C');
         }
 
         return $this->GetY();

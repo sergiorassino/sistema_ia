@@ -5,9 +5,9 @@ namespace App\Livewire\CalificacionesPrimario;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioNotasPermitidas;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Renderless;
@@ -38,16 +38,16 @@ class CargaCalificacionesPrimarioForm extends Component
     public string $obsAnual = '';
 
     /**
-     * Lista secuencial para validación en navegador (mismo criterio que secundario).
+     * Notas permitidas por escala (1 = conceptos, 2 = literales).
      *
-     * @var list<string>
+     * @var array<int, list<string>>
      */
-    public array $notasPermitidasLista = [];
+    public array $notasPermitidasPorEscala = [];
 
     /**
      * Materias visibles (array serializable para Livewire; no usar Collection pública).
      *
-     * @var list<array{id: int, ord: int, abrev: string, materia: string}>
+     * @var list<array{id: int, ord: int, abrev: string, materia: string, escala: int}>
      */
     public array $materiasLista = [];
 
@@ -91,6 +91,7 @@ class CargaCalificacionesPrimarioForm extends Component
                 'ord' => (int) $m->ord,
                 'abrev' => (string) $m->abrev,
                 'materia' => (string) $m->materia,
+                'escala' => CalificacionesPrimarioNotasPermitidas::normalizarEscala($m->escala ?? 1),
             ])
             ->values()
             ->all();
@@ -104,38 +105,36 @@ class CargaCalificacionesPrimarioForm extends Component
 
     protected function cargarNotasPermitidas(): void
     {
-        $this->notasPermitidasLista = [];
         $ctx = schoolCtx();
-        $notas = DB::table('notaspermitidas')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->pluck('nota');
-
-        foreach ($notas as $n) {
-            $clave = trim((string) $n);
-            if ($clave === '') {
-                continue;
-            }
-            if (! in_array($clave, $this->notasPermitidasLista, true)) {
-                $this->notasPermitidasLista[] = $clave;
-            }
-        }
+        $this->notasPermitidasPorEscala = CalificacionesPrimarioNotasPermitidas::listasPorEscala((int) $ctx->idNivel);
     }
 
-    protected function notasPermitidasActiva(): bool
+    /**
+     * @return list<string>
+     */
+    public function notasPermitidasParaMateria(int $idMaterias): array
     {
-        return $this->notasPermitidasLista !== [];
+        $escala = CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS;
+        foreach ($this->materiasLista as $m) {
+            if ((int) ($m['id'] ?? 0) === $idMaterias) {
+                $escala = CalificacionesPrimarioNotasPermitidas::normalizarEscala($m['escala'] ?? 1);
+                break;
+            }
+        }
+
+        return $this->notasPermitidasPorEscala[$escala] ?? [];
     }
 
-    protected function notaPermitida(string $nota): bool
+    public function notasPermitidasActivaParaMateria(int $idMaterias): bool
     {
-        if ($nota === '') {
-            return true;
-        }
-        if (! $this->notasPermitidasActiva()) {
-            return true;
-        }
+        return $this->notasPermitidasParaMateria($idMaterias) !== [];
+    }
 
-        return in_array($nota, $this->notasPermitidasLista, true);
+    protected function notaPermitida(int $escala, string $nota): bool
+    {
+        $ctx = schoolCtx();
+
+        return CalificacionesPrimarioNotasPermitidas::notaPermitida((int) $ctx->idNivel, $escala, $nota);
     }
 
     #[Renderless]
@@ -183,7 +182,10 @@ class CargaCalificacionesPrimarioForm extends Component
             ['value' => $campo],
         )->validate();
 
-        if (! $this->notaPermitida($value)) {
+        if (! $this->notaPermitida(
+            CalificacionesPrimarioNotasPermitidas::normalizarEscala($materia->escala ?? 1),
+            $value,
+        )) {
             $guardado = CalificacionesPrimarioDatos::valorCampoCalificacion(
                 $this->idMatricula,
                 $idMaterias,
@@ -252,9 +254,16 @@ class CargaCalificacionesPrimarioForm extends Component
 
     public function render()
     {
+        $algunaConCatalogo = false;
+        foreach ($this->materiasLista as $m) {
+            if ($this->notasPermitidasActivaParaMateria((int) ($m['id'] ?? 0))) {
+                $algunaConCatalogo = true;
+                break;
+            }
+        }
+
         return view('livewire.calificaciones-primario.carga-calificaciones-primario-form', [
-            'notasPermitidasLista' => $this->notasPermitidasLista,
-            'notasPermitidasActiva' => $this->notasPermitidasActiva(),
+            'notasPermitidasActiva' => $algunaConCatalogo,
         ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante']);
     }
 }

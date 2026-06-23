@@ -74,6 +74,9 @@
                 @if ($tieneInfoCalif)
                     <div class="gf-th gf-ma-col-flag" title="La materia aparece en síntesis y calificaciones del informe">Inf.</div>
                 @endif
+                @if ($tieneEscala)
+                    <div class="gf-th gf-ma-col-escala" title="Escala de calificación (1 = conceptos, 2 = ML/L/EL/P/EP/PPI)">Esc.</div>
+                @endif
                 <div class="gf-th-right gf-ma-col-acciones">Acciones</div>
             </div>
 
@@ -158,6 +161,20 @@
                                 <input type="checkbox" wire:model.defer="create.infoCalif"
                                        class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                             </label>
+                        </div>
+                    @endif
+
+                    @if ($tieneEscala)
+                        <div class="gf-td gf-ma-col-escala">
+                            <div class="gf-ma-escala-wrap">
+                                <select wire:model.defer="create.escala"
+                                        class="gf-ma-escala-select @error('create.escala') ring-2 ring-red-400 @enderror"
+                                        title="Escala de calificación">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                </select>
+                            </div>
+                            @error('create.escala') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         </div>
                     @endif
 
@@ -293,6 +310,32 @@
                                            @checked((int) ($m->infoCalif ?? 0) === 1)
                                            class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                 </label>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if ($tieneEscala)
+                        <div class="gf-td gf-ma-col-escala">
+                            @if ($editingId === $m->id)
+                                <div class="gf-ma-escala-wrap">
+                                    <select wire:model.defer="draft.{{ $m->id }}.escala"
+                                            class="gf-ma-escala-select @error('draft.'.$m->id.'.escala') ring-2 ring-red-400 @enderror"
+                                            title="Escala de calificación">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                </div>
+                                @error('draft.'.$m->id.'.escala') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
+                            @else
+                                <div class="gf-ma-escala-wrap">
+                                    <select wire:change="guardarEscala({{ $m->id }}, $event.target.value)"
+                                            wire:key="materia-anio-escala-{{ $m->id }}-{{ (int) ($m->escala ?? 1) }}"
+                                            class="gf-ma-escala-select"
+                                            title="1 = conceptos (E, MB…) · 2 = ML, L, EL, P, EP, PPI">
+                                        <option value="1" @selected((int) ($m->escala ?? 1) === 1)>1</option>
+                                        <option value="2" @selected((int) ($m->escala ?? 1) === 2)>2</option>
+                                    </select>
+                                </div>
                             @endif
                         </div>
                     @endif

@@ -82,8 +82,7 @@
             </thead>
             <tbody
                 data-se-calif-prim-tbody
-                data-se-calif-prim-activa="{{ $notasPermitidasActiva ? '1' : '0' }}"
-                data-se-calif-prim-allowed='@json($notasPermitidasLista ?? [])'>
+                data-se-calif-prim-activa="{{ $notasPermitidasActiva ? '1' : '0' }}">
                 @foreach (['ic01' => 'Etapa 1', 'ic02' => 'Etapa 2', 'ic03' => 'Nota anual'] as $campo => $etiquetaFila)
                     <tr wire:key="calif-prim-fila-{{ $campo }}">
                         <td class="se-calif-prim-row-label border border-accent-200 bg-accent-50/80 px-2 text-[10px] uppercase text-neutral-600">
@@ -93,14 +92,16 @@
                             @php
                                 $idMaterias = (int) $m['id'];
                                 $valor = $notas[$idMaterias][$campo] ?? '';
+                                $listaNotas = $this->notasPermitidasParaMateria($idMaterias);
+                                $catalogoActivo = $listaNotas !== [];
                             @endphp
                             <td class="border border-accent-200 p-0.5">
                                 @include('livewire.calificaciones-primario.partials.celda-nota-permitida', [
                                     'id' => 'se-calif-prim-'.$idMaterias.'-'.$campo,
                                     'value' => $valor,
                                     'wireKey' => 'prim-cell-'.$idMatricula.'-'.$idMaterias.'-'.$campo,
-                                    'notasPermitidasActiva' => $notasPermitidasActiva,
-                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                    'notasPermitidasActiva' => $catalogoActivo,
+                                    'notasPermitidasLista' => $listaNotas,
                                 ])
                             </td>
                         @endforeach

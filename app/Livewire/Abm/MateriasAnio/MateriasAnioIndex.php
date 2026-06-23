@@ -3,6 +3,7 @@
 namespace App\Livewire\Abm\MateriasAnio;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioNotasPermitidas;
 use App\Support\PermisosConfiguracion;
 use App\Models\Curso;
 use App\Models\Curplan;
@@ -97,6 +98,7 @@ class MateriasAnioIndex extends Component
             'abrev' => '',
             'esInstitucional' => false,
             'infoCalif' => false,
+            'escala' => CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS,
         ];
 
         $this->editingId = null;
@@ -125,6 +127,10 @@ class MateriasAnioIndex extends Component
             'create.abrev' => ['nullable', 'string', 'max:5'],
             'create.esInstitucional' => ['boolean'],
             'create.infoCalif' => ['boolean'],
+            'create.escala' => ['required', 'integer', Rule::in([
+                CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS,
+                CalificacionesPrimarioNotasPermitidas::ESCALA_LITERALES,
+            ])],
         ];
     }
 
@@ -184,6 +190,9 @@ class MateriasAnioIndex extends Component
         if (Schema::hasColumn('materias', 'infoCalif')) {
             $payload['infoCalif'] = ! empty($this->create['infoCalif']) ? 1 : 0;
         }
+        if (Schema::hasColumn('materias', 'escala')) {
+            $payload['escala'] = CalificacionesPrimarioNotasPermitidas::normalizarEscala($this->create['escala'] ?? 1);
+        }
 
         try {
             $id = (int) DB::table('materias')->insertGetId($payload);
@@ -227,6 +236,7 @@ class MateriasAnioIndex extends Component
             'abrev' => (string) ($m->abrev ?? ''),
             'esInstitucional' => (int) ($m->esInstitucional ?? 0) === 1,
             'infoCalif' => (int) ($m->infoCalif ?? 0) === 1,
+            'escala' => CalificacionesPrimarioNotasPermitidas::normalizarEscala($m->escala ?? 1),
         ];
 
         $this->creating = false;
@@ -254,6 +264,10 @@ class MateriasAnioIndex extends Component
             "draft.$id.abrev" => ['nullable', 'string', 'max:5'],
             "draft.$id.esInstitucional" => ['boolean'],
             "draft.$id.infoCalif" => ['boolean'],
+            "draft.$id.escala" => ['required', 'integer', Rule::in([
+                CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS,
+                CalificacionesPrimarioNotasPermitidas::ESCALA_LITERALES,
+            ])],
         ];
     }
 
@@ -321,6 +335,9 @@ class MateriasAnioIndex extends Component
         }
         if (Schema::hasColumn('materias', 'infoCalif')) {
             $payload['infoCalif'] = ! empty($d['infoCalif']) ? 1 : 0;
+        }
+        if (Schema::hasColumn('materias', 'escala')) {
+            $payload['escala'] = CalificacionesPrimarioNotasPermitidas::normalizarEscala($d['escala'] ?? 1);
         }
 
         try {
@@ -496,6 +513,42 @@ class MateriasAnioIndex extends Component
         DB::table('materias')->where('id', $id)->update(['infoCalif' => $nuevo]);
     }
 
+    public function guardarEscala(int $id, mixed $valor): void
+    {
+        if (! Schema::hasColumn('materias', 'escala')) {
+            session()->flash('error', 'Falta aplicar la migración del campo «Escala» en materias.');
+
+            return;
+        }
+
+        $key = 'materias-anio:escala:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 60)) {
+            session()->flash('error', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx = schoolCtx();
+        $escala = CalificacionesPrimarioNotasPermitidas::normalizarEscala($valor);
+
+        $m = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('id', $id)
+            ->first(['id', 'escala']);
+
+        if (! $m) {
+            abort(404);
+        }
+
+        if (CalificacionesPrimarioNotasPermitidas::normalizarEscala($m->escala ?? 1) === $escala) {
+            return;
+        }
+
+        DB::table('materias')->where('id', $id)->update(['escala' => $escala]);
+    }
+
     public function confirmDelete(int $id): void
     {
         $ctx = schoolCtx();
@@ -643,6 +696,9 @@ class MateriasAnioIndex extends Component
         if (Schema::hasColumn('materias', 'infoCalif')) {
             $columnas[] = 'infoCalif';
         }
+        if (Schema::hasColumn('materias', 'escala')) {
+            $columnas[] = 'escala';
+        }
 
         $materias = $q->get($columnas);
 
@@ -651,6 +707,7 @@ class MateriasAnioIndex extends Component
         $matplanesByCurplan = $matplanes->groupBy('idCurPlan');
         $tieneEsInstitucional = Schema::hasColumn('materias', 'esInstitucional');
         $tieneInfoCalif = Schema::hasColumn('materias', 'infoCalif');
+        $tieneEscala = Schema::hasColumn('materias', 'escala');
 
         return view('livewire.abm.materias-anio.index', compact(
             'materias',
@@ -659,6 +716,7 @@ class MateriasAnioIndex extends Component
             'matplanesByCurplan',
             'tieneEsInstitucional',
             'tieneInfoCalif',
+            'tieneEscala',
         ))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Asignaturas del Año']);
     }

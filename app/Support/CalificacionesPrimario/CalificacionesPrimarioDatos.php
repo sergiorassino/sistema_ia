@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Lectura y persistencia del formulario manual de calificaciones (primario).
@@ -379,12 +380,17 @@ final class CalificacionesPrimarioDatos
             return null;
         }
 
+        $columnas = ['id', 'ord'];
+        if (Schema::hasColumn('materias', 'escala')) {
+            $columnas[] = 'escala';
+        }
+
         $fila = DB::table('materias')
             ->where('idNivel', $idNivel)
             ->where('idTerlec', $idTerlec)
             ->where('idCursos', $idCurso)
             ->where('id', $idMaterias)
-            ->first(['id', 'ord']);
+            ->first($columnas);
 
         if ($fila === null) {
             return null;
@@ -393,6 +399,7 @@ final class CalificacionesPrimarioDatos
         return (object) [
             'id' => (int) $fila->id,
             'ord' => (int) $fila->ord,
+            'escala' => CalificacionesPrimarioNotasPermitidas::normalizarEscala($fila->escala ?? 1),
         ];
     }
 

@@ -30,6 +30,27 @@ final class PlanillaCalificacionesPrimarioDatos
     }
 
     /**
+     * Ciclo escolar de la planilla según grado (`cursos.c`): 1.º–2.º = primer ciclo, 3.º–4.º = segundo, 5.º–6.º = tercero.
+     */
+    public static function cicloGradoDesdeGrado(int $grado): string
+    {
+        return match (BoletinIpeSanJoseLayout::cicloEscolarDesdeGrado($grado)) {
+            1 => 'PRIMER CICLO',
+            2 => 'SEGUNDO CICLO',
+            default => 'TERCER CICLO',
+        };
+    }
+
+    public static function tituloCicloDesdeGrado(int $grado): string
+    {
+        return match (BoletinIpeSanJoseLayout::cicloEscolarDesdeGrado($grado)) {
+            1 => 'Primer Ciclo',
+            2 => 'Segundo Ciclo',
+            default => 'Tercer Ciclo',
+        };
+    }
+
+    /**
      * @return array{
      *     insti: string,
      *     categoria: string,
@@ -93,7 +114,7 @@ final class PlanillaCalificacionesPrimarioDatos
             }
 
             $grado = (int) ($curso->c ?? 0);
-            $cicloGrado = $grado < 4 ? 'PRIMERO' : 'SEGUNDO';
+            $cicloGrado = self::cicloGradoDesdeGrado($grado);
 
             $bloquesMaterias = CalificacionesPrimarioCatalogo::materiasParaPlanilla(
                 (int) $curso->Id,
@@ -174,7 +195,7 @@ final class PlanillaCalificacionesPrimarioDatos
                 'grado' => $grado,
                 'division' => trim((string) ($curso->s ?? '')),
                 'cicloGrado' => $cicloGrado,
-                'esCicloPrimero' => $cicloGrado === 'PRIMERO',
+                'esCicloPrimero' => BoletinIpeSanJoseLayout::cicloEscolarDesdeGrado($grado) === 1,
                 'materiasCurriculares' => $materiasCurriculares,
                 'materiasInstitucionales' => $materiasInstitucionales,
                 'materias' => $materiasLista,
