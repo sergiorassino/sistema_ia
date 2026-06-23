@@ -2,7 +2,9 @@
 
 namespace App\Services\SincroGe;
 
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioNotasPermitidas;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -84,6 +86,9 @@ final class GeCsvImporterPrimario
     /** @var list<string> */
     private array $notasPermitidas = [];
 
+    /** @var array<int, list<string>> */
+    private array $notasPermitidasPorEscala = [];
+
     public function import(string $absolutePath, int $idTerlec, int $idNivel): GeCsvImportResult
     {
         if (! is_readable($absolutePath)) {
@@ -97,7 +102,11 @@ final class GeCsvImporterPrimario
 
         $this->materiaCache = [];
         $this->legajoCache = [];
-        $this->notasPermitidas = $this->loadNotasPermitidas($idNivel);
+        $this->notasPermitidasPorEscala = CalificacionesPrimarioNotasPermitidas::listasPorEscala($idNivel);
+        $this->notasPermitidas = array_values(array_unique(array_merge(
+            $this->notasPermitidasPorEscala[CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS] ?? [],
+            $this->notasPermitidasPorEscala[CalificacionesPrimarioNotasPermitidas::ESCALA_LITERALES] ?? [],
+        )));
 
         $issues = [];
         $totalDataRows = 0;
@@ -194,7 +203,7 @@ final class GeCsvImporterPrimario
 
                 $payload = $this->buildGradePayload($row);
 
-                $invalidNotes = $this->findInvalidNotes($payload);
+                $invalidNotes = $this->findInvalidNotes($payload, (int) ($materia['escala'] ?? 1));
                 if ($invalidNotes !== []) {
                     $skippedRows++;
                     $issues[] = $this->issue(
@@ -368,12 +377,13 @@ final class GeCsvImporterPrimario
                     ->orWhereRaw('TRIM(matplan.codGE2) = ?', [$codMat])
                     ->orWhereRaw('TRIM(matplan.codGE3) = ?', [$codMat]);
             })
-            ->select([
+            ->select(array_values(array_filter([
                 'matplan.id as idMatPlan',
                 'matplan.matPlanMateria',
                 'materias.id as idMaterias',
                 'materias.idCursos',
-            ])
+                Schema::hasColumn('materias', 'escala') ? 'materias.escala' : null,
+            ])))
             ->first();
 
         $resolved = $row ? [
@@ -381,6 +391,9 @@ final class GeCsvImporterPrimario
             'idCursos' => (int) $row->idCursos,
             'idMaterias' => (int) $row->idMaterias,
             'matPlanMateria' => (string) $row->matPlanMateria,
+            'escala' => Schema::hasColumn('materias', 'escala')
+                ? CalificacionesPrimarioNotasPermitidas::normalizarEscala($row->escala ?? 1)
+                : CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS,
         ] : null;
 
         $this->materiaCache[$cacheKey] = $resolved;
@@ -533,9 +546,14 @@ final class GeCsvImporterPrimario
      * @param  array<string, string>  $payload
      * @return list<string>
      */
-    private function findInvalidNotes(array $payload): array
+    private function findInvalidNotes(array $payload, int $escala): array
     {
-        if ($this->notasPermitidas === []) {
+        $escala = CalificacionesPrimarioNotasPermitidas::normalizarEscala($escala);
+        $permitidas = $this->notasPermitidasPorEscala[$escala] ?? [];
+        if ($permitidas === []) {
+            $permitidas = $this->notasPermitidas;
+        }
+        if ($permitidas === []) {
             return [];
         }
 
@@ -544,27 +562,12 @@ final class GeCsvImporterPrimario
             if ($value === '') {
                 continue;
             }
-            if (! in_array($value, $this->notasPermitidas, true)) {
+            if (! in_array($value, $permitidas, true)) {
                 $invalid[] = "{$field}={$value}";
             }
         }
 
         return $invalid;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function loadNotasPermitidas(int $idNivel): array
-    {
-        return DB::table('notaspermitidas')
-            ->where('idNivel', $idNivel)
-            ->pluck('nota')
-            ->map(fn ($n) => trim((string) $n))
-            ->filter(fn ($n) => $n !== '')
-            ->unique()
-            ->values()
-            ->all();
     }
 
     /**

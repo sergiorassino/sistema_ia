@@ -75,15 +75,12 @@ class RrdReserva extends Model
     // Scopes
     // ---------------------------------------------------------------
 
+    /** Reservas visibles para todos los niveles del mismo ciclo lectivo. */
     public function scopeEnContexto(Builder $query): Builder
     {
-        $ctx = schoolCtx();
-        $idNivel  = (int) ($ctx->idNivel  ?? 0);
-        $idTerlec = (int) ($ctx->idTerlec ?? 0);
+        $idTerlec = (int) (schoolCtx()->idTerlec ?? 0);
 
-        return $query
-            ->where('id_nivel', $idNivel)
-            ->where('id_terlec', $idTerlec);
+        return $query->where('id_terlec', $idTerlec);
     }
 
     public function scopeActivas(Builder $query): Builder

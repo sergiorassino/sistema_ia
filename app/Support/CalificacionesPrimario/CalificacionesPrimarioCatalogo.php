@@ -186,6 +186,9 @@ final class CalificacionesPrimarioCatalogo
         if (Schema::hasColumn('materias', 'infoCalif')) {
             $columnas[] = 'infoCalif';
         }
+        if (Schema::hasColumn('materias', 'escala')) {
+            $columnas[] = 'escala';
+        }
 
         $query = DB::table('materias')
             ->where('idNivel', $idNivel)
@@ -207,6 +210,7 @@ final class CalificacionesPrimarioCatalogo
                 'materia' => trim((string) ($r->materia ?? '')),
                 'esInstitucional' => (int) ($r->esInstitucional ?? 0),
                 'infoCalif' => (int) ($r->infoCalif ?? 0),
+                'escala' => CalificacionesPrimarioNotasPermitidas::normalizarEscala($r->escala ?? 1),
             ]);
 
         return $ordenarParaColumnasIpe

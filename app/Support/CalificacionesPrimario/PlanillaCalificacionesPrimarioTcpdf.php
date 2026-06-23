@@ -147,7 +147,8 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             $this->Image($escudo, 45, 11, 20, 20, '', '', '', false, 300);
         }
 
-        $cicloGrado = (string) ($sec['cicloGrado'] ?? 'PRIMERO');
+        $grado = (int) ($sec['grado'] ?? 1);
+        $cicloGrado = (string) ($sec['cicloGrado'] ?? PlanillaCalificacionesPrimarioDatos::cicloGradoDesdeGrado($grado));
         $layout = $this->layoutMaterias($sec);
 
         $this->SetXY(120, 12);
@@ -155,7 +156,7 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $this->Cell(50, 8, 'Planilla de Calificaciones', 0, 2, 'C');
 
         TcpdfFuenteArial::aplicar($this, '', 13);
-        $tituloCiclo = $cicloGrado === 'PRIMERO' ? 'Primer Ciclo' : 'Segundo Ciclo';
+        $tituloCiclo = PlanillaCalificacionesPrimarioDatos::tituloCicloDesdeGrado($grado);
         $this->Cell(50, 6, $tituloCiclo, 1, 2, 'C');
 
         $this->SetXY(30, 30);
@@ -191,14 +192,14 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $this->SetXY(self::MARGEN_IZQ, 50);
         $this->Cell(self::ANCHO_UTIL, 4, $lineaCiclo, 0, 2, 'L');
 
-        $grado = (string) ($sec['grado'] ?? '');
+        $gradoTexto = (string) ($sec['grado'] ?? '');
         $division = (string) ($sec['division'] ?? '');
 
         $this->SetX(self::MARGEN_IZQ);
         TcpdfFuenteArial::aplicar($this, '', 6);
         $this->Cell(self::ANCHO_NRO, 7, '', 1, 0, 'C');
         $this->Cell(self::ANCHO_GRADO_LABEL, 7, 'Grado', 1, 0, 'C');
-        $this->Cell(self::ANCHO_GRADO_VALOR, 7, $grado, 1, 0, 'C');
+        $this->Cell(self::ANCHO_GRADO_VALOR, 7, $gradoTexto, 1, 0, 'C');
         $this->Cell(self::ANCHO_DIVISION_LABEL, 7, 'División', 1, 0, 'C');
         $this->Cell(self::ANCHO_DIVISION_VALOR, 7, $division, 1, 0, 'C');
 

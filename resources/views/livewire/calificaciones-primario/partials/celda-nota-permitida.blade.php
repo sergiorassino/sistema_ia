@@ -1,5 +1,5 @@
 {{--
-    Celda de nota primario: input (teclado) + desplegable compacto (notas permitidas del nivel).
+    Celda de nota primario: input (teclado) + desplegable compacto (notas permitidas según escala de la materia).
     El guardado sigue vía focusout en el input (app.js).
 --}}
 @props([
@@ -9,6 +9,7 @@
     'inputClass' => 'rounded border border-accent-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500',
     'notasPermitidasActiva' => false,
     'notasPermitidasLista' => [],
+    'incluirOpcionVacia' => true,
 ])
 
 @php
@@ -22,6 +23,7 @@
                maxlength="15"
                autocomplete="off"
                value="{{ $valor }}"
+               data-se-calif-prim-allowed='@json($notasPermitidasLista)'
                @if ($wireKey) wire:key="{{ $wireKey }}" @endif
                class="se-calif-prim-nota-input min-w-0 flex-1 {{ $inputClass }}" />
         <div class="se-calif-prim-nota-picker shrink-0"
@@ -41,6 +43,13 @@
                  aria-label="Notas permitidas"
                  data-se-calif-prim-nota-menu-for="{{ $id }}"
                  hidden>
+                @if ($incluirOpcionVacia)
+                    <button type="button"
+                            role="option"
+                            class="se-calif-prim-nota-picker-option se-calif-prim-nota-picker-option--vacia @if($valor === '') is-selected @endif"
+                            aria-selected="{{ $valor === '' ? 'true' : 'false' }}"
+                            data-nota="">(vacío)</button>
+                @endif
                 @foreach ($notasPermitidasLista as $nota)
                     <button type="button"
                             role="option"

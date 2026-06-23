@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioNotasPermitidas;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
@@ -13,6 +14,7 @@ use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Renderless;
 use Livewire\Component;
@@ -64,6 +66,8 @@ class CargaCalificacionesPrimarioMateria extends Component
     /** @var list<string> */
     public array $notasPermitidasLista = [];
 
+    public int $materiaEscala = 1;
+
     public bool $modoPortalDocente = false;
 
     public function mount(): void
@@ -81,8 +85,48 @@ class CargaCalificacionesPrimarioMateria extends Component
 
         CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
-        $this->cargarNotasPermitidas();
         $this->aplicarColumnasEtapa();
+    }
+
+    public function updatedMateriaId(mixed $value): void
+    {
+        $this->materiaId = ((int) $value) > 0 ? (int) $value : null;
+        $this->filas = [];
+        $this->materiaEscala = CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS;
+        $this->notasPermitidasLista = [];
+
+        if ($this->cursoId && $this->materiaId) {
+            $this->cargarEscalaMateriaSeleccionada();
+            $this->loadGrid();
+        }
+    }
+
+    protected function cargarEscalaMateriaSeleccionada(): void
+    {
+        if (! $this->materiaId || ! $this->cursoId) {
+            $this->materiaEscala = CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS;
+            $this->notasPermitidasLista = [];
+
+            return;
+        }
+
+        $ctx = schoolCtx();
+        if (! Schema::hasColumn('materias', 'escala')) {
+            $this->materiaEscala = CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS;
+            $this->cargarNotasPermitidas();
+
+            return;
+        }
+
+        $escala = DB::table('materias')
+            ->where('id', (int) $this->materiaId)
+            ->where('idCursos', (int) $this->cursoId)
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->value('escala');
+
+        $this->materiaEscala = CalificacionesPrimarioNotasPermitidas::normalizarEscala($escala ?? 1);
+        $this->cargarNotasPermitidas();
     }
 
     public function updatedEtapa(mixed $value): void
@@ -100,16 +144,8 @@ class CargaCalificacionesPrimarioMateria extends Component
         $this->cursoId = ((int) $value) > 0 ? (int) $value : null;
         $this->materiaId = null;
         $this->filas = [];
-    }
-
-    public function updatedMateriaId(mixed $value): void
-    {
-        $this->materiaId = ((int) $value) > 0 ? (int) $value : null;
-        $this->filas = [];
-
-        if ($this->cursoId && $this->materiaId) {
-            $this->loadGrid();
-        }
+        $this->materiaEscala = CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS;
+        $this->notasPermitidasLista = [];
     }
 
     protected function aplicarColumnasEtapa(): void
@@ -193,21 +229,11 @@ class CargaCalificacionesPrimarioMateria extends Component
 
     protected function cargarNotasPermitidas(): void
     {
-        $this->notasPermitidasLista = [];
         $ctx = schoolCtx();
-        $notas = DB::table('notaspermitidas')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->pluck('nota');
-
-        foreach ($notas as $n) {
-            $clave = trim((string) $n);
-            if ($clave === '') {
-                continue;
-            }
-            if (! in_array($clave, $this->notasPermitidasLista, true)) {
-                $this->notasPermitidasLista[] = $clave;
-            }
-        }
+        $this->notasPermitidasLista = CalificacionesPrimarioNotasPermitidas::listaParaEscala(
+            (int) $ctx->idNivel,
+            $this->materiaEscala,
+        );
     }
 
     protected function notasPermitidasActiva(): bool
@@ -217,14 +243,13 @@ class CargaCalificacionesPrimarioMateria extends Component
 
     protected function notaPermitida(string $nota): bool
     {
-        if ($nota === '') {
-            return true;
-        }
-        if (! $this->notasPermitidasActiva()) {
-            return true;
-        }
+        $ctx = schoolCtx();
 
-        return in_array($nota, $this->notasPermitidasLista, true);
+        return CalificacionesPrimarioNotasPermitidas::notaPermitida(
+            (int) $ctx->idNivel,
+            $this->materiaEscala,
+            $nota,
+        );
     }
 
     #[Renderless]
