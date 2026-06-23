@@ -18,6 +18,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_ALUMNOS_RESUMEN_PAGOS = 'alumnos.aranceles-escolares.resumen-pagos';
 
+    public const PURPOSE_ALUMNOS_CUOTAS_ADEUDADAS = 'alumnos.aranceles-escolares.cuotas-adeudadas';
+
     public const PURPOSE_ALUMNOS_COMPROBANTE_AFIP_REG = 'alumnos.comprobante-afip-reg';
 
     public const PURPOSE_ADMIN_COMPROBANTE_PAGO = 'cuotas.comprobante-pago';
@@ -31,6 +33,8 @@ final class OpaqueRouteToken
     public const PURPOSE_ADMIN_COMPROBANTE_AFIP_REG = 'cuotas.comprobante-afip-reg';
 
     public const PURPOSE_ADMIN_RESUMEN_PAGOS = 'cuotas.resumen-pagos';
+
+    public const PURPOSE_ADMIN_CUOTAS_ADEUDADAS = 'cuotas.cuotas-adeudadas';
 
     public const PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR = 'cuotas.solicitud-ayuda-familiar';
 
@@ -58,6 +62,11 @@ final class OpaqueRouteToken
     public static function forResumenPagosAutogestion(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ALUMNOS_RESUMEN_PAGOS, $idLegajo, $idLegajo);
+    }
+
+    public static function forCuotasAdeudadasAutogestion(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ALUMNOS_CUOTAS_ADEUDADAS, $idLegajo, $idLegajo);
     }
 
     public static function forComprobanteAfipAutogestion(int $idComprobanteAfip, int $idCuotaGenerada, int $idLegajo): string
@@ -108,6 +117,11 @@ final class OpaqueRouteToken
     public static function forResumenPagosEstudiante(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ADMIN_RESUMEN_PAGOS, $idLegajo, $idLegajo);
+    }
+
+    public static function forCuotasAdeudadasEstudiante(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_ADMIN_CUOTAS_ADEUDADAS, $idLegajo, $idLegajo);
     }
 
     public static function forSolicitudAyudaFamiliar(int $nroSolicitud, int $idLegajo): string
