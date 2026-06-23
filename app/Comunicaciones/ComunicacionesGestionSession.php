@@ -2,7 +2,6 @@
 
 namespace App\Comunicaciones;
 
-use App\Models\ComHilo;
 use App\Support\ComunicacionesRutasGestion;
 
 /**
@@ -30,11 +29,11 @@ final class ComunicacionesGestionSession
 
         $ctx = schoolCtx();
 
-        $hilo = ComHilo::query()
-            ->where('id', $idHilo)
-            ->where('id_nivel', (int) $ctx->idNivel)
-            ->where('id_terlec', (int) $ctx->idTerlec)
-            ->first();
+        $hilo = ComunicacionesRepository::hiloGestionProfesorEnContexto(
+            $idHilo,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec
+        );
 
         if ($hilo === null) {
             return false;

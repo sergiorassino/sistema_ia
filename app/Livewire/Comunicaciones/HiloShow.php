@@ -353,11 +353,11 @@ class HiloShow extends Component
 
         $rolEmisor = CanalesPolicy::claveRolDeProfesor($profesor);
 
-        $hiloCtx = ComHilo::query()
-            ->where('id', $this->idHilo)
-            ->where('id_nivel', (int) $ctx->idNivel)
-            ->where('id_terlec', (int) $ctx->idTerlec)
-            ->first();
+        $hiloCtx = ComunicacionesRepository::hiloGestionProfesorEnContexto(
+            $this->idHilo,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec
+        );
 
         abort_if($hiloCtx === null, 404);
 
@@ -428,8 +428,13 @@ class HiloShow extends Component
             },
         ])->findOrFail($this->idHilo);
 
-        abort_if(
-            $hilo->id_nivel !== (int) $ctx->idNivel || $hilo->id_terlec !== (int) $ctx->idTerlec,
+        abort_unless(
+            ComunicacionesRepository::profesorPuedeVerHilo(
+                (int) $hilo->id,
+                (int) $ctx->idProfesor,
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec
+            ) || tienePermiso(8),
             404
         );
 
