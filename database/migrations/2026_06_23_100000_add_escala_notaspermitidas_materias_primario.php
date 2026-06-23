@@ -56,6 +56,18 @@ return new class extends Migration
                         ->update(['escala' => 2]);
                 }
             }
+
+            if (! DB::table('notaspermitidas')
+                ->where('idNivel', $idNivelPrimario)
+                ->where('nota', '-')
+                ->where('escala', 2)
+                ->exists()) {
+                DB::table('notaspermitidas')->insert([
+                    'idNivel' => $idNivelPrimario,
+                    'nota' => '-',
+                    'escala' => 2,
+                ]);
+            }
         }
 
         if (Schema::hasTable('materias') && ! Schema::hasColumn('materias', 'escala')) {
@@ -84,6 +96,12 @@ return new class extends Migration
             ->where('idNivel', $idNivelPrimario)
             ->where('escala', 2)
             ->whereIn('nota', ['ML', 'L', 'EL', 'P', 'EP', 'PPI'])
+            ->delete();
+
+        DB::table('notaspermitidas')
+            ->where('idNivel', $idNivelPrimario)
+            ->where('nota', '-')
+            ->where('escala', 2)
             ->delete();
 
         DB::table('notaspermitidas')
