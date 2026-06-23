@@ -42,6 +42,9 @@ class NuevoComunicado extends Component
 
     public array $docentesSeleccionados = []; // [{id, label}]
 
+    /** Nivel del docente prefijado (p. ej. desde reserva de material didáctico cross-nivel). */
+    public ?int $idNivelDestinatarioDocente = null;
+
     // —— Modal alumnos ——
     public bool $modalAlumnosAbierto = false;
 
@@ -92,10 +95,43 @@ class NuevoComunicado extends Component
         if ($idDestinatario > 0) {
             $prefill = NuevoComunicadoDocenteDestino::datosDestinatarioProfesor($idDestinatario);
             if ($prefill !== null) {
-                $this->destinatarioTipo       = $prefill['destinatario_tipo'];
-                $this->docentesSeleccionados  = [$prefill['docente']];
+                $this->destinatarioTipo              = $prefill['destinatario_tipo'];
+                $this->docentesSeleccionados         = [$prefill['docente']];
+                $this->idNivelDestinatarioDocente    = (int) ($prefill['id_nivel_destinatario'] ?? 0) ?: null;
+                $this->asegurarOpcionDestinatarioPrefill();
             }
         }
+    }
+
+    private function asegurarOpcionDestinatarioPrefill(): void
+    {
+        if ($this->destinatarioTipo === '') {
+            return;
+        }
+
+        foreach ($this->opcionesDestinatarios as $op) {
+            if (($op['value'] ?? '') === $this->destinatarioTipo) {
+                return;
+            }
+        }
+
+        $catalogo = ComCanalRolCatalog::catalogo();
+        if (! isset($catalogo[$this->destinatarioTipo])) {
+            return;
+        }
+
+        $parsed = ComCanalRolCatalog::parseClave($this->destinatarioTipo);
+        $this->opcionesDestinatarios[] = [
+            'value'        => $this->destinatarioTipo,
+            'label'        => $catalogo[$this->destinatarioTipo],
+            'es_familia'   => $parsed['familia'],
+            'id_tipo_prof' => $parsed['id_tipo_prof'],
+        ];
+
+        usort(
+            $this->opcionesDestinatarios,
+            static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label'])
+        );
     }
 
     public function updatedModalAlumnosFiltro(): void
@@ -309,6 +345,7 @@ class NuevoComunicado extends Component
     {
         if ($this->esDestinatarioFamilia()) {
             $this->docentesSeleccionados = [];
+            $this->idNivelDestinatarioDocente = null;
             $this->cerrarModalDocentes();
         } else {
             $this->alumnosSeleccionados = [];
@@ -317,6 +354,7 @@ class NuevoComunicado extends Component
             $this->cerrarModalAlumnos();
             $this->cerrarModalCursos();
             $this->docentesSeleccionados = [];
+            $this->idNivelDestinatarioDocente = null;
             $this->cerrarModalDocentes();
         }
     }
@@ -345,6 +383,12 @@ class NuevoComunicado extends Component
         $profesor = $ctx->profesor();
         $rolEmisor = $profesor !== null ? CanalesPolicy::claveRolDeProfesor($profesor) : '';
         $valoresDest = CanalesPolicy::valoresDestinatarioNuevoComunicado($rolEmisor, (int) $ctx->idNivel);
+        if ($this->idNivelDestinatarioDocente !== null && $this->idNivelDestinatarioDocente !== (int) $ctx->idNivel) {
+            $valoresDest = array_values(array_unique(array_merge(
+                $valoresDest,
+                CanalesPolicy::valoresDestinatarioNuevoComunicado($rolEmisor, $this->idNivelDestinatarioDocente)
+            )));
+        }
 
         $rules = [
             'destinatarioTipo' => ['required', 'string', Rule::in($valoresDest)],
@@ -455,23 +499,24 @@ class NuevoComunicado extends Component
             }
 
             $claveReceptor = $this->destinatarioTipo;
-            if (! CanalesPolicy::puedeIniciar($rolEmisor, $claveReceptor, $idNivel)) {
+            $idNivelCanal  = $this->idNivelDestinatarioDocente ?? $idNivel;
+            if (! CanalesPolicy::puedeIniciar($rolEmisor, $claveReceptor, $idNivelCanal)) {
                 $this->addError('destinatarioTipo', 'Su rol no tiene permiso para iniciar comunicados a este tipo de destinatario según los canales del nivel.');
 
                 return;
             }
 
             $idsPedidos = array_map(fn ($d) => (int) $d['id'], $this->docentesSeleccionados);
-            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorIdTipoProf($idsPedidos, $idNivel, $idTipoProf);
+            $idsProf    = ComunicacionesRepository::filtrarIdsProfesoresPorIdTipoProf($idsPedidos, $idNivelCanal, $idTipoProf);
             $idsProf    = array_values(array_diff($idsProf, [$idProf]));
 
             if ($idsProf === []) {
-                $this->addError('destinatarioTipo', 'Seleccione al menos un destinatario del nivel actual. No puede incluirse a usted mismo.');
+                $this->addError('destinatarioTipo', 'Seleccione al menos un destinatario válido. No puede incluirse a usted mismo.');
 
                 return;
             }
 
-            $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $claveReceptor, $idNivel);
+            $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $claveReceptor, $idNivelCanal);
             if ($mediosCanal === []) {
                 $this->addError('contenido', 'No hay medios habilitados para este tipo de envío. Revise la parametrización de canales.');
 

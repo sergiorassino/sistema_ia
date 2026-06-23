@@ -19,8 +19,23 @@ class ComunicacionesRepository
     private const ID_TIPO_SIN_ROL = 1;
 
     /**
+     * Hilos visibles en gestión: mismo terlec y (mismo nivel o comunicación interna docentes cross-nivel).
+     */
+    public static function hiloGestionProfesorEnContexto(int $idHilo, int $idNivel, int $idTerlec): ?ComHilo
+    {
+        return ComHilo::query()
+            ->where('id', $idHilo)
+            ->where('id_terlec', $idTerlec)
+            ->where(function ($q) use ($idNivel) {
+                $q->where('id_nivel', $idNivel)
+                    ->orWhere('scope', 'docentes');
+            })
+            ->first();
+    }
+
+    /**
      * Verifica si un profesor puede ver un hilo (por ser creador o destinatario),
-     * siempre acotado al nivel/terlec del contexto.
+     * acotado al terlec del contexto y al nivel salvo hilos internos docentes cross-nivel.
      */
     public static function profesorPuedeVerHilo(
         int $idHilo,
@@ -30,8 +45,11 @@ class ComunicacionesRepository
     ): bool {
         return DB::table('com_hilos as h')
             ->where('h.id', $idHilo)
-            ->where('h.id_nivel', $idNivel)
             ->where('h.id_terlec', $idTerlec)
+            ->where(function ($q) use ($idNivel) {
+                $q->where('h.id_nivel', $idNivel)
+                    ->orWhere('h.scope', 'docentes');
+            })
             ->where(function ($q) use ($idProfesor) {
                 $q->where(function ($q2) use ($idProfesor) {
                     $q2->where('h.creado_por_tipo', 'profesor')
@@ -888,8 +906,11 @@ class ComunicacionesRepository
                 $q->where('h.creado_por_tipo', 'profesor')
                     ->where('h.creado_por_id', $idProfesor);
             })
-            ->where('h.id_nivel', $idNivel)
             ->when($soloTerlecActual, fn ($q) => $q->where('h.id_terlec', $idTerlec))
+            ->where(function ($q) use ($idNivel) {
+                $q->where('h.id_nivel', $idNivel)
+                    ->orWhere('h.scope', 'docentes');
+            })
             ->leftJoin('com_mensajes_destinatarios as d', 'd.id_hilo', '=', 'h.id');
 
         $select = [

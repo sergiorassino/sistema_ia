@@ -13,7 +13,11 @@ use App\Support\ComunicacionesRutasGestion;
 final class NuevoComunicadoDocenteDestino
 {
     /**
-     * @return array{destinatario_tipo:string,docente:array{id:int,label:string}}|null
+     * @return array{
+     *     destinatario_tipo:string,
+     *     id_nivel_destinatario:int,
+     *     docente:array{id:int,label:string}
+     * }|null
      */
     public static function datosDestinatarioProfesor(int $idProfesor): ?array
     {
@@ -22,19 +26,22 @@ final class NuevoComunicadoDocenteDestino
         }
 
         $ctx = schoolCtx();
-        $idNivel      = (int) ($ctx->idNivel ?? 0);
         $idProfSesion = (int) ($ctx->idProfesor ?? 0);
 
-        if ($idNivel <= 0 || $idProfesor === $idProfSesion) {
+        if ($idProfesor === $idProfSesion) {
             return null;
         }
 
         $profesor = Profesor::query()
             ->where('id', $idProfesor)
-            ->where('nivel', $idNivel)
             ->first();
 
         if ($profesor === null) {
+            return null;
+        }
+
+        $idNivelDestinatario = (int) ($profesor->nivel ?? 0);
+        if ($idNivelDestinatario <= 0) {
             return null;
         }
 
@@ -51,13 +58,13 @@ final class NuevoComunicadoDocenteDestino
         }
 
         $rolEmisor = CanalesPolicy::claveRolDeProfesor($profEmisor);
-        if (! CanalesPolicy::puedeIniciar($rolEmisor, $destinatarioTipo, $idNivel)) {
+        if (! CanalesPolicy::puedeIniciar($rolEmisor, $destinatarioTipo, $idNivelDestinatario)) {
             return null;
         }
 
         $idsValidos = ComunicacionesRepository::filtrarIdsProfesoresPorIdTipoProf(
             [$idProfesor],
-            $idNivel,
+            $idNivelDestinatario,
             $idTipoProf
         );
 
@@ -66,8 +73,9 @@ final class NuevoComunicadoDocenteDestino
         }
 
         return [
-            'destinatario_tipo' => $destinatarioTipo,
-            'docente'           => [
+            'destinatario_tipo'      => $destinatarioTipo,
+            'id_nivel_destinatario'  => $idNivelDestinatario,
+            'docente'                => [
                 'id'    => $idProfesor,
                 'label' => $profesor->nombre_completo,
             ],
@@ -76,10 +84,14 @@ final class NuevoComunicadoDocenteDestino
 
     public static function urlParaProfesor(int $idProfesor): ?string
     {
-        if (self::datosDestinatarioProfesor($idProfesor) === null) {
+        $datos = self::datosDestinatarioProfesor($idProfesor);
+        if ($datos === null) {
             return null;
         }
 
-        return ComunicacionesRutasGestion::route('nuevo', ['destinatario' => $idProfesor]);
+        return ComunicacionesRutasGestion::route('nuevo', [
+            'destinatario'       => $idProfesor,
+            'nivel_destinatario' => $datos['id_nivel_destinatario'],
+        ]);
     }
 }
