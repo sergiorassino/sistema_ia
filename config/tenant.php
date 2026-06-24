@@ -329,6 +329,7 @@ return [
             'cert_usuario_id' => null,
             'cert_key' => null,
             'cert_crt' => null,
+            /** Respaldo si no están en `ento` (Parámetros del sistema). Prioridad: ento → tenant. */
             'cbte_tipo' => 15,
             'concepto' => 2,
             'doc_tipo' => 96,
@@ -337,6 +338,7 @@ return [
             'produccion' => true,
             /** Si true, no llama a AFIP (cualquier entorno). Para pruebas en un tenant concreto. */
             'simular' => false,
+            /** En local, simula salvo que el tenant declare `simular => false` explícito. */
             'simular_local' => true,
             'condicion_iva_alumno' => 'Consumidor Final',
             'condicion_iva_receptor_id' => 5,

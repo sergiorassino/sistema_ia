@@ -48,7 +48,8 @@
             && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
             && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
             && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
-            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf' ? 'true' : 'false' }},
+            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf'
+            && ($route ?? '') !== 'cuotas.consulta-afip-comprobante' ? 'true' : 'false' }},
         becas: {{ in_array($route ?? '', ['cuotas.tipos-beca', 'cuotas.asignacion-becas', 'cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true) ? 'true' : 'false' }},
         gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.eliminacion-masiva', 'cuotas.edicion-generadas', 'cuotas.cancelar-todas-reservas'], true)
             || str_starts_with($route ?? '', 'cuotas.importes.') ? 'true' : 'false' }},

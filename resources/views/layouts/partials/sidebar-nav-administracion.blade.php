@@ -268,7 +268,8 @@
                            && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha'
                            && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
                            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
-                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf',
+                           && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf'
+                           && ($route ?? '') !== 'cuotas.consulta-afip-comprobante',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -276,6 +277,20 @@
                               d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                     </svg>
                     <span class="truncate">Aranceles por estudiante</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeConsultaAfipComprobante())
+                <a href="{{ route('cuotas.consulta-afip-comprobante') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'cuotas.consulta-afip-comprobante',
+                   ])
+                   title="Consultar factura o nota de crédito en AFIP por número">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 4h.01"/>
+                    </svg>
+                    <span class="truncate">Consulta AFIP</span>
                 </a>
                 @endif
             </div>

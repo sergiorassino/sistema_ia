@@ -18,13 +18,11 @@ return [
 
         'facturacion_afip' => [
             'habilitado' => true,
-            'cert_usuario_id' => '1',
-            'cert_key' => 'privada_prod.key',
-            'cert_crt' => 'Sistemalaboratorio_2bbae7f592f630ba.crt',
+            // Certificados WSAA/WSFE: carpeta y nombres de archivo en Parámetros del sistema (ento).
+            // Respaldo opcional en tenant para desarrollo: cert_usuario_id, cert_key, cert_crt.
             'cbte_tipo' => 15,
             'produccion' => true,
-            // Por ahora no envía a AFIP: genera comprobante simulado en BD.
-            'simular' => true,
+            'simular' => false,
         ],
     ],
 

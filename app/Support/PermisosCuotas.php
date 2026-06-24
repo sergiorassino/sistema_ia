@@ -25,6 +25,12 @@ final class PermisosCuotas
         return self::tiene(PermisosIaCatalog::ADMIN_ARANCELES_ESTUDIANTE);
     }
 
+    /** Consulta de comprobantes AFIP (solo tenants con facturación AFIP habilitada). */
+    public static function puedeConsultaAfipComprobante(): bool
+    {
+        return self::puedeArancelesPorEstudiante() && tenantCuotasFacturacionAfipHabilitada();
+    }
+
     public static function puedePlantillas(): bool
     {
         return self::tiene(PermisosIaCatalog::ADMIN_CUOTAS_PLANTILLAS);
@@ -93,7 +99,7 @@ final class PermisosCuotas
     /** Grupo sidebar «Gestión de aranceles». */
     public static function muestraGrupoGestionAranceles(): bool
     {
-        return self::puedeArancelesPorEstudiante();
+        return self::puedeArancelesPorEstudiante() || self::puedeConsultaAfipComprobante();
     }
 
     /** Grupo sidebar «Gestión masiva». */
