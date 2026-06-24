@@ -6,6 +6,7 @@ use App\Models\CuotaGenerada;
 use App\Models\CuotasBeca;
 use App\Models\CuotasImporte;
 use App\Models\Ento;
+use App\Support\Cuotas\ImputacionPagoCalculo;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
@@ -98,15 +99,14 @@ final class ComprobantePagoCalculo
             $nuevoVencEsp = $nuevoVenc?->format('d/m/Y');
             $diasRecargo4 = self::diasEntre($nuevoVenc, $venc1);
 
-            if ($formula['signo4'] === '+' && $formula['porcan4'] === '%') {
-                $nuevoImporte = $faltapa + self::interesRecargoPorcent(
-                    $faltapa,
-                    (float) $formula['valor4'],
-                    $diasRecargo4,
-                );
-            } else {
-                $nuevoImporte = $faltapa + $formula['valor4'];
-            }
+            $nuevoImporte = $faltapa + self::interesRecargo(
+                $faltapa,
+                (float) $formula['valor4'],
+                $formula['porcan4'],
+                $venc1,
+                $fechaDeHoy,
+                $diasRecargo4,
+            );
 
             $importeVenc3 = $nuevoImporte;
             $venc3 = $nuevoVenc;
@@ -324,9 +324,14 @@ final class ComprobantePagoCalculo
         if ($formula['signo2'] === '+') {
             $identConcepto = '1';
             $dias = self::diasEntre($venc2, $venc1);
-            $interes = $formula['porcan2'] === '%'
-                ? self::interesRecargoPorcent($faltapa, (float) $formula['valor2'], $dias)
-                : $formula['valor2'];
+            $interes = self::interesRecargo(
+                $faltapa,
+                (float) $formula['valor2'],
+                $formula['porcan2'],
+                $venc1,
+                $venc2 ?? Carbon::today(),
+                $dias,
+            );
 
             return [$faltapa + $interes, $identConcepto];
         }
@@ -353,9 +358,14 @@ final class ComprobantePagoCalculo
         if ($formula['signo3'] === '+') {
             $identConcepto = '1';
             $dias = self::diasEntre($venc3, $venc1);
-            $interes = $formula['porcan3'] === '%'
-                ? self::interesRecargoPorcent($faltapa, (float) $formula['valor3'], $dias)
-                : $formula['valor3'];
+            $interes = self::interesRecargo(
+                $faltapa,
+                (float) $formula['valor3'],
+                $formula['porcan3'],
+                $venc1,
+                $venc3 ?? Carbon::today(),
+                $dias,
+            );
 
             return [$faltapa + $interes, $identConcepto];
         }
@@ -454,6 +464,36 @@ final class ComprobantePagoCalculo
         }
 
         return max(0, $fechaMenor->diffInDays($fechaMayor, false));
+    }
+
+    /**
+     * Recargo según tipo porcan ($, %, m, p).
+     */
+    private static function interesRecargo(
+        float $faltapa,
+        float $valor,
+        string $porcan,
+        ?CarbonInterface $venc1,
+        CarbonInterface $fechaReferencia,
+        int $dias,
+    ): float {
+        if ($porcan === '%') {
+            return self::interesRecargoPorcent($faltapa, $valor, $dias);
+        }
+
+        if ($porcan === 'm') {
+            $meses = ImputacionPagoCalculo::mesesMoraAcumuladaDesdeVenc1($venc1, $fechaReferencia);
+
+            return $valor * $meses;
+        }
+
+        if ($porcan === 'p') {
+            $meses = ImputacionPagoCalculo::mesesMoraAcumuladaDesdeVenc1($venc1, $fechaReferencia);
+
+            return (($faltapa * $valor) / 100) * $meses;
+        }
+
+        return $valor;
     }
 
     /**

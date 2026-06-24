@@ -532,12 +532,23 @@ class ImputarPagoForm extends Component
     }
 
     /**
-     * @param  array{esRecargo: bool, usaDias: bool, diasMora: int}  $calc
+     * @param  array{esRecargo: bool, usaDias: bool, diasMora: int, usaMeses?: bool, mesesMora?: int, porcan?: string}  $calc
      */
     private static function etiquetaPorcentDesdeCalculo(array $calc): string
     {
         if (! $calc['esRecargo']) {
             return 'PORCENTAJE BONIFICACIÓN';
+        }
+
+        if ($calc['usaMeses'] ?? false) {
+            $meses = (int) ($calc['mesesMora'] ?? 0);
+            $sufijoMeses = $meses === 1 ? 'mes' : 'meses';
+
+            if (($calc['porcan'] ?? '') === 'm') {
+                return 'INTERÉS MENSUAL ($) - '.$meses.' '.$sufijoMeses;
+            }
+
+            return '% INTERÉS MENSUAL - '.$meses.' '.$sufijoMeses;
         }
 
         if ($calc['usaDias']) {

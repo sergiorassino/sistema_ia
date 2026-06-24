@@ -79,6 +79,9 @@ final class ImputacionPagoCalculo
      *     usaDias: bool,
      *     dias: int,
      *     diasMora: int,
+     *     usaMeses: bool,
+     *     mesesMora: int,
+     *     porcan: string,
      *     interes: float,
      *     bonificacion: float,
      *     aPagar: float,
@@ -105,7 +108,9 @@ final class ImputacionPagoCalculo
         $valor = $formula['valor1'];
         $porcan = $formula['porcan1'];
         $usaDias = false;
+        $usaMeses = false;
         $dias = 0;
+        $mesesMora = 0;
         $interesMoraDiario = tenantCuotasInteresMoraEsDiario();
 
         if ($venc1 !== null && $fecha->lte($venc1)) {
@@ -119,18 +124,21 @@ final class ImputacionPagoCalculo
             $valor = $formula['valor2'];
             $porcan = $formula['porcan2'];
             $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
+            $usaMeses = $signo === '+' && self::porcanEsMensualAcumulado($porcan);
         } elseif ($venc3 !== null && $fecha->lte($venc3)) {
             $tramo = '3';
             $signo = $formula['signo3'];
             $valor = $formula['valor3'];
             $porcan = $formula['porcan3'];
             $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
+            $usaMeses = $signo === '+' && self::porcanEsMensualAcumulado($porcan);
         } else {
             $tramo = '4';
             $signo = $formula['signo4'];
             $valor = $formula['valor4'];
             $porcan = $formula['porcan4'];
             $usaDias = $interesMoraDiario && $signo === '+' && $porcan === '%';
+            $usaMeses = $signo === '+' && self::porcanEsMensualAcumulado($porcan);
         }
 
         $diasMora = 0;
@@ -141,6 +149,9 @@ final class ImputacionPagoCalculo
         }
         if ($usaDias) {
             $dias = $diasMora;
+        }
+        if ($usaMeses) {
+            $mesesMora = self::mesesMoraAcumuladaDesdeVenc1($venc1, $fecha);
         }
 
         $porcentDiario = (float) $valor;
@@ -162,6 +173,7 @@ final class ImputacionPagoCalculo
             $esRecargo,
             $usaDias,
             $diasMora,
+            $mesesMora,
         );
 
         $aPagar = round($saldoAPagar + $interes - $bonificacion, 2);
@@ -175,6 +187,9 @@ final class ImputacionPagoCalculo
             'usaDias' => $usaDias,
             'dias' => $dias,
             'diasMora' => $diasMora,
+            'usaMeses' => $usaMeses,
+            'mesesMora' => $mesesMora,
+            'porcan' => $porcan,
             'interes' => $interes,
             'bonificacion' => $bonificacion,
             'aPagar' => max(0, $aPagar),
@@ -192,6 +207,7 @@ final class ImputacionPagoCalculo
         bool $esRecargo,
         bool $usaDias,
         int $dias,
+        int $meses,
     ): array {
         if ($saldo <= 0 || $valor == 0.0) {
             return [0.0, 0.0];
@@ -201,6 +217,10 @@ final class ImputacionPagoCalculo
             if ($porcan === '%') {
                 // Con mora diaria, $valor ya es el % total (diario × días desde venc. 1).
                 $monto = ($saldo * $valor) / 100;
+            } elseif ($porcan === 'm') {
+                $monto = $valor * max(0, $meses);
+            } elseif ($porcan === 'p') {
+                $monto = (($saldo * $valor) / 100) * max(0, $meses);
             } else {
                 $monto = $valor;
                 if ($usaDias) {
@@ -216,6 +236,33 @@ final class ImputacionPagoCalculo
             : $valor;
 
         return [0.0, round($bonif, 2)];
+    }
+
+    public static function porcanEsMensualAcumulado(string $porcan): bool
+    {
+        return in_array($porcan, ['m', 'p'], true);
+    }
+
+    /**
+     * Meses de mora acumulada desde el 1.er vencimiento (legacy ScriptCase imputarPago).
+     */
+    public static function mesesMoraAcumuladaDesdeVenc1(?CarbonInterface $venc1, CarbonInterface $fechaReferencia): int
+    {
+        if ($venc1 === null) {
+            return 0;
+        }
+
+        $fechaInicial = $venc1->copy()->startOfMonth();
+        $fecha = $fechaReferencia->copy()->startOfDay();
+        $venc1Dia = $venc1->copy()->startOfDay();
+
+        $meses = (int) $fechaInicial->diff($fecha)->format('%m');
+
+        if ($venc1Dia->lt($fecha)) {
+            $meses++;
+        }
+
+        return max(0, $meses);
     }
 
     /**
