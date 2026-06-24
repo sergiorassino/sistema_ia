@@ -2,7 +2,9 @@
 
 namespace App\Support\CalificacionesInicial;
 
+use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -43,6 +45,22 @@ final class CalificacionesInicialObservacionesDatos
     public static function campoObsPorEtapa(int $etapa): string
     {
         return $etapa === 2 ? 'obs02' : 'obs01';
+    }
+
+    /** @return list<string> */
+    public static function camposObservacion(): array
+    {
+        $campos = [];
+        foreach (self::etapasCarga() as $etapa) {
+            $campos[] = self::campoObsPorEtapa($etapa);
+        }
+
+        return $campos;
+    }
+
+    public static function esCampoObservacion(string $campo): bool
+    {
+        return in_array($campo, self::camposObservacion(), true);
     }
 
     /**
@@ -132,6 +150,162 @@ final class CalificacionesInicialObservacionesDatos
             'materiaNombre' => (string) $materia->materia,
             'cursoLabel' => (string) $materia->cursoLabel,
         ];
+    }
+
+    /**
+     * Grilla por espacio curricular: matrículas regulares del curso con obs01/obs02 de la materia.
+     *
+     * @return array{
+     *     ord: int,
+     *     materiaLabel: string,
+     *     cursoLabel: string,
+     *     etapas: list<int>,
+     *     filas: list<array{
+     *         idMatricula: int,
+     *         idCalificacion: ?int,
+     *         alumno: string,
+     *         observaciones: array<int, string>
+     *     }>
+     * }
+     */
+    public static function cargarGrillaMateria(int $cursoId, int $materiaId): array
+    {
+        self::abortSiColumnasInexistentes();
+
+        $ctx = schoolCtx();
+        $etapas = self::etapasCarga();
+        $campos = self::camposObservacion();
+
+        $curso = Curso::query()
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('Id', $cursoId)
+            ->first(['Id', 'cursec', 'c', 's', 'orden', 'idTurnoClase']);
+
+        if ($curso === null) {
+            return [
+                'ord' => 0,
+                'materiaLabel' => '—',
+                'cursoLabel' => '—',
+                'etapas' => $etapas,
+                'filas' => [],
+            ];
+        }
+
+        $materia = self::materiaEnContexto($materiaId, (int) $ctx->idNivel, (int) $ctx->idTerlec);
+        if ($materia === null || (int) $materia->idCursos !== $cursoId) {
+            return [
+                'ord' => 0,
+                'materiaLabel' => '—',
+                'cursoLabel' => $curso->nombreParaListado(),
+                'etapas' => $etapas,
+                'filas' => [],
+            ];
+        }
+
+        $ord = (int) $materia->ord;
+        $idsCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES,
+        );
+
+        $matriculas = Matricula::query()
+            ->with('legajo')
+            ->join('legajos as l', 'l.id', '=', 'matricula.idLegajos')
+            ->where('matricula.idCursos', $cursoId)
+            ->where('matricula.idNivel', (int) $ctx->idNivel)
+            ->where('matricula.idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('matricula.idCondiciones', $idsCondiciones)
+            ->whereNull('matricula.fechaBaja')
+            ->orderBy('l.apellido')
+            ->orderBy('l.nombre')
+            ->select('matricula.*')
+            ->get();
+
+        $idsMatricula = $matriculas->map(fn (Matricula $m) => (int) $m->id)->all();
+        $porMatricula = [];
+
+        if ($idsMatricula !== []) {
+            $columnasSelect = array_merge(['id', 'idMatricula'], $campos);
+            $filasCalif = DB::table('calificaciones')
+                ->whereIn('idMatricula', $idsMatricula)
+                ->where('ord', $ord)
+                ->get($columnasSelect);
+
+            foreach ($filasCalif as $fila) {
+                $porMatricula[(int) $fila->idMatricula] = $fila;
+            }
+        }
+
+        $filas = [];
+        foreach ($matriculas as $mat) {
+            $idMatricula = (int) $mat->id;
+            $fila = $porMatricula[$idMatricula] ?? null;
+            $observaciones = [];
+            foreach ($etapas as $etapa) {
+                $col = self::campoObsPorEtapa($etapa);
+                $observaciones[$etapa] = $fila !== null ? (string) ($fila->{$col} ?? '') : '';
+            }
+
+            $legajo = $mat->legajo;
+            $filas[] = [
+                'idMatricula' => $idMatricula,
+                'idCalificacion' => $fila !== null ? (int) $fila->id : null,
+                'alumno' => trim(((string) ($legajo?->apellido ?? '')).', '.((string) ($legajo?->nombre ?? ''))),
+                'observaciones' => $observaciones,
+            ];
+        }
+
+        return [
+            'ord' => $ord,
+            'materiaLabel' => trim((string) ($materia->materia ?? '')) !== '' ? (string) $materia->materia : '—',
+            'cursoLabel' => $curso->nombreParaListado(),
+            'etapas' => $etapas,
+            'filas' => $filas,
+        ];
+    }
+
+    public static function guardarCelda(
+        Matricula $matricula,
+        object $materia,
+        string $campo,
+        string $valor,
+    ): void {
+        self::abortSiColumnasInexistentes();
+
+        if (! self::esCampoObservacion($campo)) {
+            abort(400);
+        }
+
+        $idMatricula = (int) $matricula->id;
+        $ord = (int) $materia->ord;
+
+        $existente = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->where('ord', $ord)
+            ->first(['id']);
+
+        if ($existente !== null) {
+            DB::table('calificaciones')
+                ->where('id', (int) $existente->id)
+                ->where('idMatricula', $idMatricula)
+                ->update([$campo => $valor]);
+
+            return;
+        }
+
+        $payload = [];
+        foreach (self::camposObservacion() as $col) {
+            $payload[$col] = $col === $campo ? $valor : '';
+        }
+
+        DB::table('calificaciones')->insert(array_merge([
+            'idMatricula' => $idMatricula,
+            'idLegajos' => (int) $matricula->idLegajos,
+            'idTerlec' => (int) $matricula->idTerlec,
+            'idCursos' => (int) $matricula->idCursos,
+            'idMaterias' => (int) $materia->id,
+            'ord' => $ord,
+        ], $payload));
     }
 
     /**
