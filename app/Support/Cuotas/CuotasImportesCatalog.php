@@ -27,6 +27,19 @@ final class CuotasImportesCatalog
         return [
             '%' => '%',
             '$' => '$',
+            'm' => 'm',
+            'p' => 'p',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function leyendasPorcan(): array
+    {
+        return [
+            '%' => 'Porcentaje sobre el saldo.',
+            '$' => 'Monto fijo.',
+            'm' => 'Monto fijo mensual acumulado desde el 1.er vencimiento.',
+            'p' => 'Porcentaje mensual acumulado sobre el saldo desde el 1.er vencimiento.',
         ];
     }
 

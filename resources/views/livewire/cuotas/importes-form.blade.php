@@ -41,6 +41,18 @@
         </div>
 
         <div class="se-card se-cuotas-importes-card">
+            <div class="border-b border-accent-200 bg-accent-50/80 px-3 py-2.5 sm:px-4">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Columna % / $</p>
+                <ul class="mt-1.5 flex flex-col gap-1 text-[11px] leading-snug text-neutral-600 sm:flex-row sm:flex-wrap sm:gap-x-5 sm:gap-y-1">
+                    @foreach ($leyendasPorcan as $clave => $texto)
+                        <li>
+                            <span class="font-semibold text-primary-700">{{ $clave }}</span>
+                            <span class="text-neutral-400" aria-hidden="true"> — </span>
+                            {{ $texto }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
             <div class="se-cuotas-importes-scroll" tabindex="0">
                 <table class="se-cuotas-importes-tabla">
                     <colgroup>
