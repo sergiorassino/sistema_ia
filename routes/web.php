@@ -133,6 +133,7 @@ use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
 use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ComprobantesAfipCuota;
+use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Cooperadora\MovimientosPdfController;
 use App\Http\Controllers\Cooperadora\OrdenPagoPdfController;
@@ -542,6 +543,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)
             ->middleware('permiso:'.$pi::ADMIN_LISTADO_ESTUDIANTES_CUOTA)
             ->name('cuotas.listado-estudiantes-por-cuota.pdf');
+        Route::get('/consulta-afip-comprobante', ConsultaAfipComprobanteIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.consulta-afip-comprobante');
 
         Route::middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)->group(function () {
             Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');

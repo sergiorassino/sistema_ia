@@ -568,6 +568,53 @@ if (! function_exists('tenantCuotasInteresMoraModo')) {
     }
 }
 
+if (! function_exists('afipCertificadosDesdeEnto')) {
+    /**
+     * Rutas de certificado WSAA/WSFE declaradas en `ento` para el nivel activo.
+     *
+     * @return array{cert_usuario_id: string, cert_key: string, cert_crt: string}|null
+     */
+    function afipCertificadosDesdeEnto(?int $idNivel = null): ?array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('ento')) {
+            return null;
+        }
+
+        foreach (['afipCertCarpeta', 'afipCertKey', 'afipCertCrt'] as $column) {
+            if (! \Illuminate\Support\Facades\Schema::hasColumn('ento', $column)) {
+                return null;
+            }
+        }
+
+        $idNivel ??= (int) (schoolCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return null;
+        }
+
+        $ento = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->first(['afipCertCarpeta', 'afipCertKey', 'afipCertCrt']);
+
+        if ($ento === null) {
+            return null;
+        }
+
+        $carpeta = trim((string) ($ento->afipCertCarpeta ?? ''));
+        $key = trim((string) ($ento->afipCertKey ?? ''));
+        $crt = trim((string) ($ento->afipCertCrt ?? ''));
+
+        if ($carpeta === '' || $key === '' || $crt === '') {
+            return null;
+        }
+
+        return [
+            'cert_usuario_id' => $carpeta,
+            'cert_key' => $key,
+            'cert_crt' => $crt,
+        ];
+    }
+}
+
 if (! function_exists('tenantCuotasFacturacionAfipHabilitada')) {
     /**
      * Si el formulario de imputación de pago ofrece facturación AFIP.
@@ -597,9 +644,10 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
             return null;
         }
 
-        $certId = trim((string) ($cfg['cert_usuario_id'] ?? ''));
-        $certKey = trim((string) ($cfg['cert_key'] ?? ''));
-        $certCrt = trim((string) ($cfg['cert_crt'] ?? ''));
+        $certsEnto = afipCertificadosDesdeEnto();
+        $certId = trim((string) ($certsEnto['cert_usuario_id'] ?? $cfg['cert_usuario_id'] ?? ''));
+        $certKey = trim((string) ($certsEnto['cert_key'] ?? $cfg['cert_key'] ?? ''));
+        $certCrt = trim((string) ($certsEnto['cert_crt'] ?? $cfg['cert_crt'] ?? ''));
 
         if ($certId === '' || $certKey === '' || $certCrt === '') {
             return null;
@@ -613,10 +661,17 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
         $cfg['doc_tipo'] = (int) ($cfg['doc_tipo'] ?? 96);
         $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
 
-        $simularExplicito = (bool) ($cfg['simular'] ?? false);
-        $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
-        $cfg['simular'] = $simularExplicito
-            || (app()->environment('local') && $simularEnLocal);
+        // `simular => false` explícito en el tenant desactiva simulación también en APP_ENV=local.
+        // `simular_local` solo aplica si no se fijó simular en false de forma explícita.
+        $simularExplicitamenteFalse = array_key_exists('simular', $cfg) && $cfg['simular'] === false;
+        if ($simularExplicitamenteFalse) {
+            $cfg['simular'] = false;
+        } else {
+            $simularExplicito = (bool) ($cfg['simular'] ?? false);
+            $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
+            $cfg['simular'] = $simularExplicito
+                || (app()->environment('local') && $simularEnLocal);
+        }
 
         return $cfg;
     }

@@ -27,6 +27,9 @@ class ParametrosSistemaForm extends Component
     public string $ee = '';
     public string $cuit = '';
     public string $ptoVta = '';
+    public string $afipCertCarpeta = '';
+    public string $afipCertKey = '';
+    public string $afipCertCrt = '';
     public string $condicionIva = '';
     public string $ingresosBrutos = '';
     public string $fechaInicioAct = '';
@@ -58,6 +61,9 @@ class ParametrosSistemaForm extends Component
         $this->ee = (string) ($ento->ee ?? '');
         $this->cuit = (string) ($ento->cuit ?? '');
         $this->ptoVta = (string) ((int) ($ento->ptoVta ?? 0) ?: '');
+        $this->afipCertCarpeta = (string) ($ento->afipCertCarpeta ?? '');
+        $this->afipCertKey = (string) ($ento->afipCertKey ?? '');
+        $this->afipCertCrt = (string) ($ento->afipCertCrt ?? '');
         $this->condicionIva = (string) ($ento->condicionIva ?? '');
         $this->ingresosBrutos = (string) ($ento->ingresosBrutos ?? '');
         $this->fechaInicioAct = self::fechaAfipParaInput($ento->getAttributes()['fechaInicioAct'] ?? null);
@@ -81,6 +87,9 @@ class ParametrosSistemaForm extends Component
             'ee' => ['nullable', 'string', 'max:30'],
             'cuit' => ['nullable', 'string', 'max:20'],
             'ptoVta' => ['nullable', 'integer', 'min:1', 'max:9999'],
+            'afipCertCarpeta' => ['nullable', 'string', 'max:40', 'regex:/^[a-zA-Z0-9_-]+$/'],
+            'afipCertKey' => ['nullable', 'string', 'max:120', 'regex:/^[a-zA-Z0-9._-]+$/'],
+            'afipCertCrt' => ['nullable', 'string', 'max:120', 'regex:/^[a-zA-Z0-9._-]+$/'],
             'condicionIva' => ['nullable', 'string', 'max:80'],
             'ingresosBrutos' => ['nullable', 'string', 'max:40'],
             'fechaInicioAct' => ['nullable', 'date'],
@@ -100,6 +109,9 @@ class ParametrosSistemaForm extends Component
     {
         return [
             'mail.email' => 'El mail no tiene un formato válido.',
+            'afipCertCarpeta.regex' => 'La carpeta de certificados solo puede contener letras, números, guión y guión bajo.',
+            'afipCertKey.regex' => 'El nombre del archivo .key no es válido.',
+            'afipCertCrt.regex' => 'El nombre del archivo .crt no es válido.',
         ];
     }
 
@@ -144,6 +156,19 @@ class ParametrosSistemaForm extends Component
 
         $this->validate();
 
+        if ($this->facturacionAfipHabilitadaEnTenant()) {
+            $carpeta = trim($this->afipCertCarpeta);
+            $key = trim($this->afipCertKey);
+            $crt = trim($this->afipCertCrt);
+            $alguno = $carpeta !== '' || $key !== '' || $crt !== '';
+            $todos = $carpeta !== '' && $key !== '' && $crt !== '';
+            if ($alguno && ! $todos) {
+                $this->addError('afipCertCarpeta', 'Complete carpeta, archivo .key y archivo .crt de AFIP, o deje los tres vacíos.');
+
+                return;
+            }
+        }
+
         if ($this->logo instanceof TemporaryUploadedFile) {
             $errorLogo = $this->validarLogoSubido($this->logo);
             if ($errorLogo !== null) {
@@ -183,6 +208,12 @@ class ParametrosSistemaForm extends Component
             'mail' => ($v = trim($this->mail)) !== '' ? $v : null,
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'afipCertCarpeta')) {
+            $payload['afipCertCarpeta'] = ($v = trim($this->afipCertCarpeta)) !== '' ? $v : null;
+            $payload['afipCertKey'] = ($v = trim($this->afipCertKey)) !== '' ? $v : null;
+            $payload['afipCertCrt'] = ($v = trim($this->afipCertCrt)) !== '' ? $v : null;
+        }
 
         $logoPathEsperado = null;
 
@@ -325,7 +356,13 @@ class ParametrosSistemaForm extends Component
     {
         return view('livewire.parametrizacion.parametros-sistema-form', [
             'nivelNombre' => schoolCtx()->nivelNombre(),
+            'facturacionAfipHabilitada' => $this->facturacionAfipHabilitadaEnTenant(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
+    }
+
+    private function facturacionAfipHabilitadaEnTenant(): bool
+    {
+        return (bool) config('tenant.cuotas.facturacion_afip.habilitado', false);
     }
 
     private static function fechaAfipParaInput(mixed $valor): string

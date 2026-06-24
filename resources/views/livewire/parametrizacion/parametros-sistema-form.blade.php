@@ -106,6 +106,42 @@
                     @error('fechaInicioAct') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>
+
+            @if ($facturacionAfipHabilitada)
+                <div class="mt-6 border-t border-accent-200 pt-5">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-primary-800 mb-1">
+                        Certificados digitales AFIP
+                    </p>
+                    <p class="mb-4 text-xs text-neutral-500">
+                        Los archivos (.key y .crt) deben estar en el servidor, en
+                        <span class="font-mono">afipSE/cert/<em>carpeta</em>/</span>.
+                        Si el colegio usa certificados distintos al de desarrollo, indique aquí la carpeta y los nombres de archivo de Ramallo.
+                    </p>
+                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div>
+                            <label class="form-label">Carpeta en afipSE/cert</label>
+                            <input wire:model="afipCertCarpeta" type="text" maxlength="40"
+                                   class="form-input mt-1.5 font-mono @error('afipCertCarpeta') border-red-400 @enderror"
+                                   placeholder="Ej. 3">
+                            @error('afipCertCarpeta') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="form-label">Archivo clave privada (.key)</label>
+                            <input wire:model="afipCertKey" type="text" maxlength="120"
+                                   class="form-input mt-1.5 font-mono @error('afipCertKey') border-red-400 @enderror"
+                                   placeholder="Ej. privada_prod.key">
+                            @error('afipCertKey') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="form-label">Archivo certificado (.crt)</label>
+                            <input wire:model="afipCertCrt" type="text" maxlength="120"
+                                   class="form-input mt-1.5 font-mono @error('afipCertCrt') border-red-400 @enderror"
+                                   placeholder="Ej. instituto_ramallo.crt">
+                            @error('afipCertCrt') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="mt-8 border-t border-accent-200 pt-6">
