@@ -70,6 +70,16 @@ final class PortalDocenteMenuCatalog
                 'icon' => 'document',
             ],
             [
+                'id' => 'inicial.observaciones_materia',
+                'nivel' => NivelSistema::INICIAL,
+                'menu_config' => 'tenant.portal_docente.menu.inicial.observaciones_materia',
+                'route' => 'portalDocente.calificacionesInicial.observacionesMateria',
+                'active_routes' => ['portalDocente.calificacionesInicial.observacionesMateria'],
+                'label' => 'Carga por Espacio Curricular',
+                'title' => 'Carga por espacio curricular (inicial)',
+                'icon' => 'rows',
+            ],
+            [
                 'id' => 'inicial.informe_progreso',
                 'nivel' => NivelSistema::INICIAL,
                 'menu_config' => 'tenant.portal_docente.menu.inicial.informe_progreso',

@@ -202,6 +202,7 @@ return [
             'inicial' => [
                 'indicadores' => false,
                 'observaciones' => false,
+                'observaciones_materia' => false,
                 'informe_progreso' => false,
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,

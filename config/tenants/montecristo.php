@@ -28,6 +28,7 @@ return [
             'inicial' => [
                 'indicadores' => true,
                 'observaciones' => true,
+                'observaciones_materia' => true,
                 'informe_progreso' => true,
             ],
             'primario' => [

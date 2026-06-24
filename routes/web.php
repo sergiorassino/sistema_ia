@@ -198,6 +198,7 @@ use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesPrimarioPd
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialAlumnos;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialForm;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialIndex;
+use App\Livewire\CalificacionesInicial\CargaObservacionesInicialMateria;
 use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialLotePdfController;
 use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialPdfController;
 use App\Livewire\CalificacionesInicial\EditarIndicadoresForm;
@@ -444,6 +445,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/calificaciones-inicial/observaciones/{materia}/{matricula}', CargaObservacionesInicialForm::class)
         ->whereNumber(['materia', 'matricula'])
         ->name('portalDocente.calificacionesInicial.observaciones.carga');
+    Route::get('/calificaciones-inicial/observaciones-espacio-curricular', CargaObservacionesInicialMateria::class)
+        ->name('portalDocente.calificacionesInicial.observacionesMateria');
     Route::get('/calificaciones-inicial/informe-progreso', InformeProgresoInicialIndex::class)
         ->name('portalDocente.calificacionesInicial.informeProgreso');
     Route::post('/calificaciones-inicial/informe-progreso/pdf', InformeProgresoInicialPdfController::class)
@@ -873,6 +876,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->whereNumber(['materia', 'matricula'])
         ->name('calificacionesInicial.observaciones.carga');
+
+    Route::get('/calificaciones-inicial/observaciones-espacio-curricular', CargaObservacionesInicialMateria::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesInicial.observacionesMateria');
 
     Route::get('/calificaciones-inicial/informe-progreso', InformeProgresoInicialIndex::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)

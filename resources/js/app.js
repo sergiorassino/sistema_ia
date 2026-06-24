@@ -1105,6 +1105,91 @@ function bindCalifPrimarioMateriaTablas() {
     });
 }
 
+const SECALIF_INICIAL_OBS_MAT_INPUT_ID = /^se-calif-inicial-obs-mat-(\d+)-(obs0[12])$/;
+
+function seCalifInicialObsMatEsTextarea(el) {
+    return el?.tagName === 'TEXTAREA' && SECALIF_INICIAL_OBS_MAT_INPUT_ID.test(String(el.id || ''));
+}
+
+function seCalifInicialObsMatCallSaveCell(root, idMatricula, field, value) {
+    const c = root && root.__livewire;
+    if (!c || !c.$wire) {
+        return false;
+    }
+    const w = c.$wire;
+    if (typeof w.call === 'function') {
+        w.call('saveCell', idMatricula, field, value);
+        return true;
+    }
+    if (typeof w.saveCell === 'function') {
+        w.saveCell(idMatricula, field, value);
+        return true;
+    }
+    return false;
+}
+
+function seCalifInicialObsMatHandleFocusin(e) {
+    const el = e.target;
+    if (!seCalifInicialObsMatEsTextarea(el)) {
+        return;
+    }
+    const tbody = el.closest('[data-se-calif-inicial-obs-mat-tbody]');
+    if (!tbody) {
+        return;
+    }
+    el.dataset.seCalifInicialObsMatLast = el.value ?? '';
+    el.dataset.seCalifInicialObsMatScopeMateria = tbody.getAttribute('data-se-calif-inicial-obs-mat-materia-id') ?? '';
+    el.dataset.seCalifInicialObsMatScopeOrd = tbody.getAttribute('data-se-calif-inicial-obs-mat-ord') ?? '';
+}
+
+function seCalifInicialObsMatHandleFocusout(e) {
+    const el = e.target;
+    if (!seCalifInicialObsMatEsTextarea(el)) {
+        return;
+    }
+    const tbody = el.closest('[data-se-calif-inicial-obs-mat-tbody]');
+    if (!tbody) {
+        return;
+    }
+    const m = el.id && String(el.id).match(SECALIF_INICIAL_OBS_MAT_INPUT_ID);
+    if (!m) {
+        return;
+    }
+    const scopeMateria = el.dataset.seCalifInicialObsMatScopeMateria ?? '';
+    const scopeOrd = el.dataset.seCalifInicialObsMatScopeOrd ?? '';
+    if (
+        scopeMateria !== '' &&
+        (scopeMateria !== (tbody.getAttribute('data-se-calif-inicial-obs-mat-materia-id') ?? '') ||
+            scopeOrd !== (tbody.getAttribute('data-se-calif-inicial-obs-mat-ord') ?? ''))
+    ) {
+        return;
+    }
+    if (!el.isConnected) {
+        return;
+    }
+    const idMatricula = parseInt(m[1], 10);
+    const field = m[2];
+    const root = el.closest('[wire\\:id]');
+    if (!root) {
+        return;
+    }
+    seCalifInicialObsMatCallSaveCell(root, idMatricula, field, el.value);
+}
+
+function seCalifInicialObsMatBindDocHandlers() {
+    if (window._seCalifInicialObsMatDocBound) {
+        return;
+    }
+    window._seCalifInicialObsMatDocBound = true;
+
+    document.addEventListener('focusin', seCalifInicialObsMatHandleFocusin, true);
+    document.addEventListener('focusout', seCalifInicialObsMatHandleFocusout, true);
+}
+
+function bindCalifInicialObsMateriaTablas() {
+    seCalifInicialObsMatBindDocHandlers();
+}
+
 function bindCalifCargaTablas() {
     document.querySelectorAll('[data-se-calif-tbody]').forEach((tbody) => {
         if (tbody._seCalifBound) {
@@ -1529,9 +1614,11 @@ function bindCierreAnualGrillas() {
 document.addEventListener('DOMContentLoaded', () => {
     seCalifPrimBindNotaPickerDocClose();
     seCalifPrimMatBindDocHandlers();
+    seCalifInicialObsMatBindDocHandlers();
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCalifPrimarioTablas);
     queueMicrotask(bindCalifPrimarioMateriaTablas);
+    queueMicrotask(bindCalifInicialObsMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
 });
@@ -1608,6 +1695,7 @@ document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifCargaTablas);
     queueMicrotask(bindCalifPrimarioTablas);
     queueMicrotask(bindCalifPrimarioMateriaTablas);
+    queueMicrotask(bindCalifInicialObsMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);
@@ -1624,10 +1712,11 @@ document.addEventListener('livewire:init', () => {
             if (document.querySelector('body > .se-calif-prim-nota-picker-menu')) {
                 seCalifPrimRepatriateAllNotaPickerMenus();
             }
-            if (document.querySelector('[data-se-calif-prim-mat-tbody], [data-se-calif-prim-tbody], [data-se-calif-tbody]')) {
+            if (document.querySelector('[data-se-calif-prim-mat-tbody], [data-se-calif-prim-tbody], [data-se-calif-tbody], [data-se-calif-inicial-obs-mat-tbody]')) {
                 queueMicrotask(bindCalifCargaTablas);
                 queueMicrotask(bindCalifPrimarioTablas);
                 queueMicrotask(bindCalifPrimarioMateriaTablas);
+                queueMicrotask(bindCalifInicialObsMateriaTablas);
             }
             queueMicrotask(bindCuotasImportesForm);
             queueMicrotask(bindCierreAnualGrillas);

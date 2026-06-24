@@ -15,6 +15,8 @@ final class CalificacionesInicialPortalDocente
 
     public const MENU_OBSERVACIONES = 'observaciones';
 
+    public const MENU_OBSERVACIONES_MATERIA = 'observaciones_materia';
+
     public const MENU_INFORME_PROGRESO = 'informe_progreso';
 
     public static function esPortalDocente(): bool
@@ -69,6 +71,7 @@ final class CalificacionesInicialPortalDocente
                 'observaciones' => 'portalDocente.calificacionesInicial.observaciones',
                 'observaciones.alumnos' => 'portalDocente.calificacionesInicial.observaciones.alumnos',
                 'observaciones.carga' => 'portalDocente.calificacionesInicial.observaciones.carga',
+                'observacionesMateria' => 'portalDocente.calificacionesInicial.observacionesMateria',
                 'informeProgreso' => 'portalDocente.calificacionesInicial.informeProgreso',
                 default => abort(404),
             }
@@ -78,6 +81,7 @@ final class CalificacionesInicialPortalDocente
                 'observaciones' => 'calificacionesInicial.observaciones',
                 'observaciones.alumnos' => 'calificacionesInicial.observaciones.alumnos',
                 'observaciones.carga' => 'calificacionesInicial.observaciones.carga',
+                'observacionesMateria' => 'calificacionesInicial.observacionesMateria',
                 'informeProgreso' => 'calificacionesInicial.informeProgreso',
                 default => abort(404),
             };
