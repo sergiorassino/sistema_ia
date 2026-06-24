@@ -27,19 +27,17 @@
             width: calc((100% - 10rem) / 2);
             min-width: 24rem;
         }
-        /* ~1500 caract. a 13px; columnas crecen en pantallas anchas */
+        /* ~1500 caract. a 14px; columnas crecen en pantallas anchas */
         table.se-calif-inicial-obs-mat-grid textarea.se-calif-inicial-obs-mat-input {
             display: block;
             width: 100%;
-            height: 21rem;
-            min-height: 21rem;
-            max-height: 21rem;
+            min-height: 16.8rem;
             padding: 6px 8px;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.4;
             text-align: left;
             overflow-y: auto;
-            resize: none;
+            resize: vertical;
             box-sizing: border-box;
         }
     </style>
@@ -131,7 +129,7 @@
                                             @endphp
                                             <td class="se-calif-inicial-obs-mat-col-obs border border-accent-200 p-1">
                                                 <textarea id="se-calif-inicial-obs-mat-{{ $idMatricula }}-{{ $campo }}"
-                                                          rows="21"
+                                                          rows="17"
                                                           maxlength="{{ $maxCaracteres }}"
                                                           autocomplete="off"
                                                           wire:key="inicial-obs-mat-cell-{{ $materiaId }}-{{ $idMatricula }}-{{ $campo }}"

@@ -1176,6 +1176,63 @@ function seCalifInicialObsMatHandleFocusout(e) {
     seCalifInicialObsMatCallSaveCell(root, idMatricula, field, el.value);
 }
 
+function seCalifInicialObsMatSyncRowHeights(source) {
+    const tr = source?.closest('tr');
+    if (!tr) {
+        return;
+    }
+
+    const textareas = tr.querySelectorAll('textarea.se-calif-inicial-obs-mat-input');
+    if (textareas.length < 2) {
+        return;
+    }
+
+    const heightPx = source.offsetHeight;
+
+    textareas.forEach((ta) => {
+        if (ta === source) {
+            return;
+        }
+        if (Math.abs(ta.offsetHeight - heightPx) <= 1) {
+            return;
+        }
+
+        ta.dataset.seCalifInicialObsMatSyncing = '1';
+        ta.style.height = `${heightPx}px`;
+        queueMicrotask(() => {
+            delete ta.dataset.seCalifInicialObsMatSyncing;
+        });
+    });
+}
+
+function seCalifInicialObsMatDisconnectResizeObservers(tbody) {
+    if (tbody._seCalifInicialObsMatResizeObservers) {
+        tbody._seCalifInicialObsMatResizeObservers.forEach((ro) => ro.disconnect());
+        delete tbody._seCalifInicialObsMatResizeObservers;
+    }
+}
+
+function seCalifInicialObsMatBindRowResizeSync(tbody) {
+    seCalifInicialObsMatDisconnectResizeObservers(tbody);
+
+    const observers = [];
+    tbody.querySelectorAll('textarea.se-calif-inicial-obs-mat-input').forEach((ta) => {
+        const ro = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const el = entry.target;
+                if (el.dataset.seCalifInicialObsMatSyncing === '1') {
+                    continue;
+                }
+                seCalifInicialObsMatSyncRowHeights(el);
+            }
+        });
+        ro.observe(ta);
+        observers.push(ro);
+    });
+
+    tbody._seCalifInicialObsMatResizeObservers = observers;
+}
+
 function seCalifInicialObsMatBindDocHandlers() {
     if (window._seCalifInicialObsMatDocBound) {
         return;
@@ -1188,6 +1245,9 @@ function seCalifInicialObsMatBindDocHandlers() {
 
 function bindCalifInicialObsMateriaTablas() {
     seCalifInicialObsMatBindDocHandlers();
+    document.querySelectorAll('[data-se-calif-inicial-obs-mat-tbody]').forEach((tbody) => {
+        seCalifInicialObsMatBindRowResizeSync(tbody);
+    });
 }
 
 function bindCalifCargaTablas() {
