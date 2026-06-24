@@ -12,15 +12,43 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('ento', function (Blueprint $table) {
+        if (! Schema::hasColumn('ento', 'ptoVta')) {
+            Schema::table('ento', function (Blueprint $table) {
+                $column = $table->unsignedSmallInteger('ptoVta')->nullable();
+                if (Schema::hasColumn('ento', 'cuit')) {
+                    $column->after('cuit');
+                }
+            });
+        }
+
+        $anclaAfip = Schema::hasColumn('ento', 'ptoVta')
+            ? 'ptoVta'
+            : (Schema::hasColumn('ento', 'cuit') ? 'cuit' : null);
+
+        Schema::table('ento', function (Blueprint $table) use ($anclaAfip) {
             if (! Schema::hasColumn('ento', 'afipCertCarpeta')) {
-                $table->string('afipCertCarpeta', 40)->nullable()->after('ptoVta');
+                $column = $table->string('afipCertCarpeta', 40)->nullable();
+                if ($anclaAfip !== null) {
+                    $column->after($anclaAfip);
+                }
             }
             if (! Schema::hasColumn('ento', 'afipCertKey')) {
-                $table->string('afipCertKey', 120)->nullable()->after('afipCertCarpeta');
+                $column = $table->string('afipCertKey', 120)->nullable();
+                if (Schema::hasColumn('ento', 'afipCertCarpeta')) {
+                    $column->after('afipCertCarpeta');
+                } elseif ($anclaAfip !== null) {
+                    $column->after($anclaAfip);
+                }
             }
             if (! Schema::hasColumn('ento', 'afipCertCrt')) {
-                $table->string('afipCertCrt', 120)->nullable()->after('afipCertKey');
+                $column = $table->string('afipCertCrt', 120)->nullable();
+                if (Schema::hasColumn('ento', 'afipCertKey')) {
+                    $column->after('afipCertKey');
+                } elseif (Schema::hasColumn('ento', 'afipCertCarpeta')) {
+                    $column->after('afipCertCarpeta');
+                } elseif ($anclaAfip !== null) {
+                    $column->after($anclaAfip);
+                }
             }
         });
     }
