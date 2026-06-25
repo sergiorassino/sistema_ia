@@ -42,6 +42,12 @@ class ParametrosSistemaForm extends Component
     public string $mail = '';
     public string $replegal = '';
 
+    public string $siroPrefijoCPE = '';
+
+    public string $siroMje = '';
+
+    public string $siroIdentCuenta = '';
+
     /** @var TemporaryUploadedFile|null */
     public $logo = null;
 
@@ -76,12 +82,16 @@ class ParametrosSistemaForm extends Component
         $this->mail = (string) ($ento->mail ?? '');
         $this->replegal = (string) ($ento->replegal ?? '');
 
+        $this->siroPrefijoCPE = (string) ($ento->siroPrefijoCPE ?? '');
+        $this->siroMje = (string) ($ento->siroMje ?? '');
+        $this->siroIdentCuenta = (string) ($ento->siroIdentCuenta ?? '');
+
         $this->currentLogoUrl = schoolLogoUrl();
     }
 
     protected function rules(): array
     {
-        return [
+        $rules = [
             'insti' => ['nullable', 'string', 'max:120'],
             'cue' => ['nullable', 'string', 'max:30'],
             'ee' => ['nullable', 'string', 'max:30'],
@@ -103,6 +113,14 @@ class ParametrosSistemaForm extends Component
             'replegal' => ['nullable', 'string', 'max:120'],
             'removeLogo' => ['boolean'],
         ];
+
+        if ($this->puedeEditarCamposSiro()) {
+            $rules['siroPrefijoCPE'] = ['nullable', 'string', 'regex:/^\d{2}$/'];
+            $rules['siroMje'] = ['nullable', 'string', 'max:40'];
+            $rules['siroIdentCuenta'] = ['nullable', 'string', 'max:20', 'regex:/^\d+$/'];
+        }
+
+        return $rules;
     }
 
     protected function messages(): array
@@ -112,6 +130,8 @@ class ParametrosSistemaForm extends Component
             'afipCertCarpeta.regex' => 'La carpeta de certificados solo puede contener letras, números, guión y guión bajo.',
             'afipCertKey.regex' => 'El nombre del archivo .key no es válido.',
             'afipCertCrt.regex' => 'El nombre del archivo .crt no es válido.',
+            'siroPrefijoCPE.regex' => 'El prefijo CPE SIRO debe ser exactamente 2 dígitos (ej. 00, 09).',
+            'siroIdentCuenta.regex' => 'La cuenta SIRO solo puede contener dígitos.',
         ];
     }
 
@@ -213,6 +233,18 @@ class ParametrosSistemaForm extends Component
             $payload['afipCertCarpeta'] = ($v = trim($this->afipCertCarpeta)) !== '' ? $v : null;
             $payload['afipCertKey'] = ($v = trim($this->afipCertKey)) !== '' ? $v : null;
             $payload['afipCertCrt'] = ($v = trim($this->afipCertCrt)) !== '' ? $v : null;
+        }
+
+        if ($this->puedeEditarCamposSiro()) {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroPrefijoCPE')) {
+                $payload['siroPrefijoCPE'] = ($v = trim($this->siroPrefijoCPE)) !== '' ? $v : null;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroMje')) {
+                $payload['siroMje'] = ($v = trim($this->siroMje)) !== '' ? $v : null;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroIdentCuenta')) {
+                $payload['siroIdentCuenta'] = ($v = trim($this->siroIdentCuenta)) !== '' ? $v : null;
+            }
         }
 
         $logoPathEsperado = null;
@@ -357,7 +389,13 @@ class ParametrosSistemaForm extends Component
         return view('livewire.parametrizacion.parametros-sistema-form', [
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'facturacionAfipHabilitada' => $this->facturacionAfipHabilitadaEnTenant(),
+            'puedeEditarCamposSiro' => $this->puedeEditarCamposSiro(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
+    }
+
+    private function puedeEditarCamposSiro(): bool
+    {
+        return tenantCuotasSiroHabilitado();
     }
 
     private function facturacionAfipHabilitadaEnTenant(): bool

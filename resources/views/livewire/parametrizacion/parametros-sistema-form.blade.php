@@ -144,6 +144,43 @@
             @endif
         </div>
 
+        @if ($puedeEditarCamposSiro)
+            <div class="mt-8 border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-1">SIRO — medios de pago por nivel</p>
+                <p class="mb-4 text-xs text-neutral-500">
+                    Parámetros del nivel activo ({{ $nivelNombre !== '' ? $nivelNombre : '—' }}):
+                    prefijo CPE, cuenta recaudadora y mensaje en cupón / subida de base de deuda.
+                    Cada nivel puede tener valores distintos.
+                </p>
+
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="form-label">Prefijo CPE (2 dígitos)</label>
+                        <input wire:model="siroPrefijoCPE" type="text" maxlength="2" inputmode="numeric"
+                               class="form-input mt-1.5 font-mono @error('siroPrefijoCPE') border-red-400 @enderror"
+                               placeholder="Ej. 00, 09">
+                        @error('siroPrefijoCPE') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="form-label">Cuenta recaudadora SIRO</label>
+                        <input wire:model="siroIdentCuenta" type="text" maxlength="20" inputmode="numeric"
+                               class="form-input mt-1.5 font-mono @error('siroIdentCuenta') border-red-400 @enderror"
+                               placeholder="10 dígitos del convenio">
+                        @error('siroIdentCuenta') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="form-label">Mensaje en ticket / pantalla SIRO</label>
+                        <input wire:model="siroMje" type="text" maxlength="40"
+                               class="form-input mt-1.5 @error('siroMje') border-red-400 @enderror"
+                               placeholder="Texto institucional en cupón (máx. 15 en archivo)">
+                        @error('siroMje') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="mt-8 border-t border-accent-200 pt-6">
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div class="md:col-span-2">

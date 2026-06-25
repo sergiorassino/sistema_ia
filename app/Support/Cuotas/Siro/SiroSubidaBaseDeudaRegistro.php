@@ -124,6 +124,15 @@ final class SiroSubidaBaseDeudaRegistro
             return self::rechazado('Sin fecha de 1.er vencimiento.');
         }
 
+        if (SiroSubidaBaseDeudaArchivo::fechaSiro($venc1, true) === str_repeat('0', 8)) {
+            return self::rechazado('Fecha de 1.er vencimiento inválida.');
+        }
+
+        $venc2 = self::carbon($registro->venc2);
+        if ($venc2 !== null && $venc2->lt($venc1)) {
+            return self::rechazado('Fechas de vencimiento no crecientes.');
+        }
+
         $venc3 = self::carbon($registro->venc3);
         if ($venc3 === null || $venc3->lt(Carbon::today())) {
             return self::rechazado('3.er vencimiento vencido.');

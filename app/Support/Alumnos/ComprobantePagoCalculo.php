@@ -51,7 +51,12 @@ final class ComprobantePagoCalculo
             ->where('idNivel', self::ID_NIVEL_ADMINISTRACION)
             ->first();
 
+        $entoNivel = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->first();
+
         $attrsEnto = $entoAdmin?->getAttributes() ?? [];
+        $attrsEntoNivel = $entoNivel?->getAttributes() ?? [];
         $siroHabilitado = tenantCuotasSiroHabilitado();
         $cuentaSiroNivel = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
 
@@ -161,7 +166,7 @@ final class ComprobantePagoCalculo
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT);
 
         $qrConcepto = ($venc1 !== null && $fechaDeHoy->lte($venc1)) ? 3 : 1;
-        $nroCliente = '09'.str_pad((string) $idLegajos, 7, '0', STR_PAD_LEFT);
+        $nroCliente = SiroCodigoPagoElectronico::bloqueLegajoNueveDigitos($idLegajos, $idNivel);
         $nroComprobanteQr = str_pad((string) $idCuotas, 11, '0', STR_PAD_LEFT)
             .$qrConcepto
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
@@ -184,6 +189,10 @@ final class ComprobantePagoCalculo
                 'localidad' => trim((string) ($attrsEnto['localidad'] ?? '')),
                 'departamento' => trim((string) ($attrsEnto['departamento'] ?? '')),
                 'cuit' => $cuit,
+            ],
+            'entoNivel' => [
+                'siroMje' => trim((string) ($attrsEntoNivel['siroMje'] ?? '')),
+                'insti' => trim((string) ($attrsEntoNivel['insti'] ?? '')),
             ],
             'nroComprobante' => $nroComprobante,
             'nroComprobanteTexto' => '00001-'.str_pad((string) $nroComprobante, 8, '0', STR_PAD_LEFT),

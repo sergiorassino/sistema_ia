@@ -1,13 +1,14 @@
 <div class="se-page max-w-7xl mx-auto"
      x-data
-     x-on:siro-subida-confirmar.window="window.seSwalConfirmar($event.detail.mensaje, $event.detail.titulo ?? 'Confirmar').then(ok => ok && $wire.prepararDescarga())">
+     x-on:siro-subida-confirmar.window="window.seSwalConfirmar($event.detail.mensaje, $event.detail.titulo ?? 'Confirmar').then(ok => ok && (window.location.href = @js(route('cuotas.siro-subida.archivo'))))">
     <section class="se-hero mb-4">
         <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-0.5">
                 <p class="se-eyebrow">Medios de pago · SIRO</p>
                 <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Subida base de deuda SIRO</h1>
                 <p class="text-xs text-white/75">
-                    Ciclo lectivo {{ $ano }} · Formato Full (280 caracteres por registro) · El archivo descargado se sube directo a SIRO, sin editar.
+                    Ciclo lectivo {{ $ano }} · 280 caracteres por registro · Suba el archivo al portal SIRO
+                    <strong class="font-semibold">sin abrirlo ni guardarlo en el Bloc de notas</strong> (evita BOM UTF-8).
                 </p>
             </div>
             @if ($paso === 2)
@@ -94,15 +95,12 @@
                             mensaje: 'Se generará el archivo para subir a SIRO con {{ $cantidadSubeSiro }} registro(s) y se actualizará el contador de subida de cada cuota. ¿Continuar?',
                             titulo: 'Procesar y descargar'
                         })"
-                        wire:loading.attr="disabled"
-                        wire:target="prepararDescarga"
                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60">
                     <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
-                    <span wire:loading.remove wire:target="prepararDescarga">Procesar y Generar Archivo de Pagos para subir a SIRO</span>
-                    <span wire:loading wire:target="prepararDescarga">Generando…</span>
+                    Procesar y Generar Archivo de Pagos para subir a SIRO
                 </button>
             @else
                 <button type="button"

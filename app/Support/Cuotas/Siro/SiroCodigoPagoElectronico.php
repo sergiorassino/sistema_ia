@@ -7,26 +7,69 @@ use App\Models\Ento;
 /**
  * Código de pago electrónico SIRO (19 dígitos).
  *
- * Formato: {@code 00} + legajo (7) + {@see Ento::$siroIdentCuenta} del nivel (10).
+ * Formato legacy: {@code prefijo(2)} + legajo (7) + {@see Ento::$siroIdentCuenta} (10).
+ * Prefijo, cuenta y demás datos SIRO se leen del {@see Ento} del nivel del curso del alumno.
  */
 final class SiroCodigoPagoElectronico
 {
-    public static function generar(int $idLegajos, int $idNivel): string
+    public static function generar(int $idLegajos, ?int $idNivel = null): string
     {
-        $prefijo = '00'.str_pad((string) $idLegajos, 7, '0', STR_PAD_LEFT);
-        $cuenta = self::cuentaRecaudadoraPorNivel($idNivel);
+        $ento = self::entoPorNivel($idNivel);
 
-        return $prefijo.$cuenta;
+        return self::bloqueLegajoNueveDigitosDesdeEnto($idLegajos, $ento).self::cuentaDesdeEnto($ento);
     }
 
     /**
-     * Últimos 10 dígitos del CPE (cuenta SIRO / convenio).
+     * Primeros 9 dígitos del CPE (prefijo + legajo). Usado en QR SIRO.
      */
-    public static function cuentaRecaudadoraPorNivel(int $idNivel): string
+    public static function bloqueLegajoNueveDigitos(int $idLegajos, ?int $idNivel = null): string
     {
-        $entoNivel = Ento::query()->where('idNivel', $idNivel)->first();
+        return self::bloqueLegajoNueveDigitosDesdeEnto($idLegajos, self::entoPorNivel($idNivel));
+    }
 
-        return self::cuentaDesdeEnto($entoNivel);
+    public static function bloqueLegajoNueveDigitosDesdeEnto(int $idLegajos, ?Ento $ento): string
+    {
+        return self::prefijoDosDigitos($ento).str_pad((string) $idLegajos, 7, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Últimos 10 dígitos del CPE (cuenta SIRO / convenio del nivel).
+     */
+    public static function cuentaRecaudadoraPorNivel(?int $idNivel = null): string
+    {
+        return self::cuentaDesdeEnto(self::entoPorNivel($idNivel));
+    }
+
+    public static function prefijoDosDigitos(?Ento $ento): string
+    {
+        $prefijo = trim((string) ($ento?->siroPrefijoCPE ?? ''));
+        if (preg_match('/^\d{2}$/', $prefijo) === 1) {
+            return $prefijo;
+        }
+
+        $tenant = tenantCuotasSiroCpePrefijo();
+        if ($tenant !== null) {
+            return $tenant;
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) ($ento?->siroSecu ?? '')) ?? '';
+        if (strlen($digits) >= 2) {
+            return str_pad(substr($digits, 0, 2), 2, '0', STR_PAD_LEFT);
+        }
+
+        return '00';
+    }
+
+    /**
+     * Registro `ento` del nivel del curso (configuración SIRO por nivel).
+     */
+    public static function entoPorNivel(?int $idNivel): ?Ento
+    {
+        if ($idNivel === null || $idNivel <= 0) {
+            return null;
+        }
+
+        return Ento::query()->where('idNivel', $idNivel)->first();
     }
 
     private static function cuentaDesdeEnto(?Ento $ento): string
