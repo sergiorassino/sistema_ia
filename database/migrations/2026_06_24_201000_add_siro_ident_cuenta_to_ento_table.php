@@ -12,8 +12,19 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('ento', function (Blueprint $table) {
-            $table->string('siroIdentCuenta', 20)->nullable()->after('siroSecu');
+        $ancla = null;
+        foreach (['siroPrefijoCPE', 'siroMje', 'siroSecu', 'siroIniPrim', 'replegal'] as $columna) {
+            if (Schema::hasColumn('ento', $columna)) {
+                $ancla = $columna;
+                break;
+            }
+        }
+
+        Schema::table('ento', function (Blueprint $table) use ($ancla) {
+            $column = $table->string('siroIdentCuenta', 20)->nullable();
+            if ($ancla !== null) {
+                $column->after($ancla);
+            }
         });
     }
 
