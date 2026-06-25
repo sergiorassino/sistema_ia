@@ -18,6 +18,12 @@ final class ListadoCursoPdfFieldCatalog
 
     private const KEYS_APELLIDO_NOMBRE = ['legajos.apellido', 'legajos.nombre'];
 
+    /** Claves antiguas (bloqueos en legajos) → matrícula por ciclo. */
+    private const LEGACY_KEY_MAP = [
+        'legajos.bloqmatr' => 'matricula.bloqmatr',
+        'legajos.bloqadmi' => 'matricula.bloqadmi',
+    ];
+
     public const DEFAULT_KEYS = [
         'legajos.apellido',
         'legajos.nombre',
@@ -116,8 +122,6 @@ final class ListadoCursoPdfFieldCatalog
         'legajos.motivo_detalle' => ['label' => 'Motivo — detalle', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'motivo_detalle'],
         'legajos.acopro' => ['label' => 'Acompañante', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'acopro'],
         'legajos.acopro_detalle' => ['label' => 'Acompañante — detalle', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'acopro_detalle'],
-        'legajos.bloqmatr' => ['label' => 'Bloqueo matrícula', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'bloqmatr'],
-        'legajos.bloqadmi' => ['label' => 'Bloqueo administración', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'bloqadmi'],
         'legajos.idnivel' => ['label' => 'ID nivel (legajo)', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'idnivel'],
         'legajos.idFamilias' => ['label' => 'ID familia', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'idFamilias'],
         'legajos.fechhora' => ['label' => 'Fecha/hora registro', 'group' => 'Escolaridad y otros', 'table' => 'legajos', 'column' => 'fechhora'],
@@ -128,6 +132,8 @@ final class ListadoCursoPdfFieldCatalog
         // — Matrícula (tabla matricula) —
         'matricula.nroMatricula' => ['label' => 'N° matrícula', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'nroMatricula'],
         'matricula.fechaMatricula' => ['label' => 'Fecha de matrícula', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'fechaMatricula'],
+        'matricula.bloqmatr' => ['label' => 'Bloqueo pedagógico', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'bloqmatr'],
+        'matricula.bloqadmi' => ['label' => 'Bloqueo administrativo', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'bloqadmi'],
         'matricula.obsMatr' => ['label' => 'Obs. matrícula', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'obsMatr'],
         'matricula.obsAnual' => ['label' => 'Obs. anual', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'obsAnual'],
         'matricula.conducta1' => ['label' => 'Conducta 1°', 'group' => 'Matrícula', 'table' => 'matricula', 'column' => 'conducta1'],
@@ -170,7 +176,11 @@ final class ListadoCursoPdfFieldCatalog
         $out = [];
         foreach ($requested as $k) {
             $k = trim((string) $k);
-            if ($k !== '' && isset($allowed[$k]) && ! in_array($k, $out, true)) {
+            if ($k === '') {
+                continue;
+            }
+            $k = self::LEGACY_KEY_MAP[$k] ?? $k;
+            if (isset($allowed[$k]) && ! in_array($k, $out, true)) {
                 $out[] = $k;
             }
         }

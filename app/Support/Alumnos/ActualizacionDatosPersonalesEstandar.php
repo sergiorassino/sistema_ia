@@ -20,9 +20,9 @@ final class ActualizacionDatosPersonalesEstandar
         return ActualizacionDatosPersonalesComun::contexto();
     }
 
-    public static function estaBloqueado(Legajo $legajo): bool
+    public static function estaBloqueado(Matricula $matricula): bool
     {
-        return ActualizacionDatosPersonalesComun::estaBloqueado($legajo);
+        return ActualizacionDatosPersonalesComun::estaBloqueado($matricula);
     }
 
     /**

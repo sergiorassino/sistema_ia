@@ -220,6 +220,10 @@ class LegajoForm extends Component
 
     public string $m_fechaBaja = '';
 
+    public bool $m_bloqmatr = false;
+
+    public bool $m_bloqadmi = false;
+
     /**
      * Columnas de `legajos` con control dedicado en el formulario (no van en extras).
      *
@@ -237,7 +241,7 @@ class LegajoForm extends Component
 
     /** No cargar ni persistir vía extras (sistema / seguridad). */
     private const COLUMNAS_SISTEMA_NO_EXTRAS = [
-        'id', 'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi',
+        'id', 'pwrd', 'fechhora', 'fechActDatos',
     ];
 
     /** Columnas extra de `legajos` (p. ej. telealte1_nom) sin control dedicado en el Blade. */
@@ -464,6 +468,8 @@ class LegajoForm extends Component
         $this->m_nroMatricula = (string) ($m->nroMatricula ?? '');
         $this->m_fechaMatricula = $m->fechaMatricula ? $m->fechaMatricula->format('Y-m-d') : '';
         $this->m_fechaBaja = $m->fechaBaja ? $m->fechaBaja->format('Y-m-d') : '';
+        $this->m_bloqmatr = (bool) ($m->bloqmatr ?? false);
+        $this->m_bloqadmi = (bool) ($m->bloqadmi ?? false);
 
         $this->resetValidation();
         $this->showMatriculaForm = true;
@@ -602,6 +608,8 @@ class LegajoForm extends Component
             'nroMatricula' => trim($this->m_nroMatricula) !== '' ? trim($this->m_nroMatricula) : null,
             'fechaMatricula' => $this->m_fechaMatricula ?: null,
             'fechaBaja' => $this->m_fechaBaja ?: null,
+            'bloqmatr' => $this->m_bloqmatr ? 1 : 0,
+            'bloqadmi' => $this->m_bloqadmi ? 1 : 0,
         ];
 
         if ($this->matriculaEditId) {
@@ -880,6 +888,7 @@ class LegajoForm extends Component
             'm_idCursos', 'm_idCondiciones', 'm_idTerlec', 'm_idNivel',
             'm_terlec_ano', 'm_nivel_nombre',
             'm_nroMatricula', 'm_fechaMatricula', 'm_fechaBaja',
+            'm_bloqmatr', 'm_bloqadmi',
             'm_idCursosAlEditar',
         ]);
         $this->resetMatriculaPlanConfirmState();

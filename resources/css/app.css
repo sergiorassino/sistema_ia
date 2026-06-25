@@ -2410,6 +2410,14 @@
         background-color: rgba(193, 215, 218, .28);
     }
 
+    .se-siro-shuttle-btn {
+        @apply inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-accent-200 bg-white px-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .se-siro-shuttle-list option {
+        padding: 0.15rem 0.35rem;
+    }
+
     .se-pagination-btn {
         @apply inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition;
         border-color: var(--color-accent-200);
@@ -2654,6 +2662,7 @@
         border-radius: 0.5rem;
         background-color: #ffffff;
         box-shadow: 0 4px 14px rgb(51 51 51 / 0.12);
+        overscroll-behavior: contain;
     }
     .se-calif-prim-nota-picker-option.is-selected {
         background-color: rgb(64 132 141);
@@ -2732,6 +2741,20 @@
     padding-left: 5mm;
     padding-right: 0.625rem;
 }
+/* Subgrupos anidados (ej. SIRO dentro de Medios de pago): sin borde de grupo, sangría a la derecha. */
+.se-sidebar:not(.is-collapsed) .se-sidebar-subgroupbtn {
+    justify-content: flex-start;
+    padding-left: 5mm;
+}
+.se-sidebar:not(.is-collapsed) .se-sidebar-subgroupbtn .se-sidebar-group-label {
+    flex: 1 1 0%;
+    min-width: 0;
+    text-align: left;
+}
+.se-sidebar-subgroup-items > .se-sidebar-link {
+    padding-left: 10mm;
+    padding-right: 0.625rem;
+}
 
 /*
  * Sidebar Bosque SE (Secretaría, Alumnos, Docentes).
@@ -2787,6 +2810,20 @@
     background: var(--se-group-open-bg, rgba(44, 90, 96, 0.25));
     color: #fff;
 }
+.se-sidebar--bosque .se-sidebar-subgroupbtn {
+    font-size: 0.6875rem; /* 11px */
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    border: none;
+}
+.se-sidebar--bosque .se-sidebar-subgroupbtn:hover {
+    background: var(--se-hover-bg);
+    color: #fff;
+}
+.se-sidebar--bosque .se-sidebar-subgroupbtn.is-open {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
 .se-sidebar--bosque .se-sidebar-link {
     font-family: inherit;
     font-size: 0.875rem; /* 14px — +1 respecto a 13px */
@@ -2836,6 +2873,12 @@
 }
 @media (min-width: 768px) {
     .se-sidebar--bosque.is-collapsed .se-sidebar-groupbtn {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+    .se-sidebar--bosque.is-collapsed .se-sidebar-subgroupbtn {
         justify-content: center;
         gap: 0;
         padding-left: 0.35rem;

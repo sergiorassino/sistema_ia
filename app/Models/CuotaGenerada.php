@@ -78,6 +78,11 @@ class CuotaGenerada extends Model
         return $this->belongsTo(CuotasBeca::class, 'idCuotasbecas');
     }
 
+    public function matricula()
+    {
+        return $this->belongsTo(Matricula::class, 'idMatricula');
+    }
+
     public function pagos()
     {
         return $this->hasMany(CuotaPago::class, 'idCuotasGeneradas');

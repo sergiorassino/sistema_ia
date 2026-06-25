@@ -108,6 +108,7 @@ use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\LibroArancelesPdfController;
 use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
+use App\Http\Controllers\Cuotas\SiroSubidaBaseDeudaArchivoController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
 use App\Http\Controllers\Cuotas\CuotasAdeudadasEstudiantePdfController;
@@ -134,6 +135,7 @@ use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ComprobantesAfipCuota;
 use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
+use App\Livewire\Cuotas\SiroSubidaBaseDeudaIndex;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Cooperadora\MovimientosPdfController;
 use App\Http\Controllers\Cooperadora\OrdenPagoPdfController;
@@ -549,6 +551,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/consulta-afip-comprobante', ConsultaAfipComprobanteIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.consulta-afip-comprobante');
+        Route::get('/siro-subida', SiroSubidaBaseDeudaIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.siro-subida');
+        Route::get('/siro-subida/archivo', SiroSubidaBaseDeudaArchivoController::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.siro-subida.archivo');
 
         Route::middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)->group(function () {
             Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');

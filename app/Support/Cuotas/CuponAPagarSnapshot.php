@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Support\Cuotas;
+
+use App\Models\CuotaGenerada;
+use App\Models\CuotasImporte;
+use App\Support\Cuotas\Siro\SiroIdFactura;
+use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaArchivo;
+use Carbon\CarbonInterface;
+
+/**
+ * Arma el snapshot de un cupón emitido (subida SIRO o impresión PDF).
+ */
+final class CuponAPagarSnapshot
+{
+    /**
+     * @param  array<string, mixed>  $cupon  Salida de {@see \App\Support\Alumnos\ComprobantePagoCalculo::paraCuotaGenerada}
+     * @return array<string, mixed>
+     */
+    public static function armar(CuotaGenerada $registro, array $cupon, string $cpe, int $idNivel): array
+    {
+        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
+        $cuotaNombre = mb_strtoupper(trim((string) ($cupon['cuotaNombre'] ?? '')));
+
+        $importes = CuotasImporte::query()
+            ->where('idCuotas', (int) $registro->idCuotas)
+            ->where('idCursos', (int) $registro->idCursos)
+            ->first();
+
+        $formula = self::formulaDesdeImportes($importes);
+
+        $cuponVencido = (bool) ($cupon['cuponVencido'] ?? false);
+        $venc1 = self::carbon($cuponVencido ? ($registro->nueVenc ?? $registro->venc3) : $registro->venc1)
+            ?? self::carbon($registro->venc1);
+        $venc2 = self::carbon($registro->venc2) ?? $venc1;
+        $venc3 = self::carbon($registro->venc3) ?? $venc2;
+
+        if ($venc2->lt($venc1)) {
+            $venc2 = $venc1->copy();
+        }
+        if ($venc3->lt($venc2)) {
+            $venc3 = $venc2->copy();
+        }
+
+        $importe1 = (float) ($cupon['importeVenc1'] ?? 0);
+        $importe2 = max((float) ($cupon['importeVenc2'] ?? $importe1), $importe1);
+        $importe3 = max((float) ($cupon['importeVenc3'] ?? $importe2), $importe2);
+
+        if ($cuponVencido) {
+            $importe3 = max((float) ($cupon['importeVenc3'] ?? $importe1), $importe1);
+            $importe2 = $importe3;
+            $venc2 = $venc1->copy();
+            $venc3 = $venc1->copy();
+        }
+
+        $ultUploadNuevo = (int) ($registro->ultUpload ?? 0) + 1;
+        $idLegajos = (int) $registro->idLegajos;
+        $idCuotas = (int) $registro->idCuotas;
+        $idFactura = SiroIdFactura::generar($idLegajos, $idCuotas, $ultUploadNuevo);
+
+        $mensajeTicket = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($entoInsti, 15)
+            .SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($cuotaNombre, 25);
+
+        return [
+            'idCuotaGenerada' => (int) $registro->id,
+            'idNivel' => $idNivel,
+            'cpe' => $cpe,
+            'idFactura' => $idFactura,
+            'ultUploadNuevo' => $ultUploadNuevo,
+            'saldoPagar' => (float) ($registro->faltapa ?? 0),
+            'formula' => $formula,
+            'venc1' => $venc1,
+            'venc2' => $venc2,
+            'venc3' => $venc3,
+            'importe1' => $importe1,
+            'importe2' => $importe2,
+            'importe3' => $importe3,
+            'mensajeTicket' => $mensajeTicket,
+            'mensajePantalla' => SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($mensajeTicket, 15),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function formulaDesdeImportes(?CuotasImporte $importes): array
+    {
+        return [
+            'signo1v' => trim((string) ($importes->signo1v ?? '+')),
+            'valor1v' => (float) ($importes->valor1v ?? 0),
+            'porcan1v' => trim((string) ($importes->porcan1v ?? '%')),
+            'signo2v' => trim((string) ($importes->signo2v ?? '+')),
+            'valor2v' => (float) ($importes->valor2v ?? 0),
+            'porcan2v' => trim((string) ($importes->porcan2v ?? '%')),
+            'signo3v' => trim((string) ($importes->signo3v ?? '+')),
+            'valor3v' => (float) ($importes->valor3v ?? 0),
+            'porcan3v' => trim((string) ($importes->porcan3v ?? '%')),
+        ];
+    }
+
+    private static function carbon(mixed $fecha): ?CarbonInterface
+    {
+        if ($fecha instanceof CarbonInterface) {
+            return $fecha->copy()->startOfDay();
+        }
+
+        $raw = trim((string) ($fecha ?? ''));
+        if ($raw === '' || $raw === '0000-00-00') {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($raw)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+}

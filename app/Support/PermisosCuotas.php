@@ -25,6 +25,12 @@ final class PermisosCuotas
         return self::tiene(PermisosIaCatalog::ADMIN_ARANCELES_ESTUDIANTE);
     }
 
+    /** Subida de base de deuda a SIRO (solo tenants con SIRO habilitado). */
+    public static function puedeSiroSubidaBaseDeuda(): bool
+    {
+        return self::puedeArancelesPorEstudiante() && tenantCuotasSiroHabilitado();
+    }
+
     /** Consulta de comprobantes AFIP (solo tenants con facturación AFIP habilitada). */
     public static function puedeConsultaAfipComprobante(): bool
     {

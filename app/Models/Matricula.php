@@ -19,6 +19,8 @@ class Matricula extends Model
         'nroMatricula',
         'fechaMatricula',
         'fechaBaja',
+        'bloqmatr',
+        'bloqadmi',
         'idCuotasbecas',
         'coop_es_hermano',
         'acept1',
@@ -30,6 +32,8 @@ class Matricula extends Model
     protected $casts = [
         'fechaMatricula' => 'date',
         'fechaBaja' => 'date',
+        'bloqmatr' => 'boolean',
+        'bloqadmi' => 'boolean',
         'coop_es_hermano' => 'boolean',
         'inscripto' => 'boolean',
         'acept1' => 'boolean',

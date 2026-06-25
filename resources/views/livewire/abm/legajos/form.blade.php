@@ -604,6 +604,8 @@
                                         <th class="table-header w-32">N°</th>
                                         <th class="table-header w-36">F. matrícula</th>
                                         <th class="table-header w-36">F. baja</th>
+                                        <th class="table-header w-28">Bloq. ped.</th>
+                                        <th class="table-header w-28">Bloq. adm.</th>
                                         <th class="table-header text-right w-36">Acciones</th>
                                     </tr>
                                 </thead>
@@ -616,6 +618,8 @@
                                             <td class="table-cell font-mono">{{ $m->nroMatricula ?? '—' }}</td>
                                             <td class="table-cell font-mono">{{ $m->fechaMatricula?->format('d/m/Y') ?? '—' }}</td>
                                             <td class="table-cell font-mono">{{ $m->fechaBaja?->format('d/m/Y') ?? '—' }}</td>
+                                            <td class="table-cell text-center font-mono">{{ ($m->bloqmatr ?? false) ? '1' : '0' }}</td>
+                                            <td class="table-cell text-center font-mono">{{ ($m->bloqadmi ?? false) ? '1' : '0' }}</td>
                                             <td class="table-cell text-right whitespace-nowrap">
                                                 @if ($puedeEditar)
                                                     <div class="flex items-center justify-end gap-2">
@@ -627,7 +631,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="table-cell text-center text-gray-400 py-10">Sin matrículas cargadas.</td>
+                                            <td colspan="9" class="table-cell text-center text-gray-400 py-10">Sin matrículas cargadas.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -713,6 +717,17 @@
                                     <label class="form-label">Fecha de baja</label>
                                     <input wire:model="m_fechaBaja" type="date" class="form-input @error('m_fechaBaja') border-red-400 @enderror">
                                     @error('m_fechaBaja') <p class="form-error">{{ $message }}</p> @enderror
+                                </div>
+
+                                <div class="flex flex-col justify-end gap-3 sm:col-span-2 lg:col-span-3">
+                                    <label class="inline-flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                                        <input type="checkbox" wire:model="m_bloqmatr" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span>Bloqueo pedagógico</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                                        <input type="checkbox" wire:model="m_bloqadmi" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        <span>Bloqueo administrativo</span>
+                                    </label>
                                 </div>
                             </div>
                         </fieldset>

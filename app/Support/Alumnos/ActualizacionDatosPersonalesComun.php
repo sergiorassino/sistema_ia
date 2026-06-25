@@ -5,6 +5,7 @@ namespace App\Support\Alumnos;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Support\InformeInasistencias;
+use App\Support\MatriculaBloqueos;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -35,9 +36,9 @@ final class ActualizacionDatosPersonalesComun
         return ['legajo' => $legajo, 'matricula' => $matricula];
     }
 
-    public static function estaBloqueado(Legajo $legajo): bool
+    public static function estaBloqueado(Matricula $matricula): bool
     {
-        return (bool) ($legajo->bloqmatr ?? false) || (bool) ($legajo->bloqadmi ?? false);
+        return MatriculaBloqueos::estaBloqueado($matricula);
     }
 
     /**

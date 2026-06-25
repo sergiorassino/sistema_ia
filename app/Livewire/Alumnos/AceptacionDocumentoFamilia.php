@@ -35,7 +35,7 @@ class AceptacionDocumentoFamilia extends Component
             abort(404);
         }
 
-        if (ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($ctx['legajo'])) {
+        if (ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($ctx['matricula'])) {
             session()->flash('error', 'La actualización no está habilitada.');
 
             $this->redirectRoute('alumnos.actualizacion-datos', navigate: true);
