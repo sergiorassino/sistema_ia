@@ -5,7 +5,13 @@
         <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-0.5">
                 <p class="se-eyebrow">Medios de pago · SIRO</p>
-                <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Subida base de deuda SIRO</h1>
+                <h1 class="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white sm:text-2xl">
+                    <svg class="h-6 w-6 shrink-0 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span>Subida base de deuda SIRO</span>
+                </h1>
                 <p class="text-xs text-white/75">
                     Ciclo lectivo {{ $ano }} · 280 caracteres por registro · Suba el archivo al portal SIRO
                     <strong class="font-semibold">sin abrirlo ni guardarlo en el Bloc de notas</strong> (evita BOM UTF-8).
@@ -106,6 +112,10 @@
                 <button type="button"
                         disabled
                         class="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-300 px-4 py-2.5 text-sm font-semibold text-neutral-600 cursor-not-allowed">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
                     Procesar y Generar Archivo de Pagos para subir a SIRO
                 </button>
             @endif

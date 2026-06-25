@@ -27,7 +27,7 @@ class LegajoForm extends Component
     private const PANEL_SLUGS = ['alumno', 'domicilio', 'madre', 'padre', 'tutor', 'escolar'];
 
     /** Columnas opcionales de la solapa «Alumno» en el Blade (el trío core va aparte). */
-    private const ALUMNO_TAB_COLUMNS = ['cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio'];
+    private const ALUMNO_TAB_COLUMNS = ['cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio', 'pwrd'];
 
     /** Columnas que pertenecen a cada plantilla de pestaña del formulario. */
     private const TAB_COLUMNS = [
@@ -66,6 +66,8 @@ class LegajoForm extends Component
     public string $libro = '';
 
     public string $folio = '';
+
+    public string $pwrd = '';
 
     // ─── Domicilio ────────────────────────────────────────────────────────────
     public string $callenum = '';
@@ -236,7 +238,7 @@ class LegajoForm extends Component
         'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'emailpad', 'vivepad',
         'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
         'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
-        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira',
+        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'pwrd',
     ];
 
     /** No cargar ni persistir vía extras (sistema / seguridad). */
@@ -305,6 +307,9 @@ class LegajoForm extends Component
         if ($set === null || isset($set['emailtut'])) {
             $r['emailtut'] = ['nullable', 'string', 'max:50'];
         }
+        if ($set === null || isset($set['pwrd'])) {
+            $r['pwrd'] = ['nullable', 'string', 'max:50'];
+        }
 
         $r['legajoExtras'] = ['array'];
         $r['legajoExtras.*'] = ['nullable', 'string', 'max:4000'];
@@ -354,13 +359,27 @@ class LegajoForm extends Component
             unset($data['idFamilias']);
         }
 
+        $persistPwrd = $set === null || isset($set['pwrd']);
+
         if ($this->id) {
             // update() only touches the given keys, preserving hidden-column values in the DB.
-            Legajo::findOrFail($this->id)->update($data);
+            $legajo = Legajo::findOrFail($this->id);
+            $legajo->update($data);
+            if ($persistPwrd) {
+                $nuevaPwrd = trim($this->pwrd);
+                if ($nuevaPwrd !== '') {
+                    $legajo->pwrd = $nuevaPwrd;
+                    $legajo->save();
+                }
+            }
             session()->flash('success', "Legajo de {$data['apellido']}, {$data['nombre']} actualizado.");
         } else {
             $data['fechhora'] = now();
             $legajo = Legajo::create($data);
+            if ($persistPwrd) {
+                $legajo->pwrd = trim($this->pwrd);
+                $legajo->save();
+            }
             $this->id = (int) $legajo->id;
             session()->flash('success', "Legajo de {$data['apellido']}, {$data['nombre']} creado.");
         }
@@ -956,6 +975,7 @@ class LegajoForm extends Component
         $this->legajo = $l->legajo ?? '';
         $this->libro = $l->libro ?? '';
         $this->folio = $l->folio ?? '';
+        $this->pwrd = (string) ($l->pwrd ?? '');
 
         $this->callenum = $l->callenum ?? '';
         $this->barrio = $l->barrio ?? '';

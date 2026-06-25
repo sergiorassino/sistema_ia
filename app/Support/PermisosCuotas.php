@@ -31,6 +31,12 @@ final class PermisosCuotas
         return self::puedeArancelesPorEstudiante() && tenantCuotasSiroHabilitado();
     }
 
+    /** Descarga de planillas de rendición SIRO (solo tenants con SIRO habilitado). */
+    public static function puedeSiroDescargaRendicion(): bool
+    {
+        return self::puedeArancelesPorEstudiante() && tenantCuotasSiroHabilitado();
+    }
+
     /** Consulta de comprobantes AFIP (solo tenants con facturación AFIP habilitada). */
     public static function puedeConsultaAfipComprobante(): bool
     {

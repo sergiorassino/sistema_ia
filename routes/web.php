@@ -557,6 +557,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/siro-subida/archivo', SiroSubidaBaseDeudaArchivoController::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.siro-subida.archivo');
+        Route::get('/siro-descarga', \App\Livewire\Cuotas\SiroDescargaRendicionPlanillasIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.siro-descarga');
+        Route::get('/siro-descarga/{nroPlanilla}', \App\Livewire\Cuotas\SiroDescargaRendicionDetalle::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->where('nroPlanilla', '[0-9]+')
+            ->name('cuotas.siro-descarga.detalle');
 
         Route::middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)->group(function () {
             Route::get('/estudiante', CuotasEstudianteShow::class)->name('cuotas.estudiante');

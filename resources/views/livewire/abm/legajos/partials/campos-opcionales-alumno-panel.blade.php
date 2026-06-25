@@ -46,6 +46,18 @@
 </div>
 @endif
 
+@if($showFieldEnTab('pwrd'))
+<div>
+    <label class="form-label">Contraseña (autogestión)</label>
+    <input wire:model="pwrd" type="text" maxlength="50" autocomplete="new-password"
+           class="form-input @error('pwrd') border-red-400 @enderror">
+    @error('pwrd') <p class="form-error">{{ $message }}</p> @enderror
+    @if($id ?? null)
+        <p class="mt-1 text-xs text-neutral-500">Dejá vacío para mantener la contraseña actual.</p>
+    @endif
+</div>
+@endif
+
 @if($showFieldEnTab('legajo') || $showFieldEnTab('libro') || $showFieldEnTab('folio'))
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:col-span-2">
     @if($showFieldEnTab('legajo'))
