@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Support\Cuotas\Siro\Descarga;
+
+/**
+ * Parsea una línea del archivo de rendición SIRO (formato Integrado, ≥272 caracteres).
+ *
+ * Posiciones según SIRO Developers — Archivo de rendición Integrado v5.2 (base 1).
+ */
+final class SiroDescargaRendicionLinea
+{
+    public const LARGO_MINIMO = 272;
+
+    /**
+     * @return array{
+     *     fechaPago: string,
+     *     fechaAcreditacion: string,
+     *     fechVenc1: string,
+     *     importePagadoCentavos: int,
+     *     idUsuario: string,
+     *     concepto: string,
+     *     codigoBarras: string,
+     *     idComprobante: string,
+     *     canalAbrev: string,
+     *     idPagoSiro: string,
+     *     cadenaPago: string
+     * }|null
+     */
+    public static function parsear(string $linea): ?array
+    {
+        $linea = rtrim($linea, "\r\n");
+        if ($linea === '' || strlen($linea) < self::LARGO_MINIMO) {
+            return null;
+        }
+
+        $idComprobante = trim(substr($linea, 103, 20));
+        $canal = trim(substr($linea, 123, 3));
+
+        return [
+            'fechaPago' => substr($linea, 0, 8),
+            'fechaAcreditacion' => substr($linea, 8, 8),
+            'fechVenc1' => substr($linea, 16, 8),
+            'importePagadoCentavos' => (int) substr($linea, 24, 11),
+            'idUsuario' => trim(substr($linea, 35, 8)),
+            'concepto' => substr($linea, 43, 1),
+            'codigoBarras' => substr($linea, 44, 59),
+            'idComprobante' => $idComprobante,
+            'canalAbrev' => $canal,
+            'idPagoSiro' => trim(substr($linea, 226, 10)),
+            'cadenaPago' => $linea,
+        ];
+    }
+
+    public static function importeDesdeCentavos(int $centavos): float
+    {
+        return round($centavos / 100, 2);
+    }
+
+    public static function fechaDesdeSiro(string $ymd): ?string
+    {
+        if (strlen($ymd) !== 8 || ! ctype_digit($ymd) || $ymd === '00000000' || $ymd === '19000101') {
+            return null;
+        }
+
+        $y = (int) substr($ymd, 0, 4);
+        $m = (int) substr($ymd, 4, 2);
+        $d = (int) substr($ymd, 6, 2);
+        if (! checkdate($m, $d, $y)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $y, $m, $d);
+    }
+}

@@ -51,6 +51,16 @@
         <div><label class="form-label">{{ $label }}</label>
             <input wire:model="folio" type="text" maxlength="10" class="form-input"></div>
         @break
+    @case('pwrd')
+        <div><label class="form-label">{{ $label }}</label>
+            <input wire:model="pwrd" type="text" maxlength="50" autocomplete="new-password"
+                   class="form-input @error('pwrd') border-red-400 @enderror">
+            @error('pwrd') <p class="form-error">{{ $message }}</p> @enderror
+            @if($id ?? null)
+                <p class="mt-1 text-xs text-neutral-500">Dejá vacío para mantener la contraseña actual.</p>
+            @endif
+        </div>
+        @break
     @case('callenum')
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
             <input wire:model="callenum" type="text" maxlength="50" class="form-input"></div>

@@ -112,7 +112,7 @@
                                         {{ mb_substr((string) $l->apellido, 0, 1) }}{{ mb_substr((string) $l->nombre, 0, 1) }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="font-semibold text-neutral-900">{{ $l->apellido }}, {{ $l->nombre }}</div>
+                                        <div class="font-semibold text-neutral-900" title="ID {{ $l->id }}">{{ $l->apellido }}, {{ $l->nombre }}</div>
                                         <div class="mt-0.5 text-xs text-neutral-500">Legajo {{ $l->legajo ?: 'sin número' }}</div>
                                     </div>
                                 </div>
@@ -134,20 +134,20 @@
                                                 'se-mat-nivel-chip',
                                                 $nivelClase,
                                                 'se-mat-ciclo-activo' => $esCicloActivo,
-                                            ])>
+                                            ]) title="ID {{ $mat->id }}">
                                                 <div class="flex min-w-0 items-center gap-1">
                                                     <span class="shrink-0 font-mono font-bold tabular-nums">{{ $mat->terlec?->ano ?? '—' }}</span>
                                                     <span class="shrink-0 opacity-50">·</span>
-                                                    <span class="shrink-0 font-semibold" title="{{ $mat->nivel?->nivel }}">
+                                                    <span class="shrink-0 font-semibold">
                                                         {{ $mat->nivel?->nivel ?: '—' }}
                                                     </span>
                                                     <span class="shrink-0 opacity-50">·</span>
-                                                    <span class="min-w-0 truncate font-medium" title="{{ $mat->curso?->cursec }}">
+                                                    <span class="min-w-0 truncate font-medium">
                                                         {{ $mat->curso?->cursec ? trim($mat->curso->cursec) : '—' }}
                                                     </span>
                                                     @if ($mat->condicion?->condicion)
                                                         <span class="shrink-0 opacity-50">·</span>
-                                                        <span class="min-w-0 truncate opacity-80" title="{{ $mat->condicion->condicion }}">
+                                                        <span class="min-w-0 truncate opacity-80">
                                                             {{ $mat->condicion->condicion }}
                                                         </span>
                                                     @endif

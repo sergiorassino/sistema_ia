@@ -845,6 +845,248 @@
         justify-content: center;
     }
 
+    /* SIRO — planillas de descarga de rendición (listado) */
+    .gf.gf-siro-descarga-planillas {
+        width: max-content;
+        min-width: 45.5rem;
+    }
+    .gf.gf-siro-descarga-planillas .gf-head,
+    .gf.gf-siro-descarga-planillas .gf-row {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th,
+    .gf.gf-siro-descarga-planillas .gf-td {
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-accion,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-accion {
+        flex: 0 0 4.5rem;
+        width: 4.5rem;
+        min-width: 4.5rem;
+        max-width: 4.5rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-nro-planilla,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-nro-planilla {
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
+        min-width: 5.5rem;
+        max-width: 5.5rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-fecha-planilla,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-fecha-planilla {
+        flex: 0 0 10.5rem;
+        width: 10.5rem;
+        min-width: 10.5rem;
+        max-width: 10.5rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-canal-pago,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-canal-pago {
+        flex: 0 0 9rem;
+        width: 9rem;
+        min-width: 9rem;
+        max-width: 9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th {
+        overflow: hidden;
+        min-width: 0;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-nombre-archivo,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-nombre-archivo {
+        flex: 0 0 16rem;
+        width: 16rem;
+        min-width: 16rem;
+        max-width: 16rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-planillas .gf-th.gf-th-impactado,
+    .gf.gf-siro-descarga-planillas .gf-td.gf-td-impactado {
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
+        min-width: 5.5rem;
+        max-width: 5.5rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-planillas.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-siro-descarga-planillas.gf-vcenter .gf-td.gf-td-accion,
+    .gf.gf-siro-descarga-planillas.gf-vcenter .gf-th.gf-th-impactado,
+    .gf.gf-siro-descarga-planillas.gf-vcenter .gf-td.gf-td-impactado {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* SIRO — rendiciones descargadas (detalle de planilla) */
+    .gf.gf-siro-descarga-rendiciones {
+        width: max-content;
+        min-width: 100%;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-head {
+        font-size: 8px;
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-head,
+    .gf.gf-siro-descarga-rendiciones .gf-row {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th,
+    .gf.gf-siro-descarga-rendiciones .gf-td {
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-head .gf-th {
+        padding: 0.2rem 0.15rem;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-td {
+        font-size: 11px;
+        padding: 0.25rem 0.15rem;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-item,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-item {
+        flex: 0 0 1.75rem;
+        width: 1.75rem;
+        min-width: 1.75rem;
+        max-width: 1.75rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-fecha-pago,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-fecha-pago {
+        flex: 0 0 5.25rem;
+        width: 5.25rem;
+        min-width: 5.25rem;
+        max-width: 5.25rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-canal-pago,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-canal-pago {
+        flex: 0 0 2.75rem;
+        width: 2.75rem;
+        min-width: 2.75rem;
+        max-width: 2.75rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-estudiante,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-estudiante {
+        flex: 0 0 10.5rem;
+        width: 10.5rem;
+        min-width: 10.5rem;
+        max-width: 10.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-curso,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-curso {
+        flex: 0 0 6.75rem;
+        width: 6.75rem;
+        min-width: 6.75rem;
+        max-width: 6.75rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-cuota,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-cuota {
+        flex: 0 0 6rem;
+        width: 6rem;
+        min-width: 6rem;
+        max-width: 6rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-planilla,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-planilla {
+        flex: 0 0 3.5rem;
+        width: 3.5rem;
+        min-width: 3.5rem;
+        max-width: 3.5rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-venc1,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-venc1 {
+        flex: 0 0 5.25rem;
+        width: 5.25rem;
+        min-width: 5.25rem;
+        max-width: 5.25rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-beca,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-beca {
+        flex: 0 0 3.25rem;
+        width: 3.25rem;
+        min-width: 3.25rem;
+        max-width: 3.25rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-importe,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-importe,
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-interes,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-interes,
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-bonific,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-bonific,
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-pagado,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-pagado {
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
+        min-width: 5.5rem;
+        max-width: 5.5rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-nombre-archivo,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-nombre-archivo {
+        flex: 0 0 8rem;
+        width: 8rem;
+        min-width: 8rem;
+        max-width: 8rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones .gf-th.gf-th-impactado,
+    .gf.gf-siro-descarga-rendiciones .gf-td.gf-td-impactado {
+        flex: 0 0 3.25rem;
+        width: 3.25rem;
+        min-width: 3.25rem;
+        max-width: 3.25rem;
+        text-align: center;
+    }
+    .gf.gf-siro-descarga-rendiciones.has-obs-data .gf-th.gf-th-obs,
+    .gf.gf-siro-descarga-rendiciones.has-obs-data .gf-td.gf-td-obs {
+        flex: 0 0 9rem;
+        width: 9rem;
+        min-width: 9rem;
+        max-width: 9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-siro-descarga-rendiciones.gf-vcenter .gf-th.gf-th-impactado,
+    .gf.gf-siro-descarga-rendiciones.gf-vcenter .gf-td.gf-td-impactado {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Comprobantes AFIP de un pago */
     .gf.gf-cuotas-comprobantes-afip {
         width: max-content;

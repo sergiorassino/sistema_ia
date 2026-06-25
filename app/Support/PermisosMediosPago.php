@@ -13,6 +13,8 @@ final class PermisosMediosPago
         return [
             'cuotas.siro-subida',
             'cuotas.siro-subida.archivo',
+            'cuotas.siro-descarga',
+            'cuotas.siro-descarga.detalle',
         ];
     }
 
@@ -27,7 +29,8 @@ final class PermisosMediosPago
             return false;
         }
 
-        return PermisosCuotas::puedeSiroSubidaBaseDeuda();
+        return PermisosCuotas::puedeSiroSubidaBaseDeuda()
+            || PermisosCuotas::puedeSiroDescargaRendicion();
     }
 
     public static function muestraGrupo(): bool

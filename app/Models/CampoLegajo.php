@@ -29,8 +29,8 @@ class CampoLegajo extends Model
         'orden_en_solapa' => 'integer',
     ];
 
-    /** Columnas de `legajos` excluidas de la parametrización (seguridad). */
-    public const COLUMNAS_EXCLUIDAS = ['pwrd', 'telecelmad', 'telecelpad'];
+    /** Columnas de `legajos` excluidas de la parametrización. */
+    public const COLUMNAS_EXCLUIDAS = ['telecelmad', 'telecelpad'];
 
     /**
      * Apellido, nombre y DNI no se parametrizan: siempre en la solapa Alumno del formulario.

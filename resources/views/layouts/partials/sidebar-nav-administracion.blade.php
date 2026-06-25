@@ -271,7 +271,9 @@
                            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf'
                            && ($route ?? '') !== 'cuotas.consulta-afip-comprobante'
                            && ($route ?? '') !== 'cuotas.siro-subida'
-                           && ($route ?? '') !== 'cuotas.siro-subida.archivo',
+                           && ($route ?? '') !== 'cuotas.siro-subida.archivo'
+                           && ($route ?? '') !== 'cuotas.siro-descarga'
+                           && ($route ?? '') !== 'cuotas.siro-descarga.detalle',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -656,7 +658,7 @@
                     <a href="{{ route('cuotas.siro-subida') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                           'is-active shadow-sm' => \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null),
+                           'is-active shadow-sm' => in_array($route ?? '', ['cuotas.siro-subida', 'cuotas.siro-subida.archivo'], true),
                        ])
                        title="Generar archivo de base de deuda para subir a SIRO">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -664,6 +666,20 @@
                                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
                         <span class="truncate">Subida base de deuda</span>
+                    </a>
+                    @endif
+                    @if (\App\Support\PermisosCuotas::puedeSiroDescargaRendicion())
+                    <a href="{{ route('cuotas.siro-descarga') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => in_array($route ?? '', ['cuotas.siro-descarga', 'cuotas.siro-descarga.detalle'], true),
+                       ])
+                       title="Descargar planillas de rendición SIRO e impactar pagos">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        <span class="truncate">Descarga rendición</span>
                     </a>
                     @endif
                 </div>

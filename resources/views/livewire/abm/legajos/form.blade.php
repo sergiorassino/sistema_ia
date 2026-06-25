@@ -36,13 +36,18 @@
         <div class="min-w-0 space-y-3">
             <p class="se-eyebrow">Legajos de estudiantes</p>
             <div>
-                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $id ? ($puedeEditar ? 'Editar legajo' : 'Consultar legajo') : 'Nuevo legajo' }}</h2>
-                <p class="mt-2 text-sm text-white/80">
-                    {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
-                    @if ($id)
-                        <span class="text-white/45"> · </span> ID {{ $id }}
-                    @endif
-                </p>
+                @if ($id)
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl" title="ID {{ $id }}">{{ trim($apellido) !== '' || trim($nombre) !== '' ? "{$apellido}, {$nombre}" : ($puedeEditar ? 'Editar legajo' : 'Consultar legajo') }}</h2>
+                    <p class="mt-2 text-sm text-white/80">
+                        {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                        <span class="text-white/45"> · </span> {{ $puedeEditar ? 'Editar legajo' : 'Consultar legajo' }}
+                    </p>
+                @else
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Nuevo legajo</h2>
+                    <p class="mt-2 text-sm text-white/80">
+                        {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                    </p>
+                @endif
             </div>
         </div>
 
@@ -611,7 +616,7 @@
                                 </thead>
                                 <tbody class="bg-white">
                                     @forelse ($matriculasAlumno as $m)
-                                        <tr class="hover:bg-gray-50 transition-colors">
+                                        <tr class="hover:bg-gray-50 transition-colors" title="ID {{ $m->id }}">
                                             <td class="table-cell font-mono">{{ $m->terlec?->ano ?? '—' }}</td>
                                             <td class="table-cell">{{ $m->curso?->cursec ? trim($m->curso->cursec) : '—' }}</td>
                                             <td class="table-cell">{{ $m->condicion?->condicion ?? '—' }}</td>
