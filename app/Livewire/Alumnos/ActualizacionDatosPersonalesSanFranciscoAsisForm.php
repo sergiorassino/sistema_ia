@@ -142,7 +142,7 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
-        $this->bloqueado = ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($legajo);
+        $this->bloqueado = ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($matricula);
 
         foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($legajo) as $k => $v) {
             if (property_exists($this, $k)) {

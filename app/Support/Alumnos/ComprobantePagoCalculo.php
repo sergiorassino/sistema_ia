@@ -7,6 +7,7 @@ use App\Models\CuotasBeca;
 use App\Models\CuotasImporte;
 use App\Models\Ento;
 use App\Support\Cuotas\ImputacionPagoCalculo;
+use App\Support\Cuotas\Siro\SiroCodigoPagoElectronico;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
@@ -51,9 +52,8 @@ final class ComprobantePagoCalculo
             ->first();
 
         $attrsEnto = $entoAdmin?->getAttributes() ?? [];
-        $siroIniPrim = trim((string) ($attrsEnto['siroIniPrim'] ?? ''));
-        $siroSecu = trim((string) ($attrsEnto['siroSecu'] ?? ''));
         $siroHabilitado = tenantCuotasSiroHabilitado();
+        $cuentaSiroNivel = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
 
         $importes = CuotasImporte::query()
             ->where('idCuotas', $idCuotas)
@@ -120,9 +120,7 @@ final class ComprobantePagoCalculo
                     $idCuotas,
                     $nuevoVenc ?? $venc3,
                     (float) $nuevoImporte,
-                    $idNivel,
-                    $siroIniPrim,
-                    $siroSecu,
+                    $cuentaSiroNivel,
                 );
             } else {
                 $barraPartes = self::partesCodigoBarrasVigente(
@@ -135,15 +133,13 @@ final class ComprobantePagoCalculo
                     $importeVenc2,
                     $venc3,
                     $importeVenc3,
-                    $idNivel,
-                    $siroIniPrim,
-                    $siroSecu,
+                    $cuentaSiroNivel,
                 );
             }
 
             $numeroCuenta = $barraPartes['numeroCuenta'];
             $barra = ComprobantePagoCodigoBarras::armar($barraPartes);
-            $codigoPagoElectronico = self::codigoPagoElectronicoConSiro($idLegajos, $idNivel, $siroIniPrim, $siroSecu);
+            $codigoPagoElectronico = SiroCodigoPagoElectronico::generar($idLegajos, $idNivel);
         } else {
             $numeroCuenta = '';
             $barra = '';
@@ -229,32 +225,7 @@ final class ComprobantePagoCalculo
             return '';
         }
 
-        $entoAdmin = Ento::query()
-            ->where('idNivel', self::ID_NIVEL_ADMINISTRACION)
-            ->first();
-
-        $attrsEnto = $entoAdmin?->getAttributes() ?? [];
-        $siroIniPrim = trim((string) ($attrsEnto['siroIniPrim'] ?? ''));
-        $siroSecu = trim((string) ($attrsEnto['siroSecu'] ?? ''));
-
-        return self::codigoPagoElectronicoConSiro($idLegajos, $idNivel, $siroIniPrim, $siroSecu);
-    }
-
-    private static function codigoPagoElectronicoConSiro(
-        int $idLegajos,
-        int $idNivel,
-        string $siroIniPrim,
-        string $siroSecu,
-    ): string {
-        $idAlumnoPe = '09'.str_pad((string) $idLegajos, 7, '0', STR_PAD_LEFT);
-        if ($idNivel === 1 || $idNivel === 2) {
-            return $idAlumnoPe.$siroIniPrim;
-        }
-        if ($idNivel === 3) {
-            return $idAlumnoPe.$siroSecu;
-        }
-
-        return $idAlumnoPe.self::numeroCuenta($idNivel, $siroIniPrim, $siroSecu);
+        return SiroCodigoPagoElectronico::generar($idLegajos, $idNivel);
     }
 
     /**
@@ -391,11 +362,8 @@ final class ComprobantePagoCalculo
         float $importeVenc2,
         ?CarbonInterface $venc3,
         float $importeVenc3,
-        int $idNivel,
-        string $siroIniPrim,
-        string $siroSecu,
+        string $cuentaSiroNivel,
     ): array {
-        $numeroCuenta = self::numeroCuenta($idNivel, $siroIniPrim, $siroSecu);
         $identUsuario = $identConcepto
             .str_pad((string) $idLegajos, 5, '0', STR_PAD_LEFT)
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
@@ -408,7 +376,7 @@ final class ComprobantePagoCalculo
             'importe1erVenc' => ComprobantePagoCodigoBarras::importeCodigo($importeVenc1),
             'dias2doVenc' => str_pad((string) self::diasEntre($venc2, $venc1), 2, '0', STR_PAD_LEFT),
             'importe2doVenc' => ComprobantePagoCodigoBarras::importeCodigo($importeVenc2),
-            'numeroCuenta' => $numeroCuenta,
+            'numeroCuenta' => $cuentaSiroNivel,
             'importe3erVenc' => ComprobantePagoCodigoBarras::importeCodigo($importeVenc3),
         ];
     }
@@ -422,11 +390,8 @@ final class ComprobantePagoCalculo
         int $idCuotas,
         ?CarbonInterface $nuevoVenc,
         float $nuevoImporte,
-        int $idNivel,
-        string $siroIniPrim,
-        string $siroSecu,
+        string $cuentaSiroNivel,
     ): array {
-        $numeroCuenta = self::numeroCuenta($idNivel, $siroIniPrim, $siroSecu);
         $identUsuario = $identConcepto
             .str_pad((string) $idLegajos, 5, '0', STR_PAD_LEFT)
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
@@ -440,21 +405,9 @@ final class ComprobantePagoCalculo
             'importe1erVenc' => $importe,
             'dias2doVenc' => '00',
             'importe2doVenc' => $importe,
-            'numeroCuenta' => $numeroCuenta,
+            'numeroCuenta' => $cuentaSiroNivel,
             'importe3erVenc' => $importe,
         ];
-    }
-
-    private static function numeroCuenta(int $idNivel, string $siroIniPrim, string $siroSecu): string
-    {
-        if ($idNivel === 1 || $idNivel === 2) {
-            return $siroIniPrim;
-        }
-        if ($idNivel === 3) {
-            return $siroSecu;
-        }
-
-        return $siroSecu !== '' ? $siroSecu : $siroIniPrim;
     }
 
     private static function diasEntre(?CarbonInterface $fechaMayor, ?CarbonInterface $fechaMenor): int

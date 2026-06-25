@@ -348,6 +348,7 @@ function seCalifPrimResetNotaPickerMenuStyles(menu) {
     }
     menu.hidden = true;
     menu.classList.add('hidden');
+    menu.classList.remove('se-calif-prim-nota-picker-menu--dropup');
     menu.style.cssText = '';
 }
 
@@ -464,18 +465,46 @@ function seCalifPrimApplyNotaFromPicker(input, nota, menu) {
 }
 
 function seCalifPrimPositionNotaPickerMenu(btn, menu) {
+    const gap = 2;
+    const pad = 4;
+
     menu.hidden = false;
-    menu.classList.remove('hidden');
+    menu.classList.remove('hidden', 'se-calif-prim-nota-picker-menu--dropup');
     menu.style.visibility = 'hidden';
     menu.style.position = 'fixed';
     menu.style.zIndex = '250';
+    menu.style.maxHeight = '';
+    menu.style.overflowY = '';
+
     const menuWidth = Math.max(36, Math.ceil(menu.getBoundingClientRect().width));
     const rect = btn.getBoundingClientRect();
     let left = rect.right - menuWidth;
-    left = Math.max(4, Math.min(left, window.innerWidth - menuWidth - 4));
+    left = Math.max(pad, Math.min(left, window.innerWidth - menuWidth - pad));
     menu.style.width = `${menuWidth}px`;
-    menu.style.top = `${Math.round(rect.bottom + 2)}px`;
     menu.style.left = `${Math.round(left)}px`;
+
+    const naturalHeight = menu.getBoundingClientRect().height;
+    const spaceBelow = window.innerHeight - rect.bottom - gap - pad;
+    const spaceAbove = rect.top - gap - pad;
+    const openUp = naturalHeight > spaceBelow && spaceAbove > spaceBelow;
+
+    const maxSpace = openUp ? spaceAbove : spaceBelow;
+    if (naturalHeight > maxSpace) {
+        menu.style.maxHeight = `${Math.max(48, Math.floor(maxSpace))}px`;
+        menu.style.overflowY = 'auto';
+    }
+
+    const menuHeight = menu.getBoundingClientRect().height;
+    let top;
+    if (openUp) {
+        top = rect.top - gap - menuHeight;
+        menu.classList.add('se-calif-prim-nota-picker-menu--dropup');
+    } else {
+        top = rect.bottom + gap;
+    }
+    top = Math.max(pad, Math.min(top, window.innerHeight - menuHeight - pad));
+
+    menu.style.top = `${Math.round(top)}px`;
     menu.style.visibility = 'visible';
 }
 
@@ -627,8 +656,32 @@ function seCalifPrimBindNotaPickerDocClose() {
         }
     });
 
-    window.addEventListener('scroll', () => seCalifPrimCloseNotaPicker(true), true);
-    window.addEventListener('resize', () => seCalifPrimCloseNotaPicker(true));
+    window.addEventListener(
+        'scroll',
+        () => {
+            if (!seCalifPrimNotaPickerOpen) {
+                return;
+            }
+            const { menu, btn } = seCalifPrimNotaPickerOpen;
+            if (menu?.isConnected && btn?.isConnected && menu.parentElement === document.body) {
+                seCalifPrimPositionNotaPickerMenu(btn, menu);
+                return;
+            }
+            seCalifPrimCloseNotaPicker(true);
+        },
+        true,
+    );
+    window.addEventListener('resize', () => {
+        if (!seCalifPrimNotaPickerOpen) {
+            return;
+        }
+        const { menu, btn } = seCalifPrimNotaPickerOpen;
+        if (menu?.isConnected && btn?.isConnected && menu.parentElement === document.body) {
+            seCalifPrimPositionNotaPickerMenu(btn, menu);
+            return;
+        }
+        seCalifPrimCloseNotaPicker(true);
+    });
 }
 
 /** Desplegable compacto de notas permitidas → copia al input y dispara guardado (focusout). */

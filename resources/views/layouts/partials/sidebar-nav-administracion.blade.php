@@ -269,7 +269,9 @@
                            && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
                            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
                            && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf'
-                           && ($route ?? '') !== 'cuotas.consulta-afip-comprobante',
+                           && ($route ?? '') !== 'cuotas.consulta-afip-comprobante'
+                           && ($route ?? '') !== 'cuotas.siro-subida'
+                           && ($route ?? '') !== 'cuotas.siro-subida.archivo',
                    ])
                    title="Buscar estudiante y gestionar cuotas">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -603,6 +605,68 @@
                     </svg>
                     <span class="truncate">Gestión de Morosos</span>
                 </a>
+                @endif
+            </div>
+            @endif
+
+            @if (\App\Support\PermisosMediosPago::muestraGrupo())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.mediosPago && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('mediosPago')"
+                    title="Medios de pago">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">Medios de pago</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.mediosPago ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.mediosPago && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                @if (\App\Support\PermisosMediosPago::muestraSubgrupoSiro())
+                <button type="button"
+                        class="se-sidebar-subgroupbtn w-full flex items-center gap-2 pr-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-md transition-colors mt-1"
+                        :class="(groups.mediosPagoSiro && !sidebarCollapsed) ? 'is-open' : ''"
+                        @click="toggleGroup('mediosPagoSiro')"
+                        title="SIRO">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">SIRO</span>
+                    <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                         :class="groups.mediosPagoSiro ? 'rotate-180' : ''"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="space-y-0.5 se-sidebar-subgroup-items se-sidebar-group-items"
+                     x-show="groups.mediosPagoSiro && !sidebarCollapsed"
+                     x-collapse
+                     x-cloak>
+                    @if (\App\Support\PermisosCuotas::puedeSiroSubidaBaseDeuda())
+                    <a href="{{ route('cuotas.siro-subida') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null),
+                       ])
+                       title="Generar archivo de base de deuda para subir a SIRO">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span class="truncate">Subida base de deuda</span>
+                    </a>
+                    @endif
+                </div>
                 @endif
             </div>
             @endif

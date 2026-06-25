@@ -2,10 +2,12 @@
 
 namespace App\Support\Alumnos;
 
+use App\Models\CuponAPagar;
 use App\Models\CuotaGenerada;
+use App\Support\Cuotas\CuponAPagarEmision;
 
 /**
- * Datos para el comprobante de pago de aranceles (portal alumno).
+ * Datos para el comprobante de pago de aranceles (portal alumno y administración).
  */
 final class ComprobantePagoDatos
 {
@@ -19,7 +21,7 @@ final class ComprobantePagoDatos
             return null;
         }
 
-        return ComprobantePagoCalculo::paraCuotaGenerada($registro);
+        return self::cuponTrasEmision($registro, CuponAPagar::ORIGEN_IMPRESION_AUTOGESTION);
     }
 
     public static function paraAdministracion(int $idCuotaGenerada, int $idLegajo): ?array
@@ -29,6 +31,16 @@ final class ComprobantePagoDatos
             return null;
         }
 
-        return ComprobantePagoCalculo::paraCuotaGenerada($registro, schoolPdfHeaderData());
+        return self::cuponTrasEmision($registro, CuponAPagar::ORIGEN_IMPRESION_ADMIN, schoolPdfHeaderData());
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function cuponTrasEmision(CuotaGenerada $registro, string $origen, ?array $pdfHeader = null): ?array
+    {
+        $registro = CuponAPagarEmision::alImprimir($registro, $origen);
+
+        return ComprobantePagoCalculo::paraCuotaGenerada($registro, $pdfHeader);
     }
 }

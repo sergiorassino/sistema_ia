@@ -123,7 +123,7 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
-        $this->bloqueado = ActualizacionDatosPersonalesEstandar::estaBloqueado($legajo);
+        $this->bloqueado = ActualizacionDatosPersonalesEstandar::estaBloqueado($ctx['matricula']);
 
         foreach (ActualizacionDatosPersonalesEstandar::atributosDesdeLegajo($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
