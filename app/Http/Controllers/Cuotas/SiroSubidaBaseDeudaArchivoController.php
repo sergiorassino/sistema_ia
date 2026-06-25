@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cuotas;
 
 use App\Http\Controllers\Controller;
 use App\Models\CuotaGenerada;
+use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaArchivo;
 use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaProceso;
 use App\Support\PermisosCuotas;
 use Illuminate\Http\Request;
@@ -50,7 +51,12 @@ class SiroSubidaBaseDeudaArchivoController extends Controller
             abort(404, 'No se encontraron registros para procesar.');
         }
 
-        $resultado = SiroSubidaBaseDeudaProceso::procesar($registros);
+        try {
+            $resultado = SiroSubidaBaseDeudaProceso::procesar($registros);
+        } catch (\RuntimeException $e) {
+            abort(422, $e->getMessage());
+        }
+
         $archivo = $resultado['archivo'];
 
         if (($archivo['cantidad'] ?? 0) < 1) {
@@ -59,15 +65,32 @@ class SiroSubidaBaseDeudaArchivoController extends Controller
 
         session()->forget(['siro_subida_filtros', 'siro_subida_ids']);
 
-        $contenido = (string) ($archivo['contenido'] ?? '');
         $nombre = (string) ($archivo['nombre'] ?? 'siro-base-deuda');
+        $contenido = SiroSubidaBaseDeudaArchivo::bytesParaDescarga((string) ($archivo['contenido'] ?? ''));
+
+        $fechaNombre = str_contains($nombre, '.') ? substr($nombre, (int) strrpos($nombre, '.') + 1) : '';
+        $fechaCabecera = substr($contenido, 8, 8);
+        if ($fechaNombre !== '' && $fechaCabecera !== $fechaNombre) {
+            abort(500, 'Inconsistencia interna: la fecha del nombre del archivo no coincide con la cabecera SIRO.');
+        }
+
+        $this->limpiarBuffersSalida();
 
         return response($contenido, 200, [
             'Content-Type' => 'application/octet-stream',
             'Content-Disposition' => 'attachment; filename="'.$nombre.'"',
             'Content-Length' => (string) strlen($contenido),
             'Content-Transfer-Encoding' => 'binary',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    private function limpiarBuffersSalida(): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
     }
 }

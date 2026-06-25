@@ -6,7 +6,6 @@ use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaConsulta;
 use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaFiltros;
 use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaRegistro;
 use App\Support\PermisosCuotas;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -99,7 +98,7 @@ class SiroSubidaBaseDeudaIndex extends Component
         try {
             $filtros = SiroSubidaBaseDeudaFiltros::normalizarDesdeLivewire($this->filtrosCrudos());
         } catch (ValidationException $e) {
-            $this->addErrorBag($e->validator->getMessageBag());
+            $this->setErrorBag($e->validator->getMessageBag());
             $this->dispatch('se-swal-error', mensaje: collect($e->errors())->flatten()->first() ?? 'Revise los filtros.');
 
             return;
@@ -139,34 +138,6 @@ class SiroSubidaBaseDeudaIndex extends Component
         $this->cantidadSubeSiro = 0;
         $this->cantidadNoSubeSiro = 0;
         session()->forget(['siro_subida_filtros', 'siro_subida_ids']);
-    }
-
-    public function prepararDescarga(): void
-    {
-        abort_unless(PermisosCuotas::puedeSiroSubidaBaseDeuda(), 403);
-
-        if ($this->cantidadSubeSiro < 1) {
-            $this->dispatch('se-swal-error', mensaje: 'No hay registros elegibles para subir a SIRO.');
-
-            return;
-        }
-
-        $ids = session('siro_subida_ids', []);
-        if ($ids === []) {
-            $this->dispatch('se-swal-error', mensaje: 'La selección expiró. Vuelva a aplicar los filtros.');
-
-            return;
-        }
-
-        $key = 'siro-subida-archivo:'.(auth()->id() ?? request()->ip());
-        if (RateLimiter::tooManyAttempts($key, 10)) {
-            $this->dispatch('se-swal-error', mensaje: 'Demasiadas solicitudes. Intente nuevamente en breve.');
-
-            return;
-        }
-        RateLimiter::hit($key, 60);
-
-        $this->redirect(route('cuotas.siro-subida.archivo'));
     }
 
     public function moverSeleccion(string $tipo, string $direccion): void

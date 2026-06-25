@@ -41,6 +41,8 @@ class Ento extends Model
         'replegal',
         'siroIniPrim',
         'siroSecu',
+        'siroMje',
+        'siroPrefijoCPE',
         'siroIdentCuenta',
 
         // Logo (nuevo)

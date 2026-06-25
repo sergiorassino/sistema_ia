@@ -19,7 +19,8 @@ final class CuponAPagarSnapshot
      */
     public static function armar(CuotaGenerada $registro, array $cupon, string $cpe, int $idNivel): array
     {
-        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
+        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoNivel']['insti'] ?? $cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
+        $siroMje = mb_strtoupper(trim((string) ($cupon['entoNivel']['siroMje'] ?? '')));
         $cuotaNombre = mb_strtoupper(trim((string) ($cupon['cuotaNombre'] ?? '')));
 
         $importes = CuotasImporte::query()
@@ -29,28 +30,29 @@ final class CuponAPagarSnapshot
 
         $formula = self::formulaDesdeImportes($importes);
 
-        $cuponVencido = (bool) ($cupon['cuponVencido'] ?? false);
-        $venc1 = self::carbon($cuponVencido ? ($registro->nueVenc ?? $registro->venc3) : $registro->venc1)
-            ?? self::carbon($registro->venc1);
-        $venc2 = self::carbon($registro->venc2) ?? $venc1;
-        $venc3 = self::carbon($registro->venc3) ?? $venc2;
+        // Legacy Scriptcase: el archivo SIRO siempre lleva venc1/venc2/venc3 de cuotasgeneradas.
+        $venc1 = self::carbon($registro->venc1);
+        $venc2 = self::carbon($registro->venc2);
+        $venc3 = self::carbon($registro->venc3);
 
-        if ($venc2->lt($venc1)) {
-            $venc2 = $venc1->copy();
-        }
-        if ($venc3->lt($venc2)) {
-            $venc3 = $venc2->copy();
+        if ($venc1 === null) {
+            throw new \RuntimeException('Sin fecha de 1.er vencimiento para SIRO.');
         }
 
         $importe1 = (float) ($cupon['importeVenc1'] ?? 0);
-        $importe2 = max((float) ($cupon['importeVenc2'] ?? $importe1), $importe1);
-        $importe3 = max((float) ($cupon['importeVenc3'] ?? $importe2), $importe2);
+        $importe2 = (float) ($cupon['importeVenc2'] ?? 0);
+        $importe3 = (float) ($cupon['importeVenc3'] ?? 0);
 
-        if ($cuponVencido) {
-            $importe3 = max((float) ($cupon['importeVenc3'] ?? $importe1), $importe1);
-            $importe2 = $importe3;
-            $venc2 = $venc1->copy();
-            $venc3 = $venc1->copy();
+        if ($venc2 === null) {
+            $importe2 = 0.0;
+        } elseif ($importe2 < $importe1) {
+            $importe2 = $importe1;
+        }
+
+        if ($venc3 === null) {
+            $importe3 = 0.0;
+        } elseif ($importe3 < $importe2) {
+            $importe3 = $importe2;
         }
 
         $ultUploadNuevo = (int) ($registro->ultUpload ?? 0) + 1;
@@ -58,8 +60,9 @@ final class CuponAPagarSnapshot
         $idCuotas = (int) $registro->idCuotas;
         $idFactura = SiroIdFactura::generar($idLegajos, $idCuotas, $ultUploadNuevo);
 
-        $mensajeTicket = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($entoInsti, 15)
-            .SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($cuotaNombre, 25);
+        $textoTicket1 = $siroMje !== '' ? $siroMje : $entoInsti;
+        $mensajeTicket1 = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($textoTicket1, 15);
+        $mensajeTicket2 = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($cuotaNombre, 25);
 
         return [
             'idCuotaGenerada' => (int) $registro->id,
@@ -75,8 +78,9 @@ final class CuponAPagarSnapshot
             'importe1' => $importe1,
             'importe2' => $importe2,
             'importe3' => $importe3,
-            'mensajeTicket' => $mensajeTicket,
-            'mensajePantalla' => SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($mensajeTicket, 15),
+            'mensajeTicket1' => $mensajeTicket1,
+            'mensajeTicket2' => $mensajeTicket2,
+            'mensajePantalla' => $mensajeTicket1,
         ];
     }
 

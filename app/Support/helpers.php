@@ -526,6 +526,28 @@ if (! function_exists('tenantCuotasSiroHabilitado')) {
     }
 }
 
+if (! function_exists('tenantCuotasSiroCpePrefijo')) {
+    /**
+     * Prefijo de 2 dígitos del CPE SIRO (ej. 09 San Francisco de Asís, 00 Montecristo).
+     * Override en `config/tenants/{slug}.php` → `cuotas.siro.cpe_prefijo`.
+     * Si no hay valor en BD, override opcional en `config('tenant.cuotas.siro.cpe_prefijo')`;
+     * fallback legacy {@see Ento::$siroSecu} del mismo nivel; default 00.
+     */
+    function tenantCuotasSiroCpePrefijo(): ?string
+    {
+        if (! tenantCuotasSiroHabilitado()) {
+            return null;
+        }
+
+        $prefijo = trim((string) config('tenant.cuotas.siro.cpe_prefijo', ''));
+        if (preg_match('/^\d{2}$/', $prefijo) === 1) {
+            return $prefijo;
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('tenantCuotasSiroQrUrl')) {
     /**
      * URL del servicio SIRO para QR en cupones (legacy obtenerQR).
