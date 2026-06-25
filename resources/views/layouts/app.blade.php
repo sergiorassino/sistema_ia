@@ -24,9 +24,13 @@
      x-data="{
     sidebarOpen: false,
     peekMenuMode: @json($isSidebarPeekMode),
+    /** dynamic = rail + expandir con hover (actual). manual = ancho fijo con botón. */
+    sidebarControlMode: 'dynamic',
     sidebarCollapsed: false,
     _sidebarNavScrollTop: 0,
     _sidebarPeekTimer: null,
+    _sidebarControlStorageKey: 'seSecretariaSidebarControl',
+    _sidebarManualCollapsedKey: 'seSecretariaSidebarCollapsed',
     groups: {
         config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
         permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
@@ -54,6 +58,54 @@
     },
     isDesktopPeekLayout() {
         return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
+    },
+    isSidebarPeekActive() {
+        return this.peekMenuMode && this.sidebarControlMode === 'dynamic' && this.isDesktopPeekLayout();
+    },
+    persistManualCollapsed() {
+        if (this.sidebarControlMode !== 'manual') return;
+        try {
+            localStorage.setItem(this._sidebarManualCollapsedKey, this.sidebarCollapsed ? '1' : '0');
+        } catch (e) {}
+    },
+    applyManualSidebarBootState() {
+        if (!this.isDesktopPeekLayout()) {
+            this.sidebarCollapsed = false;
+            return;
+        }
+        try {
+            const raw = localStorage.getItem(this._sidebarManualCollapsedKey);
+            if (raw === '1') this.sidebarCollapsed = true;
+            else if (raw === '0') this.sidebarCollapsed = false;
+            else this.sidebarCollapsed = false;
+        } catch (e) {
+            this.sidebarCollapsed = false;
+        }
+    },
+    toggleSidebarControlMode() {
+        const next = this.sidebarControlMode === 'dynamic' ? 'manual' : 'dynamic';
+        clearTimeout(this._sidebarPeekTimer);
+        const el = this.$refs.seSidebar;
+        if (el) el.classList.remove('is-narrowing');
+        this.sidebarControlMode = next;
+        try {
+            localStorage.setItem(this._sidebarControlStorageKey, next);
+        } catch (e) {}
+        if (next === 'manual') {
+            this.persistManualCollapsed();
+        } else {
+            this.applyPeekSidebarBootState(false);
+        }
+    },
+    toggleSidebarManual() {
+        if (this.sidebarControlMode !== 'manual' || !this.isDesktopPeekLayout()) return;
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        if (!this.sidebarCollapsed) {
+            this.restoreSidebarNavScroll();
+        } else {
+            this.saveSidebarNavScroll();
+        }
+        this.persistManualCollapsed();
     },
     saveSidebarNavScroll() {
         const nav = this.$refs.seSidebarNav;
@@ -96,14 +148,14 @@
         if (ev.type === 'click') this.sidebarOpen = false;
     },
     peekSidebarExpandNow() {
-        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        if (!this.isSidebarPeekActive()) return;
         clearTimeout(this._sidebarPeekTimer);
         const el = this.$refs.seSidebar;
         if (el) el.classList.remove('is-narrowing');
         this.sidebarCollapsed = false;
     },
     peekSidebarMaybeCollapseLater() {
-        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        if (!this.isSidebarPeekActive()) return;
         clearTimeout(this._sidebarPeekTimer);
         const el = this.$refs.seSidebar;
         if (el) el.classList.add('is-narrowing');
@@ -119,13 +171,17 @@
         }, 200);
     },
     peekSidebarFocusOut(ev) {
-        if (!this.peekMenuMode || !this.isDesktopPeekLayout()) return;
+        if (!this.isSidebarPeekActive()) return;
         const sidebar = this.$refs.seSidebar;
         const rt = ev.relatedTarget;
         if (sidebar && rt && sidebar.contains(rt)) return;
         this.peekSidebarMaybeCollapseLater();
     },
     applyPeekSidebarBootState(respectInteraction = true) {
+        if (this.sidebarControlMode === 'manual') {
+            this.applyManualSidebarBootState();
+            return;
+        }
         if (!this.peekMenuMode || !this.isDesktopPeekLayout()) {
             this.sidebarCollapsed = false;
             return;
@@ -145,10 +201,17 @@
             } catch (e) {}
         }
         this.loadSidebarNavScroll();
-        // Desktop dashboard: sidebar ancho siempre; resto de rutas: rail hasta hover/focus.
+        try {
+            const mode = localStorage.getItem(this._sidebarControlStorageKey);
+            if (mode === 'manual' || mode === 'dynamic') this.sidebarControlMode = mode;
+        } catch (e) {}
+        // Desktop dashboard: sidebar ancho siempre; resto de rutas: rail hasta hover/focus (modo dynamic).
         this.applyPeekSidebarBootState(false);
         this.$watch('sidebarCollapsed', (collapsed) => {
-            if (!collapsed && this.peekMenuMode && this.isDesktopPeekLayout()) {
+            if (this.sidebarControlMode === 'manual') {
+                this.persistManualCollapsed();
+            }
+            if (!collapsed && this.isSidebarPeekActive()) {
                 this.restoreSidebarNavScroll();
             }
         });
@@ -1524,6 +1587,51 @@
         @endif
 
     </nav>
+
+    {{-- Controles sidebar (solo desktop): modo automático/manual y contraer/expandir en manual --}}
+    <div class="hidden md:flex border-t se-sidebar-sep relative z-[1] flex-shrink-0"
+         :class="sidebarCollapsed ? 'flex-col items-center gap-1.5 px-1.5 py-2' : 'items-center justify-between gap-2 px-3 py-2'">
+        <button type="button"
+                @click="toggleSidebarControlMode()"
+                class="se-sidebar-iconbtn rounded-lg p-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
+                :title="sidebarControlMode === 'dynamic'
+                    ? 'Modo automático: el menú se expande al pasar el mouse. Clic para modo manual.'
+                    : 'Modo manual: usted controla el ancho del menú. Clic para modo automático.'">
+            <svg x-show="sidebarControlMode === 'dynamic'" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+            </svg>
+            <svg x-show="sidebarControlMode === 'manual'" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 100 3m0-3a1.5 1.5 0 100 3m0-3v6m6-9v6m0 0a1.5 1.5 0 103 0m-3 0a1.5 1.5 0 103 0m0 0v6"/>
+            </svg>
+            <span class="sr-only" x-text="sidebarControlMode === 'dynamic' ? 'Cambiar a modo manual' : 'Cambiar a modo automático'"></span>
+        </button>
+
+        <button type="button"
+                x-show="sidebarControlMode === 'manual'"
+                x-cloak
+                @click="toggleSidebarManual()"
+                class="se-sidebar-iconbtn rounded-lg p-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
+                :title="sidebarCollapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'">
+            <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+            </svg>
+            <svg x-show="sidebarCollapsed" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+            <span class="sr-only" x-text="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'"></span>
+        </button>
+
+        <p x-show="!sidebarCollapsed && sidebarControlMode === 'manual'" x-cloak
+           class="text-[10px] font-semibold uppercase tracking-wide text-white/55 truncate min-w-0 flex-1 text-right">
+            Menú manual
+        </p>
+        <p x-show="!sidebarCollapsed && sidebarControlMode === 'dynamic'" x-cloak
+           class="text-[10px] font-semibold uppercase tracking-wide text-white/55 truncate min-w-0 flex-1 text-right">
+            Menú automático
+        </p>
+    </div>
 
     {{-- User footer --}}
     <div class="px-4 py-3 border-t se-sidebar-sep relative z-[1]"
