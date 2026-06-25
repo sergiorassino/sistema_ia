@@ -12,18 +12,50 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('ento', function (Blueprint $table) {
-            if (! Schema::hasColumn('ento', 'siroMje')) {
-                $table->string('siroMje', 40)->nullable()->after('siroSecu');
-            }
-        });
+        $columnasSiro = [
+            'siroMje' => static fn (Blueprint $table) => $table->string('siroMje', 40)->nullable(),
+            'siroPrefijoCPE' => static fn (Blueprint $table) => $table->string('siroPrefijoCPE', 2)->nullable(),
+            'siroIdentCuenta' => static fn (Blueprint $table) => $table->string('siroIdentCuenta', 20)->nullable(),
+        ];
 
-        Schema::table('ento', function (Blueprint $table) {
-            if (! Schema::hasColumn('ento', 'siroPrefijoCPE')) {
-                $after = Schema::hasColumn('ento', 'siroMje') ? 'siroMje' : 'siroSecu';
-                $table->string('siroPrefijoCPE', 2)->nullable()->after($after);
+        foreach ($columnasSiro as $nombre => $definicion) {
+            if (Schema::hasColumn('ento', $nombre)) {
+                continue;
             }
-        });
+
+            $ancla = $this->anclaParaColumnaSiro($nombre);
+
+            Schema::table('ento', function (Blueprint $table) use ($definicion, $ancla) {
+                $column = $definicion($table);
+                if ($ancla !== null) {
+                    $column->after($ancla);
+                }
+            });
+        }
+    }
+
+    /**
+     * @param  list<string>  $candidatas
+     */
+    private function anclaColumnaEnto(array $candidatas): ?string
+    {
+        foreach ($candidatas as $columna) {
+            if (Schema::hasColumn('ento', $columna)) {
+                return $columna;
+            }
+        }
+
+        return null;
+    }
+
+    private function anclaParaColumnaSiro(string $columna): ?string
+    {
+        return match ($columna) {
+            'siroMje' => $this->anclaColumnaEnto(['siroSecu', 'siroIniPrim', 'replegal']),
+            'siroPrefijoCPE' => $this->anclaColumnaEnto(['siroMje', 'siroSecu', 'siroIniPrim', 'replegal']),
+            'siroIdentCuenta' => $this->anclaColumnaEnto(['siroPrefijoCPE', 'siroMje', 'siroSecu', 'siroIniPrim', 'replegal']),
+            default => null,
+        };
     }
 
     public function down(): void
@@ -38,6 +70,6 @@ return new class extends Migration
             }
         });
 
-        // siroMje puede ser columna legacy: no eliminar en down salvo que la migración la haya creado.
+        // siroMje y siroIdentCuenta pueden ser columnas legacy: no eliminar en down.
     }
 };
