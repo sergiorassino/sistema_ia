@@ -7,6 +7,7 @@ use App\Models\CuotasBeca;
 use App\Models\CuotasImporte;
 use App\Models\Ento;
 use App\Support\Cuotas\ImputacionPagoCalculo;
+use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionIdentUsuario448Nuevo;
 use App\Support\Cuotas\Siro\SiroCodigoPagoElectronico;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -118,20 +119,21 @@ final class ComprobantePagoCalculo
         }
 
         if ($siroHabilitado) {
+            $ultUploadBarra = max(1, (int) ($registro->ultUpload ?? 0));
             if ($cuponVencido) {
                 $barraPartes = self::partesCodigoBarrasVencido(
-                    $identConcepto,
                     $idLegajos,
                     $idCuotas,
+                    $ultUploadBarra,
                     $nuevoVenc ?? $venc3,
                     (float) $nuevoImporte,
                     $cuentaSiroNivel,
                 );
             } else {
                 $barraPartes = self::partesCodigoBarrasVigente(
-                    $identConcepto,
                     $idLegajos,
                     $idCuotas,
+                    $ultUploadBarra,
                     $venc1,
                     $importeVenc1,
                     $venc2,
@@ -362,9 +364,9 @@ final class ComprobantePagoCalculo
      * @return array<string, string>
      */
     private static function partesCodigoBarrasVigente(
-        string $identConcepto,
         int $idLegajos,
         int $idCuotas,
+        int $ultUpload,
         ?CarbonInterface $venc1,
         float $importeVenc1,
         ?CarbonInterface $venc2,
@@ -373,10 +375,7 @@ final class ComprobantePagoCalculo
         float $importeVenc3,
         string $cuentaSiroNivel,
     ): array {
-        $identUsuario = $identConcepto
-            .str_pad((string) $idLegajos, 5, '0', STR_PAD_LEFT)
-            .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
-            .'000000';
+        $identUsuario = SiroDescargaRendicionIdentUsuario448Nuevo::armar($idCuotas, $idLegajos, $ultUpload);
 
         return [
             'empresaServicio' => '0448',
@@ -394,17 +393,14 @@ final class ComprobantePagoCalculo
      * @return array<string, string>
      */
     private static function partesCodigoBarrasVencido(
-        string $identConcepto,
         int $idLegajos,
         int $idCuotas,
+        int $ultUpload,
         ?CarbonInterface $nuevoVenc,
         float $nuevoImporte,
         string $cuentaSiroNivel,
     ): array {
-        $identUsuario = $identConcepto
-            .str_pad((string) $idLegajos, 5, '0', STR_PAD_LEFT)
-            .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
-            .'000000';
+        $identUsuario = SiroDescargaRendicionIdentUsuario448Nuevo::armar($idCuotas, $idLegajos, $ultUpload);
         $importe = ComprobantePagoCodigoBarras::importeCodigo($nuevoImporte);
 
         return [

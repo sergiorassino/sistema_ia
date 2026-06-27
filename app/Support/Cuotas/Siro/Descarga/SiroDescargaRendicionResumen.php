@@ -10,6 +10,7 @@ final class SiroDescargaRendicionResumen
     /**
      * @param  list<string>  $advertencias
      * @param  list<string>  $errores
+     * @param  list<array{linea: int, canal: string, idFacturaBuscado: string, modalidadIdentificacion: string, estado: string, detalle: ?string}>  $registrosArchivo
      */
     public function __construct(
         public int $procesados = 0,
@@ -20,7 +21,16 @@ final class SiroDescargaRendicionResumen
         public float $montoImpactado = 0.0,
         public array $advertencias = [],
         public array $errores = [],
+        public array $registrosArchivo = [],
     ) {}
+
+    /**
+     * @param  array{linea: int, canal: string, idFacturaBuscado: string, modalidadIdentificacion: string, estado: string, detalle: ?string}  $registro
+     */
+    public function agregarRegistroArchivo(array $registro): void
+    {
+        $this->registrosArchivo[] = $registro;
+    }
 
     public function agregarAdvertencia(string $mensaje): void
     {
@@ -36,7 +46,22 @@ final class SiroDescargaRendicionResumen
         }
     }
 
-    public function mensajeSwal(): string
+    public function debeMostrarModal(string $contexto = ''): bool
+    {
+        if ($contexto === 'descarga' && $this->registrosArchivo !== []) {
+            return true;
+        }
+
+        return $this->errores !== []
+            || $this->advertencias !== []
+            || $this->omitidos > 0
+            || $this->noImpactados > 0;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function lineasEncabezado(): array
     {
         $lineas = [];
         if ($this->procesados > 0) {
@@ -57,6 +82,48 @@ final class SiroDescargaRendicionResumen
         if ($this->noImpactados > 0) {
             $lineas[] = 'Sin impactar: '.$this->noImpactados.'.';
         }
+
+        return $lineas;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function lineasProblemas(): array
+    {
+        return array_values(array_merge($this->errores, $this->advertencias));
+    }
+
+    /**
+     * @return array{
+     *     titulo: string,
+     *     contexto: string,
+     *     encabezado: list<string>,
+     *     problemas: list<string>,
+     *     registrosArchivo: list<array{linea: int, canal: string, idFacturaBuscado: string, estado: string, detalle: ?string}>
+     * }
+     */
+    public function paraModal(string $titulo, string $contexto): array
+    {
+        return [
+            'titulo' => $titulo,
+            'contexto' => $contexto,
+            'encabezado' => $this->lineasEncabezado(),
+            'problemas' => $this->lineasProblemas(),
+            'registrosArchivo' => $this->registrosArchivo,
+        ];
+    }
+
+    public function mensajeExitoBreve(): string
+    {
+        $lineas = $this->lineasEncabezado();
+
+        return $lineas !== [] ? implode(' ', $lineas) : 'Operación finalizada correctamente.';
+    }
+
+    public function mensajeSwal(): string
+    {
+        $lineas = $this->lineasEncabezado();
 
         foreach (array_slice($this->advertencias, 0, 8) as $adv) {
             $lineas[] = '• '.$adv;

@@ -26,4 +26,16 @@ class SiroDescargaRendicionLineaTest extends TestCase
     {
         $this->assertNull(SiroDescargaRendicionLinea::parsear('20260616'));
     }
+
+    public function test_extrae_barcode_0448_con_ceros_iniciales_de_mas(): void
+    {
+        $linea = rtrim(file('d:/_enviar/_06-Junio/sanfra/nuevo/CobranzasSiro_Cta. 1102_20260625txt.txt')[0], "\r\n");
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+        if ($parsed === null) {
+            $this->markTestSkipped('Archivo de rendición de ejemplo no disponible.');
+        }
+
+        $this->assertStringStartsWith('0448103284086000000', $parsed['codigoBarras']);
+        $this->assertSame(59, strlen($parsed['codigoBarras']));
+    }
 }

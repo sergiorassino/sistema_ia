@@ -23,6 +23,7 @@ final class SiroDescargaRendicionLinea
      *     idComprobante: string,
      *     canalAbrev: string,
      *     idPagoSiro: string,
+     *     idClienteExtendido: string,
      *     cadenaPago: string
      * }|null
      */
@@ -36,19 +37,34 @@ final class SiroDescargaRendicionLinea
         $idComprobante = trim(substr($linea, 103, 20));
         $canal = trim(substr($linea, 123, 3));
 
-        return [
+        $parsed = [
             'fechaPago' => substr($linea, 0, 8),
             'fechaAcreditacion' => substr($linea, 8, 8),
             'fechVenc1' => substr($linea, 16, 8),
             'importePagadoCentavos' => (int) substr($linea, 24, 11),
             'idUsuario' => trim(substr($linea, 35, 8)),
             'concepto' => substr($linea, 43, 1),
-            'codigoBarras' => substr($linea, 44, 59),
+            'codigoBarras' => self::extraerCodigoBarras($linea),
             'idComprobante' => $idComprobante,
             'canalAbrev' => $canal,
             'idPagoSiro' => trim(substr($linea, 226, 10)),
             'cadenaPago' => $linea,
         ];
+        $parsed['idClienteExtendido'] = SiroDescargaRendicionIdClienteExtendido::identUsuario15($parsed);
+
+        return $parsed;
+    }
+
+    /**
+     * Algunos archivos traen ceros de más antes del prefijo 0448/0449 en el campo de barras.
+     */
+    private static function extraerCodigoBarras(string $linea): string
+    {
+        if (preg_match('/04(?:48|49)\d{55}/', $linea, $coincidencia) === 1) {
+            return substr($coincidencia[0], 0, 59);
+        }
+
+        return substr($linea, 44, 59);
     }
 
     public static function importeDesdeCentavos(int $centavos): float

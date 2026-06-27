@@ -108,6 +108,7 @@ use App\Http\Controllers\Cuotas\ComprobantePagoCuotasPdfController;
 use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\LibroArancelesPdfController;
 use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
+use App\Http\Controllers\Cuotas\SiroCuponesVencidosArchivoController;
 use App\Http\Controllers\Cuotas\SiroSubidaBaseDeudaArchivoController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
@@ -135,6 +136,7 @@ use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ComprobantesAfipCuota;
 use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
+use App\Livewire\Cuotas\SiroCuponesVencidosIndex;
 use App\Livewire\Cuotas\SiroSubidaBaseDeudaIndex;
 use App\Livewire\Cuotas\ImputarPagoForm;
 use App\Http\Controllers\Cooperadora\MovimientosPdfController;
@@ -557,6 +559,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/siro-subida/archivo', SiroSubidaBaseDeudaArchivoController::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.siro-subida.archivo');
+        Route::get('/siro-cupones-vencidos', SiroCuponesVencidosIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.siro-cupones-vencidos');
+        Route::get('/siro-cupones-vencidos/archivo', SiroCuponesVencidosArchivoController::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.siro-cupones-vencidos.archivo');
         Route::get('/siro-descarga', \App\Livewire\Cuotas\SiroDescargaRendicionPlanillasIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.siro-descarga');

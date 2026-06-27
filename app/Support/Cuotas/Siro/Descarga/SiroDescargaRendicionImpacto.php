@@ -81,8 +81,12 @@ final class SiroDescargaRendicionImpacto
                 }
 
                 $advertencias = [];
-                if ($saldo > $faltapaAntes && $faltapaAntes >= 0) {
-                    $advertencias[] = 'Pago superior al saldo adeudado.';
+                $totalRendicion = round($saldo + $interes - $bonificacion, 2);
+                if ($saldo > $faltapaAntes + 0.02 && $faltapaAntes >= 0) {
+                    $advertencias[] = 'Capital imputado superior al saldo adeudado.';
+                }
+                if ($pagado > $totalRendicion + 0.02 && $faltapaAntes > 0) {
+                    $advertencias[] = 'Pago superior al total calculado para la rendición.';
                 }
 
                 $duplicado = CuotaPago::query()

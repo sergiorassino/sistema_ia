@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class EdicionCuotasGeneradasConsulta
 {
-    public const MAX_FILAS = 1000;
+    public const MAX_FILAS = 2000;
 
     /**
      * @return list<array{id: int, nombre: string, abrev: string}>

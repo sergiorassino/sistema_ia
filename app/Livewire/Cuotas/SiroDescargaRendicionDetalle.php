@@ -9,6 +9,7 @@ use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionArchivo;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionCanal;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionConsulta;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionImpacto;
+use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionResumen;
 use App\Support\PermisosCuotas;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -24,6 +25,21 @@ class SiroDescargaRendicionDetalle extends Component
     public int $nroPlanilla;
 
     public $archivoRendicion;
+
+    public bool $modalResumenAbierto = false;
+
+    public string $modalResumenTitulo = '';
+
+    /** @var list<string> */
+    public array $modalResumenEncabezado = [];
+
+    /** @var list<string> */
+    public array $modalResumenProblemas = [];
+
+    /** @var list<array{linea: int, canal: string, idFacturaBuscado: string, estado: string, detalle: ?string}> */
+    public array $modalRegistrosArchivo = [];
+
+    public string $modalResumenContexto = '';
 
     public function mount(int $nroPlanilla): void
     {
@@ -73,20 +89,14 @@ class SiroDescargaRendicionDetalle extends Component
             $contenido = substr($contenido, 3);
         }
 
-        $nombreSubido = trim((string) $this->archivoRendicion->getClientOriginalName());
-        if ($nombreSubido !== '') {
-            $planilla->nombreArchivo = mb_substr($nombreSubido, 0, 50);
-            $planilla->save();
-        }
-
         $idTerlec = (int) schoolCtx()->idTerlec;
-        $resultado = SiroDescargaRendicionArchivo::procesar($planilla, $contenido, $idTerlec);
+        $nombreSubido = (string) $this->archivoRendicion->getClientOriginalName();
+        $resultado = SiroDescargaRendicionArchivo::procesar($planilla, $contenido, $idTerlec, $nombreSubido);
         $resumen = $resultado['resumen'];
 
         $this->archivoRendicion = null;
 
-        $tipo = $resumen->procesados > 0 ? 'se-swal-exito' : 'se-swal-aviso';
-        $this->dispatch($tipo, mensaje: $resumen->mensajeSwal());
+        $this->presentarResumenOperacion($resumen, 'Resultado de la carga del archivo', 'descarga');
     }
 
     public function impactarTodos(): void
@@ -106,8 +116,17 @@ class SiroDescargaRendicionDetalle extends Component
 
         $resumen = SiroDescargaRendicionImpacto::impactarPlanilla($planilla, (int) schoolCtx()->idTerlec);
 
-        $tipo = $resumen->impactados > 0 ? 'se-swal-exito' : 'se-swal-aviso';
-        $this->dispatch($tipo, mensaje: $resumen->mensajeSwal());
+        $this->presentarResumenOperacion($resumen, 'Resultado del impacto de pagos', 'impacto');
+    }
+
+    public function cerrarModalResumen(): void
+    {
+        $this->modalResumenAbierto = false;
+        $this->modalResumenTitulo = '';
+        $this->modalResumenEncabezado = [];
+        $this->modalResumenProblemas = [];
+        $this->modalRegistrosArchivo = [];
+        $this->modalResumenContexto = '';
     }
 
     public function borrarTodos(): void
@@ -161,6 +180,28 @@ class SiroDescargaRendicionDetalle extends Component
     private function planilla(): ?PlanillaDescargaCuota
     {
         return (new SiroDescargaRendicionConsulta)->planillaPorNro($this->nroPlanilla);
+    }
+
+    private function presentarResumenOperacion(
+        SiroDescargaRendicionResumen $resumen,
+        string $titulo,
+        string $contexto,
+    ): void {
+        if ($resumen->debeMostrarModal($contexto)) {
+            $datos = $resumen->paraModal($titulo, $contexto);
+            $this->modalResumenTitulo = $datos['titulo'];
+            $this->modalResumenEncabezado = $datos['encabezado'];
+            $this->modalResumenProblemas = $datos['problemas'];
+            $this->modalRegistrosArchivo = $datos['registrosArchivo'];
+            $this->modalResumenContexto = $datos['contexto'];
+            $this->modalResumenAbierto = true;
+
+            return;
+        }
+
+        $huboExito = $resumen->procesados > 0 || $resumen->impactados > 0;
+        $tipo = $huboExito ? 'se-swal-exito' : 'se-swal-aviso';
+        $this->dispatch($tipo, mensaje: $resumen->mensajeExitoBreve());
     }
 
     public function render()

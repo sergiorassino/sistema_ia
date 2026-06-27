@@ -11,8 +11,8 @@ final class SiroIdFactura
 {
     public static function generar(int $idLegajos, int $idCuotas, int $ultUpload): string
     {
-        $diferenciador = str_pad((string) $ultUpload, 2, '0', STR_PAD_LEFT)
-            .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT);
+        $sufijoCuota = str_pad(substr((string) $idCuotas, -3), 3, '0', STR_PAD_LEFT);
+        $diferenciador = str_pad((string) $ultUpload, 2, '0', STR_PAD_LEFT).$sufijoCuota;
 
         return str_pad((string) $idLegajos, 8, '0', STR_PAD_LEFT)
             .str_pad((string) $idCuotas, 7, '0', STR_PAD_LEFT)

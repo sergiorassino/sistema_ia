@@ -31,6 +31,12 @@ final class PermisosCuotas
         return self::puedeArancelesPorEstudiante() && tenantCuotasSiroHabilitado();
     }
 
+    /** Actualizar cupones vencidos y subir a SIRO (mismo permiso que subida base de deuda). */
+    public static function puedeSiroCuponesVencidos(): bool
+    {
+        return self::puedeSiroSubidaBaseDeuda();
+    }
+
     /** Descarga de planillas de rendición SIRO (solo tenants con SIRO habilitado). */
     public static function puedeSiroDescargaRendicion(): bool
     {

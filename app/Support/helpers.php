@@ -548,6 +548,30 @@ if (! function_exists('tenantCuotasSiroCpePrefijo')) {
     }
 }
 
+if (! function_exists('tenantCuotasSiroDescargaRendicionCanalesPlanilla')) {
+    /**
+     * Medios de pago (cuotastipopago) ofrecidos al crear planilla de rendición SIRO.
+     * Vacío = todos. Override en `config/tenants/{slug}.php` → `cuotas.siro.descarga_rendicion.canales_planilla`.
+     *
+     * @return list<string>
+     */
+    function tenantCuotasSiroDescargaRendicionCanalesPlanilla(): array
+    {
+        if (! tenantCuotasSiroHabilitado()) {
+            return [];
+        }
+
+        $canales = config('tenant.cuotas.siro.descarga_rendicion.canales_planilla', []);
+
+        return is_array($canales)
+            ? array_values(array_filter(array_map(
+                static fn ($c) => trim((string) $c),
+                $canales
+            )))
+            : [];
+    }
+}
+
 if (! function_exists('tenantCuotasSiroQrUrl')) {
     /**
      * URL del servicio SIRO para QR en cupones (legacy obtenerQR).
