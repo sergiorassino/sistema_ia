@@ -17,7 +17,7 @@ final class LegajoCargaPorCursoCatalog
     /** @var list<string> */
     private const COLUMNAS_NO_EDITABLES = [
         'apellido', 'nombre', 'dni',
-        'pwrd', 'fechhora', 'fechActDatos',
+        'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi',
     ];
 
     /** @var list<string> */

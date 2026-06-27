@@ -63,7 +63,7 @@
                             <div class="gf-td gf-td-nro-planilla font-semibold tabular-nums">{{ number_format((int) $planilla->nroPlanilla, 0, ',', '.') }}</div>
                             <div class="gf-td gf-td-fecha-planilla tabular-nums">{{ $planilla->fecha?->format('d/m/Y') ?? '—' }}</div>
                             <div class="gf-td gf-td-canal-pago">{{ $canal['label'] ?? $planilla->canalPago }}</div>
-                            <div class="gf-td gf-td-nombre-archivo" title="{{ $planilla->nombreArchivo }}">{{ $planilla->nombreArchivo }}</div>
+                            <div class="gf-td gf-td-nombre-archivo" title="{{ $planilla->nombreArchivo }}">{{ $planilla->nombreArchivo !== '' ? $planilla->nombreArchivo : '—' }}</div>
                             <div class="gf-td gf-td-impactado">
                                 @if ((int) ($planilla->impactado ?? 0) === 1)
                                     <span class="se-pill se-pill-ok">Sí</span>
@@ -81,12 +81,14 @@
         @endif
     </section>
 
-    @teleport('body')
-        @if ($modalAbierto)
+    @if ($modalAbierto)
+        @teleport('body')
             <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
-                 role="dialog" aria-modal="true" aria-labelledby="siro-descarga-alta-titulo">
-                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModal"></div>
-                <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+                 role="dialog" aria-modal="true" aria-labelledby="siro-descarga-alta-titulo"
+                 wire:key="siro-descarga-modal-alta">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModal" aria-hidden="true"></div>
+                <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5"
+                     @click.stop>
                     <div class="shrink-0 border-b border-accent-200 px-5 py-4">
                         <h2 id="siro-descarga-alta-titulo" class="text-lg font-bold text-neutral-800">Nueva planilla de rendición</h2>
                     </div>
@@ -111,21 +113,21 @@
                             </div>
                             <div>
                                 <label class="form-label">Canal Pago <span class="text-red-600">*</span></label>
-                                <select wire:model="canalPago" class="form-input w-full">
-                                    <option value="">Seleccione</option>
-                                    @foreach ($canalesPago as $canal)
-                                        <option value="{{ $canal['id'] }}">{{ $canal['label'] }}</option>
-                                    @endforeach
-                                </select>
+                                @if (count($canalesPagoAlta) === 1)
+                                    <p class="form-input bg-accent-50 text-neutral-800">{{ $canalesPagoAlta[0]['label'] }}</p>
+                                @else
+                                    <select wire:model="canalPago" class="form-input w-full">
+                                        <option value="">Seleccione</option>
+                                        @foreach ($canalesPagoAlta as $canal)
+                                            <option value="{{ $canal['id'] }}">{{ $canal['label'] }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
                                 @error('canalPago') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
-                            <div>
-                                <label class="form-label">Nombre Archivo <span class="text-red-600">*</span></label>
-                                <input type="text" wire:model="nombreArchivo" maxlength="50"
-                                       placeholder="CobranzasSiro_Cta. 1105_20260624txt.txt"
-                                       class="form-input w-full">
-                                @error('nombreArchivo') <p class="form-error">{{ $message }}</p> @enderror
-                            </div>
+                            <p class="text-[11px] text-neutral-500">
+                                El nombre del archivo se registrará al procesar la rendición en el detalle de la planilla.
+                            </p>
                             <p class="text-[11px] text-red-600">* Campos obligatorios</p>
                         </div>
                         <div class="shrink-0 flex flex-wrap justify-end gap-2 border-t border-accent-200 bg-accent-50/80 px-5 py-4">
@@ -143,8 +145,8 @@
                     </form>
                 </div>
             </div>
-        @endif
-    @endteleport
+        @endteleport
+    @endif
 
     @script
     <script>

@@ -303,6 +303,14 @@ return [
             'habilitado' => false,
             /** URL del servicio legacy obtenerQR (solo si `habilitado` es true). */
             'qr_url' => null,
+            /**
+             * Descarga de rendición SIRO — alta de planilla.
+             * `canales_planilla`: abrevs o nombres de cuotastipopago permitidos al crear planilla.
+             * Vacío = todos los medios con abrev en BD.
+             */
+            'descarga_rendicion' => [
+                'canales_planilla' => [],
+            ],
         ],
 
         'formulas_iniciales_plantilla' => [

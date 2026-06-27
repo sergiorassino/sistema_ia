@@ -6,6 +6,7 @@ use App\Models\CuotaGenerada;
 use App\Models\CuotasImporte;
 use App\Support\Cuotas\Siro\SiroIdFactura;
 use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaArchivo;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
 /**
@@ -19,10 +20,6 @@ final class CuponAPagarSnapshot
      */
     public static function armar(CuotaGenerada $registro, array $cupon, string $cpe, int $idNivel): array
     {
-        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoNivel']['insti'] ?? $cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
-        $siroMje = mb_strtoupper(trim((string) ($cupon['entoNivel']['siroMje'] ?? '')));
-        $cuotaNombre = mb_strtoupper(trim((string) ($cupon['cuotaNombre'] ?? '')));
-
         $importes = CuotasImporte::query()
             ->where('idCuotas', (int) $registro->idCuotas)
             ->where('idCursos', (int) $registro->idCursos)
@@ -54,6 +51,87 @@ final class CuponAPagarSnapshot
         } elseif ($importe3 < $importe2) {
             $importe3 = $importe2;
         }
+
+        return self::completarDetalle($registro, $cupon, $cpe, $idNivel, $formula, $venc1, $venc2, $venc3, $importe1, $importe2, $importe3);
+    }
+
+    /**
+     * Importe a pagar (saldo + interés − bonificación) según parámetros del sistema a una fecha dada.
+     */
+    public static function importeConInteresesEnFecha(CuotaGenerada $registro, CarbonInterface $fecha): float
+    {
+        $faltapa = max(0, round((float) ($registro->faltapa ?? 0), 2));
+        if ($faltapa <= 0) {
+            return 0.0;
+        }
+
+        $calc = ImputacionPagoCalculo::calcular($registro, $faltapa, $fecha->copy()->startOfDay());
+
+        return max(0, round((float) $calc['aPagar'], 2));
+    }
+
+    /**
+     * Snapshot para «Actualizar cupones vencidos y subir»: tres tramos con fecha {@see CuotaGenerada::$nueVenc}
+     * e importe con intereses calculado a esa fecha ({@see ImputacionPagoCalculo}).
+     *
+     * @param  array<string, mixed>  $cupon
+     * @return array<string, mixed>
+     */
+    public static function armarParaCuponesVencidosSiro(CuotaGenerada $registro, array $cupon, string $cpe, int $idNivel): array
+    {
+        $nueVenc = self::carbon($registro->nueVenc);
+        if ($nueVenc === null) {
+            throw new \RuntimeException('Sin fecha nueVenc para subida de cupones vencidos SIRO.');
+        }
+
+        $importe = self::importeConInteresesEnFecha($registro, $nueVenc);
+        if ($importe <= 0) {
+            throw new \RuntimeException('Importe con intereses en cero.');
+        }
+
+        $importes = CuotasImporte::query()
+            ->where('idCuotas', (int) $registro->idCuotas)
+            ->where('idCursos', (int) $registro->idCursos)
+            ->first();
+
+        $formula = self::formulaDesdeImportes($importes);
+
+        return self::completarDetalle(
+            $registro,
+            $cupon,
+            $cpe,
+            $idNivel,
+            $formula,
+            $nueVenc,
+            $nueVenc,
+            $nueVenc,
+            $importe,
+            $importe,
+            $importe,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $cupon
+     * @param  array<string, mixed>  $formula
+     * @return array<string, mixed>
+     */
+    private static function completarDetalle(
+        CuotaGenerada $registro,
+        array $cupon,
+        string $cpe,
+        int $idNivel,
+        array $formula,
+        CarbonInterface $venc1,
+        ?CarbonInterface $venc2,
+        ?CarbonInterface $venc3,
+        float $importe1,
+        float $importe2,
+        float $importe3,
+    ): array {
+        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoNivel']['insti'] ?? $cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
+        $siroMje = mb_strtoupper(trim((string) ($cupon['entoNivel']['siroMje'] ?? '')));
+        $cuotaNombre = mb_strtoupper(trim((string) ($cupon['cuotaNombre'] ?? '')));
 
         $ultUploadNuevo = (int) ($registro->ultUpload ?? 0) + 1;
         $idLegajos = (int) $registro->idLegajos;

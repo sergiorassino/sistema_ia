@@ -16,6 +16,10 @@ return [
             'qr_url' => null,
             // Prefijo de 2 dígitos del CPE (legacy Scriptcase / SIRO). San Fra usa 09.
             'cpe_prefijo' => '09',
+            'descarga_rendicion' => [
+                // Solo Roela al crear planilla de rendición (cuotastipopago).
+                'canales_planilla' => ['Roela'],
+            ],
         ],
     ],
 

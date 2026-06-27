@@ -243,7 +243,7 @@ class LegajoForm extends Component
 
     /** No cargar ni persistir vía extras (sistema / seguridad). */
     private const COLUMNAS_SISTEMA_NO_EXTRAS = [
-        'id', 'pwrd', 'fechhora', 'fechActDatos',
+        'id', 'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi',
     ];
 
     /** Columnas extra de `legajos` (p. ej. telealte1_nom) sin control dedicado en el Blade. */

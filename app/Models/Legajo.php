@@ -24,6 +24,8 @@ class Legajo extends Authenticatable
         'fechnacpad' => 'date',
         'fechhora' => 'datetime',
         'fechActDatos' => 'datetime',
+        'bloqmatr' => 'boolean',
+        'bloqadmi' => 'boolean',
     ];
 
     public function familia()

@@ -11,7 +11,7 @@
                 <dl class="grid gap-1 text-xs text-white/85 sm:grid-cols-2 lg:grid-cols-4">
                     <div><dt class="inline font-semibold">Fecha de Carga:</dt> {{ $planilla->fecha?->format('d/m/Y') ?? '—' }}</div>
                     <div><dt class="inline font-semibold">Canal de Pago:</dt> {{ $etiquetaCanal }}</div>
-                    <div class="sm:col-span-2"><dt class="inline font-semibold">Archivo de Origen:</dt> {{ $planilla->nombreArchivo }}</div>
+                    <div class="sm:col-span-2"><dt class="inline font-semibold">Archivo de Origen:</dt> {{ $planilla->nombreArchivo !== '' ? $planilla->nombreArchivo : '—' }}</div>
                 </dl>
             </div>
             <a href="{{ route('cuotas.siro-descarga') }}"
@@ -141,8 +141,208 @@
         @endif
     </section>
 
+    @if ($modalResumenAbierto)
+        @teleport('body')
+            <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                 role="dialog" aria-modal="true" aria-labelledby="siro-descarga-resumen-titulo"
+                 wire:key="siro-descarga-modal-resumen">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalResumen" aria-hidden="true"></div>
+                <div class="relative z-10 my-auto flex w-full max-w-4xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),44rem)]"
+                     @click.stop>
+                    <div class="shrink-0 border-b border-accent-200 px-5 py-4">
+                        <h2 id="siro-descarga-resumen-titulo" class="text-lg font-bold text-neutral-800">{{ $modalResumenTitulo }}</h2>
+                        <p class="mt-1 text-sm text-neutral-600">
+                            Planilla Nº {{ number_format($planilla->nroPlanilla, 0, ',', '.') }}
+                            @if ($planilla->nombreArchivo !== '')
+                                · {{ $planilla->nombreArchivo }}
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4" id="siro-descarga-resumen-contenido">
+                        @if ($modalResumenEncabezado !== [])
+                            <ul class="space-y-1 text-sm text-neutral-700">
+                                @foreach ($modalResumenEncabezado as $linea)
+                                    <li>{{ $linea }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        @if ($modalRegistrosArchivo !== [])
+                            <div>
+                                <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-600">
+                                    Registros del archivo ({{ count($modalRegistrosArchivo) }})
+                                </p>
+                                <div class="w-full overflow-x-auto se-grid-angosta-wrap">
+                                    <table class="se-matriz-list-tabla table-fixed text-sm">
+                                        <thead>
+                                            <tr class="bg-accent-50 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                                                <th class="w-12 px-2 py-2 text-left">#</th>
+                                                <th class="w-16 px-2 py-2 text-left">Canal</th>
+                                                <th class="min-w-[12rem] px-2 py-2 text-left">id_factura buscado</th>
+                                                <th class="min-w-[10rem] px-2 py-2 text-left">Modalidad</th>
+                                                <th class="w-28 px-2 py-2 text-left">Resultado</th>
+                                                <th class="min-w-[10rem] px-2 py-2 text-left">Detalle</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($modalRegistrosArchivo as $registro)
+                                                @php
+                                                    $estado = (string) ($registro['estado'] ?? '');
+                                                    $estadoEtiqueta = match ($estado) {
+                                                        'encontrado' => 'Encontrado',
+                                                        'no_encontrado' => 'No encontrado',
+                                                        'omitido' => 'Omitido',
+                                                        default => ucfirst($estado),
+                                                    };
+                                                    $estadoClase = match ($estado) {
+                                                        'encontrado' => 'text-primary-700 font-semibold',
+                                                        'no_encontrado' => 'text-red-700 font-semibold',
+                                                        'omitido' => 'text-amber-800 font-semibold',
+                                                        default => 'text-neutral-700',
+                                                    };
+                                                @endphp
+                                                <tr class="border-t border-accent-100 hover:bg-accent-50/60" wire:key="siro-resumen-reg-{{ $registro['linea'] ?? $loop->index }}">
+                                                    <td class="px-2 py-2 tabular-nums">{{ $registro['linea'] ?? '—' }}</td>
+                                                    <td class="px-2 py-2">{{ $registro['canal'] ?? '—' }}</td>
+                                                    <td class="px-2 py-2 font-mono text-xs break-all">{{ $registro['idFacturaBuscado'] ?? '—' }}</td>
+                                                    <td class="px-2 py-2 text-xs text-neutral-700">{{ $registro['modalidadIdentificacion'] ?? '—' }}</td>
+                                                    <td class="px-2 py-2 {{ $estadoClase }}">{{ $estadoEtiqueta }}</td>
+                                                    <td class="px-2 py-2 text-xs text-neutral-600">{{ $registro['detalle'] ?? '' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if ($modalResumenProblemas !== [])
+                            <div>
+                                <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                                    Errores y advertencias ({{ count($modalResumenProblemas) }})
+                                </p>
+                                <ol class="list-decimal space-y-2 border border-amber-200/80 bg-amber-50/60 px-4 py-3 pl-8 text-sm leading-relaxed text-neutral-800">
+                                    @foreach ($modalResumenProblemas as $problema)
+                                        <li>{{ $problema }}</li>
+                                    @endforeach
+                                </ol>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="shrink-0 flex flex-wrap justify-end gap-2 border-t border-accent-200 bg-accent-50/80 px-5 py-4">
+                        <button type="button"
+                                x-on:click="window.seSiroDescargaImprimirResumen(
+                                    @js($modalResumenTitulo),
+                                    @js(number_format((int) $planilla->nroPlanilla, 0, ',', '.')),
+                                    @js($planilla->nombreArchivo !== '' ? $planilla->nombreArchivo : '—'),
+                                    @js($modalResumenContexto),
+                                    @js($modalResumenEncabezado),
+                                    @js($modalResumenProblemas),
+                                    @js($modalRegistrosArchivo)
+                                )"
+                                class="rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-accent-50">
+                            Imprimir
+                        </button>
+                        <button type="button"
+                                wire:click="cerrarModalResumen"
+                                class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endteleport
+    @endif
+
     @script
     <script>
+        window.seSiroDescargaImprimirResumen = (titulo, nroPlanilla, nombreArchivo, contexto, encabezado, problemas, registros) => {
+            const esc = (valor) => String(valor ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+            const encabezadoHtml = (encabezado ?? []).map((linea) => `<li>${esc(linea)}</li>`).join('');
+            const problemasHtml = (problemas ?? []).map((linea) => `<li>${esc(linea)}</li>`).join('');
+            const registrosHtml = (registros ?? []).map((reg) => {
+                const estado = reg.estado === 'encontrado' ? 'Encontrado'
+                    : reg.estado === 'no_encontrado' ? 'No encontrado'
+                    : reg.estado === 'omitido' ? 'Omitido'
+                    : esc(reg.estado);
+                return `<tr>
+                    <td>${esc(reg.linea)}</td>
+                    <td>${esc(reg.canal)}</td>
+                    <td style="font-family:monospace;font-size:10pt">${esc(reg.idFacturaBuscado)}</td>
+                    <td>${esc(reg.modalidadIdentificacion ?? '—')}</td>
+                    <td>${estado}</td>
+                    <td>${esc(reg.detalle ?? '')}</td>
+                </tr>`;
+            }).join('');
+            const operacion = contexto === 'impacto' ? 'Impacto de pagos' : 'Carga de archivo de rendición';
+            const fecha = new Date().toLocaleString('es-AR');
+
+            const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>${esc(titulo)}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12pt; color: #222; margin: 18mm; }
+        h1 { font-size: 16pt; margin: 0 0 8px; }
+        .meta { font-size: 10pt; color: #555; margin-bottom: 16px; }
+        h2 { font-size: 12pt; margin: 16px 0 8px; }
+        ol { margin: 0; padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        ul { margin: 0; padding-left: 18px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 8px; }
+        th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; vertical-align: top; }
+        th { background: #f4f8f9; font-size: 9pt; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <h1>${esc(titulo)}</h1>
+    <p class="meta">${esc(operacion)} · Planilla Nº ${esc(nroPlanilla)} · Archivo: ${esc(nombreArchivo)} · ${esc(fecha)}</p>
+    ${encabezadoHtml ? `<h2>Resumen</h2><ul>${encabezadoHtml}</ul>` : ''}
+    ${registrosHtml ? `<h2>Registros del archivo</h2><table><thead><tr><th>#</th><th>Canal</th><th>id_factura buscado</th><th>Modalidad</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>${registrosHtml}</tbody></table>` : ''}
+    ${problemasHtml ? `<h2>Errores y advertencias</h2><ol>${problemasHtml}</ol>` : ''}
+</body>
+</html>`;
+
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('aria-hidden', 'true');
+            iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+            if (!doc) {
+                iframe.remove();
+                window.seSwalError?.('No se pudo preparar la impresión.');
+                return;
+            }
+
+            doc.open();
+            doc.write(html);
+            doc.close();
+
+            const imprimir = () => {
+                try {
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                } finally {
+                    window.setTimeout(() => iframe.remove(), 1000);
+                }
+            };
+
+            if (iframe.contentWindow?.document.readyState === 'complete') {
+                imprimir();
+            } else {
+                iframe.onload = imprimir;
+            }
+        };
+
         $wire.on('se-swal-exito', ({ mensaje }) => window.seSwalExito(mensaje));
         $wire.on('se-swal-aviso', ({ mensaje }) => window.seSwalAviso(mensaje));
         $wire.on('se-swal-error', ({ mensaje }) => window.seSwalError(mensaje));

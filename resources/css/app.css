@@ -2365,6 +2365,23 @@
         line-height: 1.2;
         box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
     }
+    /* Subida SIRO: cabecera en dos filas — la 2.ª queda debajo de la 1.ª al hacer scroll */
+    .se-matriz-list-tabla--siro-subida {
+        --se-siro-subida-head-row1: 1.65rem;
+    }
+    .se-matriz-list-tabla--siro-subida thead tr:first-child th {
+        top: 0;
+        z-index: 3;
+    }
+    .se-matriz-list-tabla--siro-subida thead tr.se-siro-subida-th-subfila th {
+        top: var(--se-siro-subida-head-row1);
+        z-index: 2;
+    }
+    .se-matriz-list-tabla--siro-subida .se-siro-subida-th-bloq {
+        @apply px-0.5;
+        max-width: 2.25rem;
+        min-width: 2.25rem;
+    }
     .se-matriz-list-tabla tbody td {
         @apply border border-gray-300 px-2 py-0 align-middle;
         height: 1.65rem;

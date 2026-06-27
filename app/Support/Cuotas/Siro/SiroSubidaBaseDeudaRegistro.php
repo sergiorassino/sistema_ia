@@ -50,7 +50,7 @@ final class SiroSubidaBaseDeudaRegistro
         $curso = $registro->curso;
         $cuota = $registro->cuota;
 
-        return [
+        return array_merge([
             'id' => (int) $registro->id,
             'apellido' => mb_strtoupper(trim((string) ($legajo->apellido ?? ''))),
             'nombre' => mb_strtoupper(trim((string) ($legajo->nombre ?? ''))),
@@ -62,13 +62,14 @@ final class SiroSubidaBaseDeudaRegistro
             'venc1' => self::formatearFecha($registro->venc1),
             'venc2' => self::formatearFecha($registro->venc2),
             'venc3' => self::formatearFecha($registro->venc3),
+            'nueVenc' => self::formatearFecha($registro->nueVenc),
             'obs' => $eval['subeSiro'] ? '' : $eval['motivoExclusion'],
             'idLegajos' => (int) $registro->idLegajos,
             'bloqmatr' => (int) MatriculaBloqueos::bloqmatr($matricula),
             'bloqadmi' => (int) MatriculaBloqueos::bloqadmi($matricula),
             'subeSiro' => $eval['subeSiro'],
             'motivoExclusion' => $eval['motivoExclusion'],
-        ];
+        ], SiroSubidaGrillaColumnas::desdeDetalle($eval['subeSiro'] ? $eval['detalle'] : null));
     }
 
     /**

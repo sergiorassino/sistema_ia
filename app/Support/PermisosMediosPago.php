@@ -13,6 +13,8 @@ final class PermisosMediosPago
         return [
             'cuotas.siro-subida',
             'cuotas.siro-subida.archivo',
+            'cuotas.siro-cupones-vencidos',
+            'cuotas.siro-cupones-vencidos.archivo',
             'cuotas.siro-descarga',
             'cuotas.siro-descarga.detalle',
         ];
@@ -30,6 +32,7 @@ final class PermisosMediosPago
         }
 
         return PermisosCuotas::puedeSiroSubidaBaseDeuda()
+            || PermisosCuotas::puedeSiroCuponesVencidos()
             || PermisosCuotas::puedeSiroDescargaRendicion();
     }
 

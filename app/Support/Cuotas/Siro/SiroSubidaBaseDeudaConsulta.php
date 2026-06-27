@@ -18,19 +18,17 @@ final class SiroSubidaBaseDeudaConsulta
      */
     public static function cuotasAdeudadas(array $filtros): Collection
     {
-        return self::consultaBase($filtros)
+        $query = self::consultaBase($filtros)
             ->with([
                 'legajo:id,apellido,nombre,dni,idFamilias',
                 'matricula:id,idLegajos,idTerlec,bloqmatr,bloqadmi',
                 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
                 'curso.nivel:id,nivel',
-                'cuota:id,nombre,idTerlec',
+                'cuota:id,nombre,idTerlec,orden',
                 'cuota.terlec:id,ano',
-            ])
-            ->orderBy('cuotasgeneradas.idLegajos')
-            ->orderBy('cuotasgeneradas.venc1')
-            ->orderBy('cuotasgeneradas.id')
-            ->get();
+            ]);
+
+        return SiroSubidaConsultaOrden::aplicar($query)->get();
     }
 
     /**

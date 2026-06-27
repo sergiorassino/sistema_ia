@@ -26,13 +26,12 @@ class SiroDescargaRendicionPlanillasIndex extends Component
 
     public string $fecha = '';
 
-    public int $canalPago = 8;
-
-    public string $nombreArchivo = '';
+    public int $canalPago = 0;
 
     public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
+        $this->canalPago = SiroDescargaRendicionCanal::canalPlanillaPorDefecto();
     }
 
     public function updatedSearch(): void
@@ -47,8 +46,7 @@ class SiroDescargaRendicionPlanillasIndex extends Component
         $consulta = new SiroDescargaRendicionConsulta;
         $this->nroPlanilla = $consulta->sugerirNroPlanilla();
         $this->fecha = now()->format('Y-m-d');
-        $this->canalPago = 8;
-        $this->nombreArchivo = '';
+        $this->canalPago = SiroDescargaRendicionCanal::canalPlanillaPorDefecto();
         $this->resetValidation();
         $this->modalAbierto = true;
     }
@@ -63,16 +61,14 @@ class SiroDescargaRendicionPlanillasIndex extends Component
     {
         abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
 
-        $idsCanal = collect(SiroDescargaRendicionCanal::opcionesPlanilla())->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $idsCanal = collect(SiroDescargaRendicionCanal::opcionesPlanillaParaAlta())->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         $validated = $this->validate([
             'nroPlanilla' => ['required', 'integer', 'min:1', Rule::unique('planillasdescargacuotas', 'nroPlanilla')],
             'fecha' => ['required', 'date'],
             'canalPago' => ['required', 'integer', Rule::in($idsCanal)],
-            'nombreArchivo' => ['required', 'string', 'max:50'],
         ], [
             'nroPlanilla.unique' => 'Ya existe una planilla con ese número.',
-            'nombreArchivo.required' => 'Indique el nombre del archivo de rendición.',
         ]);
 
         $key = 'siro-descarga-planilla:'.(auth()->id() ?? 'guest');
@@ -89,12 +85,12 @@ class SiroDescargaRendicionPlanillasIndex extends Component
             'desde' => null,
             'hasta' => null,
             'canalPago' => (int) $validated['canalPago'],
-            'nombreArchivo' => trim($validated['nombreArchivo']),
+            'nombreArchivo' => '',
             'impactado' => 0,
         ]);
 
         $this->modalAbierto = false;
-        $this->dispatch('se-swal-exito', mensaje: 'Planilla Nº '.$planilla->nroPlanilla.' creada. Ahora puede cargar el archivo de rendición.');
+        $this->dispatch('se-swal-exito', mensaje: 'Planilla Nº '.$planilla->nroPlanilla.' creada. Cargue el archivo de rendición para registrar los pagos.');
         $this->redirectRoute('cuotas.siro-descarga.detalle', ['nroPlanilla' => $planilla->nroPlanilla], navigate: true);
     }
 
@@ -106,6 +102,7 @@ class SiroDescargaRendicionPlanillasIndex extends Component
             'planillas' => $consulta->listarPlanillas($this->search),
             'ultimoNro' => $consulta->ultimoNroPlanilla(),
             'canalesPago' => SiroDescargaRendicionCanal::opcionesPlanilla(),
+            'canalesPagoAlta' => SiroDescargaRendicionCanal::opcionesPlanillaParaAlta(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Descarga rendición SIRO']);
     }
 }

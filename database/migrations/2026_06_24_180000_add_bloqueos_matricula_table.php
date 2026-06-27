@@ -4,6 +4,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Bloqueos por ciclo lectivo en matricula.
+ * legajos.bloqmatr / bloqadmi no se modifican (legacy Scriptcase).
+ */
 return new class extends Migration
 {
     public function up(): void
