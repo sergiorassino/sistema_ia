@@ -231,8 +231,7 @@
             <p class="se-section-title mb-4">Logo (JPG/JPEG/PNG por nivel)</p>
 
             <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
-                 wire:key="logo-preview-{{ md5((string) ($currentLogoUrl ?? '')) }}"
-                 x-data="{ previewUrl: @js($currentLogoUrl) }">
+                 wire:key="logo-preview-{{ md5((string) ($logoPreviewUrl ?? '')) }}">
                 <div class="space-y-3">
                     <div>
                         <label class="form-label">Subir logo</label>
@@ -242,13 +241,6 @@
                                    if ($event.detail?.property === 'logo') {
                                        $wire.onLogoUploadFailed();
                                    }
-                               "
-                               x-on:change="
-                                   const file = $event.target.files?.[0];
-                                   if (! file || ! file.type.startsWith('image/')) return;
-                                   const reader = new FileReader();
-                                   reader.onload = (e) => { previewUrl = e.target?.result ?? null };
-                                   reader.readAsDataURL(file);
                                ">
                         <p wire:loading wire:target="logo" class="mt-1 text-xs font-medium text-primary-700">
                             Subiendo archivo… espere a que termine antes de pulsar Guardar.
@@ -259,18 +251,14 @@
 
                     <label class="inline-flex cursor-pointer items-center gap-2">
                         <input type="checkbox" wire:model.live="removeLogo"
-                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                               x-on:change="previewUrl = $event.target.checked ? null : @js($currentLogoUrl)">
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                         <span class="text-xs text-neutral-600">Quitar logo actual</span>
                     </label>
                 </div>
 
                 <div class="space-y-2">
                     <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
-                    <div class="flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4">
-                        <img x-show="previewUrl" x-bind:src="previewUrl" alt="Logo" class="max-h-28 object-contain">
-                        <span x-show="! previewUrl" class="text-xs text-neutral-400">Sin logo</span>
-                    </div>
+                    @include('layouts.partials.logo-institucional', ['url' => $logoPreviewUrl, 'context' => 'preview'])
                 </div>
             </div>
         </div>

@@ -140,7 +140,7 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Sin saldo adeudado.');
         }
 
-        $cupon = \App\Support\Alumnos\ComprobantePagoCalculo::paraCuotaGenerada($registro);
+        $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }
@@ -215,7 +215,7 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Sin vencimiento vigente (indique «Actualizar al»).');
         }
 
-        $cupon = \App\Support\Alumnos\ComprobantePagoCalculo::paraCuotaGenerada($registro);
+        $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }

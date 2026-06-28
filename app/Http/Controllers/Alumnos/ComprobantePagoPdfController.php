@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Alumnos;
 use App\Http\Controllers\Controller;
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
-use App\Support\Alumnos\ComprobantePagoTcpdf;
+use App\Support\Alumnos\ComprobantePagoPdf;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -67,8 +67,8 @@ class ComprobantePagoPdfController extends Controller
             $slug = 'comprobante_pago';
         }
 
-        $pdf = ComprobantePagoTcpdf::generar($datos);
+        $pdf = ComprobantePagoPdf::generar($datos);
 
-        return ComprobantePagoTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return ComprobantePagoPdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

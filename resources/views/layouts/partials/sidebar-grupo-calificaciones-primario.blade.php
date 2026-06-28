@@ -50,11 +50,18 @@
         </a>
         @endif
         @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_ESTUDIANTE))
-        <a href="{{ route('calificacionesPrimario.carga') }}"
+        @php
+            $rutaCargaStaff = \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::rutaStaff(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::CARGA_ESTUDIANTE);
+            $prefijosCargaStaff = str_contains($rutaCargaStaff, 'Epq')
+                ? ['calificacionesPrimarioEpq.carga', 'calificacionesPrimarioEpq.infoAdicional']
+                : ['calificacionesPrimario.carga'];
+        @endphp
+        <a href="{{ route($rutaCargaStaff) }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesPrimario.carga')
-                   && ! str_starts_with($route ?? '', 'calificacionesPrimario.cargaMateria'),
+               'is-active shadow-sm' => collect($prefijosCargaStaff)->contains(
+                   fn (string $prefijo): bool => str_starts_with($route ?? '', $prefijo)
+               ),
            ])
            title="Carga de calificaciones por estudiante (primario)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,6 +86,20 @@
         </a>
         @endif
         @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
+            @if (\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::BOLETIN_PRIM))
+        <a href="{{ route(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::rutaStaff(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::BOLETIN_PRIM)) }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+               'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesPrimarioEpq.boletin'),
+           ])
+           title="{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="truncate">{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}</span>
+        </a>
+            @else
         <a href="{{ route('calificacionesPrimario.boletinIpe') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -91,12 +112,17 @@
             </svg>
             <span class="truncate">{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}</span>
         </a>
+            @endif
         @endif
         @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA))
-        <a href="{{ route('calificacionesPrimario.planilla') }}"
+        @php
+            $rutaPlanillaStaff = \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::rutaStaff(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA);
+            $prefijoPlanillaStaff = str_contains($rutaPlanillaStaff, 'Epq') ? 'calificacionesPrimarioEpq.planilla' : 'calificacionesPrimario.planilla';
+        @endphp
+        <a href="{{ route($rutaPlanillaStaff) }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesPrimario.planilla'),
+               'is-active shadow-sm' => str_starts_with($route ?? '', $prefijoPlanillaStaff),
            ])
            title="Planilla de calificaciones (primario)">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

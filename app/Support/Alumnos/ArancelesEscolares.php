@@ -107,7 +107,7 @@ final class ArancelesEscolares
             'curso' => mb_strtoupper($curso),
             'nivel' => mb_strtoupper(trim((string) $ctx->nivelNombre())),
             'codigoPagoElectronico' => tenantCuotasSiroHabilitado()
-                ? ComprobantePagoCalculo::codigoPagoElectronico($idLegajo, $idNivel)
+                ? ComprobantePagoPdf::codigoPagoElectronico($idLegajo, $idNivel)
                 : '',
         ];
     }

@@ -38,7 +38,9 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            // Debe coincidir con la URL /storage/… (public/storage). En este repo suele ser
+            // carpeta física versionada, no solo el destino de storage:link.
+            'root' => public_path('storage'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,

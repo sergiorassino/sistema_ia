@@ -4,7 +4,7 @@ namespace App\Support\Cuotas;
 
 use App\Models\CuponAPagar;
 use App\Models\CuotaGenerada;
-use App\Support\Alumnos\ComprobantePagoCalculo;
+use App\Support\Alumnos\ComprobantePagoPdf;
 use App\Support\Cuotas\Siro\SiroCodigoPagoElectronico;
 use Illuminate\Support\Facades\DB;
 
@@ -71,7 +71,7 @@ final class CuponAPagarEmision
 
             $locked->loadMissing(['legajo', 'curso', 'cuota']);
 
-            $cupon = ComprobantePagoCalculo::paraCuotaGenerada($locked);
+            $cupon = ComprobantePagoPdf::calcular($locked);
             if ($cupon === null) {
                 return $locked;
             }

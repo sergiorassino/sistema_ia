@@ -2,6 +2,8 @@
 
 use App\Livewire\Alumnos\ActualizacionDatosPersonalesEstandarForm;
 use App\Livewire\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsisForm;
+use App\Livewire\Alumnos\ArancelesEscolaresGestionIndex;
+use App\Livewire\Alumnos\ArancelesEscolaresIndex;
 use App\Models\Ento;
 use App\Models\Profesor;
 use App\Push\WebPushService;
@@ -190,6 +192,44 @@ if (! function_exists('tieneAlgunPermisoConfiguracion')) {
     }
 }
 
+if (! function_exists('ensurePublicStorageFileAccessible')) {
+    /**
+     * Garantiza que un archivo relativo a /storage exista en public/storage (servido por la web).
+     * Si solo está en storage/app/public (subidas previas sin enlace), lo copia allí.
+     */
+    function ensurePublicStorageFileAccessible(string $relativePath): bool
+    {
+        $relativePath = ltrim(str_replace('\\', '/', trim($relativePath)), '/');
+        if ($relativePath === '' || str_contains($relativePath, '..')) {
+            return false;
+        }
+
+        $webAbsolute = public_path('storage/'.$relativePath);
+        if (is_file($webAbsolute)) {
+            return true;
+        }
+
+        $legacyAbsolute = storage_path('app/public/'.$relativePath);
+        if (! is_file($legacyAbsolute)) {
+            return false;
+        }
+
+        $webDir = dirname($webAbsolute);
+        if (! is_dir($webDir) && ! @mkdir($webDir, 0755, true) && ! is_dir($webDir)) {
+            return false;
+        }
+
+        return @copy($legacyAbsolute, $webAbsolute) || is_file($webAbsolute);
+    }
+}
+
+if (! function_exists('publicStorageRelativePathExists')) {
+    function publicStorageRelativePathExists(string $relativePath): bool
+    {
+        return ensurePublicStorageFileAccessible($relativePath);
+    }
+}
+
 if (! function_exists('schoolLogoStoragePath')) {
     function schoolLogoStoragePath(bool $refresh = false): ?string
     {
@@ -207,7 +247,7 @@ if (! function_exists('schoolLogoStoragePath')) {
         }
 
         $path = trim($path);
-        if (! Storage::disk('public')->exists($path)) {
+        if (! publicStorageRelativePathExists($path)) {
             return null;
         }
 
@@ -221,6 +261,25 @@ if (! function_exists('schoolLogoUrl')) {
         $path = schoolLogoStoragePath($refresh);
 
         return $path !== null ? Storage::disk('public')->url($path) : null;
+    }
+}
+
+if (! function_exists('schoolLogoForma')) {
+    /**
+     * Presentación del logo: `horizontal` (apaisado) o `emblema` (sello circular/cuadrado).
+     */
+    function schoolLogoForma(): string
+    {
+        $forma = strtolower(trim((string) config('tenant.institucional.logo_forma', 'horizontal')));
+
+        return in_array($forma, ['emblema', 'horizontal'], true) ? $forma : 'horizontal';
+    }
+}
+
+if (! function_exists('schoolLogoEsEmblema')) {
+    function schoolLogoEsEmblema(): bool
+    {
+        return schoolLogoForma() === 'emblema';
     }
 }
 
@@ -241,7 +300,7 @@ if (! function_exists('studentLogoStoragePath')) {
         }
 
         $path = trim($path);
-        if (! Storage::disk('public')->exists($path)) {
+        if (! publicStorageRelativePathExists($path)) {
             return null;
         }
 
@@ -275,7 +334,7 @@ if (! function_exists('entoInstitutionalLogoStoragePath')) {
         }
 
         $path = trim($path);
-        if (! Storage::disk('public')->exists($path)) {
+        if (! publicStorageRelativePathExists($path)) {
             return null;
         }
 
@@ -351,6 +410,40 @@ if (! function_exists('institutionalFaviconUrl')) {
     function institutionalFaviconUrl(?callable $contextLogo = null): string
     {
         return seMonogramFaviconUrls()['light'];
+    }
+}
+
+if (! function_exists('pdfHeaderLogoAbsolutePath')) {
+    /**
+     * Ruta absoluta al logo del colegio para PDFs (nunca el genérico `public/img/3.png`).
+     */
+    function pdfHeaderLogoAbsolutePath(array $header = []): ?string
+    {
+        $logo = $header['logo_file'] ?? null;
+        if (is_string($logo) && $logo !== '' && is_file($logo)) {
+            return $logo;
+        }
+
+        foreach ([studentLogoStoragePath(), schoolLogoStoragePath()] as $resolver) {
+            $path = $resolver();
+            if (! is_string($path) || trim($path) === '') {
+                continue;
+            }
+
+            $abs = Storage::disk('public')->path(trim($path));
+            if (is_file($abs)) {
+                return $abs;
+            }
+        }
+
+        $path = entoInstitutionalLogoStoragePath();
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        $abs = Storage::disk('public')->path(trim($path));
+
+        return is_file($abs) ? $abs : null;
     }
 }
 
@@ -614,6 +707,18 @@ if (! function_exists('tenantCuotasInteresMoraModo')) {
     }
 }
 
+if (! function_exists('tenantCuotasComprobantePagoImplementacion')) {
+    /**
+     * Variante TCPDF del cupón de pago: `sanfranciscoasis` (default) | `epq`.
+     */
+    function tenantCuotasComprobantePagoImplementacion(): string
+    {
+        $impl = trim((string) config('tenant.cuotas.comprobante_pago.implementacion', 'sanfranciscoasis'));
+
+        return $impl !== '' ? $impl : 'sanfranciscoasis';
+    }
+}
+
 if (! function_exists('afipCertificadosDesdeEnto')) {
     /**
      * Rutas de certificado WSAA/WSFE declaradas en `ento` para el nivel activo.
@@ -773,6 +878,25 @@ if (! function_exists('tenantBoletinPrimarioMenuEtiquetaBoletinIpe')) {
     }
 }
 
+if (! function_exists('tenantBoletinPrimEpqMembretePortadaAbsoluta')) {
+    /**
+     * Ruta absoluta al membrete de la portada del Boletín (Prim) — implementación epq.
+     * Configurable por tenant en `boletin_primario.epq_membrete_portada` (relativa a `public/`).
+     */
+    function tenantBoletinPrimEpqMembretePortadaAbsoluta(): ?string
+    {
+        $rel = trim((string) config('tenant.boletin_primario.epq_membrete_portada', ''));
+        if ($rel === '') {
+            return null;
+        }
+
+        $rel = ltrim(str_replace('\\', '/', $rel), '/');
+        $abs = public_path($rel);
+
+        return is_file($abs) ? $abs : null;
+    }
+}
+
 if (! function_exists('tenantCalificacionesPrimarioCargaEstudianteImplementacion')) {
     /** Variante activa de carga por estudiante (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioCargaEstudianteImplementacion(): ?string
@@ -924,7 +1048,19 @@ if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
      */
     function tenantAutogestionActualizacionDatosHabilitada(): bool
     {
-        return (bool) config('tenant.autogestion.actualizacion_datos.habilitado', true);
+        if (! (bool) config('tenant.autogestion.actualizacion_datos.habilitado', true)) {
+            return false;
+        }
+
+        $nivelesDeshabilitados = config('tenant.autogestion.actualizacion_datos.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
+            $idNivel = (int) (studentCtx()->idNivel ?? 0);
+            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -964,7 +1100,19 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
             return false;
         }
 
-        return filled(config('tenant.autogestion.ficha_matricula.implementacion'));
+        if (! filled(config('tenant.autogestion.ficha_matricula.implementacion'))) {
+            return false;
+        }
+
+        $nivelesDeshabilitados = config('tenant.autogestion.ficha_matricula.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
+            $idNivel = (int) (studentCtx()->idNivel ?? 0);
+            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -1143,6 +1291,29 @@ if (! function_exists('tenantAutogestionComunicacionesHabilitada')) {
     }
 }
 
+if (! function_exists('tenantAutogestionMenuInicioHabilitada')) {
+    /**
+     * Si el Menú de Alumnos incluye el ítem «Inicio» (escritorio).
+     * Default habilitado; ocultar por nivel en `config/tenants/{slug}.php`.
+     */
+    function tenantAutogestionMenuInicioHabilitada(): bool
+    {
+        if (! (bool) config('tenant.autogestion.menu_inicio.habilitado', true)) {
+            return false;
+        }
+
+        $nivelesDeshabilitados = config('tenant.autogestion.menu_inicio.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
+            $idNivel = (int) (studentCtx()->idNivel ?? 0);
+            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 if (! function_exists('tenantAutogestionRutaInicio')) {
     /**
      * Ruta de destino tras login o acceso a `/alumnos`.
@@ -1161,6 +1332,17 @@ if (! function_exists('tenantAutogestionBoletinIpePrimarioHabilitada')) {
     function tenantAutogestionBoletinIpePrimarioHabilitada(): bool
     {
         return (bool) config('tenant.autogestion.boletin_ipe_primario.habilitado', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionBoletinPrimEpqHabilitada')) {
+    /**
+     * Boletín (Prim) EPQ — portada y calificaciones en autogestión familia.
+     * Activar en `config/tenants/{slug}.php` → `autogestion.boletin_prim_epq.habilitado`.
+     */
+    function tenantAutogestionBoletinPrimEpqHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.boletin_prim_epq.habilitado', false);
     }
 }
 
@@ -1187,6 +1369,68 @@ if (! function_exists('tenantAutogestionArancelesEscolaresHabilitada')) {
         }
 
         return filled(config('tenant.autogestion.aranceles_escolares.implementacion'));
+    }
+}
+
+if (! function_exists('tenantAutogestionArancelesEscolaresMenuEtiqueta')) {
+    /**
+     * Etiqueta del ítem de aranceles en el Menú de Alumnos.
+     * Personalizar en `config/tenants/{slug}.php` → `autogestion.aranceles_escolares.menu_etiqueta`.
+     */
+    function tenantAutogestionArancelesEscolaresMenuEtiqueta(): string
+    {
+        $etiqueta = trim((string) config('tenant.autogestion.aranceles_escolares.menu_etiqueta', 'Aranceles Escolares'));
+
+        return $etiqueta !== '' ? $etiqueta : 'Aranceles Escolares';
+    }
+}
+
+if (! function_exists('tenantAutogestionArancelesEscolaresImplementacion')) {
+    /**
+     * Variante del módulo de aranceles en autogestión (`sanfranciscoasis`, `gestion_aranceles`, etc.).
+     */
+    function tenantAutogestionArancelesEscolaresImplementacion(): ?string
+    {
+        $clave = trim((string) config('tenant.autogestion.aranceles_escolares.implementacion', ''));
+
+        return $clave !== '' ? $clave : null;
+    }
+}
+
+if (! function_exists('tenantAutogestionArancelesEscolaresLivewireComponent')) {
+    /**
+     * Componente Livewire del listado según la variante del tenant.
+     *
+     * @return class-string<Component>
+     */
+    function tenantAutogestionArancelesEscolaresLivewireComponent(): string
+    {
+        return match (tenantAutogestionArancelesEscolaresImplementacion()) {
+            'gestion_aranceles' => ArancelesEscolaresGestionIndex::class,
+            default => ArancelesEscolaresIndex::class,
+        };
+    }
+}
+
+if (! function_exists('tenantArancelesEscolaresBotonPagosUrl')) {
+    /**
+     * URL del botón de pagos SIRO (variante `gestion_aranceles`).
+     * Personalizar en `config/tenants/{slug}.php` → `autogestion.aranceles_escolares.boton_pagos.url`.
+     */
+    function tenantArancelesEscolaresBotonPagosUrl(): string
+    {
+        if (tenantAutogestionArancelesEscolaresImplementacion() !== 'gestion_aranceles') {
+            return '';
+        }
+
+        $cfg = config('tenant.autogestion.aranceles_escolares.boton_pagos');
+        if (! is_array($cfg)) {
+            return 'https://siropagos.bancoroela.com.ar';
+        }
+
+        $url = trim((string) ($cfg['url'] ?? ''));
+
+        return $url !== '' ? $url : 'https://siropagos.bancoroela.com.ar';
     }
 }
 

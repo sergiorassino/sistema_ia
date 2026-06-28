@@ -21,7 +21,11 @@ final class ComprobantePagoDatos
             return null;
         }
 
-        return self::cuponTrasEmision($registro, CuponAPagar::ORIGEN_IMPRESION_AUTOGESTION);
+        return self::cuponTrasEmision(
+            $registro,
+            CuponAPagar::ORIGEN_IMPRESION_AUTOGESTION,
+            studentPdfHeaderData(),
+        );
     }
 
     public static function paraAdministracion(int $idCuotaGenerada, int $idLegajo): ?array
@@ -41,6 +45,6 @@ final class ComprobantePagoDatos
     {
         $registro = CuponAPagarEmision::alImprimir($registro, $origen);
 
-        return ComprobantePagoCalculo::paraCuotaGenerada($registro, $pdfHeader);
+        return ComprobantePagoPdf::calcular($registro, $pdfHeader);
     }
 }
