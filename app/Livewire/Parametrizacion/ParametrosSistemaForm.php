@@ -165,6 +165,23 @@ class ParametrosSistemaForm extends Component
         );
     }
 
+    public function getLogoPreviewUrlProperty(): ?string
+    {
+        if ($this->removeLogo && ! ($this->logo instanceof TemporaryUploadedFile)) {
+            return null;
+        }
+
+        if ($this->logo instanceof TemporaryUploadedFile) {
+            try {
+                return $this->logo->temporaryUrl();
+            } catch (\Throwable) {
+                return $this->currentLogoUrl;
+            }
+        }
+
+        return $this->currentLogoUrl;
+    }
+
     public function save(): void
     {
         $key = 'parametros-sistema:save:' . (auth()->id() ?? 'guest');
@@ -390,6 +407,7 @@ class ParametrosSistemaForm extends Component
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'facturacionAfipHabilitada' => $this->facturacionAfipHabilitadaEnTenant(),
             'puedeEditarCamposSiro' => $this->puedeEditarCamposSiro(),
+            'logoPreviewUrl' => $this->logoPreviewUrl,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
     }
 

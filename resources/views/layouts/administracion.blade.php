@@ -222,11 +222,7 @@
            class="flex min-w-0 items-center gap-2 rounded-lg text-left no-underline text-inherit transition-colors hover:bg-[var(--se-hover-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--se-light-blue)]"
            :class="sidebarCollapsed ? 'flex-col justify-center' : 'flex-1'"
            title="Ir al panel principal v1.0">
-            <span class="se-sidebar-brand rounded-lg bg-white px-2 py-1.5 shadow-sm">
-                <img src="{{ $sidebarLogoUrl }}" alt=""
-                     width="152" height="36"
-                     class="object-contain block">
-            </span>
+            @include('layouts.partials.logo-institucional', ['url' => $sidebarLogoUrl, 'context' => 'sidebar'])
 
             <p class="text-white/90 text-[12px] font-semibold truncate min-w-0 leading-snug"
                x-show="!sidebarCollapsed" x-cloak

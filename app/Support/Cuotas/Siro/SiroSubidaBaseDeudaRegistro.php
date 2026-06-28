@@ -6,7 +6,7 @@ use App\Models\CuotaGenerada;
 use App\Models\Ento;
 use App\Models\Legajo;
 use App\Support\Alumnos\ArancelesEscolares;
-use App\Support\Alumnos\ComprobantePagoCalculo;
+use App\Support\Alumnos\ComprobantePagoPdf;
 use App\Support\Cuotas\CuponAPagarSnapshot;
 use App\Support\Cuotas\GeneracionCuotaEstudianteService;
 use App\Support\MatriculaBloqueos;
@@ -95,7 +95,7 @@ final class SiroSubidaBaseDeudaRegistro
             return self::rechazado($motivoLegacy);
         }
 
-        $cupon = ComprobantePagoCalculo::paraCuotaGenerada($registro);
+        $cupon = ComprobantePagoPdf::calcular($registro);
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }

@@ -13,6 +13,7 @@ class ArancelesEscolaresIndex extends Component
     public function mount(): void
     {
         abort_unless(tenantAutogestionArancelesEscolaresHabilitada(), 404);
+        abort_unless(tenantAutogestionArancelesEscolaresImplementacion() !== 'gestion_aranceles', 404);
     }
 
     public function alternarVistaCuotas(): void

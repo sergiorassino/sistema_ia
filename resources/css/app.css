@@ -529,6 +529,60 @@
         color: #b91c1c;
     }
 
+    /* Gestión de aranceles — portal familia (variante legacy / Banco Roela) */
+    .se-gestion-aranceles-cpe {
+        background: linear-gradient(135deg, #2c4a6e 0%, #1e3550 100%);
+    }
+    .se-gestion-aranceles-toolbar {
+        background: #ffffff;
+    }
+    .se-gestion-aranceles-btn {
+        @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    }
+    .se-gestion-aranceles-btn--secundario {
+        background: #e8eef3;
+        color: #1e4a7a;
+    }
+    .se-gestion-aranceles-btn--secundario:hover {
+        background: #d8e3ec;
+    }
+    .se-gestion-aranceles-btn--pagos {
+        background: #dc2626;
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+    .se-gestion-aranceles-btn--pagos:hover {
+        background: #b91c1c;
+    }
+    .se-gestion-aranceles-tabla {
+        @apply w-full border-collapse text-[12px] text-neutral-800;
+    }
+    .se-gestion-aranceles-tabla thead th {
+        @apply border border-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700;
+        background: #c5d5e0;
+    }
+    .se-gestion-aranceles-tabla tbody td {
+        @apply border border-accent-100 px-3 py-2 align-middle;
+        background: #ffffff;
+    }
+    .se-gestion-aranceles-tabla tbody tr:nth-child(even) td {
+        background: #f4f8fb;
+    }
+    .se-gestion-aranceles-tabla tbody tr:hover td {
+        background: #eaf1f6;
+    }
+    .se-gestion-aranceles-tabla-th-accion,
+    .se-gestion-aranceles-tabla-td-accion {
+        @apply text-center;
+        width: 7rem;
+    }
+    .se-gestion-aranceles-tabla-th-monto,
+    .se-gestion-aranceles-tabla-td-monto {
+        @apply text-right font-semibold;
+        width: 6.5rem;
+    }
+
     /* Listado de cuotas — importes por curso (compacto, centrado) */
     .se-cuotas-importes-lista-scroll {
         @apply w-full overflow-x-auto flex justify-center;
@@ -3115,6 +3169,8 @@
     box-shadow: none;
 }
 .se-sidebar--bosque.se-sidebar--active-typography .se-sidebar-link.is-active span.truncate {
+    flex: 0 1 auto;
+    max-width: 100%;
     text-decoration: underline;
     text-decoration-color: var(--se-light-blue, #c1d7da);
     text-underline-offset: 0.2em;
@@ -3163,7 +3219,7 @@
     flex-shrink: 0;
     max-width: 100%;
 }
-.se-sidebar-brand img {
+.se-sidebar-brand:not(.se-sidebar-brand--emblema) img {
     display: block;
     height: 2.25rem;
     width: auto;
@@ -3171,8 +3227,27 @@
     max-height: 2.25rem;
     object-fit: contain;
 }
-.se-sidebar.is-collapsed .se-sidebar-brand img,
-.se-sidebar.is-narrowing .se-sidebar-brand img {
+.se-sidebar-brand--emblema {
+    border-radius: 9999px;
+    padding: 0.2rem;
+}
+.se-sidebar-brand--emblema img {
+    display: block;
+    height: 2.5rem;
+    width: 2.5rem;
+    max-width: 2.5rem;
+    max-height: 2.5rem;
+    object-fit: contain;
+}
+.se-sidebar.is-collapsed .se-sidebar-brand:not(.se-sidebar-brand--emblema) img,
+.se-sidebar.is-narrowing .se-sidebar-brand:not(.se-sidebar-brand--emblema) img {
+    height: 2rem;
+    width: 2rem;
+    max-width: 2rem;
+    max-height: 2rem;
+}
+.se-sidebar.is-collapsed .se-sidebar-brand--emblema img,
+.se-sidebar.is-narrowing .se-sidebar-brand--emblema img {
     height: 2rem;
     width: 2rem;
     max-width: 2rem;

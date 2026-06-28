@@ -39,10 +39,41 @@ final class PortalDocenteMenu
                 continue;
             }
 
-            $out[] = $item;
+            $out[] = self::enriquecerItemRutas($item);
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    private static function enriquecerItemRutas(array $item): array
+    {
+        if ($item['id'] === 'primario.carga_estudiante'
+            && CalificacionesPrimarioModulos::moduloActivo(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE)) {
+            $item['route'] = CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE);
+            $item['active_routes'] = array_values(array_unique(array_filter([
+                CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE),
+                CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE, 'form'),
+                CalificacionesPrimarioModulos::definicionActiva(CalificacionesPrimarioModulos::CARGA_ESTUDIANTE)['ruta_portal_info'] ?? null,
+            ])));
+        }
+
+        if ($item['id'] === 'primario.boletin_ipe'
+            && CalificacionesPrimarioModulos::moduloActivo(CalificacionesPrimarioModulos::BOLETIN_PRIM)) {
+            $item['route'] = CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::BOLETIN_PRIM);
+            $item['active_routes'] = CalificacionesPrimarioModulos::rutasActivasPortal(CalificacionesPrimarioModulos::BOLETIN_PRIM);
+        }
+
+        if ($item['id'] === 'primario.planilla'
+            && CalificacionesPrimarioModulos::moduloActivo(CalificacionesPrimarioModulos::PLANILLA)) {
+            $item['route'] = CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::PLANILLA);
+            $item['active_routes'] = CalificacionesPrimarioModulos::rutasActivasPortal(CalificacionesPrimarioModulos::PLANILLA);
+        }
+
+        return $item;
     }
 
     /**

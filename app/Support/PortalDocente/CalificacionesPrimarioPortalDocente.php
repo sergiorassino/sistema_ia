@@ -59,6 +59,34 @@ final class CalificacionesPrimarioPortalDocente
         return route($nombre, $parameters);
     }
 
+    public static function rutaBoletinPrimEpq(string $accion = 'index'): string
+    {
+        $nombre = self::esPortalDocente()
+            ? match ($accion) {
+                'pdf' => CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::BOLETIN_PRIM, 'pdf'),
+                'pdfLote' => CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::BOLETIN_PRIM, 'pdfLote'),
+                default => CalificacionesPrimarioModulos::rutaPortal(CalificacionesPrimarioModulos::BOLETIN_PRIM),
+            }
+            : match ($accion) {
+                'pdf' => CalificacionesPrimarioModulos::rutaStaff(CalificacionesPrimarioModulos::BOLETIN_PRIM, 'pdf'),
+                'pdfLote' => CalificacionesPrimarioModulos::rutaStaff(CalificacionesPrimarioModulos::BOLETIN_PRIM, 'pdfLote'),
+                default => CalificacionesPrimarioModulos::rutaStaff(CalificacionesPrimarioModulos::BOLETIN_PRIM),
+            };
+
+        return route($nombre);
+    }
+
+    public static function abortSiPortalBoletinPrimEpqInactivo(): void
+    {
+        if (self::esPortalDocente()) {
+            abort_unless(
+                CalificacionesPrimarioModulos::moduloActivo(CalificacionesPrimarioModulos::BOLETIN_PRIM)
+                && (bool) config('tenant.portal_docente.menu.primario.boletin_ipe', false),
+                404,
+            );
+        }
+    }
+
     /** @return array{0: string, 1: string} */
     private static function resolverModuloYAccion(string $accion): array
     {
@@ -66,6 +94,10 @@ final class CalificacionesPrimarioPortalDocente
             'carga', 'carga.alumno' => [
                 CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
                 $accion === 'carga.alumno' ? 'form' : 'index',
+            ],
+            'carga.infoAdicional' => [
+                CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
+                'info',
             ],
             'cargaMateria' => [CalificacionesPrimarioModulos::CARGA_MATERIA, 'index'],
             'planilla', 'planilla.pdf' => [

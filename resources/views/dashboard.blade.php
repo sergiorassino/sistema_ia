@@ -31,9 +31,7 @@
                 </p>
             </div>
             <div class="flex shrink-0 justify-start md:justify-end">
-                <div class="rounded-2xl bg-white p-4 shadow-md ring-1 ring-white/20">
-                    <img src="{{ $heroLogo }}" alt="" class="h-16 sm:h-20 w-auto max-w-[200px] object-contain">
-                </div>
+                @include('layouts.partials.logo-institucional', ['url' => $heroLogo, 'context' => 'hero'])
             </div>
         </div>
     </section>

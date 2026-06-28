@@ -3,6 +3,7 @@
 namespace App\Support\Alumnos;
 
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
+use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
 
@@ -26,7 +27,18 @@ final class PortalFamiliaDashboard
     {
         $accesos = [];
 
-        if (PortalFamiliaBoletinIpe::habilitadoEnMenu()) {
+        if (PortalFamiliaBoletinPrimEpq::habilitadoEnMenu()) {
+            foreach (PortalFamiliaBoletinPrimEpq::items() as $item) {
+                $accesos[] = [
+                    'id' => 'boletin-prim-epq-'.$item['cara'],
+                    'titulo' => $item['titulo'],
+                    'descripcion' => 'Boletín de calificaciones del ciclo lectivo activo.',
+                    'url' => $item['url'],
+                    'externo' => true,
+                    'icono' => 'calificaciones',
+                ];
+            }
+        } elseif (PortalFamiliaBoletinIpe::habilitadoEnMenu()) {
             foreach (PortalFamiliaBoletinIpe::itemsEtapa() as $item) {
                 $accesos[] = [
                     'id' => 'boletin-ipe-etapa-'.$item['etapa'],
@@ -51,7 +63,7 @@ final class PortalFamiliaDashboard
         if (tenantAutogestionInformeInasistenciasHabilitada()) {
             $accesos[] = [
                 'id' => 'inasistencias',
-                'titulo' => 'Informe de inasistencias',
+                'titulo' => 'Informe de Inasistencias',
                 'descripcion' => 'Resumen de inasistencias del estudiante.',
                 'url' => se_route_url('alumnos.inasistencias.informe'),
                 'externo' => true,
@@ -84,7 +96,7 @@ final class PortalFamiliaDashboard
         if (tenantAutogestionArancelesEscolaresHabilitada()) {
             $accesos[] = [
                 'id' => 'aranceles-escolares',
-                'titulo' => 'Aranceles escolares',
+                'titulo' => tenantAutogestionArancelesEscolaresMenuEtiqueta(),
                 'descripcion' => 'Cuotas pendientes y comprobantes de pago.',
                 'url' => route('alumnos.aranceles-escolares'),
                 'externo' => false,

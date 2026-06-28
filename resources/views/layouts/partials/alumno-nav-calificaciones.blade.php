@@ -1,4 +1,23 @@
-@if (\App\Support\Alumnos\PortalFamiliaBoletinIpe::habilitadoEnMenu())
+@if (\App\Support\Alumnos\PortalFamiliaBoletinPrimEpq::habilitadoEnMenu())
+    @foreach (\App\Support\Alumnos\PortalFamiliaBoletinPrimEpq::items() as $itemBoletinEpq)
+        <a href="{{ $itemBoletinEpq['url'] }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
+           title="{{ $itemBoletinEpq['titulo'] }} (se abre en una nueva pestaña)">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @if ($itemBoletinEpq['cara'] === 'portada')
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                @else
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 13l4 4L19 7"/>
+                @endif
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">{{ $itemBoletinEpq['titulo'] }}</span>
+        </a>
+    @endforeach
+@elseif (\App\Support\Alumnos\PortalFamiliaBoletinIpe::habilitadoEnMenu())
     @foreach (\App\Support\Alumnos\PortalFamiliaBoletinIpe::itemsEtapa() as $itemBoletinIpe)
         <a href="{{ $itemBoletinIpe['url'] }}"
            target="_blank"

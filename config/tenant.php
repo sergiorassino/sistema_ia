@@ -19,6 +19,14 @@ return [
     'nombre' => 'Colegio',
 
     /**
+     * Logo institucional en sidebar, login y dashboard.
+     * `horizontal`: apaisado (default). `emblema`: sello circular o cuadrado (EPQ, etc.).
+     */
+    'institucional' => [
+        'logo_forma' => 'horizontal',
+    ],
+
+    /**
      * Login de Secretaría / Docentes (`/loginUsuario`).
      * `niveles_ids`: IDs de `niveles` visibles en el desplegable. `null` = todos los registros de la tabla.
      * Override en `config/tenants/{slug}.php` (ej. `[1, 2, 3, 5]` sin terciario; agregar `6` si el colegio usa Adultos).
@@ -55,6 +63,8 @@ return [
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'estandar',
+            /** IDs de `niveles` sin el ítem (p. ej. `[2]` solo primario). */
+            'niveles_deshabilitados' => [],
         ],
 
         /**
@@ -64,15 +74,34 @@ return [
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
+            /** IDs de `niveles` sin el ítem (p. ej. `[2]` solo primario). */
+            'niveles_deshabilitados' => [],
+        ],
+
+        /**
+         * Ítem «Inicio» del sidebar (escritorio).
+         * Default habilitado; ocultar por nivel en `config/tenants/{slug}.php`.
+         */
+        'menu_inicio' => [
+            'habilitado' => true,
+            'niveles_deshabilitados' => [],
         ],
 
         /**
          * Listado de cuotas pendientes y comprobante de pago (portal familia).
-         * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
+         * `implementacion`: clave de variante en código:
+         *   - `sanfranciscoasis` — UI SE (hero, historial, totales, banners opcionales).
+         *   - `gestion_aranceles` — UI legacy (CPE, botón SIRO Roela, tabla compacta).
          */
         'aranceles_escolares' => [
             'habilitado' => false,
             'implementacion' => null,
+            /**
+             * Botón de pagos SIRO (solo variante `gestion_aranceles`).
+             */
+            'boton_pagos' => [
+                'url' => 'https://siropagos.bancoroela.com.ar',
+            ],
             /**
              * Banner + PDF de adhesión a débito automático (opcional, por tenant).
              * `banner`: ruta bajo `public/` servida con asset().
@@ -110,6 +139,15 @@ return [
          * Default deshabilitado; activar en `config/tenants/{slug}.php`.
          */
         'boletin_ipe_primario' => [
+            'habilitado' => false,
+        ],
+
+        /**
+         * Boletín (Prim) EPQ — portada y calificaciones (portal familia, nivel primario).
+         * Requiere `calificaciones_primario.boletin_prim.implementacion` = `epq`.
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         */
+        'boletin_prim_epq' => [
             'habilitado' => false,
         ],
 
@@ -174,12 +212,17 @@ return [
         'director_firma' => '',
         /** Texto del ítem en CALIFICACIONES (Primario) del Menú de Secretaría. */
         'menu_etiqueta_boletin_ipe' => 'Boletines IPE',
+        /**
+         * Membrete circular de la portada — Boletín (Prim), implementación epq.
+         * Ruta relativa a `public/` (p. ej. `img/tenants/{slug}/boletin-prim-membrete.png`).
+         * Cada colegio con variante `epq` define el suyo en `config/tenants/{slug}.php`.
+         */
+        'epq_membrete_portada' => null,
     ],
 
     /**
      * Calificaciones primario — variantes de carga/planilla por `implementacion`.
-     * Claves conocidas: `montecristo` (grilla ic01–ic03, parciales por materia, planilla TCPDF).
-     * La implementación es reutilizable entre colegios; no confundir con `TENANT_SLUG`.
+     * Claves conocidas: `montecristo`, `epq` (Escuelas Pías Quimilí).
      */
     'calificaciones_primario' => [
         'carga_estudiante' => [
@@ -189,6 +232,9 @@ return [
             'implementacion' => null,
         ],
         'planilla' => [
+            'implementacion' => null,
+        ],
+        'boletin_prim' => [
             'implementacion' => null,
         ],
     ],
@@ -294,6 +340,14 @@ return [
          * Override por colegio en config/tenants/{slug}.php.
          */
         'interes_mora_modo' => 'diario',
+
+        /**
+         * Maquetación TCPDF del cupón de pago (aranceles).
+         * Claves: `sanfranciscoasis` (default) | `epq` (Escuelas Pías — dos talonarios por hoja).
+         */
+        'comprobante_pago' => [
+            'implementacion' => 'sanfranciscoasis',
+        ],
 
         /**
          * Medio de pago SIRO (código de pago electrónico, QR y código de barras en cupones).

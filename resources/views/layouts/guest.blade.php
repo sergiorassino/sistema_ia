@@ -27,11 +27,7 @@
 
         <div class="relative z-10 flex w-full flex-col gap-8">
             <div class="flex w-full justify-center">
-                <span class="inline-flex rounded-2xl bg-white px-3 py-2.5 shadow-md overflow-hidden">
-                    <img src="{{ $guestBrandLogo }}"
-                         alt=""
-                         class="w-auto h-28 xl:h-32 max-w-[min(100%,14rem)] object-contain">
-                </span>
+                @include('layouts.partials.logo-institucional', ['url' => $guestBrandLogo, 'context' => 'login'])
             </div>
 
             <div class="max-w-lg w-full mx-auto md:mx-0">
@@ -74,11 +70,7 @@
 
             {{-- Logo móvil (panel editorial oculto) --}}
             <div class="mb-7 md:hidden w-full flex justify-center">
-                <span class="inline-flex rounded-2xl bg-white px-4 py-3 shadow-md overflow-hidden">
-                    <img src="{{ $guestBrandLogo }}"
-                         alt=""
-                         class="max-h-[148px] w-auto max-w-[min(100%,16rem)] object-contain">
-                </span>
+                @include('layouts.partials.logo-institucional', ['url' => $guestBrandLogo, 'context' => 'login-mobile'])
             </div>
 
             <div class="w-full max-w-md">
