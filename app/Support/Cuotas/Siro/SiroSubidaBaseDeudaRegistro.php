@@ -3,7 +3,6 @@
 namespace App\Support\Cuotas\Siro;
 
 use App\Models\CuotaGenerada;
-use App\Models\Ento;
 use App\Models\Legajo;
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoPdf;
@@ -19,8 +18,6 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class SiroSubidaBaseDeudaRegistro
 {
-    private const ID_NIVEL_ADMINISTRACION = 5;
-
     /**
      * @return array{
      *     id: int,
@@ -147,10 +144,9 @@ final class SiroSubidaBaseDeudaRegistro
             }
         }
 
-        $entoAdmin = Ento::query()->where('idNivel', self::ID_NIVEL_ADMINISTRACION)->first();
-        $cuit = preg_replace('/\D+/', '', (string) ($entoAdmin?->cuit ?? '')) ?? '';
+        $cuit = SiroCodigoPagoElectronico::cuitPorNivel($idNivel);
         if (strlen($cuit) < 11) {
-            return self::rechazado('CUIT institucional no configurado.');
+            return self::rechazado('CUIT no configurado para este nivel.');
         }
 
         $detalle = self::armarDetalleArchivo($registro, $cupon, $cpe, $idNivel);
