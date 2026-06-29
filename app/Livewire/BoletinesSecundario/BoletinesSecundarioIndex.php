@@ -5,6 +5,7 @@ namespace App\Livewire\BoletinesSecundario;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
+use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -14,6 +15,16 @@ use Livewire\Component;
  */
 class BoletinesSecundarioIndex extends Component
 {
+    public function mount(): void
+    {
+        if (CalificacionesSecundarioModulos::moduloActivo(CalificacionesSecundarioModulos::BOLETIN)) {
+            $this->redirectRoute(
+                CalificacionesSecundarioModulos::rutaStaff(CalificacionesSecundarioModulos::BOLETIN),
+                navigate: true,
+            );
+        }
+    }
+
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
 

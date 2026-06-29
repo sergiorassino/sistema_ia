@@ -16,6 +16,11 @@ class ConsultaCalificacionesSecundario extends Component
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
 
+    public function mount(): void
+    {
+        abort_unless(tenantSecretariaConsultaCalificacionesHabilitada(), 404);
+    }
+
     public function updatedCursoId(mixed $value): void
     {
         $this->cursoId = ((int) $value) > 0 ? (int) $value : null;

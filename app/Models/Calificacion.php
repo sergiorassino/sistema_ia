@@ -14,7 +14,7 @@ class Calificacion extends Model
         'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
         'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28', 'ic29', 'ic30',
         'ic31', 'ic32', 'ic33', 'ic34', 'ic35', 'ic36', 'ic37', 'ic38', 'ic39', 'ic40',
-        'obs01', 'obs02', 'tm1', 'tm2', 'tm3', 'tm4', 'tm5', 'tm6', 'tmNota',
+        'obs01', 'obs02', 'obs03', 'baObs01', 'baObs02', 'baObs03', 'tm1', 'tm2', 'tm3', 'tm4', 'tm5', 'tm6', 'tmNota',
         'dic', 'feb', 'tea', 'inscri', 'condAdeuda', 'apro', 'calif', 'mes', 'ano', 'cond', 'escuapro',
         'libro', 'folio', 'fechApro', 'libroDic', 'folioDic', 'fechAproDic', 'libroFeb', 'folioFeb', 'fechAproFeb'
     ];

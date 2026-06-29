@@ -21,14 +21,32 @@ return [
         'epq_membrete_portada' => 'img/tenants/epq/boletin-prim-membrete.png',
     ],
 
+    'boletin_secundario' => [
+        'menu_etiqueta' => 'Informe de calificaciones',
+        'epq_subtitulo_institucion' => 'Padres Escolapios',
+        'epq_membrete' => 'img/tenants/epq/boletin-prim-membrete.png',
+    ],
+
     'calificaciones_primario' => [
         'carga_estudiante' => ['implementacion' => 'epq'],
         'boletin_prim' => ['implementacion' => 'epq'],
         'planilla' => ['implementacion' => 'epq'],
     ],
 
+    'calificaciones_secundario' => [
+        'carga' => ['implementacion' => 'epq'],
+        'boletin' => ['implementacion' => 'epq'],
+        'planilla' => ['implementacion' => 'epq'],
+    ],
+
+    /*
+     | Pie del informe de calificaciones secundario: filas en tabla `itemsboletin`.
+     | Migración: database/migrations/2026_06_28_120000_seed_itemsboletin_epq_secundario.php
+     | Catálogo PHP: App\Support\CalificacionesSecundario\Epq\ItemsBoletinEpqSecundarioCatalogo
+     */
+
     'login' => [
-        'niveles_ids' => [1, 2, 3, 5],
+        'niveles_ids' => [2, 3, 5],
     ],
 
     'cuotas' => [
@@ -75,8 +93,7 @@ return [
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => true,
                 'recursos_didacticos_listado' => true,
-                // Calificaciones secundario (estándar): pendiente variante epq.
-                'calificaciones' => false,
+                'calificaciones' => true,
                 'solicitud_evaluacion' => false,
                 'cuaderno_seguimiento_aulico' => false,
             ],
@@ -84,8 +101,9 @@ return [
     ],
 
     /*
+     | Niveles EPQ: primario (2), secundario (3), administración (5). Sin inicial (1).
      | Menú de Administración (nivel 5): cuotas, becas, mora, cooperadora vía permisos_ia
-     | y bloque `cuotas` arriba (SIRO, mora diaria). Login incluye nivel 5 en `login.niveles_ids`.
+     | y bloque `cuotas` arriba (SIRO, mora diaria).
      */
 
     'secretaria' => [
@@ -93,26 +111,29 @@ return [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
         ],
+        // Sin consulta de calificaciones estándar en secundario (usan Informe de calificaciones EPQ).
+        'consulta_calificaciones' => [
+            'habilitado' => false,
+        ],
     ],
 
     'autogestion' => [
         /*
-         | Menú de Alumnos — primario (nivel 2): solo boletín EPQ (portada + calificaciones)
-         | y Gestión de Aranceles. Sin inicio, inasistencias, datos, ficha ni comunicados.
+         | Menú de Alumnos — primario (nivel 2): boletín EPQ (portada + calificaciones),
+         | Gestión de Aranceles e Inicio (escritorio). Sin inasistencias, datos, ficha ni comunicados.
+         | Secundario (nivel 3): consulta de calificaciones EPQ, aranceles e inasistencias;
+         | sin datos personales, ficha ni comunicados.
          | Gestión de Aranceles (`gestion_aranceles`): todos los niveles con acceso al Menú de Alumnos.
          */
-        'menu_inicio' => [
-            'niveles_deshabilitados' => [2],
-        ],
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2],
+            'niveles_deshabilitados' => [2, 3],
         ],
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2],
+            'niveles_deshabilitados' => [2, 3],
         ],
         'aranceles_escolares' => [
             'habilitado' => true,
@@ -123,10 +144,14 @@ return [
             ],
         ],
         'comunicaciones' => [
-            'niveles_deshabilitados' => [2],
+            'niveles_deshabilitados' => [2, 3],
         ],
         // Boletín (Prim) EPQ en autogestión familia (portada + calificaciones).
         'boletin_prim_epq' => [
+            'habilitado' => true,
+        ],
+        // Informe EPQ secundario en autogestión familia (consulta de calificaciones).
+        'boletin_sec_epq' => [
             'habilitado' => true,
         ],
         // Sin consulta de calificaciones estándar (IPE / secundario).

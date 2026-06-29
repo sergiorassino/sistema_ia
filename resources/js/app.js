@@ -77,7 +77,11 @@ window.seSwalConfirmar = function (mensaje, titulo = '¿Confirma?', opciones = {
  * Navegación con flechas entre celdas; Enter baja una fila (misma columna) o salta a la columna siguiente en la primera fila al llegar al final.
  */
 function seCalifCampoConCatalogo(field) {
-    return /^ic(0[1-9]|1[0-9]|2[0-8])$/.test(field) || field === 'dic' || field === 'feb';
+    return (
+        /^ic(0[1-9]|1[0-9]|2[0-8]|3[1-4])$/.test(field) ||
+        field === 'dic' ||
+        field === 'feb'
+    );
 }
 
 function seCalifCallSaveCell(root, rowId, field, value) {

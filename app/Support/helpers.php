@@ -897,6 +897,43 @@ if (! function_exists('tenantBoletinPrimEpqMembretePortadaAbsoluta')) {
     }
 }
 
+if (! function_exists('tenantBoletinSecundarioMenuEtiqueta')) {
+    function tenantBoletinSecundarioMenuEtiqueta(): string
+    {
+        $etiqueta = trim((string) config('tenant.boletin_secundario.menu_etiqueta', 'Boletines (secundario)'));
+
+        return $etiqueta !== '' ? $etiqueta : 'Boletines (secundario)';
+    }
+}
+
+if (! function_exists('tenantBoletinEpqSecundarioSubtituloInstitucion')) {
+    function tenantBoletinEpqSecundarioSubtituloInstitucion(): string
+    {
+        return trim((string) config('tenant.boletin_secundario.epq_subtitulo_institucion', 'Padres Escolapios'));
+    }
+}
+
+if (! function_exists('tenantBoletinEpqSecundarioMembreteAbsoluta')) {
+    /**
+     * Membrete del informe de calificaciones EPQ secundario (`public/` relativo).
+     */
+    function tenantBoletinEpqSecundarioMembreteAbsoluta(): ?string
+    {
+        $rel = trim((string) config('tenant.boletin_secundario.epq_membrete', ''));
+        if ($rel === '') {
+            $rel = trim((string) config('tenant.boletin_primario.epq_membrete_portada', ''));
+        }
+        if ($rel === '') {
+            return null;
+        }
+
+        $rel = ltrim(str_replace('\\', '/', $rel), '/');
+        $abs = public_path($rel);
+
+        return is_file($abs) ? $abs : null;
+    }
+}
+
 if (! function_exists('tenantCalificacionesPrimarioCargaEstudianteImplementacion')) {
     /** Variante activa de carga por estudiante (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioCargaEstudianteImplementacion(): ?string
@@ -1212,6 +1249,17 @@ if (! function_exists('tenantSecretariaInformeInasistenciasHabilitada')) {
     }
 }
 
+if (! function_exists('tenantSecretariaConsultaCalificacionesHabilitada')) {
+    /**
+     * Si el Menú de Secretaría incluye consulta de calificaciones (secundario).
+     * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+     */
+    function tenantSecretariaConsultaCalificacionesHabilitada(): bool
+    {
+        return (bool) config('tenant.secretaria.consulta_calificaciones.habilitado', true);
+    }
+}
+
 if (! function_exists('tenantAutogestionConsultaCalificacionesHabilitada')) {
     /**
      * Si el portal familia incluye consulta de calificaciones (boletín IPE primario o consulta secundario).
@@ -1343,6 +1391,17 @@ if (! function_exists('tenantAutogestionBoletinPrimEpqHabilitada')) {
     function tenantAutogestionBoletinPrimEpqHabilitada(): bool
     {
         return (bool) config('tenant.autogestion.boletin_prim_epq.habilitado', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionBoletinSecEpqHabilitada')) {
+    /**
+     * Informe EPQ secundario — consulta de calificaciones en autogestión familia.
+     * Activar en `config/tenants/{slug}.php` → `autogestion.boletin_sec_epq.habilitado`.
+     */
+    function tenantAutogestionBoletinSecEpqHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.boletin_sec_epq.habilitado', false);
     }
 }
 
