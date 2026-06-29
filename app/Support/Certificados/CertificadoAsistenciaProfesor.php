@@ -12,6 +12,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Str;
+
 
 
 /**
@@ -388,6 +390,42 @@ final class CertificadoAsistenciaProfesor
 
      * @param  array{
 
+     *     apellido: string,
+
+     *     nombre: string,
+
+     *     dni: string
+
+     * }  $profesor
+
+     */
+
+    public static function nombreArchivoPdf(array $profesor, ?\DateTimeInterface $momento = null): string
+
+    {
+
+        $momento = $momento ?? now();
+
+        $apellido = self::segmentoNombreArchivo($profesor['apellido'] ?? '', 'apellido');
+
+        $nombre = self::segmentoNombreArchivo($profesor['nombre'] ?? '', 'nombre');
+
+        $dni = preg_replace('/\D+/', '', (string) ($profesor['dni'] ?? '')) ?: 'sindni';
+
+        $stamp = $momento->format('Y_d_m_H_i_s');
+
+
+
+        return 'Asistencia_'.$apellido.'_'.$nombre.'_'.$dni.'_'.$stamp.'.pdf';
+
+    }
+
+
+
+    /**
+
+     * @param  array{
+
      *     fecha: string,
 
      *     texto: string,
@@ -459,6 +497,46 @@ final class CertificadoAsistenciaProfesor
             'parapre.max' => 'El destino no puede superar 300 caracteres.',
 
         ];
+
+    }
+
+
+
+    private static function segmentoNombreArchivo(string $texto, string $fallback): string
+
+    {
+
+        $ascii = Str::ascii(trim($texto));
+
+        $palabras = preg_split('/\s+/', $ascii, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $segmentos = [];
+
+
+
+        foreach ($palabras as $palabra) {
+
+            $limpio = preg_replace('/[^A-Za-z0-9]/', '', $palabra) ?? '';
+
+            if ($limpio !== '') {
+
+                $segmentos[] = strtolower($limpio);
+
+            }
+
+        }
+
+
+
+        if ($segmentos === []) {
+
+            return $fallback;
+
+        }
+
+
+
+        return implode('_', $segmentos);
 
     }
 

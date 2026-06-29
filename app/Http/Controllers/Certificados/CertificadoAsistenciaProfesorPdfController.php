@@ -6,15 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Support\Certificados\CertificadoAsistenciaProfesor;
 use App\Support\Certificados\CertificadoAsistenciaProfesorDatos;
 use App\Support\Certificados\CertificadoAsistenciaProfesorTcpdf;
+use App\Support\Pdf\PdfPostEntrega;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class CertificadoAsistenciaProfesorPdfController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): JsonResponse|RedirectResponse
     {
         abort_unless(tienePermiso(20), 403, 'Sin permiso para certificados de asistencia del profesor.');
 
@@ -64,25 +65,13 @@ class CertificadoAsistenciaProfesorPdfController extends Controller
 
         $pdf = CertificadoAsistenciaProfesorTcpdf::generar($datos);
 
-        $prof = $datos['profesor'];
-        $slug = Str::slug(
-            'certificado-asistencia-profesor-'.($prof['apellido'] ?? '').'-'.($prof['nombre'] ?? '').'-'.$idProfesores,
-            '_',
-        );
-        if ($slug === '') {
-            $slug = 'certificado_asistencia_profesor_'.$idProfesores;
-        }
+        $nombreArchivo = CertificadoAsistenciaProfesor::nombreArchivoPdf($datos['profesor']);
 
         $this->limpiarBuffersSalida();
 
-        $binario = $pdf->Output($slug.'.pdf', 'S');
+        $binario = $pdf->Output($nombreArchivo, 'S');
 
-        return response($binario, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.$slug.'.pdf"',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma' => 'no-cache',
-        ]);
+        return PdfPostEntrega::respuesta($binario, $nombreArchivo, $request);
     }
 
     private function limpiarBuffersSalida(): void

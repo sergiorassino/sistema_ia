@@ -6,8 +6,7 @@
 
 <form method="POST"
       action="{{ $action }}"
-      target="_blank"
-      rel="noopener noreferrer"
+      onsubmit="event.preventDefault(); window.abrirPdfPostFromForm(this);"
       {{ $attributes->class(['inline']) }}>
     @csrf
     @foreach ($fields as $name => $value)
