@@ -10,4 +10,15 @@ return [
     'login' => [
         'niveles_ids' => [3],
     ],
+
+    /**
+     * Recibos cooperadora — envío real al pagador (COOP_MAIL_* en .env del despliegue).
+     * Otros tenants no declaran este bloque: quedan con simulado true (default).
+     */
+    'cooperadora' => [
+        'recibo_email' => [
+            'simulado' => false,
+            'from_name' => 'Cooperadora — IPEM N° 206 Fernando Fader',
+        ],
+    ],
 ];

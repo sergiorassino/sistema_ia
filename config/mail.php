@@ -48,6 +48,21 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
+        /**
+         * Cooperadora — recibos de ingreso (origen estudiantes). Credenciales en COOP_MAIL_* (.env).
+         * No usar para cuaderno de comunicados ni otros envíos pedagógicos.
+         */
+        'cooperadora' => [
+            'transport' => 'smtp',
+            'host' => env('COOP_MAIL_HOST', '127.0.0.1'),
+            'port' => env('COOP_MAIL_PORT', 587),
+            'encryption' => env('COOP_MAIL_ENCRYPTION', 'tls'),
+            'username' => env('COOP_MAIL_USERNAME'),
+            'password' => env('COOP_MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

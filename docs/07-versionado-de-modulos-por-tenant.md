@@ -97,6 +97,24 @@ return [
 
 Consumir con `tenantCuotasInteresMoraEsDiario()` o `tenantCuotasInteresMoraModo()`. Afecta imputación, PDF morosos y cupón de pago.
 
+Correo de recibos cooperadora (origen estudiantes), distinto del cuaderno de comunicados:
+
+- Credenciales SMTP del despliegue: `COOP_MAIL_*` en `.env` (mailer `cooperadora` en `config/mail.php`).
+- Flags por colegio: `config/tenant.php` → `cooperadora.recibo_email`; override en `config/tenants/{slug}.php` (`simulado`, `from_name`, `asunto`).
+- Helpers: `tenantCooperadoraReciboEmailSimulado()`, `tenantCooperadoraReciboEmailFrom()`.
+
+```php
+// config/tenants/{slug}.php — activar envío real en producción
+return [
+    'cooperadora' => [
+        'recibo_email' => [
+            'simulado' => false,
+            'from_name' => 'Cooperadora Escolar',
+        ],
+    ],
+];
+```
+
 El `slug` también se usa en rutas de almacenamiento (ej. logos en `ento/logos/{slug}/…`).
 
 ### 3.2 Parametrización en base de datos (principal)

@@ -8,6 +8,7 @@ use App\Models\Ento;
 use App\Models\Profesor;
 use App\Push\WebPushService;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
+use App\Support\Cooperadora\CooperadoraConfig;
 use App\Support\Cuotas\CuotasImportesCatalog;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use App\Support\NivelSistema;
@@ -762,6 +763,94 @@ if (! function_exists('afipCertificadosDesdeEnto')) {
             'cert_usuario_id' => $carpeta,
             'cert_key' => $key,
             'cert_crt' => $crt,
+        ];
+    }
+}
+
+if (! function_exists('tenantCooperadoraReciboEmailHabilitado')) {
+    /**
+     * Si el módulo cooperadora intenta enviar recibos por email al pagador.
+     */
+    function tenantCooperadoraReciboEmailHabilitado(): bool
+    {
+        return (bool) config('tenant.cooperadora.recibo_email.habilitado', true);
+    }
+}
+
+if (! function_exists('tenantCooperadoraReciboEmailSimulado')) {
+    /**
+     * true: registra envío simulado (log + estado) sin SMTP.
+     * Override en `config/tenants/{slug}.php` → `cooperadora.recibo_email.simulado`.
+     */
+    function tenantCooperadoraReciboEmailSimulado(): bool
+    {
+        return (bool) config('tenant.cooperadora.recibo_email.simulado', true);
+    }
+}
+
+if (! function_exists('tenantCooperadoraReciboEmailMailer')) {
+    function tenantCooperadoraReciboEmailMailer(): string
+    {
+        $mailer = trim((string) config('tenant.cooperadora.recibo_email.mailer', 'cooperadora'));
+
+        return $mailer !== '' ? $mailer : 'cooperadora';
+    }
+}
+
+if (! function_exists('tenantCooperadoraReciboEmailAsunto')) {
+    function tenantCooperadoraReciboEmailAsunto(string $numeroReciboTexto = ''): string
+    {
+        $base = trim((string) config('tenant.cooperadora.recibo_email.asunto', 'Recibo de pago'));
+        if ($base === '') {
+            $base = 'Recibo de pago';
+        }
+        if ($numeroReciboTexto !== '') {
+            return $base.' Nº '.$numeroReciboTexto;
+        }
+
+        return $base;
+    }
+}
+
+if (! function_exists('tenantCooperadoraReciboEmailFrom')) {
+    /**
+     * Remitente del correo cooperadora. null si faltan COOP_MAIL_* en .env.
+     *
+     * @return array{address: string, name: string}|null
+     */
+    function tenantCooperadoraReciboEmailFrom(): ?array
+    {
+        $address = trim((string) env('COOP_MAIL_FROM_ADDRESS', ''));
+        if ($address === '') {
+            $address = trim((string) env('COOP_MAIL_USERNAME', ''));
+        }
+        $password = trim((string) env('COOP_MAIL_PASSWORD', ''));
+        $host = trim((string) env('COOP_MAIL_HOST', ''));
+
+        if ($address === '' || $password === '' || $host === '') {
+            return null;
+        }
+
+        $nameTenant = config('tenant.cooperadora.recibo_email.from_name');
+        $nameEnv = trim((string) env('COOP_MAIL_FROM_NAME', ''));
+        if (is_string($nameTenant) && trim($nameTenant) !== '') {
+            $name = trim($nameTenant);
+        } elseif ($nameEnv !== '') {
+            $name = $nameEnv;
+        } else {
+            try {
+                $name = trim((string) (CooperadoraConfig::datosPdfHeader()['nombre'] ?? ''));
+            } catch (Throwable) {
+                $name = '';
+            }
+            if ($name === '') {
+                $name = trim((string) config('tenant.nombre', 'Cooperadora'));
+            }
+        }
+
+        return [
+            'address' => $address,
+            'name' => $name,
         ];
     }
 }

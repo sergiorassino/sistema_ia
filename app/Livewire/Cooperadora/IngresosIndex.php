@@ -69,7 +69,7 @@ class IngresosIndex extends Component
         $ok = EnvioReciboCooperadora::enviar($idRef, reenvio: true);
 
         if ($ok) {
-            $msg = EnvioReciboCooperadora::RECIBO_EMAIL_SIMULADO
+            $msg = EnvioReciboCooperadora::modoSimulado()
                 ? 'Reenvío registrado (modo simulado: no se envió correo real).'
                 : 'Recibo enviado al pagador.';
             $this->dispatch('se-swal-exito', mensaje: $msg);
