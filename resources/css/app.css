@@ -2496,7 +2496,7 @@
     }
     /* Grilla angosta (ancho al contenido o min-width acotado): centrada en el contenedor */
     .se-grid-angosta-wrap {
-        @apply flex justify-center;
+        @apply flex items-start justify-center;
     }
     .se-grid-angosta-wrap > .gf,
     .se-grid-angosta-wrap > table,

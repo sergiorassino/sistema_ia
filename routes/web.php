@@ -182,6 +182,7 @@ use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
 use App\Http\Controllers\Certificados\CertificadoAlumnoRegularPdfController;
 use App\Http\Controllers\Certificados\CertificadoEstudiosTramitePdfController;
 use App\Http\Controllers\Certificados\CertificadoAsistenciaProfesorPdfController;
+use App\Http\Controllers\PdfPostVerController;
 use App\Http\Controllers\Certificados\ConstanciaDocumentosPdfController;
 use App\Http\Controllers\Certificados\PaseParcialPdfController;
 use App\Http\Controllers\Certificados\SolicitudDePasePdfController;
@@ -773,6 +774,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     });
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('/pdf-post/ver/{token}', PdfPostVerController::class)
+        ->where('token', '[A-Za-z0-9]{32,128}')
+        ->name('pdfPost.ver');
 
     Route::get('/manual-sistema.pdf', ManualSistemaPdfController::class)->name('manual.sistema.pdf');
     Route::get('/manual-comunicacion-institucional.pdf', ManualComunicacionInstitucionalPdfController::class)
