@@ -27,6 +27,29 @@ class SiroDescargaRendicionLineaTest extends TestCase
         $this->assertNull(SiroDescargaRendicionLinea::parsear('20260616'));
     }
 
+    public function test_parsea_linea_integrado_corta_api_bpd(): void
+    {
+        $archivo = 'd:/_enviar/_06-Junio/sfq/CobranzasSiro_33609754309_20260629_12_57_19.txt';
+        if (! is_readable($archivo)) {
+            $this->markTestSkipped('Archivo de rendición SFQ de ejemplo no disponible.');
+        }
+
+        $raw = file_get_contents($archivo);
+        if (str_starts_with($raw, "\xEF\xBB\xBF")) {
+            $raw = substr($raw, 3);
+        }
+        $linea = rtrim($raw, "\r\n");
+
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+        $this->assertNotNull($parsed);
+        $this->assertSame('20260623', $parsed['fechaPago']);
+        $this->assertSame('20260626', $parsed['fechaAcreditacion']);
+        $this->assertSame('20260610', $parsed['fechVenc1']);
+        $this->assertSame('BPD', $parsed['canalAbrev']);
+        $this->assertSame('', $parsed['idPagoSiro']);
+        $this->assertStringStartsWith('0449', $parsed['codigoBarras']);
+    }
+
     public function test_extrae_barcode_0448_con_ceros_iniciales_de_mas(): void
     {
         $linea = rtrim(file('d:/_enviar/_06-Junio/sanfra/nuevo/CobranzasSiro_Cta. 1102_20260625txt.txt')[0], "\r\n");

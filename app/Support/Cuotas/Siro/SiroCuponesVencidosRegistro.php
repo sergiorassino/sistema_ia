@@ -184,10 +184,9 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Fechas de vencimiento no crecientes.');
         }
 
-        $entoAdmin = \App\Models\Ento::query()->where('idNivel', 5)->first();
-        $cuit = preg_replace('/\D+/', '', (string) ($entoAdmin?->cuit ?? '')) ?? '';
+        $cuit = SiroCodigoPagoElectronico::cuitPorNivel($idNivel);
         if (strlen($cuit) < 11) {
-            return self::rechazado('CUIT institucional no configurado.');
+            return self::rechazado('CUIT no configurado para este nivel.');
         }
 
         $detalle = CuponAPagarSnapshot::armarParaCuponesVencidosSiro($registro, $cupon, $cpe, $idNivel);

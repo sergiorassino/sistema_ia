@@ -72,6 +72,12 @@ final class SiroCodigoPagoElectronico
         return Ento::query()->where('idNivel', $idNivel)->first();
     }
 
+    /** CUIT numérico (solo dígitos) del `ento` del nivel indicado. */
+    public static function cuitPorNivel(int $idNivel): string
+    {
+        return preg_replace('/\D+/', '', (string) (self::entoPorNivel($idNivel)?->cuit ?? '')) ?? '';
+    }
+
     private static function cuentaDesdeEnto(?Ento $ento): string
     {
         if ($ento === null) {

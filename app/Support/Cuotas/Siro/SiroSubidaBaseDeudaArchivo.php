@@ -2,7 +2,6 @@
 
 namespace App\Support\Cuotas\Siro;
 
-use App\Models\Ento;
 use Carbon\CarbonInterface;
 
 /**
@@ -12,8 +11,6 @@ use Carbon\CarbonInterface;
  */
 final class SiroSubidaBaseDeudaArchivo
 {
-    private const ID_NIVEL_ADMINISTRACION = 5;
-
     /** Longitud fija por registro exigida por SIRO (cabecera, detalle y pie). */
     public const LARGO_LINEA = 280;
 
@@ -52,7 +49,7 @@ final class SiroSubidaBaseDeudaArchivo
 
         return [
             'contenido' => $contenido,
-            'nombre' => self::nombreArchivo($fechaArchivo),
+            'nombre' => self::nombreArchivo($fechaArchivo, $detalles),
             'cantidad' => count($detalles),
             'totalImporte1' => round($totalImporte1, 2),
         ];
@@ -156,13 +153,16 @@ final class SiroSubidaBaseDeudaArchivo
         }
     }
 
-    public static function nombreArchivo(?CarbonInterface $fecha = null): string
+    /**
+     * @param  list<array<string, mixed>>  $detalles
+     */
+    public static function nombreArchivo(?CarbonInterface $fecha = null, array $detalles = []): string
     {
         $fecha ??= now()->startOfDay();
-        $cuit = self::cuitAdministrador();
+        $cuit = self::cuitDesdeDetalles($detalles);
 
         if (strlen($cuit) < 11) {
-            throw new \RuntimeException('CUIT institucional no configurado (ento nivel administración).');
+            throw new \RuntimeException('CUIT no configurado para el nivel de los cupones incluidos.');
         }
 
         return $cuit.'.'.$fecha->format('Ymd');
@@ -298,12 +298,37 @@ final class SiroSubidaBaseDeudaArchivo
         return self::asegurarLongitudNumerica($linea, self::LARGO_LINEA);
     }
 
-    private static function cuitAdministrador(): string
+    /**
+     * @param  list<array<string, mixed>>  $detalles
+     */
+    private static function cuitDesdeDetalles(array $detalles): string
     {
-        $ento = Ento::query()->where('idNivel', self::ID_NIVEL_ADMINISTRACION)->first();
-        $digits = preg_replace('/\D+/', '', (string) ($ento?->cuit ?? '')) ?? '';
+        $cuits = [];
 
-        return $digits !== '' ? $digits : '00000000000';
+        foreach ($detalles as $detalle) {
+            $idNivel = (int) ($detalle['idNivel'] ?? 0);
+            if ($idNivel <= 0) {
+                continue;
+            }
+
+            $cuit = SiroCodigoPagoElectronico::cuitPorNivel($idNivel);
+            if (strlen($cuit) >= 11) {
+                $cuits[$cuit] = true;
+            }
+        }
+
+        $unicos = array_keys($cuits);
+        if (count($unicos) === 1) {
+            return $unicos[0];
+        }
+
+        if (count($unicos) > 1) {
+            throw new \RuntimeException(
+                'Los cupones seleccionados pertenecen a niveles con distinto CUIT. Genere un archivo por nivel.'
+            );
+        }
+
+        return '';
     }
 
     private static function numerico(int|string $valor, int $longitud): string

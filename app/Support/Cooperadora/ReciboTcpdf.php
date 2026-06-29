@@ -3,7 +3,6 @@
 namespace App\Support\Cooperadora;
 
 use App\Support\Pdf\TcpdfFuenteArial;
-use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -12,6 +11,8 @@ use TCPDF;
 final class ReciboTcpdf extends TCPDF
 {
     private const ANCHO_HOJA = 210.0;
+
+    private const ALTO_HOJA_A4 = 297.0;
 
     private const ALTO_BASE = 99.0;
 
@@ -41,9 +42,9 @@ final class ReciboTcpdf extends TCPDF
     private function __construct(array $datos)
     {
         $this->datos = $datos;
-        $this->altoHoja = self::altoParaDatos($datos);
+        $this->altoHoja = min(self::altoParaDatos($datos), self::ALTO_HOJA_A4);
 
-        parent::__construct('L', 'mm', [self::ANCHO_HOJA, $this->altoHoja], true, 'UTF-8', false);
+        parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Recibo cooperadora');
@@ -89,54 +90,19 @@ final class ReciboTcpdf extends TCPDF
     {
         $header = (array) ($datos['header'] ?? []);
         $lineas = (array) ($datos['lineas'] ?? []);
-        $yHeaderFin = self::estimarYHeaderFin($header);
+        $yHeaderFin = CooperadoraComprobanteEncabezadoTcpdf::estimarYHeaderFin(
+            $header,
+            self::MARGEN,
+            self::MARGEN,
+            self::ANCHO_HOJA - (self::MARGEN * 2),
+            self::LOGO_ANCHO,
+        );
         $altoDetalle = self::altoZonaDetalle($lineas);
 
         return max(
             self::ALTO_BASE,
             $yHeaderFin + self::ALTO_BLOQUE_PRE_DETALLE + $altoDetalle + self::ALTO_PIE + self::MARGEN,
         );
-    }
-
-    /**
-     * @param  array<string, mixed>  $header
-     */
-    private static function estimarYHeaderFin(array $header): float
-    {
-        $y0 = self::MARGEN;
-        $ancho = self::ANCHO_HOJA - (self::MARGEN * 2);
-        $colDer = self::MARGEN + ($ancho * 0.55);
-        $textX = self::MARGEN + 2 + self::LOGO_ANCHO + 2;
-        $textW = max(20.0, $colDer - $textX - 2);
-
-        $yTexto = $y0 + 2.0;
-        $yTexto += self::lineasTextoEstimadas((string) ($header['nombre'] ?? ''), $textW, 10) * 4.0;
-
-        foreach (['direccion', 'localidad'] as $campo) {
-            if (trim((string) ($header[$campo] ?? '')) !== '') {
-                $yTexto += 4.0;
-            }
-        }
-
-        foreach (['telefono', 'cuit', 'repace'] as $campo) {
-            if (trim((string) ($header[$campo] ?? '')) !== '') {
-                $yTexto += 4.0;
-            }
-        }
-
-        return max($yTexto + 2.0, $y0 + 30.0);
-    }
-
-    private static function lineasTextoEstimadas(string $texto, float $anchoMm, int $fontSize): int
-    {
-        $texto = trim($texto);
-        if ($texto === '') {
-            return 0;
-        }
-
-        $charsPorLinea = max(12, (int) floor($anchoMm / ($fontSize * 0.18)));
-
-        return max(1, (int) ceil(mb_strlen($texto) / $charsPorLinea));
     }
 
     /**
@@ -186,7 +152,21 @@ final class ReciboTcpdf extends TCPDF
         $this->Rect($x0, $y0, $ancho, $altoInner);
 
         $colDer = $x0 + ($ancho * 0.55);
-        $yHeaderFin = $this->dibujarEncabezadoInstitucional($header, $x0, $y0, $colDer, $ancho);
+        $yHeaderFin = CooperadoraComprobanteEncabezadoTcpdf::dibujar(
+            $this,
+            $header,
+            $x0,
+            $y0,
+            $ancho,
+            self::LOGO_ANCHO,
+            self::LOGO_ALTO,
+            [
+                'titulo' => 'Recibo',
+                'numero_texto' => (string) ($this->datos['recibo_numero_texto'] ?? ''),
+                'fecha_texto' => (string) ($this->datos['fecha_texto'] ?? ''),
+                'mostrar_aviso_no_factura' => true,
+            ],
+        );
         $this->Line($colDer, $y0, $colDer, $yHeaderFin);
 
         $y = $yHeaderFin + 2;
@@ -240,92 +220,6 @@ final class ReciboTcpdf extends TCPDF
         $this->SetXY($xDer, $yAclTexto);
         $this->Cell($wLabelAcl, $hAcl, 'Aclaración:', 0, 0, 'L');
         $this->Line($xDer + $wLabelAcl, $yLineaAcl, $xFin, $yLineaAcl);
-    }
-
-    /**
-     * @param  array<string, mixed>  $header
-     */
-    private function dibujarEncabezadoInstitucional(array $header, float $x0, float $y0, float $colDer, float $ancho): float
-    {
-        $textX = $x0 + 2;
-        TcpdfLogoInstitucional::dibujar(
-            $this,
-            $textX,
-            $y0 + 3,
-            self::LOGO_ANCHO,
-            self::LOGO_ALTO,
-            $header['logo_file'] ?? null,
-        );
-        $textX += self::LOGO_ANCHO + 2;
-        $textW = $colDer - $textX - 2;
-
-        $yTexto = $y0 + 2;
-        TcpdfFuenteArial::aplicar($this, 'B', 10);
-        $this->SetXY($textX, $yTexto);
-        $this->MultiCell($textW, 4, (string) ($header['nombre'] ?? ''), 0, 'L', false, 1);
-        $yTexto = $this->GetY();
-
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        foreach (['direccion', 'localidad'] as $campo) {
-            $valor = trim((string) ($header[$campo] ?? ''));
-            if ($valor === '') {
-                continue;
-            }
-            $this->SetXY($textX, $yTexto);
-            $this->Cell($textW, 4, $valor, 0, 2, 'L');
-            $yTexto = $this->GetY();
-        }
-
-        $tel = trim((string) ($header['telefono'] ?? ''));
-        if ($tel !== '') {
-            $this->SetXY($textX, $yTexto);
-            $this->Cell($textW, 4, 'TELÉFONO '.$tel, 0, 2, 'L');
-            $yTexto = $this->GetY();
-        }
-
-        $cuit = trim((string) ($header['cuit'] ?? ''));
-        if ($cuit !== '') {
-            $this->SetXY($textX, $yTexto);
-            $this->Cell($textW, 4, 'CUIT '.$cuit, 0, 2, 'L');
-            $yTexto = $this->GetY();
-        }
-
-        $repace = trim((string) ($header['repace'] ?? ''));
-        if ($repace !== '') {
-            $this->SetXY($textX, $yTexto);
-            $this->Cell($textW, 4, 'REPACE '.$repace, 0, 2, 'L');
-            $yTexto = $this->GetY();
-        }
-
-        TcpdfFuenteArial::aplicar($this, 'B', 16);
-        $this->SetXY($colDer + 4, $y0 + 4);
-        $this->Cell($ancho - ($colDer - $x0) - 8, 8, 'Recibo', 0, 2, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 9);
-        $this->Cell($ancho - ($colDer - $x0) - 8, 5, 'Nº: '.(string) ($this->datos['recibo_numero_texto'] ?? ''), 0, 2, 'L');
-        $this->Cell($ancho - ($colDer - $x0) - 8, 5, 'Fecha: '.(string) ($this->datos['fecha_texto'] ?? ''), 0, 2, 'L');
-
-        $wColDer = $x0 + $ancho - $colDer;
-        $xCelda = $colDer + ($wColDer * 0.55);
-        $wCelda = ($x0 + $ancho - 2) - $xCelda;
-        $yCeldaTop = $y0 + 4;
-        $yCeldaH = 24.0;
-        $boxW = 22.0;
-        $boxH = 10.0;
-        $lineH = 2.5;
-        $textoH = 5.0;
-        $bloqueH = $boxH + 1.0 + $textoH;
-        $boxY = $yCeldaTop + (($yCeldaH - $bloqueH) / 2);
-        $boxX = $xCelda + (($wCelda - $boxW) / 2);
-
-        $this->Rect($boxX, $boxY, $boxW, $boxH);
-        TcpdfFuenteArial::aplicar($this, 'B', 14);
-        $this->SetXY($boxX, $boxY + (($boxH - 8) / 2));
-        $this->Cell($boxW, 8, 'X', 0, 0, 'C');
-        TcpdfFuenteArial::aplicar($this, '', 5);
-        $this->SetXY($xCelda, $boxY + $boxH + 1);
-        $this->MultiCell($wCelda, $lineH, 'DOCUMENTO NO VALIDO COMO FACTURA', 0, 'C');
-
-        return max($yTexto + 2, $y0 + 30);
     }
 
     private function dibujarDetalleLineas(float $x0, float $y, float $ancho): void

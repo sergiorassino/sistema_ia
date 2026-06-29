@@ -3,13 +3,16 @@
 namespace App\Support\Cuotas\Siro\Descarga;
 
 /**
- * Parsea una línea del archivo de rendición SIRO (formato Integrado, ≥272 caracteres).
+ * Parsea una línea del archivo de rendición SIRO (formato Integrado).
  *
  * Posiciones según SIRO Developers — Archivo de rendición Integrado v5.2 (base 1).
+ * Líneas ≥272 incluyen id. de pago SIRO; algunos archivos de cobranza (p. ej. API BPD)
+ * traen solo el bloque hasta canal (pos. 124–126) con relleno, ~226 caracteres.
  */
 final class SiroDescargaRendicionLinea
 {
-    public const LARGO_MINIMO = 272;
+    /** Hasta canal (pos. 124–126, base 1). */
+    public const LARGO_MINIMO = 126;
 
     /**
      * @return array{
@@ -47,7 +50,7 @@ final class SiroDescargaRendicionLinea
             'codigoBarras' => self::extraerCodigoBarras($linea),
             'idComprobante' => $idComprobante,
             'canalAbrev' => $canal,
-            'idPagoSiro' => trim(substr($linea, 226, 10)),
+            'idPagoSiro' => strlen($linea) >= 236 ? trim(substr($linea, 226, 10)) : '',
             'cadenaPago' => $linea,
         ];
         $parsed['idClienteExtendido'] = SiroDescargaRendicionIdClienteExtendido::identUsuario15($parsed);
