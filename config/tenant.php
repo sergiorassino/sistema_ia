@@ -402,6 +402,35 @@ return [
     ],
 
     /**
+     * Cooperadora escolar — ingresos, egresos y recibos.
+     * El correo de recibos es independiente del mailer pedagógico (MAIL_* / cuaderno de comunicados).
+     */
+    'cooperadora' => [
+        /**
+         * Recibos de ingreso (origen estudiantes) — correo al pagador con PDF adjunto.
+         * Usa mailer `cooperadora` (COOP_MAIL_* en .env), distinto del cuaderno de comunicados (MAIL_*).
+         * Override parcial en `config/tenants/{slug}.php` → `cooperadora.recibo_email`.
+         */
+        'recibo_email' => [
+            /** Si false, no se intenta envío (ni simulado). */
+            'habilitado' => true,
+            /**
+             * true: registra estado simulado y log, sin SMTP.
+             * Poner false en el tenant al activar envío real (requiere COOP_MAIL_* en .env).
+             */
+            'simulado' => env('COOP_RECIBO_EMAIL_SIMULADO', true),
+            /** Clave en config/mail.php → mailers.* */
+            'mailer' => 'cooperadora',
+            'asunto' => 'Recibo de pago',
+            /**
+             * Remitente visible. Dirección y credenciales SMTP: COOP_MAIL_* en .env.
+             * `from_name` null → nombre institucional cooperadora (coop_config).
+             */
+            'from_name' => null,
+        ],
+    ],
+
+    /**
      * Plantillas de cuotas — fórmulas al crear una cuota («Valores por defecto del sistema»).
      * Corresponden a: hasta 1.er venc., 1.º→2.º, 2.º→3.º y después del 3.er vencimiento.
      * Override parcial en `config/tenants/{slug}.php` (solo claves que difieran).

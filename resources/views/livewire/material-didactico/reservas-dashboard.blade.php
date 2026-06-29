@@ -315,7 +315,7 @@
                     </div>
                     <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4">
                         <p class="text-xs text-neutral-500 leading-relaxed">
-                            Complete la entrega o corrija el nombre. Si borra un campo entregado, el recurso vuelve a pendiente. Los devueltos no se editan aquí.
+                            Complete la entrega o corrija el nombre. Use «Liberar reserva» si el recurso no se retirará (quedará disponible para otros pedidos). Si borra un campo entregado, el recurso vuelve a pendiente. Los devueltos no se editan aquí.
                         </p>
                         @foreach($modalEntregaReservas as $reserva)
                             @php
@@ -344,14 +344,26 @@
                                     </label>
                                     <span class="{{ $estadoEntregaClases }}">{{ $estadoEntregaLabel }}</span>
                                 </div>
-                                <input id="entrega-{{ $reserva->id }}"
-                                       type="text"
-                                       wire:model="entregasPedido.{{ $reserva->id }}"
-                                       maxlength="100"
-                                       placeholder="{{ $campoEntregaDeshabilitado ? 'Ya devuelto' : 'Quién retira este recurso…' }}"
-                                       class="form-input"
-                                       @disabled($campoEntregaDeshabilitado)
-                                       @if($loop->first && ! $campoEntregaDeshabilitado) autofocus @endif>
+                                <div @class([
+                                    'flex flex-col gap-2 sm:flex-row sm:items-start',
+                                    'sm:gap-3' => $reserva->esPendiente(),
+                                ])>
+                                    <input id="entrega-{{ $reserva->id }}"
+                                           type="text"
+                                           wire:model="entregasPedido.{{ $reserva->id }}"
+                                           maxlength="100"
+                                           placeholder="{{ $campoEntregaDeshabilitado ? 'Ya devuelto' : 'Quién retira este recurso…' }}"
+                                           class="form-input min-w-0 flex-1"
+                                           @disabled($campoEntregaDeshabilitado)
+                                           @if($loop->first && ! $campoEntregaDeshabilitado) autofocus @endif>
+                                    @if($reserva->esPendiente())
+                                        <button type="button"
+                                                x-on:click="seSwalConfirmar(@js('¿Liberar esta reserva? El recurso quedará disponible para otros pedidos en ese horario.')).then(ok => ok && $wire.liberarReservaEntrega({{ $reserva->id }}))"
+                                                class="btn-secondary btn-sm shrink-0 whitespace-nowrap">
+                                            Liberar reserva
+                                        </button>
+                                    @endif
+                                </div>
                                 @error('entregasPedido.'.$reserva->id)
                                     <p class="form-error">{{ $message }}</p>
                                 @enderror

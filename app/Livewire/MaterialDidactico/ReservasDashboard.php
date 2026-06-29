@@ -154,6 +154,37 @@ class ReservasDashboard extends Component
         $this->cerrarEntrega();
     }
 
+    /**
+     * Libera un ítem pendiente del pedido en curso (cancela la reserva del recurso).
+     */
+    public function liberarReservaEntrega(int $reservaId): void
+    {
+        abort_if($this->esPortalDocente(), 403);
+        abort_unless(rrdRol() === 'admin', 403);
+
+        if ($this->pedidoEntregaId === null) {
+            return;
+        }
+
+        $reserva = RrdReserva::queryEnContexto()
+            ->where('id_pedido', $this->pedidoEntregaId)
+            ->where('id', $reservaId)
+            ->firstOrFail();
+
+        try {
+            RrdReservaService::cancelarReserva($reserva);
+            unset($this->entregasPedido[$reservaId]);
+
+            if ($this->reservasActivasPedido($this->pedidoEntregaId)->isEmpty()) {
+                $this->cerrarEntrega();
+            }
+
+            $this->dispatch('se-swal-exito', mensaje: 'Reserva liberada. El recurso vuelve a estar disponible.');
+        } catch (RrdReservaException $e) {
+            $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+        }
+    }
+
     // ---------------------------------------------------------------
     // Devolución
     // ---------------------------------------------------------------

@@ -470,7 +470,7 @@ class IngresoForm extends Component
             : 'Ingreso registrado. Recibo Nº '.$lider->recibo_numero;
 
         if ($this->esOrigenEstudiantes()) {
-            if ($emailEnviado && EnvioReciboCooperadora::RECIBO_EMAIL_SIMULADO) {
+            if ($emailEnviado && EnvioReciboCooperadora::modoSimulado()) {
                 $mensaje .= '. Email al pagador registrado (modo simulado, no se envió correo real).';
             } elseif (! $emailEnviado && ResponsablesLegajoCooperadora::emailPagador($this->pagadorResponsables, $this->pagadorVinculo) === '') {
                 $mensaje .= '. Sin email del pagador: podrá reenviarlo desde el listado cuando lo cargue.';
