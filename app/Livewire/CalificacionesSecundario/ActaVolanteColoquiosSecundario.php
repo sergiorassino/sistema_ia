@@ -5,6 +5,7 @@ namespace App\Livewire\CalificacionesSecundario;
 use App\Models\Curso;
 use App\Support\ActaVolanteColoquiosSecundario as ActaVolanteColoquiosService;
 use App\Support\CalificacionesColoquioSecundario;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -22,6 +23,12 @@ class ActaVolanteColoquiosSecundario extends Component
 
     public function mount(): void
     {
+        abort_unless(
+            tienePermiso(PermisosIaCatalog::CALIF_ACTAS_VOLANTES_COLOQUIO),
+            403,
+            'Sin permiso para actas volantes de coloquio.',
+        );
+
         $this->periodo = CalificacionesColoquioSecundario::PERIODO_DICIEMBRE;
         $this->cursoId = null;
         $this->materiasSeleccionadas = [];

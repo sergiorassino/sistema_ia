@@ -27,11 +27,24 @@ final class MenuSecretariaPerfil
         return self::esAdministracion();
     }
 
-    /** Grupo sidebar «CALIFICACIONES (Inicial)» — solo sesión en `niveles.id` = 1. */
+    /** Grupo sidebar «CALIFICACIONES (Inicial)» — flujo estándar (Montecristo). */
     public static function muestraCalificacionesInicial(): bool
     {
         return ! self::ocultarGruposPedagogicos()
-            && NivelSistema::esInicial((int) (schoolCtx()->idNivel ?? 0));
+            && NivelSistema::esInicial((int) (schoolCtx()->idNivel ?? 0))
+            && (bool) config('tenant.secretaria.calificaciones_inicial.habilitado', true)
+            && ! self::muestraCalificacionesInicialSfq();
+    }
+
+    /** Grupo sidebar «CALIFICACIONES (Inicial)» — variante SFQ (carga ic01–ic06). */
+    public static function muestraCalificacionesInicialSfq(): bool
+    {
+        return ! self::ocultarGruposPedagogicos()
+            && NivelSistema::esInicial((int) (schoolCtx()->idNivel ?? 0))
+            && (bool) config('tenant.secretaria.calificaciones_inicial_sfq.habilitado', false)
+            && \App\Support\CalificacionesInicial\CalificacionesInicialModulos::moduloActivo(
+                \App\Support\CalificacionesInicial\CalificacionesInicialModulos::CARGA_NOTAS,
+            );
     }
 
     /** Grupo sidebar «CALIFICACIONES (Primario)» — solo sesión en `niveles.id` = 2. */

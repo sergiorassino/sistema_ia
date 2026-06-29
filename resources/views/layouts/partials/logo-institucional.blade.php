@@ -19,13 +19,13 @@
     </span>
 @elseif ($context === 'hero')
     <div @class([
-        'bg-white shadow-md ring-1 ring-white/20',
+        'inline-flex items-center justify-center overflow-hidden bg-white ring-1 ring-white/20',
         'se-logo-hero--emblema rounded-full p-3' => $emblema,
-        'rounded-2xl p-4' => ! $emblema,
+        'rounded-2xl p-4 shadow-md' => ! $emblema,
     ])>
         <img src="{{ $url }}" alt="" @class([
             'object-contain block',
-            'h-16 w-16 sm:h-20 sm:w-20' => $emblema,
+            'h-16 w-16 sm:h-20 sm:w-20 rounded-full' => $emblema,
             'h-16 sm:h-20 w-auto max-w-[200px]' => ! $emblema,
         ])>
     </div>

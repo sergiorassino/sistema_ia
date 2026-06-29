@@ -18,6 +18,8 @@ class ConsultaCalificacionesSecundarioPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
+        abort_unless(tenantSecretariaConsultaCalificacionesHabilitada(), 404);
+
         $validated = $request->validate([
             'matricula' => ['required', 'integer', 'min:1'],
         ]);

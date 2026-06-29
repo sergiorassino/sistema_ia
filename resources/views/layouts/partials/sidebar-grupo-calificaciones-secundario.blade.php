@@ -38,10 +38,24 @@
         </a>
         @endif
         @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
-        <a href="{{ route('calificacionesSecundario.carga') }}"
+        @php
+            $rutaCargaSecStaff = \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::moduloActivo(
+                \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::CARGA
+            )
+                ? \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::rutaStaff(
+                    \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::CARGA
+                )
+                : 'calificacionesSecundario.carga';
+            $prefijosCargaSecStaff = str_contains($rutaCargaSecStaff, 'Epq')
+                ? ['calificacionesSecundarioEpq.carga']
+                : ['calificacionesSecundario.carga'];
+        @endphp
+        <a href="{{ route($rutaCargaSecStaff) }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.carga',
+               'is-active shadow-sm' => collect($prefijosCargaSecStaff)->contains(
+                   fn (string $prefijo): bool => str_starts_with($route ?? '', $prefijo)
+               ),
            ])
            title="Carga de calificaciones (secundario) v1.0">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,6 +65,7 @@
             <span class="truncate">Carga de calificaciones</span>
         </a>
         @endif
+        @if (tenantSecretariaConsultaCalificacionesHabilitada())
         <a href="{{ route('calificacionesSecundario.consulta') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -64,23 +79,40 @@
             </svg>
             <span class="truncate">Consulta de calificaciones</span>
         </a>
-        <a href="{{ route('boletinesSecundario.index') }}"
+        @endif
+        <a href="{{ route(\App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::moduloActivo(\App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::BOLETIN)
+                ? \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::rutaStaff(\App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::BOLETIN)
+                : 'boletinesSecundario.index') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => str_starts_with($route ?? '', 'boletinesSecundario.'),
+               'is-active shadow-sm' => str_starts_with($route ?? '', 'boletinesSecundario.')
+                   || str_starts_with($route ?? '', 'calificacionesSecundarioEpq.boletin'),
            ])
-           title="Boletines (secundario) · Informe de progreso escolar v1.0">
+           title="{{ tenantBoletinSecundarioMenuEtiqueta() }} v1.0">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            <span class="truncate">Boletines (secundario)</span>
+            <span class="truncate">{{ tenantBoletinSecundarioMenuEtiqueta() }}</span>
         </a>
-        <a href="{{ route('calificacionesSecundario.planilla') }}"
+        @php
+            $rutaPlanillaSecStaff = \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::moduloActivo(
+                \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::PLANILLA
+            )
+                ? \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::rutaStaff(
+                    \App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos::PLANILLA
+                )
+                : 'calificacionesSecundario.planilla';
+            $prefijosPlanillaSecStaff = str_contains($rutaPlanillaSecStaff, 'Epq')
+                ? ['calificacionesSecundarioEpq.planilla']
+                : ['calificacionesSecundario.planilla'];
+        @endphp
+        <a href="{{ route($rutaPlanillaSecStaff) }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-               'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.planilla'
-                   || ($route ?? '') === 'calificacionesSecundario.planilla.pdf',
+               'is-active shadow-sm' => collect($prefijosPlanillaSecStaff)->contains(
+                   fn (string $prefijo): bool => str_starts_with($route ?? '', $prefijo)
+               ),
            ])
            title="Planilla de calificaciones (secundario) v1.0">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,6 +121,7 @@
             </svg>
             <span class="truncate">Planilla de calificaciones</span>
         </a>
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_PLANILLA_RESUMEN))
         <a href="{{ route('calificacionesSecundario.planillaResumen') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -102,6 +135,7 @@
             </svg>
             <span class="truncate">Planilla resumen</span>
         </a>
+        @endif
         @if (tienePermiso(10))
         <a href="{{ route('calificacionesSecundario.coloquios') }}"
            @class([
@@ -116,6 +150,7 @@
             <span class="truncate">Carga de coloquios</span>
         </a>
         @endif
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_ACTAS_VOLANTES_COLOQUIO))
         <a href="{{ route('calificacionesSecundario.actaVolanteColoquios') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -129,6 +164,7 @@
             </svg>
             <span class="truncate">Actas volantes coloquio</span>
         </a>
+        @endif
         @if (tienePermiso(15))
         <a href="{{ route('calificacionesSecundario.cierreAnual') }}"
            @class([

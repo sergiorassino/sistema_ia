@@ -3,6 +3,7 @@
 namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -16,6 +17,12 @@ class PlanillaResumenCalificacionesSecundario extends Component
 
     public function mount(): void
     {
+        abort_unless(
+            tienePermiso(PermisosIaCatalog::CALIF_PLANILLA_RESUMEN),
+            403,
+            'Sin permiso para planilla resumen de calificaciones.',
+        );
+
         $this->cursosSeleccionados = [];
     }
 

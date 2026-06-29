@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\BoletinPrimEpqFamiliaPdfController;
+use App\Http\Controllers\Alumnos\BoletinEpqSecundarioFamiliaPdfController;
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
 use App\Http\Controllers\Alumnos\ComprobanteAfipPdfController as AlumnosComprobanteAfipPdfController;
@@ -21,7 +22,12 @@ use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioLotePdfController;
 use App\Http\Controllers\BoletinesSecundario\BoletinSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ConsultaCalificacionesSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfController;
+use App\Http\Controllers\CalificacionesSecundario\BoletinEpqSecundarioLotePdfController;
+use App\Http\Controllers\CalificacionesSecundario\BoletinEpqSecundarioPdfController;
+use App\Http\Controllers\CalificacionesSecundario\CargaCalificacionesEpqSecundarioPdfController;
+use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesEpqSecundarioPdfController;
 use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfController;
+use App\Http\Controllers\PortalDocente\PortalDocenteCargaCalificacionesEpqSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesDatosExcelController;
@@ -163,6 +169,9 @@ use App\Livewire\Mora\EstadoDeudaFamiliarIndex;
 use App\Livewire\Mora\GestionMorososIndex;
 use App\Livewire\Mora\TextosNotificacionDeudaForm;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
+use App\Livewire\CalificacionesSecundario\Epq\BoletinEpqSecundarioIndex;
+use App\Livewire\CalificacionesSecundario\Epq\CargaCalificacionesEpqSecundario;
+use App\Livewire\CalificacionesSecundario\Epq\PlanillaCalificacionesEpqSecundario;
 use App\Livewire\CalificacionesSecundario\CargaColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ActaVolanteColoquiosSecundario;
@@ -202,10 +211,16 @@ use App\Http\Controllers\CalificacionesPrimario\BoletinPrimEpqLotePdfController;
 use App\Http\Controllers\CalificacionesPrimario\BoletinPrimEpqPdfController;
 use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesEpqPdfController;
 use App\Http\Controllers\CalificacionesPrimario\PlanillaCalificacionesPrimarioPdfController;
+use App\Livewire\CalificacionesInicial\Sfq\BoletinInicialSfqIndex;
+use App\Livewire\CalificacionesInicial\Sfq\CargaCalificacionesInicialSfqIndex;
+use App\Livewire\CalificacionesInicial\Sfq\CargaCalificacionesInicialSfqIndicadoresForm;
+use App\Livewire\CalificacionesInicial\Sfq\CargaCalificacionesInicialSfqObservacionesForm;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialAlumnos;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialForm;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialIndex;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialMateria;
+use App\Http\Controllers\CalificacionesInicial\BoletinInicialSfqLotePdfController;
+use App\Http\Controllers\CalificacionesInicial\BoletinInicialSfqPdfController;
 use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialLotePdfController;
 use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialPdfController;
 use App\Livewire\CalificacionesInicial\EditarIndicadoresForm;
@@ -332,6 +347,8 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/boletin-calificaciones-primario-epq/{cara}', BoletinPrimEpqFamiliaPdfController::class)
         ->where('cara', 'portada|calificaciones')
         ->name('alumnos.boletin-prim-epq');
+    Route::get('/boletin-calificaciones-secundario-epq', BoletinEpqSecundarioFamiliaPdfController::class)
+        ->name('alumnos.boletin-sec-epq');
     Route::get('/informe-progreso-escolar/{etapa}', \App\Http\Controllers\Alumnos\InformeProgresoInicialPdfController::class)
         ->whereNumber('etapa')
         ->name('alumnos.informe-progreso-inicial');
@@ -408,6 +425,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/calificaciones/{curso}/{materia}/pdf', PortalDocentePlanillaCalificacionesPdfController::class)
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.calificaciones.pdf');
+
+    Route::get('/calificaciones-epq/{curso}/{materia}', CargaCalificacionesEpqSecundario::class)
+        ->whereNumber(['curso', 'materia'])
+        ->name('portalDocente.calificacionesEpq.carga');
+    Route::get('/calificaciones-epq/{curso}/{materia}/pdf', PortalDocenteCargaCalificacionesEpqSecundarioPdfController::class)
+        ->whereNumber(['curso', 'materia'])
+        ->name('portalDocente.calificacionesEpq.pdf');
+
+    Route::get('/calificaciones-secundario-epq/planilla', PlanillaCalificacionesEpqSecundario::class)
+        ->name('portalDocente.calificacionesSecundarioEpq.planilla');
+    Route::get('/calificaciones-secundario-epq/planilla/pdf', PlanillaCalificacionesEpqSecundarioPdfController::class)
+        ->name('portalDocente.calificacionesSecundarioEpq.planilla.pdf');
 
     Route::get('/calificaciones-primario/carga', CargaCalificacionesPrimarioIndex::class)
         ->name('portalDocente.calificacionesPrimario.carga');
@@ -488,6 +517,23 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->name('portalDocente.calificacionesInicial.informeProgreso.pdf');
     Route::post('/calificaciones-inicial/informe-progreso/pdf-lote', InformeProgresoInicialLotePdfController::class)
         ->name('portalDocente.calificacionesInicial.informeProgreso.pdfLote');
+
+    Route::get('/calificaciones-inicial-sfq/carga', CargaCalificacionesInicialSfqIndex::class)
+        ->name('portalDocente.calificacionesInicialSfq.carga');
+    Route::get('/calificaciones-inicial-sfq/carga/{matricula}/indicadores/{campo}', CargaCalificacionesInicialSfqIndicadoresForm::class)
+        ->whereNumber('matricula')
+        ->where('campo', 'ic0[1-6]')
+        ->name('portalDocente.calificacionesInicialSfq.carga.indicadores');
+    Route::get('/calificaciones-inicial-sfq/carga/{matricula}/observaciones', CargaCalificacionesInicialSfqObservacionesForm::class)
+        ->whereNumber('matricula')
+        ->name('portalDocente.calificacionesInicialSfq.carga.observaciones');
+
+    Route::get('/calificaciones-inicial-sfq/boletin', BoletinInicialSfqIndex::class)
+        ->name('portalDocente.calificacionesInicialSfq.boletin');
+    Route::post('/calificaciones-inicial-sfq/boletin/pdf', BoletinInicialSfqPdfController::class)
+        ->name('portalDocente.calificacionesInicialSfq.boletin.pdf');
+    Route::post('/calificaciones-inicial-sfq/boletin/pdf-lote', BoletinInicialSfqLotePdfController::class)
+        ->name('portalDocente.calificacionesInicialSfq.boletin.pdfLote');
 
     Route::get('/material-didactico', ReservasDashboard::class)
         ->name('portalDocente.materialDidactico.index');
@@ -945,6 +991,29 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.informeProgreso.pdfLote');
 
+    Route::get('/calificaciones-inicial-sfq/carga', CargaCalificacionesInicialSfqIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesInicialSfq.carga');
+    Route::get('/calificaciones-inicial-sfq/carga/{matricula}/indicadores/{campo}', CargaCalificacionesInicialSfqIndicadoresForm::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->whereNumber('matricula')
+        ->where('campo', 'ic0[1-6]')
+        ->name('calificacionesInicialSfq.carga.indicadores');
+    Route::get('/calificaciones-inicial-sfq/carga/{matricula}/observaciones', CargaCalificacionesInicialSfqObservacionesForm::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->whereNumber('matricula')
+        ->name('calificacionesInicialSfq.carga.observaciones');
+
+    Route::get('/calificaciones-inicial-sfq/boletin', BoletinInicialSfqIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesInicialSfq.boletin');
+    Route::post('/calificaciones-inicial-sfq/boletin/pdf', BoletinInicialSfqPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesInicialSfq.boletin.pdf');
+    Route::post('/calificaciones-inicial-sfq/boletin/pdf-lote', BoletinInicialSfqLotePdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesInicialSfq.boletin.pdfLote');
+
     // Calificaciones (nivel primario): GE/CIDI y desempeños por etapa (CSV)
     Route::get('/calificaciones-primario/sincro-ge', SincroGePrimario::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
@@ -1012,20 +1081,45 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesSecundario.carga');
+    Route::get('/calificaciones-secundario-epq/carga', CargaCalificacionesEpqSecundario::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.carga');
+    Route::get('/calificaciones-secundario-epq/carga/pdf', CargaCalificacionesEpqSecundarioPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.carga.pdf');
+    Route::get('/calificaciones-secundario-epq/boletin', BoletinEpqSecundarioIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.boletin');
+    Route::post('/calificaciones-secundario-epq/boletin/pdf', BoletinEpqSecundarioPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.boletin.pdf');
+    Route::post('/calificaciones-secundario-epq/boletin/pdf-lote', BoletinEpqSecundarioLotePdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.boletin.pdfLote');
+    Route::get('/calificaciones-secundario-epq/planilla', PlanillaCalificacionesEpqSecundario::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.planilla');
+    Route::get('/calificaciones-secundario-epq/planilla/pdf', PlanillaCalificacionesEpqSecundarioPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->name('calificacionesSecundarioEpq.planilla.pdf');
     Route::get('/calificaciones-secundario/coloquios', CargaColoquiosSecundario::class)
         ->middleware('permiso:10')
         ->name('calificacionesSecundario.coloquios');
     Route::get('/calificaciones-secundario/actas-volantes-coloquio', ActaVolanteColoquiosSecundario::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_ACTAS_VOLANTES_COLOQUIO)
         ->name('calificacionesSecundario.actaVolanteColoquios');
     Route::get('/calificaciones-secundario/actas-volantes-coloquio/pdf', ActaVolanteColoquiosPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_ACTAS_VOLANTES_COLOQUIO)
         ->name('calificacionesSecundario.actaVolanteColoquios.pdf');
     Route::get('/calificaciones-secundario/planilla', PlanillaCalificacionesSecundario::class)
         ->name('calificacionesSecundario.planilla');
     Route::get('/calificaciones-secundario/planilla/pdf', PlanillaCalificacionesPdfController::class)
         ->name('calificacionesSecundario.planilla.pdf');
     Route::get('/calificaciones-secundario/planilla-resumen', PlanillaResumenCalificacionesSecundario::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_PLANILLA_RESUMEN)
         ->name('calificacionesSecundario.planillaResumen');
     Route::get('/calificaciones-secundario/planilla-resumen/pdf', PlanillaResumenCalificacionesPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_PLANILLA_RESUMEN)
         ->name('calificacionesSecundario.planillaResumen.pdf');
     Route::get('/calificaciones-secundario/consulta', ConsultaCalificacionesSecundario::class)
         ->name('calificacionesSecundario.consulta');

@@ -4,6 +4,7 @@ namespace App\Support\Alumnos;
 
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
+use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
 
@@ -38,6 +39,15 @@ final class PortalFamiliaDashboard
                     'icono' => 'calificaciones',
                 ];
             }
+        } elseif (PortalFamiliaBoletinEpqSecundario::habilitadoEnMenu()) {
+            $accesos[] = [
+                'id' => 'consulta-calificaciones-epq-sec',
+                'titulo' => PortalFamiliaBoletinEpqSecundario::tituloMenu(),
+                'descripcion' => 'Informe de calificaciones del ciclo lectivo activo.',
+                'url' => PortalFamiliaBoletinEpqSecundario::urlPdf(),
+                'externo' => true,
+                'icono' => 'calificaciones',
+            ];
         } elseif (PortalFamiliaBoletinIpe::habilitadoEnMenu()) {
             foreach (PortalFamiliaBoletinIpe::itemsEtapa() as $item) {
                 $accesos[] = [

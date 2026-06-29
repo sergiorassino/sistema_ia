@@ -1,4 +1,11 @@
 {{-- Menú de Docentes: materias a cargo (ppc) — nivel secundario. --}}
+@php
+    use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
+
+    $rutaCargaPortal = CalificacionesSecundarioModulos::moduloActivo(CalificacionesSecundarioModulos::CARGA)
+        ? CalificacionesSecundarioModulos::rutaPortal(CalificacionesSecundarioModulos::CARGA, 'form')
+        : 'portalDocente.calificaciones.carga';
+@endphp
 <div class="mx-auto w-full max-w-6xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -67,7 +74,7 @@
                                     {{ $fila->anoLectivo ?? schoolCtx()->terlecAno() ?? '—' }}
                                 </td>
                                 <td class="whitespace-nowrap text-right">
-                                    <a href="{{ route('portalDocente.calificaciones.carga', ['curso' => $fila->idCurso, 'materia' => $fila->idMateria]) }}"
+                                    <a href="{{ route($rutaCargaPortal, ['curso' => $fila->idCurso, 'materia' => $fila->idMateria]) }}"
                                        class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                                         Calificaciones
                                     </a>

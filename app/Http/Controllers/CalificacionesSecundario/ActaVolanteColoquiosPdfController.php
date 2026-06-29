@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Curso;
 use App\Support\ActaVolanteColoquiosSecundario;
 use App\Support\CalificacionesColoquioSecundario;
+use App\Support\PermisosIaCatalog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,6 +17,12 @@ class ActaVolanteColoquiosPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
+        abort_unless(
+            tienePermiso(PermisosIaCatalog::CALIF_ACTAS_VOLANTES_COLOQUIO),
+            403,
+            'Sin permiso para actas volantes de coloquio.',
+        );
+
         @ini_set('memory_limit', '512M');
 
         $key = 'acta-volante-coloquios-pdf:'.(auth()->id() ?? $request->ip());

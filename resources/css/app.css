@@ -171,6 +171,94 @@
         @apply px-2 py-1.5 text-right whitespace-nowrap select-none;
     }
 
+    /* Carga calificaciones inicial SFQ — ocupa el ancho del card; columnas flex según contenido */
+    .gf.gf-sfq-carga-ini {
+        display: block;
+        width: 100%;
+        min-width: 52rem;
+    }
+    .gf.gf-sfq-carga-ini .gf-head,
+    .gf.gf-sfq-carga-ini .gf-row {
+        @apply items-stretch;
+        width: 100%;
+    }
+    .gf.gf-sfq-carga-ini .gf-head {
+        @apply text-[11px];
+        min-height: 3.25rem;
+    }
+    .gf.gf-sfq-carga-ini .gf-row:not(:only-child) {
+        min-height: 3rem;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--idx,
+    .gf.gf-sfq-carga-ini .gf-td--idx {
+        @apply shrink-0 px-1 text-center;
+        flex: 0 0 2rem;
+        width: 2rem;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--apellido,
+    .gf.gf-sfq-carga-ini .gf-td--apellido {
+        @apply px-2;
+        flex: 1.6 1 9rem;
+        min-width: 8.5rem;
+        width: auto;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--nombre,
+    .gf.gf-sfq-carga-ini .gf-td--nombre {
+        @apply px-2;
+        flex: 1.3 1 7.5rem;
+        min-width: 7rem;
+        width: auto;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--dni,
+    .gf.gf-sfq-carga-ini .gf-td--dni {
+        @apply shrink-0 px-1.5 text-center;
+        flex: 0 0 5.75rem;
+        width: 5.75rem;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--stack,
+    .gf.gf-sfq-carga-ini .gf-td--icon {
+        flex: 1 1 var(--se-sfq-col-icon, 6.25rem);
+        min-width: var(--se-sfq-col-icon, 6.25rem);
+        width: auto;
+        @apply px-1;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--stack {
+        @apply flex flex-col items-center justify-center py-1 text-center normal-case tracking-normal;
+    }
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--idx,
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--apellido,
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--nombre,
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--dni {
+        @apply flex items-center;
+    }
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--idx,
+    .gf.gf-sfq-carga-ini .gf-head .gf-th--dni {
+        @apply justify-center;
+    }
+    .gf.gf-sfq-carga-ini .gf-th--stack .gf-th-line {
+        @apply block whitespace-nowrap text-[11px] font-semibold leading-snug text-gray-700;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--icon {
+        @apply flex items-center justify-center py-0.5;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--apellido {
+        @apply flex items-center font-medium whitespace-nowrap text-neutral-800;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--nombre,
+    .gf.gf-sfq-carga-ini .gf-td--dni,
+    .gf.gf-sfq-carga-ini .gf-td--idx {
+        @apply flex items-center;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--nombre {
+        @apply whitespace-nowrap text-neutral-800;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--dni {
+        @apply justify-center text-neutral-700;
+    }
+    .gf.gf-sfq-carga-ini .gf-td--idx {
+        @apply justify-center text-neutral-500;
+    }
+
     /* Fila de datos (listado o formulario) */
     .gf-row {
         @apply flex border-b border-gray-300 last:border-b-0;
@@ -531,7 +619,12 @@
 
     /* Gestión de aranceles — portal familia (variante legacy / Banco Roela) */
     .se-gestion-aranceles-cpe {
-        background: linear-gradient(135deg, #2c4a6e 0%, #1e3550 100%);
+        @apply relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-neutral-800 text-white;
+    }
+    .se-gestion-aranceles-cpe::before {
+        content: '';
+        @apply pointer-events-none absolute inset-0;
+        background: radial-gradient(ellipse 80% 70% at 100% 0%, rgba(255,255,255,.14), transparent 58%);
     }
     .se-gestion-aranceles-toolbar {
         background: #ffffff;
@@ -3252,6 +3345,14 @@
     width: 2rem;
     max-width: 2rem;
     max-height: 2rem;
+}
+
+/*
+ * Logo emblema en hero (dashboards): drop-shadow circular en lugar de shadow-md,
+ * que deja un artefacto cuadrado detrás del contenedor redondo.
+ */
+.se-logo-hero--emblema {
+    filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.12)) drop-shadow(0 2px 4px rgb(0 0 0 / 0.06));
 }
 
 /* Editor HTML liviano (salidas educativas) */

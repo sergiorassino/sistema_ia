@@ -152,6 +152,15 @@ return [
         ],
 
         /**
+         * Informe EPQ secundario — consulta de calificaciones (portal familia, nivel secundario).
+         * Requiere `calificaciones_secundario.boletin.implementacion` = `epq`.
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         */
+        'boletin_sec_epq' => [
+            'habilitado' => false,
+        ],
+
+        /**
          * Informe de progreso escolar por etapa (portal familia, nivel inicial).
          * Usa el mismo PDF que secretaría/docentes con marca «SIN VALOR LEGAL».
          * Default deshabilitado; activar en `config/tenants/{slug}.php`.
@@ -240,16 +249,63 @@ return [
     ],
 
     /**
+     * Calificaciones secundario — variantes por `implementacion`.
+     * Claves conocidas: `estandar`, `epq` (Escuelas Pías Quimilí).
+     */
+    'calificaciones_secundario' => [
+        'carga' => [
+            'implementacion' => null,
+        ],
+    ],
+
+    /**
+     * Calificaciones inicial — variantes por `implementacion`.
+     * Claves conocidas: `estandar` (Montecristo / flujo legacy), `sfq` (en desarrollo).
+     */
+    'calificaciones_inicial' => [
+        'carga_notas' => [
+            'implementacion' => null,
+        ],
+        'indicadores' => [
+            'implementacion' => null,
+        ],
+        'observaciones' => [
+            'implementacion' => null,
+        ],
+        'observaciones_materia' => [
+            'implementacion' => null,
+        ],
+        'informe_progreso' => [
+            'implementacion' => null,
+        ],
+        'boletin' => [
+            'implementacion' => null,
+        ],
+    ],
+
+    /**
+     * Boletín / Informe Pedagógico — nivel inicial.
+     * `membrete`: ruta relativa a `public/` (p. ej. `img/tenants/{slug}/boletin-inic-membrete.png`).
+     * `titulo_institucion`: encabezado del PDF; si es null, usa `ento.insti`.
+     */
+    'boletin_inicial' => [
+        'membrete' => null,
+        'titulo_institucion' => null,
+    ],
+
+    /**
      * Menú de Docentes — ítems opcionales por nivel (sin permiso_ia en sidebar).
      * Cada ítem de primario exige además `calificaciones_primario.{modulo}.implementacion`.
      */
     'portal_docente' => [
         'menu' => [
             'inicial' => [
+                'carga_notas' => false,
                 'indicadores' => false,
                 'observaciones' => false,
                 'observaciones_materia' => false,
                 'informe_progreso' => false,
+                'boletin' => false,
                 'listado_estudiantes' => true,
                 'recursos_didacticos_nueva_reserva' => false,
                 'recursos_didacticos_listado' => false,
@@ -292,6 +348,24 @@ return [
          */
         'informe_inasistencias' => [
             'niveles_deshabilitados' => [],
+        ],
+        /**
+         * Consulta de calificaciones (Menú de Secretaría → CALIFICACIONES Secundario).
+         * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
+         */
+        'consulta_calificaciones' => [
+            'habilitado' => true,
+        ],
+        /**
+         * Grupo sidebar «CALIFICACIONES (Inicial)» — flujo estándar (Montecristo).
+         * Desactivar en tenants con variantes propias hasta registrar rutas/Livewire.
+         */
+        'calificaciones_inicial' => [
+            'habilitado' => true,
+        ],
+        /** Grupo sidebar inicial SFQ — carga ic01–ic06 (desactivar menú estándar en el tenant). */
+        'calificaciones_inicial_sfq' => [
+            'habilitado' => false,
         ],
     ],
 
