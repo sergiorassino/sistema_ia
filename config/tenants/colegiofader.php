@@ -18,7 +18,6 @@ return [
     'cooperadora' => [
         'recibo_email' => [
             'simulado' => false,
-            'from_name' => 'Cooperadora — IPEM N° 206 Fernando Fader',
         ],
     ],
 ];

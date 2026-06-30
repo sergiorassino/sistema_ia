@@ -815,6 +815,7 @@ if (! function_exists('tenantCooperadoraReciboEmailAsunto')) {
 if (! function_exists('tenantCooperadoraReciboEmailFrom')) {
     /**
      * Remitente del correo cooperadora. null si faltan COOP_MAIL_* en .env.
+     * Nombre visible: coop_config.nombre_institucion; si vacío, tenant / COOP_MAIL_FROM_NAME / tenant.nombre.
      *
      * @return array{address: string, name: string}|null
      */
@@ -831,19 +832,20 @@ if (! function_exists('tenantCooperadoraReciboEmailFrom')) {
             return null;
         }
 
-        $nameTenant = config('tenant.cooperadora.recibo_email.from_name');
-        $nameEnv = trim((string) env('COOP_MAIL_FROM_NAME', ''));
-        if (is_string($nameTenant) && trim($nameTenant) !== '') {
-            $name = trim($nameTenant);
-        } elseif ($nameEnv !== '') {
-            $name = $nameEnv;
-        } else {
-            try {
-                $name = trim((string) (CooperadoraConfig::datosPdfHeader()['nombre'] ?? ''));
-            } catch (Throwable) {
-                $name = '';
-            }
-            if ($name === '') {
+        $name = '';
+        try {
+            $name = trim((string) (CooperadoraConfig::datosPdfHeader()['nombre'] ?? ''));
+        } catch (Throwable) {
+            $name = '';
+        }
+        if ($name === '') {
+            $nameTenant = config('tenant.cooperadora.recibo_email.from_name');
+            $nameEnv = trim((string) env('COOP_MAIL_FROM_NAME', ''));
+            if (is_string($nameTenant) && trim($nameTenant) !== '') {
+                $name = trim($nameTenant);
+            } elseif ($nameEnv !== '') {
+                $name = $nameEnv;
+            } else {
                 $name = trim((string) config('tenant.nombre', 'Cooperadora'));
             }
         }
