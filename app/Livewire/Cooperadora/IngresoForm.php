@@ -44,6 +44,14 @@ class IngresoForm extends Component
 
     public int|string $idMedioPago = '';
 
+    public ?string $emailEnvioPendiente = null;
+
+    public ?int $idRefEnvioPendiente = null;
+
+    public ?string $urlPdfPendiente = null;
+
+    public ?string $mensajeExitoPendiente = null;
+
     public function mount(): void
     {
         abort_unless(PermisosCooperadora::puedeIngresos(), 403);
@@ -460,7 +468,6 @@ class IngresoForm extends Component
 
         $lider = $resultado['lider'];
         $idRef = ReciboIngresosGrupo::idReferenciaPdf($lider);
-        $emailEnviado = EnvioReciboCooperadora::enviar($idRef);
         $ref = OpaqueRouteToken::forCoopRecibo($idRef);
         $urlPdf = route('cooperadora.recibo.pdf', ['ref' => $ref]);
 
@@ -469,14 +476,75 @@ class IngresoForm extends Component
             ? 'Ingresos registrados. Recibo Nº '.$lider->recibo_numero.' ('.$cantidad.' ítems)'
             : 'Ingreso registrado. Recibo Nº '.$lider->recibo_numero;
 
-        if ($this->esOrigenEstudiantes()) {
-            if ($emailEnviado && EnvioReciboCooperadora::modoSimulado()) {
-                $mensaje .= '. Email al pagador registrado (modo simulado, no se envió correo real).';
-            } elseif (! $emailEnviado && ResponsablesLegajoCooperadora::emailPagador($this->pagadorResponsables, $this->pagadorVinculo) === '') {
-                $mensaje .= '. Sin email del pagador: podrá reenviarlo desde el listado cuando lo cargue.';
-            }
+        $emailPagador = $this->esOrigenEstudiantes()
+            ? ResponsablesLegajoCooperadora::emailPagador($this->pagadorResponsables, $this->pagadorVinculo)
+            : '';
+
+        if ($this->debeEnviarReciboEmail($emailPagador)) {
+            $this->emailEnvioPendiente = $emailPagador;
+            $this->idRefEnvioPendiente = $idRef;
+            $this->urlPdfPendiente = $urlPdf;
+            $this->mensajeExitoPendiente = $mensaje;
+            $this->dispatch('cooperadora-enviar-recibo-email');
+
+            return;
         }
 
+        $emailEnviado = EnvioReciboCooperadora::enviar($idRef);
+        $mensaje = $this->mensajeConEstadoEmail($mensaje, $emailPagador, $emailEnviado);
+        $this->finalizarGuardado($mensaje, $urlPdf);
+    }
+
+    public function enviarReciboEmailPostGuardado(): void
+    {
+        abort_unless(PermisosCooperadora::puedeIngresos(), 403);
+
+        if ($this->idRefEnvioPendiente === null || $this->emailEnvioPendiente === null) {
+            return;
+        }
+
+        $idRef = $this->idRefEnvioPendiente;
+        $emailPagador = $this->emailEnvioPendiente;
+        $urlPdf = (string) ($this->urlPdfPendiente ?? '');
+        $mensaje = (string) ($this->mensajeExitoPendiente ?? 'Ingreso registrado.');
+
+        $emailEnviado = EnvioReciboCooperadora::enviar($idRef);
+        $mensaje = $this->mensajeConEstadoEmail($mensaje, $emailPagador, $emailEnviado);
+
+        $this->emailEnvioPendiente = null;
+        $this->idRefEnvioPendiente = null;
+        $this->urlPdfPendiente = null;
+        $this->mensajeExitoPendiente = null;
+
+        $this->finalizarGuardado($mensaje, $urlPdf);
+    }
+
+    private function debeEnviarReciboEmail(string $emailPagador): bool
+    {
+        return $this->esOrigenEstudiantes()
+            && tenantCooperadoraReciboEmailHabilitado()
+            && trim($emailPagador) !== '';
+    }
+
+    private function mensajeConEstadoEmail(string $mensaje, string $emailPagador, bool $emailEnviado): string
+    {
+        if (! $this->esOrigenEstudiantes()) {
+            return $mensaje;
+        }
+
+        if ($emailEnviado && EnvioReciboCooperadora::modoSimulado()) {
+            return $mensaje.'. Email al pagador registrado (modo simulado, no se envió correo real).';
+        }
+
+        if (! $emailEnviado && trim($emailPagador) === '') {
+            return $mensaje.'. Sin email del pagador: podrá reenviarlo desde el listado cuando lo cargue.';
+        }
+
+        return $mensaje;
+    }
+
+    private function finalizarGuardado(string $mensaje, string $urlPdf): void
+    {
         session()->flash('success', $mensaje);
         $this->dispatch('cooperadora-abrir-pdf', url: $urlPdf);
         $this->redirectRoute('cooperadora.ingresos', navigate: true);

@@ -344,15 +344,35 @@
 
             <div class="flex justify-end gap-2 border-t border-accent-100 pt-4">
                 <a href="{{ route('cooperadora.ingresos') }}" class="btn-secondary">Cancelar</a>
-                <button type="submit" class="btn-primary">Registrar y emitir recibo</button>
+                <button type="submit"
+                        class="btn-primary"
+                        wire:loading.attr="disabled"
+                        wire:target="guardar, enviarReciboEmailPostGuardado">
+                    <span wire:loading.remove wire:target="guardar, enviarReciboEmailPostGuardado">Registrar y emitir recibo</span>
+                    <span wire:loading wire:target="guardar">Registrando…</span>
+                    <span wire:loading wire:target="enviarReciboEmailPostGuardado">Enviando correo…</span>
+                </button>
             </div>
         </form>
     </div>
+
+    @if ($esOrigenEstudiantes && $emailEnvioPendiente)
+        <div wire:loading.flex
+             wire:target="enviarReciboEmailPostGuardado"
+             class="fixed inset-0 z-[100] items-center justify-center bg-neutral-900/45 backdrop-blur-sm px-4">
+            <div class="max-w-md rounded-2xl bg-white px-6 py-5 text-center shadow-xl ring-1 ring-black/5">
+                <div class="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600"></div>
+                <p class="text-sm font-semibold text-neutral-800">Enviando correo electrónico a:</p>
+                <p class="mt-1 break-all text-sm text-primary-700">{{ $emailEnvioPendiente }}</p>
+            </div>
+        </div>
+    @endif
 
     @script
     <script>
         $wire.on('se-swal-aviso', ({ mensaje, titulo }) => window.seSwalAviso(mensaje, titulo ?? 'Atención'));
         $wire.on('se-swal-error', ({ mensaje, titulo }) => window.seSwalError(mensaje, titulo ?? 'Error'));
+        $wire.on('cooperadora-enviar-recibo-email', () => $wire.enviarReciboEmailPostGuardado());
     </script>
     @endscript
 

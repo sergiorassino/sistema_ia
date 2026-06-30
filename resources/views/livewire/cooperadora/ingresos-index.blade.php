@@ -1,4 +1,6 @@
-<div class="se-page" x-on:cooperadora-abrir-pdf.window="window.open($event.detail.url, '_blank', 'noopener,noreferrer')">
+<div class="se-page"
+     x-data="{ emailReenvioEnCurso: '' }"
+     x-on:cooperadora-abrir-pdf.window="window.open($event.detail.url, '_blank', 'noopener,noreferrer')">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
@@ -104,12 +106,13 @@
                         @if ($ingreso->tipo === 'origen_estudiantes' && $tieneEmailPagador && ! $ingreso->anulado)
                             <button type="button"
                                     wire:click="reenviarReciboEmail({{ $ingreso->id }})"
+                                    x-on:click="emailReenvioEnCurso = @js($emailPagador)"
                                     wire:loading.attr="disabled"
-                                    wire:target="reenviarReciboEmail({{ $ingreso->id }})"
+                                    wire:target="reenviarReciboEmail"
                                     class="btn-secondary btn-sm"
                                     title="Reenviar recibo por email al pagador">
-                                <span wire:loading.remove wire:target="reenviarReciboEmail({{ $ingreso->id }})">Email</span>
-                                <span wire:loading wire:target="reenviarReciboEmail({{ $ingreso->id }})">…</span>
+                                <span wire:loading.remove wire:target="reenviarReciboEmail">Email</span>
+                                <span wire:loading wire:target="reenviarReciboEmail">…</span>
                             </button>
                         @endif
                         @if (! $ingreso->anulado)
@@ -133,6 +136,16 @@
     </div>
 
     <div class="mt-4">{{ $ingresos->links() }}</div>
+
+    <div wire:loading.flex
+         wire:target="reenviarReciboEmail"
+         class="fixed inset-0 z-[100] items-center justify-center bg-neutral-900/45 backdrop-blur-sm px-4">
+        <div class="max-w-md rounded-2xl bg-white px-6 py-5 text-center shadow-xl ring-1 ring-black/5">
+            <div class="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600"></div>
+            <p class="text-sm font-semibold text-neutral-800">Enviando correo electrónico a:</p>
+            <p class="mt-1 break-all text-sm text-primary-700" x-text="emailReenvioEnCurso"></p>
+        </div>
+    </div>
 
     @script
     <script>
