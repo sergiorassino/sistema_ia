@@ -1,4 +1,4 @@
-{{-- Permiso de examen por alumno: una hoja PDF por estudiante con materias adeudadas (todas las condiciones). --}}
+{{-- Permiso de examen por alumno: una hoja PDF por estudiante con materias adeudadas inscriptas a examen. --}}
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -6,8 +6,9 @@
                 <p class="se-eyebrow">Exámenes</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Permiso de examen</h2>
                 <p class="max-w-2xl text-sm text-white/80">
-                    {{ schoolCtx()->nivelNombre() }} · Una hoja por alumno con las materias adeudadas
-                    (<code class="rounded bg-white/15 px-1 text-xs">apro = 1</code>, todas las condiciones)
+                    {{ schoolCtx()->nivelNombre() }} · Una hoja por alumno con las materias adeudadas inscriptas a examen
+                    (<code class="rounded bg-white/15 px-1 text-xs">apro = 1</code>,
+                    <code class="rounded bg-white/15 px-1 text-xs">inscri = 1</code>)
                 </p>
             </div>
             <a href="{{ route('dashboard') }}"
@@ -66,7 +67,7 @@
                 <div>
                     <p class="se-section-title">Alumnos a imprimir</p>
                     <p class="mt-1 text-sm text-neutral-600">
-                        Incluye todas las materias adeudadas del alumno en este nivel, sin filtrar por condición ni inscripción
+                        Solo materias adeudadas con inscripción a examen activa en este nivel
                         (hasta {{ \App\Support\Examenes\PermisoExamen::FILAS_POR_PERMISO }} materias por hoja).
                     </p>
                 </div>

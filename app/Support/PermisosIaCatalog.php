@@ -55,6 +55,9 @@ final class PermisosIaCatalog
     /** Actas volantes de coloquio Dic / Feb (secundario, PDF). */
     public const CALIF_ACTAS_VOLANTES_COLOQUIO = 77;
 
+    /** Correo masivo HTML a familias de estudiantes matriculados regulares (BCC). */
+    public const EMAILS_MASIVOS_ESTUDIANTES = 78;
+
     public const MATRIZ_ANALITICO = 16;
 
     public const CERT_ALUMNO_REGULAR = 17;
@@ -252,6 +255,7 @@ final class PermisosIaCatalog
             ['id' => 73, 'orden' => self::COOP_INGRESOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: registro de ingresos y emisión de recibos PDF.'],
             ['id' => 74, 'orden' => self::COOP_EGRESOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: registro de egresos y órdenes de pago PDF.'],
             ['id' => 75, 'orden' => self::COOP_MOVIMIENTOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: consulta de movimientos por fecha y listado PDF con saldo.'],
+            ['id' => 78, 'orden' => self::EMAILS_MASIVOS_ESTUDIANTES, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Enviar Correo Masivo a Estudiantes: redacción HTML, selección por alumno o curso y auditoría de envíos.'],
         ];
     }
 

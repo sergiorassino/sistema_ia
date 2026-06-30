@@ -6,14 +6,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Permiso de examen por alumno: PDF con materias adeudadas (apro = 1) de todas las condiciones.
+ * Permiso de examen por alumno: PDF con materias adeudadas inscriptas a examen (apro = 1, inscri = 1).
  */
 final class PermisoExamen
 {
     public const FILAS_POR_PERMISO = 15;
 
     /**
-     * Alumnos del nivel con al menos una materia adeudada.
+     * Alumnos del nivel con al menos una materia adeudada inscripta a examen.
      *
      * @return Collection<int, object{
      *     idLegajos: int,
@@ -66,6 +66,7 @@ final class PermisoExamen
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->where('c.apro', 1)
+            ->where('c.inscri', 1)
             ->where('cu.idNivel', $idNivel)
             ->groupBy('l.id', 'l.apellido', 'l.nombre', 'l.dni')
             ->orderBy('l.apellido')
@@ -140,7 +141,7 @@ final class PermisoExamen
     }
 
     /**
-     * Materias adeudadas de un alumno (consulta por legajo, como el sistema anterior).
+     * Materias adeudadas inscriptas a examen de un alumno (consulta por legajo, como el sistema anterior).
      *
      * @return list<array{materia: string, curso: string, plan: string, condicion: string}>
      */
@@ -172,6 +173,7 @@ final class PermisoExamen
             ->where('c.idLegajos', $idLegajos)
             ->where('cu.idNivel', $idNivel)
             ->where('c.apro', 1)
+            ->where('c.inscri', 1)
             ->orderByDesc('t.ano')
             ->orderBy('mp.ord')
             ->orderBy('m.ord')

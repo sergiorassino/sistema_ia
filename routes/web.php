@@ -1,5 +1,6 @@
 ﻿<?php
 
+use App\Http\Controllers\EmailsMasivosAdjuntoDownloadController;
 use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\BoletinPrimEpqFamiliaPdfController;
 use App\Http\Controllers\Alumnos\BoletinEpqSecundarioFamiliaPdfController;
@@ -246,6 +247,9 @@ use App\Livewire\Comunicaciones\ComAuditoriaIndex;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
+use App\Livewire\EmailsMasivos\EmailsMasivosCampanaShow;
+use App\Livewire\EmailsMasivos\EmailsMasivosIndex;
+use App\Livewire\EmailsMasivos\EmailsMasivosNuevo;
 use App\Livewire\Listados\EstudiantesDatosExport;
 use App\Livewire\Viajes\SalidaViajeForm;
 use App\Livewire\Viajes\SalidaViajeImpresion;
@@ -803,6 +807,17 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:3')
         ->whereNumber('id')
         ->name('comunicaciones.abrir');
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::EMAILS_MASIVOS_ESTUDIANTES)->group(function () {
+        Route::get('/emails-masivos', EmailsMasivosIndex::class)->name('emails-masivos.index');
+        Route::get('/emails-masivos/nuevo', EmailsMasivosNuevo::class)->name('emails-masivos.nuevo');
+        Route::get('/emails-masivos/campana/{id}', EmailsMasivosCampanaShow::class)
+            ->whereNumber('id')
+            ->name('emails-masivos.campana');
+        Route::get('/emails-masivos/adjunto/{ref}', EmailsMasivosAdjuntoDownloadController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('emails-masivos.adjunto');
+    });
 
     // Administración: permisos del sistema (menú Configuración · subgrupo Permisos del sistema · orden 0)
     Route::get('/administracion/permisos', PermisosUsuariosIndex::class)

@@ -39,7 +39,7 @@
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf', 'viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf') ? 'true' : 'false' }},
         materialDidactico: {{ request()->routeIs('material-didactico.*') ? 'true' : 'false' }},
-        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))) ? 'true' : 'false' }},
+        cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
         calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') ? 'true' : 'false' }},
         calificacionesInicialSfq: {{ str_starts_with($route ?? '', 'calificacionesInicialSfq.') ? 'true' : 'false' }},
         calificacionesPrimario: {{ str_starts_with($route ?? '', 'calificacionesPrimario.') ? 'true' : 'false' }},
@@ -542,7 +542,7 @@
         @endif
 
         {{-- Comunicación institucional --}}
-        @if(tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5))
+        @if(tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -621,6 +621,21 @@
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                     </svg>
                     <span class="truncate">Auditoría Comunicación</span>
+                </a>
+                @endif
+
+                @if(tienePermiso(78))
+                <a href="{{ route('emails-masivos.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'emails-masivos.'),
+                   ])
+                   title="Enviar Correo Masivo a Estudiantes">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Correo masivo estudiantes</span>
                 </a>
                 @endif
 
