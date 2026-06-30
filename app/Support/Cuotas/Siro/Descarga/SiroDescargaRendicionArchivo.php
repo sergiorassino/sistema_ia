@@ -26,6 +26,7 @@ final class SiroDescargaRendicionArchivo
         $fechasAcred = [];
         $nroPlanilla = (int) $planilla->nroPlanilla;
         $nombreArchivo = self::resolverNombreArchivo($planilla, $nombreArchivoOrigen);
+        $indicePlanilla = self::indiceRegistrosPlanilla($nroPlanilla);
 
         DB::transaction(function () use (
             $lineas,
@@ -36,6 +37,7 @@ final class SiroDescargaRendicionArchivo
             &$resumen,
             &$idsPagoVistos,
             &$fechasAcred,
+            &$indicePlanilla,
         ): void {
             foreach ($lineas as $indice => $lineaCruda) {
                 $lineaCruda = rtrim((string) $lineaCruda, "\r\n");
@@ -66,6 +68,22 @@ final class SiroDescargaRendicionArchivo
                     : '—';
                 $canal = trim((string) ($linea['canalAbrev'] ?? ''));
                 $canalEtiqueta = $canal !== '' ? $canal : '—';
+
+                $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
+                if ($motivoDuplicadoPlanilla !== null) {
+                    $resumen->omitidos++;
+                    $resumen->agregarAdvertencia($motivoDuplicadoPlanilla);
+                    $resumen->agregarRegistroArchivo([
+                        'linea' => $indice + 1,
+                        'canal' => $canalEtiqueta,
+                        'idFacturaBuscado' => $idFacturaBuscado,
+                        'modalidadIdentificacion' => $modalidadIdentificacion,
+                        'estado' => 'omitido',
+                        'detalle' => 'Registro ya cargado en esta planilla.',
+                    ]);
+
+                    continue;
+                }
 
                 $idPago = (string) ($linea['idPagoSiro'] ?? '');
                 if ($idPago !== '' && $idPago !== '0000000000') {
@@ -167,6 +185,8 @@ final class SiroDescargaRendicionArchivo
                     'obs' => $obs,
                 ]);
 
+                self::registrarEnIndicePlanilla($linea, $indicePlanilla);
+
                 $resumen->procesados++;
                 $resumen->montoPagado = round($resumen->montoPagado + $montos['pagado'], 2);
                 $resumen->agregarRegistroArchivo([
@@ -227,5 +247,84 @@ final class SiroDescargaRendicionArchivo
         }
 
         return self::normalizarNombreArchivo((string) $planilla->nombreArchivo);
+    }
+
+    /**
+     * Índice de pagos ya descargados en la planilla (cargas parciales anteriores).
+     *
+     * @return array{cadenas: array<string, true>, idsPago: array<string, true>}
+     */
+    private static function indiceRegistrosPlanilla(int $nroPlanilla): array
+    {
+        $indice = [
+            'cadenas' => [],
+            'idsPago' => [],
+        ];
+
+        $cadenas = RendicionRoela::query()
+            ->where('nroPlanilla', $nroPlanilla)
+            ->pluck('cadenaPago');
+
+        foreach ($cadenas as $cadena) {
+            $cadena = (string) $cadena;
+            if ($cadena === '') {
+                continue;
+            }
+
+            $indice['cadenas'][$cadena] = true;
+
+            $parsed = SiroDescargaRendicionLinea::parsear($cadena);
+            if ($parsed === null) {
+                continue;
+            }
+
+            $idPago = (string) ($parsed['idPagoSiro'] ?? '');
+            if ($idPago !== '' && $idPago !== '0000000000') {
+                $indice['idsPago'][$idPago] = true;
+            }
+        }
+
+        return $indice;
+    }
+
+    /**
+     * @param  array{cadenas: array<string, true>, idsPago: array<string, true>}  $indicePlanilla
+     * @param  array{idPagoSiro: string, cadenaPago: string}  $linea
+     */
+    private static function motivoDuplicadoEnPlanilla(array $linea, array $indicePlanilla): ?string
+    {
+        $cadena = (string) ($linea['cadenaPago'] ?? '');
+        if ($cadena !== '' && isset($indicePlanilla['cadenas'][$cadena])) {
+            $idPago = (string) ($linea['idPagoSiro'] ?? '');
+            if ($idPago !== '' && $idPago !== '0000000000') {
+                return 'El pago SIRO '.$idPago.' ya fue cargado en esta planilla.';
+            }
+
+            return 'Registro ya cargado en esta planilla.';
+        }
+
+        $idPago = (string) ($linea['idPagoSiro'] ?? '');
+        if ($idPago !== '' && $idPago !== '0000000000' && isset($indicePlanilla['idsPago'][$idPago])) {
+            return 'El pago SIRO '.$idPago.' ya fue cargado en esta planilla.';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{cadenas: array<string, true>, idsPago: array<string, true>}  $indicePlanilla
+     * @param  array{idPagoSiro: string, cadenaPago: string}  $linea
+     */
+    private static function registrarEnIndicePlanilla(array $linea, array &$indicePlanilla): void
+    {
+        $cadena = (string) ($linea['cadenaPago'] ?? '');
+        if ($cadena !== '') {
+            $indicePlanilla['cadenas'][$cadena] = true;
+        }
+
+        $idPago = (string) ($linea['idPagoSiro'] ?? '');
+        if ($idPago !== '' && $idPago !== '0000000000') {
+            $indicePlanilla['idsPago'][$idPago] = true;
+        }
     }
 }

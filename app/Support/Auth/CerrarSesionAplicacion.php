@@ -22,11 +22,18 @@ final class CerrarSesionAplicacion
      * Si no hay nada, evitar flush/regenerateToken en cada GET: reduce carreras de CSRF
      * (doble carga, autocompletar + Livewire) que provocan 419 en bucle.
      */
+    public static function teniaAutenticacionActiva(?Request $request = null): bool
+    {
+        $request ??= request();
+
+        return Auth::check() || Auth::guard('alumno')->check();
+    }
+
     public static function haySesionAutenticadaOLegacy(?Request $request = null): bool
     {
         $request ??= request();
 
-        if (Auth::check() || Auth::guard('alumno')->check()) {
+        if (self::teniaAutenticacionActiva($request)) {
             return true;
         }
 

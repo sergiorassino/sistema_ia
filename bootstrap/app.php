@@ -29,6 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToGroup('web', ForceHttpsBehindProxy::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {
+            if (! $request->expectsJson() && $request->hasSession()) {
+                $request->session()->flash(
+                    'error',
+                    'Debe iniciar sesión para continuar. Si acaba de ingresar y vuelve a ver el login sin mensaje de contraseña, '
+                    .'revise APP_URL en el servidor (debe coincidir con la URL del navegador, p. ej. https://dominio.com/ia/colegio).',
+                );
+            }
+
             $path = trim($request->path(), '/');
 
             if ($path === 'alumnos' || str_starts_with($path, 'alumnos/')) {

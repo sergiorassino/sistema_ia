@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Auth;
 
+use App\Auth\ProfesorUserProvider;
 use App\Models\Profesor;
 use App\Models\Terlec;
 use App\Support\DniInput;
@@ -11,6 +12,7 @@ use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -81,7 +83,7 @@ class Login extends Component
         $profesor = Profesor::query()
             ->where('dni', $dni)
             ->orderBy('id', 'asc')
-            ->first(['ult_idNivel', 'ult_idTerlec']);
+            ->first(['ult_idNivel', 'ult_idTerlec', 'nivel']);
 
         if (! $profesor) {
             return;
@@ -94,16 +96,34 @@ class Login extends Component
             }
         }
 
+        // Primer ingreso (instalación nueva): sugerir nivel del legajo en `profesores.nivel`.
+        if ($this->idNivel === '' && (int) ($profesor->nivel ?? 0) > 0) {
+            $nivelLegajo = (int) $profesor->nivel;
+            if (NivelSistema::nivelPermitidoEnLogin($nivelLegajo)) {
+                $this->idNivel = $nivelLegajo;
+            }
+        }
+
         if ($this->idTerlec === '' && (int) $profesor->ult_idTerlec > 0) {
             $ultTerlec = (int) $profesor->ult_idTerlec;
             if (Terlec::query()->whereKey($ultTerlec)->exists()) {
                 $this->idTerlec = $ultTerlec;
             }
         }
+
+        // Primer ingreso: preseleccionar el ciclo lectivo más reciente si aún no hay uno.
+        if ($this->idTerlec === '') {
+            $terlecReciente = Terlec::paraSelector()->first();
+            if ($terlecReciente !== null) {
+                $this->idTerlec = (int) $terlecReciente->id;
+            }
+        }
     }
 
     public function rules(): array
     {
+        $terlecIds = Terlec::paraSelector()->pluck('id')->all();
+
         return [
             'dni' => ['required', 'digits_between:7,11'],
             'pwrd' => ['required', 'min:1'],
@@ -113,7 +133,12 @@ class Login extends Component
                 'min:1',
                 Rule::in(NivelSistema::nivelesParaLogin()->pluck('id')->all()),
             ],
-            'idTerlec' => ['required', 'integer', 'min:1'],
+            'idTerlec' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::in($terlecIds),
+            ],
         ];
     }
 
@@ -125,8 +150,10 @@ class Login extends Component
             'pwrd.required' => 'La contraseña es obligatoria.',
             'idNivel.required' => 'Seleccione un nivel.',
             'idNivel.integer' => 'Seleccione un nivel válido.',
+            'idNivel.in' => 'Seleccione un nivel válido para este colegio.',
             'idTerlec.required' => 'Seleccione un año lectivo.',
             'idTerlec.integer' => 'Seleccione un año lectivo válido.',
+            'idTerlec.in' => 'Seleccione un año lectivo válido. Si el desplegable está vacío, cargue ciclos en la tabla terlec.',
         ];
     }
 
@@ -177,10 +204,12 @@ class Login extends Component
 
             // Actualizar último nivel/año para TODOS los registros del mismo DNI
             // (hay usuarios con múltiples filas en `profesores`, una por nivel).
-            Profesor::query()->where('dni', $profesor->dni)->update([
-                'ult_idNivel' => (int) $this->idNivel,
-                'ult_idTerlec' => (int) $this->idTerlec,
-            ]);
+            if (Schema::hasColumn('profesores', 'ult_idNivel') && Schema::hasColumn('profesores', 'ult_idTerlec')) {
+                Profesor::query()->where('dni', $profesor->dni)->update([
+                    'ult_idNivel' => (int) $this->idNivel,
+                    'ult_idTerlec' => (int) $this->idTerlec,
+                ]);
+            }
 
             RateLimiter::clear($throttleKey);
 
@@ -190,6 +219,44 @@ class Login extends Component
         }
 
         RateLimiter::hit($throttleKey, 60);
+
+        $this->registrarErrorAutenticacion();
+    }
+
+    private function registrarErrorAutenticacion(): void
+    {
+        $nivelSeleccionado = (int) $this->idNivel;
+        $legajos = Profesor::query()
+            ->where('dni', $this->dni)
+            ->orderBy('id')
+            ->get(['id', 'nivel', 'pwrd']);
+
+        $nivelesConClaveValida = $legajos
+            ->filter(fn (Profesor $p) => ProfesorUserProvider::verificarPassword($p, $this->pwrd))
+            ->map(fn (Profesor $p) => (int) ($p->nivel ?? 0))
+            ->filter(fn (int $n) => $n > 0)
+            ->unique()
+            ->values();
+
+        if ($nivelesConClaveValida->isNotEmpty() && ! $nivelesConClaveValida->contains($nivelSeleccionado)) {
+            $nombres = NivelSistema::nivelesParaLogin()
+                ->whereIn('id', $nivelesConClaveValida->all())
+                ->pluck('nivel')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $lista = $nombres->isNotEmpty()
+                ? $nombres->implode('», «')
+                : $nivelesConClaveValida->implode(', ');
+
+            $this->addError(
+                'idNivel',
+                "La contraseña es correcta, pero el nivel seleccionado no coincide con su legajo. Pruebe con: «{$lista}».",
+            );
+
+            return;
+        }
 
         $this->addError('dni', 'DNI o contraseña incorrectos. Verifique sus datos.');
     }

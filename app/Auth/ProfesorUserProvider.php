@@ -40,7 +40,11 @@ class ProfesorUserProvider implements UserProvider
 
     public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
-        $plain  = $credentials['pwrd'] ?? '';
+        return self::verificarPassword($user, (string) ($credentials['pwrd'] ?? ''));
+    }
+
+    public static function verificarPassword(Authenticatable $user, string $plain): bool
+    {
         $stored = $user->getAuthPassword();
 
         // Support future bcrypt hashes as well as plain-text legacy passwords
