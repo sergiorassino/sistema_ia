@@ -424,7 +424,7 @@ return [
             'asunto' => 'Recibo de pago',
             /**
              * Remitente visible. Dirección y credenciales SMTP: COOP_MAIL_* en .env.
-             * `from_name` null → nombre institucional cooperadora (coop_config).
+             * Nombre: coop_config.nombre_institucion; fallback tenant / COOP_MAIL_FROM_NAME si vacío.
              */
             'from_name' => null,
         ],
