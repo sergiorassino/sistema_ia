@@ -32,8 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! $request->expectsJson() && $request->hasSession()) {
                 $request->session()->flash(
                     'error',
-                    'Debe iniciar sesión para continuar. Si acaba de ingresar y vuelve a ver el login sin mensaje de contraseña, '
-                    .'revise APP_URL en el servidor (debe coincidir con la URL del navegador, p. ej. https://dominio.com/ia/colegio).',
+                    'Debe iniciar sesión para continuar.',
                 );
             }
 
