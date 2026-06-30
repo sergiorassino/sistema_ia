@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureSchoolContext;
 use App\Http\Middleware\EnsureStudentContext;
 use App\Http\Middleware\ForceHttpsBehindProxy;
 use App\Http\Middleware\NoStoreResponse;
+use App\Http\Middleware\RegenerarSesionPostLogin;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->prependToGroup('web', ForceHttpsBehindProxy::class);
+        $middleware->appendToGroup('web', RegenerarSesionPostLogin::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {
             if (! $request->expectsJson() && $request->hasSession()) {

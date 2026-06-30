@@ -192,10 +192,11 @@ class Login extends Component
                 return;
             }
 
-            // Regenerar sesión primero (seguridad anti-session-fixation)
-            session()->regenerate();
+            // No regenerar aquí (POST Livewire): en navegadores nuevos la cookie puede no
+            // aplicarse antes del redirect. Ver RegenerarSesionPostLogin.
+            session(['auth.pending_session_regenerate' => true]);
 
-            // Guardar el contexto en la sesión ya regenerada
+            // Guardar el contexto en sesión
             SchoolContext::set(
                 idProfesor: $profesor->id,
                 idNivel: (int) $this->idNivel,
