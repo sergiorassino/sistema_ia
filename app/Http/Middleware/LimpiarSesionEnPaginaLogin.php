@@ -29,8 +29,7 @@ class LimpiarSesionEnPaginaLogin
             if ($teniaAuth) {
                 session()->flash(
                     'error',
-                    'No se pudo mantener la sesión activa. Ingrese nuevamente con DNI, contraseña, nivel y año lectivo. '
-                    .'Si el problema continúa tras un intento correcto, revise que APP_URL en el servidor coincida exactamente con la URL del navegador (incluida la subcarpeta /ia/…).',
+                    'No se pudo completar el ingreso. Vuelva a intentar con DNI, contraseña, nivel y año lectivo.',
                 );
             }
         }
