@@ -54,6 +54,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_DOC_ESTUDIANTE_AUTOGESTION = 'alumnos.doc-estudiante';
 
+    public const PURPOSE_EMAILS_MASIVOS_ADJUNTO = 'emails-masivos.adjunto';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -67,6 +69,15 @@ final class OpaqueRouteToken
     public static function forCuotasAdeudadasAutogestion(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ALUMNOS_CUOTAS_ADEUDADAS, $idLegajo, $idLegajo);
+    }
+
+    public static function forEmailsMasivosAdjunto(int $idTerlec, int $idEmailEscrito, string $nombreArchivo): string
+    {
+        return self::encodePayload(self::PURPOSE_EMAILS_MASIVOS_ADJUNTO, [
+            't' => $idTerlec,
+            'e' => $idEmailEscrito,
+            'n' => mb_substr(trim($nombreArchivo), 0, 30),
+        ]);
     }
 
     public static function forComprobanteAfipAutogestion(int $idComprobanteAfip, int $idCuotaGenerada, int $idLegajo): string

@@ -20,4 +20,8 @@ return [
             'simulado' => false,
         ],
     ],
+
+    'emails_masivos' => [
+        'simulado' => false,
+    ],
 ];

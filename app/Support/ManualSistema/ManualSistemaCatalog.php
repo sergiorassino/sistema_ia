@@ -644,7 +644,7 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Permiso de examen',
                         'Menú Exámenes → Permisos de Examen',
-                        'Imprime un permiso PDF por alumno con todas sus materias adeudadas del turno.',
+                        'Imprime un permiso PDF por alumno con las materias adeudadas inscriptas a examen (inscri = 1).',
                         [
                             'Al ingresar desde el menú, elija turno de examen y año lectivo y confirme el recálculo de condiciones.',
                             'Indique el número de permiso inicial (por defecto 1) y la fecha que figurará en el documento.',
