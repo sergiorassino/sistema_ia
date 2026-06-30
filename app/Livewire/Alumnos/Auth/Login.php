@@ -97,7 +97,7 @@ class Login extends Component
             /** @var Legajo $alumno */
             $alumno = Auth::guard('alumno')->user();
 
-            session()->regenerate();
+            session(['auth.pending_session_regenerate' => true]);
 
             $idNivel = (int) ($alumno->idnivel ?? 0);
             if ($idNivel <= 0) {
@@ -130,7 +130,7 @@ class Login extends Component
 
             RateLimiter::clear($throttleKey);
 
-            return redirect()->route(tenantAutogestionRutaInicio());
+            return $this->redirectRoute(tenantAutogestionRutaInicio(), navigate: false);
         }
 
         RateLimiter::hit($throttleKey, 60);
