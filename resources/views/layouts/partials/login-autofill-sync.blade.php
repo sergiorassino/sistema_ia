@@ -24,6 +24,8 @@
         const syncAutofill = async () => {
             const dniVal = readField('dni').replace(/\D/g, '').slice(0, 11);
             const pwrdVal = readField('pwrd');
+            const idNivelVal = readField('idNivel');
+            const idTerlecVal = readField('idTerlec');
             let dniCambio = false;
 
             if (dniVal.length >= 7 && $wire.get('dni') !== dniVal) {
@@ -33,6 +35,14 @@
 
             if (pwrdVal !== '' && $wire.get('pwrd') !== pwrdVal) {
                 await $wire.set('pwrd', pwrdVal);
+            }
+
+            if (idNivelVal !== '' && String($wire.get('idNivel')) !== idNivelVal) {
+                await $wire.set('idNivel', idNivelVal);
+            }
+
+            if (idTerlecVal !== '' && String($wire.get('idTerlec')) !== idTerlecVal) {
+                await $wire.set('idTerlec', idTerlecVal);
             }
 
             if (sugerirUltimoAcceso && (dniCambio || (dniVal.length >= 7 && pwrdVal !== ''))) {
@@ -50,6 +60,8 @@
         ['change', 'input'].forEach((eventName) => {
             form.querySelector('#dni')?.addEventListener(eventName, scheduleSyncAutofill);
             form.querySelector('#pwrd')?.addEventListener(eventName, scheduleSyncAutofill);
+            form.querySelector('#idNivel')?.addEventListener(eventName, scheduleSyncAutofill);
+            form.querySelector('#idTerlec')?.addEventListener(eventName, scheduleSyncAutofill);
         });
 
         const boot = () => {
