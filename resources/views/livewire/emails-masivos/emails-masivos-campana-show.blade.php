@@ -6,9 +6,20 @@
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Detalle de campaña</h2>
                 <p class="mt-2 text-sm text-white/80">{{ $seed->fechhora?->format('d/m/Y H:i') }} · {{ $seed->subject }}</p>
             </div>
-            <a href="{{ route('emails-masivos.index') }}" class="rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">Volver</a>
+            <a href="{{ route('emails-masivos.historial') }}" class="rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">Volver</a>
         </div>
     </section>
+
+    @if (tienePermiso(\App\Support\PermisosIaCatalog::EMAILS_MASIVOS_BORRAR))
+        <div class="mb-4 flex justify-end">
+            <button type="button"
+                    x-data
+                    x-on:click="seSwalConfirmar('¿Eliminar este envío del historial? Se borrarán {{ $envios->count() }} registro(s). Luego podrá eliminar el mensaje escrito si no quedan más envíos.', 'Eliminar envío', { icon: 'warning' }).then(ok => ok && $wire.confirmarEliminarCampana())"
+                    class="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100">
+                Eliminar envío del historial
+            </button>
+        </div>
+    @endif
 
     <div class="grid gap-4 lg:grid-cols-2">
         <div class="se-card p-5">
@@ -56,4 +67,11 @@
             </table>
         </div>
     </div>
+
+    @script
+    <script>
+        $wire.on('se-swal-exito', ({ mensaje }) => window.seSwalExito(mensaje));
+        $wire.on('se-swal-error', ({ mensaje }) => window.seSwalError(mensaje));
+    </script>
+    @endscript
 </div>

@@ -2,12 +2,13 @@
 
 namespace App\Livewire\EmailsMasivos;
 
-use App\Models\EmailEnviado;
-use App\Models\Profesor;
-use App\Push\DestinatariosRepository;
+use App\Models\EmailEscrito;
+use App\Support\EmailsMasivos\EmailsMasivosAdjuntosStorage;
+use App\Support\EmailsMasivos\EmailsMasivosEscritoEnvios;
 use App\Support\EmailsMasivos\EmailsMasivosConfig;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,14 +18,10 @@ class EmailsMasivosIndex extends Component
 
     public string $filtroAsunto = '';
 
-    public string $periodo = 'actual';
-
-    public ?int $idProfesorFiltro = null;
-
     public function mount(): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::EMAILS_MASIVOS_ESTUDIANTES), 403);
-        abort_unless(Schema::hasTable('emails_enviados'), 404);
+        abort_unless(Schema::hasTable('emails_escritos') && Schema::hasTable('emails_enviados'), 404);
     }
 
     public function updatedFiltroAsunto(): void
@@ -32,25 +29,41 @@ class EmailsMasivosIndex extends Component
         $this->resetPage();
     }
 
-    public function updatedPeriodo(): void
+    public function confirmarEliminar(int $id): void
     {
-        $this->resetPage();
+        if (! tienePermiso(PermisosIaCatalog::EMAILS_MASIVOS_BORRAR)) {
+            $this->dispatch('se-swal-error', mensaje: 'No tiene permiso para borrar mensajes de correo masivo.');
+
+            return;
+        }
+
+        $escrito = EmailEscrito::query()->find($id);
+        if ($escrito === null) {
+            $this->dispatch('se-swal-error', mensaje: 'El mensaje ya no existe.');
+
+            return;
+        }
+
+        $ctx = schoolCtx();
+        if (EmailsMasivosEscritoEnvios::escritoTieneEnvios($escrito, (int) $ctx->idNivel)) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: 'Este mensaje ya fue enviado. Elimine primero todos los envíos registrados en el historial.',
+            );
+
+            return;
+        }
+
+        $dir = 'emails-masivos/' . tenantSlug() . '/' . (int) $ctx->idTerlec . '/' . $id;
+        Storage::disk(EmailsMasivosAdjuntosStorage::DISK)->deleteDirectory($dir);
+
+        $escrito->delete();
+        $this->dispatch('se-swal-exito', mensaje: 'Mensaje eliminado.');
     }
 
     public function render()
     {
-        $ctx = schoolCtx();
-
-        $query = EmailEnviado::query()
-            ->where('idNiveles', (int) $ctx->idNivel);
-
-        if ($this->periodo === 'actual') {
-            $query->where('idTerlec', (int) $ctx->idTerlec);
-        }
-
-        if ($this->idProfesorFiltro) {
-            $query->where('idProfesores', $this->idProfesorFiltro);
-        }
+        $query = EmailEscrito::query()->orderByDesc('id');
 
         $asunto = trim($this->filtroAsunto);
         if ($asunto !== '') {
@@ -58,21 +71,16 @@ class EmailsMasivosIndex extends Component
             $query->where('subject', 'like', $like);
         }
 
-        $campanias = $query
-            ->selectRaw('MIN(id) as id_seed, idProfesores, subject, fechhora, COUNT(*) as total_envios, MAX(attached) as attached')
-            ->groupBy('idProfesores', 'subject', 'fechhora', 'texto')
-            ->orderByDesc('fechhora')
-            ->orderByDesc('id_seed')
-            ->paginate(20);
-
-        $profesoresIds = collect($campanias->items())->pluck('idProfesores')->unique()->filter()->all();
-        $profesores = $profesoresIds !== []
-            ? Profesor::query()->whereIn('id', $profesoresIds)->get(['id', 'apellido', 'nombre'])->keyBy('id')
-            : collect();
+        $escritos = $query->paginate(25);
+        $ctx = schoolCtx();
+        $escritosConEnvios = EmailsMasivosEscritoEnvios::idsConEnvios(
+            $escritos->getCollection(),
+            (int) $ctx->idNivel,
+        );
 
         return view('livewire.emails-masivos.emails-masivos-index', [
-            'campanias' => $campanias,
-            'profesores' => $profesores,
+            'escritos' => $escritos,
+            'escritosConEnvios' => $escritosConEnvios,
             'maxDestinatarios' => EmailsMasivosConfig::maxDestinatariosPorEnvio(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Correo masivo a estudiantes']);
     }

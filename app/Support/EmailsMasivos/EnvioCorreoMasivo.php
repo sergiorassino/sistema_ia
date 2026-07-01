@@ -9,12 +9,13 @@ use App\Models\Profesor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 final class EnvioCorreoMasivo
 {
     /**
+     * Envía un mensaje ya guardado en emails_escritos (sin crear otro registro escrito).
+     *
      * @param  list<array{
      *     email:string,
      *     tipo:string,
@@ -23,17 +24,14 @@ final class EnvioCorreoMasivo
      *     alumnoLabel:string,
      *     cursoLabel:string
      * }>  $destinatarios
-     * @param  list<\Livewire\Features\SupportFileUploads\TemporaryUploadedFile>  $archivosTemp
      * @return array{ok:bool,mensaje:string,destinatarios:list<string>,idEmailEscrito:?int}
      */
-    public static function ejecutar(
+    public static function ejecutarDesdeEscrito(
+        EmailEscrito $escrito,
         Profesor $profesor,
         int $idNivel,
         int $idTerlec,
-        string $asunto,
-        string $html,
         array $destinatarios,
-        array $archivosTemp = [],
     ): array {
         $emailRemitente = trim((string) ($profesor->email ?? ''));
         $pass = trim((string) ($profesor->emailPass ?? ''));
@@ -56,72 +54,44 @@ final class EnvioCorreoMasivo
             );
         }
 
-        $nombresPreview = array_map(
-            static fn ($f) => EmailsMasivosAdjuntosStorage::nombreSeguro($f->getClientOriginalName()),
-            $archivosTemp,
-        );
-        if ($errAdj = EmailsMasivosAdjuntosStorage::validarListaNombres($nombresPreview)) {
-            return self::error($errAdj);
-        }
-
-        $asunto = mb_substr(trim($asunto), 0, 254);
-        $attachedStr = implode('|', $nombresPreview);
+        $asunto = mb_substr(trim((string) $escrito->subject), 0, 254);
+        $html = (string) $escrito->text;
+        $attached = (string) ($escrito->attached ?? '');
         $nombreRemitente = trim(($profesor->apellido ?? '') . ', ' . ($profesor->nombre ?? ''));
         if ($nombreRemitente === ',') {
             $nombreRemitente = 'Institución';
         }
 
         $emailsBcc = array_map(static fn (array $d) => $d['email'], $destinatarios);
-        $listaOk = $emailsBcc;
+        $pathsAbs = EmailsMasivosAdjuntosStorage::pathsAbsolutosCampana($idTerlec, (int) $escrito->id, $attached);
 
         if (EmailsMasivosConfig::simulado()) {
-            return self::persistirSinSmtp(
+            return self::persistirEnviosSinSmtp(
+                $escrito,
                 $profesor,
                 $idNivel,
                 $idTerlec,
-                $asunto,
-                $html,
-                $attachedStr,
                 $destinatarios,
-                $archivosTemp,
-                $listaOk,
+                $emailsBcc,
             );
         }
 
         try {
             return DB::transaction(function () use (
+                $escrito,
                 $profesor,
                 $idNivel,
                 $idTerlec,
+                $destinatarios,
+                $emailsBcc,
                 $asunto,
                 $html,
-                $attachedStr,
-                $destinatarios,
-                $archivosTemp,
-                $emailsBcc,
-                $listaOk,
+                $attached,
                 $emailRemitente,
                 $pass,
                 $nombreRemitente,
+                $pathsAbs,
             ) {
-                $escrito = EmailEscrito::query()->create([
-                    'subject' => $asunto,
-                    'text' => $html,
-                    'attached' => $attachedStr,
-                ]);
-
-                $adjuntos = EmailsMasivosAdjuntosStorage::guardarParaCampana(
-                    $idTerlec,
-                    (int) $escrito->id,
-                    $archivosTemp,
-                );
-
-                $pathsAbs = [];
-                $disk = Storage::disk(EmailsMasivosAdjuntosStorage::DISK);
-                foreach ($adjuntos['paths'] as $rel) {
-                    $pathsAbs[] = $disk->path($rel);
-                }
-
                 self::configurarMailerProfesor($emailRemitente, $pass);
                 self::enviarBccChunks(
                     $asunto,
@@ -132,32 +102,19 @@ final class EnvioCorreoMasivo
                     $pathsAbs,
                 );
 
-                $fechhora = now();
-                foreach ($destinatarios as $d) {
-                    EmailEnviado::query()->create([
-                        'mailDestino' => $d['email'],
-                        'fechhora' => $fechhora,
-                        'idProfesores' => (int) $profesor->id,
-                        'idLegajos' => $d['idLegajo'],
-                        'idCursos' => $d['idCurso'],
-                        'idNiveles' => $idNivel,
-                        'idTerlec' => $idTerlec,
-                        'subject' => $asunto,
-                        'texto' => $html,
-                        'attached' => $adjuntos['attached'],
-                    ]);
-                }
+                self::insertarEnvios($profesor, $idNivel, $idTerlec, $destinatarios, $asunto, $html, $attached);
 
                 return [
                     'ok' => true,
                     'mensaje' => 'Correo enviado con éxito.',
-                    'destinatarios' => $listaOk,
+                    'destinatarios' => $emailsBcc,
                     'idEmailEscrito' => (int) $escrito->id,
                 ];
             });
         } catch (Throwable $e) {
             Log::error('Envío correo masivo falló', [
                 'profesor' => $profesor->id,
+                'id_escrito' => $escrito->id,
                 'error' => $e->getMessage(),
             ]);
 
@@ -208,60 +165,35 @@ final class EnvioCorreoMasivo
 
     /**
      * @param  list<array<string,mixed>>  $destinatarios
-     * @param  list<\Livewire\Features\SupportFileUploads\TemporaryUploadedFile>  $archivosTemp
      * @param  list<string>  $listaOk
      * @return array{ok:bool,mensaje:string,destinatarios:list<string>,idEmailEscrito:?int}
      */
-    private static function persistirSinSmtp(
+    private static function persistirEnviosSinSmtp(
+        EmailEscrito $escrito,
         Profesor $profesor,
         int $idNivel,
         int $idTerlec,
-        string $asunto,
-        string $html,
-        string $attachedStr,
         array $destinatarios,
-        array $archivosTemp,
         array $listaOk,
     ): array {
         try {
             return DB::transaction(function () use (
+                $escrito,
                 $profesor,
                 $idNivel,
                 $idTerlec,
-                $asunto,
-                $html,
-                $attachedStr,
                 $destinatarios,
-                $archivosTemp,
                 $listaOk,
             ) {
-                $escrito = EmailEscrito::query()->create([
-                    'subject' => $asunto,
-                    'text' => $html,
-                    'attached' => $attachedStr,
-                ]);
-
-                $adjuntos = EmailsMasivosAdjuntosStorage::guardarParaCampana(
+                self::insertarEnvios(
+                    $profesor,
+                    $idNivel,
                     $idTerlec,
-                    (int) $escrito->id,
-                    $archivosTemp,
+                    $destinatarios,
+                    (string) $escrito->subject,
+                    (string) $escrito->text,
+                    (string) ($escrito->attached ?? ''),
                 );
-
-                $fechhora = now();
-                foreach ($destinatarios as $d) {
-                    EmailEnviado::query()->create([
-                        'mailDestino' => $d['email'],
-                        'fechhora' => $fechhora,
-                        'idProfesores' => (int) $profesor->id,
-                        'idLegajos' => $d['idLegajo'],
-                        'idCursos' => $d['idCurso'],
-                        'idNiveles' => $idNivel,
-                        'idTerlec' => $idTerlec,
-                        'subject' => $asunto,
-                        'texto' => $html,
-                        'attached' => $adjuntos['attached'],
-                    ]);
-                }
 
                 Log::info('Correo masivo SIMULADO', [
                     'id_emails_escritos' => $escrito->id,
@@ -277,6 +209,35 @@ final class EnvioCorreoMasivo
             });
         } catch (Throwable $e) {
             return self::error('ERROR AL REGISTRAR EL ENVÍO: ' . mb_substr($e->getMessage(), 0, 500));
+        }
+    }
+
+    /**
+     * @param  list<array<string,mixed>>  $destinatarios
+     */
+    private static function insertarEnvios(
+        Profesor $profesor,
+        int $idNivel,
+        int $idTerlec,
+        array $destinatarios,
+        string $asunto,
+        string $html,
+        string $attached,
+    ): void {
+        $fechhora = now();
+        foreach ($destinatarios as $d) {
+            EmailEnviado::query()->create([
+                'mailDestino' => $d['email'],
+                'fechhora' => $fechhora,
+                'idProfesores' => (int) $profesor->id,
+                'idLegajos' => $d['idLegajo'],
+                'idCursos' => $d['idCurso'],
+                'idNiveles' => $idNivel,
+                'idTerlec' => $idTerlec,
+                'subject' => mb_substr(trim($asunto), 0, 254),
+                'texto' => $html,
+                'attached' => $attached,
+            ]);
         }
     }
 

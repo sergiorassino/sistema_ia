@@ -248,8 +248,10 @@ use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\EmailsMasivos\EmailsMasivosCampanaShow;
+use App\Livewire\EmailsMasivos\EmailsMasivosEnviar;
+use App\Livewire\EmailsMasivos\EmailsMasivosForm;
+use App\Livewire\EmailsMasivos\EmailsMasivosHistorial;
 use App\Livewire\EmailsMasivos\EmailsMasivosIndex;
-use App\Livewire\EmailsMasivos\EmailsMasivosNuevo;
 use App\Livewire\Listados\EstudiantesDatosExport;
 use App\Livewire\Viajes\SalidaViajeForm;
 use App\Livewire\Viajes\SalidaViajeImpresion;
@@ -810,7 +812,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::EMAILS_MASIVOS_ESTUDIANTES)->group(function () {
         Route::get('/emails-masivos', EmailsMasivosIndex::class)->name('emails-masivos.index');
-        Route::get('/emails-masivos/nuevo', EmailsMasivosNuevo::class)->name('emails-masivos.nuevo');
+        Route::get('/emails-masivos/form/{id?}', EmailsMasivosForm::class)->whereNumber('id')->name('emails-masivos.form');
+        Route::get('/emails-masivos/enviar/{id}', EmailsMasivosEnviar::class)->whereNumber('id')->name('emails-masivos.enviar');
+        Route::get('/emails-masivos/historial', EmailsMasivosHistorial::class)->name('emails-masivos.historial');
         Route::get('/emails-masivos/campana/{id}', EmailsMasivosCampanaShow::class)
             ->whereNumber('id')
             ->name('emails-masivos.campana');

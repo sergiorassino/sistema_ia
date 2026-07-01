@@ -26,7 +26,7 @@ final class DestinatariosEmailsMasivos
         $prefix = addcslashes($t, '%_\\') . '%';
 
         return self::queryMatriculaRegular($idNivel, $idTerlec)
-            ->where(function ($w) use ($prefix) {
+            ->where(function ($w) use ($prefix, $t) {
                 $w->where('l.apellido', 'like', $prefix)
                     ->orWhere('l.nombre', 'like', $prefix);
                 if (ctype_digit($t)) {

@@ -1,32 +1,12 @@
 <?php
 
-namespace App\Livewire\EmailsMasivos;
+namespace App\Livewire\EmailsMasivos\Concerns;
 
-use App\Models\Profesor;
 use App\Push\DestinatariosRepository;
 use App\Support\EmailsMasivos\DestinatariosEmailsMasivos;
-use App\Support\EmailsMasivos\EmailsMasivosAdjuntosStorage;
-use App\Support\EmailsMasivos\EmailsMasivosConfig;
-use App\Support\EmailsMasivos\EnvioCorreoMasivo;
-use App\Support\PermisosIaCatalog;
-use Illuminate\Support\Facades\Schema;
-use Livewire\Component;
-use Livewire\WithFileUploads;
 
-class EmailsMasivosNuevo extends Component
+trait SeleccionDestinatariosCorreoMasivo
 {
-    use WithFileUploads;
-
-    /** redactar | destinatarios | confirmar | resultado */
-    public string $paso = 'redactar';
-
-    public string $asunto = '';
-
-    public string $contenidoHtml = '';
-
-    /** @var list<\Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
-    public array $adjuntosArchivos = [];
-
     /** alumnos | cursos */
     public string $tipoDestino = 'cursos';
 
@@ -70,19 +50,6 @@ class EmailsMasivosNuevo extends Component
     /** @var list<int> */
     public array $modalCursosMarcados = [];
 
-    /** @var list<string> */
-    public array $resultadoDestinatarios = [];
-
-    public string $resultadoMensaje = '';
-
-    public ?int $resultadoIdEscrito = null;
-
-    public function mount(): void
-    {
-        abort_unless(tienePermiso(PermisosIaCatalog::EMAILS_MASIVOS_ESTUDIANTES), 403);
-        abort_unless(Schema::hasTable('emails_escritos') && Schema::hasTable('emails_enviados'), 404);
-    }
-
     public function updatedModalAlumnosFiltro(): void
     {
         if ($this->modalAlumnosAbierto) {
@@ -102,77 +69,6 @@ class EmailsMasivosNuevo extends Component
         $this->lineasAlumnos = [];
         $this->alumnosSeleccionados = [];
         $this->cursosSeleccionados = [];
-    }
-
-    public function irADestinatarios(): void
-    {
-        $this->validate([
-            'asunto' => ['required', 'string', 'max:254'],
-            'contenidoHtml' => ['required', 'string', 'min:3'],
-        ], [
-            'asunto.required' => 'Ingrese el asunto.',
-            'contenidoHtml.required' => 'Redacte el cuerpo del mensaje.',
-        ]);
-
-        $this->validarAdjuntosPendientes();
-        $this->paso = 'destinatarios';
-    }
-
-    public function irAConfirmacion(): void
-    {
-        $this->validarSeleccionAlumnos();
-        $this->paso = 'confirmar';
-    }
-
-    public function volverARedactar(): void
-    {
-        $this->paso = 'redactar';
-    }
-
-    public function volverADestinatarios(): void
-    {
-        $this->paso = 'destinatarios';
-    }
-
-    public function confirmarYEnviar(): void
-    {
-        $this->validarSeleccionAlumnos();
-        $destinatarios = $this->calcularDestinatariosEnvio();
-        $n = count($destinatarios);
-
-        if ($n > EmailsMasivosConfig::maxDestinatariosPorEnvio()) {
-            $this->dispatch('se-swal-error', mensaje: 'La selección supera el máximo de '
-                . EmailsMasivosConfig::maxDestinatariosPorEnvio()
-                . ' destinatarios. Reduzca el alcance antes de enviar.');
-
-            return;
-        }
-
-        $ctx = schoolCtx();
-        $profesor = $ctx->profesor();
-        abort_if($profesor === null, 403);
-
-        $resultado = EnvioCorreoMasivo::ejecutar(
-            $profesor,
-            (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
-            $this->asunto,
-            $this->contenidoHtml,
-            $destinatarios,
-            $this->adjuntosArchivos,
-        );
-
-        if (! $resultado['ok']) {
-            $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);
-
-            return;
-        }
-
-        $this->resultadoDestinatarios = $resultado['destinatarios'];
-        $this->resultadoMensaje = $resultado['mensaje'];
-        $this->resultadoIdEscrito = $resultado['idEmailEscrito'];
-        $this->paso = 'resultado';
-        $this->dispatch('se-swal-exito', mensaje: $resultado['mensaje']);
     }
 
     public function abrirModalAlumnos(): void
@@ -274,12 +170,6 @@ class EmailsMasivosNuevo extends Component
         }
     }
 
-    public function removeAdjunto(int $index): void
-    {
-        unset($this->adjuntosArchivos[$index]);
-        $this->adjuntosArchivos = array_values($this->adjuntosArchivos);
-    }
-
     /**
      * @return list<array<string,mixed>>
      */
@@ -294,78 +184,7 @@ class EmailsMasivosNuevo extends Component
         );
     }
 
-    public function render()
-    {
-        $ctx = schoolCtx();
-        $profesor = $ctx->profesor();
-        $credencialesOk = $profesor !== null
-            && trim((string) ($profesor->email ?? '')) !== ''
-            && trim((string) ($profesor->emailPass ?? '')) !== '';
-
-        $destinatarios = $this->paso === 'confirmar' || $this->paso === 'destinatarios'
-            ? $this->calcularDestinatariosEnvio()
-            : [];
-
-        $lineasMarcadas = $this->lineasAlumnosMarcadas();
-        $totalAlumnosMarcados = count($lineasMarcadas);
-        $nEnvios = count($destinatarios);
-        $maxEnvio = EmailsMasivosConfig::maxDestinatariosPorEnvio();
-        $avisoEnvio = EmailsMasivosConfig::maxDestinatariosAviso();
-
-        $omitidos = max(0, $totalAlumnosMarcados - count(array_unique(array_map(
-            fn ($l) => (int) $l['idLegajo'],
-            $lineasMarcadas,
-        ))));
-
-        return view('livewire.emails-masivos.emails-masivos-nuevo', [
-            'credencialesOk' => $credencialesOk,
-            'profesor' => $profesor,
-            'destinatariosPreview' => $destinatarios,
-            'nEnvios' => $nEnvios,
-            'maxEnvio' => $maxEnvio,
-            'avisoEnvio' => $avisoEnvio,
-            'superaTope' => $nEnvios > $maxEnvio,
-            'superaAviso' => $nEnvios > $avisoEnvio && $nEnvios <= $maxEnvio,
-            'simulado' => EmailsMasivosConfig::simulado(),
-            'lineasPorCurso' => collect($this->lineasAlumnos)->groupBy('idCurso'),
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Nuevo correo masivo']);
-    }
-
-    private function validarAdjuntosPendientes(): void
-    {
-        if ($this->adjuntosArchivos === []) {
-            return;
-        }
-
-        $maxBytes = EmailsMasivosConfig::adjuntoMaxBytes();
-        $maxCount = EmailsMasivosConfig::adjuntosMaxCount();
-        if (count($this->adjuntosArchivos) > $maxCount) {
-            $this->addError('adjuntosArchivos', 'Máximo ' . $maxCount . ' adjuntos.');
-
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'adjuntosArchivos' => 'Máximo ' . $maxCount . ' adjuntos.',
-            ]);
-        }
-
-        $nombres = [];
-        foreach ($this->adjuntosArchivos as $file) {
-            if ($file->getSize() > $maxBytes) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'adjuntosArchivos' => 'Cada adjunto debe pesar como máximo '
-                        . (int) config('emails_masivos.adjunto_max_mb', 10) . ' MB.',
-                ]);
-            }
-            $nombres[] = EmailsMasivosAdjuntosStorage::nombreSeguro($file->getClientOriginalName());
-        }
-
-        if ($err = EmailsMasivosAdjuntosStorage::validarListaNombres($nombres)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'adjuntosArchivos' => $err,
-            ]);
-        }
-    }
-
-    private function validarSeleccionAlumnos(): void
+    protected function validarSeleccionDestinatarios(): void
     {
         if ($this->lineasAlumnosMarcadas() === []) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -383,7 +202,7 @@ class EmailsMasivosNuevo extends Component
     /**
      * @return list<array<string,mixed>>
      */
-    private function lineasAlumnosMarcadas(): array
+    protected function lineasAlumnosMarcadas(): array
     {
         return array_values(array_filter(
             $this->lineasAlumnos,
@@ -391,7 +210,7 @@ class EmailsMasivosNuevo extends Component
         ));
     }
 
-    private function reconstruirLineasDesdeAlumnos(int $idNivel, int $idTerlec): void
+    protected function reconstruirLineasDesdeAlumnos(int $idNivel, int $idTerlec): void
     {
         $lineas = [];
         foreach ($this->alumnosSeleccionados as $alumno) {
@@ -400,11 +219,10 @@ class EmailsMasivosNuevo extends Component
             if ($mat === null) {
                 continue;
             }
-            $idCurso = (int) $mat['idCurso'];
             $lineas[] = [
                 'key' => 'a-' . $idLegajo,
                 'idLegajo' => $idLegajo,
-                'idCurso' => $idCurso,
+                'idCurso' => (int) $mat['idCurso'],
                 'label' => (string) $alumno['label'],
                 'cursoLabel' => '',
                 'marcado' => true,
@@ -413,7 +231,7 @@ class EmailsMasivosNuevo extends Component
         $this->lineasAlumnos = $lineas;
     }
 
-    private function reconstruirLineasDesdeCursos(int $idNivel, int $idTerlec): void
+    protected function reconstruirLineasDesdeCursos(int $idNivel, int $idTerlec): void
     {
         $lineas = [];
         foreach ($this->cursosSeleccionados as $curso) {
@@ -433,7 +251,7 @@ class EmailsMasivosNuevo extends Component
         $this->lineasAlumnos = $lineas;
     }
 
-    private function recargarModalAlumnosLista(): void
+    protected function recargarModalAlumnosLista(): void
     {
         $ctx = schoolCtx();
         if (! $ctx->idNivel || ! $ctx->idTerlec) {
@@ -457,7 +275,7 @@ class EmailsMasivosNuevo extends Component
         );
     }
 
-    private function recargarModalCursosLista(): void
+    protected function recargarModalCursosLista(): void
     {
         $ctx = schoolCtx();
         if (! $ctx->idNivel || ! $ctx->idTerlec) {
