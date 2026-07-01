@@ -11,12 +11,16 @@ use Throwable;
 /**
  * Importa calificaciones de primario desde CSV GE/CIDI (formato grados 1°–6°).
  *
- * Por fila: curso (PRIMER GRADO…), división, DNI, código de espacio curricular
- * (`Cód. Esp. Curricular` → `matplan.codGE|codGE2|codGE3`), notas de evaluaciones 1 y 2
- * y aprobación final (`ic01`–`ic03`, `ic05`–`ic16`).
+ * Formato CIDI (59 columnas): la etapa 1 del archivo no se importa. Etapa 2 CIDI → 1ª etapa
+ * del sistema (ic05–ic10, ic01); etapa 3 CIDI → 2ª etapa (ic11–ic16, ic02); apreciación final → ic03.
+ * Cada celda del CSV va solo a su campo; celda vacía borra el valor en BD. No se copian parciales
+ * a finales de etapa ni se inventan notas.
  *
- * Criterio de actualización: exactamente una fila en `calificaciones` con
- * `idLegajos` + `idTerlec` + `idMaterias` (misma materia del curso resuelta por código GE).
+ * Por fila: curso (PRIMER GRADO…), división, DNI, columna M «Cód. Esp. Curricular» cruzada solo
+ * con `matplan.codGE` en el curso del ciclo activo.
+ *
+ * Criterio de actualización: la misma fila que usa la carga por estudiante
+ * (`idMatricula` + `idMaterias`, con fallback legacy por `ord`).
  */
 final class GeCsvImporterPrimario
 {
@@ -38,35 +42,40 @@ final class GeCsvImporterPrimario
 
     private const COL_COD_MATERIA = 12;
 
-    private const COL_N1E1 = 29;
+    /** CIDI etapa 2 → sistema 1ª etapa (parciales). */
+    private const COL_CIDI_E2_N1 = 29;
 
-    private const COL_N2E1 = 31;
+    private const COL_CIDI_E2_N2 = 31;
 
-    private const COL_N3E1 = 33;
+    private const COL_CIDI_E2_N3 = 33;
 
-    private const COL_N4E1 = 35;
+    private const COL_CIDI_E2_N4 = 35;
 
-    private const COL_N5E1 = 37;
+    private const COL_CIDI_E2_N5 = 37;
 
-    private const COL_N6E1 = 39;
+    private const COL_CIDI_E2_N6 = 39;
 
-    private const COL_E1 = 41;
+    /** CIDI etapa 2 final → ic01. */
+    private const COL_CIDI_E2_FINAL = 41;
 
-    private const COL_N1E2 = 43;
+    /** CIDI etapa 3 → sistema 2ª etapa (parciales). */
+    private const COL_CIDI_E3_N1 = 43;
 
-    private const COL_N2E2 = 45;
+    private const COL_CIDI_E3_N2 = 45;
 
-    private const COL_N3E2 = 47;
+    private const COL_CIDI_E3_N3 = 47;
 
-    private const COL_N4E2 = 49;
+    private const COL_CIDI_E3_N4 = 49;
 
-    private const COL_N5E2 = 51;
+    private const COL_CIDI_E3_N5 = 51;
 
-    private const COL_N6E2 = 53;
+    private const COL_CIDI_E3_N6 = 53;
 
-    private const COL_E2 = 55;
+    /** CIDI etapa 3 final → ic02. */
+    private const COL_CIDI_E3_FINAL = 55;
 
-    private const COL_AF = 57;
+    /** Apreciación final CIDI → ic03. */
+    private const COL_CIDI_AF = 57;
 
     private const CURSO_TEXTO = [
         'PRIMER GRADO' => 1,
@@ -77,8 +86,14 @@ final class GeCsvImporterPrimario
         'SEXTO GRADO' => 6,
     ];
 
-    /** @var array<string, array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}|null> */
+    /** @var array<string, array{status: string, materia: array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string, escala: int}|null}> */
     private array $materiaCache = [];
+
+    /** @var array<string, int|null> */
+    private array $cursoCache = [];
+
+    /** @var array<string, int|null> */
+    private array $matriculaCache = [];
 
     /** @var array<string, int|null> */
     private array $legajoCache = [];
@@ -101,6 +116,8 @@ final class GeCsvImporterPrimario
         }
 
         $this->materiaCache = [];
+        $this->cursoCache = [];
+        $this->matriculaCache = [];
         $this->legajoCache = [];
         $this->notasPermitidasPorEscala = CalificacionesPrimarioNotasPermitidas::listasPorEscala($idNivel);
         $this->notasPermitidas = array_values(array_unique(array_merge(
@@ -135,7 +152,7 @@ final class GeCsvImporterPrimario
 
                 $cursoNum = $this->mapCurso($row[self::COL_CURSO] ?? '');
                 $seccion = trim((string) ($row[self::COL_SECCION] ?? ''));
-                $codMat = trim((string) ($row[self::COL_COD_MATERIA] ?? ''));
+                $codMat = $this->normalizeCodGe((string) ($row[self::COL_COD_MATERIA] ?? ''));
                 $dniRaw = trim((string) ($row[self::COL_DNI] ?? ''));
 
                 if ($cursoNum === null) {
@@ -161,20 +178,18 @@ final class GeCsvImporterPrimario
 
                 $dni = (int) $dniRaw;
 
-                $materia = $this->resolveMateria($codMat, $cursoNum, $seccion, $idTerlec, $idNivel);
-                if ($materia === null) {
+                $idCursos = $this->resolveCursoId($cursoNum, $seccion, $idTerlec, $idNivel);
+                if ($idCursos === null) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
-                        'materia_no_encontrada',
-                        "No se encontró la materia con código GE «{$codMat}» para {$cursoNum}° «{$seccion}».",
+                        'curso_no_encontrado',
+                        "No se encontró el curso {$cursoNum}° división «{$seccion}» en el ciclo y nivel activos.",
                         $this->formatIssueContext($row)
                     );
 
                     continue;
                 }
-
-                $context = $this->formatIssueContext($row, $materia['matPlanMateria']);
 
                 $idLegajos = $this->resolveLegajoId($dni);
                 if ($idLegajos === null) {
@@ -183,23 +198,52 @@ final class GeCsvImporterPrimario
                         $lineNumber,
                         'legajo_no_encontrado',
                         "No existe legajo con DNI {$dni}.",
-                        $context
+                        $this->formatIssueContext($row)
                     );
 
                     continue;
                 }
 
-                if (! $this->tieneMatricula($idTerlec, $idNivel, $materia['idCursos'], $idLegajos)) {
+                $idMatricula = $this->resolveMatriculaId($idTerlec, $idNivel, $idCursos, $idLegajos);
+                if ($idMatricula === null) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
                         'matricula_no_encontrada',
                         'El alumno no está matriculado en el curso/división del archivo para el ciclo lectivo activo.',
-                        $context.' · '.$this->matriculaMismatchDebug($idLegajos, $idTerlec, $idNivel, $materia['idCursos'])
+                        $this->formatIssueContext($row).' · '.$this->matriculaMismatchDebug($idLegajos, $idTerlec, $idNivel, $idCursos)
                     );
 
                     continue;
                 }
+
+                $materiaResult = $this->resolveMateria($codMat, $idCursos, $idTerlec, $idNivel);
+                if ($materiaResult['status'] === 'ambiguous') {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'materia_ambigua',
+                        "Hay más de una materia con codGE «{$codMat}» en el curso del alumno; no se actualizó.",
+                        $this->formatIssueContext($row)
+                    );
+
+                    continue;
+                }
+
+                $materia = $materiaResult['materia'];
+                if ($materia === null) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'materia_no_encontrada',
+                        "No se encontró la materia con codGE «{$codMat}» en el curso {$cursoNum}° «{$seccion}».",
+                        $this->formatIssueContext($row).' · '.$this->materiaCodGeDebug($idCursos, $idTerlec, $idNivel)
+                    );
+
+                    continue;
+                }
+
+                $context = $this->formatIssueContext($row, $materia['matPlanMateria']);
 
                 $payload = $this->buildGradePayload($row);
 
@@ -216,15 +260,15 @@ final class GeCsvImporterPrimario
                     continue;
                 }
 
-                $updateResult = $this->updateCalificacionRow($idLegajos, $idTerlec, $materia, $payload);
+                $updateResult = $this->updateCalificacionRow($idMatricula, $idLegajos, $idTerlec, $materia, $payload);
 
                 if ($updateResult === -2) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
                         'calificacion_ambigua',
-                        'Hay más de un registro en calificaciones con el mismo idLegajos + idTerlec + idMaterias; no se actualizó.',
-                        $context.' · '.$this->califMatchDebug($idLegajos, $idTerlec, $materia['idMaterias'])
+                        'Hay más de un registro en calificaciones para este alumno y materia; no se actualizó.',
+                        $context.' · '.$this->califMatchDebug($idMatricula, $idLegajos, $idTerlec, $materia['idMaterias'])
                     );
 
                     continue;
@@ -235,8 +279,8 @@ final class GeCsvImporterPrimario
                     $issues[] = $this->issue(
                         $lineNumber,
                         'calificacion_no_encontrada',
-                        'No existe exactamente una fila en calificaciones con idLegajos + idTerlec + idMaterias (criterio único de sincronización).',
-                        $context.' · '.$this->califMatchDebug($idLegajos, $idTerlec, $materia['idMaterias'])
+                        'No existe exactamente una fila en calificaciones para la matrícula y materia del alumno (criterio de la carga por estudiante).',
+                        $context.' · '.$this->califMatchDebug($idMatricula, $idLegajos, $idTerlec, $materia['idMaterias'])
                     );
 
                     continue;
@@ -296,7 +340,7 @@ final class GeCsvImporterPrimario
                 $s = mb_convert_encoding($s, 'UTF-8', 'ISO-8859-1');
             }
 
-            $out[] = trim($s);
+            $out[] = trim(str_replace("\xEF\xBB\xBF", '', $s));
         }
 
         return $out;
@@ -355,50 +399,125 @@ final class GeCsvImporterPrimario
         return self::CURSO_TEXTO[$key] ?? null;
     }
 
-    /**
-     * @return array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}|null
-     */
-    private function resolveMateria(string $codMat, int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?array
+    private function normalizeCodGe(string $codigo): string
     {
-        $cacheKey = "{$codMat}|{$cursoNum}|{$seccion}|{$idTerlec}|{$idNivel}";
+        return mb_strtoupper(trim($codigo), 'UTF-8');
+    }
+
+    private function resolveCursoId(int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?int
+    {
+        $cacheKey = "{$cursoNum}|{$seccion}|{$idTerlec}|{$idNivel}";
+        if (array_key_exists($cacheKey, $this->cursoCache)) {
+            return $this->cursoCache[$cacheKey];
+        }
+
+        $id = DB::table('cursos')
+            ->where('idTerlec', $idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('c', $cursoNum)
+            ->whereRaw('TRIM(s) = ?', [$seccion])
+            ->value('Id');
+
+        $resolved = $id !== null ? (int) $id : null;
+        $this->cursoCache[$cacheKey] = $resolved;
+
+        return $resolved;
+    }
+
+    /**
+     * @return array{status: 'ok'|'not_found'|'ambiguous', materia: array{idMatPlan: int, idCursos: int, idMaterias: int, ord: int, matPlanMateria: string, escala: int}|null}
+     */
+    private function resolveMateria(string $codMat, int $idCursos, int $idTerlec, int $idNivel): array
+    {
+        $cacheKey = "{$codMat}|{$idCursos}|{$idTerlec}|{$idNivel}";
         if (array_key_exists($cacheKey, $this->materiaCache)) {
             return $this->materiaCache[$cacheKey];
         }
 
-        $row = DB::table('materias')
-            ->join('cursos', 'materias.idCursos', '=', 'cursos.Id')
+        $idCurPlan = DB::table('cursos')->where('Id', $idCursos)->value('idCurPlan');
+
+        $query = DB::table('materias')
             ->join('matplan', 'materias.idMatPlan', '=', 'matplan.id')
             ->where('materias.idTerlec', $idTerlec)
             ->where('materias.idNivel', $idNivel)
-            ->where('cursos.c', $cursoNum)
-            ->whereRaw('TRIM(cursos.s) = ?', [$seccion])
-            ->where(function ($q) use ($codMat) {
-                $q->whereRaw('TRIM(matplan.codGE) = ?', [$codMat])
-                    ->orWhereRaw('TRIM(matplan.codGE2) = ?', [$codMat])
-                    ->orWhereRaw('TRIM(matplan.codGE3) = ?', [$codMat]);
-            })
+            ->where('materias.idCursos', $idCursos)
+            ->whereRaw('UPPER(TRIM(matplan.codGE)) = ?', [$codMat]);
+
+        if ($idCurPlan !== null && (int) $idCurPlan > 0) {
+            $query->where('matplan.idCurPlan', (int) $idCurPlan);
+        }
+
+        $rows = $query
             ->select(array_values(array_filter([
                 'matplan.id as idMatPlan',
                 'matplan.matPlanMateria',
+                'matplan.codGE',
                 'materias.id as idMaterias',
                 'materias.idCursos',
+                'materias.ord',
                 Schema::hasColumn('materias', 'escala') ? 'materias.escala' : null,
             ])))
-            ->first();
+            ->orderBy('materias.id')
+            ->get();
 
-        $resolved = $row ? [
+        if ($rows->count() > 1) {
+            $resolved = ['status' => 'ambiguous', 'materia' => null];
+            $this->materiaCache[$cacheKey] = $resolved;
+
+            return $resolved;
+        }
+
+        $row = $rows->first();
+        $materia = $row ? [
             'idMatPlan' => (int) $row->idMatPlan,
             'idCursos' => (int) $row->idCursos,
             'idMaterias' => (int) $row->idMaterias,
+            'ord' => (int) ($row->ord ?? 0),
             'matPlanMateria' => (string) $row->matPlanMateria,
             'escala' => Schema::hasColumn('materias', 'escala')
                 ? CalificacionesPrimarioNotasPermitidas::normalizarEscala($row->escala ?? 1)
                 : CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS,
         ] : null;
 
+        $resolved = [
+            'status' => $materia !== null ? 'ok' : 'not_found',
+            'materia' => $materia,
+        ];
         $this->materiaCache[$cacheKey] = $resolved;
 
         return $resolved;
+    }
+
+    private function materiaCodGeDebug(int $idCursos, int $idTerlec, int $idNivel): string
+    {
+        $idCurPlan = DB::table('cursos')->where('Id', $idCursos)->value('idCurPlan');
+
+        $query = DB::table('materias')
+            ->join('matplan', 'materias.idMatPlan', '=', 'matplan.id')
+            ->where('materias.idTerlec', $idTerlec)
+            ->where('materias.idNivel', $idNivel)
+            ->where('materias.idCursos', $idCursos)
+            ->whereNotNull('matplan.codGE')
+            ->whereRaw("TRIM(matplan.codGE) <> ''");
+
+        if ($idCurPlan !== null && (int) $idCurPlan > 0) {
+            $query->where('matplan.idCurPlan', (int) $idCurPlan);
+        }
+
+        $codigos = $query
+            ->orderBy('matplan.ord')
+            ->orderBy('matplan.matPlanMateria')
+            ->pluck('matplan.codGE')
+            ->map(fn ($c) => mb_strtoupper(trim((string) $c), 'UTF-8'))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($codigos === []) {
+            return 'El curso no tiene materias con codGE cargado en matplan.';
+        }
+
+        return 'codGE disponibles en el curso: '.implode(', ', $codigos).'.';
     }
 
     private function resolveLegajoId(int $dni): ?int
@@ -415,14 +534,25 @@ final class GeCsvImporterPrimario
         return $resolved;
     }
 
-    private function tieneMatricula(int $idTerlec, int $idNivel, int $idCursos, int $idLegajos): bool
+    private function resolveMatriculaId(int $idTerlec, int $idNivel, int $idCursos, int $idLegajos): ?int
     {
-        return DB::table('matricula')
+        $cacheKey = "{$idTerlec}|{$idNivel}|{$idCursos}|{$idLegajos}";
+        if (array_key_exists($cacheKey, $this->matriculaCache)) {
+            return $this->matriculaCache[$cacheKey];
+        }
+
+        $id = DB::table('matricula')
             ->where('idTerlec', $idTerlec)
             ->where('idNivel', $idNivel)
             ->where('idCursos', $idCursos)
             ->where('idLegajos', $idLegajos)
-            ->exists();
+            ->orderBy('id')
+            ->value('id');
+
+        $resolved = $id !== null ? (int) $id : null;
+        $this->matriculaCache[$cacheKey] = $resolved;
+
+        return $resolved;
     }
 
     private function matriculaMismatchDebug(int $idLegajos, int $idTerlec, int $idNivel, int $idCursosEsperado): string
@@ -478,45 +608,88 @@ final class GeCsvImporterPrimario
     }
 
     /**
-     * @param  array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}  $materia
+     * @param  array{idMatPlan: int, idCursos: int, idMaterias: int, ord: int, matPlanMateria: string}  $materia
      * @param  array<string, string>  $payload
      */
-    private function updateCalificacionRow(int $idLegajos, int $idTerlec, array $materia, array $payload): int
+    private function updateCalificacionRow(int $idMatricula, int $idLegajos, int $idTerlec, array $materia, array $payload): int
     {
-        $where = [
-            'idLegajos' => $idLegajos,
-            'idTerlec' => $idTerlec,
-            'idMaterias' => $materia['idMaterias'],
-        ];
+        $idMaterias = $materia['idMaterias'];
 
-        $count = DB::table('calificaciones')->where($where)->count();
+        $porMatricula = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->where('idMaterias', $idMaterias);
 
-        if ($count === 0) {
-            return 0;
+        $count = $porMatricula->count();
+        if ($count === 1) {
+            $porMatricula->update($payload);
+
+            return 1;
         }
-
         if ($count > 1) {
             return -2;
         }
 
-        DB::table('calificaciones')->where($where)->update($payload);
+        $ord = (int) ($materia['ord'] ?? 0);
+        if ($ord > 0) {
+            $legacy = DB::table('calificaciones')
+                ->where('idMatricula', $idMatricula)
+                ->where('ord', $ord)
+                ->where(function ($q): void {
+                    $q->whereNull('idMaterias')
+                        ->orWhere('idMaterias', 0);
+                });
+
+            $legacyCount = $legacy->count();
+            if ($legacyCount === 1) {
+                $legacy->update(array_merge($payload, ['idMaterias' => $idMaterias]));
+
+                return 1;
+            }
+            if ($legacyCount > 1) {
+                return -2;
+            }
+        }
+
+        $whereLegajo = [
+            'idLegajos' => $idLegajos,
+            'idTerlec' => $idTerlec,
+            'idMaterias' => $idMaterias,
+        ];
+
+        $countLegajo = DB::table('calificaciones')->where($whereLegajo)->count();
+        if ($countLegajo === 0) {
+            return 0;
+        }
+        if ($countLegajo > 1) {
+            return -2;
+        }
+
+        DB::table('calificaciones')->where($whereLegajo)->update(array_merge($payload, [
+            'idMatricula' => $idMatricula,
+        ]));
 
         return 1;
     }
 
-    private function califMatchDebug(int $idLegajos, int $idTerlec, int $idMaterias): string
+    private function califMatchDebug(int $idMatricula, int $idLegajos, int $idTerlec, int $idMaterias): string
     {
-        $n = DB::table('calificaciones')
+        $nMatricula = DB::table('calificaciones')
+            ->where('idMatricula', $idMatricula)
+            ->where('idMaterias', $idMaterias)
+            ->count();
+
+        $nLegajo = DB::table('calificaciones')
             ->where('idLegajos', $idLegajos)
             ->where('idTerlec', $idTerlec)
             ->where('idMaterias', $idMaterias)
             ->count();
 
-        return "idLegajos={$idLegajos}, idTerlec={$idTerlec}, idMaterias={$idMaterias} → {$n} fila(s)";
+        return "idMatricula={$idMatricula}, idMaterias={$idMaterias} → {$nMatricula} fila(s); idLegajos={$idLegajos}, idTerlec={$idTerlec} → {$nLegajo} fila(s)";
     }
 
     /**
-     * Campos de primario según exportación GE legacy (solo ic01–ic03 e ic05–ic16).
+     * CIDI etapa 2 → 1ª etapa del sistema; CIDI etapa 3 → 2ª etapa; apreciación final → ic03.
+     * Mapeo 1:1 por columna; vacío en CSV → cadena vacía en BD (borra el campo).
      *
      * @param  list<string>  $row
      * @return array<string, string>
@@ -524,22 +697,30 @@ final class GeCsvImporterPrimario
     private function buildGradePayload(array $row): array
     {
         return [
-            'ic01' => (string) ($row[self::COL_E1] ?? ''),
-            'ic02' => (string) ($row[self::COL_E2] ?? ''),
-            'ic03' => (string) ($row[self::COL_AF] ?? ''),
-            'ic05' => (string) ($row[self::COL_N1E1] ?? ''),
-            'ic06' => (string) ($row[self::COL_N2E1] ?? ''),
-            'ic07' => (string) ($row[self::COL_N3E1] ?? ''),
-            'ic08' => (string) ($row[self::COL_N4E1] ?? ''),
-            'ic09' => (string) ($row[self::COL_N5E1] ?? ''),
-            'ic10' => (string) ($row[self::COL_N6E1] ?? ''),
-            'ic11' => (string) ($row[self::COL_N1E2] ?? ''),
-            'ic12' => (string) ($row[self::COL_N2E2] ?? ''),
-            'ic13' => (string) ($row[self::COL_N3E2] ?? ''),
-            'ic14' => (string) ($row[self::COL_N4E2] ?? ''),
-            'ic15' => (string) ($row[self::COL_N5E2] ?? ''),
-            'ic16' => (string) ($row[self::COL_N6E2] ?? ''),
+            'ic01' => $this->celda($row, self::COL_CIDI_E2_FINAL),
+            'ic02' => $this->celda($row, self::COL_CIDI_E3_FINAL),
+            'ic03' => $this->celda($row, self::COL_CIDI_AF),
+            'ic05' => $this->celda($row, self::COL_CIDI_E2_N1),
+            'ic06' => $this->celda($row, self::COL_CIDI_E2_N2),
+            'ic07' => $this->celda($row, self::COL_CIDI_E2_N3),
+            'ic08' => $this->celda($row, self::COL_CIDI_E2_N4),
+            'ic09' => $this->celda($row, self::COL_CIDI_E2_N5),
+            'ic10' => $this->celda($row, self::COL_CIDI_E2_N6),
+            'ic11' => $this->celda($row, self::COL_CIDI_E3_N1),
+            'ic12' => $this->celda($row, self::COL_CIDI_E3_N2),
+            'ic13' => $this->celda($row, self::COL_CIDI_E3_N3),
+            'ic14' => $this->celda($row, self::COL_CIDI_E3_N4),
+            'ic15' => $this->celda($row, self::COL_CIDI_E3_N5),
+            'ic16' => $this->celda($row, self::COL_CIDI_E3_N6),
         ];
+    }
+
+    /**
+     * @param  list<string>  $row
+     */
+    private function celda(array $row, int $columna): string
+    {
+        return trim((string) ($row[$columna] ?? ''));
     }
 
     /**

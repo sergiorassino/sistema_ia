@@ -35,10 +35,11 @@
         <div class="space-y-2 text-sm text-neutral-600">
             <p>Suba el archivo <strong>CSV</strong> exportado desde <strong>GE</strong> para primario (separador punto y coma).</p>
             <ul class="list-disc space-y-1 pl-5">
-                <li>Se actualizan <code class="text-xs">ic01</code>–<code class="text-xs">ic03</code> (evaluaciones y aprobación final) y <code class="text-xs">ic05</code>–<code class="text-xs">ic16</code> (notas por módulo de cada evaluación). Las celdas vacías borran el valor en el sistema.</li>
-                <li>La materia se identifica por el <strong>código de espacio curricular</strong> del archivo (columna <em>Cód. Esp. Curricular</em>), cruzado con <code class="text-xs">matplan.codGE</code>, <code class="text-xs">codGE2</code> o <code class="text-xs">codGE3</code> del grado y división indicados (PRIMER GRADO … SEXTO GRADO).</li>
+                <li>Etapa 2 del archivo CIDI → 1ª etapa del sistema (<code class="text-xs">ic05</code>–<code class="text-xs">ic10</code>, <code class="text-xs">ic01</code>). Etapa 3 CIDI → 2ª etapa (<code class="text-xs">ic11</code>–<code class="text-xs">ic16</code>, <code class="text-xs">ic02</code>). Apreciación final → <code class="text-xs">ic03</code>. La etapa 1 del archivo no se importa.</li>
+                <li>Cada columna del CSV actualiza solo su campo; si la celda está vacía, se <strong>borra</strong> la nota en el sistema. No se copian parciales a finales de etapa.</li>
+                <li>La materia se identifica por la columna M del Excel (<em>Cód. Esp. Curricular</em>), cruzada únicamente con <code class="text-xs">matplan.codGE</code> en el curso y división del alumno (PRIMER GRADO … SEXTO GRADO).</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel primario</strong> de su sesión actual.</li>
-                <li>Debe existir <strong>exactamente un</strong> registro en calificaciones por alumno (DNI), ciclo lectivo activo y materia del curso. Si no existe o hay duplicados, la fila se informa y no se graba.</li>
+                <li>Debe existir <strong>exactamente un</strong> registro en calificaciones por matrícula del alumno y materia (mismo criterio que esta pantalla de carga). Si no existe o hay duplicados, la fila se informa y no se graba.</li>
             </ul>
         </div>
 
