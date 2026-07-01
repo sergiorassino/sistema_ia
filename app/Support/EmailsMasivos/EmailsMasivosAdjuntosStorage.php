@@ -53,6 +53,23 @@ final class EmailsMasivosAdjuntosStorage
         return $disk->exists($path) ? $path : null;
     }
 
+    /**
+     * @return list<string> rutas absolutas en disco para adjuntos de una campaña
+     */
+    public static function pathsAbsolutosCampana(int $idTerlec, int $idEmailEscrito, string $attached): array
+    {
+        $disk = Storage::disk(self::DISK);
+        $paths = [];
+        foreach (DestinatariosEmailsMasivos::parseAttached($attached) as $nombre) {
+            $rel = self::rutaArchivo($idTerlec, $idEmailEscrito, $nombre);
+            if ($rel !== null) {
+                $paths[] = $disk->path($rel);
+            }
+        }
+
+        return $paths;
+    }
+
     public static function nombreSeguro(string $original): string
     {
         $base = pathinfo($original, PATHINFO_FILENAME);

@@ -7,6 +7,7 @@ use App\Models\EmailEscrito;
 use App\Models\Profesor;
 use App\Support\EmailsMasivos\DestinatariosEmailsMasivos;
 use App\Support\EmailsMasivos\EmailsMasivosAdjuntosStorage;
+use App\Support\EmailsMasivos\EmailsMasivosEscritoEnvios;
 use App\Support\PermisosIaCatalog;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,33 @@ class EmailsMasivosCampanaShow extends Component
         abort_unless(Schema::hasTable('emails_enviados'), 404);
 
         $this->idSeed = $id;
+    }
+
+    public function confirmarEliminarCampana(): void
+    {
+        if (! tienePermiso(PermisosIaCatalog::EMAILS_MASIVOS_BORRAR)) {
+            $this->dispatch('se-swal-error', mensaje: 'No tiene permiso para borrar envíos del historial de correo masivo.');
+
+            return;
+        }
+
+        $ctx = schoolCtx();
+        $seed = EmailsMasivosEscritoEnvios::seedEnAlcance($this->idSeed, (int) $ctx->idNivel);
+        if ($seed === null) {
+            $this->dispatch('se-swal-error', mensaje: 'El envío ya no existe.');
+
+            return;
+        }
+
+        $total = EmailsMasivosEscritoEnvios::eliminarCampana($seed, (int) $ctx->idNivel);
+        if ($total <= 0) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontraron registros de envío para eliminar.');
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Envío eliminado del historial (' . $total . ' registro(s)).');
+        $this->redirectRoute('emails-masivos.historial', navigate: true);
     }
 
     public function render()
