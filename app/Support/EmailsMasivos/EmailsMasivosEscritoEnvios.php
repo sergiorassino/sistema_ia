@@ -24,14 +24,53 @@ final class EmailsMasivosEscritoEnvios
      */
     public static function idsConEnvios(Collection $escritos, int $idNivel): array
     {
+        if ($escritos->isEmpty()) {
+            return [];
+        }
+
+        $query = EmailEnviado::query()->where('idNiveles', $idNivel);
+
+        $query->where(function ($outer) use ($escritos) {
+            foreach ($escritos as $escrito) {
+                $attached = (string) ($escrito->attached ?? '');
+                $outer->orWhere(function ($q) use ($escrito, $attached) {
+                    $q->where('subject', $escrito->subject)
+                        ->where('texto', $escrito->text)
+                        ->where('attached', $attached);
+                });
+            }
+        });
+
+        $clavesEnviados = $query
+            ->select(['subject', 'texto', 'attached'])
+            ->distinct()
+            ->get()
+            ->map(fn ($row) => self::claveEscrito(
+                (string) $row->subject,
+                (string) $row->texto,
+                (string) ($row->attached ?? ''),
+            ))
+            ->flip()
+            ->all();
+
         $ids = [];
         foreach ($escritos as $escrito) {
-            if (self::escritoTieneEnvios($escrito, $idNivel)) {
+            $clave = self::claveEscrito(
+                (string) $escrito->subject,
+                (string) $escrito->text,
+                (string) ($escrito->attached ?? ''),
+            );
+            if (isset($clavesEnviados[$clave])) {
                 $ids[] = (int) $escrito->id;
             }
         }
 
         return $ids;
+    }
+
+    private static function claveEscrito(string $subject, string $text, string $attached): string
+    {
+        return md5($subject . "\0" . $text . "\0" . $attached);
     }
 
     public static function seedEnAlcance(int $idSeed, int $idNivel): ?EmailEnviado

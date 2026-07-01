@@ -7,7 +7,7 @@ use App\Support\EmailsMasivos\EmailsMasivosAdjuntosStorage;
 use App\Support\EmailsMasivos\EmailsMasivosEscritoEnvios;
 use App\Support\EmailsMasivos\EmailsMasivosConfig;
 use App\Support\PermisosIaCatalog;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,7 +21,6 @@ class EmailsMasivosIndex extends Component
     public function mount(): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::EMAILS_MASIVOS_ESTUDIANTES), 403);
-        abort_unless(Schema::hasTable('emails_escritos') && Schema::hasTable('emails_enviados'), 404);
     }
 
     public function updatedFiltroAsunto(): void
@@ -71,10 +70,22 @@ class EmailsMasivosIndex extends Component
             $query->where('subject', 'like', $like);
         }
 
-        $escritos = $query->paginate(25);
+        $escritos = $query
+            ->select([
+                'id',
+                'subject',
+                'attached',
+                DB::raw('SUBSTRING(`text`, 1, 220) AS text'),
+            ])
+            ->paginate(25);
         $ctx = schoolCtx();
+
+        $filasEnvio = EmailEscrito::query()
+            ->whereIn('id', $escritos->pluck('id'))
+            ->get(['id', 'subject', 'text', 'attached']);
+
         $escritosConEnvios = EmailsMasivosEscritoEnvios::idsConEnvios(
-            $escritos->getCollection(),
+            $filasEnvio,
             (int) $ctx->idNivel,
         );
 
