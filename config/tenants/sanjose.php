@@ -10,4 +10,10 @@ return [
     'boletin_primario' => [
         'ipe_implementacion' => 'sanjose',
     ],
+
+    'calificaciones_primario' => [
+        'carga_estudiante' => ['implementacion' => 'montecristo'],
+        'carga_materia' => ['implementacion' => 'montecristo'],
+        'planilla' => ['implementacion' => 'montecristo'],
+    ],
 ];
