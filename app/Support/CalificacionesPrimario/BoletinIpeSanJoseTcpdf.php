@@ -38,6 +38,17 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
 
     private const ALTO_FILA = 7.0;
 
+    /** Espacio entre la grilla de notas y el bloque de observaciones de 1º etapa (mm). */
+    private const ESPACIO_GRILLA_OBS = 3.0;
+
+    /** Alto mínimo de cada celda de observación por etapa (mm). */
+    private const ALTO_BLOQUE_OBS = 26.4;
+
+    private const ESPACIO_ENTRE_OBS = 2.0;
+
+    /** Margen inferior tras las observaciones, antes de firmas/escala (mm). */
+    private const ESPACIO_DESPUES_OBS = 2.0;
+
     private const ALTO_ENCABEZADO_INST = 22.0;
 
     private const ANCHO_LOGO = 18.0;
@@ -470,14 +481,14 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
      */
     private function dibujarObservaciones(float $y, array $datos): float
     {
-        $y += 10;
+        $y += self::ESPACIO_GRILLA_OBS;
         $anchoObs = 239.0;
         $xObs = self::MARGEN_IZQ + 16;
 
         $y = $this->dibujarBloqueObservacion($y, '1º Etapa;', $xObs, $anchoObs, (string) ($datos['obs1'] ?? ''));
-        $y = $this->dibujarBloqueObservacion($y + 2, '2º Etapa:', $xObs, $anchoObs, (string) ($datos['obs2'] ?? ''));
+        $y = $this->dibujarBloqueObservacion($y + self::ESPACIO_ENTRE_OBS, '2º Etapa:', $xObs, $anchoObs, (string) ($datos['obs2'] ?? ''));
 
-        return $y + 4;
+        return $y + self::ESPACIO_DESPUES_OBS;
     }
 
     private function dibujarBloqueObservacion(float $y, string $etiqueta, float $xObs, float $anchoObs, string $texto): float
@@ -486,7 +497,7 @@ final class BoletinIpeSanJoseTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, 'I', 9);
         $this->Cell(16, 4, $etiqueta, 0, 0, 'L');
 
-        $altoMin = 10.0;
+        $altoMin = self::ALTO_BLOQUE_OBS;
         $this->SetDrawColor(0, 0, 0);
         $this->Rect($xObs, $y, $anchoObs, $altoMin);
 
