@@ -16,4 +16,15 @@ return [
         'carga_materia' => ['implementacion' => 'montecristo'],
         'planilla' => ['implementacion' => 'montecristo'],
     ],
+
+    'portal_docente' => [
+        'menu' => [
+            'primario' => [
+                'carga_estudiante' => true,
+                'carga_materia' => true,
+                'boletin_ipe' => true,
+                'planilla' => true,
+            ],
+        ],
+    ],
 ];

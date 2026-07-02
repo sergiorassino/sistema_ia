@@ -61,6 +61,9 @@ final class PermisosIaCatalog
     /** Borrar mensajes escritos y envíos del historial de correo masivo a estudiantes. */
     public const EMAILS_MASIVOS_BORRAR = 79;
 
+    /** Legajos docentes: ver contraseña de acceso del docente en el listado ABM. */
+    public const LEGAJOS_DOCENTES_VER_CONTRASEÑA = 80;
+
     public const MATRIZ_ANALITICO = 16;
 
     public const CERT_ALUMNO_REGULAR = 17;
@@ -260,6 +263,7 @@ final class PermisosIaCatalog
             ['id' => 75, 'orden' => self::COOP_MOVIMIENTOS, 'tema' => 'COOPERADORA', 'descripcion' => 'Cooperadora escolar: consulta de movimientos por fecha y listado PDF con saldo.'],
             ['id' => 78, 'orden' => self::EMAILS_MASIVOS_ESTUDIANTES, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Enviar Correo Masivo a Estudiantes: redacción HTML, selección por alumno o curso y auditoría de envíos.'],
             ['id' => 79, 'orden' => self::EMAILS_MASIVOS_BORRAR, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar Correo Masivo a Estudiantes: eliminar mensajes escritos y envíos registrados en el historial.'],
+            ['id' => 80, 'orden' => self::LEGAJOS_DOCENTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver contraseña de acceso del docente en el listado de legajos (botón Ver Pwrd).'],
         ];
     }
 

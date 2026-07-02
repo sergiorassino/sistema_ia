@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Auth;
 
-use App\Auth\ProfesorUserProvider;
 use App\Models\Profesor;
 use App\Models\Terlec;
 use App\Support\DniInput;
@@ -220,44 +219,6 @@ class Login extends Component
         }
 
         RateLimiter::hit($throttleKey, 60);
-
-        $this->registrarErrorAutenticacion();
-    }
-
-    private function registrarErrorAutenticacion(): void
-    {
-        $nivelSeleccionado = (int) $this->idNivel;
-        $legajos = Profesor::query()
-            ->where('dni', $this->dni)
-            ->orderBy('id')
-            ->get(['id', 'nivel', 'pwrd']);
-
-        $nivelesConClaveValida = $legajos
-            ->filter(fn (Profesor $p) => ProfesorUserProvider::verificarPassword($p, $this->pwrd))
-            ->map(fn (Profesor $p) => (int) ($p->nivel ?? 0))
-            ->filter(fn (int $n) => $n > 0)
-            ->unique()
-            ->values();
-
-        if ($nivelesConClaveValida->isNotEmpty() && ! $nivelesConClaveValida->contains($nivelSeleccionado)) {
-            $nombres = NivelSistema::nivelesParaLogin()
-                ->whereIn('id', $nivelesConClaveValida->all())
-                ->pluck('nivel')
-                ->filter()
-                ->unique()
-                ->values();
-
-            $lista = $nombres->isNotEmpty()
-                ? $nombres->implode('», «')
-                : $nivelesConClaveValida->implode(', ');
-
-            $this->addError(
-                'idNivel',
-                "La contraseña es correcta, pero el nivel seleccionado no coincide con su legajo. Pruebe con: «{$lista}».",
-            );
-
-            return;
-        }
 
         $this->addError('dni', 'DNI o contraseña incorrectos. Verifique sus datos.');
     }
