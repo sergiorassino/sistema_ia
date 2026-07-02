@@ -33,6 +33,9 @@ return [
         'boletin_ipe_primario' => [
             'habilitado' => true,
         ],
+        'informe_progreso_inicial' => [
+            'habilitado' => true,
+        ],
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanjose',
