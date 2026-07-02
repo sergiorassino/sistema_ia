@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Nivel;
 use App\Models\Terlec;
+use App\Support\InformeInasistencias;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,52 @@ final class FichaMatriculaMontecristoDatos
             return null;
         }
 
+        return self::desdeMatriculaEnContexto(
+            $idMatricula,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec,
+            schoolPdfHeaderData(),
+            (int) ($ctx->terlecAno() ?? 0),
+        );
+    }
+
+    /**
+     * Datos para autogestión (matrícula del alumno en sesión).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function paraAutogestion(): ?array
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        $matricula = InformeInasistencias::matriculaAutogestion();
+        if ($matricula === null) {
+            return null;
+        }
+
+        return self::desdeMatriculaEnContexto(
+            (int) $matricula->id,
+            (int) $ctx->idNivel,
+            (int) $ctx->idTerlec,
+            studentPdfHeaderData(),
+            (int) ($ctx->terlecAno() ?? 0),
+        );
+    }
+
+    /**
+     * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
+     * @return array<string, mixed>|null
+     */
+    private static function desdeMatriculaEnContexto(
+        int $idMatricula,
+        int $idNivel,
+        int $idTerlec,
+        array $header,
+        int $anoTerlec,
+    ): ?array {
         $select = self::columnasSelect();
         $select[] = 'matricula.id as matricula_id';
         $select[] = 'matricula.idLegajos as id_legajo';
@@ -62,8 +109,8 @@ final class FichaMatriculaMontecristoDatos
         $row = DB::table('matricula')
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->where('matricula.id', $idMatricula)
-            ->where('matricula.idNivel', (int) $ctx->idNivel)
-            ->where('matricula.idTerlec', (int) $ctx->idTerlec)
+            ->where('matricula.idNivel', $idNivel)
+            ->where('matricula.idTerlec', $idTerlec)
             ->whereNull('matricula.fechaBaja')
             ->select($select)
             ->first();
@@ -73,16 +120,13 @@ final class FichaMatriculaMontecristoDatos
         }
 
         $cursoActual = self::cursoConNivel((int) $row->id_curso);
-        $cursoAnterior = self::cursoAnterior((int) $row->id_legajo, (int) $ctx->idTerlec);
+        $cursoAnterior = self::cursoAnterior((int) $row->id_legajo, $idTerlec);
 
         $fechaMatricula = self::fecha(
             $row->fecha_matriculacion ?? $row->fecha_matricula ?? null,
         );
         $fechnaci = self::fecha($row->fechnaci ?? null);
         $edad = self::calcularEdad($row->fechnaci ?? null, $row->fecha_matricula ?? null);
-
-        $header = schoolPdfHeaderData();
-        $anoTerlec = (int) ($ctx->terlecAno() ?? 0);
 
         return [
             'header' => $header,

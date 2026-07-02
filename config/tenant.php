@@ -335,7 +335,7 @@ return [
     /**
      * Menú de Secretaría — impresión de ficha de matrícula por curso (PDF en lote).
      * `implementacion`: variante en código (`sanfranciscoasis` = con aceptación de documentos;
-     * `montecristo` = solicitud de matrícula solo datos).
+     * `montecristo` = solicitud de matrícula solo datos; `sanjose` = solicitud A4 San José).
      */
     'secretaria' => [
         'ficha_matricula' => [
