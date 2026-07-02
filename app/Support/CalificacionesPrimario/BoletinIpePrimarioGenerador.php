@@ -20,6 +20,12 @@ final class BoletinIpePrimarioGenerador
         return in_array(self::implementacion(), ['estandar', 'montecristo'], true);
     }
 
+    /** Boletín único sin selector de etapa (p. ej. San José primario). */
+    public static function usaBoletinUnico(): bool
+    {
+        return self::implementacion() === 'sanjose';
+    }
+
     public static function etiquetaPdf(): string
     {
         return match (self::implementacion()) {

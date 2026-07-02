@@ -9,6 +9,7 @@
 return [
     'boletin_primario' => [
         'ipe_implementacion' => 'sanjose',
+        'menu_etiqueta_boletin_ipe' => 'Calificaciones',
     ],
 
     'calificaciones_primario' => [
@@ -25,6 +26,12 @@ return [
                 'boletin_ipe' => true,
                 'planilla' => true,
             ],
+        ],
+    ],
+
+    'autogestion' => [
+        'boletin_ipe_primario' => [
+            'habilitado' => true,
         ],
     ],
 ];
