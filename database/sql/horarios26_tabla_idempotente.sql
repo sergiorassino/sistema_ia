@@ -5,7 +5,9 @@
 -- Grilla de horas cátedra por docente / materia / curso / día / módulo.
 -- Sin datos: no inserta filas.
 --
--- Uso: ejecutar en la base del colegio destino (phpMyAdmin, HeidiSQL, mysql CLI).
+-- Uso preferido: php artisan se:migrate-legacy --force
+--   (migración 2026_07_02_141000_create_horarios26_table_if_missing.php)
+-- Alternativa manual: ejecutar este SQL en phpMyAdmin / HeidiSQL / mysql CLI.
 -- Compatible con MySQL 5.7+ / MariaDB 10.x
 -- Sin DELIMITER ni procedimientos almacenados (ejecutable en un solo lote).
 --
