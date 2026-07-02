@@ -41,9 +41,15 @@ class BoletinIpePrimarioPdfController extends Controller
 
         $prefijo = BoletinIpePrimarioGenerador::prefijoArchivoPdf();
         $slugBase = trim((string) ($data['alumnoLinea'] ?? ''));
-        $slug = Str::slug($prefijo.'-etapa'.$etapa.'-'.$slugBase, '_');
+        if (BoletinIpePrimarioGenerador::usaBoletinUnico()) {
+            $slug = Str::slug($prefijo.'-'.$slugBase, '_');
+        } else {
+            $slug = Str::slug($prefijo.'-etapa'.$etapa.'-'.$slugBase, '_');
+        }
         if ($slug === '') {
-            $slug = $prefijo.'_etapa'.$etapa;
+            $slug = BoletinIpePrimarioGenerador::usaBoletinUnico()
+                ? $prefijo
+                : $prefijo.'_etapa'.$etapa;
         }
 
         $pdf = BoletinIpePrimarioGenerador::generarHoja($data, studentPdfHeaderData(), true);

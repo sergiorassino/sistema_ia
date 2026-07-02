@@ -14,7 +14,8 @@ final class PortalFamiliaBoletinIpe
         return tenantAutogestionConsultaCalificacionesHabilitada()
             && tenantAutogestionBoletinIpePrimarioHabilitada()
             && studentEsNivelPrimario()
-            && BoletinIpePrimarioGenerador::usaSelectorEtapa();
+            && (BoletinIpePrimarioGenerador::usaSelectorEtapa()
+                || BoletinIpePrimarioGenerador::usaBoletinUnico());
     }
 
     public static function consultaSecundariaVisible(): bool
@@ -29,6 +30,16 @@ final class PortalFamiliaBoletinIpe
     public static function itemsEtapa(): array
     {
         $base = tenantBoletinPrimarioMenuEtiquetaBoletinIpe();
+
+        if (BoletinIpePrimarioGenerador::usaBoletinUnico()) {
+            return [
+                [
+                    'etapa' => 1,
+                    'titulo' => $base,
+                    'url' => se_route_url('alumnos.boletin-ipe-primario', ['etapa' => 1]),
+                ],
+            ];
+        }
 
         return [
             [

@@ -54,7 +54,7 @@ final class BoletinIpeSanJoseDatos
      */
     public static function buildDesdeMatricula(Matricula $matricula): array
     {
-        $matricula->loadMissing(['legajo', 'curso.curplan']);
+        $matricula->loadMissing(['legajo', 'curso.curplan', 'terlec']);
         $form = CalificacionesPrimarioDatos::cargarFormulario($matricula);
 
         $grado = (int) ($matricula->curso?->c ?? 0);
@@ -66,11 +66,15 @@ final class BoletinIpeSanJoseDatos
         $nombre = trim((string) ($legajo?->nombre ?? ''));
         $alumnoLinea = trim($apellido.' '.$nombre);
 
-        $ctx = schoolCtx();
+        $ano = (int) ($matricula->terlec?->ano ?? 0);
+        if ($ano <= 0) {
+            $ctx = studentCtx()->isValid() ? studentCtx() : schoolCtx();
+            $ano = (int) ($ctx->terlecAno() ?? now()->year);
+        }
 
         return [
             'ok' => true,
-            'ano' => (int) ($ctx->terlecAno() ?? now()->year),
+            'ano' => $ano,
             'titulo' => 'INFORME DE PROGRESO ESCOLAR',
             'alumnoLinea' => $alumnoLinea,
             'dni' => trim((string) ($legajo?->dni ?? '')),
