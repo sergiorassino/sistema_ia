@@ -34,7 +34,24 @@
         </div>
     </section>
 
-    <div class="se-card overflow-hidden p-6 sm:p-7">
+    <div class="se-card overflow-hidden">
+        <div class="border-b border-accent-200 bg-white">
+            <nav class="se-form-tabs">
+                <button type="button"
+                        wire:click="setTab('institucion')"
+                        @class(['se-form-tab', 'se-form-tab-active' => $activeTab === 'institucion', 'se-form-tab-idle' => $activeTab !== 'institucion'])>
+                    DATOS DE LA INSTITUCIÓN
+                </button>
+                <button type="button"
+                        wire:click="setTab('parametros')"
+                        @class(['se-form-tab', 'se-form-tab-active' => $activeTab === 'parametros', 'se-form-tab-idle' => $activeTab !== 'parametros'])>
+                    PARÁMETROS
+                </button>
+            </nav>
+        </div>
+
+        @if ($activeTab === 'institucion')
+        <div class="p-6 sm:p-7" wire:key="param-tab-institucion">
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div class="md:col-span-2">
                 <label class="form-label">Institución</label>
@@ -262,5 +279,90 @@
                 </div>
             </div>
         </div>
+        </div>
+        @else
+        <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros">
+            <div>
+                <p class="se-section-title mb-1">Ciclos lectivos</p>
+                <p class="mb-4 text-xs text-neutral-500">
+                    Ciclo lectivo visible en autogestión y restricciones del Menú de Docentes.
+                </p>
+                <div class="max-w-md">
+                    <label class="form-label">Año para la plataforma del alumno</label>
+                    <livewire:components.terlec-selector wire:model="idTerlecVerNotas" input-id="param-idTerlecVerNotas" />
+                    <p class="mt-1 text-xs text-neutral-500">Corresponde a <span class="font-mono">idTerlecVerNotas</span> (autogestión familia y docente).</p>
+                    @error('idTerlecVerNotas') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            <div class="border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-4">Calificaciones — docentes</p>
+                <div class="space-y-5">
+                    <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" wire:model.live="cargaNotasOff" class="mt-1 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <span>
+                                <span class="block text-sm font-semibold text-neutral-800">Bloquear carga de notas a docentes</span>
+                                <span class="mt-0.5 block text-xs text-neutral-500">Pueden seguir entrando a consultar.</span>
+                            </span>
+                        </label>
+                        @error('cargaNotasOff') <p class="form-error">{{ $message }}</p> @enderror
+
+                        <div class="space-y-1.5 border-t border-accent-200/80 pt-3">
+                            <label class="form-label">Mensaje ante el bloqueo</label>
+                            <textarea wire:model="notasOffMensaje" rows="3" maxlength="500"
+                                      class="form-input @error('notasOffMensaje') border-red-400 @enderror"
+                                      placeholder="La carga de calificaciones no está habilitada en este momento."></textarea>
+                            <p class="text-xs text-neutral-500">Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                            @error('notasOffMensaje') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-4">Calificaciones — alumnos</p>
+                <div class="space-y-5">
+                    <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" wire:model.live="verNotasOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <span class="block text-sm font-semibold text-neutral-800">Bloqueo de visualización de notas a los alumnos</span>
+                        </label>
+                        @error('verNotasOff') <p class="form-error">{{ $message }}</p> @enderror
+
+                        <div class="space-y-1.5 border-t border-accent-200/80 pt-3">
+                            <label class="form-label">Mensaje ante el bloqueo</label>
+                            <textarea wire:model="verOffMensaje" rows="3" maxlength="500"
+                                      class="form-input @error('verOffMensaje') border-red-400 @enderror"></textarea>
+                            <p class="text-xs text-neutral-500">Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                            @error('verOffMensaje') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" wire:model.live="verBimesOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <span class="block text-sm font-semibold text-neutral-800">Bloqueo de visualización por bimestre</span>
+                        </label>
+                        @error('verBimesOff') <p class="form-error">{{ $message }}</p> @enderror
+
+                        <div class="space-y-1.5 border-t border-accent-200/80 pt-3">
+                            <label class="form-label">Mensaje ante el bloqueo</label>
+                            <textarea wire:model="bimesOffMensaje" rows="3" maxlength="500"
+                                      class="form-input @error('bimesOffMensaje') border-red-400 @enderror"></textarea>
+                            <p class="text-xs text-neutral-500">Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                            @error('bimesOffMensaje') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <input type="checkbox" wire:model.live="imprBoleOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                        <span class="block text-sm font-semibold text-neutral-800">Bloquear impresión de boletines</span>
+                    </label>
+                    @error('imprBoleOff') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>

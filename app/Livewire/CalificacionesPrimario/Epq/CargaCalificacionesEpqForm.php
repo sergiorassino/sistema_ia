@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesPrimario\Epq;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\CalificacionesPrimario\Epq\CalificacionesEpqCatalogo;
@@ -18,6 +19,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesEpqForm extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public int $idMatricula;
 
     public int $cursoId;
@@ -62,6 +65,7 @@ class CargaCalificacionesEpqForm extends Component
         $this->idMatricula = (int) $mat->id;
         $this->cursoId = (int) $mat->idCursos;
         $this->cargarDesdeBd($mat);
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     protected function cargarDesdeBd(\App\Models\Matricula $mat): void
@@ -83,6 +87,10 @@ class CargaCalificacionesEpqForm extends Component
     #[Renderless]
     public function saveCell(int $idMaterias, string $campo, mixed $value): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesEpq:carga:cell:'.(auth()->id() ?? 'guest');
@@ -117,7 +125,7 @@ class CargaCalificacionesEpqForm extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-primario.epq.carga-form')
+        return view('livewire.calificaciones-primario.epq.carga-form', $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente))
             ->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones (EPQ)']);
     }
 }

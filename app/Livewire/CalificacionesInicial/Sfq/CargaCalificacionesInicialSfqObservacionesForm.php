@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial\Sfq;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Support\CalificacionesInicial\CalificacionesInicialModulos;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqCatalogo;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqDatos;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesInicialSfqObservacionesForm extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public int $idMatricula;
 
     public int $cursoId;
@@ -77,11 +80,16 @@ class CargaCalificacionesInicialSfqObservacionesForm extends Component
         $this->baObs01 = $data['baObs01'];
         $this->baObs02 = $data['baObs02'];
         $this->baObs03 = $data['baObs03'];
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     #[Renderless]
     public function guardarCampo(string $campo, mixed $value): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesInicialSfq:obs:'.(auth()->id() ?? 'guest');
@@ -120,9 +128,9 @@ class CargaCalificacionesInicialSfqObservacionesForm extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-inicial.sfq.observaciones-form', [
+        return view('livewire.calificaciones-inicial.sfq.observaciones-form', array_merge([
             'maxCaracteres' => CalificacionesInicialSfqCatalogo::MAX_OBS_CARACTERES,
-        ])->layout(CalificacionesInicialSfqPortalDocente::layout(), [
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesInicialSfqPortalDocente::layout(), [
             'pageTitle' => 'Observaciones (Inicial SFQ)',
         ]);
     }

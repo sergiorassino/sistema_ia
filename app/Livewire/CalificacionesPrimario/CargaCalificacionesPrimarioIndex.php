@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesPrimario;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesPrimarioIndex extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public ?int $cursoId = null;
 
     public bool $modoPortalDocente = false;
@@ -42,6 +45,8 @@ class CargaCalificacionesPrimarioIndex extends Component
             }
             $this->cursoId = $curso;
         }
+
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     public function updatedCursoId(mixed $value): void
@@ -109,9 +114,9 @@ class CargaCalificacionesPrimarioIndex extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-primario.carga-calificaciones-primario-index', [
+        return view('livewire.calificaciones-primario.carga-calificaciones-primario-index', array_merge([
             'cursos' => $this->cursos(),
             'matriculas' => $this->matriculasDelCurso(),
-        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante (primario)']);
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante (primario)']);
     }
 }

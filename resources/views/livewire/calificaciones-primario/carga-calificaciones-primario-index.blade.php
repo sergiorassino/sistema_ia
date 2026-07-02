@@ -1,4 +1,10 @@
 {{-- Carga manual de calificaciones (primario): curso → alumno. --}}
+@php
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
+@endphp
+<div>
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -72,4 +78,10 @@
             </div>
         </div>
     @endif
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-prim-index',
+        'modalTituloId' => 'modal-notas-off-prim-index-titulo',
+    ])
 </div>

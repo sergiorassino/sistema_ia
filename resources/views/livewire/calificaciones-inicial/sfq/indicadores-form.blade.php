@@ -1,11 +1,22 @@
 {{-- SFQ — indicadores por alumno (ic01–ic06). --}}
+@php
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
+@endphp
+<div>
 <div class="mx-auto w-full max-w-6xl space-y-6">
     <div class="overflow-hidden rounded-2xl bg-neutral-800 px-5 py-3 text-center">
         <p class="text-sm font-bold uppercase tracking-wide text-white">{{ $alumnoLinea }}</p>
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm font-semibold text-neutral-700">{{ $etiquetaColumna }} · {{ $cursoLabel }}</p>
+        <p class="text-sm font-semibold text-neutral-700">
+            {{ $etiquetaColumna }} · {{ $cursoLabel }}
+            @if ($soloLectura)
+                <span class="mt-1 block text-xs font-semibold uppercase tracking-wide text-amber-700">Solo consulta — la carga está deshabilitada</span>
+            @endif
+        </p>
         <a href="{{ \App\Support\PortalDocente\CalificacionesInicialSfqPortalDocente::route('index', ['curso' => $cursoId]) }}"
            class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-50">
             Volver
@@ -39,7 +50,8 @@
                             <td class="px-3 py-2 align-top text-sm text-neutral-800">{{ $fila['indicador'] ?: '—' }}</td>
                             <td class="px-3 py-2">
                                 <select wire:model="filas.{{ $idx }}.nota"
-                                        wire:change="guardar"
+                                        @disabled($soloLectura)
+                                        @if (! $soloLectura) wire:change="guardar" @endif
                                         class="form-select w-full text-sm">
                                     @foreach ($opcionesNota as $valor => $etiq)
                                         <option value="{{ $valor }}">{{ $etiq }}</option>
@@ -58,6 +70,12 @@
             </table>
         </div>
     </div>
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-ini-ind',
+        'modalTituloId' => 'modal-notas-off-ini-ind-titulo',
+    ])
 </div>
 
 @script

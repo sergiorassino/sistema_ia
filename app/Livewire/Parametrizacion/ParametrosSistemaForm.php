@@ -5,7 +5,10 @@ namespace App\Livewire\Parametrizacion;
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
+use App\Models\Terlec;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -21,6 +24,8 @@ class ParametrosSistemaForm extends Component
         return PermisosConfiguracion::PARAMETROS_SISTEMA;
     }
     use WithFileUploads;
+
+    public string $activeTab = 'institucion';
 
     public string $insti = '';
     public string $cue = '';
@@ -55,6 +60,29 @@ class ParametrosSistemaForm extends Component
 
     public ?string $currentLogoUrl = null;
 
+    public int|string $idTerlecVerNotas = '';
+
+    public bool $cargaNotasOff = false;
+
+    public string $notasOffMensaje = '';
+
+    public bool $verNotasOff = false;
+
+    public string $verOffMensaje = '';
+
+    public bool $verBimesOff = false;
+
+    public string $bimesOffMensaje = '';
+
+    public bool $imprBoleOff = false;
+
+    public function setTab(string $tab): void
+    {
+        if (in_array($tab, ['institucion', 'parametros'], true)) {
+            $this->activeTab = $tab;
+        }
+    }
+
     public function mount(): void
     {
         $idNivel = (int) (schoolCtx()->idNivel ?? 0);
@@ -87,10 +115,14 @@ class ParametrosSistemaForm extends Component
         $this->siroIdentCuenta = (string) ($ento->siroIdentCuenta ?? '');
 
         $this->currentLogoUrl = schoolLogoUrl();
+
+        $this->cargarParametrosOperativosDesdeEnto($ento);
     }
 
     protected function rules(): array
     {
+        $terlecIds = Terlec::paraSelector()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
         $rules = [
             'insti' => ['nullable', 'string', 'max:120'],
             'cue' => ['nullable', 'string', 'max:30'],
@@ -112,6 +144,14 @@ class ParametrosSistemaForm extends Component
             'mail' => ['nullable', 'email:rfc', 'max:120'],
             'replegal' => ['nullable', 'string', 'max:120'],
             'removeLogo' => ['boolean'],
+            'idTerlecVerNotas' => ['nullable', 'integer', Rule::in($terlecIds)],
+            'cargaNotasOff' => ['boolean'],
+            'notasOffMensaje' => ['nullable', 'string', 'max:500'],
+            'verNotasOff' => ['boolean'],
+            'verOffMensaje' => ['nullable', 'string', 'max:500'],
+            'verBimesOff' => ['boolean'],
+            'bimesOffMensaje' => ['nullable', 'string', 'max:500'],
+            'imprBoleOff' => ['boolean'],
         ];
 
         if ($this->puedeEditarCamposSiro()) {
@@ -253,16 +293,18 @@ class ParametrosSistemaForm extends Component
         }
 
         if ($this->puedeEditarCamposSiro()) {
-            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroPrefijoCPE')) {
+            if (Schema::hasColumn('ento', 'siroPrefijoCPE')) {
                 $payload['siroPrefijoCPE'] = ($v = trim($this->siroPrefijoCPE)) !== '' ? $v : null;
             }
-            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroMje')) {
+            if (Schema::hasColumn('ento', 'siroMje')) {
                 $payload['siroMje'] = ($v = trim($this->siroMje)) !== '' ? $v : null;
             }
-            if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'siroIdentCuenta')) {
+            if (Schema::hasColumn('ento', 'siroIdentCuenta')) {
                 $payload['siroIdentCuenta'] = ($v = trim($this->siroIdentCuenta)) !== '' ? $v : null;
             }
         }
+
+        $payload = array_merge($payload, $this->payloadParametrosOperativos());
 
         $logoPathEsperado = null;
 
@@ -423,6 +465,11 @@ class ParametrosSistemaForm extends Component
 
     private static function fechaAfipParaInput(mixed $valor): string
     {
+        return self::fechaLegacyParaInput($valor);
+    }
+
+    private static function fechaLegacyParaInput(mixed $valor): string
+    {
         $raw = trim((string) ($valor ?? ''));
         if ($raw === '') {
             return '';
@@ -439,6 +486,81 @@ class ParametrosSistemaForm extends Component
         } catch (\Throwable) {
             return '';
         }
+    }
+
+    private function cargarParametrosOperativosDesdeEnto(Ento $ento): void
+    {
+        $attrs = $ento->getAttributes();
+
+        $this->idTerlecVerNotas = self::terlecIdParaInput($attrs['idTerlecVerNotas'] ?? null);
+
+        $this->cargaNotasOff = self::entoFlagActivo($attrs['cargaNotasOff'] ?? null);
+        $this->notasOffMensaje = (string) ($attrs['notasOffMensaje'] ?? '');
+        $this->verNotasOff = self::entoFlagActivo($attrs['verNotasOff'] ?? null);
+        $this->verOffMensaje = (string) ($attrs['verOffMensaje'] ?? '');
+        $this->verBimesOff = self::entoFlagActivo($attrs['verBimesOff'] ?? null);
+        $this->bimesOffMensaje = (string) ($attrs['bimesOffMensaje'] ?? '');
+        $this->imprBoleOff = self::entoFlagActivo($attrs['imprBoleOff'] ?? null);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payloadParametrosOperativos(): array
+    {
+        $payload = [];
+
+        $this->asignarTerlecPayload($payload, 'idTerlecVerNotas', $this->idTerlecVerNotas);
+
+        $this->asignarFlagPayload($payload, 'cargaNotasOff', $this->cargaNotasOff);
+        $this->asignarTextoPayload($payload, 'notasOffMensaje', $this->notasOffMensaje);
+        $this->asignarFlagPayload($payload, 'verNotasOff', $this->verNotasOff);
+        $this->asignarTextoPayload($payload, 'verOffMensaje', $this->verOffMensaje);
+        $this->asignarFlagPayload($payload, 'verBimesOff', $this->verBimesOff);
+        $this->asignarTextoPayload($payload, 'bimesOffMensaje', $this->bimesOffMensaje);
+        $this->asignarFlagPayload($payload, 'imprBoleOff', $this->imprBoleOff);
+
+        return $payload;
+    }
+
+    private function asignarTerlecPayload(array &$payload, string $columna, int|string $valor): void
+    {
+        if (! Schema::hasColumn('ento', $columna)) {
+            return;
+        }
+
+        $id = trim((string) $valor);
+        $payload[$columna] = $id !== '' ? (int) $id : null;
+    }
+
+    private function asignarFlagPayload(array &$payload, string $columna, bool $activo): void
+    {
+        if (! Schema::hasColumn('ento', $columna)) {
+            return;
+        }
+
+        $payload[$columna] = $activo ? 1 : 0;
+    }
+
+    private function asignarTextoPayload(array &$payload, string $columna, string $valor): void
+    {
+        if (! Schema::hasColumn('ento', $columna)) {
+            return;
+        }
+
+        $payload[$columna] = ($v = trim($valor)) !== '' ? $v : null;
+    }
+
+    private static function terlecIdParaInput(mixed $valor): int|string
+    {
+        $id = (int) ($valor ?? 0);
+
+        return $id > 0 ? $id : '';
+    }
+
+    private static function entoFlagActivo(mixed $valor): bool
+    {
+        return (int) ($valor ?? 0) === 1;
     }
 }
 

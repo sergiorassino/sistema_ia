@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesPrimario;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
@@ -18,6 +19,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesPrimarioForm extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public int $idMatricula;
 
     public int $cursoId;
@@ -79,6 +82,7 @@ class CargaCalificacionesPrimarioForm extends Component
         $this->cursoId = (int) $mat->idCursos;
         $this->cargarDesdeBd($mat);
         $this->cargarNotasPermitidas();
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     protected function cargarDesdeBd(\App\Models\Matricula $mat): void
@@ -140,6 +144,10 @@ class CargaCalificacionesPrimarioForm extends Component
     #[Renderless]
     public function saveCell(int $idMaterias, string $campo, mixed $value): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesPrimario:carga:cell:'.(auth()->id() ?? 'guest');
@@ -214,6 +222,10 @@ class CargaCalificacionesPrimarioForm extends Component
     #[Renderless]
     public function saveObservacion(string $campo, mixed $value): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesPrimario:carga:obs:'.(auth()->id() ?? 'guest');
@@ -262,8 +274,8 @@ class CargaCalificacionesPrimarioForm extends Component
             }
         }
 
-        return view('livewire.calificaciones-primario.carga-calificaciones-primario-form', [
+        return view('livewire.calificaciones-primario.carga-calificaciones-primario-form', array_merge([
             'notasPermitidasActiva' => $algunaConCatalogo,
-        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante']);
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por estudiante']);
     }
 }

@@ -2,7 +2,11 @@
 @php
     use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
     $maxObsCalif = CalificacionesPrimarioCatalogo::MAX_CARACTERES_OBS_CALIFICACION;
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
 @endphp
+<div>
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
     <style>
         table.se-calif-prim-mat-grid {
@@ -159,6 +163,11 @@
                         </span>
                     @endif
                 </p>
+                @if ($soloLectura)
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-200/95">
+                        Solo consulta — la carga está deshabilitada
+                    </p>
+                @endif
             </div>
             <a href="{{ \App\Support\PortalDocente\CalificacionesPrimarioPortalDocente::urlInicio() }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
@@ -272,8 +281,9 @@
                                                     'value' => $valor,
                                                     'wireKey' => 'prim-mat-cell-'.$materiaId.'-'.$etapa.'-'.$idMatricula.'-'.$campo,
                                                     'notasPermitidasActiva' => $notasPermitidasActiva,
-                                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
-                                                ])
+                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                    'soloLectura' => $soloLectura,
+                                ])
                                             </td>
                                         @endforeach
                                         @php
@@ -287,8 +297,9 @@
                                                 'wireKey' => 'prim-mat-cell-'.$materiaId.'-'.$etapa.'-'.$idMatricula.'-'.$campoFinal,
                                                 'inputClass' => 'rounded border border-accent-200 font-semibold focus:border-primary-500 focus:ring-1 focus:ring-primary-500',
                                                 'notasPermitidasActiva' => $notasPermitidasActiva,
-                                                'notasPermitidasLista' => $notasPermitidasLista ?? [],
-                                            ])
+                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                    'soloLectura' => $soloLectura,
+                                ])
                                         </td>
                                         @if ($columnaAnual)
                                             @php
@@ -302,8 +313,9 @@
                                                     'wireKey' => 'prim-mat-cell-'.$materiaId.'-'.$etapa.'-'.$idMatricula.'-'.$campoAnual,
                                                     'inputClass' => 'rounded border border-accent-200 font-semibold focus:border-primary-500 focus:ring-1 focus:ring-primary-500',
                                                     'notasPermitidasActiva' => $notasPermitidasActiva,
-                                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
-                                                ])
+                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                    'soloLectura' => $soloLectura,
+                                ])
                                             </td>
                                         @endif
                                         @if ($columnaIntensificacion)
@@ -318,8 +330,9 @@
                                                     'wireKey' => 'prim-mat-cell-'.$materiaId.'-'.$etapa.'-'.$idMatricula.'-'.$campoIntensif,
                                                     'inputClass' => 'rounded border border-accent-200 font-semibold focus:border-primary-500 focus:ring-1 focus:ring-primary-500',
                                                     'notasPermitidasActiva' => $notasPermitidasActiva,
-                                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
-                                                ])
+                                    'notasPermitidasLista' => $notasPermitidasLista ?? [],
+                                    'soloLectura' => $soloLectura,
+                                ])
                                             </td>
                                         @endif
                                         @php
@@ -333,7 +346,12 @@
                                                       autocomplete="off"
                                                       wire:key="prim-mat-cell-{{ $materiaId }}-{{ $etapa }}-{{ $idMatricula }}-{{ $campoObs }}"
                                                       title="{{ $maxObsCalif }} caracteres máx."
-                                                      class="se-calif-prim-mat-obs-input rounded border border-accent-200 leading-relaxed focus:border-primary-500 focus:ring-1 focus:ring-primary-500">{{ $valorObs }}</textarea>
+                                                      @readonly($soloLectura)
+                                                      @class([
+                                                          'se-calif-prim-mat-obs-input rounded border border-accent-200 leading-relaxed',
+                                                          'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                                                          'focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                                                      ])>{{ $valorObs }}</textarea>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -344,4 +362,10 @@
             </div>
         @endif
     @endif
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-prim-materia',
+        'modalTituloId' => 'modal-notas-off-prim-materia-titulo',
+    ])
 </div>

@@ -106,7 +106,7 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
     public function saveCell(int $id, string $field, mixed $value): void
     {
         if ($this->modoPortalDocente) {
-            if ($this->cargaNotasSoloLectura) {
+            if ($this->cargaNotasOffBloqueaEdicion()) {
                 return;
             }
         } else {
@@ -138,9 +138,6 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
         $notasPermitidasActiva = $this->notasPermitidasActiva();
 
         $modoPortalDocente = $this->modoPortalDocente;
-        $soloLectura = $this->modoPortalDocente && $this->cargaNotasSoloLectura;
-        $mostrarModalNotasOff = $this->modoPortalDocente && $this->mostrarModalNotasOff;
-        $mensajeNotasOff = $this->mensajeNotasOff;
         $pdfUrl = null;
         $urlLista = null;
 
@@ -159,19 +156,19 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
             }
         }
 
-        $viewData = compact(
-            'cursos',
-            'materias',
-            'cursoLabel',
-            'materiaLabel',
-            'notasPermitidasLista',
-            'notasPermitidasActiva',
-            'modoPortalDocente',
-            'soloLectura',
-            'mostrarModalNotasOff',
-            'mensajeNotasOff',
-            'pdfUrl',
-            'urlLista',
+        $viewData = array_merge(
+            compact(
+                'cursos',
+                'materias',
+                'cursoLabel',
+                'materiaLabel',
+                'notasPermitidasLista',
+                'notasPermitidasActiva',
+                'modoPortalDocente',
+                'pdfUrl',
+                'urlLista',
+            ),
+            $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente),
         );
 
         $layout = $this->modoPortalDocente ? 'layouts.docente' : 'layouts.app';

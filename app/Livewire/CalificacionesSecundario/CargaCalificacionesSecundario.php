@@ -2,8 +2,8 @@
 
 namespace App\Livewire\CalificacionesSecundario;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
-use App\Support\EntoCargaNotas;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -33,6 +33,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesSecundario extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
 
@@ -62,12 +64,6 @@ class CargaCalificacionesSecundario extends Component
 
     /** Menú de Docentes: sin permiso de carga; alcance por ppc y `ento.cargaNotasOff`. */
     public bool $modoPortalDocente = false;
-
-    public bool $cargaNotasSoloLectura = false;
-
-    public bool $mostrarModalNotasOff = false;
-
-    public string $mensajeNotasOff = '';
 
     /**
      * Secretaría: sin parámetros. Menú de Docentes: `{curso}` y `{materia}` en la ruta.
@@ -104,12 +100,7 @@ class CargaCalificacionesSecundario extends Component
 
         CalificacionesDocenteSecundario::abortSiProfesorSinMateria($materia, $curso);
 
-        $params = EntoCargaNotas::paraNivelActual();
-        if ($params['bloqueada']) {
-            $this->cargaNotasSoloLectura = true;
-            $this->mensajeNotasOff = $params['mensaje'];
-            $this->mostrarModalNotasOff = true;
-        }
+        $this->inicializarAvisoCargaNotasOff(true);
 
         if ($this->cursoId && $this->materiaId) {
             $this->loadGrid();
@@ -424,7 +415,7 @@ class CargaCalificacionesSecundario extends Component
     public function saveCell(int $id, string $field, mixed $value): void
     {
         if ($this->modoPortalDocente) {
-            if ($this->cargaNotasSoloLectura) {
+            if ($this->cargaNotasOffBloqueaEdicion()) {
                 return;
             }
         } else {
@@ -625,9 +616,6 @@ class CargaCalificacionesSecundario extends Component
         $notasPermitidasActiva = $this->notasPermitidasActiva();
 
         $modoPortalDocente = $this->modoPortalDocente;
-        $soloLectura = $this->modoPortalDocente && $this->cargaNotasSoloLectura;
-        $mostrarModalNotasOff = $this->modoPortalDocente && $this->mostrarModalNotasOff;
-        $mensajeNotasOff = $this->mensajeNotasOff;
         $pdfUrl = null;
         $urlLista = null;
 
@@ -639,19 +627,19 @@ class CargaCalificacionesSecundario extends Component
             $urlLista = route('portalDocente.calificaciones');
         }
 
-        $viewData = compact(
-            'cursos',
-            'materias',
-            'cursoLabel',
-            'materiaLabel',
-            'notasPermitidasLista',
-            'notasPermitidasActiva',
-            'modoPortalDocente',
-            'soloLectura',
-            'mostrarModalNotasOff',
-            'mensajeNotasOff',
-            'pdfUrl',
-            'urlLista',
+        $viewData = array_merge(
+            compact(
+                'cursos',
+                'materias',
+                'cursoLabel',
+                'materiaLabel',
+                'notasPermitidasLista',
+                'notasPermitidasActiva',
+                'modoPortalDocente',
+                'pdfUrl',
+                'urlLista',
+            ),
+            $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente),
         );
 
         $layout = $this->modoPortalDocente ? 'layouts.docente' : 'layouts.app';
@@ -663,8 +651,4 @@ class CargaCalificacionesSecundario extends Component
             ->layout($layout, ['pageTitle' => $pageTitle]);
     }
 
-    public function aceptarAvisoCargaNotasOff(): void
-    {
-        $this->mostrarModalNotasOff = false;
-    }
 }
