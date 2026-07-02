@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Alumnos;
 use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaInformeProgresoInicial;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
+use App\Support\EntoVerNotasOff;
 use App\Support\CalificacionesInicial\InformeProgresoInicialTcpdf;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
@@ -20,6 +21,14 @@ class InformeProgresoInicialPdfController extends Controller
     public function __invoke(Request $request, int $etapa)
     {
         abort_unless(PortalFamiliaInformeProgresoInicial::habilitadoEnMenu(), 404);
+
+        $bloqueoVerNotas = EntoVerNotasOff::paraEstudianteActual();
+        if ($bloqueoVerNotas['bloqueada']) {
+            return response()->view('errors.alumno-pdf', [
+                'mensaje' => $bloqueoVerNotas['mensaje'],
+            ], 403);
+        }
+
         abort_unless(in_array($etapa, [1, 2], true), 404);
         abort_unless(
             NivelSistema::esInicial((int) studentCtx()->idNivel),
