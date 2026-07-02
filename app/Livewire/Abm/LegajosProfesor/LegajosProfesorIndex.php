@@ -57,6 +57,10 @@ class LegajosProfesorIndex extends Component
 
         $focus = request()->integer('focus');
         $this->focusId = $focus > 0 ? $focus : null;
+
+        if ($this->focusId) {
+            $this->setPage(self::paginaParaProfesor($this->focusId, 25, $this->filtroRol, $this->search));
+        }
     }
 
     public function updatedSearch(): void
@@ -188,19 +192,37 @@ class LegajosProfesorIndex extends Component
         return $deps;
     }
 
-    public function render()
-    {
-        $query = Profesor::query()
-            ->with('tipo')
-            ->delNivel(SchoolAlcancePedagogico::idNivelLegajosDocente());
+    public static function paginaParaProfesor(
+        int $id,
+        int $perPage = 25,
+        string $filtroRol = '',
+        string $search = '',
+    ): int {
+        $query = self::queryListado($filtroRol, $search);
 
-        if ($this->search !== '') {
-            $query->buscar($this->search);
+        $profesor = (clone $query)->whereKey($id)->first(['id', 'apellido', 'nombre']);
+        if ($profesor === null) {
+            return 1;
         }
 
-        $this->aplicarFiltroRol($query);
+        $countBefore = (clone $query)->where(function ($q) use ($profesor) {
+            $q->where('apellido', '<', $profesor->apellido)
+                ->orWhere(function ($q2) use ($profesor) {
+                    $q2->where('apellido', $profesor->apellido)
+                        ->where('nombre', '<', $profesor->nombre);
+                });
+        })->count();
 
-        $profesores = $query->orderBy('apellido')->orderBy('nombre')->paginate(25);
+        return max(1, (int) floor($countBefore / $perPage) + 1);
+    }
+
+    public function render()
+    {
+        $profesores = self::queryListado($this->filtroRol, $this->search)
+            ->with('tipo')
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->paginate(25);
 
         $roles = ProfesorTipo::query()
             ->orderBy('tipo')
@@ -211,12 +233,31 @@ class LegajosProfesorIndex extends Component
     }
 
     /**
+     * Query base del listado (nivel, búsqueda y filtro de rol).
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<\App\Models\Profesor>
+     */
+    private static function queryListado(string $filtroRol = '', string $search = '')
+    {
+        $query = Profesor::query()
+            ->delNivel(SchoolAlcancePedagogico::idNivelLegajosDocente());
+
+        if ($search !== '') {
+            $query->buscar($search);
+        }
+
+        self::aplicarFiltroRolEnQuery($query, $filtroRol);
+
+        return $query;
+    }
+
+    /**
      * Aplica el filtro por rol al query. Por defecto excluye «Sin Rol» (IdTipoProf = 1):
      * son docentes que ya no están en la escuela y no deben aparecer salvo selección explícita.
      */
-    private function aplicarFiltroRol($query): void
+    private static function aplicarFiltroRolEnQuery($query, string $filtroRol): void
     {
-        $valor = trim($this->filtroRol);
+        $valor = trim($filtroRol);
 
         if ($valor === self::FILTRO_ROL_TODOS) {
             return;
