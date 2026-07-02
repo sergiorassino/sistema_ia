@@ -5,7 +5,7 @@ namespace App\Support;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Parámetros de `ento` que controlan la carga de notas desde el Menú de Docentes.
+ * Parámetros de `ento` que controlan la carga de notas (Menú de Docentes y Menú de Secretaría).
  */
 final class EntoCargaNotas
 {
@@ -45,5 +45,15 @@ final class EntoCargaNotas
     public static function paraNivelActual(): array
     {
         return self::paraNivel((int) (schoolCtx()->idNivel ?? 0));
+    }
+
+    public static function entradaSecretariaBloqueada(): bool
+    {
+        return self::paraNivelActual()['bloqueada'];
+    }
+
+    public static function mensajeEntradaSecretariaBloqueada(): string
+    {
+        return self::paraNivelActual()['mensaje'];
     }
 }

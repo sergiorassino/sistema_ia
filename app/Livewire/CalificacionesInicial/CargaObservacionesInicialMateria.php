@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial;
 
+use App\Livewire\Concerns\BloqueoEntradaCargaNotasOffSecretaria;
 use App\Models\Curso;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\PermisosIaCatalog;
@@ -20,6 +21,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialMateria extends Component
 {
+    use BloqueoEntradaCargaNotasOffSecretaria;
+
     public ?int $cursoId = null;
 
     public ?int $materiaId = null;
@@ -64,6 +67,8 @@ class CargaObservacionesInicialMateria extends Component
 
         CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+
+        $this->redirigirSiSecretariaCargaNotasOff($this->modoPortalDocente);
 
         $this->etapas = CalificacionesInicialObservacionesDatos::etapasCarga();
     }
@@ -154,6 +159,10 @@ class CargaObservacionesInicialMateria extends Component
     #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
+        if ($this->secretariaCargaNotasOffBloqueaAccion($this->modoPortalDocente)) {
+            return;
+        }
+
         if (! $this->modoPortalDocente) {
             PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
         }

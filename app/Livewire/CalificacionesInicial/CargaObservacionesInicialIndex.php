@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial;
 
+use App\Livewire\Concerns\BloqueoEntradaCargaNotasOffSecretaria;
 use App\Support\CalificacionesInicial\CalificacionesInicialIndicadoresCatalogo;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\PermisosIaCatalog;
@@ -14,6 +15,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialIndex extends Component
 {
+    use BloqueoEntradaCargaNotasOffSecretaria;
+
     public bool $modoPortalDocente = false;
 
     public function mount(): void
@@ -31,6 +34,8 @@ class CargaObservacionesInicialIndex extends Component
 
         CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+
+        $this->redirigirSiSecretariaCargaNotasOff($this->modoPortalDocente);
     }
 
     public function render()

@@ -1750,5 +1750,6 @@
     })();
 </script>
 @include('layouts.partials.abrir-pdf-post')
+@include('layouts.partials.carga-notas-off-aviso-flash')
 </body>
 </html>

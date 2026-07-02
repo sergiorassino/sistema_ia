@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial;
 
+use App\Livewire\Concerns\BloqueoEntradaCargaNotasOffSecretaria;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
@@ -14,6 +15,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialForm extends Component
 {
+    use BloqueoEntradaCargaNotasOffSecretaria;
+
     public bool $modoPortalDocente = false;
 
     public int $idMateria;
@@ -55,6 +58,8 @@ class CargaObservacionesInicialForm extends Component
 
         CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+
+        $this->redirigirSiSecretariaCargaNotasOff($this->modoPortalDocente);
 
         $ctx = schoolCtx();
         $mat = CalificacionesInicialObservacionesDatos::materiaEnContexto(
@@ -98,6 +103,10 @@ class CargaObservacionesInicialForm extends Component
 
     public function guardar(): void
     {
+        if ($this->secretariaCargaNotasOffBloqueaAccion($this->modoPortalDocente)) {
+            return;
+        }
+
         if (! $this->modoPortalDocente) {
             PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
         }
