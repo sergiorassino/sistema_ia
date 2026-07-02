@@ -1292,7 +1292,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->name('seguimiento.inasistencias.informe.pdf');
     });
     Route::get('/seguimiento/inasistencias/sincro-cidi', SincroCidiInasistencias::class)
-        ->middleware('permiso:24')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI)
         ->name('seguimiento.inasistencias.sincroCidi');
     Route::get('/seguimiento/toma-asistencia-clase', TomaAsistenciaClaseIndex::class)
         ->middleware('permiso:1')
@@ -1303,8 +1303,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('seguimiento.inasistencias.informe.lote.pdf');
 
     Route::get('/seguimiento/partes-diarios', PartesDiariosIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PARTE_DIARIO_PRECEPTOR)
         ->name('seguimiento.partes-diarios');
     Route::get('/seguimiento/partes-diarios/pdf', ParteDiarioPreceptorPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PARTE_DIARIO_PRECEPTOR)
         ->name('seguimiento.partes-diarios.pdf');
 
     }); // fin menu.portal:secretaria (pedagógico)

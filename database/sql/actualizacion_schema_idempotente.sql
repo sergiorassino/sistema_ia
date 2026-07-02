@@ -483,9 +483,10 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (23, 21, 'CERTIFICADOS', 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'),
 (24, 22, 'CERTIFICADOS', 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'),
 (25, 23, 'INASISTENCIAS DOCENTES', 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'),
-(26, 24, 'ASISTENCIA ESTUDIANTES', 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'),
+(26, 24, 'ASISTENCIA ESTUDIANTES', 'Descargar e importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'),
 (39, 37, 'SEGUIMIENTO DISCIPLINARIO', 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'),
 (40, 38, 'ASISTENCIA ESTUDIANTES', 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'),
+(81, 81, 'ASISTENCIA ESTUDIANTES', 'Parte diario del preceptor: selección de curso(s), fecha e impresión PDF por día.'),
 (44, 44, 'MATRÍCULA WEB', 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.')
 ON DUPLICATE KEY UPDATE
   `orden` = VALUES(`orden`),
