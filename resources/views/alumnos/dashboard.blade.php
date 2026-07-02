@@ -5,6 +5,8 @@
 @section('content')
 @php
     $terlecAno = $ctx->terlecAno();
+    $dniEstudiante = $datosSesion['dni'] ?? '—';
+    $cursoEstudiante = trim((string) ($datosSesion['curso'] ?? ''));
 @endphp
 
 <div class="max-w-6xl mx-auto space-y-8">
@@ -26,6 +28,13 @@
                         .
                     @endif
                 </p>
+                <p class="text-xs leading-relaxed text-white/70" aria-label="Identificación y curso">
+                    <span>DNI {{ $dniEstudiante }}</span>
+                    @if ($cursoEstudiante !== '')
+                        <span class="mx-1.5 text-white/40" aria-hidden="true">·</span>
+                        <span class="uppercase">{{ $cursoEstudiante }}</span>
+                    @endif
+                </p>
             </div>
             <div class="flex shrink-0 justify-start md:justify-end">
                 @include('layouts.partials.logo-institucional', ['url' => $heroLogo, 'context' => 'hero'])
@@ -37,7 +46,7 @@
         <h2 id="alumno-dash-session-heading" class="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
             Datos de la sesión
         </h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.72fr)]">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <div class="se-dash-session-card">
                 <div class="se-dash-session-icon">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -48,6 +57,32 @@
                 <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Estudiante</p>
                     <p class="se-dash-session-value text-neutral-900" title="{{ $nombreEstudiante }}">{{ $nombreEstudiante }}</p>
+                </div>
+            </div>
+            <div class="se-dash-session-card">
+                <div class="se-dash-session-icon">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 002.83 2M9 14h6m-6 0a3.001 3.001 0 012.83-2"/>
+                    </svg>
+                </div>
+                <div class="se-dash-session-body">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">DNI</p>
+                    <p class="se-dash-session-value tabular-nums text-neutral-900" title="{{ $dniEstudiante }}">{{ $dniEstudiante }}</p>
+                </div>
+            </div>
+            <div class="se-dash-session-card">
+                <div class="se-dash-session-icon">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                    </svg>
+                </div>
+                <div class="se-dash-session-body">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Curso y sección</p>
+                    <p class="se-dash-session-value text-neutral-900" title="{{ $cursoEstudiante !== '' ? $cursoEstudiante : 'Sin matrícula en este ciclo' }}">
+                        {{ $cursoEstudiante !== '' ? $cursoEstudiante : '—' }}
+                    </p>
                 </div>
             </div>
             <div class="se-dash-session-card">

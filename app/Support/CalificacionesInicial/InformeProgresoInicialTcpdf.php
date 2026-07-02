@@ -4,6 +4,7 @@ namespace App\Support\CalificacionesInicial;
 
 use App\Support\Pdf\TcpdfFuenteArial;
 use App\Support\Pdf\TcpdfMultiCellJustificado;
+use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
 /**
@@ -18,6 +19,10 @@ final class InformeProgresoInicialTcpdf extends TCPDF
     private const ANCHO_CONTENIDO = 160.0;
 
     private const FILL_GRIS = [232, 232, 232];
+
+    private const ANCHO_LOGO = 21.78;
+
+    private const ALTO_LOGO = 21.78;
 
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $header;
@@ -101,10 +106,13 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         $etapa = $etapa === 2 ? 2 : 1;
         $nombreEtapa = (string) ($datos['nombreEtapa'] ?? ($etapa === 1 ? 'PRIMERA ETAPA' : 'SEGUNDA ETAPA'));
 
+        /** @var array<string, mixed> $alumno */
+        $alumno = (array) ($datos['alumno'] ?? []);
+
         /** @var list<array<string, mixed>> $materias */
         $materias = (array) ($datos['materias'] ?? []);
         foreach ($materias as $materia) {
-            $this->paginaMateria($materia, $etapa, $nombreEtapa);
+            $this->paginaMateria($materia, $alumno, $etapa, $nombreEtapa);
         }
 
         $this->paginaCierre($nombreEtapa);
@@ -240,8 +248,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
 
     /**
      * @param  array<string, mixed>  $materia
+     * @param  array<string, mixed>  $alumno
      */
-    private function paginaMateria(array $materia, int $etapa, string $nombreEtapa): void
+    private function paginaMateria(array $materia, array $alumno, int $etapa, string $nombreEtapa): void
     {
         $nombre = trim((string) ($materia['materia'] ?? ''));
         $esObservaciones = mb_strtoupper($nombre) === 'OBSERVACIONES';
@@ -249,17 +258,13 @@ final class InformeProgresoInicialTcpdf extends TCPDF
 
         $this->AddPage('P', 'A4');
 
-        $yInicioMarca = 20.0;
-        $this->SetXY(self::MARGEN_IZQ, $yInicioMarca);
-        TcpdfFuenteArial::aplicar($this, 'B', 13);
+        $tituloEncabezado = $esObservaciones ? trim($nombre.' '.$nombreEtapa) : $nombre;
+        $docente = trim((string) ($materia['docente'] ?? ''));
+        $lineaCursoAlumno = trim((string) ($alumno['lineaCursoAlumno'] ?? ''));
 
-        if ($esObservaciones) {
-            $this->MultiCell(self::ANCHO_CONTENIDO, 7, $nombre.' '.$nombreEtapa, 0, 'C');
-        } else {
-            $this->MultiCell(self::ANCHO_CONTENIDO, 7, $nombre, 0, 'C');
-        }
-
-        $this->Ln(3);
+        $yInicioMarca = 18.0;
+        $yContenido = $this->dibujarEncabezadoMateria($tituloEncabezado, $docente, $lineaCursoAlumno);
+        $this->SetXY(self::MARGEN_IZQ, $yContenido);
         TcpdfFuenteArial::aplicar($this, '', 13);
 
         $indicador1 = self::normalizarComillas((string) ($materia['indicador1'] ?? ''));
@@ -299,6 +304,61 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             $yFinMarca = min($this->GetY() + 4, 285.0);
             $this->dibujarMarcaAgua($yInicioMarca, $yFinMarca);
         }
+    }
+
+    private function dibujarEncabezadoMateria(string $tituloMateria, string $docente, string $lineaCursoAlumno): float
+    {
+        $yInicio = 18.0;
+
+        $logo = $this->resolverLogoArchivo();
+        if ($logo !== null) {
+            $this->Image(
+                $logo,
+                self::MARGEN_IZQ,
+                $yInicio,
+                self::ANCHO_LOGO,
+                self::ALTO_LOGO,
+                '',
+                '',
+                '',
+                false,
+                300,
+            );
+        }
+
+        $this->SetXY(self::MARGEN_IZQ, $yInicio);
+        TcpdfFuenteArial::aplicar($this, 'B', 13);
+        $this->Cell(self::ANCHO_BLOQUE, 7, mb_strtoupper($tituloMateria), 0, 2, 'C');
+
+        TcpdfFuenteArial::aplicar($this, '', 13);
+        if ($docente !== '') {
+            $this->Cell(self::ANCHO_BLOQUE, 7, $docente, 0, 2, 'C');
+        }
+        if ($lineaCursoAlumno !== '') {
+            $this->Cell(self::ANCHO_BLOQUE, 7, $lineaCursoAlumno, 0, 2, 'C');
+        }
+
+        return max($this->GetY() + 5, $yInicio + self::ALTO_LOGO + 5);
+    }
+
+    private function resolverLogoArchivo(): ?string
+    {
+        $logo = $this->header['logo_file'] ?? null;
+        if (is_string($logo) && $logo !== '' && is_file($logo)) {
+            return $logo;
+        }
+
+        $path = entoInstitutionalLogoStoragePath();
+        if (is_string($path) && $path !== '') {
+            $abs = Storage::disk('public')->path($path);
+            if (is_string($abs) && $abs !== '' && is_file($abs)) {
+                return $abs;
+            }
+        }
+
+        $fallback = public_path('img/3.png');
+
+        return is_file($fallback) ? $fallback : null;
     }
 
     /**

@@ -155,6 +155,8 @@ final class InformeProgresoInicialDatos
                 ->where('idNivel', $idNivel)
                 ->where('idTerlec', $idTerlec)
                 ->first();
+        } elseif ((int) ($curso->idTurnoClase ?? 0) > 0 && ! $curso->relationLoaded('turnoClase')) {
+            $curso->load('turnoClase');
         }
 
         if (! $matricula->relationLoaded('terlec')) {
@@ -181,9 +183,13 @@ final class InformeProgresoInicialDatos
             $edadSala = mb_substr($edadSala, 0, -1).' AÑOS';
         }
 
+        $turno = self::turnoDesdeCurso($curso);
+        $apellidoAlumno = trim((string) ($legajo?->apellido ?? ''));
+        $nombreAlumno = trim((string) ($legajo?->nombre ?? ''));
+
         $alumno = [
-            'apellido' => trim((string) ($legajo?->apellido ?? '')),
-            'nombre' => trim((string) ($legajo?->nombre ?? '')),
+            'apellido' => $apellidoAlumno,
+            'nombre' => $nombreAlumno,
             'dni' => trim((string) ($legajo?->dni ?? '')),
             'cursec' => $cursec,
             'edadSala' => $edadSala,
@@ -195,7 +201,13 @@ final class InformeProgresoInicialDatos
             'barrio' => trim((string) ($legajo?->barrio ?? '')),
             'localidad' => trim((string) ($legajo?->localidad ?? '')),
             'nroMatricula' => trim((string) ($matricula->nroMatricula ?? '')),
-            'turno' => self::turnoDesdeCurso($curso),
+            'turno' => $turno,
+            'lineaCursoAlumno' => self::lineaCursoAlumno(
+                self::salaParaEncabezadoInforme($curso),
+                $turno,
+                $apellidoAlumno,
+                $nombreAlumno,
+            ),
         ];
 
         $materiasRows = DB::table('materias')
@@ -226,6 +238,7 @@ final class InformeProgresoInicialDatos
 
             $materiasPdf[] = [
                 'materia' => $nombreMateria,
+                'docente' => self::docentePorMateria($idCurso, $ord, $idNivel, $idTerlec),
                 'indicador1' => $indicadores[1] ?? '',
                 'indicador2' => $indicadores[2] ?? '',
                 'etapa1' => (string) ($obs['etapa1'] ?? ''),
@@ -300,28 +313,111 @@ final class InformeProgresoInicialDatos
         return CalificacionesInicialIndicadoresDatos::textosPorEtapa($idMateria);
     }
 
+    private static function docentePorMateria(int $idCurso, int $ord, int $idNivel, int $idTerlec): string
+    {
+        $fila = DB::table('profesores as p')
+            ->join('ppc', 'ppc.idProfesor', '=', 'p.id')
+            ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
+            ->where('m.idCursos', $idCurso)
+            ->where('m.ord', $ord)
+            ->where('m.idNivel', $idNivel)
+            ->where('m.idTerlec', $idTerlec)
+            ->orderBy('p.id')
+            ->first(['p.apellido', 'p.nombre']);
+
+        if ($fila === null) {
+            return '';
+        }
+
+        $apellido = mb_strtoupper(trim((string) ($fila->apellido ?? '')));
+        $nombre = trim((string) ($fila->nombre ?? ''));
+
+        return trim($apellido.($nombre !== '' ? ' '.$nombre : ''));
+    }
+
+    private static function salaParaEncabezadoInforme(?Curso $curso): string
+    {
+        if ($curso === null) {
+            return '';
+        }
+
+        $seccion = trim((string) ($curso->s ?? ''));
+        $nombreSala = trim((string) ($curso->c ?? ''));
+        $cursec = trim((string) ($curso->cursec ?? ''));
+
+        if ($nombreSala === '' && $cursec !== '') {
+            $nombreSala = $cursec;
+        }
+
+        if (preg_match('/^(\d+)\s+"([^"]+)"$/u', $nombreSala, $coincidencias)) {
+            return 'SALA DE '.$coincidencias[1].' "'.$coincidencias[2].'"';
+        }
+
+        if (preg_match('/^SALA DE (\d+)\s+"([^"]+)"$/iu', $nombreSala, $coincidencias)) {
+            return 'SALA DE '.$coincidencias[1].' "'.$coincidencias[2].'"';
+        }
+
+        if (preg_match('/^SALA DE (\d+)$/iu', $nombreSala, $coincidencias)) {
+            $nombreSala = 'SALA DE '.$coincidencias[1];
+        } elseif (preg_match('/^(\d+)$/u', $nombreSala)) {
+            $nombreSala = 'SALA DE '.$nombreSala;
+        } elseif (preg_match('/^SALA DE \d+/iu', $cursec) && ! preg_match('/^SALA DE /iu', $nombreSala)) {
+            if (preg_match('/^(SALA DE \d+)/iu', $cursec, $coincidencias)) {
+                $nombreSala = $coincidencias[1];
+            }
+        }
+
+        if ($seccion === '' && preg_match('/^(.+?\d)\s*([A-Za-zÁÉÍÓÚÑ])$/u', $nombreSala, $coincidencias)) {
+            $nombreSala = trim($coincidencias[1]);
+            $seccion = $coincidencias[2];
+        } elseif ($seccion === '' && preg_match('/^(.+?\S)\s+([A-Za-zÁÉÍÓÚÑ])$/u', $nombreSala, $coincidencias)) {
+            $nombreSala = trim($coincidencias[1]);
+            $seccion = $coincidencias[2];
+        }
+
+        if (preg_match('/^(\d+)$/u', $nombreSala)) {
+            $nombreSala = 'SALA DE '.$nombreSala;
+        }
+
+        $nombreSala = trim($nombreSala);
+        if ($nombreSala === '') {
+            return '';
+        }
+
+        return $seccion !== '' ? $nombreSala.' "'.$seccion.'"' : $nombreSala;
+    }
+
+    private static function lineaCursoAlumno(string $sala, string $turno, string $apellido, string $nombre): string
+    {
+        $sala = trim($sala);
+        $turno = trim($turno);
+        if ($turno !== '' && $sala !== '' && ! str_contains(mb_strtoupper($sala), mb_strtoupper($turno))) {
+            $sala .= ' '.$turno;
+        }
+
+        $apellido = trim($apellido);
+        $nombre = trim($nombre);
+        $alumno = $apellido !== ''
+            ? mb_strtoupper($apellido).($nombre !== '' ? ', '.$nombre : '')
+            : $nombre;
+
+        if ($sala === '') {
+            return $alumno;
+        }
+
+        return $alumno !== '' ? $sala.' - '.$alumno : $sala;
+    }
+
     private static function turnoDesdeCurso(?Curso $curso): string
     {
         if ($curso === null) {
             return '';
         }
 
-        if (! $curso->relationLoaded('turnoClase') && (int) ($curso->idTurnoClase ?? 0) > 0) {
+        if ((int) ($curso->idTurnoClase ?? 0) > 0 && ! $curso->relationLoaded('turnoClase')) {
             $curso->load('turnoClase');
         }
 
-        $nombreTurno = trim((string) ($curso->turnoClase?->nombre ?? ''));
-        if ($nombreTurno !== '') {
-            return $nombreTurno;
-        }
-
-        $cursec = (string) ($curso->cursec ?? '');
-        if (mb_strlen($cursec) >= 9) {
-            $seccion = mb_substr($cursec, 8, 1);
-
-            return $seccion === '4' ? 'Mañana' : 'Tarde';
-        }
-
-        return '';
+        return trim((string) ($curso->turnoClase?->nombre ?? ''));
     }
 }

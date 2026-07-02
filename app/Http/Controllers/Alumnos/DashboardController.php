@@ -17,6 +17,7 @@ class DashboardController extends Controller
             'nombreInstitucion' => PortalFamiliaDashboard::nombreInstitucion(),
             'heroLogo' => studentLogoUrl() ?: asset('img/3.png'),
             'ctx' => $ctx,
+            'datosSesion' => PortalFamiliaDashboard::datosSesion(),
             'accesos' => PortalFamiliaDashboard::accesosRapidos(),
             'widgets' => PortalFamiliaDashboard::widgets(),
         ]);
