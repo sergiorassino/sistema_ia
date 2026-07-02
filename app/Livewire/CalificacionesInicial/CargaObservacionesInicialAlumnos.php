@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial;
 
+use App\Livewire\Concerns\BloqueoEntradaCargaNotasOffSecretaria;
 use App\Models\Matricula;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CargaObservacionesInicialAlumnos extends Component
 {
+    use BloqueoEntradaCargaNotasOffSecretaria;
+
     public bool $modoPortalDocente = false;
 
     public int $idMateria;
@@ -39,6 +42,8 @@ class CargaObservacionesInicialAlumnos extends Component
 
         CalificacionesInicialPortalDocente::abortSiNoEsInicial();
         CalificacionesInicialObservacionesDatos::abortSiColumnasInexistentes();
+
+        $this->redirigirSiSecretariaCargaNotasOff($this->modoPortalDocente);
 
         $ctx = schoolCtx();
         $mat = CalificacionesInicialObservacionesDatos::materiaEnContexto(

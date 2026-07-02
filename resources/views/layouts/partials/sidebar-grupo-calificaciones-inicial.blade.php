@@ -1,5 +1,10 @@
 {{-- Menú de Secretaría: grupo CALIFICACIONES (Inicial) — `niveles.id` = 1. Ítems futuros (sin secundario). --}}
 
+@php
+    $cargaNotasOffSecretaria = \App\Support\EntoCargaNotas::entradaSecretariaBloqueada();
+    $mensajeCargaNotasOffSecretaria = \App\Support\EntoCargaNotas::mensajeEntradaSecretariaBloqueada();
+@endphp
+
 @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicial())
     <div class="mt-4"></div>
     <button type="button"
@@ -37,6 +42,9 @@
             <span class="truncate">Editar indicadores</span>
         </a>
         <a href="{{ route('calificacionesInicial.observaciones') }}"
+           @if ($cargaNotasOffSecretaria)
+               @click.prevent="window.seSwalAviso(@js($mensajeCargaNotasOffSecretaria), 'Carga de calificaciones')"
+           @endif
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'calificacionesInicial.observaciones'
@@ -50,6 +58,9 @@
             <span class="truncate">Carga de observaciones</span>
         </a>
         <a href="{{ route('calificacionesInicial.observacionesMateria') }}"
+           @if ($cargaNotasOffSecretaria)
+               @click.prevent="window.seSwalAviso(@js($mensajeCargaNotasOffSecretaria), 'Carga de calificaciones')"
+           @endif
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'calificacionesInicial.observacionesMateria',
