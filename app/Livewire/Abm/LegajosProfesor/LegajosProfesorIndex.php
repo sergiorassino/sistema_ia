@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\LegajosProfesor;
 
 use App\Models\Profesor;
 use App\Models\ProfesorTipo;
+use App\Support\Auth\ProfesorPasswordLectura;
 use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,14 @@ class LegajosProfesorIndex extends Component
     public string $deleteInfo = '';
 
     public bool $puedeEliminar = true;
+
+    public bool $showPasswordModal = false;
+
+    public string $passwordModalDocente = '';
+
+    public string $passwordModalTexto = '';
+
+    public bool $passwordModalEncriptada = false;
 
     public function mount(): void
     {
@@ -89,6 +98,33 @@ class LegajosProfesorIndex extends Component
         }
 
         $this->showConfirm = true;
+    }
+
+    public function verPassword(int $id): void
+    {
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES_VER_CONTRASEÑA), 403, 'Sin permiso para ver contraseñas de docentes.');
+
+        $key = 'legajos-profesor:ver-pwrd:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $p = $this->scopedProfesorOrFail($id);
+        $lectura = ProfesorPasswordLectura::paraMostrar($p);
+
+        $this->passwordModalDocente = "{$p->apellido}, {$p->nombre}";
+        $this->passwordModalTexto = $lectura['texto'];
+        $this->passwordModalEncriptada = $lectura['encriptada'];
+        $this->showPasswordModal = true;
+    }
+
+    public function cerrarPasswordModal(): void
+    {
+        $this->showPasswordModal = false;
+        $this->reset('passwordModalDocente', 'passwordModalTexto', 'passwordModalEncriptada');
     }
 
     public function delete(): void
