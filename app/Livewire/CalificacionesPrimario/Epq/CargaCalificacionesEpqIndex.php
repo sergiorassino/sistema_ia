@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesPrimario\Epq;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
@@ -17,6 +18,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesEpqIndex extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public ?int $cursoId = null;
 
     public bool $modoPortalDocente = false;
@@ -46,6 +49,8 @@ class CargaCalificacionesEpqIndex extends Component
             }
             $this->cursoId = $curso;
         }
+
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     public function updatedCursoId(mixed $value): void
@@ -113,9 +118,9 @@ class CargaCalificacionesEpqIndex extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-primario.epq.carga-index', [
+        return view('livewire.calificaciones-primario.epq.carga-index', array_merge([
             'cursos' => $this->cursos(),
             'matriculas' => $this->matriculasDelCurso(),
-        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones (EPQ)']);
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones (EPQ)']);
     }
 }

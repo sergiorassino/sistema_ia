@@ -1,6 +1,10 @@
 @php
     use App\Support\CalificacionesPrimario\Epq\CalificacionesEpqCatalogo;
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
 @endphp
+<div>
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <style>
         table.se-epq-calif-grid {
@@ -66,6 +70,11 @@
                     <span class="font-semibold text-white">{{ $alumnoLinea }}</span>
                     <span class="block sm:inline sm:before:content-['·'] sm:before:mx-2">{{ $cursoLabel }}</span>
                 </p>
+                @if ($soloLectura)
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-200/95">
+                        Solo consulta — la carga está deshabilitada
+                    </p>
+                @endif
             </div>
             <a href="{{ \App\Support\PortalDocente\CalificacionesPrimarioPortalDocente::route('carga', ['curso' => $cursoId]) }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20">
@@ -75,7 +84,13 @@
         </div>
     </section>
 
-    <p class="text-xs text-neutral-500">Los datos se guardan automáticamente al salir de cada celda. No se calcula ningún promedio.</p>
+    <p class="text-xs text-neutral-500">
+        @if ($soloLectura)
+            Visualización de calificaciones (solo lectura).
+        @else
+            Los datos se guardan automáticamente al salir de cada celda. No se calcula ningún promedio.
+        @endif
+    </p>
 
     @if ($materiasLista === [])
         <div class="se-card px-5 py-8 text-center text-sm text-neutral-600">
@@ -125,7 +140,11 @@
                                                maxlength="15"
                                                value="{{ $valor }}"
                                                wire:key="epq-inp-{{ $idMaterias }}-{{ $campo }}"
-                                               wire:blur="saveCell({{ $idMaterias }}, '{{ $campo }}', $event.target.value)" />
+                                               @readonly($soloLectura)
+                                               @if (! $soloLectura) wire:blur="saveCell({{ $idMaterias }}, '{{ $campo }}', $event.target.value)" @endif
+                                               @class([
+                                                   'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                                               ]) />
                                     </td>
                                 @endforeach
                             </tr>
@@ -135,4 +154,10 @@
             </div>
         </div>
     @endif
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-epq-form',
+        'modalTituloId' => 'modal-notas-off-epq-form-titulo',
+    ])
 </div>

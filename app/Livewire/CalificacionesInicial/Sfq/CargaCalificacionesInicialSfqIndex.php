@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial\Sfq;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
 use App\Support\CalificacionesInicial\CalificacionesInicialModulos;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqCatalogo;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesInicialSfqIndex extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public ?int $cursoId = null;
 
     public bool $modoPortalDocente = false;
@@ -49,6 +52,8 @@ class CargaCalificacionesInicialSfqIndex extends Component
             }
             $this->cursoId = $curso;
         }
+
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     public function updatedCursoId(mixed $value): void
@@ -112,13 +117,13 @@ class CargaCalificacionesInicialSfqIndex extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-inicial.sfq.carga-index', [
+        return view('livewire.calificaciones-inicial.sfq.carga-index', array_merge([
             'cursos' => $this->cursos(),
             'filas' => $this->filasGrilla(),
             'etiquetasColumna' => CalificacionesInicialSfqCatalogo::ETIQUETAS_COLUMNA,
             'columnasGrilla' => CalificacionesInicialSfqCatalogo::COLUMNAS_GRILLA_CARGA,
             'anchoColumnaIcono' => CalificacionesInicialSfqCatalogo::anchoColumnaIconoCss(),
-        ])->layout(CalificacionesInicialSfqPortalDocente::layout(), [
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesInicialSfqPortalDocente::layout(), [
             'pageTitle' => 'Carga de calificaciones (Inicial SFQ)',
         ]);
     }

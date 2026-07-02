@@ -1,4 +1,9 @@
 {{-- EPQ — curso → alumnos con acceso a Calificaciones e Información adicional. --}}
+@php
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
+@endphp
+<div>
 <div class="mx-auto w-full max-w-6xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -84,4 +89,10 @@
             </div>
         </div>
     @endif
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-epq-index',
+        'modalTituloId' => 'modal-notas-off-epq-index-titulo',
+    ])
 </div>

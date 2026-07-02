@@ -1,7 +1,11 @@
 {{-- Formulario por alumno: materias (id) × ic01/ic02/ic03 + obs matrícula. Guardado por celda al salir del campo. --}}
 @php
     use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
+    $soloLectura = $soloLectura ?? false;
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
 @endphp
+<div>
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
     <style>
         table.se-calif-prim-grid { table-layout: fixed; width: 100%; min-width: 720px; font-size: 11px; }
@@ -44,6 +48,11 @@
                     <span class="block sm:inline sm:before:content-['·'] sm:before:mx-2">{{ $cursoLabel }}</span>
                     <span class="block sm:inline sm:before:content-['·'] sm:before:mx-2">Ciclo lectivo {{ schoolCtx()->terlecAno() }}</span>
                 </p>
+                @if ($soloLectura)
+                    <p class="text-xs font-semibold uppercase tracking-wide text-amber-200/95">
+                        Solo consulta — la carga está deshabilitada
+                    </p>
+                @endif
             </div>
             <a href="{{ \App\Support\PortalDocente\CalificacionesPrimarioPortalDocente::route('carga', ['curso' => $cursoId]) }}"
                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
@@ -102,6 +111,7 @@
                                     'wireKey' => 'prim-cell-'.$idMatricula.'-'.$idMaterias.'-'.$campo,
                                     'notasPermitidasActiva' => $catalogoActivo,
                                     'notasPermitidasLista' => $listaNotas,
+                                    'soloLectura' => $soloLectura,
                                 ])
                             </td>
                         @endforeach
@@ -119,8 +129,13 @@
                       rows="5"
                       maxlength="1200"
                       wire:model="obs1"
-                      wire:blur="saveObservacion('obs1', $event.target.value)"
-                      class="mt-2 w-full rounded-2xl border border-accent-200 bg-white px-3 py-2 text-sm leading-relaxed focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
+                      @readonly($soloLectura)
+                      @if (! $soloLectura) wire:blur="saveObservacion('obs1', $event.target.value)" @endif
+                      @class([
+                          'mt-2 w-full rounded-2xl border border-accent-200 px-3 py-2 text-sm leading-relaxed',
+                          'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                          'bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                      ])></textarea>
         </div>
         <div class="se-card p-5">
             <label for="obs2" class="form-label">Obs. Etapa 2 <span class="font-normal normal-case text-neutral-500">(1200 caract. máx.)</span></label>
@@ -128,8 +143,13 @@
                       rows="5"
                       maxlength="1200"
                       wire:model="obs2"
-                      wire:blur="saveObservacion('obs2', $event.target.value)"
-                      class="mt-2 w-full rounded-2xl border border-accent-200 bg-white px-3 py-2 text-sm leading-relaxed focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
+                      @readonly($soloLectura)
+                      @if (! $soloLectura) wire:blur="saveObservacion('obs2', $event.target.value)" @endif
+                      @class([
+                          'mt-2 w-full rounded-2xl border border-accent-200 px-3 py-2 text-sm leading-relaxed',
+                          'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                          'bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+                      ])></textarea>
         </div>
     </div>
 
@@ -139,7 +159,18 @@
                id="obsAnual"
                maxlength="500"
                wire:model="obsAnual"
-               wire:blur="saveObservacion('obsAnual', $event.target.value)"
-               class="mt-2 w-full rounded-xl border border-accent-200 bg-white px-3 py-2.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+               @readonly($soloLectura)
+               @if (! $soloLectura) wire:blur="saveObservacion('obsAnual', $event.target.value)" @endif
+               @class([
+                   'mt-2 w-full rounded-xl border border-accent-200 px-3 py-2.5 text-sm',
+                   'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+                   'bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500' => ! $soloLectura,
+               ]) />
     </div>
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-prim-form',
+        'modalTituloId' => 'modal-notas-off-prim-form-titulo',
+    ])
 </div>

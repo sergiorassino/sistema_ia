@@ -54,6 +54,16 @@ class Ento extends Model
         'documAcept2',
         'documAcept3',
         'documAcept4',
+
+        // Parámetros operativos (legacy ento)
+        'idTerlecVerNotas',
+        'cargaNotasOff',
+        'notasOffMensaje',
+        'verNotasOff',
+        'verOffMensaje',
+        'verBimesOff',
+        'bimesOffMensaje',
+        'imprBoleOff',
     ];
 
     protected $casts = [

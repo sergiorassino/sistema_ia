@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesInicial\Sfq;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Support\CalificacionesInicial\CalificacionesInicialModulos;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqCatalogo;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqDatos;
@@ -16,6 +17,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesInicialSfqIndicadoresForm extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     public int $idMatricula;
 
     public int $cursoId;
@@ -79,11 +82,16 @@ class CargaCalificacionesInicialSfqIndicadoresForm extends Component
         $this->etapa = (int) $data['etapa'];
         $this->area = (string) $data['area'];
         $this->filas = $data['filas'];
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     #[Renderless]
     public function guardar(): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(\App\Support\PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesInicialSfq:indicadores:'.(auth()->id() ?? 'guest');
@@ -108,11 +116,11 @@ class CargaCalificacionesInicialSfqIndicadoresForm extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-inicial.sfq.indicadores-form', [
+        return view('livewire.calificaciones-inicial.sfq.indicadores-form', array_merge([
             'etiquetaColumna' => CalificacionesInicialSfqCatalogo::ETIQUETAS_COLUMNA[$this->campoIc] ?? $this->campoIc,
             'etiquetaEtapa' => CalificacionesInicialSfqCatalogo::etiquetaEtapa($this->etapa),
             'opcionesNota' => CalificacionesInicialSfqCatalogo::OPCIONES_NOTA,
-        ])->layout(CalificacionesInicialSfqPortalDocente::layout(), [
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesInicialSfqPortalDocente::layout(), [
             'pageTitle' => 'Carga de indicadores (Inicial SFQ)',
         ]);
     }

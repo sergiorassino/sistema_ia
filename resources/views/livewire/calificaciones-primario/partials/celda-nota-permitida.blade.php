@@ -10,6 +10,7 @@
     'notasPermitidasActiva' => false,
     'notasPermitidasLista' => [],
     'incluirOpcionVacia' => true,
+    'soloLectura' => false,
 ])
 
 @php
@@ -24,8 +25,14 @@
                autocomplete="off"
                value="{{ $valor }}"
                data-se-calif-prim-allowed='@json($notasPermitidasLista)'
+               @readonly($soloLectura)
                @if ($wireKey) wire:key="{{ $wireKey }}" @endif
-               class="se-calif-prim-nota-input min-w-0 flex-1 {{ $inputClass }}" />
+               @class([
+                   'se-calif-prim-nota-input min-w-0 flex-1',
+                   $inputClass,
+                   'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+               ]) />
+        @if (! $soloLectura)
         <div class="se-calif-prim-nota-picker shrink-0"
              data-se-calif-prim-nota-picker-for="{{ $id }}">
             <button type="button"
@@ -59,6 +66,7 @@
                 @endforeach
             </div>
         </div>
+        @endif
     </div>
 @else
     <input type="text"
@@ -66,6 +74,10 @@
            maxlength="15"
            autocomplete="off"
            value="{{ $valor }}"
+           @readonly($soloLectura)
            @if ($wireKey) wire:key="{{ $wireKey }}" @endif
-           class="{{ $inputClass }}" />
+           @class([
+               $inputClass,
+               'bg-accent-50/80 text-neutral-700 cursor-default' => $soloLectura,
+           ]) />
 @endif

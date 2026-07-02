@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesPrimario;
 
+use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioCatalogo;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
@@ -26,6 +27,8 @@ use Livewire\Component;
  */
 class CargaCalificacionesPrimarioMateria extends Component
 {
+    use AvisoCargaNotasOffEnto;
+
     /** 1 = 1ª etapa · 2 = 2ª etapa */
     public int $etapa = 1;
 
@@ -86,6 +89,7 @@ class CargaCalificacionesPrimarioMateria extends Component
         CalificacionesPrimarioPortalDocente::abortSiNoEsPrimario();
 
         $this->aplicarColumnasEtapa();
+        $this->inicializarAvisoCargaNotasOff($this->modoPortalDocente);
     }
 
     public function updatedMateriaId(mixed $value): void
@@ -255,6 +259,10 @@ class CargaCalificacionesPrimarioMateria extends Component
     #[Renderless]
     public function saveCell(int $idMatricula, string $campo, mixed $value): void
     {
+        if ($this->cargaNotasOffBloqueaEdicion()) {
+            return;
+        }
+
         PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
 
         $key = 'calificacionesPrimario:carga-materia:cell:'.(auth()->id() ?? 'guest');
@@ -402,11 +410,11 @@ class CargaCalificacionesPrimarioMateria extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-primario.carga-calificaciones-primario-materia', [
+        return view('livewire.calificaciones-primario.carga-calificaciones-primario-materia', array_merge([
             'cursos' => $this->cursos(),
             'materias' => $this->materiasDelCurso(),
             'notasPermitidasActiva' => $this->notasPermitidasActiva(),
             'notasPermitidasLista' => $this->notasPermitidasLista,
-        ])->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por materia (primario)']);
+        ], $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente)))->layout(CalificacionesPrimarioPortalDocente::layout(), ['pageTitle' => 'Carga de calificaciones por materia (primario)']);
     }
 }

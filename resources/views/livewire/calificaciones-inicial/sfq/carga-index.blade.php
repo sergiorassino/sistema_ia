@@ -1,4 +1,9 @@
 {{-- SFQ — curso → grilla alumnos × informes pedagógicos / Bellas Artes. --}}
+@php
+    $mostrarModalNotasOff = $mostrarModalNotasOff ?? false;
+    $mensajeNotasOff = $mensajeNotasOff ?? '';
+@endphp
+<div>
 <div class="se-page mx-auto w-full space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -104,4 +109,10 @@
             </div>
         </div>
     @endif
+</div>
+
+    @include('livewire.partials.modal-carga-notas-off', [
+        'modalWireKey' => 'modal-notas-off-ini-index',
+        'modalTituloId' => 'modal-notas-off-ini-index-titulo',
+    ])
 </div>
