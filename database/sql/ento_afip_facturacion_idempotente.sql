@@ -2,65 +2,69 @@
 -- Tabla `ento` — campos de facturación AFIP (idempotente, re-ejecutable)
 -- Referencia: esquema legacy con columnas para emisión/consulta WSFE
 --
+-- Uso preferido: php artisan se:migrate-legacy --force
+--   (migraciones 2026_06_24_120000_add_afip_cert_fields_to_ento_table.php
+--    y 2026_07_02_142000_add_ento_afip_facturacion_fields_if_missing.php)
+-- Alternativa manual: ejecutar este SQL en phpMyAdmin / HeidiSQL / mysql CLI.
+--
 -- Columnas:
 --   condicionIva, ptoVta, afipCertCarpeta, afipCertKey, afipCertCrt,
 --   ingresosBrutos, fechaInicioAct
 --
--- Uso: ejecutar en la base del colegio (phpMyAdmin, HeidiSQL, mysql CLI).
--- Compatible con MySQL 5.7+ / MariaDB 10.x
---
--- Verificar antes:
---   SHOW COLUMNS FROM ento LIKE 'condicionIva';
---   SHOW COLUMNS FROM ento LIKE 'ptoVta';
---
 -- ADVERTENCIA: solo agrega columnas que falten. No altera tipos ni datos existentes.
--- Si el colegio ya tiene ptoVta como smallint unsigned (migración Laravel), se conserva.
 -- =============================================================================
 
 SET NAMES utf8mb4;
 
--- -----------------------------------------------------------------------------
--- Utilidad: agregar columna solo si no existe
--- -----------------------------------------------------------------------------
-DROP PROCEDURE IF EXISTS sp_add_column_if_missing;
-DELIMITER $$
-CREATE PROCEDURE sp_add_column_if_missing(
-    IN p_table VARCHAR(64),
-    IN p_column VARCHAR(64),
-    IN p_definition TEXT
-)
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME = p_table
-          AND COLUMN_NAME = p_column
-    ) THEN
-        SET @ddl = CONCAT(
-            'ALTER TABLE `', p_table, '` ADD COLUMN `', p_column, '` ', p_definition
-        );
-        PREPARE stmt FROM @ddl;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-END$$
-DELIMITER ;
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'condicionIva'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `condicionIva` varchar(50) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
--- -----------------------------------------------------------------------------
--- Datos fiscales / comprobante (legacy ScriptCase)
--- -----------------------------------------------------------------------------
-CALL sp_add_column_if_missing('ento', 'condicionIva', "varchar(50) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'ptoVta', "int(5) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'afipCertCarpeta', "varchar(40) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'afipCertKey', "varchar(120) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'afipCertCrt', "varchar(120) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'ingresosBrutos', "varchar(10) NULL DEFAULT NULL");
-CALL sp_add_column_if_missing('ento', 'fechaInicioAct', "varchar(15) NULL DEFAULT NULL");
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'ptoVta'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `ptoVta` int(5) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
-DROP PROCEDURE IF EXISTS sp_add_column_if_missing;
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'afipCertCarpeta'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `afipCertCarpeta` varchar(40) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'afipCertKey'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `afipCertKey` varchar(120) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'afipCertCrt'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `afipCertCrt` varchar(120) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'ingresosBrutos'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `ingresosBrutos` varchar(10) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @add := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ento' AND COLUMN_NAME = 'fechaInicioAct'
+);
+SET @ddl := IF(@add = 0, 'ALTER TABLE `ento` ADD COLUMN `fechaInicioAct` varchar(15) NULL DEFAULT NULL', 'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- =============================================================================
 -- Fin. Puede ejecutarse varias veces sin error.
--- Tras aplicar, completar valores en Parámetros del sistema (facturación AFIP).
 -- =============================================================================
