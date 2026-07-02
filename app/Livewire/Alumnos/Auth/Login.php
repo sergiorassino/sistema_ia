@@ -8,6 +8,8 @@ use App\Models\Matricula;
 use App\Models\Terlec;
 use App\Support\DniInput;
 use App\Support\StudentContext;
+use App\Support\Auth\RecuperacionContrasenaOrigen;
+use App\Livewire\Concerns\RecuperaContrasenaOlvidada;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +17,8 @@ use Livewire\Component;
 
 class Login extends Component
 {
+    use RecuperaContrasenaOlvidada;
+
     public string $dni = '';
 
     public string $pwrd = '';
@@ -136,6 +140,11 @@ class Login extends Component
         RateLimiter::hit($throttleKey, 60);
 
         $this->addError('dni', 'DNI o contraseña incorrectos. Verifique sus datos.');
+    }
+
+    protected function origenRecuperacionContrasena(): RecuperacionContrasenaOrigen
+    {
+        return RecuperacionContrasenaOrigen::Alumno;
     }
 
     public function render()
