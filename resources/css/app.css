@@ -2290,6 +2290,19 @@
         @apply outline-none ring-2 ring-offset-2;
         --tw-ring-color: rgba(64, 132, 141, 0.45);
     }
+    .se-auth-link {
+        @apply inline-flex items-center justify-center text-xs font-semibold uppercase tracking-[0.12em] transition-colors duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed;
+        color: var(--color-primary-700);
+    }
+    .se-auth-link:hover:not(:disabled) {
+        color: var(--color-primary-800);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    .se-auth-link:focus-visible {
+        @apply outline-none ring-2 ring-offset-2 rounded;
+        --tw-ring-color: rgba(64, 132, 141, 0.45);
+    }
 
     /* Dashboard — tarjetas de acceso rápido SE */
     .se-dash-access {

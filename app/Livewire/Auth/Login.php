@@ -9,6 +9,8 @@ use App\Support\NivelSistema;
 use App\Support\EntoTerlecVerNotas;
 use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolContext;
+use App\Support\Auth\RecuperacionContrasenaOrigen;
+use App\Livewire\Concerns\RecuperaContrasenaOlvidada;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +20,8 @@ use Livewire\Component;
 
 class Login extends Component
 {
+    use RecuperaContrasenaOlvidada;
+
     public string $dni = '';
 
     public string $pwrd = '';
@@ -226,6 +230,11 @@ class Login extends Component
     public function cerrarMensajeBloqueoDocenteTerlec(): void
     {
         $this->mensajeBloqueoDocenteTerlec = null;
+    }
+
+    protected function origenRecuperacionContrasena(): RecuperacionContrasenaOrigen
+    {
+        return RecuperacionContrasenaOrigen::Profesor;
     }
 
     public function render()

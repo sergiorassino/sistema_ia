@@ -62,6 +62,8 @@
                 @enderror
             </div>
 
+            @include('layouts.partials.login-olvidar-contrasena', ['niveles' => $niveles])
+
             {{-- Nivel --}}
             <div>
                 <label class="se-auth-label" for="idNivel">Nivel</label>

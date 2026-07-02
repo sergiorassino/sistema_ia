@@ -72,6 +72,99 @@ window.seSwalConfirmar = function (mensaje, titulo = '¿Confirma?', opciones = {
 };
 
 /**
+ * SweetAlert2 — recuperación de contraseña (DNI y, en portal staff, nivel).
+ * Devuelve Promise<{ dni: string, idNivel: number|null }|null>.
+ */
+window.seSwalPromptRecuperarContrasena = function (opciones = {}) {
+    const mensaje = opciones.mensaje
+        ?? 'Ingrese sus datos para recibir la contraseña en el correo registrado.';
+    const titulo = opciones.titulo ?? 'Recuperar contraseña';
+    const niveles = Array.isArray(opciones.niveles) ? opciones.niveles : [];
+    const conNivel = niveles.length > 0;
+
+    const labelStyle = 'display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.35rem;color:#333;text-align:left;';
+    const fieldStyle = 'width:100%;margin:0 0 1rem;box-sizing:border-box;';
+
+    const htmlConNivel = `<p style="margin:0 0 1rem;text-align:left;font-size:0.95rem;color:#444;">${mensaje}</p>`
+        + `<label for="se-swal-recuperar-dni" style="${labelStyle}">DNI</label>`
+        + `<input id="se-swal-recuperar-dni" type="text" inputmode="numeric" maxlength="11" autocomplete="username" placeholder="Ej: 25038868" class="swal2-input" style="${fieldStyle}">`
+        + `<label for="se-swal-recuperar-nivel" style="${labelStyle}">Nivel</label>`
+        + `<select id="se-swal-recuperar-nivel" class="swal2-select" style="${fieldStyle}">`
+        + '<option value="">— Seleccione nivel —</option>'
+        + niveles.map((n) => `<option value="${Number(n.id)}">${String(n.label ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</option>`).join('')
+        + '</select>';
+
+    const htmlSoloDni = `<p style="margin:0 0 1rem;text-align:left;font-size:0.95rem;color:#444;">${mensaje}</p>`
+        + `<label for="se-swal-recuperar-dni" style="${labelStyle}">DNI</label>`
+        + `<input id="se-swal-recuperar-dni" type="text" inputmode="numeric" maxlength="11" autocomplete="username" placeholder="Ej: 25038868" class="swal2-input" style="${fieldStyle}margin-bottom:0;">`;
+
+    if (typeof Swal === 'undefined') {
+        const dni = window.prompt(mensaje);
+        if (dni === null) {
+            return Promise.resolve(null);
+        }
+        const digits = String(dni).replace(/\D/g, '').slice(0, 11);
+        if (digits.length < 7) {
+            return Promise.resolve(null);
+        }
+        return Promise.resolve({ dni: digits, idNivel: null });
+    }
+
+    return Swal.fire({
+        icon: 'question',
+        title: titulo,
+        html: conNivel ? htmlConNivel : htmlSoloDni,
+        showCancelButton: true,
+        confirmButtonText: 'Enviar contraseña',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#40848D',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+        focusCancel: false,
+        didOpen: () => {
+            const input = document.getElementById('se-swal-recuperar-dni');
+            if (!input) {
+                return;
+            }
+            input.addEventListener('input', () => {
+                input.value = String(input.value).replace(/\D/g, '').slice(0, 11);
+            });
+            input.focus();
+        },
+        preConfirm: () => {
+            const input = document.getElementById('se-swal-recuperar-dni');
+            const digits = String(input?.value ?? '').replace(/\D/g, '').slice(0, 11);
+            if (digits.length < 7) {
+                Swal.showValidationMessage('Ingrese un DNI válido (entre 7 y 11 dígitos).');
+                return false;
+            }
+
+            if (conNivel) {
+                const select = document.getElementById('se-swal-recuperar-nivel');
+                const idNivel = parseInt(String(select?.value ?? ''), 10);
+                if (!Number.isFinite(idNivel) || idNivel <= 0) {
+                    Swal.showValidationMessage('Seleccione un nivel.');
+                    return false;
+                }
+                return { dni: digits, idNivel };
+            }
+
+            return { dni: digits, idNivel: null };
+        },
+    }).then((result) => {
+        if (!result.isConfirmed || !result.value) {
+            return null;
+        }
+        return result.value;
+    });
+};
+
+/** @deprecated Usar seSwalPromptRecuperarContrasena */
+window.seSwalPromptDni = function (mensaje, titulo = 'Recuperar contraseña') {
+    return window.seSwalPromptRecuperarContrasena({ mensaje, titulo }).then((datos) => datos?.dni ?? null);
+};
+
+/**
  * Carga de calificaciones (secundario / calificacionesSecundario): validación de notas permitidas en el cliente (sin request si es inválida).
  * Delegación `focusout` en `tbody[data-se-calif-tbody]` + toast liviano (sin SweetAlert).
  * Navegación con flechas entre celdas; Enter baja una fila (misma columna) o salta a la columna siguiente en la primera fila al llegar al final.

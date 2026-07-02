@@ -812,6 +812,38 @@ if (! function_exists('tenantCooperadoraReciboEmailAsunto')) {
     }
 }
 
+if (! function_exists('seClientesMailFrom')) {
+    /**
+     * Remitente del mailer `sistemas_escolares` (recuperación de contraseña, avisos SE).
+     * null si faltan SE_CLIENTES_MAIL_* en .env.
+     *
+     * @return array{address: string, name: string}|null
+     */
+    function seClientesMailFrom(): ?array
+    {
+        $address = trim((string) env('SE_CLIENTES_MAIL_FROM_ADDRESS', ''));
+        if ($address === '') {
+            $address = trim((string) env('SE_CLIENTES_MAIL_USERNAME', ''));
+        }
+        $password = trim((string) env('SE_CLIENTES_MAIL_PASSWORD', ''));
+        $host = trim((string) env('SE_CLIENTES_MAIL_HOST', ''));
+
+        if ($address === '' || $password === '' || $host === '') {
+            return null;
+        }
+
+        $nameEnv = trim((string) env('SE_CLIENTES_MAIL_FROM_NAME', ''));
+        $name = $nameEnv !== ''
+            ? $nameEnv
+            : trim((string) config('app.name', 'Sistemas Escolares'));
+
+        return [
+            'address' => $address,
+            'name' => $name,
+        ];
+    }
+}
+
 if (! function_exists('tenantCooperadoraReciboEmailFrom')) {
     /**
      * Remitente del correo cooperadora. null si faltan COOP_MAIL_* en .env.

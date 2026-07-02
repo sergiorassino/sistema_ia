@@ -63,6 +63,21 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
+        /**
+         * Sistemas Escolares — recuperación de contraseña y otros avisos transversales.
+         * Cuenta compartida por todos los colegios: SE_CLIENTES_MAIL_* (.env).
+         */
+        'sistemas_escolares' => [
+            'transport' => 'smtp',
+            'host' => env('SE_CLIENTES_MAIL_HOST', 'smtp.gmail.com'),
+            'port' => env('SE_CLIENTES_MAIL_PORT', 587),
+            'encryption' => env('SE_CLIENTES_MAIL_ENCRYPTION', 'tls'),
+            'username' => env('SE_CLIENTES_MAIL_USERNAME'),
+            'password' => env('SE_CLIENTES_MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

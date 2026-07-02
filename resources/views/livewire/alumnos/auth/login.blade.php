@@ -59,6 +59,8 @@
                 @enderror
             </div>
 
+            @include('layouts.partials.login-olvidar-contrasena', ['variant' => 'alumno'])
+
             <div class="pt-1">
                 <button type="submit"
                         class="btn-primary w-full py-2 text-sm"
