@@ -29,7 +29,7 @@ final class FichaMatriculaSecretariaPdf
         foreach ($ids as $idMatricula) {
             $datos = match ($implementacion) {
                 'sanfranciscoasis' => FichaMatriculaDatos::paraMatricula($idMatricula),
-                'montecristo' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
+                'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
                 default => null,
             };
 
@@ -53,7 +53,7 @@ final class FichaMatriculaSecretariaPdf
         }
 
         if ($slug === '') {
-            $slug = $implementacion === 'montecristo'
+            $slug = in_array($implementacion, ['montecristo', 'sanjose'], true)
                 ? 'ficha_solicitud_matricula'
                 : 'ficha_matricula';
         }
@@ -65,6 +65,10 @@ final class FichaMatriculaSecretariaPdf
             ),
             'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::respuestaHttp(
                 FichaMatriculaSolicitudMontecristoTcpdf::generarLote($hojas),
+                $slug.'.pdf',
+            ),
+            'sanjose' => FichaMatriculaSanJoseTcpdf::respuestaHttp(
+                FichaMatriculaSanJoseTcpdf::generarLote($hojas),
                 $slug.'.pdf',
             ),
             default => abort(404),

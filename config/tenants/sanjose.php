@@ -33,5 +33,16 @@ return [
         'boletin_ipe_primario' => [
             'habilitado' => true,
         ],
+        'ficha_matricula' => [
+            'habilitado' => true,
+            'implementacion' => 'sanjose',
+        ],
+    ],
+
+    'secretaria' => [
+        'ficha_matricula' => [
+            'habilitado' => true,
+            'implementacion' => 'sanjose',
+        ],
     ],
 ];

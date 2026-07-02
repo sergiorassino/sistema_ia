@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
-use App\Support\Alumnos\FichaMatriculaDatos;
 use App\Support\Alumnos\FichaMatriculaConAceptacionTcpdf;
+use App\Support\Alumnos\FichaMatriculaDatos;
+use App\Support\Alumnos\FichaMatriculaMontecristoDatos;
+use App\Support\Alumnos\FichaMatriculaSanJoseTcpdf;
+use App\Support\Alumnos\FichaMatriculaSolicitudMontecristoTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -24,7 +27,14 @@ class FichaMatriculaPdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $datos = FichaMatriculaDatos::paraAutogestion();
+        $implementacion = (string) config('tenant.autogestion.ficha_matricula.implementacion', '');
+
+        $datos = match ($implementacion) {
+            'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion(),
+            'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraAutogestion(),
+            default => null,
+        };
+
         if ($datos === null) {
             return response()->view('errors.alumno-pdf', [
                 'mensaje' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
@@ -36,14 +46,28 @@ class FichaMatriculaPdfController extends Controller
             '_',
         );
         if ($slug === '') {
-            $slug = 'ficha_matricula';
+            $slug = in_array($implementacion, ['montecristo', 'sanjose'], true)
+                ? 'ficha_solicitud_matricula'
+                : 'ficha_matricula';
         }
 
-        /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} $header */
-        $header = $datos['header'] ?? studentPdfHeaderData();
-
-        $pdf = FichaMatriculaConAceptacionTcpdf::generar($datos, $header);
-
-        return FichaMatriculaConAceptacionTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return match ($implementacion) {
+            'sanfranciscoasis' => FichaMatriculaConAceptacionTcpdf::respuestaHttp(
+                FichaMatriculaConAceptacionTcpdf::generar(
+                    $datos,
+                    $datos['header'] ?? studentPdfHeaderData(),
+                ),
+                $slug.'.pdf',
+            ),
+            'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::respuestaHttp(
+                FichaMatriculaSolicitudMontecristoTcpdf::generar($datos),
+                $slug.'.pdf',
+            ),
+            'sanjose' => FichaMatriculaSanJoseTcpdf::respuestaHttp(
+                FichaMatriculaSanJoseTcpdf::generar($datos),
+                $slug.'.pdf',
+            ),
+            default => abort(404),
+        };
     }
 }

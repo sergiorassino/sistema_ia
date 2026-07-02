@@ -34,7 +34,7 @@ final class FichaMatriculaSecretariaZip
         foreach ($ids as $idMatricula) {
             $datos = match ($implementacion) {
                 'sanfranciscoasis' => FichaMatriculaDatos::paraMatricula($idMatricula),
-                'montecristo' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
+                'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
                 default => null,
             };
 
@@ -71,6 +71,7 @@ final class FichaMatriculaSecretariaZip
                     $datos['header'] ?? $header,
                 ),
                 'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::generar($datos),
+                'sanjose' => FichaMatriculaSanJoseTcpdf::generar($datos),
                 default => null,
             };
 

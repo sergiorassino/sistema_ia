@@ -11,6 +11,8 @@
                             · Formato con aceptación de documentos
                         @elseif ($implementacion === 'montecristo')
                             · Formato solicitud de matrícula (solo datos)
+                        @elseif ($implementacion === 'sanjose')
+                            · Formato solicitud de matrícula San José (A4)
                         @endif
                     </p>
                 </div>
