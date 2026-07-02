@@ -202,4 +202,30 @@ final class PortalFamiliaDashboard
 
         return $nombre !== '' ? $nombre : 'Estudiante';
     }
+
+    /**
+     * DNI y curso/sección del ciclo activo (idTerlecVerNotas) para el escritorio.
+     *
+     * @return array{dni: string, curso: string}
+     */
+    public static function datosSesion(): array
+    {
+        $encabezado = ArancelesEscolares::encabezadoAutogestion();
+        if ($encabezado !== null) {
+            return [
+                'dni' => $encabezado['dni'] !== '' ? $encabezado['dni'] : '—',
+                'curso' => $encabezado['curso'],
+            ];
+        }
+
+        $legajo = studentCtx()->alumno();
+        $dni = $legajo !== null
+            ? ArancelesEscolares::formatearDni($legajo->dni ?? '')
+            : '';
+
+        return [
+            'dni' => $dni !== '' ? $dni : '—',
+            'curso' => '',
+        ];
+    }
 }
