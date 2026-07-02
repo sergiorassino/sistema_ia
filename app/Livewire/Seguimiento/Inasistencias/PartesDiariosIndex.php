@@ -4,6 +4,7 @@ namespace App\Livewire\Seguimiento\Inasistencias;
 
 use App\Models\Curso;
 use App\Support\HorariosProfesores;
+use App\Support\PermisosIaCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -31,6 +32,8 @@ class PartesDiariosIndex extends Component
 
     public function mount(): void
     {
+        abort_unless(tienePermiso(PermisosIaCatalog::PARTE_DIARIO_PRECEPTOR), 403, 'Sin permiso para el parte diario del preceptor.');
+
         $this->fecha = now()->format('Y-m-d');
         $this->cursosSeleccionados = [];
     }

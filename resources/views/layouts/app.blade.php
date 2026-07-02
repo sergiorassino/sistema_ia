@@ -770,7 +770,7 @@
                     <span class="truncate">Toma de asistencia a clase</span>
                 </a>
                 @endif
-                @if (tienePermiso(24))
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI))
                 <a href="{{ route('seguimiento.inasistencias.sincroCidi') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -784,6 +784,7 @@
                     <span class="truncate">Descargar inasistencias desde CIDI</span>
                 </a>
                 @endif
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::PARTE_DIARIO_PRECEPTOR))
                 <a href="{{ route('seguimiento.partes-diarios') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -796,6 +797,7 @@
                     </svg>
                     <span class="truncate">Parte diario del preceptor</span>
                 </a>
+                @endif
                 @if (tenantSecretariaInformeInasistenciasHabilitada())
                 <a href="{{ route('seguimiento.inasistencias.informe') }}"
                    @class([

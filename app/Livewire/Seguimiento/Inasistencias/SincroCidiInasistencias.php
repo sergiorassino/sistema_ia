@@ -5,6 +5,7 @@ namespace App\Livewire\Seguimiento\Inasistencias;
 use App\Models\InasistenciaValor;
 use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImporter;
 use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImportResult;
+use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -39,13 +40,13 @@ class SincroCidiInasistencias extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(24), 403, 'Sin permiso para importar inasistencias desde CIDI/GE.');
+        abort_unless(tienePermiso(PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI), 403, 'Sin permiso para importar inasistencias desde CIDI/GE.');
         $this->cargarTextosCidi();
     }
 
     public function guardarTextosCidi(): void
     {
-        abort_unless(tienePermiso(24), 403);
+        abort_unless(tienePermiso(PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI), 403);
 
         $key = 'sincroCidiInasistencias:textos:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 20)) {
@@ -141,7 +142,7 @@ class SincroCidiInasistencias extends Component
 
     public function importar(CidiInasistenciasCsvImporter $importer): void
     {
-        abort_unless(tienePermiso(24), 403);
+        abort_unless(tienePermiso(PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI), 403);
 
         if (! $this->archivoCsv instanceof TemporaryUploadedFile) {
             $this->addError('archivoCsv', 'Seleccione un archivo CSV antes de importar.');

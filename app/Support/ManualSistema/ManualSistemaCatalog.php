@@ -499,7 +499,7 @@ final class ManualSistemaCatalog
                             'Guarde y genere el PDF del parte para dirección o archivo.',
                         ],
                         [],
-                        'Permiso de estudiantes (2)',
+                        'Permiso Asistencia estudiantes (81)',
                     ),
                     self::mod(
                         'Informe de inasistencias',

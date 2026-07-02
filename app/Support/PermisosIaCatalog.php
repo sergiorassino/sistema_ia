@@ -108,6 +108,9 @@ final class PermisosIaCatalog
 
     public const INASISTENCIAS_SINCRO_CIDI = 24;
 
+    /** Parte diario del preceptor: selección de curso(s), fecha e impresión PDF. */
+    public const PARTE_DIARIO_PRECEPTOR = 81;
+
     public const SEGUIMIENTO_DISCIPLINARIO = 37;
 
     public const INASISTENCIAS_ESTUDIANTES_GESTION = 38;
@@ -214,7 +217,8 @@ final class PermisosIaCatalog
             ['id' => 24, 'orden' => self::CERT_SOLICITUD_PASE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'],
             ['id' => 66, 'orden' => self::CERT_CUS_ISA_VOZ_IMAGEN, 'tema' => 'CERTIFICADOS', 'descripcion' => 'C.U.S., I.S.A. y autorización de uso de imagen y voz: selección por curso y emisión de PDF.'],
             ['id' => 25, 'orden' => self::INASISTENCIAS_DOCENTES, 'tema' => 'INASISTENCIAS DOCENTES', 'descripcion' => 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'],
-            ['id' => 26, 'orden' => self::INASISTENCIAS_SINCRO_CIDI, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'],
+            ['id' => 26, 'orden' => self::INASISTENCIAS_SINCRO_CIDI, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Descargar e importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'],
+            ['id' => 81, 'orden' => self::PARTE_DIARIO_PRECEPTOR, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Parte diario del preceptor: selección de curso(s), fecha e impresión PDF por día.'],
             ['id' => 27, 'orden' => PermisosConfiguracion::TERLEC, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Términos lectivos.'],
             ['id' => 28, 'orden' => PermisosConfiguracion::NIVELES, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Niveles educativos.'],
             ['id' => 29, 'orden' => PermisosConfiguracion::CAMPOS_LEGAJO_ESTUDIANTE, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del legajo del estudiante.'],
