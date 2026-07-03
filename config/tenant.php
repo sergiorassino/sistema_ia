@@ -260,7 +260,7 @@ return [
 
     /**
      * Calificaciones inicial — variantes por `implementacion`.
-     * Claves conocidas: `estandar` (Montecristo / flujo legacy), `sfq` (en desarrollo).
+     * Claves conocidas: `estandar` (Montecristo / flujo legacy), `sfq` (en desarrollo), `montecristo` (PDF sin aprendizajes ni cierre).
      */
     'calificaciones_inicial' => [
         'carga_notas' => [

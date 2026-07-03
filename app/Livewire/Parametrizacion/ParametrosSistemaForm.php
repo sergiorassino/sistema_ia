@@ -211,14 +211,8 @@ class ParametrosSistemaForm extends Component
             return null;
         }
 
-        if ($this->logo instanceof TemporaryUploadedFile) {
-            try {
-                return $this->logo->temporaryUrl();
-            } catch (\Throwable) {
-                return $this->currentLogoUrl;
-            }
-        }
-
+        // Archivo recién elegido: vista previa en el navegador (Alpine + blob URL en la vista).
+        // temporaryUrl() (ruta firmada livewire.preview-file) suele devolver 401/403 en subcarpeta o HTTPS.
         return $this->currentLogoUrl;
     }
 
@@ -355,6 +349,8 @@ class ParametrosSistemaForm extends Component
         $this->currentLogoUrl = schoolLogoUrl();
         $this->logo = null;
         $this->removeLogo = false;
+
+        $this->dispatch('parametros-logo-guardado');
 
         session()->flash('success', 'Parámetros del sistema actualizados.');
     }

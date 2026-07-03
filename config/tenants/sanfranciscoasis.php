@@ -21,6 +21,14 @@ return [
                 'canales_planilla' => ['Roela'],
             ],
         ],
+
+        'facturacion_afip' => [
+            'habilitado' => true,
+            // Certificados WSAA/WSFE: carpeta y nombres de archivo en Parámetros del sistema (ento).
+            'cbte_tipo' => 15,
+            'produccion' => true,
+            'simular' => true,
+        ],
     ],
 
     'portal_docente' => [

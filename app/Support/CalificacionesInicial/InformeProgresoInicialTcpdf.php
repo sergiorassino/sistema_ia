@@ -29,16 +29,19 @@ final class InformeProgresoInicialTcpdf extends TCPDF
 
     private bool $mostrarMarcaAgua;
 
+    private string $implementacion;
+
     private ?string $escudoProvincia = null;
 
     /**
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    private function __construct(array $header, bool $mostrarMarcaAgua = false)
+    private function __construct(array $header, bool $mostrarMarcaAgua = false, string $implementacion = 'estandar')
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->header = $header;
         $this->mostrarMarcaAgua = $mostrarMarcaAgua;
+        $this->implementacion = $implementacion !== '' ? $implementacion : 'estandar';
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Informe de Progreso Escolar');
@@ -53,9 +56,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
      * @param  array<string, mixed>  $datos
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generar(array $datos, array $header, bool $mostrarMarcaAgua = false): self
+    public static function generar(array $datos, array $header, bool $mostrarMarcaAgua = false, string $implementacion = 'estandar'): self
     {
-        $pdf = new self($header, $mostrarMarcaAgua);
+        $pdf = new self($header, $mostrarMarcaAgua, $implementacion);
         $pdf->dibujarInformeAlumno($datos);
 
         return $pdf;
@@ -65,9 +68,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
      * @param  list<array<string, mixed>>  $hojas
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = false): self
+    public static function generarLote(array $hojas, array $header, bool $mostrarMarcaAgua = false, string $implementacion = 'estandar'): self
     {
-        $pdf = new self($header, $mostrarMarcaAgua);
+        $pdf = new self($header, $mostrarMarcaAgua, $implementacion);
         foreach ($hojas as $datos) {
             $pdf->dibujarInformeAlumno($datos);
         }
@@ -115,7 +118,9 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             $this->paginaMateria($materia, $alumno, $etapa, $nombreEtapa);
         }
 
-        $this->paginaCierre($nombreEtapa);
+        if (! $this->esImplementacionMontecristo()) {
+            $this->paginaCierre($nombreEtapa);
+        }
     }
 
     private function dibujarEncabezadoProvincial(float $yInicio = 43.0): void
@@ -272,14 +277,18 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         $etapa1 = self::normalizarComillas((string) ($materia['etapa1'] ?? ''));
         $etapa2 = self::normalizarComillas((string) ($materia['etapa2'] ?? ''));
 
+        $mostrarAprendizajes = ! $this->esImplementacionMontecristo();
+
         if ($etapa === 1) {
             if (! $esObsFinal) {
-                $this->Cell(self::ANCHO_CONTENIDO, 7, 'APRENDIZAJES', 1, 2, 'C');
-                $this->Ln(3);
-                TcpdfFuenteArial::aplicar($this, '', 10);
-                TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $indicador1);
-                $this->Ln(3);
-                TcpdfFuenteArial::aplicar($this, '', 13);
+                if ($mostrarAprendizajes) {
+                    $this->Cell(self::ANCHO_CONTENIDO, 7, 'APRENDIZAJES', 1, 2, 'C');
+                    $this->Ln(3);
+                    TcpdfFuenteArial::aplicar($this, '', 10);
+                    TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $indicador1);
+                    $this->Ln(3);
+                    TcpdfFuenteArial::aplicar($this, '', 13);
+                }
                 $this->Cell(self::ANCHO_CONTENIDO, 7, 'PRIMERA ETAPA', 1, 2, 'C');
                 $this->Ln(3);
             }
@@ -287,12 +296,14 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $etapa1);
         } else {
             if (! $esObsFinal) {
-                $this->Cell(self::ANCHO_CONTENIDO, 7, 'APRENDIZAJES', 1, 2, 'C');
-                $this->Ln(3);
-                TcpdfFuenteArial::aplicar($this, '', 10);
-                TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $indicador2);
-                $this->Ln(3);
-                TcpdfFuenteArial::aplicar($this, '', 13);
+                if ($mostrarAprendizajes) {
+                    $this->Cell(self::ANCHO_CONTENIDO, 7, 'APRENDIZAJES', 1, 2, 'C');
+                    $this->Ln(3);
+                    TcpdfFuenteArial::aplicar($this, '', 10);
+                    TcpdfMultiCellJustificado::escribir($this, self::ANCHO_CONTENIDO, 5, $indicador2);
+                    $this->Ln(3);
+                    TcpdfFuenteArial::aplicar($this, '', 13);
+                }
                 $this->Cell(self::ANCHO_CONTENIDO, 7, 'SEGUNDA ETAPA', 1, 2, 'C');
                 $this->Ln(3);
             }
@@ -424,6 +435,11 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             $this->Cell(40, 20, '', 1, 0, 'C');
             $this->Cell(40, 20, '', 1, 1, 'C');
         }
+    }
+
+    private function esImplementacionMontecristo(): bool
+    {
+        return $this->implementacion === 'montecristo';
     }
 
     private static function normalizarComillas(string $texto): string

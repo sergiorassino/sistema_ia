@@ -5,7 +5,7 @@ namespace App\Http\Controllers\CalificacionesInicial;
 use App\Http\Controllers\Controller;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
-use App\Support\CalificacionesInicial\InformeProgresoInicialTcpdf;
+use App\Support\CalificacionesInicial\InformeProgresoInicialGenerador;
 use App\Support\NivelSistema;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
@@ -90,8 +90,8 @@ class InformeProgresoInicialLotePdfController extends Controller
             $slug = 'informes_progreso_escolar';
         }
 
-        $pdf = InformeProgresoInicialTcpdf::generarLote($hojas, schoolPdfHeaderData());
+        $pdf = InformeProgresoInicialGenerador::generarLote($hojas, schoolPdfHeaderData());
 
-        return InformeProgresoInicialTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return InformeProgresoInicialGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

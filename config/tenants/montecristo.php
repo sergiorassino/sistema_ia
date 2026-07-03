@@ -23,6 +23,10 @@ return [
         'planilla' => ['implementacion' => 'montecristo'],
     ],
 
+    'calificaciones_inicial' => [
+        'informe_progreso' => ['implementacion' => 'montecristo'],
+    ],
+
     'portal_docente' => [
         'menu' => [
             'inicial' => [

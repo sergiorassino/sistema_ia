@@ -1085,6 +1085,19 @@ if (! function_exists('tenantBoletinEpqSecundarioMembreteAbsoluta')) {
     }
 }
 
+if (! function_exists('tenantCalificacionesInicialInformeProgresoImplementacion')) {
+    /**
+     * Variante del Informe de Progreso Escolar (inicial).
+     * Valores: `estandar` (layout provincial completo) | `montecristo` (sin aprendizajes ni página de cierre).
+     */
+    function tenantCalificacionesInicialInformeProgresoImplementacion(): string
+    {
+        $impl = trim((string) config('tenant.calificaciones_inicial.informe_progreso.implementacion', 'estandar'));
+
+        return $impl !== '' ? $impl : 'estandar';
+    }
+}
+
 if (! function_exists('tenantCalificacionesPrimarioCargaEstudianteImplementacion')) {
     /** Variante activa de carga por estudiante (primario), p. ej. `montecristo`. */
     function tenantCalificacionesPrimarioCargaEstudianteImplementacion(): ?string
