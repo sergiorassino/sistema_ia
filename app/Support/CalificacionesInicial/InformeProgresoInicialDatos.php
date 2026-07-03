@@ -238,7 +238,7 @@ final class InformeProgresoInicialDatos
 
             $materiasPdf[] = [
                 'materia' => $nombreMateria,
-                'docente' => self::docentePorMateria($idCurso, $ord, $idNivel, $idTerlec),
+                'docente' => self::docentePorMateria($idMateria),
                 'indicador1' => $indicadores[1] ?? '',
                 'indicador2' => $indicadores[2] ?? '',
                 'etapa1' => (string) ($obs['etapa1'] ?? ''),
@@ -313,17 +313,24 @@ final class InformeProgresoInicialDatos
         return CalificacionesInicialIndicadoresDatos::textosPorEtapa($idMateria);
     }
 
-    private static function docentePorMateria(int $idCurso, int $ord, int $idNivel, int $idTerlec): string
+    /**
+     * Docente titular del espacio curricular (ppc + situacionrevista.sitRev = TITULAR).
+     * Si no hay titular definido, usa el primer docente asignado (orden legacy por id).
+     */
+    private static function docentePorMateria(int $idMateria): string
     {
-        $fila = DB::table('profesores as p')
-            ->join('ppc', 'ppc.idProfesor', '=', 'p.id')
-            ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
-            ->where('m.idCursos', $idCurso)
-            ->where('m.ord', $ord)
-            ->where('m.idNivel', $idNivel)
-            ->where('m.idTerlec', $idTerlec)
+        $fila = self::queryDocentesPpcPorMateria($idMateria)
+            ->whereRaw('UPPER(TRIM(COALESCE(sr.sitRev, ""))) = ?', ['TITULAR'])
+            ->orderBy('p.apellido')
+            ->orderBy('p.nombre')
             ->orderBy('p.id')
             ->first(['p.apellido', 'p.nombre']);
+
+        if ($fila === null) {
+            $fila = self::queryDocentesPpcPorMateria($idMateria)
+                ->orderBy('p.id')
+                ->first(['p.apellido', 'p.nombre']);
+        }
 
         if ($fila === null) {
             return '';
@@ -333,6 +340,14 @@ final class InformeProgresoInicialDatos
         $nombre = trim((string) ($fila->nombre ?? ''));
 
         return trim($apellido.($nombre !== '' ? ' '.$nombre : ''));
+    }
+
+    private static function queryDocentesPpcPorMateria(int $idMateria): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('profesores as p')
+            ->join('ppc', 'ppc.idProfesor', '=', 'p.id')
+            ->leftJoin('situacionrevista as sr', 'sr.id', '=', 'ppc.idSituRevis')
+            ->where('ppc.idMateria', $idMateria);
     }
 
     private static function salaParaEncabezadoInforme(?Curso $curso): string
