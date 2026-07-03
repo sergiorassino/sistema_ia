@@ -248,14 +248,33 @@
             <p class="se-section-title mb-4">Logo (JPG/JPEG/PNG por nivel)</p>
 
             <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
-                 wire:key="logo-preview-{{ md5((string) ($logoPreviewUrl ?? '')) }}">
+                 wire:key="logo-upload-section"
+                 x-data="{
+                     localPreview: null,
+                     revokeLocalPreview() {
+                         if (this.localPreview) {
+                             URL.revokeObjectURL(this.localPreview);
+                             this.localPreview = null;
+                         }
+                     },
+                     onLogoFileChange(event) {
+                         this.revokeLocalPreview();
+                         const file = event.target.files?.[0];
+                         if (file && /^image\/(jpe?g|png)$/i.test(file.type)) {
+                             this.localPreview = URL.createObjectURL(file);
+                         }
+                     }
+                 }"
+                 x-on:parametros-logo-guardado.window="revokeLocalPreview()">
                 <div class="space-y-3">
                     <div>
                         <label class="form-label">Subir logo</label>
                         <input wire:model="logo" type="file" accept="image/jpeg,image/png"
                                class="form-input mt-1.5 @error('logo') border-red-400 @enderror"
+                               x-on:change="onLogoFileChange($event)"
                                x-on:livewire-upload-error.window="
                                    if ($event.detail?.property === 'logo') {
+                                       revokeLocalPreview();
                                        $wire.onLogoUploadFailed();
                                    }
                                ">
@@ -268,14 +287,35 @@
 
                     <label class="inline-flex cursor-pointer items-center gap-2">
                         <input type="checkbox" wire:model.live="removeLogo"
-                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                               x-on:change="if ($event.target.checked) revokeLocalPreview()">
                         <span class="text-xs text-neutral-600">Quitar logo actual</span>
                     </label>
                 </div>
 
                 <div class="space-y-2">
                     <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
-                    @include('layouts.partials.logo-institucional', ['url' => $logoPreviewUrl, 'context' => 'preview'])
+                    <div @class([
+                        'flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4',
+                        'se-logo-preview--emblema' => schoolLogoEsEmblema(),
+                    ])>
+                        <img x-show="localPreview" x-bind:src="localPreview" alt="Logo"
+                             @class([
+                                 'object-contain',
+                                 'h-28 w-28' => schoolLogoEsEmblema(),
+                                 'max-h-28' => ! schoolLogoEsEmblema(),
+                             ])>
+                        @if ($logoPreviewUrl)
+                            <img x-show="! localPreview && ! $wire.removeLogo" src="{{ $logoPreviewUrl }}" alt="Logo"
+                                 @class([
+                                     'object-contain',
+                                     'h-28 w-28' => schoolLogoEsEmblema(),
+                                     'max-h-28' => ! schoolLogoEsEmblema(),
+                                 ])>
+                        @endif
+                        <span x-show="! localPreview && ($wire.removeLogo || @js(! $logoPreviewUrl))"
+                              class="text-xs text-neutral-400">Sin logo</span>
+                    </div>
                 </div>
             </div>
         </div>

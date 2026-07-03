@@ -4,7 +4,7 @@ namespace App\Http\Controllers\CalificacionesInicial;
 
 use App\Http\Controllers\Controller;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
-use App\Support\CalificacionesInicial\InformeProgresoInicialTcpdf;
+use App\Support\CalificacionesInicial\InformeProgresoInicialGenerador;
 use App\Support\NivelSistema;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -65,8 +65,8 @@ class InformeProgresoInicialPdfController extends Controller
             $slug = 'informe_progreso_escolar';
         }
 
-        $pdf = InformeProgresoInicialTcpdf::generar($data, schoolPdfHeaderData());
+        $pdf = InformeProgresoInicialGenerador::generar($data, schoolPdfHeaderData());
 
-        return InformeProgresoInicialTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return InformeProgresoInicialGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

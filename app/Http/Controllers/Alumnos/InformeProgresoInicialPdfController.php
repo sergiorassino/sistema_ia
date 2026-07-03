@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaInformeProgresoInicial;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\EntoVerNotasOff;
-use App\Support\CalificacionesInicial\InformeProgresoInicialTcpdf;
+use App\Support\CalificacionesInicial\InformeProgresoInicialGenerador;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -59,8 +59,8 @@ class InformeProgresoInicialPdfController extends Controller
             $slug = 'informe_progreso_escolar_etapa'.$etapa;
         }
 
-        $pdf = InformeProgresoInicialTcpdf::generar($data, studentPdfHeaderData(), true);
+        $pdf = InformeProgresoInicialGenerador::generar($data, studentPdfHeaderData(), true);
 
-        return InformeProgresoInicialTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        return InformeProgresoInicialGenerador::respuestaHttp($pdf, $slug.'.pdf');
     }
 }
