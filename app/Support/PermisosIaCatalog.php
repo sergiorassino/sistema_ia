@@ -123,6 +123,12 @@ final class PermisosIaCatalog
 
     public const MATRICULA_WEB_DOCUMENTOS = 44;
 
+    /** Parametrización de documentos que sube la familia en actualización de datos. */
+    public const MATRICULA_WEB_DOCUMENTOS_ESTUDIANTE = 83;
+
+    /** Bloqueos pedagógico y administrativo por matrícula (ciclo activo). */
+    public const MATRICULA_WEB_BLOQUEOS = 82;
+
     public const SOLICITUDES_EVALUACION_GESTION = 45;
 
     public const LEGAJOS_FAMILIAS_GESTION = 46;
@@ -237,6 +243,8 @@ final class PermisosIaCatalog
             ['id' => 42, 'orden' => self::ASPIRANTES_CAMPOS, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del formulario público de aspirantes.'],
             ['id' => 43, 'orden' => self::COM_AUDITORIA, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Auditoría de comunicación institucional: consultar borrados y marcas de lectura en bandejas.'],
             ['id' => 44, 'orden' => self::MATRICULA_WEB_DOCUMENTOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.'],
+            ['id' => 83, 'orden' => self::MATRICULA_WEB_DOCUMENTOS_ESTUDIANTE, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Documentos a subir (familia): parametrizar tipos de documentación que la familia carga en actualización de datos.'],
+            ['id' => 82, 'orden' => self::MATRICULA_WEB_BLOQUEOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Bloqueos pedagógico y administrativo por matrícula: listado de alumnos regulares del ciclo activo y edición con un clic.'],
             ['id' => 45, 'orden' => self::SOLICITUDES_EVALUACION_GESTION, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).'],
             ['id' => 46, 'orden' => self::LEGAJOS_FAMILIAS_GESTION, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).'],
             ['id' => 47, 'orden' => self::LEGAJOS_MODIFICAR_ADMIN, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Nivel Administración: crear, editar, eliminar legajos y matrículas en Inicial, Primario y Secundario (cualquier nivel pedagógico del ciclo activo).'],

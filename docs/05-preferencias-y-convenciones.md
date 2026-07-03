@@ -384,3 +384,102 @@ Filas nuevas sin persistir pueden llamar `$wire.eliminar(...)` directo, sin conf
 ### Regla Cursor
 
 `.cursor/rules/sweetalert-dialogos-se.mdc`
+
+---
+
+## 13. Paginación en listados Livewire (obligatorio)
+
+Todo **listado paginado** del sistema (ABM, certificados, matrícula web, cuotas, etc.) debe usar el **mismo control compacto** integrado con Livewire, para que el cambio de página no recargue la pantalla ni pierda filtros.
+
+### Vista Blade (patrón obligatorio)
+
+```blade
+@if ($registros->hasPages())
+    <div class="se-matriz-list-footer">
+        {{ $registros->links('vendor.pagination.se-compact') }}
+    </div>
+@endif
+```
+
+- **`vendor.pagination.se-compact`**: resumen `1–50 de 234 · pág. 1/5`, flechas anterior/siguiente e índices de página (desktop). En mobile muestra la página actual entre flechas.
+- **`se-matriz-list-footer`**: pie del listado (borde superior, fondo blanco semitransparente, padding compacto). Definido en `resources/css/app.css`.
+- **`hasPages()`**: solo renderizar el bloque si hay más de una página (evita un footer vacío cuando el total cabe en una sola página).
+
+El pie va **debajo de la tabla/grilla**, dentro del mismo card (`se-matriz-list-card`, `se-card`, etc.), no flotando fuera del contenedor del listado.
+
+### Componente Livewire (PHP)
+
+```php
+use Livewire\WithPagination;
+
+class MiListadoIndex extends Component
+{
+    use WithPagination;
+
+    public const POR_PAGINA = 50;
+
+    public function updatedFiltroCurso(): void
+    {
+        $this->resetPage(); // siempre al cambiar búsqueda o filtros
+    }
+
+    public function render()
+    {
+        $registros = MiConsulta::paginar(..., self::POR_PAGINA);
+
+        return view('livewire....', compact('registros'));
+    }
+}
+```
+
+- Trait **`WithPagination`** en el componente.
+- **`resetPage()`** en cada `updated*()` de filtros, búsqueda o selectores que alteren el universo del listado.
+- Tamaño de página habitual: **50** (`POR_PAGINA = 50` en la clase o en la clase de consulta `Support`).
+
+### Plantillas disponibles
+
+| Vista | Cuándo usar |
+|-------|-------------|
+| **`vendor.pagination.se-compact`** | **Listados operativos** (tablas en cards, certificados, bloqueos, libro matriz, etc.). **Preferida para módulos nuevos.** |
+| `vendor.pagination.se` | Variante más alta con texto “Mostrando X a Y de Z registros”. Solo en pantallas legacy que aún no migraron; no usar en módulos nuevos. |
+
+Ambas están preparadas para Livewire (`wire:click.prevent` en `previousPage`, `gotoPage`, `nextPage`). El default global en `AppServiceProvider` es `se`, pero **en listados hay que invocar explícitamente `se-compact`**.
+
+### Layout recomendado (listados densos)
+
+Cuando el listado usa el patrón matriz/certificados:
+
+```blade
+<div class="se-matriz-list-card min-h-0">
+    <div class="se-cierre-anual-grilla se-matriz-list-grilla se-matriz-list-grilla--unified">
+        <div class="se-cierre-anual-body-wrap se-matriz-list-scroll se-grid-angosta-wrap" tabindex="0">
+            <table class="se-matriz-list-tabla ...">...</table>
+        </div>
+    </div>
+
+    @if ($registros->hasPages())
+        <div class="se-matriz-list-footer">
+            {{ $registros->links('vendor.pagination.se-compact') }}
+        </div>
+    @endif
+</div>
+```
+
+En listados dentro de `se-card` simple, basta con el bloque `@if ($registros->hasPages())` + `se-matriz-list-footer` al cierre del card.
+
+### Referencias en el repo
+
+- Plantilla: `resources/views/vendor/pagination/se-compact.blade.php`
+- Estilos: `resources/css/app.css` (`.se-matriz-list-footer`, `.se-pagination--compact`)
+- Ejemplos: `resources/views/livewire/certificados/certificado-alumno-regular-index.blade.php`, `resources/views/livewire/matriz-analiticos/libro-matriz-index.blade.php`, `resources/views/livewire/matricula-web/bloqueos-matricula-index.blade.php`
+
+### Regla Cursor
+
+Detalle para el agente: `.cursor/rules/paginacion-listados-se.mdc`.
+
+### Antipatrones
+
+- `{{ $registros->links() }}` sin `se-compact` en un listado nuevo.
+- Mostrar el footer de paginación siempre, aunque `lastPage() === 1`.
+- Olvidar `resetPage()` al cambiar filtros (el usuario queda en la página 7 sin resultados).
+- Paginación fuera del card o con wrappers ad hoc (`border-t px-5 py-3`) en lugar de `se-matriz-list-footer`.

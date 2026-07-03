@@ -186,6 +186,34 @@ if (! function_exists('tienePermisoConfig')) {
     }
 }
 
+if (! function_exists('seSidebarTooltip')) {
+    /**
+     * Tooltip del sidebar (Menú de Secretaría): descripción + orden del permiso que controla el ítem.
+     *
+     * @param  int|list<int>|null  $permiso  Orden en permisos_ia; null si el ítem no exige permiso concreto.
+     */
+    function seSidebarTooltip(string $descripcion, int|array|null $permiso = null): string
+    {
+        if ($permiso === null) {
+            return $descripcion;
+        }
+
+        $ordenes = is_array($permiso) ? $permiso : [$permiso];
+        $ordenes = array_values(array_unique(array_map('intval', $ordenes)));
+        sort($ordenes);
+
+        if ($ordenes === []) {
+            return $descripcion;
+        }
+
+        $suffix = count($ordenes) === 1
+            ? ' · Permiso '.$ordenes[0]
+            : ' · Permisos '.implode(', ', $ordenes);
+
+        return $descripcion.$suffix;
+    }
+}
+
 if (! function_exists('tieneAlgunPermisoConfiguracion')) {
     function tieneAlgunPermisoConfiguracion(): bool
     {

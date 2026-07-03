@@ -315,7 +315,7 @@
                     </div>
                     <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4">
                         <p class="text-xs text-neutral-500 leading-relaxed">
-                            Complete la entrega o corrija el nombre. Use «Liberar reserva» si el recurso no se retirará (quedará disponible para otros pedidos). Si borra un campo entregado, el recurso vuelve a pendiente. Los devueltos no se editan aquí.
+                            Indique quién retira cada recurso pendiente. Una vez registrado, el nombre queda bloqueado. Use «Liberar reserva» si el recurso no se retirará (quedará disponible para otros pedidos).
                         </p>
                         @foreach($modalEntregaReservas as $reserva)
                             @php
@@ -331,7 +331,7 @@
                                     'devuelto'  => 'se-pill bg-green-100 text-green-700',
                                     default     => 'se-pill bg-neutral-100 text-neutral-500',
                                 };
-                                $campoEntregaDeshabilitado = $reserva->esDevuelto();
+                                $campoEntregaDeshabilitado = ! $reserva->esPendiente();
                             @endphp
                             <div @class([
                                 'rounded-xl border px-4 py-3',
@@ -352,7 +352,7 @@
                                            type="text"
                                            wire:model="entregasPedido.{{ $reserva->id }}"
                                            maxlength="100"
-                                           placeholder="{{ $campoEntregaDeshabilitado ? 'Ya devuelto' : 'Quién retira este recurso…' }}"
+                                           placeholder="{{ $campoEntregaDeshabilitado ? 'Entrega registrada' : 'Quién retira este recurso…' }}"
                                            class="form-input min-w-0 flex-1"
                                            @disabled($campoEntregaDeshabilitado)
                                            @if($loop->first && ! $campoEntregaDeshabilitado) autofocus @endif>
@@ -397,7 +397,7 @@
                     </div>
                     <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-4">
                         <p class="text-xs text-neutral-500 leading-relaxed">
-                            Registre devoluciones o corrija el nombre. Si borra un campo ya registrado, el recurso vuelve a entregado.
+                            Indique quién devuelve cada recurso entregado. Una vez registrado, el nombre queda bloqueado.
                         </p>
                         @foreach($modalDevolucionReservas as $reserva)
                             @php
@@ -413,7 +413,7 @@
                                     'devuelto'  => 'se-pill bg-green-100 text-green-700',
                                     default     => 'se-pill bg-neutral-100 text-neutral-500',
                                 };
-                                $campoDevolucionDeshabilitado = $reserva->esPendiente();
+                                $campoDevolucionDeshabilitado = ! $reserva->esEntregado();
                             @endphp
                             <div @class([
                                 'rounded-xl border px-4 py-3',
@@ -431,7 +431,7 @@
                                        wire:model="devolucionesPedido.{{ $reserva->id }}"
                                        wire:keydown.enter.prevent="confirmarDevolucion"
                                        maxlength="100"
-                                       placeholder="{{ $campoDevolucionDeshabilitado ? 'Aún no entregado' : 'Quién devuelve este recurso…' }}"
+                                       placeholder="{{ $reserva->esPendiente() ? 'Aún no entregado' : ($reserva->esDevuelto() ? 'Devolución registrada' : 'Quién devuelve este recurso…') }}"
                                        class="form-input"
                                        @disabled($campoDevolucionDeshabilitado)
                                        @if($loop->first && ! $campoDevolucionDeshabilitado) autofocus @endif>

@@ -120,24 +120,19 @@ class ReservasDashboard extends Component
                 continue;
             }
 
+            if (! $reserva->esPendiente()) {
+                continue;
+            }
+
             $nombre = trim((string) ($this->entregasPedido[$reserva->id] ?? ''));
 
+            if ($nombre === '') {
+                continue;
+            }
+
             try {
-                if ($nombre !== '') {
-                    if ($reserva->esPendiente()) {
-                        RrdReservaService::registrarEntrega($reserva, $nombre, $idOperador);
-                        $procesadas++;
-                    } elseif (
-                        $reserva->esEntregado()
-                        && $nombre !== trim((string) ($reserva->entregado_a ?? ''))
-                    ) {
-                        RrdReservaService::actualizarEntrega($reserva, $nombre, $idOperador);
-                        $procesadas++;
-                    }
-                } elseif ($reserva->esEntregado()) {
-                    RrdReservaService::revertirEntrega($reserva);
-                    $procesadas++;
-                }
+                RrdReservaService::registrarEntrega($reserva, $nombre, $idOperador);
+                $procesadas++;
             } catch (RrdReservaException $e) {
                 $this->dispatch('se-swal-error', mensaje: $e->getMessage());
 
@@ -246,24 +241,19 @@ class ReservasDashboard extends Component
                 continue;
             }
 
+            if (! $reserva->esEntregado()) {
+                continue;
+            }
+
             $nombre = trim((string) ($this->devolucionesPedido[$reserva->id] ?? ''));
 
+            if ($nombre === '') {
+                continue;
+            }
+
             try {
-                if ($nombre !== '') {
-                    if ($reserva->esEntregado()) {
-                        RrdReservaService::registrarDevolucion($reserva, $nombre, $idOperador);
-                        $procesadas++;
-                    } elseif (
-                        $reserva->esDevuelto()
-                        && $nombre !== $reserva->nombreQuienDevuelve()
-                    ) {
-                        RrdReservaService::actualizarDevolucion($reserva, $nombre, $idOperador);
-                        $procesadas++;
-                    }
-                } elseif ($reserva->esDevuelto()) {
-                    RrdReservaService::revertirDevolucion($reserva);
-                    $procesadas++;
-                }
+                RrdReservaService::registrarDevolucion($reserva, $nombre, $idOperador);
+                $procesadas++;
             } catch (RrdReservaException $e) {
                 $this->dispatch('se-swal-error', mensaje: $e->getMessage());
 

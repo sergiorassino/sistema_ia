@@ -46,7 +46,7 @@
         <h2 id="alumno-dash-session-heading" class="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">
             Datos de la sesión
         </h2>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.72fr)]">
             <div class="se-dash-session-card">
                 <div class="se-dash-session-icon">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -56,19 +56,10 @@
                 </div>
                 <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Estudiante</p>
-                    <p class="se-dash-session-value text-neutral-900" title="{{ $nombreEstudiante }}">{{ $nombreEstudiante }}</p>
-                </div>
-            </div>
-            <div class="se-dash-session-card">
-                <div class="se-dash-session-icon">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 002.83 2M9 14h6m-6 0a3.001 3.001 0 012.83-2"/>
-                    </svg>
-                </div>
-                <div class="se-dash-session-body">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">DNI</p>
-                    <p class="se-dash-session-value tabular-nums text-neutral-900" title="{{ $dniEstudiante }}">{{ $dniEstudiante }}</p>
+                    <div class="mt-1 space-y-0.5">
+                        <p class="se-dash-session-value text-neutral-900" title="{{ $nombreEstudiante }}">{{ $nombreEstudiante }}</p>
+                        <p class="truncate text-sm font-semibold tabular-nums text-neutral-700" title="DNI {{ $dniEstudiante }}">DNI {{ $dniEstudiante }}</p>
+                    </div>
                 </div>
             </div>
             <div class="se-dash-session-card">
@@ -79,21 +70,13 @@
                     </svg>
                 </div>
                 <div class="se-dash-session-body">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Curso y sección</p>
-                    <p class="se-dash-session-value text-neutral-900" title="{{ $cursoEstudiante !== '' ? $cursoEstudiante : 'Sin matrícula en este ciclo' }}">
-                        {{ $cursoEstudiante !== '' ? $cursoEstudiante : '—' }}
-                    </p>
-                </div>
-            </div>
-            <div class="se-dash-session-card">
-                <div class="se-dash-session-icon">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
-                    </svg>
-                </div>
-                <div class="se-dash-session-body">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Nivel</p>
-                    <p class="se-dash-session-value text-neutral-900" title="{{ $ctx->nivelNombre() }}">{{ $ctx->nivelNombre() }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Cursado</p>
+                    <div class="mt-1 space-y-0.5">
+                        <p class="se-dash-session-value text-neutral-900" title="{{ $cursoEstudiante !== '' ? $cursoEstudiante : 'Sin matrícula en este ciclo' }}">
+                            {{ $cursoEstudiante !== '' ? $cursoEstudiante : '—' }}
+                        </p>
+                        <p class="truncate text-sm font-semibold text-neutral-700" title="{{ $ctx->nivelNombre() }}">{{ $ctx->nivelNombre() }}</p>
+                    </div>
                 </div>
             </div>
             <div class="se-dash-session-card">

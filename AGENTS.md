@@ -55,6 +55,10 @@ Usar siempre: **Menú de Secretaría** (`layouts/app`), **Menú de Administraci�
 
 Confirmaciones, éxitos, avisos y errores: helpers `seSwal*` en `resources/js/app.js`; eventos Livewire `se-swal-exito` / `se-swal-error`. No usar `wire:confirm` ni `alert`/`confirm` del navegador. Detalle: `docs/05-preferencias-y-convenciones.md` §12 y `.cursor/rules/sweetalert-dialogos-se.mdc`.
 
+## Paginación en listados Livewire
+
+Listados paginados: `WithPagination`, `POR_PAGINA = 50`, `resetPage()` al cambiar filtros, y en Blade `@if ($registros->hasPages())` + `se-matriz-list-footer` + `$registros->links('vendor.pagination.se-compact')`. No usar `links()` sin `se-compact` en módulos nuevos. Detalle: `docs/05-preferencias-y-convenciones.md` §13 y `.cursor/rules/paginacion-listados-se.mdc`.
+
 ## URLs sin IDs reveladores
 
 En autogestión, PDFs y descargas por GET: **no** poner IDs de BD, DNI ni legajo en la URL. Usar `App\Support\Security\OpaqueRouteToken` o token en BD (aspirantes). Detalle: `docs/06-reglas-de-seguridad.md` §10 y `.cursor/rules/urls-sin-identificadores.mdc`.

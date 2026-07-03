@@ -6,7 +6,7 @@
             class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
             :class="(groups.cooperadora && !sidebarCollapsed) ? 'is-open' : ''"
             @click="toggleGroup('cooperadora')"
-            title="Cooperadora escolar">
+            title="{{ seSidebarTooltip('Cooperadora escolar', [72, 73, 74, 75]) }}">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
@@ -28,7 +28,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'cooperadora.ingresos' || ($route ?? '') === 'cooperadora.recibo.pdf',
            ])
-           title="Registro de ingresos y recibos">
+           title="{{ seSidebarTooltip('Registro de ingresos y recibos', 73) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 4v16m8-8H4"/>
@@ -42,7 +42,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'cooperadora.egresos') || ($route ?? '') === 'cooperadora.orden-pago.pdf',
            ])
-           title="Registro de egresos y órdenes de pago">
+           title="{{ seSidebarTooltip('Registro de egresos y órdenes de pago', 74) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M20 12H4"/>
@@ -56,7 +56,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => in_array($route ?? '', ['cooperadora.movimientos', 'cooperadora.movimientos.pdf'], true),
            ])
-           title="Movimientos por fecha con saldo">
+           title="{{ seSidebarTooltip('Movimientos por fecha con saldo', 75) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -74,7 +74,7 @@
                    'cooperadora.pagos-estudiante.pdf',
                ], true),
            ])
-           title="Pagos registrados por estudiante">
+           title="{{ seSidebarTooltip('Pagos registrados por estudiante', 73) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -88,7 +88,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'cooperadora.config',
            ])
-           title="Datos institucionales y descuento hermanos">
+           title="{{ seSidebarTooltip('Datos institucionales y descuento hermanos', 72) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -101,7 +101,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'cooperadora.rubros',
            ])
-           title="Rubros de ingreso">
+           title="{{ seSidebarTooltip('Rubros de ingreso', 72) }}">
             <span class="truncate">Rubros de Ingreso</span>
         </a>
         <a href="{{ route('cooperadora.items') }}"
@@ -109,7 +109,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'cooperadora.items',
            ])
-           title="Ítems de ingreso">
+           title="{{ seSidebarTooltip('Ítems de ingreso', 72) }}">
             <span class="truncate">Ítems de ingreso</span>
         </a>
         <a href="{{ route('cooperadora.proveedores') }}"
@@ -117,7 +117,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'cooperadora.proveedores'),
            ])
-           title="Proveedores para egresos">
+           title="{{ seSidebarTooltip('Proveedores para egresos', 72) }}">
             <span class="truncate">Proveedores</span>
         </a>
         <a href="{{ route('cooperadora.medios-pago') }}"
@@ -125,7 +125,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'cooperadora.medios-pago',
            ])
-           title="Medios de pago para ingresos y egresos">
+           title="{{ seSidebarTooltip('Medios de pago para ingresos y egresos', 72) }}">
             <span class="truncate">Medios de pago</span>
         </a>
         @endif

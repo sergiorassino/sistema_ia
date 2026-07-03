@@ -268,6 +268,7 @@ use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\CamposProfesorIndex;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use App\Livewire\Parametrizacion\ParametrosSistemaForm;
+use App\Livewire\MatriculaWeb\BloqueosMatriculaIndex;
 use App\Livewire\MatriculaWeb\DocumentosAceptacionForm;
 use App\Livewire\MatriculaWeb\DocumentosEstudianteTiposIndex;
 use App\Http\Controllers\MatriculaWeb\DocumentoAceptacionArchivoController;
@@ -869,11 +870,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::middleware('permiso:'.PermisosMatriculaWeb::DOCUMENTOS_ACEPTACION)->prefix('matricula-web')->group(function () {
         Route::get('/documentos', DocumentosAceptacionForm::class)->name('matricula-web.documentos');
-        Route::get('/documentos-estudiante-tipos', DocumentosEstudianteTiposIndex::class)
-            ->name('matricula-web.documentos-estudiante-tipos');
         Route::get('/documentos/{tipo}/archivo', DocumentoAceptacionArchivoController::class)
             ->where('tipo', 'compromiso|aec|normas|traslado')
             ->name('matricula-web.documentos.archivo');
+    });
+
+    Route::middleware('permiso:'.PermisosMatriculaWeb::DOCUMENTOS_ESTUDIANTE_FAMILIA)->prefix('matricula-web')->group(function () {
+        Route::get('/documentos-estudiante-tipos', DocumentosEstudianteTiposIndex::class)
+            ->name('matricula-web.documentos-estudiante-tipos');
+    });
+
+    Route::middleware('permiso:'.PermisosMatriculaWeb::BLOQUEOS_MATRICULA)->prefix('matricula-web')->group(function () {
+        Route::get('/bloqueos', BloqueosMatriculaIndex::class)->name('matricula-web.bloqueos');
     });
 
     // Gestión de Aspirantes (permiso orden 39)
