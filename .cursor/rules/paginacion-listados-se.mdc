@@ -1,0 +1,52 @@
+---
+description: Paginación estándar en listados Livewire (se-compact + se-matriz-list-footer)
+globs: resources/views/livewire/**/*.blade.php,app/Livewire/**/*.php
+alwaysApply: false
+---
+
+# Paginación en listados — patrón SE
+
+Detalle: `docs/05-preferencias-y-convenciones.md` sección **13**.
+
+## Obligatorio en listados paginados
+
+```blade
+@if ($registros->hasPages())
+    <div class="se-matriz-list-footer">
+        {{ $registros->links('vendor.pagination.se-compact') }}
+    </div>
+@endif
+```
+
+- **`vendor.pagination.se-compact`**: control compacto con rango `1–50 de N · pág. X/Y` y navegación Livewire (`wire:click.prevent`).
+- **`se-matriz-list-footer`**: pie fijo del listado (CSS en `resources/css/app.css`).
+- **`hasPages()`**: no renderizar el footer si solo hay una página.
+
+## Livewire (PHP)
+
+- Trait `WithPagination` en el componente.
+- `public const POR_PAGINA = 50;` (o constante equivalente en la consulta).
+- `$this->resetPage()` en cada `updated*()` de filtros o búsqueda.
+
+## Cuándo usar cada plantilla
+
+| Vista | Uso |
+|-------|-----|
+| **`vendor.pagination.se-compact`** | **Módulos nuevos y listados operativos** (preferida). |
+| `vendor.pagination.se` | Solo legacy existente; no usar en código nuevo. |
+
+El default global (`AppServiceProvider`) es `se`; en listados hay que pasar **`se-compact` explícitamente**.
+
+## Referencias
+
+- `resources/views/vendor/pagination/se-compact.blade.php`
+- `resources/views/livewire/certificados/certificado-alumno-regular-index.blade.php`
+- `resources/views/livewire/matricula-web/bloqueos-matricula-index.blade.php`
+- `resources/views/livewire/matriz-analiticos/libro-matriz-index.blade.php`
+
+## Prohibido en módulos nuevos
+
+- `{{ $registros->links() }}` sin `se-compact`.
+- Footer de paginación sin `hasPages()`.
+- Filtros que cambian el listado sin `resetPage()`.
+- Wrappers ad hoc (`border-t px-5 py-3`) en lugar de `se-matriz-list-footer`.

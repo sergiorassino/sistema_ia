@@ -282,29 +282,17 @@ class RrdReservaService
     }
 
     /**
-     * Corregir datos de entrega (recurso ya entregado o devuelto).
+     * @deprecated El nombre de entrega queda bloqueado al registrar.
      *
      * @throws RrdReservaException
      */
     public static function actualizarEntrega(RrdReserva $reserva, string $entregadoA, int $idProfesorEntrega): void
     {
-        if ($reserva->esPendiente() || $reserva->esCancelado()) {
-            throw new RrdReservaException('Use registrar entrega para recursos pendientes.');
-        }
-
-        if (! $reserva->esEntregado() && ! $reserva->esDevuelto()) {
-            throw new RrdReservaException('No se puede corregir la entrega de este recurso.');
-        }
-
-        $reserva->update([
-            'entregado_a'   => substr(trim($entregadoA), 0, 100),
-            'entregado_por' => $idProfesorEntrega,
-            'entregado_at'  => now(),
-        ]);
+        throw new RrdReservaException('El nombre de entrega no puede modificarse una vez registrado.');
     }
 
     /**
-     * Corregir datos de devolución (recurso ya devuelto).
+     * @deprecated El nombre de devolución queda bloqueado al registrar.
      *
      * @throws RrdReservaException
      */
@@ -313,56 +301,27 @@ class RrdReservaService
         string $devueltoPor,
         int $idOperadorRecibe
     ): void {
-        if (! $reserva->esDevuelto()) {
-            throw new RrdReservaException('Use registrar devolución para recursos entregados.');
-        }
-
-        $reserva->update([
-            'devuelto_por' => substr(trim($devueltoPor), 0, 100),
-            'devuelto_a'   => max(0, $idOperadorRecibe) > 0 ? max(0, $idOperadorRecibe) : null,
-            'devuelto_at'  => now(),
-        ]);
+        throw new RrdReservaException('El nombre de devolución no puede modificarse una vez registrado.');
     }
 
     /**
-     * Anular entrega: vuelve el recurso a pendiente y limpia datos de entrega/devolución.
+     * @deprecated La entrega registrada no puede anularse desde el listado.
      *
      * @throws RrdReservaException
      */
     public static function revertirEntrega(RrdReserva $reserva): void
     {
-        if ($reserva->esPendiente() || $reserva->esCancelado()) {
-            throw new RrdReservaException('Este recurso ya está pendiente.');
-        }
-
-        $reserva->update([
-            'estado'        => RrdReserva::ESTADO_PENDIENTE,
-            'entregado_a'   => null,
-            'entregado_por' => null,
-            'entregado_at'  => null,
-            'devuelto_por'  => null,
-            'devuelto_a'    => null,
-            'devuelto_at'   => null,
-        ]);
+        throw new RrdReservaException('La entrega registrada no puede anularse.');
     }
 
     /**
-     * Anular devolución: vuelve el recurso a entregado y limpia datos de devolución.
+     * @deprecated La devolución registrada no puede anularse desde el listado.
      *
      * @throws RrdReservaException
      */
     public static function revertirDevolucion(RrdReserva $reserva): void
     {
-        if (! $reserva->esDevuelto()) {
-            throw new RrdReservaException('Solo se puede anular la devolución de recursos devueltos.');
-        }
-
-        $reserva->update([
-            'estado'       => RrdReserva::ESTADO_ENTREGADO,
-            'devuelto_por' => null,
-            'devuelto_a'   => null,
-            'devuelto_at'  => null,
-        ]);
+        throw new RrdReservaException('La devolución registrada no puede anularse.');
     }
 
     /**

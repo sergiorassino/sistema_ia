@@ -51,7 +51,10 @@
                 </div>
                 <div class="se-dash-session-body">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Usuario</p>
-                    <p class="se-dash-session-value text-neutral-900" title="{{ $nombreUsuario }}">{{ $nombreUsuario }}</p>
+                    <div class="mt-1 space-y-0.5">
+                        <p class="se-dash-session-value text-neutral-900" title="{{ $nombreUsuario }}">{{ $nombreUsuario }}</p>
+                        <p class="truncate text-sm font-semibold tabular-nums text-neutral-700" title="DNI {{ $dniUsuario }}">DNI {{ $dniUsuario }}</p>
+                    </div>
                 </div>
             </div>
             <div class="se-dash-session-card">

@@ -29,7 +29,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesInicialSfq.carga'),
            ])
-           title="Carga de calificaciones (inicial SFQ)">
+           title="{{ seSidebarTooltip('Carga de calificaciones (inicial SFQ)', 71) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -46,7 +46,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesInicialSfq.boletin'),
            ])
-           title="Informes pedagógicos (inicial SFQ)">
+           title="{{ seSidebarTooltip('Informes pedagógicos (inicial SFQ)', 71) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>

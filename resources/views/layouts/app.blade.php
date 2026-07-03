@@ -326,7 +326,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.legajos'),
                    ])
-                   title="Legajos de Estudiantes v1.0">
+                   title="{{ seSidebarTooltip('Legajos de Estudiantes v1.0', 2) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -399,7 +399,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => request()->routeIs('listados.ficha-matricula', 'listados.ficha-matricula.pdf'),
                        ])
-                       title="{{ tenantSecretariaFichaMatriculaEtiqueta() }} v1.0">
+                       title="{{ seSidebarTooltip(tenantSecretariaFichaMatriculaEtiqueta().' v1.0', 2) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -419,7 +419,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.viajesSalidas && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('viajesSalidas')"
-                    title="Viajes / Salidas educativas v1.0">
+                    title="{{ seSidebarTooltip('Viajes / Salidas educativas v1.0', 67) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -451,7 +451,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf'),
                    ])
-                   title="Gestión de salidas educativas">
+                   title="{{ seSidebarTooltip('Gestión de salidas educativas', 67) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -463,7 +463,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'),
                    ])
-                   title="Generar Excel Viaje v1.0">
+                   title="{{ seSidebarTooltip('Generar Excel Viaje v1.0', 67) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -480,7 +480,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.materialDidactico && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('materialDidactico')"
-                    title="Material Didáctico">
+                    title="{{ seSidebarTooltip('Material Didáctico', [68, 69, 70]) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.753 0-3.332.477-4.5 1.253"/>
@@ -501,7 +501,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('material-didactico.index'),
                    ])
-                   title="Listado de reservas">
+                   title="{{ seSidebarTooltip('Listado de reservas', [68, 69, 70]) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -514,7 +514,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => request()->routeIs('material-didactico.reservar', 'material-didactico.reservar.edit'),
                        ])
-                       title="Registrar nueva reserva">
+                       title="{{ seSidebarTooltip('Registrar nueva reserva', [68, 69]) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 4v16m8-8H4"/>
@@ -528,7 +528,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => request()->routeIs('material-didactico.recursos'),
                        ])
-                       title="Gestión de recursos">
+                       title="{{ seSidebarTooltip('Gestión de recursos', 68) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -571,7 +571,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'comunicaciones.') && ! in_array(($route ?? ''), ['comunicaciones.nuevo', 'comunicaciones.revision', 'comunicaciones.auditoria'], true),
                    ])
-                   title="Bandeja de comunicados v1.0">
+                   title="{{ seSidebarTooltip('Bandeja de comunicados v1.0', 3) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -586,7 +586,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.nuevo',
                    ])
-                   title="Nuevo comunicado a familias v1.0">
+                   title="{{ seSidebarTooltip('Nuevo comunicado a familias v1.0', 4) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -600,7 +600,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.revision',
                    ])
-                   title="Control Cuaderno de Comunicados v1.0">
+                   title="{{ seSidebarTooltip('Control Cuaderno de Comunicados v1.0', 8) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -615,7 +615,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'comunicaciones.auditoria',
                    ])
-                   title="Auditoría de borrados y marcas de lectura en bandejas">
+                   title="{{ seSidebarTooltip('Auditoría de borrados y marcas de lectura en bandejas', 43) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -630,7 +630,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'emails-masivos.'),
                    ])
-                   title="Enviar Correo Masivo a Estudiantes">
+                   title="{{ seSidebarTooltip('Enviar Correo Masivo a Estudiantes', 78) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -645,7 +645,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.com-canales',
                    ])
-                   title="Configuración de canales v1.0">
+                   title="{{ seSidebarTooltip('Configuración de canales v1.0', 5) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -661,7 +661,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'push.suscribir',
                    ])
-                   title="Notificaciones push en este dispositivo">
+                   title="{{ seSidebarTooltip('Notificaciones push en este dispositivo', 32) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -685,7 +685,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.disciplinario && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('disciplinario')"
-                    title="Seguimiento disciplinario v1.0">
+                    title="{{ seSidebarTooltip('Seguimiento disciplinario v1.0', 37) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -707,7 +707,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.disciplinario'),
                        ])
-                       title="Seguimiento Disciplinario v1.0">
+                       title="{{ seSidebarTooltip('Seguimiento Disciplinario v1.0', 37) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -748,7 +748,7 @@
                            || ($route ?? '') === 'seguimiento.inasistencias.create'
                            || ($route ?? '') === 'seguimiento.inasistencias.edit',
                    ])
-                   title="Gestión de Inasistencias del Estudiante v1.0">
+                   title="{{ seSidebarTooltip('Gestión de Inasistencias del Estudiante v1.0', 38) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -762,7 +762,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'seguimiento.toma-asistencia-clase',
                    ])
-                   title="Toma de asistencia por curso, materia y fecha">
+                   title="{{ seSidebarTooltip('Toma de asistencia por curso, materia y fecha', 1) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -776,7 +776,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'seguimiento.inasistencias.sincroCidi',
                    ])
-                   title="Importar inasistencias desde CSV CIDI/GE">
+                   title="{{ seSidebarTooltip('Importar inasistencias desde CSV CIDI/GE', 24) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -790,7 +790,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.partes-diarios'),
                    ])
-                   title="Parte diario del preceptor (PDF por curso(s) y fecha)">
+                   title="{{ seSidebarTooltip('Parte diario del preceptor (PDF por curso(s) y fecha)', 81) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -825,7 +825,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.examenes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('examenes')"
-                    title="Exámenes">
+                    title="{{ seSidebarTooltip('Exámenes', 12) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -847,7 +847,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas.gestion', 'examenes.materias-adeudadas.gestion.entrar'),
                    ])
-                   title="Gestión de materias adeudadas (secundario)">
+                   title="{{ seSidebarTooltip('Gestión de materias adeudadas (secundario)', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -859,7 +859,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.borrar-inscripciones'),
                    ])
-                   title="Borrar todas las inscripciones a examen">
+                   title="{{ seSidebarTooltip('Borrar todas las inscripciones a examen', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -871,7 +871,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas', 'examenes.materias-adeudadas.entrar', 'examenes.materias-adeudadas.pdf'),
                    ])
-                   title="Listado de materias adeudadas">
+                   title="{{ seSidebarTooltip('Listado de materias adeudadas', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -883,7 +883,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.acta-volante-previos', 'examenes.acta-volante-previos.entrar', 'examenes.acta-volante-previos.pdf'),
                    ])
-                   title="Actas volante de examen (previas)">
+                   title="{{ seSidebarTooltip('Actas volante de examen (previas)', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
@@ -895,7 +895,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.permiso-examen', 'examenes.permiso-examen.entrar', 'examenes.permiso-examen.pdf', 'examenes.permiso-examen.pdf.preparar'),
                    ])
-                   title="Permisos de examen por alumno">
+                   title="{{ seSidebarTooltip('Permisos de examen por alumno', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -908,7 +908,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => request()->routeIs('examenes.tercer-materia', 'examenes.tercer-materia.pdf', 'examenes.tercer-materia.acta-compromiso.pdf'),
                    ])
-                   title="Gestión de tercer materia (condición TM)">
+                   title="{{ seSidebarTooltip('Gestión de tercer materia (condición TM)', 12) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
@@ -925,7 +925,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.matrizAnaliticos && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('matrizAnaliticos')"
-                    title="Matríz y analíticos">
+                    title="{{ seSidebarTooltip('Matríz y analíticos', 16) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -947,7 +947,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'matrizAnaliticos.'),
                    ])
-                   title="Libro matriz, pase y certificado analítico">
+                   title="{{ seSidebarTooltip('Libro matriz, pase y certificado analítico', 16) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -986,7 +986,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.alumnoRegular',
                        ])
-                       title="Constancia de Alumno Regular">
+                       title="{{ seSidebarTooltip('Constancia de Alumno Regular', 17) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1000,7 +1000,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.estudiosTramite',
                        ])
-                       title="Constancia de Certificado en Trámite">
+                       title="{{ seSidebarTooltip('Constancia de Certificado en Trámite', 18) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1014,7 +1014,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.constanciaDocumentos',
                        ])
-                       title="Constancia de Documentos">
+                       title="{{ seSidebarTooltip('Constancia de Documentos', 19) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1028,7 +1028,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.asistenciaProfesor',
                        ])
-                       title="Certificado de Asistencia del Profesor">
+                       title="{{ seSidebarTooltip('Certificado de Asistencia del Profesor', 20) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1042,7 +1042,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.paseParcial',
                        ])
-                       title="Pase Parcial">
+                       title="{{ seSidebarTooltip('Pase Parcial', 21) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1056,7 +1056,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'certificados.solicitudDePase',
                        ])
-                       title="Solicitud de Pase">
+                       title="{{ seSidebarTooltip('Solicitud de Pase', 22) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1070,7 +1070,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => in_array($route ?? '', ['certificados.cusIsaVozImagen', 'certificados.cusIsaVozImagen.pdf'], true),
                        ])
-                       title="C.U.S. / I.S.A. / Voz-Imagen">
+                       title="{{ seSidebarTooltip('C.U.S. / I.S.A. / Voz-Imagen', 66) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1110,7 +1110,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'horarios.config',
                        ])
-                       title="Turnos, días de clase y horario reloj">
+                       title="{{ seSidebarTooltip('Turnos, días de clase y horario reloj', 13) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -1126,7 +1126,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'horarios.carga',
                        ])
-                       title="Carga de horas cátedra por docente">
+                       title="{{ seSidebarTooltip('Carga de horas cátedra por docente', 13) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -1158,7 +1158,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.aspirantes && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('aspirantes')"
-                    title="Gestión de aspirantes">
+                    title="{{ seSidebarTooltip('Gestión de aspirantes', 39) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -1180,7 +1180,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'aspirantes.cursos-modelo',
                    ])
-                   title="Cursos modelo (sin sección) que ofrece el nivel">
+                   title="{{ seSidebarTooltip('Cursos modelo (sin sección) que ofrece el nivel', 39) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 7h18M3 12h18M3 17h18"/>
@@ -1192,7 +1192,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => in_array($route ?? '', ['aspirantes.instancia', 'aspirantes.instancia.create', 'aspirantes.instancia.edit'], true),
                    ])
-                   title="Instancia de registro: fechas, cursos y URL pública">
+                   title="{{ seSidebarTooltip('Instancia de registro: fechas, cursos y URL pública', 39) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -1204,7 +1204,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'aspirantes.listado',
                    ])
-                   title="Aspirantes registrados">
+                   title="{{ seSidebarTooltip('Aspirantes registrados', 39) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1221,7 +1221,7 @@
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
                     :class="(groups.matriculaWeb && !sidebarCollapsed) ? 'is-open' : ''"
                     @click="toggleGroup('matriculaWeb')"
-                    title="Matrícula web">
+                    title="{{ seSidebarTooltip('Matrícula web', [44, 83, 82]) }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1244,24 +1244,40 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'matricula-web.documentos',
                        ])
-                       title="PDF de aceptación por nivel (compromiso, AEC, normas, traslado)">
+                       title="{{ seSidebarTooltip('PDF de aceptación por nivel (compromiso, AEC, normas, traslado)', 44) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                         </svg>
                         <span class="truncate">Documentos de aceptación</span>
                     </a>
+                @endif
+                @if (\App\Support\PermisosMatriculaWeb::tiene(\App\Support\PermisosMatriculaWeb::DOCUMENTOS_ESTUDIANTE_FAMILIA))
                     <a href="{{ route('matricula-web.documentos-estudiante-tipos') }}"
                        @class([
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'matricula-web.documentos-estudiante-tipos',
                        ])
-                       title="Documentación que sube la familia en actualización de datos">
+                       title="{{ seSidebarTooltip('Documentación que sube la familia en actualización de datos', 83) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                         </svg>
                         <span class="truncate">Documentos a subir (familia)</span>
+                    </a>
+                @endif
+                @if (\App\Support\PermisosMatriculaWeb::tiene(\App\Support\PermisosMatriculaWeb::BLOQUEOS_MATRICULA))
+                    <a href="{{ route('matricula-web.bloqueos') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'matricula-web.bloqueos',
+                       ])
+                       title="{{ seSidebarTooltip('Bloqueos pedagógico y administrativo por matrícula del ciclo activo', 82) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span class="truncate">Bloqueos de matrícula</span>
                     </a>
                 @endif
             </div>
@@ -1299,7 +1315,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.terlec'),
                    ])
-                   title="Términos Lectivos v1.0">
+                   title="{{ seSidebarTooltip('Términos Lectivos v1.0', 25) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -1314,7 +1330,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.niveles'),
                    ])
-                   title="Niveles v1.0">
+                   title="{{ seSidebarTooltip('Niveles v1.0', 26) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 7h18M3 12h18M3 17h18"/>
@@ -1329,7 +1345,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-listado-alumnos'),
                    ])
-                   title="Campos activos (Legajo del estudiante) v1.0">
+                   title="{{ seSidebarTooltip('Campos activos (Legajo del estudiante) v1.0', 27) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -1344,7 +1360,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo'),
                    ])
-                   title="Solapas del Legajo v1.0">
+                   title="{{ seSidebarTooltip('Solapas del Legajo v1.0', 28) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 10h18M3 6h18M3 14h10M3 18h10"/>
@@ -1359,7 +1375,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.campos-legajo-profesor'),
                    ])
-                   title="Campos activos (Legajo del docente) v1.0">
+                   title="{{ seSidebarTooltip('Campos activos (Legajo del docente) v1.0', 29) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -1374,7 +1390,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.solapas-legajo-profesor'),
                    ])
-                   title="Solapas del Legajo del docente v1.0">
+                   title="{{ seSidebarTooltip('Solapas del Legajo del docente v1.0', 30) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 10h18M3 6h18M3 14h10M3 18h10"/>
@@ -1389,7 +1405,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
                    ])
-                   title="Parámetros del sistema v1.0">
+                   title="{{ seSidebarTooltip('Parámetros del sistema v1.0', 31) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
@@ -1404,7 +1420,7 @@
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                        'is-active shadow-sm' => ($route ?? '') === 'param.campos-aspirantes',
                    ])
-                   title="Campos activos (Aspirantes) — qué columnas aparecen en el form público">
+                   title="{{ seSidebarTooltip('Campos activos (Aspirantes) — qué columnas aparecen en el form público', 40) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -1443,7 +1459,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'admin.permisos',
                        ])
-                       title="Asignación de permisos de usuario v1.0">
+                       title="{{ seSidebarTooltip('Asignación de permisos de usuario v1.0', 0) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -1457,7 +1473,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => ($route ?? '') === 'admin.permisos-por-usuario',
                        ])
-                       title="Consulta de permisos concedidos por usuario v1.0">
+                       title="{{ seSidebarTooltip('Consulta de permisos concedidos por usuario v1.0', 14) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -1497,7 +1513,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.planes'),
                        ])
-                       title="Gestión de Planes de Estudio v1.0">
+                       title="{{ seSidebarTooltip('Gestión de Planes de Estudio v1.0', 33) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -1512,7 +1528,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.curplan'),
                        ])
-                       title="Gestión de Cursos y Materias del Plan v1.0">
+                       title="{{ seSidebarTooltip('Gestión de Cursos y Materias del Plan v1.0', 34) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1552,7 +1568,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.cursos'),
                        ])
-                       title="Gestión de Cursos / Grados / Salas v1.0">
+                       title="{{ seSidebarTooltip('Gestión de Cursos / Grados / Salas v1.0', 35) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -1567,7 +1583,7 @@
                            'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                            'is-active shadow-sm' => str_starts_with($route ?? '', 'abm.materias-anio'),
                        ])
-                       title="Gestión de asignaturas del año v1.0">
+                       title="{{ seSidebarTooltip('Gestión de asignaturas del año v1.0', 36) }}">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 6h16M4 10h16M4 14h16M4 18h16"/>

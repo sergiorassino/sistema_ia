@@ -44,7 +44,7 @@ class DocumentosEstudianteTiposIndex extends Component
 
     protected function permisoMatriculaWebOrden(): int
     {
-        return PermisosMatriculaWeb::DOCUMENTOS_ACEPTACION;
+        return PermisosMatriculaWeb::DOCUMENTOS_ESTUDIANTE_FAMILIA;
     }
 
     public function mount(): void
