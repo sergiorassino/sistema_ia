@@ -19,7 +19,15 @@ final class ComprobantesAfipCuotaService
      */
     public static function comprobantes(int $idCuotaPago, int $idLegajo, int $idCuotaGenerada): Collection
     {
-        if (! self::moduloDisponible() || self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null) {
+        if (! self::moduloDisponible()) {
+            return collect();
+        }
+
+        if (tenantCuotasFacturacionAfipEnDevengamiento()) {
+            return self::comprobantesDeCuota($idLegajo, $idCuotaGenerada);
+        }
+
+        if (self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null) {
             return collect();
         }
 
@@ -60,11 +68,65 @@ final class ComprobantesAfipCuotaService
     }
 
     /**
+     * @return Collection<int, ComprobanteAfip>
+     */
+    public static function comprobantesDeCuota(int $idLegajo, int $idCuotaGenerada): Collection
+    {
+        if (! self::moduloDisponible()
+            || $idLegajo <= 0
+            || $idCuotaGenerada <= 0
+            || GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
+            return collect();
+        }
+
+        return self::comprobantesPorCuotaGenerada($idCuotaGenerada);
+    }
+
+    /**
+     * @param  list<int>  $idsCuotasGeneradas
+     * @return array<int, true>
+     */
+    public static function cuotasConComprobantesAfip(array $idsCuotasGeneradas): array
+    {
+        if (! self::moduloDisponible() || $idsCuotasGeneradas === []) {
+            return [];
+        }
+
+        $idsCuotasGeneradas = array_values(array_unique(array_filter(
+            array_map('intval', $idsCuotasGeneradas),
+            fn (int $id) => $id > 0,
+        )));
+
+        $map = [];
+        foreach ($idsCuotasGeneradas as $idCuota) {
+            if (self::comprobantesPorCuotaGenerada($idCuota)->isNotEmpty()) {
+                $map[$idCuota] = true;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * @return Collection<int, int>
      */
     public static function idsFacturasAnuladas(int $idCuotaPago): Collection
     {
         return self::comprobantesDelPago($idCuotaPago)
+            ->filter(fn (ComprobanteAfip $c) => self::esNotaCredito($c))
+            ->map(fn (ComprobanteAfip $c) => self::idFacturaAnuladaPor($c))
+            ->filter(fn (?int $id) => $id !== null && $id > 0)
+            ->values();
+    }
+
+    /**
+     * Facturas anuladas por NC vinculadas directamente a la cuota (devengamiento).
+     *
+     * @return Collection<int, int>
+     */
+    public static function idsFacturasAnuladasPorCuotaGenerada(int $idCuotaGenerada): Collection
+    {
+        return self::comprobantesPorCuotaGenerada($idCuotaGenerada)
             ->filter(fn (ComprobanteAfip $c) => self::esNotaCredito($c))
             ->map(fn (ComprobanteAfip $c) => self::idFacturaAnuladaPor($c))
             ->filter(fn (?int $id) => $id !== null && $id > 0)
@@ -99,13 +161,14 @@ final class ComprobantesAfipCuotaService
             return null;
         }
 
+        $anuladas = self::idsFacturasAnuladasPorCuotaGenerada($idCuotaGenerada);
+
         $idsPagos = CuotaPago::query()
             ->where('idCuotasGeneradas', $idCuotaGenerada)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        $anuladas = collect();
         foreach ($idsPagos as $idPago) {
             $anuladas = $anuladas->merge(self::idsFacturasAnuladas($idPago));
         }
@@ -212,6 +275,18 @@ final class ComprobantesAfipCuotaService
             return ['ok' => false, 'mensaje' => 'La facturación AFIP no está habilitada para este colegio.'];
         }
 
+        if (GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
+            return ['ok' => false, 'mensaje' => 'Cuota no encontrada.'];
+        }
+
+        if (tenantCuotasFacturacionAfipEnDevengamiento()) {
+            if (self::facturaVigentePorCuotaGenerada($idCuotaGenerada) === null) {
+                return ['ok' => false, 'mensaje' => 'No hay factura AFIP vigente para anular con nota de crédito.'];
+            }
+
+            return ['ok' => true, 'mensaje' => ''];
+        }
+
         if (self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null) {
             return ['ok' => false, 'mensaje' => 'Pago no encontrado.'];
         }
@@ -239,7 +314,7 @@ final class ComprobantesAfipCuotaService
         }
 
         if (self::esFactura($comprobante)) {
-            return 'Factura / Recibo C';
+            return ConsultaAfipComprobanteService::etiquetaComprobanteFacturaAfip();
         }
 
         return 'Comprobante AFIP';
@@ -300,7 +375,10 @@ final class ComprobantesAfipCuotaService
             return ['ok' => false, 'mensaje' => 'Cuota no encontrada.'];
         }
 
-        $factura = self::facturaVigente($idCuotaPago);
+        $factura = tenantCuotasFacturacionAfipEnDevengamiento()
+            ? self::facturaVigentePorCuotaGenerada($idCuotaGenerada)
+            : self::facturaVigente($idCuotaPago);
+
         if ($factura === null) {
             return ['ok' => false, 'mensaje' => 'No hay factura AFIP vigente.'];
         }

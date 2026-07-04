@@ -18,10 +18,13 @@ return [
 
         'facturacion_afip' => [
             'habilitado' => true,
-            'modo' => 'devengamiento',
+            /** Factura al imputar pago (legacy Ramallo). */
+            'modo' => 'pago',
             // Certificados WSAA/WSFE: carpeta y nombres de archivo en Parámetros del sistema (ento).
             // Respaldo opcional en tenant para desarrollo: cert_usuario_id, cert_key, cert_crt.
             'cbte_tipo' => 15,
+            'nota_credito_tipo' => 12,
+            'cbte_tipo_asociado' => 15,
             'produccion' => true,
             'simular' => false,
         ],

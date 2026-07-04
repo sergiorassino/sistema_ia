@@ -94,18 +94,21 @@ class CuotasEstudianteShow extends Component
     public function render()
     {
         $cuotas = $this->cuotasListado();
+        $idsCuotas = $cuotas->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $afipEnDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
+        $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible() && $afipEnDevengamiento;
 
         return view('livewire.cuotas.estudiante-show', [
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'cuotas' => $cuotas,
             'totalesAdeudados' => GestionAranceles::totalizarSaldosAdeudados($cuotas),
             'cantidadSeleccionadas' => count($this->cuotasSeleccionadas),
-            'muestraComprobanteAfip' => ComprobantesAfipCuotaService::moduloDisponible(),
-            'facturasAfipPorCuota' => ComprobantesAfipCuotaService::moduloDisponible()
-                ? ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas(
-                    $cuotas->pluck('id')->map(fn ($id) => (int) $id)->all(),
-                )
+            'muestraComprobanteAfip' => $muestraComprobanteAfip,
+            'facturasAfipPorCuota' => [],
+            'cuotasConComprobanteAfip' => $muestraComprobanteAfip
+                ? ComprobantesAfipCuotaService::cuotasConComprobantesAfip($idsCuotas)
                 : [],
+            'afipEnDevengamiento' => $afipEnDevengamiento,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de aranceles']);
     }
 

@@ -101,6 +101,23 @@ final class ConsultaAfipComprobanteService
     }
 
     /**
+     * Etiqueta del comprobante de débito según `cbte_tipo` del tenant (11 = Factura, 15 = Recibo).
+     *
+     * @param  array<string, mixed>|null  $config
+     */
+    public static function etiquetaComprobanteFacturaAfip(?array $config = null): string
+    {
+        $config ??= tenantCuotasFacturacionAfipConfig() ?? [];
+        $cbteTipo = (int) ($config['cbte_tipo'] ?? 15);
+
+        return match ($cbteTipo) {
+            11 => 'Factura',
+            15 => 'Recibo',
+            default => 'Factura / Recibo',
+        };
+    }
+
+    /**
      * @param  array<string, mixed>  $config
      */
     public static function etiquetaTipo(string $tipo, ?array $config = null): string
@@ -109,7 +126,8 @@ final class ConsultaAfipComprobanteService
 
         return match ($tipo) {
             self::TIPO_NOTA_CREDITO => 'Nota de crédito C',
-            default => 'Factura / Recibo C',
+            self::TIPO_FACTURA => self::etiquetaComprobanteFacturaAfip($config),
+            default => self::etiquetaComprobanteFacturaAfip($config),
         };
     }
 

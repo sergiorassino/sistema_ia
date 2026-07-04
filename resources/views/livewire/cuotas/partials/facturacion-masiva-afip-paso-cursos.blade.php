@@ -7,7 +7,7 @@
     <div class="border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:px-5">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-neutral-700">
-                Elija cursos por nivel y/o estudiantes individuales. En el siguiente paso seleccionará las cuotas a facturar.
+                Elija cursos por nivel y/o estudiantes individuales. Luego podrá revisar la vista previa antes de emitir el comprobante.
             </p>
             @if ($cursos->isNotEmpty())
                 <span class="se-pill shrink-0 tabular-nums">
@@ -109,7 +109,7 @@
         @elseif ($legajosBusqueda === null || $legajosBusqueda->isEmpty())
             <p class="mt-2 text-xs text-neutral-600">No se encontraron estudiantes con ese criterio.</p>
         @else
-            <ul class="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50/30 p-2">
+            <ul class="mt-3 max-h-52 space-y-1.5 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50/30 p-2 sm:p-2.5">
                 @foreach ($legajosBusqueda as $legajo)
                     @php
                         $datos = GestionAranceles::datosListadoBusqueda($legajo);
@@ -117,25 +117,30 @@
                         $yaSeleccionado = isset($idsAlumnosSeleccionados[(int) $legajo->id]);
                     @endphp
                     <li wire:key="buscar-alumno-afip-{{ $legajo->id }}"
-                        class="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-white">
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-medium text-neutral-800" title="{{ $nombreCompleto }}">
+                        class="rounded-xl border border-transparent bg-white/70 px-2.5 py-2 transition hover:border-accent-200 hover:bg-white hover:shadow-sm">
+                        <div class="flex min-w-0 items-center gap-2">
+                            <p class="min-w-0 truncate text-sm font-semibold text-neutral-800" title="{{ $nombreCompleto }}">
                                 {!! CuotasFormato::resaltarTerminoBusqueda($nombreCompleto, $buscarAlumno) !!}
                             </p>
-                            <p class="text-[11px] text-neutral-500">
-                                DNI {{ CuotasFormato::formatearDni($legajo->dni) }}
-                                · {{ $datos['curso'] !== '' ? $datos['curso'] : 'Sin curso actual' }}
-                            </p>
+                            @if ($yaSeleccionado)
+                                <span class="inline-flex shrink-0 items-center rounded-lg bg-primary-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-700 ring-1 ring-primary-200/80">
+                                    Agregado
+                                </span>
+                            @else
+                                <button type="button"
+                                        wire:click="agregarAlumno({{ (int) $legajo->id }})"
+                                        class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Agregar
+                                </button>
+                            @endif
                         </div>
-                        @if ($yaSeleccionado)
-                            <span class="shrink-0 text-xs font-semibold text-primary-700">Agregado</span>
-                        @else
-                            <button type="button"
-                                    wire:click="agregarAlumno({{ (int) $legajo->id }})"
-                                    class="inline-flex shrink-0 rounded-lg border border-primary-200 bg-white px-3 py-1 text-xs font-semibold text-primary-800 hover:bg-accent-50">
-                                Agregar
-                            </button>
-                        @endif
+                        <p class="mt-0.5 truncate text-[11px] text-neutral-500">
+                            DNI {{ CuotasFormato::formatearDni($legajo->dni) }}
+                            · {{ $datos['curso'] !== '' ? $datos['curso'] : 'Sin curso actual' }}
+                        </p>
                     </li>
                 @endforeach
             </ul>
@@ -178,9 +183,14 @@
     @enderror
 
     <div class="flex flex-wrap justify-end gap-2 border-t border-accent-200 bg-accent-50/60 px-4 py-3 sm:px-5">
-        <button type="button" wire:click="continuarACuotas" @disabled(! $puedeContinuar)
+        <button type="button"
+                wire:click="armarVistaPrevia"
+                wire:loading.attr="disabled"
+                wire:target="armarVistaPrevia"
+                @disabled(! $puedeContinuarAlumnos)
                 class="inline-flex items-center rounded-xl bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50">
-            Continuar
+            <span wire:loading.remove wire:target="armarVistaPrevia">Ver vista previa</span>
+            <span wire:loading wire:target="armarVistaPrevia">Calculando…</span>
         </button>
     </div>
 </div>

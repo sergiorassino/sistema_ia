@@ -143,6 +143,7 @@ use App\Livewire\Cuotas\ResumenBecasPorNivelIndex;
 use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ComprobantesAfipCuota;
+use App\Livewire\Cuotas\ComprobantesAfipDevengamientoCuota;
 use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
 use App\Livewire\Cuotas\SiroCuponesVencidosIndex;
 use App\Livewire\Cuotas\SiroSubidaBaseDeudaIndex;
@@ -669,6 +670,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             Route::get('/estudiante/cuota/imputar', ImputarPagoForm::class)->name('cuotas.cuota.imputar');
             Route::get('/estudiante/cuota/historial-pagos', HistorialPagosCuota::class)->name('cuotas.cuota.historial-pagos');
             Route::get('/estudiante/cuota/comprobantes-afip', ComprobantesAfipCuota::class)->name('cuotas.cuota.comprobantes-afip');
+            Route::get('/estudiante/cuota/comprobantes-afip-devengamiento', ComprobantesAfipDevengamientoCuota::class)->name('cuotas.cuota.comprobantes-afip-devengamiento');
             Route::get('/comprobante/{ref}', ComprobantePagoCuotasPdfController::class)
                 ->where('ref', '[A-Za-z0-9_-]+')
                 ->name('cuotas.comprobante');

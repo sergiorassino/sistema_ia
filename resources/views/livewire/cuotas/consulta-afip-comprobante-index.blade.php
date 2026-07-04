@@ -42,7 +42,7 @@
                                value="{{ ConsultaAfipComprobanteService::TIPO_FACTURA }}"
                                wire:model="tipo"
                                class="text-primary-600 focus:ring-primary-500" />
-                        Factura / Recibo C
+                        {{ ConsultaAfipComprobanteService::etiquetaTipo(ConsultaAfipComprobanteService::TIPO_FACTURA) }}
                     </label>
                     <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 has-[:checked]:text-primary-800">
                         <input type="radio"

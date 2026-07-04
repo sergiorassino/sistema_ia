@@ -78,6 +78,7 @@ class HistorialPagosCuota extends Component
     public function abrirModalFechaPago(int $idCuotaPago): void
     {
         abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipModo() === 'pago', 404);
 
         $pago = HistorialPagosCuotaService::pagoDelHistorial(
             $idCuotaPago,
@@ -114,6 +115,7 @@ class HistorialPagosCuota extends Component
     public function guardarFechaPago(): void
     {
         abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipModo() === 'pago', 404);
 
         $idCuotaPago = (int) ($this->idCuotaPagoFecha ?? 0);
         if ($idCuotaPago <= 0) {
