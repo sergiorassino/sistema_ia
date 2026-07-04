@@ -26,7 +26,6 @@ class ComprobanteAfip extends Model
         'dni',
         'nombreResp',
         'dniResp',
-        'domicilioAlumno',
         'condicionIvaAlumno',
         'condicionVenta',
         'fechaDesde',
@@ -46,11 +45,16 @@ class ComprobanteAfip extends Model
         'importeSubConceptos',
         'saldoRestante',
         'idCuotasPagos',
+        'telefonoInstitucion',
+        'aporteEstatal',
+        'cursoAlumno',
+        'docTipoAfip',
     ];
 
     protected $casts = [
         'puntoVenta' => 'integer',
         'tipoComprobante' => 'integer',
+        'docTipoAfip' => 'integer',
         'nroRecibo' => 'integer',
         'importePagado' => 'float',
         'interesPagado' => 'float',

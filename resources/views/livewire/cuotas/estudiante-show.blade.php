@@ -9,6 +9,8 @@
     $vistaCuotasNav = $mostrarHistorial
         ? ContextoEstudianteSesion::VISTA_CUOTAS_HISTORIAL
         : ContextoEstudianteSesion::VISTA_CUOTAS_ANIO;
+    $facturasAfipPorCuota = $facturasAfipPorCuota ?? [];
+    $muestraComprobanteAfip = $muestraComprobanteAfip ?? false;
 @endphp
 
 <div class="se-page max-w-[90rem] mx-auto">
@@ -132,7 +134,10 @@
                             <div class="gf-th gf-th-right w-[4.75rem]">Pagado</div>
                             <div class="gf-th gf-th-right w-[4.75rem]">Saldo</div>
                             <div class="gf-th gf-th-accion" title="Imputar pago"></div>
-                            <div class="gf-th gf-th-accion" title="Cupón"></div>
+                            <div class="gf-th gf-th-accion gf-th-accion-cupon" title="Cupón de pago">Cupón</div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-th gf-th-accion gf-th-accion-afip" title="Factura AFIP">AFIP</div>
+                            @endif
                         </div>
 
                         @foreach ($cuotas as $c)
@@ -144,6 +149,7 @@
                                 $etiquetaBeca = GestionAranceles::etiquetaBeca($c);
                                 $nivelTexto = mb_strtoupper(trim((string) ($c->curso?->nivel?->nivel ?? '')));
                                 [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
+                                $facturaAfip = $facturasAfipPorCuota[(int) $c->id] ?? null;
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
                                 <div class="gf-td gf-td-accion w-8 !py-1">
@@ -242,6 +248,21 @@
                                         @endif
                                     @endif
                                 </div>
+                                @if ($muestraComprobanteAfip)
+                                    <div class="gf-td gf-td-accion !py-1">
+                                        @if ($facturaAfip)
+                                            <a href="{{ se_route_url('cuotas.comprobante-afip', ['ref' => OpaqueRouteToken::forComprobanteAfipRegistro((int) $facturaAfip->idComprobanteAfip, $idLegajo)]) }}"
+                                               target="_blank" rel="noopener noreferrer"
+                                               class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                               title="Descargar factura AFIP">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                                <span class="sr-only">Descargar factura AFIP</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         @endforeach
 
@@ -266,6 +287,9 @@
                             </div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
                         </div>
                         <div class="gf-row gf-row--totales gf-cuotas-estudiante-totales" wire:key="cg-totales-intereses-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
                             <div class="gf-td gf-td-accion w-8" aria-hidden="true"></div>
@@ -288,6 +312,9 @@
                             </div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
                             <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-td gf-td-accion" aria-hidden="true"></div>
+                            @endif
                         </div>
                 </div>
             </div>

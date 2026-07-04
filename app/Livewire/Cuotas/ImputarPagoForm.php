@@ -79,7 +79,7 @@ class ImputarPagoForm extends Component
         $this->idCuotaGenerada = (int) ($this->idsCuotasGeneradas[0] ?? 0);
 
         $this->fechaPago = Carbon::today()->format('Y-m-d');
-        $this->tipoComprobanteImputacion = tenantCuotasFacturacionAfipHabilitada() ? 'afip' : 'interno';
+        $this->tipoComprobanteImputacion = tenantCuotasFacturacionAfipMuestraEnImputacionPago() ? 'afip' : 'interno';
 
         if (! in_array($this->idCuotastipopago, GestionAranceles::idsMediosPagoImputacion(), true)) {
             $this->idCuotastipopago = GestionAranceles::IDS_MEDIOS_PAGO_IMPUTACION[0];
@@ -324,7 +324,7 @@ class ImputarPagoForm extends Component
             ? 'Se imputaron '.$pagos->count().' cuotas correctamente.'
             : 'Pago imputado correctamente.');
 
-        if ($tipoComprobante === 'afip' && ! tenantCuotasFacturacionAfipHabilitada()) {
+        if ($tipoComprobante === 'afip' && ! tenantCuotasFacturacionAfipMuestraEnImputacionPago()) {
             $tipoComprobante = 'interno';
         }
 
@@ -587,7 +587,7 @@ class ImputarPagoForm extends Component
             'resumenMultiples' => $esUnaCuota ? null : $this->resumenMultiples(),
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'mediosPago' => GestionAranceles::mediosDePagoImputacion(),
-            'muestraOpcionesComprobante' => tenantCuotasFacturacionAfipHabilitada(),
+            'muestraOpcionesComprobante' => tenantCuotasFacturacionAfipMuestraEnImputacionPago(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Imputar pago']);
     }
 }

@@ -35,6 +35,7 @@
         </div>
     </section>
 
+    @if (tenantCuotasFacturacionAfipEnPago())
     <section class="se-card mb-4 p-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center se-toolbar-pocos-campos">
             @if ($puedeGenerarFactura)
@@ -74,6 +75,7 @@
             </p>
         @endif
     </section>
+    @endif
 
     <section class="se-card se-card-cuotas-grid p-0 overflow-hidden">
         @if ($comprobantes->isEmpty())

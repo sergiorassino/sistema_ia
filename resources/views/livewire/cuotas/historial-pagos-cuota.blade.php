@@ -4,7 +4,7 @@
     use App\Support\Navegacion\ContextoEstudianteSesion;
     use App\Support\Security\OpaqueRouteToken;
 
-    $muestraCompAfip = tenantCuotasFacturacionAfipHabilitada();
+    $muestraCompAfip = tenantCuotasFacturacionAfipEnPago();
     $vistaCuotasNav = ContextoEstudianteSesion::etiquetaVistaCuotas(ContextoEstudianteSesion::CUOTAS_GESTION);
 @endphp
 

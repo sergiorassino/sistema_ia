@@ -67,6 +67,16 @@
                             <dd class="text-sm text-neutral-800">{{ $familia->responsable ?: '—' }}</dd>
                         </div>
                         <div>
+                            <dt class="form-label">DNI responsable</dt>
+                            <dd class="text-sm text-neutral-800 tabular-nums">
+                                @if (filled($familia->dniResp))
+                                    {{ \App\Support\Cuotas\CuotasFormato::formatearDni($familia->dniResp) }}
+                                @else
+                                    —
+                                @endif
+                            </dd>
+                        </div>
+                        <div>
                             <dt class="form-label">Email</dt>
                             <dd class="text-sm text-neutral-800 break-all">{{ $familia->email ?: '—' }}</dd>
                         </div>
@@ -241,6 +251,14 @@
                         <input wire:model="familiaResponsable" id="familia-responsable" type="text" maxlength="50"
                                class="form-input @error('familiaResponsable') border-red-400 @enderror">
                         @error('familiaResponsable') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label" for="familia-dni-resp">DNI del responsable</label>
+                        <input wire:model="familiaDniResp" id="familia-dni-resp" type="text"
+                               inputmode="numeric" maxlength="11" autocomplete="off"
+                               placeholder="Solo números"
+                               class="form-input tabular-nums @error('familiaDniResp') border-red-400 @enderror">
+                        @error('familiaDniResp') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="form-label" for="familia-email">Email</label>

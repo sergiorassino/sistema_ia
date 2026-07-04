@@ -23,7 +23,7 @@ final class GestionAranceles
     {
         return Legajo::query()
             ->whereKey($idLegajo)
-            ->first(['id', 'apellido', 'nombre', 'dni', 'legajo']);
+            ->first(['id', 'apellido', 'nombre', 'dni', 'legajo', 'idFamilias']);
     }
 
     /**
@@ -551,7 +551,7 @@ final class GestionAranceles
         ];
     }
 
-    private static function matriculaReferenciaListado(Legajo $legajo): ?Matricula
+    public static function matriculaReferenciaListado(Legajo $legajo): ?Matricula
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
 

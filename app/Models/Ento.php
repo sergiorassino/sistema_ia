@@ -24,6 +24,8 @@ class Ento extends Model
         'cue',
         'ee',
         'cuit',
+        'condIvaInst',
+        'aporteEstatal',
         'ptoVta',
         'afipCertCarpeta',
         'afipCertKey',

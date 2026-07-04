@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
@@ -99,6 +100,12 @@ class CuotasEstudianteShow extends Component
             'cuotas' => $cuotas,
             'totalesAdeudados' => GestionAranceles::totalizarSaldosAdeudados($cuotas),
             'cantidadSeleccionadas' => count($this->cuotasSeleccionadas),
+            'muestraComprobanteAfip' => ComprobantesAfipCuotaService::moduloDisponible(),
+            'facturasAfipPorCuota' => ComprobantesAfipCuotaService::moduloDisponible()
+                ? ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas(
+                    $cuotas->pluck('id')->map(fn ($id) => (int) $id)->all(),
+                )
+                : [],
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de aranceles']);
     }
 

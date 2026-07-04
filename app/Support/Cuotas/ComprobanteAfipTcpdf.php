@@ -6,43 +6,58 @@ use App\Support\Pdf\TcpdfFuenteArial;
 use TCPDF;
 
 /**
- * Comprobante electrónico AFIP (recibo / factura C) — TCPDF.
- *
- * Encabezado tipo factura C AFIP: emisor (izq.) | recuadro C (centro) | datos del comprobante (der.).
+ * Comprobante electrónico AFIP escolar — TCPDF (encabezado y pie modelo ARCA).
  */
 final class ComprobanteAfipTcpdf extends TCPDF
 {
-    private const MARGEN_IZQ = 30.0;
+    private const MARGEN_IZQ = 15.0;
 
-    private const MARGEN_DER = 30.0;
+    private const MARGEN_DER = 15.0;
 
-    private const ANCHO_UTIL = 150.0;
+    private const ANCHO_UTIL = 180.0;
 
-    /** Columna izquierda — emisor. */
-    private const X_COL_IZQ = 30.0;
+    private const ANCHO_CAJA_C = 16.0;
 
-    private const ANCHO_COL_IZQ = 60.0;
+    private const ALTO_CAJA_C = 16.0;
 
-    /** Columna central — letra y código AFIP. */
-    private const X_COL_CENTRO = 93.0;
+    private const FUENTE_LETRA_TIPO = 16;
 
-    private const ANCHO_CAJA_C = 20.0;
+    private const FUENTE_COD_TIPO = 6;
 
-    private const ALTO_CAJA_C = 15.0;
+    private const ALTO_TEXTO_ORIGINAL = 3.5;
 
-    /** Columna derecha — número, CUIT, fechas. */
-    private const X_COL_DER = 118.0;
+    private const ESPACIO_ORIGINAL_CAJA = 0.3;
 
-    private const ANCHO_COL_DER = 62.0;
+    /** Espacio entre el texto lateral y la caja del tipo de comprobante (franja superior). */
+    private const MARGEN_RESERVA_CAJA = 2.0;
 
-    private const Y_HEADER_TOP = 30.0;
+    private const Y_HEADER_TOP = 12.0;
 
-    private const ALTO_FILA = 5.0;
+    private const ALTO_HEADER = 38.0;
+
+    /** Aire vertical mínimo arriba y abajo de cada bloque dentro del recuadro. */
+    private const PADDING_VERTICAL_ENCABEZADO = 3.0;
+
+    private const ALTO_FILA = 4.5;
+
+    private const FUENTE_TITULO_COMPROBANTE = 11;
+
+    /** Un punto menor que {@see self::FUENTE_TITULO_COMPROBANTE}. */
+    private const FUENTE_NOMBRE_INSTITUCION = 10;
+
+    private const ALTO_FILA_NOMBRE_INSTITUCION = 4.8;
+
+    /** Sangría interna de las columnas emisor y comprobante (separación del borde). */
+    private const MARGEN_INTERNO_COL_IZQ = 1.5;
+
+    private const ESPACIO_ANTES_SEPARADOR_NOMBRE = 0.6;
+
+    private const ESPACIO_DESPUES_SEPARADOR_NOMBRE = 0.8;
 
     /** @var array<string, mixed> */
     private array $datos;
 
-    private float $yCursor = 30.0;
+    private float $yCursor = 12.0;
 
     /**
      * @param  array<string, mixed>  $datos
@@ -95,160 +110,398 @@ final class ComprobanteAfipTcpdf extends TCPDF
         $this->dibujarBloqueCliente();
         $this->dibujarDetalleConceptos();
         $this->dibujarTotal();
-        $this->dibujarCaeYQr();
+        $this->dibujarPieArca();
     }
 
     private function dibujarEncabezado(): void
     {
-        $yTop = self::Y_HEADER_TOP;
-        $xFin = self::MARGEN_IZQ + self::ANCHO_UTIL;
-        $yContent = $yTop + 2.0;
+        $yContent = self::Y_HEADER_TOP;
+        $yFinCaja = $this->yFinCajaTipoComprobante($yContent);
 
-        $this->Line(self::MARGEN_IZQ, $yTop, $xFin, $yTop);
+        $alturaIzq = $this->alturaTituloEmisor() + $this->alturaDatosEmisor();
+        $alturaDer = $this->alturaTituloComprobante() + $this->alturaDatosComprobante();
+        $alturaCols = max($alturaIzq, $alturaDer);
 
-        $yCentroFin = $this->dibujarColumnaCentral($yContent);
-        $yIzqFin = $this->dibujarColumnaEmisor($yContent);
-        $yDerFin = $this->dibujarColumnaComprobante($yContent);
+        $altoHeader = max(
+            self::ALTO_HEADER,
+            $alturaCols + (2 * self::PADDING_VERTICAL_ENCABEZADO),
+            ($yFinCaja - $yContent) + self::PADDING_VERTICAL_ENCABEZADO,
+        );
 
-        $yBottom = max($yIzqFin, $yCentroFin, $yDerFin) + 4.0;
-        $this->Line(self::MARGEN_IZQ, $yBottom, $xFin, $yBottom);
+        $yStart = $yContent + (($altoHeader - $alturaCols) / 2.0);
 
-        $this->yCursor = $yBottom + 5.0;
+        $this->Rect(self::MARGEN_IZQ, $yContent, self::ANCHO_UTIL, $altoHeader);
+        $this->dibujarColumnaCentral($yContent, $altoHeader);
+
+        $yDatosIzq = $this->dibujarTituloEmisor($yStart);
+        $this->dibujarDatosEmisor($yDatosIzq);
+
+        $yDatosDer = $this->dibujarTituloComprobante($yStart);
+        $this->dibujarDatosComprobante($yDatosDer);
+
+        $this->yCursor = $yContent + $altoHeader + 4.0;
     }
 
-    private function dibujarColumnaCentral(float $y): float
+    private function yFinCajaTipoComprobante(float $yContent): float
+    {
+        return $yContent + 0.5 + self::ALTO_TEXTO_ORIGINAL + self::ESPACIO_ORIGINAL_CAJA + self::ALTO_CAJA_C;
+    }
+
+    private function tituloComprobante(): string
     {
         $tipo = (int) ($this->datos['tipoComprobante'] ?? 15);
 
-        $this->SetXY(self::X_COL_CENTRO, $y);
-        TcpdfFuenteArial::aplicar($this, '', 20);
-        $this->Cell(self::ANCHO_CAJA_C, self::ALTO_CAJA_C, 'C', 1, 0, 'C');
-
-        $this->SetXY(self::X_COL_CENTRO, $y + 11.0);
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->Cell(self::ANCHO_CAJA_C, 3, 'Cod. '.$tipo, 0, 0, 'C');
-
-        return $y + self::ALTO_CAJA_C + 5.0;
+        return match ($tipo) {
+            12 => 'NOTA DE CRÉDITO',
+            default => 'FACTURA',
+        };
     }
 
-    private function dibujarColumnaEmisor(float $y): float
+    /** @return list<array{0: string, 1: string}> */
+    private function filasColumnaComprobante(): array
     {
-        $this->SetXY(self::X_COL_IZQ, $y);
-        TcpdfFuenteArial::aplicar($this, 'B', 11);
-        $this->MultiCell(
-            self::ANCHO_COL_IZQ,
+        return [
+            ['Punto de Venta:', (string) ($this->datos['puntoVentaTexto'] ?? '')],
+            ['Comp. Nro.:', (string) ($this->datos['numeroComprobanteSolo'] ?? '')],
+            ['Fecha de Emisión:', (string) ($this->datos['fechaEmision'] ?? '')],
+            ['CUIT:', (string) ($this->datos['cuitInstitucion'] ?? '')],
+            ['Ingresos Brutos:', (string) ($this->datos['ingresosBrutos'] ?? '')],
+            ['Fecha de Inicio de Actividades:', (string) ($this->datos['fechaInicioActividades'] ?? '')],
+            ['Aporte Estatal:', (string) ($this->datos['aporteEstatal'] ?? '')],
+        ];
+    }
+
+    private function alturaFilaColumnaDerecha(string $etiqueta, string $valor, float $anchoCol): float
+    {
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $anchoEtiqueta = min(52.0, $this->GetStringWidth($etiqueta) + 1.0);
+        $anchoValor = max(10.0, $anchoCol - $anchoEtiqueta);
+        TcpdfFuenteArial::aplicar($this, '', 7);
+
+        return max(
             self::ALTO_FILA,
-            (string) ($this->datos['razonSocial'] ?? ''),
+            $this->getStringHeight($anchoValor, $valor),
+        );
+    }
+
+    private function xCentroEncabezado(): float
+    {
+        return self::MARGEN_IZQ + (self::ANCHO_UTIL / 2.0);
+    }
+
+    private function xCajaTipoComprobante(): float
+    {
+        return $this->xCentroEncabezado() - (self::ANCHO_CAJA_C / 2.0);
+    }
+
+    private function xTextoColIzq(): float
+    {
+        return self::MARGEN_IZQ + self::MARGEN_INTERNO_COL_IZQ;
+    }
+
+    private function xFinTextoColIzq(): float
+    {
+        return $this->xCajaTipoComprobante() - self::MARGEN_RESERVA_CAJA;
+    }
+
+    private function anchoTextoColIzq(): float
+    {
+        return max(10.0, $this->xFinTextoColIzq() - $this->xTextoColIzq());
+    }
+
+    private function xFinTextoColIzqSuperior(): float
+    {
+        return $this->xFinTextoColIzq();
+    }
+
+    private function anchoTextoColIzqSuperior(): float
+    {
+        return $this->anchoTextoColIzq();
+    }
+
+    private function xFinTextoColIzqInferior(): float
+    {
+        return $this->xFinTextoColIzq();
+    }
+
+    private function anchoTextoColIzqInferior(): float
+    {
+        return $this->anchoTextoColIzq();
+    }
+
+    /** Inicio del texto en la columna derecha (después de la caja del tipo de comprobante). */
+    private function xTextoColDer(): float
+    {
+        return $this->xCajaTipoComprobante() + self::ANCHO_CAJA_C + self::MARGEN_RESERVA_CAJA;
+    }
+
+    private function xTextoColDerSuperior(): float
+    {
+        return $this->xTextoColDer();
+    }
+
+    private function anchoTextoColDer(): float
+    {
+        $xFin = self::MARGEN_IZQ + self::ANCHO_UTIL - self::MARGEN_INTERNO_COL_IZQ;
+
+        return max(10.0, $xFin - $this->xTextoColDer());
+    }
+
+    private function anchoTextoColDerSuperior(): float
+    {
+        return $this->anchoTextoColDer();
+    }
+
+    private function xTextoColDerInferior(): float
+    {
+        return $this->xTextoColDer();
+    }
+
+    private function anchoTextoColDerInferior(): float
+    {
+        return $this->anchoTextoColDer();
+    }
+
+    private function alturaTituloEmisor(): float
+    {
+        $nombreInstitucion = trim((string) ($this->datos['nombreInstitucion'] ?? ''));
+        if ($nombreInstitucion === '') {
+            return 0.0;
+        }
+
+        return $this->alturaFilaNombreInstitucion($nombreInstitucion, $this->anchoTextoColIzqSuperior())
+            + $this->alturaSeparacionNombreInstitucion();
+    }
+
+    private function alturaDatosEmisor(): float
+    {
+        $ancho = $this->anchoTextoColIzqInferior();
+        $altura = $this->alturaFilaEmisorValor(22, (string) ($this->datos['razonSocial'] ?? ''), true, $ancho);
+        $altura += $this->alturaFilaEmisorValor(28, (string) ($this->datos['domicilioComercial'] ?? ''), false, $ancho);
+        $altura += self::ALTO_FILA;
+        $altura += $this->alturaFilaEmisorValor(32, (string) ($this->datos['condicionIvaInstitucion'] ?? ''), false, $ancho);
+
+        return $altura;
+    }
+
+    private function alturaTituloComprobante(): float
+    {
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_TITULO_COMPROBANTE);
+
+        return max(6.0, $this->getStringHeight($this->anchoTextoColDerSuperior(), $this->tituloComprobante()));
+    }
+
+    private function alturaDatosComprobante(): float
+    {
+        $anchoCol = $this->anchoTextoColDerInferior();
+        $altura = 0.0;
+        foreach ($this->filasColumnaComprobante() as [$etiqueta, $valor]) {
+            $altura += $this->alturaFilaColumnaDerecha($etiqueta, $valor, $anchoCol);
+        }
+
+        return $altura;
+    }
+
+    private function alturaFilaNombreInstitucion(string $nombre, float $ancho): float
+    {
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_NOMBRE_INSTITUCION);
+
+        return $this->getStringHeight($ancho, mb_strtoupper($nombre));
+    }
+
+    private function alturaSeparacionNombreInstitucion(): float
+    {
+        return self::ESPACIO_ANTES_SEPARADOR_NOMBRE + self::ESPACIO_DESPUES_SEPARADOR_NOMBRE;
+    }
+
+    private function alturaFilaEmisorValor(float $anchoEtiqueta, string $valor, bool $forzarMinimoFila, float $anchoCol): float
+    {
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $anchoValor = $anchoCol - $anchoEtiqueta;
+        $altura = $this->getStringHeight($anchoValor, $valor);
+
+        if ($forzarMinimoFila) {
+            $altura = max(self::ALTO_FILA, $altura);
+        }
+
+        return $altura;
+    }
+
+    private function letraTipoComprobante(int $tipo): string
+    {
+        return match (true) {
+            in_array($tipo, [1, 2, 3, 51, 52, 53], true) => 'A',
+            in_array($tipo, [6, 7, 8, 56, 57, 58], true) => 'B',
+            default => 'C',
+        };
+    }
+
+    private function xCentroDivisorEncabezado(): float
+    {
+        return $this->xCentroEncabezado();
+    }
+
+    private function dibujarColumnaCentral(float $yContent, float $altoHeader): void
+    {
+        $tipo = (int) ($this->datos['tipoComprobante'] ?? 15);
+        $letra = $this->letraTipoComprobante($tipo);
+        $x = $this->xCajaTipoComprobante();
+        $y = $yContent + 0.5;
+
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $this->Cell(self::ANCHO_CAJA_C, self::ALTO_TEXTO_ORIGINAL, 'ORIGINAL', 0, 0, 'C');
+
+        $yCaja = $y + self::ALTO_TEXTO_ORIGINAL + self::ESPACIO_ORIGINAL_CAJA;
+        $this->Rect($x, $yCaja, self::ANCHO_CAJA_C, self::ALTO_CAJA_C);
+
+        $this->SetXY($x, $yCaja + 0.8);
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_LETRA_TIPO);
+        $this->Cell(self::ANCHO_CAJA_C, 7.5, $letra, 0, 0, 'C');
+
+        $this->SetXY($x, $yCaja + self::ALTO_CAJA_C - 4.2);
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_COD_TIPO);
+        $this->Cell(self::ANCHO_CAJA_C, 3.0, 'COD. '.$tipo, 0, 0, 'C');
+
+        $xLinea = $this->xCentroDivisorEncabezado();
+        $yFinCaja = $yCaja + self::ALTO_CAJA_C;
+        $this->SetLineWidth(0.35);
+        $this->Line($xLinea, $yFinCaja, $xLinea, $yContent + $altoHeader);
+        $this->SetLineWidth(0.2);
+    }
+
+    private function dibujarSeparacionNombreInstitucion(float $yFinNombre, float $ancho): float
+    {
+        $x = $this->xTextoColIzq();
+        $yLine = $yFinNombre + self::ESPACIO_ANTES_SEPARADOR_NOMBRE;
+
+        $this->SetDrawColor(175, 175, 175);
+        $this->SetLineWidth(0.12);
+        $this->Line($x, $yLine, $x + $ancho, $yLine);
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+
+        return $yLine + self::ESPACIO_DESPUES_SEPARADOR_NOMBRE;
+    }
+
+    private function dibujarTituloEmisor(float $y): float
+    {
+        $nombreInstitucion = trim((string) ($this->datos['nombreInstitucion'] ?? ''));
+        if ($nombreInstitucion === '') {
+            return $y;
+        }
+
+        $x = $this->xTextoColIzq();
+        $ancho = $this->anchoTextoColIzqSuperior();
+
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_NOMBRE_INSTITUCION);
+        $this->MultiCell(
+            $ancho,
+            self::ALTO_FILA_NOMBRE_INSTITUCION,
+            mb_strtoupper($nombreInstitucion),
             0,
             'L',
         );
 
-        $this->SetXY(self::X_COL_IZQ, $this->GetY() + 0.5);
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->MultiCell(
-            self::ANCHO_COL_IZQ,
-            self::ALTO_FILA,
-            (string) ($this->datos['domicilioComercial'] ?? ''),
-            0,
-            'L',
-        );
+        return $this->dibujarSeparacionNombreInstitucion($this->GetY(), $ancho);
+    }
 
-        $this->SetXY(self::X_COL_IZQ, $this->GetY() + 1.0);
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->MultiCell(
-            self::ANCHO_COL_IZQ,
-            self::ALTO_FILA,
-            (string) ($this->datos['condicionIvaInstitucion'] ?? ''),
-            0,
-            'L',
-        );
+    private function dibujarDatosEmisor(float $y): float
+    {
+        $x = $this->xTextoColIzq();
+        $ancho = $this->anchoTextoColIzqInferior();
+
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $this->Cell(22, self::ALTO_FILA, 'Razón Social:', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $this->MultiCell($ancho - 22, self::ALTO_FILA, (string) ($this->datos['razonSocial'] ?? ''), 0, 'L');
+
+        $y = $this->GetY();
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $this->Cell(28, self::ALTO_FILA, 'Domicilio Comercial:', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $this->MultiCell($ancho - 28, self::ALTO_FILA, (string) ($this->datos['domicilioComercial'] ?? ''), 0, 'L');
+
+        $y = $this->GetY();
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $this->Cell(14, self::ALTO_FILA, 'Teléfono:', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $this->Cell($ancho - 14, self::ALTO_FILA, (string) ($this->datos['telefonoInstitucion'] ?? ''), 0, 1, 'L');
+
+        $y = $this->GetY();
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $this->Cell(32, self::ALTO_FILA, 'Condición frente al IVA:', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $this->MultiCell($ancho - 32, self::ALTO_FILA, (string) ($this->datos['condicionIvaInstitucion'] ?? ''), 0, 'L');
 
         return $this->GetY();
     }
 
-    private function dibujarColumnaComprobante(float $y): float
+    private function dibujarTituloComprobante(float $y): float
     {
-        $tipo = (int) ($this->datos['tipoComprobante'] ?? 15);
-        $numero = (string) ($this->datos['numeroComprobanteTexto'] ?? '');
+        $this->SetXY($this->xTextoColDerSuperior(), $y);
+        TcpdfFuenteArial::aplicar($this, 'B', self::FUENTE_TITULO_COMPROBANTE);
+        $this->MultiCell($this->anchoTextoColDerSuperior(), 5.5, $this->tituloComprobante(), 0, 'L');
 
-        $titulo = match ($tipo) {
-            12 => 'NOTA DE CRÉDITO:',
-            default => 'FACTURA:',
-        };
+        return $this->GetY();
+    }
 
-        $y = $this->filaColumnaDerecha($y, $titulo, $numero, true, $tipo === 11 ? 10 : 8);
-        $y = $this->filaColumnaDerecha($y, 'CUIT:', (string) ($this->datos['cuitInstitucion'] ?? ''));
-        $y = $this->filaColumnaDerecha($y, 'Ingresos Brutos:', (string) ($this->datos['ingresosBrutos'] ?? ''));
-        $y = $this->filaColumnaDerecha(
-            $y,
-            'Inicio de Actividades:',
-            (string) ($this->datos['fechaInicioActividades'] ?? ''),
-        );
+    private function dibujarDatosComprobante(float $y): float
+    {
+        foreach ($this->filasColumnaComprobante() as [$etiqueta, $valor]) {
+            $y = $this->filaColumnaDerecha($y, $etiqueta, $valor, $this->anchoTextoColDerInferior(), $this->xTextoColDerInferior());
+        }
 
-        $y += 2.0;
-        $this->SetXY(self::X_COL_DER, $y);
-        $this->SetFillColor(220, 220, 220);
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell(
-            self::ANCHO_COL_DER,
-            self::ALTO_FILA,
-            'Fecha  '.(string) ($this->datos['fechaEmision'] ?? ''),
-            1,
-            0,
-            'C',
-            true,
-        );
-        $this->SetFillColor(255, 255, 255);
-
-        return $y + self::ALTO_FILA;
+        return $y;
     }
 
     private function dibujarBloqueCliente(): void
     {
         $y = $this->yCursor;
+        $xFin = self::MARGEN_IZQ + self::ANCHO_UTIL;
+        $xMedio = self::MARGEN_IZQ + (self::ANCHO_UTIL / 2);
 
-        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'DNI / CUIT:', (string) ($this->datos['docNro'] ?? ''), 22.0, 100.0);
-        $y = $this->filaEtiquetaValor(
-            $y,
-            self::MARGEN_IZQ,
-            'Apellido y Nombre / Razón Social:',
-            (string) ($this->datos['nombreCliente'] ?? ''),
-            50.0,
-            100.0,
-        );
-        $y = $this->filaEtiquetaValor(
-            $y,
-            self::MARGEN_IZQ,
-            'Condición frente a IVA:',
-            (string) ($this->datos['condicionIvaReceptorTexto'] ?? ''),
-        );
-        $y = $this->filaEtiquetaValor(
-            $y,
-            self::MARGEN_IZQ,
-            'Condición de venta:',
-            (string) ($this->datos['condicionVenta'] ?? ''),
-            35.0,
-            60.0,
-        );
+        $this->Line(self::MARGEN_IZQ, $y, $xFin, $y);
+        $y += 2.0;
 
-        $this->yCursor = $y + 2.0;
+        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Resp. Económico:', (string) ($this->datos['nombreResp'] ?? ''));
+        $yResp = $y - self::ALTO_FILA;
+        $this->filaEtiquetaValor($yResp, $xMedio, 'DNI:', (string) ($this->datos['dniResp'] ?? ''));
+
+        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Condición frente al IVA:', (string) ($this->datos['condicionIvaReceptorTexto'] ?? ''));
+
+        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Alumno:', (string) ($this->datos['nombreCliente'] ?? ''));
+        $yAlu = $y - self::ALTO_FILA;
+        $this->filaEtiquetaValor($yAlu, $xMedio, 'Curso:', (string) ($this->datos['cursoTexto'] ?? ''));
+
+        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Cuota:', (string) ($this->datos['cuotaTexto'] ?? ''));
+        $yCuota = $y - self::ALTO_FILA;
+        $this->filaEtiquetaValor($yCuota, $xMedio, 'DNI:', (string) ($this->datos['docNro'] ?? ''));
+
+        if (! empty($this->datos['muestraCondicionVenta'])) {
+            $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Condición de venta:', (string) ($this->datos['condicionVenta'] ?? ''));
+        }
+
+        $this->Line(self::MARGEN_IZQ, $y + 1.0, $xFin, $y + 1.0);
+        $this->yCursor = $y + 4.0;
     }
 
     private function dibujarDetalleConceptos(): void
     {
         $y = $this->yCursor;
-        $this->SetFillColor(0, 0, 0);
-        $this->SetTextColor(255, 255, 255);
-        $this->SetDrawColor(255, 255, 255);
+        $this->SetFillColor(230, 230, 230);
         $this->SetXY(self::MARGEN_IZQ, $y);
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->Cell(110, self::ALTO_FILA, 'Descripción', 1, 0, 'L', true);
-        $this->Cell(20, self::ALTO_FILA, 'Precio', 1, 0, 'R', true);
-        $this->Cell(20, self::ALTO_FILA, 'Total', 1, 0, 'R', true);
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->Cell(130, self::ALTO_FILA + 1, 'Descripción', 1, 0, 'L', true);
+        $this->Cell(25, self::ALTO_FILA + 1, 'Precio', 1, 0, 'R', true);
+        $this->Cell(25, self::ALTO_FILA + 1, 'Total', 1, 0, 'R', true);
 
-        $this->SetTextColor(0, 0, 0);
-        $this->SetDrawColor(0, 0, 0);
-        $y += self::ALTO_FILA + 2.0;
+        $y += self::ALTO_FILA + 3.0;
 
         /** @var list<array{concepto?: string, importeFmt?: string}> $lineas */
         $lineas = (array) ($this->datos['lineas'] ?? []);
@@ -263,9 +516,9 @@ final class ComprobanteAfipTcpdf extends TCPDF
             $importeFmt = (string) ($linea['importeFmt'] ?? '0,00');
             $this->SetXY(self::MARGEN_IZQ, $y);
             TcpdfFuenteArial::aplicar($this, '', 8);
-            $this->Cell(110, self::ALTO_FILA, (string) ($linea['concepto'] ?? ''), 0, 0, 'L');
-            $this->Cell(20, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
-            $this->Cell(20, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
+            $this->Cell(130, self::ALTO_FILA, (string) ($linea['concepto'] ?? ''), 0, 0, 'L');
+            $this->Cell(25, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
+            $this->Cell(25, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
             $y += self::ALTO_FILA;
         }
 
@@ -274,72 +527,78 @@ final class ComprobanteAfipTcpdf extends TCPDF
 
     private function dibujarTotal(): void
     {
-        $y = max(200.0, $this->yCursor + 12.0);
+        $y = max(175.0, $this->yCursor + 8.0);
         $this->SetXY(self::MARGEN_IZQ, $y);
-        $this->SetFillColor(0, 0, 0);
-        $this->SetTextColor(255, 255, 255);
-        $this->SetDrawColor(255, 255, 255);
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->Cell(150, self::ALTO_FILA, 'TOTAL', 1, 0, 'C', true);
-
-        $this->SetTextColor(0, 0, 0);
-        $this->SetDrawColor(0, 0, 0);
-        $y += self::ALTO_FILA;
+        $this->SetFillColor(230, 230, 230);
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->Cell(self::ANCHO_UTIL, self::ALTO_FILA + 1, 'TOTAL', 1, 0, 'C', true);
+        $y += self::ALTO_FILA + 1.0;
         $this->SetXY(self::MARGEN_IZQ, $y);
-        $this->Cell(150, self::ALTO_FILA, '$ '.(string) ($this->datos['importeFmt'] ?? '0,00'), 1, 0, 'C');
+        TcpdfFuenteArial::aplicar($this, 'B', 9);
+        $this->Cell(self::ANCHO_UTIL, self::ALTO_FILA + 2, '$ '.(string) ($this->datos['importeFmt'] ?? '0,00'), 1, 0, 'C');
 
-        $this->yCursor = $y + self::ALTO_FILA;
+        $this->yCursor = $y + self::ALTO_FILA + 2.0;
     }
 
-    private function dibujarCaeYQr(): void
+    private function dibujarPieArca(): void
     {
-        $yBase = $this->yCursor + 10.0;
-
-        $this->SetXY(self::X_COL_DER, $yBase);
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->Cell(self::ANCHO_COL_DER, self::ALTO_FILA, 'CAE: '.(string) ($this->datos['cae'] ?? ''), 0, 1, 'L');
-        $this->SetX(self::X_COL_DER);
-        $this->Cell(self::ANCHO_COL_DER, self::ALTO_FILA, 'VTO. CAE: '.(string) ($this->datos['vtoCae'] ?? ''), 0, 0, 'L');
+        $yBase = max(230.0, $this->yCursor + 8.0);
+        $xFin = self::MARGEN_IZQ + self::ANCHO_UTIL;
 
         $urlQr = trim((string) ($this->datos['urlQr'] ?? ''));
-        if ($urlQr === '') {
-            return;
+        if ($urlQr !== '') {
+            $style = [
+                'border' => false,
+                'vpadding' => 'auto',
+                'hpadding' => 'auto',
+                'fgcolor' => [0, 0, 0],
+                'bgcolor' => false,
+            ];
+            $this->write2DBarcode($urlQr, 'QRCODE,H', self::MARGEN_IZQ, $yBase, 32, 32, $style);
         }
 
-        $style = [
-            'border' => false,
-            'vpadding' => 'auto',
-            'hpadding' => 'auto',
-            'fgcolor' => [0, 0, 0],
-            'bgcolor' => false,
-        ];
-
-        $this->write2DBarcode(
-            $urlQr,
-            'QRCODE,H',
-            self::MARGEN_IZQ,
-            $yBase,
-            50,
-            50,
-            $style,
+        $xTexto = self::MARGEN_IZQ + 36.0;
+        $this->SetXY($xTexto, $yBase + 2.0);
+        TcpdfFuenteArial::aplicar($this, 'B', 10);
+        $this->Cell(50, 5, 'ARCA', 0, 1, 'L');
+        $this->SetX($xTexto);
+        TcpdfFuenteArial::aplicar($this, '', 6);
+        $this->MultiCell(70, 3, 'AGENCIA DE RECAUDACIÓN Y CONTROL ADUANERO', 0, 'L');
+        $this->SetX($xTexto);
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->Cell(70, 4, 'Comprobante Autorizado', 0, 1, 'L');
+        $this->SetX($xTexto);
+        TcpdfFuenteArial::aplicar($this, 'I', 6);
+        $this->MultiCell(
+            70,
+            3,
+            'Esta Administración Federal no se responsabiliza por los datos ingresados en el detalle de la operación',
+            0,
+            'L',
         );
+
+        $this->SetXY(self::MARGEN_IZQ, $yBase + 34.0);
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(self::ANCHO_UTIL, 4, 'Pág. '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, 0, 'C');
+
+        $this->SetXY($xFin - 55.0, $yBase + 24.0);
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(55, 4, 'CAE N°: '.(string) ($this->datos['cae'] ?? ''), 0, 2, 'R');
+        $this->Cell(55, 4, 'Fecha de Vto. de CAE: '.(string) ($this->datos['vtoCae'] ?? ''), 0, 0, 'R');
     }
 
-    private function filaColumnaDerecha(
-        float $y,
-        string $etiqueta,
-        string $valor,
-        bool $etiquetaNegrita = true,
-        int $size = 8,
-    ): float {
-        $this->SetXY(self::X_COL_DER, $y);
-        TcpdfFuenteArial::aplicar($this, $etiquetaNegrita ? 'B' : '', $size);
-        $anchoEtiqueta = $this->GetStringWidth($etiqueta) + 1.0;
-        $this->Cell($anchoEtiqueta, self::ALTO_FILA, $etiqueta, 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', $size);
-        $this->Cell(self::ANCHO_COL_DER - $anchoEtiqueta, self::ALTO_FILA, $valor, 0, 0, 'L');
+    private function filaColumnaDerecha(float $y, string $etiqueta, string $valor, float $anchoCol, float $xCol): float
+    {
+        $alturaFila = $this->alturaFilaColumnaDerecha($etiqueta, $valor, $anchoCol);
 
-        return $y + self::ALTO_FILA;
+        $this->SetXY($xCol, $y);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $anchoEtiqueta = min(52.0, $this->GetStringWidth($etiqueta) + 1.0);
+        $this->Cell($anchoEtiqueta, $alturaFila, $etiqueta, 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 7);
+        $this->Cell($anchoCol - $anchoEtiqueta, $alturaFila, $valor, 0, 0, 'L');
+
+        return $y + $alturaFila;
     }
 
     private function filaEtiquetaValor(
@@ -350,15 +609,15 @@ final class ComprobanteAfipTcpdf extends TCPDF
         ?float $anchoEtiqueta = null,
         ?float $anchoValor = null,
     ): float {
-        $anchoDisponible = self::ANCHO_UTIL - ($x - self::MARGEN_IZQ);
+        $anchoDisponible = (self::ANCHO_UTIL / 2) - 2.0;
 
         $this->SetXY($x, $y);
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $anchoLabel = $anchoEtiqueta ?? ($this->GetStringWidth($etiqueta) + 2.0);
-        $anchoLabel = min(max($anchoLabel, 18.0), $anchoDisponible - 25.0);
+        TcpdfFuenteArial::aplicar($this, 'B', 7);
+        $anchoLabel = $anchoEtiqueta ?? ($this->GetStringWidth($etiqueta) + 1.0);
+        $anchoLabel = min(max($anchoLabel, 16.0), $anchoDisponible - 10.0);
         $this->Cell($anchoLabel, self::ALTO_FILA, $etiqueta, 0, 0, 'L');
 
-        TcpdfFuenteArial::aplicar($this, '', 8);
+        TcpdfFuenteArial::aplicar($this, '', 7);
         $anchoVal = $anchoValor ?? ($anchoDisponible - $anchoLabel);
         $this->Cell($anchoVal, self::ALTO_FILA, $valor, 0, 0, 'L');
 

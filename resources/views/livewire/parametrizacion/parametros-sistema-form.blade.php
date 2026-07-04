@@ -87,8 +87,7 @@
         <div class="mt-8 border-t border-accent-200 pt-6">
             <p class="se-section-title mb-1">Facturación AFIP</p>
             <p class="mb-4 text-xs text-neutral-500">
-                Datos del emisor para comprobantes electrónicos al imputar pagos de aranceles.
-                La condición frente a IVA del destinatario se aplica por defecto en cada factura.
+                Datos del emisor para comprobantes electrónicos. La condición frente al IVA del destinatario se aplica por defecto en cada factura.
             </p>
 
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -106,6 +105,22 @@
                            class="form-input mt-1.5 @error('ingresosBrutos') border-red-400 @enderror"
                            placeholder="Ej. Exento">
                     @error('ingresosBrutos') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="form-label">Condición frente al IVA (institución)</label>
+                    <input wire:model="condIvaInst" type="text" maxlength="40"
+                           class="form-input mt-1.5 @error('condIvaInst') border-red-400 @enderror"
+                           placeholder="Ej. Responsable Monotributo">
+                    @error('condIvaInst') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="form-label">Aporte estatal</label>
+                    <input wire:model="aporteEstatal" type="text" maxlength="10"
+                           class="form-input mt-1.5 font-mono @error('aporteEstatal') border-red-400 @enderror"
+                           placeholder="Ej. 0,00">
+                    @error('aporteEstatal') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
                 <div>

@@ -31,6 +31,8 @@ class ParametrosSistemaForm extends Component
     public string $cue = '';
     public string $ee = '';
     public string $cuit = '';
+    public string $condIvaInst = '';
+    public string $aporteEstatal = '';
     public string $ptoVta = '';
     public string $afipCertCarpeta = '';
     public string $afipCertKey = '';
@@ -94,6 +96,12 @@ class ParametrosSistemaForm extends Component
         $this->cue = (string) ($ento->cue ?? '');
         $this->ee = (string) ($ento->ee ?? '');
         $this->cuit = (string) ($ento->cuit ?? '');
+        $this->condIvaInst = Schema::hasColumn('ento', 'condIvaInst')
+            ? (string) ($ento->condIvaInst ?? '')
+            : '';
+        $this->aporteEstatal = Schema::hasColumn('ento', 'aporteEstatal')
+            ? (string) ($ento->aporteEstatal ?? '')
+            : '';
         $this->ptoVta = (string) ((int) ($ento->ptoVta ?? 0) ?: '');
         $this->afipCertCarpeta = (string) ($ento->afipCertCarpeta ?? '');
         $this->afipCertKey = (string) ($ento->afipCertKey ?? '');
@@ -128,6 +136,8 @@ class ParametrosSistemaForm extends Component
             'cue' => ['nullable', 'string', 'max:30'],
             'ee' => ['nullable', 'string', 'max:30'],
             'cuit' => ['nullable', 'string', 'max:20'],
+            'condIvaInst' => ['nullable', 'string', 'max:40'],
+            'aporteEstatal' => ['nullable', 'string', 'max:10'],
             'ptoVta' => ['nullable', 'integer', 'min:1', 'max:9999'],
             'afipCertCarpeta' => ['nullable', 'string', 'max:40', 'regex:/^[a-zA-Z0-9_-]+$/'],
             'afipCertKey' => ['nullable', 'string', 'max:120', 'regex:/^[a-zA-Z0-9._-]+$/'],
@@ -280,7 +290,14 @@ class ParametrosSistemaForm extends Component
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'afipCertCarpeta')) {
+        if (Schema::hasColumn('ento', 'condIvaInst')) {
+            $payload['condIvaInst'] = ($v = trim($this->condIvaInst)) !== '' ? $v : null;
+        }
+        if (Schema::hasColumn('ento', 'aporteEstatal')) {
+            $payload['aporteEstatal'] = ($v = trim($this->aporteEstatal)) !== '' ? $v : null;
+        }
+
+        if (Schema::hasColumn('ento', 'afipCertCarpeta')) {
             $payload['afipCertCarpeta'] = ($v = trim($this->afipCertCarpeta)) !== '' ? $v : null;
             $payload['afipCertKey'] = ($v = trim($this->afipCertKey)) !== '' ? $v : null;
             $payload['afipCertCrt'] = ($v = trim($this->afipCertCrt)) !== '' ? $v : null;

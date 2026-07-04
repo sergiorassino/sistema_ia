@@ -57,7 +57,11 @@ final class FacturacionAfipImputacionPago
             ->first([
                 'insti',
                 'direccion',
+                'localidad',
+                'telefono',
                 'cuit',
+                'condIvaInst',
+                'aporteEstatal',
                 'condicionIva',
                 'ptoVta',
                 'ingresosBrutos',
@@ -90,9 +94,7 @@ final class FacturacionAfipImputacionPago
             $condicionAlumno,
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
         );
-        $condicionIvaEmisor = ComprobanteAfipDatos::etiquetaCondicionIvaEmisor(
-            (string) ($ento->ingresosBrutos ?? ''),
-        );
+        $condicionIvaEmisor = ComprobanteAfipDatos::condIvaInstDesdeEnto($ento);
 
         try {
             $emision = AfipWsfeEmision::emitirRecibo($config, [
@@ -106,7 +108,7 @@ final class FacturacionAfipImputacionPago
                 'condicion_iva_receptor_id' => $condicionIvaId,
             ]);
         } catch (Throwable $e) {
-            self::guardarMensajeCuota($registro, 'Error AFIP: '.$e->getMessage());
+            FacturacionAfipComun::guardarMensajeCuota($registro, 'Error AFIP: '.$e->getMessage());
 
             return ['ok' => false, 'mensaje' => 'Error al facturar en AFIP: '.$e->getMessage()];
         }
@@ -124,9 +126,12 @@ final class FacturacionAfipImputacionPago
             $vtoCaeYmd,
         );
 
-        [$nombreResp, $dniResp] = self::responsablePago($legajo);
+        $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
+        $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
         $concepto = mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? 'CUOTA')));
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
+        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
+        $cursoAlumno = FacturacionAfipComun::cursoTextoDesdeRegistro($registro);
 
         try {
             $idComprobanteAfip = 0;
@@ -154,6 +159,8 @@ final class FacturacionAfipImputacionPago
                 $condicionAlumno,
                 $condicionIvaEmisor,
                 $sufijoSimulado,
+                $snapshotInst,
+                $cursoAlumno,
             ): void {
                 $comprobante = ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
@@ -161,6 +168,8 @@ final class FacturacionAfipImputacionPago
                     'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
                     'domicilioComercial' => $ento->domicilioComercialCompleto(),
                     'condicionIvaInstitucion' => $condicionIvaEmisor,
+                    'telefonoInstitucion' => $snapshotInst['telefonoInstitucion'],
+                    'aporteEstatal' => $snapshotInst['aporteEstatal'],
                     'puntoVenta' => $ptoVta,
                     'ingresosBrutos' => trim((string) ($ento->ingresosBrutos ?? '')),
                     'fechaInicioActividades' => self::formatearFechaEnto($ento->fechaInicioAct ?? null),
@@ -168,7 +177,7 @@ final class FacturacionAfipImputacionPago
                     'dni' => (string) $docNro,
                     'nombreResp' => $nombreResp,
                     'dniResp' => $dniResp,
-                    'domicilioAlumno' => trim((string) ($legajo->callenum ?? '')),
+                    'cursoAlumno' => $cursoAlumno,
                     'condicionIvaAlumno' => $condicionAlumno,
                     'condicionVenta' => (string) ($config['condicion_venta'] ?? 'contado'),
                     'fechaDesde' => self::formatearFechaBarra($fechaDesde),
@@ -176,6 +185,7 @@ final class FacturacionAfipImputacionPago
                     'fechaEmision' => $hoy->format('Y/m/d'),
                     'fechaVencimiento' => $hoy->format('Y/m/d'),
                     'tipoComprobante' => (int) $config['cbte_tipo'],
+                    'docTipoAfip' => (int) ($config['doc_tipo'] ?? 96),
                     'codigoBarras' => $codigoBarras,
                     'nroRecibo' => $nroRecibo,
                     'cae' => $cae,
@@ -192,9 +202,10 @@ final class FacturacionAfipImputacionPago
 
                 $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
 
-                $registro->nroComp = $nroRecibo;
-                $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado;
-                $registro->save();
+                FacturacionAfipComun::guardarMensajeCuota(
+                    $registro,
+                    'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado,
+                );
             });
         } catch (Throwable $e) {
             return ['ok' => false, 'mensaje' => 'AFIP autorizó el comprobante pero no se pudo guardar: '.$e->getMessage()];
@@ -280,7 +291,11 @@ final class FacturacionAfipImputacionPago
             ->first([
                 'insti',
                 'direccion',
+                'localidad',
+                'telefono',
                 'cuit',
+                'condIvaInst',
+                'aporteEstatal',
                 'condicionIva',
                 'ptoVta',
                 'ingresosBrutos',
@@ -313,9 +328,7 @@ final class FacturacionAfipImputacionPago
             $condicionAlumno,
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
         );
-        $condicionIvaEmisor = ComprobanteAfipDatos::etiquetaCondicionIvaEmisor(
-            (string) ($ento->ingresosBrutos ?? ''),
-        );
+        $condicionIvaEmisor = ComprobanteAfipDatos::condIvaInstDesdeEnto($ento);
 
         try {
             $emision = AfipWsfeEmision::emitirRecibo($config, [
@@ -330,7 +343,7 @@ final class FacturacionAfipImputacionPago
             ]);
         } catch (Throwable $e) {
             foreach ($registros as $registro) {
-                self::guardarMensajeCuota($registro, 'Error AFIP: '.$e->getMessage());
+                FacturacionAfipComun::guardarMensajeCuota($registro, 'Error AFIP: '.$e->getMessage());
             }
 
             return ['ok' => false, 'mensaje' => 'Error al facturar en AFIP: '.$e->getMessage()];
@@ -349,7 +362,8 @@ final class FacturacionAfipImputacionPago
             $vtoCaeYmd,
         );
 
-        [$nombreResp, $dniResp] = self::responsablePago($legajo);
+        $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
+        $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
         $conceptoPrincipal = count($conceptos) === 1
             ? $conceptos[0]
             : 'CUOTAS ESCOLARES';
@@ -358,6 +372,8 @@ final class FacturacionAfipImputacionPago
         $primerRegistro = $registros[0];
         $subConceptos = implode('|', $conceptos);
         $importeSubConceptos = implode('|', $importesLinea);
+        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
+        $cursoAlumno = FacturacionAfipComun::cursoTextoDesdeRegistro($primerRegistro);
 
         try {
             $idComprobanteAfip = 0;
@@ -390,6 +406,8 @@ final class FacturacionAfipImputacionPago
                 $sufijoSimulado,
                 $primerPago,
                 $primerRegistro,
+                $snapshotInst,
+                $cursoAlumno,
             ): void {
                 $comprobante = ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
@@ -397,6 +415,8 @@ final class FacturacionAfipImputacionPago
                     'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
                     'domicilioComercial' => $ento->domicilioComercialCompleto(),
                     'condicionIvaInstitucion' => $condicionIvaEmisor,
+                    'telefonoInstitucion' => $snapshotInst['telefonoInstitucion'],
+                    'aporteEstatal' => $snapshotInst['aporteEstatal'],
                     'puntoVenta' => $ptoVta,
                     'ingresosBrutos' => trim((string) ($ento->ingresosBrutos ?? '')),
                     'fechaInicioActividades' => self::formatearFechaEnto($ento->fechaInicioAct ?? null),
@@ -404,7 +424,7 @@ final class FacturacionAfipImputacionPago
                     'dni' => (string) $docNro,
                     'nombreResp' => $nombreResp,
                     'dniResp' => $dniResp,
-                    'domicilioAlumno' => trim((string) ($legajo->callenum ?? '')),
+                    'cursoAlumno' => $cursoAlumno,
                     'condicionIvaAlumno' => $condicionAlumno,
                     'condicionVenta' => (string) ($config['condicion_venta'] ?? 'contado'),
                     'fechaDesde' => self::formatearFechaBarra($fechaDesde),
@@ -412,6 +432,7 @@ final class FacturacionAfipImputacionPago
                     'fechaEmision' => $hoy->format('Y/m/d'),
                     'fechaVencimiento' => $hoy->format('Y/m/d'),
                     'tipoComprobante' => (int) $config['cbte_tipo'],
+                    'docTipoAfip' => (int) ($config['doc_tipo'] ?? 96),
                     'codigoBarras' => $codigoBarras,
                     'nroRecibo' => $nroRecibo,
                     'cae' => $cae,
@@ -432,9 +453,10 @@ final class FacturacionAfipImputacionPago
                 $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
 
                 foreach ($registros as $registro) {
-                    $registro->nroComp = $nroRecibo;
-                    $registro->mensajeResultado = 'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado;
-                    $registro->save();
+                    FacturacionAfipComun::guardarMensajeCuota(
+                        $registro,
+                        'Comprobante AFIP emitido. CAE '.$cae.$sufijoSimulado,
+                    );
                 }
             });
         } catch (Throwable $e) {
@@ -550,7 +572,7 @@ final class FacturacionAfipImputacionPago
                 'cbte_asoc_nro' => $nroFactura,
             ]);
         } catch (Throwable $e) {
-            self::guardarMensajeCuota($registro, 'Error AFIP NC: '.$e->getMessage());
+            FacturacionAfipComun::guardarMensajeCuota($registro, 'Error AFIP NC: '.$e->getMessage());
 
             return ['ok' => false, 'mensaje' => 'Error al emitir nota de crédito en AFIP: '.$e->getMessage()];
         }
@@ -595,6 +617,8 @@ final class FacturacionAfipImputacionPago
                     'cuitInstitucion' => preg_replace('/\D/', '', (string) ($factura->cuitInstitucion ?? '')),
                     'domicilioComercial' => trim((string) ($factura->domicilioComercial ?? '')),
                     'condicionIvaInstitucion' => trim((string) ($factura->condicionIvaInstitucion ?? '')),
+                    'telefonoInstitucion' => trim((string) ($factura->telefonoInstitucion ?? '')),
+                    'aporteEstatal' => trim((string) ($factura->aporteEstatal ?? '')),
                     'puntoVenta' => (int) ($factura->puntoVenta ?? 0),
                     'ingresosBrutos' => trim((string) ($factura->ingresosBrutos ?? '')),
                     'fechaInicioActividades' => trim((string) ($factura->fechaInicioActividades ?? '')),
@@ -602,7 +626,7 @@ final class FacturacionAfipImputacionPago
                     'dni' => trim((string) ($factura->dni ?? '')),
                     'nombreResp' => trim((string) ($factura->nombreResp ?? '')),
                     'dniResp' => trim((string) ($factura->dniResp ?? '')),
-                    'domicilioAlumno' => trim((string) ($factura->domicilioAlumno ?? '')),
+                    'cursoAlumno' => trim((string) ($factura->cursoAlumno ?? '')),
                     'condicionIvaAlumno' => trim((string) ($factura->condicionIvaAlumno ?? '')),
                     'condicionVenta' => trim((string) ($factura->condicionVenta ?? 'contado')),
                     'fechaDesde' => trim((string) ($factura->fechaDesde ?? self::formatearFechaBarra($fechaDesde))),
@@ -610,6 +634,7 @@ final class FacturacionAfipImputacionPago
                     'fechaEmision' => $hoy->format('Y/m/d'),
                     'fechaVencimiento' => $hoy->format('Y/m/d'),
                     'tipoComprobante' => $tipoNc,
+                    'docTipoAfip' => (int) ($factura->docTipoAfip ?? $config['doc_tipo'] ?? 96),
                     'codigoBarras' => $codigoBarras,
                     'nroRecibo' => $nroNc,
                     'cae' => $cae,
@@ -626,8 +651,10 @@ final class FacturacionAfipImputacionPago
 
                 $idComprobanteAfip = (int) $comprobante->idComprobanteAfip;
 
-                $registro->mensajeResultado = 'Nota de crédito AFIP emitida. CAE '.$cae.$sufijoSimulado;
-                $registro->save();
+                FacturacionAfipComun::guardarMensajeCuota(
+                    $registro,
+                    'Nota de crédito AFIP emitida. CAE '.$cae.$sufijoSimulado,
+                );
             });
         } catch (Throwable $e) {
             return ['ok' => false, 'mensaje' => 'AFIP autorizó la nota de crédito pero no se pudo guardar: '.$e->getMessage()];
@@ -752,16 +779,6 @@ final class FacturacionAfipImputacionPago
             return Carbon::parse($raw)->format('d/m/Y');
         } catch (Throwable) {
             return $raw;
-        }
-    }
-
-    private static function guardarMensajeCuota(CuotaGenerada $registro, string $mensaje): void
-    {
-        try {
-            $registro->mensajeResultado = mb_substr($mensaje, 0, 500);
-            $registro->save();
-        } catch (Throwable) {
-            // No bloquear el flujo de pago por un fallo al guardar el mensaje auxiliar.
         }
     }
 }
