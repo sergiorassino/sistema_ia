@@ -183,6 +183,10 @@ final class ComprobantesAfipCuotaService
             return ['ok' => false, 'mensaje' => 'La facturación AFIP no está habilitada para este colegio.'];
         }
 
+        if (tenantCuotasFacturacionAfipEnDevengamiento()) {
+            return ['ok' => false, 'mensaje' => 'La facturación AFIP se realiza por devengamiento (facturación masiva), no al imputar el pago.'];
+        }
+
         $pago = self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada);
         if ($pago === null) {
             return ['ok' => false, 'mensaje' => 'Pago no encontrado.'];
@@ -332,6 +336,7 @@ final class ComprobantesAfipCuotaService
         return ComprobanteAfip::query()
             ->where(function (Builder $q) use ($idCuotaGenerada): void {
                 $q->where('idCbteAsoc', $idCuotaGenerada)
+                    ->orWhereRaw('FIND_IN_SET(?, saldoRestante)', [$idCuotaGenerada])
                     ->orWhereIn('idCuotasPagos', function ($sub) use ($idCuotaGenerada): void {
                         $sub->select('id')
                             ->from('cuotaspagos')

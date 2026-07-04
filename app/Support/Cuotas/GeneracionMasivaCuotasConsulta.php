@@ -138,4 +138,39 @@ final class GeneracionMasivaCuotasConsulta
 
         return $texto;
     }
+
+    /**
+     * Fila de alumno para facturación AFIP a partir de un legajo (selección individual).
+     */
+    public static function filaAlumnoDesdeLegajo(int $idLegajo): ?object
+    {
+        if ($idLegajo <= 0) {
+            return null;
+        }
+
+        $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+        if ($legajo === null) {
+            return null;
+        }
+
+        $matricula = GestionAranceles::matriculaCicloActivo($idLegajo)
+            ?? GestionAranceles::matriculaReferenciaListado($legajo);
+
+        $cursoNombre = '';
+        $idCurso = 0;
+        if ($matricula !== null) {
+            $idCurso = (int) ($matricula->idCursos ?? 0);
+            $matricula->loadMissing(['curso.curplan', 'curso.turnoClase']);
+            $cursoNombre = trim((string) ($matricula->curso?->nombreParaListado() ?? ''));
+        }
+
+        return (object) [
+            'id_legajo' => $idLegajo,
+            'id_curso' => $idCurso,
+            'curso_nombre' => $cursoNombre,
+            'apellido' => (string) ($legajo->apellido ?? ''),
+            'nombre' => (string) ($legajo->nombre ?? ''),
+            'dni' => (string) ($legajo->dni ?? ''),
+        ];
+    }
 }

@@ -18,6 +18,7 @@ return [
 
         'facturacion_afip' => [
             'habilitado' => true,
+            'modo' => 'devengamiento',
             // Certificados WSAA/WSFE: carpeta y nombres de archivo en Parámetros del sistema (ento).
             // Respaldo opcional en tenant para desarrollo: cert_usuario_id, cert_key, cert_crt.
             'cbte_tipo' => 15,

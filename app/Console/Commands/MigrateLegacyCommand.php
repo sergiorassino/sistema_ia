@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\DB;
  *
  * No ejecuta migraciones que modifiquen estructuralmente tablas existentes
  * sin verificar primero con hasColumn / hasTable.
+ *
+ * Migraciones de DATOS puntuales (p. ej. infoxobse → calificaciones) no se incluyen:
+ * deben ejecutarse con su comando Artisan dedicado, nunca desde este flujo.
  */
 class MigrateLegacyCommand extends Command
 {

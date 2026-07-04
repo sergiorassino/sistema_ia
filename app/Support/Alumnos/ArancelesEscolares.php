@@ -265,16 +265,23 @@ final class ArancelesEscolares
         }
 
         $idLegajo = (int) $ctx->idLegajo;
-        $idsCuotasPagadas = $cuotas
+        $idsCuotas = $cuotas
             ->filter(function (CuotaGenerada $cuota) use ($idLegajo): bool {
-                return (int) ($cuota->idLegajos ?? 0) === $idLegajo
-                    && (float) ($cuota->faltapa ?? 0) <= 0;
+                if ((int) ($cuota->idLegajos ?? 0) !== $idLegajo) {
+                    return false;
+                }
+
+                if (tenantCuotasFacturacionAfipEnDevengamiento()) {
+                    return true;
+                }
+
+                return (float) ($cuota->faltapa ?? 0) <= 0;
             })
             ->map(fn (CuotaGenerada $cuota) => (int) $cuota->id)
             ->values()
             ->all();
 
-        return ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas($idsCuotasPagadas);
+        return ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas($idsCuotas);
     }
 
     /**

@@ -558,6 +558,16 @@
         align-items: center;
         justify-content: center;
     }
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion-cupon,
+    .gf.gf-cuotas-estudiante .gf-th.gf-th-accion-afip {
+        font-size: 7px;
+        line-height: 1.1;
+        letter-spacing: 0.02em;
+        padding-left: 0;
+        padding-right: 0;
+        text-align: center;
+        white-space: normal;
+    }
     .gf.gf-cuotas-estudiante .gf-row.gf-row--totales {
         background-color: #e8f0f2;
         border-top: 1px solid #c1d7da;

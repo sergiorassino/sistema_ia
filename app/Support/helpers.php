@@ -919,7 +919,7 @@ if (! function_exists('tenantCooperadoraReciboEmailFrom')) {
 
 if (! function_exists('tenantCuotasFacturacionAfipHabilitada')) {
     /**
-     * Si el formulario de imputación de pago ofrece facturación AFIP.
+     * Si el colegio tiene facturación AFIP configurada (certificados y tenant).
      */
     function tenantCuotasFacturacionAfipHabilitada(): bool
     {
@@ -930,6 +930,41 @@ if (! function_exists('tenantCuotasFacturacionAfipHabilitada')) {
         $cfg = tenantCuotasFacturacionAfipConfig();
 
         return $cfg !== null;
+    }
+}
+
+if (! function_exists('tenantCuotasFacturacionAfipModo')) {
+    /**
+     * @return 'devengamiento'|'pago'
+     */
+    function tenantCuotasFacturacionAfipModo(): string
+    {
+        $modo = (string) config('tenant.cuotas.facturacion_afip.modo', 'devengamiento');
+
+        return $modo === 'pago' ? 'pago' : 'devengamiento';
+    }
+}
+
+if (! function_exists('tenantCuotasFacturacionAfipEnPago')) {
+    function tenantCuotasFacturacionAfipEnPago(): bool
+    {
+        return tenantCuotasFacturacionAfipHabilitada()
+            && tenantCuotasFacturacionAfipModo() === 'pago';
+    }
+}
+
+if (! function_exists('tenantCuotasFacturacionAfipEnDevengamiento')) {
+    function tenantCuotasFacturacionAfipEnDevengamiento(): bool
+    {
+        return tenantCuotasFacturacionAfipHabilitada()
+            && tenantCuotasFacturacionAfipModo() === 'devengamiento';
+    }
+}
+
+if (! function_exists('tenantCuotasFacturacionAfipMuestraEnImputacionPago')) {
+    function tenantCuotasFacturacionAfipMuestraEnImputacionPago(): bool
+    {
+        return tenantCuotasFacturacionAfipEnPago();
     }
 }
 

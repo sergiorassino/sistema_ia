@@ -3,10 +3,13 @@
 namespace App\Support\Cuotas;
 
 use App\Models\ComprobanteAfip;
+use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
+use App\Models\Ento;
 use App\Support\Afip\AfipComprobanteQrUrl;
 use App\Support\Afip\AfipCondicionIvaReceptor;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Arma los datos del PDF de comprobante AFIP a partir de un pago imputado.
@@ -138,23 +141,54 @@ final class ComprobanteAfipDatos
     private static function datosDesdeModelo(ComprobanteAfip $comprobante): array
     {
         $config = tenantCuotasFacturacionAfipConfig();
-        $docTipo = (int) ($config['doc_tipo'] ?? 96);
+        $docTipo = (int) ($comprobante->docTipoAfip ?? 0);
+        if ($docTipo <= 0) {
+            $docTipo = (int) ($config['doc_tipo'] ?? 96);
+        }
         $tipoComprobante = (int) ($comprobante->tipoComprobante ?? 15);
         $ptoVta = (int) ($comprobante->puntoVenta ?? 0);
         $nroRecibo = (int) ($comprobante->nroRecibo ?? 0);
         $importe = round((float) ($comprobante->importePagado ?? 0), 2);
-        $fechaEmision = self::fechaAFormatoBarra((string) ($comprobante->fechaEmision ?? ''));
+        $fechaEmision = self::fechaEncabezado((string) ($comprobante->fechaEmision ?? ''));
         $fechaYmd = self::fechaABarrraAYmd($fechaEmision);
-        $fechaQr = self::fechaABarraAIso($fechaEmision);
-        $vtoCae = self::fechaAFormatoBarra((string) ($comprobante->vtoCae ?? ''));
+        $fechaQr = self::fechaParaQr($fechaEmision);
+        $vtoCae = self::fechaEncabezado((string) ($comprobante->vtoCae ?? ''));
         $condicionIvaId = AfipCondicionIvaReceptor::idDesdeEtiqueta(
             (string) ($comprobante->condicionIvaAlumno ?? ''),
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
         );
-        $condicionIvaInstitucion = self::etiquetaCondicionIvaEmisor(
-            (string) ($comprobante->ingresosBrutos ?? ''),
-            (string) ($comprobante->condicionIvaInstitucion ?? ''),
-        );
+
+        $nombreInstitucion = trim((string) ($comprobante->nombreInstitucion ?? ''));
+        $condicionIvaInstitucion = trim((string) ($comprobante->condicionIvaInstitucion ?? ''));
+        $telefonoInstitucion = trim((string) ($comprobante->telefonoInstitucion ?? ''));
+        $aporteEstatal = trim((string) ($comprobante->aporteEstatal ?? ''));
+        $cursoTexto = mb_strtoupper(trim((string) ($comprobante->cursoAlumno ?? '')));
+
+        if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '' || $cursoTexto === '') {
+            $ento = self::entoParaComprobantePdf();
+            if ($nombreInstitucion === '') {
+                $nombreInstitucion = trim((string) ($ento?->insti ?? ''));
+            }
+            if ($condicionIvaInstitucion === '') {
+                $condicionIvaInstitucion = self::condIvaInstDesdeEnto($ento);
+            }
+            if ($telefonoInstitucion === '') {
+                $telefonoInstitucion = trim((string) ($ento?->telefono ?? ''));
+            }
+            if ($aporteEstatal === '') {
+                $aporteEstatal = self::aporteEstatalDesdeEnto($ento);
+            }
+            if ($cursoTexto === '') {
+                $registroCuota = self::registroCuotaAsociado($comprobante);
+                $cursoTexto = mb_strtoupper(trim((string) ($registroCuota?->curso?->nombreParaListado() ?? '')));
+            }
+        }
+
+        $nombreResp = trim((string) ($comprobante->nombreResp ?? ''));
+        $dniResp = trim((string) ($comprobante->dniResp ?? ''));
+        if ($dniResp !== '') {
+            $dniResp = CuotasFormato::formatearDni($dniResp);
+        }
 
         $urlQr = AfipComprobanteQrUrl::generar([
             'fecha_yyyy_mm_dd' => $fechaQr,
@@ -169,24 +203,40 @@ final class ComprobanteAfipDatos
         ]);
 
         return [
-            'razonSocial' => trim((string) ($comprobante->razonSocial ?? $comprobante->nombreInstitucion ?? '')),
+            'nombreInstitucion' => $nombreInstitucion,
+            'razonSocial' => trim((string) ($comprobante->razonSocial ?? '')),
+            'telefonoInstitucion' => $telefonoInstitucion,
             'tipoComprobante' => $tipoComprobante,
             'puntoVenta' => $ptoVta,
             'nroComprobante' => $nroRecibo,
-            'numeroComprobanteTexto' => str_pad((string) $ptoVta, 4, '0', STR_PAD_LEFT)
-                .'-'
-                .str_pad((string) $nroRecibo, 8, '0', STR_PAD_LEFT),
+            'numeroComprobanteTexto' => ($ptoVta > 0 && $nroRecibo > 0)
+                ? str_pad((string) $ptoVta, 5, '0', STR_PAD_LEFT)
+                    .'-'
+                    .str_pad((string) $nroRecibo, 8, '0', STR_PAD_LEFT)
+                : '',
+            'puntoVentaTexto' => $ptoVta > 0
+                ? str_pad((string) $ptoVta, 5, '0', STR_PAD_LEFT)
+                : '',
+            'numeroComprobanteSolo' => $nroRecibo > 0
+                ? str_pad((string) $nroRecibo, 8, '0', STR_PAD_LEFT)
+                : '',
             'cuitInstitucion' => trim((string) ($comprobante->cuitInstitucion ?? '')),
             'domicilioComercial' => trim((string) ($comprobante->domicilioComercial ?? '')),
             'ingresosBrutos' => trim((string) ($comprobante->ingresosBrutos ?? '')),
-            'fechaInicioActividades' => self::fechaAFormatoBarra((string) ($comprobante->fechaInicioActividades ?? '')),
+            'fechaInicioActividades' => self::fechaEncabezado((string) ($comprobante->fechaInicioActividades ?? '')),
             'condicionIvaInstitucion' => $condicionIvaInstitucion,
+            'aporteEstatal' => $aporteEstatal,
             'fechaEmision' => $fechaEmision,
             'docNro' => trim((string) ($comprobante->dni ?? '')),
             'docTipo' => $docTipo,
             'nombreCliente' => trim((string) ($comprobante->nombreAlumno ?? '')),
+            'nombreResp' => $nombreResp,
+            'dniResp' => $dniResp,
+            'cursoTexto' => $cursoTexto,
+            'cuotaTexto' => self::textoCuotasDesdeComprobante($comprobante),
             'condicionIvaReceptorId' => $condicionIvaId,
             'condicionIvaReceptorTexto' => trim((string) ($comprobante->condicionIvaAlumno ?? '')),
+            'muestraCondicionVenta' => trim((string) ($comprobante->condicionVenta ?? '')) !== '',
             'condicionVenta' => self::etiquetaCondicionVenta((string) ($comprobante->condicionVenta ?? '')),
             'concepto' => trim((string) ($comprobante->concepto ?? '')),
             'importe' => $importe,
@@ -250,37 +300,85 @@ final class ComprobanteAfipDatos
         return $lineas;
     }
 
-    public static function etiquetaCondicionIvaEmisor(string $ingresosBrutos = '', string $fallback = ''): string
+    private static function registroCuotaAsociado(ComprobanteAfip $comprobante): ?CuotaGenerada
     {
-        $ib = mb_strtolower(trim($ingresosBrutos));
-        if ($ib !== '' && str_contains($ib, 'exento')) {
-            return 'IVA Sujeto Exento';
+        $id = (int) ($comprobante->idCbteAsoc ?? 0);
+        if ($id <= 0) {
+            return null;
         }
 
-        $fallback = trim($fallback);
-        if ($fallback !== '') {
-            return $fallback;
+        return CuotaGenerada::query()
+            ->with([
+                'cuota:id,nombre',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase',
+                'curso.curplan:id,curPlanCurso',
+                'curso.turnoClase:id,nombre',
+            ])
+            ->find($id);
+    }
+
+    private static function idNivelParaEnto(): int
+    {
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            $idNivel = (int) (studentCtx()->idNivel ?? 0);
         }
 
-        return 'Responsable Monotributo';
+        return $idNivel;
     }
 
-    private static function etiquetaCondicionVenta(string $valor): string
+    /** @return list<string> */
+    private static function columnasEntoParaPdf(): array
     {
-        $n = mb_strtolower(trim($valor));
+        $columnas = ['insti', 'telefono'];
+        if (Schema::hasColumn('ento', 'condIvaInst')) {
+            $columnas[] = 'condIvaInst';
+        }
+        if (Schema::hasColumn('ento', 'aporteEstatal')) {
+            $columnas[] = 'aporteEstatal';
+        }
 
-        return match ($n) {
-            'contado' => 'Contado',
-            'cuenta corriente', 'cuenta_corriente' => 'Cuenta Corriente',
-            default => $valor !== '' ? mb_convert_case($valor, MB_CASE_TITLE, 'UTF-8') : 'Contado',
-        };
+        return $columnas;
     }
 
-    private static function fechaAFormatoBarra(string $valor): string
+    private static function entoParaComprobantePdf(): ?Ento
+    {
+        $idNivel = self::idNivelParaEnto();
+        if ($idNivel <= 0) {
+            return null;
+        }
+
+        return Ento::query()
+            ->where('idNivel', $idNivel)
+            ->first(self::columnasEntoParaPdf());
+    }
+
+    public static function condIvaInstDesdeEnto(?Ento $ento): string
+    {
+        if ($ento === null || ! Schema::hasColumn('ento', 'condIvaInst')) {
+            return '';
+        }
+
+        return trim((string) ($ento->condIvaInst ?? ''));
+    }
+
+    public static function aporteEstatalDesdeEnto(?Ento $ento): string
+    {
+        if ($ento === null || ! Schema::hasColumn('ento', 'aporteEstatal')) {
+            return '';
+        }
+
+        return trim((string) ($ento->aporteEstatal ?? ''));
+    }
+
+    /**
+     * Fecha del encabezado: solo formatea lo cargado; sin fecha de hoy ni valores por defecto.
+     */
+    private static function fechaEncabezado(string $valor): string
     {
         $raw = trim($valor);
         if ($raw === '') {
-            return Carbon::today()->format('d/m/Y');
+            return '';
         }
 
         if (str_contains($raw, '/')) {
@@ -299,15 +397,47 @@ final class ComprobanteAfipDatos
         try {
             return Carbon::parse($raw)->format('d/m/Y');
         } catch (\Throwable) {
-            return Carbon::today()->format('d/m/Y');
+            return '';
         }
+    }
+
+    /** Fecha ISO para QR AFIP; solo uso técnico del pie, no del encabezado impreso. */
+    private static function fechaParaQr(string $fechaEncabezado): string
+    {
+        $fechaEncabezado = trim($fechaEncabezado);
+        if ($fechaEncabezado === '') {
+            return Carbon::today()->format('Y-m-d');
+        }
+
+        return self::fechaABarraAIso($fechaEncabezado);
+    }
+
+    private static function textoCuotasDesdeComprobante(ComprobanteAfip $comprobante): string
+    {
+        $subs = trim((string) ($comprobante->subConceptos ?? ''));
+        if ($subs !== '' && ! ctype_digit(str_replace('|', '', $subs))) {
+            return str_replace('|', ', ', $subs);
+        }
+
+        return mb_strtoupper(trim((string) ($comprobante->concepto ?? '')));
+    }
+
+    private static function etiquetaCondicionVenta(string $valor): string
+    {
+        $n = mb_strtolower(trim($valor));
+
+        return match ($n) {
+            'contado' => 'Contado',
+            'cuenta corriente', 'cuenta_corriente' => 'Cuenta Corriente',
+            default => $valor !== '' ? mb_convert_case($valor, MB_CASE_TITLE, 'UTF-8') : 'Contado',
+        };
     }
 
     private static function fechaABarrraAYmd(string $fechaBarra): string
     {
         $partes = explode('/', $fechaBarra);
         if (count($partes) !== 3) {
-            return Carbon::today()->format('Ymd');
+            return '';
         }
 
         return sprintf('%04d%02d%02d', (int) $partes[2], (int) $partes[1], (int) $partes[0]);
@@ -317,7 +447,7 @@ final class ComprobanteAfipDatos
     {
         $partes = explode('/', $fechaBarra);
         if (count($partes) !== 3) {
-            return Carbon::today()->format('Y-m-d');
+            return '';
         }
 
         return sprintf('%04d-%02d-%02d', (int) $partes[2], (int) $partes[1], (int) $partes[0]);

@@ -487,11 +487,17 @@ return [
         ],
 
         /**
-         * Facturación AFIP al imputar pago (Aranceles por estudiante).
-         * Activar solo en `config/tenants/{slug}.php` para colegios que facturan con WSFE.
+         * Facturación AFIP (WSFE).
+         * Activar solo en `config/tenants/{slug}.php`.
+         *
+         * `modo`:
+         * - `devengamiento` (default): facturación masiva manual al devengar cuotas.
+         * - `pago`: emite al imputar pago (legacy).
          */
         'facturacion_afip' => [
             'habilitado' => false,
+            /** @var 'devengamiento'|'pago' */
+            'modo' => 'devengamiento',
             'cert_usuario_id' => null,
             'cert_key' => null,
             'cert_crt' => null,

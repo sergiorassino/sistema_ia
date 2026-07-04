@@ -127,6 +127,7 @@ use App\Livewire\Cuotas\EdicionCuotasGeneradasIndex;
 use App\Livewire\Cuotas\CancelarTodasReservas;
 use App\Livewire\Cuotas\EliminacionMasivaCuotas;
 use App\Livewire\Cuotas\GeneracionMasivaCuotas;
+use App\Livewire\Cuotas\FacturacionMasivaAfip;
 use App\Livewire\Cuotas\LibroArancelesIndex;
 use App\Livewire\Cuotas\ListadoEstudiantesPorCuotaIndex;
 use App\Livewire\Cuotas\ListadoPagosPorFechaIndex;
@@ -608,6 +609,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)
             ->middleware('permiso:'.$pi::ADMIN_CUOTAS_GENERACION_MASIVA)
             ->name('cuotas.generacion-masiva');
+        Route::get('/facturacion-masiva-afip', FacturacionMasivaAfip::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->name('cuotas.facturacion-masiva-afip');
         Route::get('/eliminacion-masiva', EliminacionMasivaCuotas::class)
             ->middleware('permiso:'.$pi::ADMIN_CUOTAS_ELIMINACION_MASIVA)
             ->name('cuotas.eliminacion-masiva');

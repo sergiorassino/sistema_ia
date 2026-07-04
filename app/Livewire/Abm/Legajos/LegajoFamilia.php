@@ -4,6 +4,7 @@ namespace App\Livewire\Abm\Legajos;
 
 use App\Models\Familia;
 use App\Models\Legajo;
+use App\Support\DniInput;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
@@ -40,6 +41,8 @@ class LegajoFamilia extends Component
     public string $familiaApellido = '';
 
     public string $familiaResponsable = '';
+
+    public string $familiaDniResp = '';
 
     public string $familiaEmail = '';
 
@@ -134,6 +137,7 @@ class LegajoFamilia extends Component
         return [
             'familiaApellido' => ['required', 'string', 'max:50'],
             'familiaResponsable' => ['nullable', 'string', 'max:50'],
+            'familiaDniResp' => ['nullable', 'digits_between:7,11'],
             'familiaEmail' => ['nullable', 'email', 'max:100'],
         ];
     }
@@ -144,6 +148,7 @@ class LegajoFamilia extends Component
             'familiaApellido.required' => 'El apellido de la familia es obligatorio.',
             'familiaApellido.max' => 'El apellido no puede superar los 50 caracteres.',
             'familiaResponsable.max' => 'El responsable no puede superar los 50 caracteres.',
+            'familiaDniResp.digits_between' => 'El DNI del responsable debe tener entre 7 y 11 dígitos.',
             'familiaEmail.email' => 'El email no es válido.',
             'familiaEmail.max' => 'El email no puede superar los 100 caracteres.',
         ];
@@ -157,7 +162,7 @@ class LegajoFamilia extends Component
     public function openCreateFamilia(): void
     {
         $this->requireModificar();
-        $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaEmail');
+        $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaDniResp', 'familiaEmail');
         $this->resetValidation();
         $this->showModalFamilia = true;
     }
@@ -170,6 +175,7 @@ class LegajoFamilia extends Component
         $this->editFamiliaId = (int) $this->familia->id;
         $this->familiaApellido = (string) ($this->familia->apellido ?? '');
         $this->familiaResponsable = (string) ($this->familia->responsable ?? '');
+        $this->familiaDniResp = (string) ($this->familia->dniResp ?? '');
         $this->familiaEmail = (string) ($this->familia->email ?? '');
         $this->resetValidation();
         $this->showModalFamilia = true;
@@ -187,14 +193,17 @@ class LegajoFamilia extends Component
         }
         RateLimiter::hit($key, 60);
 
+        $this->familiaDniResp = DniInput::digitsOnly($this->familiaDniResp);
         $this->validate($this->rulesFamilia(), $this->messagesFamilia());
 
         $apellido = trim($this->familiaApellido);
         $responsable = trim($this->familiaResponsable);
+        $dniResp = $this->familiaDniResp;
         $email = trim($this->familiaEmail);
         $payload = [
             'apellido' => $apellido,
             'responsable' => $responsable !== '' ? $responsable : null,
+            'dniResp' => $dniResp !== '' ? $dniResp : null,
             'email' => $email !== '' ? $email : null,
         ];
 
@@ -210,7 +219,7 @@ class LegajoFamilia extends Component
                 $this->asignarFamiliaAlEstudiante((int) $f->id, false);
                 session()->flash('success', 'Familia creada y asignada al estudiante.');
                 $this->showModalFamilia = false;
-                $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaEmail');
+                $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaDniResp', 'familiaEmail');
                 $this->cargarDatos();
 
                 return;
@@ -218,7 +227,7 @@ class LegajoFamilia extends Component
         }
 
         $this->showModalFamilia = false;
-        $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaEmail');
+        $this->reset('editFamiliaId', 'familiaApellido', 'familiaResponsable', 'familiaDniResp', 'familiaEmail');
         $this->cargarDatos();
     }
 

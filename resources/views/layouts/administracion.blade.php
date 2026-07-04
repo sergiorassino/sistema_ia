@@ -40,6 +40,7 @@
             && ($route ?? '') !== 'cuotas.plantillas'
             && ! str_starts_with($route ?? '', 'cuotas.importes.')
             && ($route ?? '') !== 'cuotas.generacion-masiva'
+            && ($route ?? '') !== 'cuotas.facturacion-masiva-afip'
             && ($route ?? '') !== 'cuotas.eliminacion-masiva'
             && ($route ?? '') !== 'cuotas.edicion-generadas'
             && ($route ?? '') !== 'cuotas.cancelar-todas-reservas'
@@ -55,7 +56,7 @@
             && ($route ?? '') !== 'cuotas.siro-descarga'
             && ($route ?? '') !== 'cuotas.siro-descarga.detalle' ? 'true' : 'false' }},
         becas: {{ in_array($route ?? '', ['cuotas.tipos-beca', 'cuotas.asignacion-becas', 'cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true) ? 'true' : 'false' }},
-        gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.eliminacion-masiva', 'cuotas.edicion-generadas', 'cuotas.cancelar-todas-reservas'], true)
+        gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.facturacion-masiva-afip', 'cuotas.eliminacion-masiva', 'cuotas.edicion-generadas', 'cuotas.cancelar-todas-reservas'], true)
             || str_starts_with($route ?? '', 'cuotas.importes.') ? 'true' : 'false' }},
         resumenes: {{ in_array($route ?? '', [
             'cuotas.libro-aranceles',

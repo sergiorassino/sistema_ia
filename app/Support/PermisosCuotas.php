@@ -49,6 +49,12 @@ final class PermisosCuotas
         return self::puedeArancelesPorEstudiante() && tenantCuotasFacturacionAfipHabilitada();
     }
 
+    /** Facturación masiva AFIP por devengamiento. */
+    public static function puedeFacturacionMasivaAfip(): bool
+    {
+        return self::puedeArancelesPorEstudiante() && tenantCuotasFacturacionAfipEnDevengamiento();
+    }
+
     public static function puedePlantillas(): bool
     {
         return self::tiene(PermisosIaCatalog::ADMIN_CUOTAS_PLANTILLAS);
@@ -128,7 +134,8 @@ final class PermisosCuotas
             || self::puedeGeneracionMasiva()
             || self::puedeEliminacionMasiva()
             || self::puedeEdicionCuotasGeneradas()
-            || self::puedeCancelarTodasReservas();
+            || self::puedeCancelarTodasReservas()
+            || self::puedeFacturacionMasivaAfip();
     }
 
     /** Grupo sidebar «Resúmenes». */
