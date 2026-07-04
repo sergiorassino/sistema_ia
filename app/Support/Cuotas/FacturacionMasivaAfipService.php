@@ -6,6 +6,7 @@ use App\Models\ComprobanteAfip;
 use App\Models\CuotaGenerada;
 use App\Models\Ento;
 use App\Models\Legajo;
+use App\Support\Cuotas\ConsultaAfipComprobanteService;
 use App\Support\Afip\AfipCodigoBarras;
 use App\Support\Afip\AfipCondicionIvaReceptor;
 use App\Support\Afip\AfipWsfeEmision;
@@ -20,6 +21,8 @@ use Throwable;
 final class FacturacionMasivaAfipService
 {
     public const ESTADO_FACTURADO = 'Facturado';
+
+    public const ESTADO_NOTA_CREDITO = 'Nota de crédito emitida';
 
     public const ESTADO_OMITIDO = 'Omitido';
 
@@ -36,9 +39,15 @@ final class FacturacionMasivaAfipService
      *     cuotasNombre: string
      * }
      */
-    public static function vistaPrevia(array $cursoIds, array $idCuotasPlantilla, array $idLegajos = []): array
-    {
-        $grupos = self::gruposFacturables($cursoIds, $idCuotasPlantilla, $idLegajos);
+    public static function vistaPrevia(
+        array $cursoIds,
+        array $idCuotasPlantilla,
+        array $idLegajos = [],
+        string $tipoOperacion = ConsultaAfipComprobanteService::TIPO_FACTURA,
+    ): array {
+        $grupos = self::esNotaCredito($tipoOperacion)
+            ? self::gruposNotaCredito($cursoIds, $idCuotasPlantilla, $idLegajos)
+            : self::gruposFacturables($cursoIds, $idCuotasPlantilla, $idLegajos);
         $cuotasNombre = self::etiquetaCuotasSeleccionadas($idCuotasPlantilla);
 
         $porCurso = [];
@@ -88,6 +97,17 @@ final class FacturacionMasivaAfipService
      *     cuotasNombre: string
      * }
      */
+    public static function procesarEnCursos(
+        array $cursoIds,
+        array $idCuotasPlantilla,
+        array $idLegajos = [],
+        string $tipoOperacion = ConsultaAfipComprobanteService::TIPO_FACTURA,
+    ): array {
+        return self::esNotaCredito($tipoOperacion)
+            ? self::notaCreditoEnCursos($cursoIds, $idCuotasPlantilla, $idLegajos)
+            : self::facturarEnCursos($cursoIds, $idCuotasPlantilla, $idLegajos);
+    }
+
     public static function facturarEnCursos(array $cursoIds, array $idCuotasPlantilla, array $idLegajos = []): array
     {
         if (! tenantCuotasFacturacionAfipEnDevengamiento()) {
@@ -322,11 +342,14 @@ final class FacturacionMasivaAfipService
                 continue;
             }
 
-            $estado = self::ESTADO_FACTURADO;
+            $aFacturar = [];
+            foreach ($registrosFacturables as $registro) {
+                $aFacturar[] = trim((string) ($registro->cuota?->nombre ?? 'Cuota')).' (se facturará)';
+            }
+
+            $estado = implode('; ', $aFacturar);
             if ($omitidos !== []) {
-                $estado = 'Se facturará '.count($registrosFacturables).' concepto(s). Omitidos: '.implode('; ', $omitidos);
-            } else {
-                $estado = 'Se facturará';
+                $estado .= '. Omitidos: '.implode('; ', $omitidos);
             }
 
             $grupos[] = self::filaGrupo(
@@ -341,6 +364,239 @@ final class FacturacionMasivaAfipService
         }
 
         return $grupos;
+    }
+
+    /**
+     * Grupos anulables con nota de crédito (una NC por factura vigente y estudiante).
+     *
+     * @param  list<int>  $cursoIds
+     * @param  list<int>  $idCuotasPlantilla
+     * @param  list<int>  $idLegajos
+     * @return list<array<string, mixed>>
+     */
+    private static function gruposNotaCredito(array $cursoIds, array $idCuotasPlantilla, array $idLegajos = []): array
+    {
+        $idCuotasPlantilla = array_values(array_unique(array_filter(
+            array_map('intval', $idCuotasPlantilla),
+            fn (int $id) => $id > 0,
+        )));
+
+        if ($idCuotasPlantilla === []) {
+            return [];
+        }
+
+        $alumnos = self::alumnosParaAlcance($cursoIds, $idLegajos);
+        if ($alumnos->isEmpty()) {
+            return [];
+        }
+
+        $idTerlec = (int) schoolCtx()->idTerlec;
+        $grupos = [];
+
+        foreach ($alumnos as $alumno) {
+            $idLegajo = (int) $alumno->id_legajo;
+            $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+            if ($legajo === null) {
+                continue;
+            }
+
+            $registros = CuotaGenerada::query()
+                ->with(['cuota:id,nombre', 'terlec:id,ano', 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase'])
+                ->where('idLegajos', $idLegajo)
+                ->where('idTerlec', $idTerlec)
+                ->whereIn('idCuotas', $idCuotasPlantilla)
+                ->orderBy('idCuotas')
+                ->get();
+
+            if ($registros->isEmpty()) {
+                $grupos[] = self::filaGrupo(
+                    $alumno,
+                    $legajo,
+                    [],
+                    false,
+                    'Sin cuotas generadas para las plantillas seleccionadas.',
+                );
+
+                continue;
+            }
+
+            $porFactura = [];
+            $sinFactura = [];
+
+            foreach ($registros as $registro) {
+                $factura = ComprobantesAfipCuotaService::facturaVigentePorCuotaGenerada((int) $registro->id);
+                $nombreCuota = trim((string) ($registro->cuota?->nombre ?? 'Cuota'));
+
+                if ($factura === null) {
+                    $sinFactura[] = $nombreCuota.' (sin factura vigente)';
+
+                    continue;
+                }
+
+                $idFactura = (int) $factura->idComprobanteAfip;
+                $porFactura[$idFactura] ??= [
+                    'factura' => $factura,
+                    'registros' => [],
+                    'conceptos' => [],
+                ];
+                $porFactura[$idFactura]['registros'][] = $registro;
+                $porFactura[$idFactura]['conceptos'][] = mb_strtoupper($nombreCuota);
+            }
+
+            if ($porFactura === []) {
+                $msg = $sinFactura !== []
+                    ? implode('; ', $sinFactura)
+                    : 'No hay facturas vigentes para anular.';
+                $grupos[] = self::filaGrupo($alumno, $legajo, [], false, $msg);
+
+                continue;
+            }
+
+            foreach ($porFactura as $grupoFactura) {
+                /** @var ComprobanteAfip $factura */
+                $factura = $grupoFactura['factura'];
+                /** @var list<CuotaGenerada> $registrosFactura */
+                $registrosFactura = $grupoFactura['registros'];
+                $importe = round((float) ($factura->importePagado ?? 0), 2);
+
+                if ($importe <= 0) {
+                    $grupos[] = self::filaGrupo(
+                        $alumno,
+                        $legajo,
+                        $registrosFactura,
+                        false,
+                        'La factura vigente no tiene importe para anular.',
+                        0.0,
+                        '',
+                        $factura,
+                    );
+
+                    continue;
+                }
+
+                $aAnular = [];
+                foreach ($registrosFactura as $registro) {
+                    $aAnular[] = trim((string) ($registro->cuota?->nombre ?? 'Cuota')).' (se anulará con NC)';
+                }
+
+                $estado = implode('; ', $aAnular);
+                if ($sinFactura !== []) {
+                    $estado .= '. Sin factura: '.implode('; ', $sinFactura);
+                }
+
+                $grupos[] = self::filaGrupo(
+                    $alumno,
+                    $legajo,
+                    $registrosFactura,
+                    true,
+                    $estado,
+                    $importe,
+                    implode(', ', array_unique($grupoFactura['conceptos'])),
+                    $factura,
+                );
+            }
+        }
+
+        return $grupos;
+    }
+
+    /**
+     * @param  list<int>  $cursoIds
+     * @param  list<int>  $idCuotasPlantilla
+     * @param  list<int>  $idLegajos
+     * @return array{
+     *     porCurso: array<int, array{cursoNombre: string, alumnos: list<array{idLegajo: int, etiqueta: string, estado: string, exito: bool, nroAfip?: string}>}>,
+     *     facturados: int,
+     *     noFacturados: int,
+     *     cuotasNombre: string
+     * }
+     */
+    public static function notaCreditoEnCursos(array $cursoIds, array $idCuotasPlantilla, array $idLegajos = []): array
+    {
+        if (! tenantCuotasFacturacionAfipEnDevengamiento()) {
+            return self::resultadoVacio($idCuotasPlantilla, 'La facturación AFIP por devengamiento no está habilitada.');
+        }
+
+        if (! Schema::hasTable('comprobanteafip')) {
+            return self::resultadoVacio($idCuotasPlantilla, 'La tabla comprobanteafip no existe.');
+        }
+
+        $config = tenantCuotasFacturacionAfipConfig();
+        if ($config === null) {
+            return self::resultadoVacio($idCuotasPlantilla, 'Falta configurar la facturación AFIP.');
+        }
+
+        $tipoNc = (int) ($config['nota_credito_tipo'] ?? 12);
+        if ($tipoNc <= 0) {
+            return self::resultadoVacio($idCuotasPlantilla, 'Falta configurar el tipo de nota de crédito AFIP.');
+        }
+
+        $grupos = collect(self::gruposNotaCredito($cursoIds, $idCuotasPlantilla, $idLegajos))
+            ->filter(fn (array $g) => $g['puedeFacturar'])
+            ->values();
+
+        $porCurso = [];
+        $facturados = 0;
+        $noFacturados = 0;
+        $cuotasNombre = self::etiquetaCuotasSeleccionadas($idCuotasPlantilla);
+
+        foreach ($grupos as $grupo) {
+            /** @var ComprobanteAfip $factura */
+            $factura = $grupo['factura'];
+            /** @var list<CuotaGenerada> $registros */
+            $registros = $grupo['registros'];
+            $primerRegistro = $registros[0] ?? null;
+
+            if ($primerRegistro === null) {
+                self::registrarResultadoCurso($porCurso, $grupo, false, 'No hay cuotas asociadas a la factura.');
+                $noFacturados++;
+
+                continue;
+            }
+
+            $resultado = FacturacionAfipImputacionPago::emitirNotaCredito(
+                $primerRegistro,
+                (int) $grupo['idLegajo'],
+                $factura,
+            );
+
+            if (! ($resultado['ok'] ?? false)) {
+                self::registrarResultadoCurso(
+                    $porCurso,
+                    $grupo,
+                    false,
+                    (string) ($resultado['mensaje'] ?? 'No se pudo emitir la nota de crédito.'),
+                );
+                $noFacturados++;
+
+                continue;
+            }
+
+            $nroAfip = null;
+            if (isset($resultado['idComprobanteAfip'])) {
+                $nc = ComprobanteAfip::query()->find((int) $resultado['idComprobanteAfip']);
+                if ($nc !== null) {
+                    $nroAfip = ComprobantesAfipCuotaService::numeroFormateado($nc);
+                }
+            }
+
+            self::registrarResultadoCurso($porCurso, $grupo, true, self::ESTADO_NOTA_CREDITO, $nroAfip);
+            $facturados++;
+        }
+
+        ksort($porCurso);
+
+        return [
+            'porCurso' => $porCurso,
+            'facturados' => $facturados,
+            'noFacturados' => $noFacturados,
+            'cuotasNombre' => $cuotasNombre,
+        ];
+    }
+
+    private static function esNotaCredito(string $tipoOperacion): bool
+    {
+        return $tipoOperacion === ConsultaAfipComprobanteService::TIPO_NOTA_CREDITO;
     }
 
     /**
@@ -400,6 +656,7 @@ final class FacturacionMasivaAfipService
         string $estado,
         float $importeTotal = 0.0,
         string $conceptosTexto = '',
+        ?ComprobanteAfip $factura = null,
     ): array {
         return [
             'idLegajo' => (int) $alumno->id_legajo,
@@ -408,6 +665,7 @@ final class FacturacionMasivaAfipService
             'etiqueta' => GeneracionMasivaCuotasConsulta::etiquetaAlumno($alumno),
             'legajo' => $legajo,
             'registros' => $registros,
+            'factura' => $factura,
             'puedeFacturar' => $puedeFacturar,
             'estado' => $estado,
             'importeTotal' => round($importeTotal, 2),

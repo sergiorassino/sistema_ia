@@ -10,7 +10,9 @@
         ? ContextoEstudianteSesion::VISTA_CUOTAS_HISTORIAL
         : ContextoEstudianteSesion::VISTA_CUOTAS_ANIO;
     $facturasAfipPorCuota = $facturasAfipPorCuota ?? [];
+    $cuotasConComprobanteAfip = $cuotasConComprobanteAfip ?? [];
     $muestraComprobanteAfip = $muestraComprobanteAfip ?? false;
+    $afipEnDevengamiento = $afipEnDevengamiento ?? false;
 @endphp
 
 <div class="se-page max-w-[90rem] mx-auto">
@@ -150,6 +152,7 @@
                                 $nivelTexto = mb_strtoupper(trim((string) ($c->curso?->nivel?->nivel ?? '')));
                                 [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
                                 $facturaAfip = $facturasAfipPorCuota[(int) $c->id] ?? null;
+                                $tieneComprobantesAfip = isset($cuotasConComprobanteAfip[(int) $c->id]);
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
                                 <div class="gf-td gf-td-accion w-8 !py-1">
@@ -250,7 +253,23 @@
                                 </div>
                                 @if ($muestraComprobanteAfip)
                                     <div class="gf-td gf-td-accion !py-1">
-                                        @if ($facturaAfip)
+                                        @if ($afipEnDevengamiento && $tieneComprobantesAfip)
+                                            <x-nav-contexto-estudiante
+                                                destino="cuotas.cuota.comprobantes-afip-devengamiento"
+                                                :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
+                                                :id-legajos="$idLegajo"
+                                                :id-cuota-generada="$c->id"
+                                                :vista-cuotas="$vistaCuotasNav"
+                                                class="inline">
+                                                <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                      title="Comprobantes AFIP">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    </svg>
+                                                    <span class="sr-only">Comprobantes AFIP</span>
+                                                </span>
+                                            </x-nav-contexto-estudiante>
+                                        @elseif (! $afipEnDevengamiento && $facturaAfip)
                                             <a href="{{ se_route_url('cuotas.comprobante-afip', ['ref' => OpaqueRouteToken::forComprobanteAfipRegistro((int) $facturaAfip->idComprobanteAfip, $idLegajo)]) }}"
                                                target="_blank" rel="noopener noreferrer"
                                                class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"

@@ -29,18 +29,28 @@ class ComprobantesAfipCuota extends Component
         $idLegajo = ContextoEstudianteSesion::legajo(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaPago = ContextoEstudianteSesion::cuotaPago(ContextoEstudianteSesion::CUOTAS_GESTION);
-        abort_if(
-            $idLegajo === null
-            || $idCuotaGenerada === null
-            || $idCuotaPago === null
-            || GestionAranceles::legajoParaGestion($idLegajo) === null
-            || ComprobantesAfipCuotaService::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null,
-            404,
-        );
+        $enDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
+
+        $cuotaValida = $idLegajo !== null
+            && $idCuotaGenerada !== null
+            && GestionAranceles::legajoParaGestion($idLegajo) !== null
+            && GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) !== null;
+
+        if (! $cuotaValida) {
+            abort(404);
+        }
+
+        if (! $enDevengamiento) {
+            abort_if(
+                $idCuotaPago === null
+                || ComprobantesAfipCuotaService::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null,
+                404,
+            );
+        }
 
         $this->idLegajo = $idLegajo;
         $this->idCuotaGenerada = $idCuotaGenerada;
-        $this->idCuotaPago = $idCuotaPago;
+        $this->idCuotaPago = (int) ($idCuotaPago ?? 0);
     }
 
     public function generarFactura(): void
@@ -132,6 +142,10 @@ class ComprobantesAfipCuota extends Component
             $this->idCuotaGenerada,
         );
 
+        $facturaVigente = tenantCuotasFacturacionAfipEnDevengamiento()
+            ? ComprobantesAfipCuotaService::facturaVigentePorCuotaGenerada($this->idCuotaGenerada)
+            : ComprobantesAfipCuotaService::facturaVigente($this->idCuotaPago);
+
         return view('livewire.cuotas.comprobantes-afip-cuota', [
             'registro' => $registro,
             'pago' => $pago,
@@ -145,7 +159,8 @@ class ComprobantesAfipCuota extends Component
             'mensajeFactura' => $puedeFacturar['mensaje'],
             'puedeNotaCredito' => $puedeNc['ok'],
             'mensajeNotaCredito' => $puedeNc['mensaje'],
-            'facturaVigente' => ComprobantesAfipCuotaService::facturaVigente($this->idCuotaPago),
+            'facturaVigente' => $facturaVigente,
+            'enDevengamiento' => tenantCuotasFacturacionAfipEnDevengamiento(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Comprobantes AFIP']);
     }
 }

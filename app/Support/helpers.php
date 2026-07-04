@@ -996,6 +996,8 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
         $cfg['cbte_tipo'] = (int) ($cfg['cbte_tipo'] ?? 15);
         $cfg['concepto'] = (int) ($cfg['concepto'] ?? 2);
         $cfg['doc_tipo'] = (int) ($cfg['doc_tipo'] ?? 96);
+        $cfg['nota_credito_tipo'] = (int) ($cfg['nota_credito_tipo'] ?? 12);
+        $cfg['cbte_tipo_asociado'] = (int) ($cfg['cbte_tipo_asociado'] ?? $cfg['cbte_tipo']);
         $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
 
         // `simular => false` explícito en el tenant desactiva simulación también en APP_ENV=local.

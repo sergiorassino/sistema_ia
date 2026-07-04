@@ -3,11 +3,13 @@
 namespace App\Livewire\Cuotas;
 
 use App\Models\Cuota;
+use App\Support\Cuotas\ConsultaAfipComprobanteService;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
 use App\Support\Cuotas\FacturacionMasivaAfipService;
 use App\Support\Cuotas\GeneracionMasivaCuotasConsulta;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\PermisosCuotas;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
@@ -16,8 +18,10 @@ use Livewire\Component;
  */
 class FacturacionMasivaAfip extends Component
 {
-    /** 1 = cursos, 2 = cuotas + vista previa, 3 = resultado */
+    /** 1 = cuotas + tipo, 2 = alumnos + vista previa, 3 = resultado */
     public int $paso = 1;
+
+    public string $tipoOperacion = '';
 
     /** @var list<string> */
     public array $cursosSeleccionados = [];
@@ -43,29 +47,57 @@ class FacturacionMasivaAfip extends Component
         abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
     }
 
-    public function continuarACuotas(): void
+    public function continuarAAlumnos(): void
     {
-        $this->validarAlcanceEstudiantes();
+        $this->validarTipoOperacion();
+        $this->validarCuotasSeleccionadas();
         if ($this->getErrorBag()->isNotEmpty()) {
             return;
         }
 
         $this->paso = 2;
+        $this->cursosSeleccionados = [];
+        $this->alumnosSeleccionados = [];
         $this->vistaPrevia = [];
         $this->resultado = [];
         $this->resetErrorBag();
     }
 
-    public function volverACursos(): void
+    public function nuevaOperacion(): void
     {
         $this->paso = 1;
+        $this->tipoOperacion = '';
         $this->cuotasSeleccionadas = [];
+        $this->cursosSeleccionados = [];
+        $this->alumnosSeleccionados = [];
+        $this->filtroCursos = '';
+        $this->buscarAlumno = '';
+        $this->vistaPrevia = [];
+        $this->resultado = [];
+        $this->resetErrorBag();
+    }
+
+    public function volverACuotas(): void
+    {
+        $this->paso = 1;
+        $this->cursosSeleccionados = [];
+        $this->alumnosSeleccionados = [];
         $this->vistaPrevia = [];
         $this->resultado = [];
         $this->resetErrorBag();
     }
 
     public function updatedCuotasSeleccionadas(): void
+    {
+        if ($this->tipoOperacion === '') {
+            $this->cuotasSeleccionadas = [];
+        }
+
+        $this->vistaPrevia = [];
+        $this->resultado = [];
+    }
+
+    public function updatedTipoOperacion(): void
     {
         $this->vistaPrevia = [];
         $this->resultado = [];
@@ -75,6 +107,7 @@ class FacturacionMasivaAfip extends Component
     {
         abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
 
+        $this->validarTipoOperacion();
         $this->validarAlcanceEstudiantes();
         $this->validarCuotasSeleccionadas();
 
@@ -88,6 +121,7 @@ class FacturacionMasivaAfip extends Component
             $cursoIds,
             $cuotaIds,
             $this->idsLegajosValidados(),
+            $this->tipoOperacion,
         );
         $this->resultado = [];
     }
@@ -106,23 +140,28 @@ class FacturacionMasivaAfip extends Component
 
         $this->validarAlcanceEstudiantes();
         $this->validarCuotasSeleccionadas();
+        $this->validarTipoOperacion();
 
         if ($this->getErrorBag()->isNotEmpty()) {
             return;
         }
 
         if (($this->vistaPrevia['total'] ?? 0) < 1) {
-            $this->dispatch('se-swal-error', mensaje: 'No hay estudiantes para facturar. Revise la vista previa.');
+            $mensaje = $this->esNotaCredito()
+                ? 'No hay estudiantes para anular con nota de crédito. Revise la vista previa.'
+                : 'No hay estudiantes para facturar. Revise la vista previa.';
+            $this->dispatch('se-swal-error', mensaje: $mensaje);
 
             return;
         }
 
         $cursoIds = $this->idsCursosValidados();
         $cuotaIds = $this->idsCuotasValidadas();
-        $this->resultado = FacturacionMasivaAfipService::facturarEnCursos(
+        $this->resultado = FacturacionMasivaAfipService::procesarEnCursos(
             $cursoIds,
             $cuotaIds,
             $this->idsLegajosValidados(),
+            $this->tipoOperacion,
         );
         $this->paso = 3;
         $this->vistaPrevia = [];
@@ -209,6 +248,10 @@ class FacturacionMasivaAfip extends Component
 
     public function seleccionarTodasCuotas(): void
     {
+        if ($this->tipoOperacion === '') {
+            return;
+        }
+
         $this->cuotasSeleccionadas = $this->idsCuotasPermitidasComoString()->keys()->all();
         $this->resetErrorBag('cuotasSeleccionadas');
     }
@@ -216,6 +259,26 @@ class FacturacionMasivaAfip extends Component
     public function quitarTodasCuotas(): void
     {
         $this->cuotasSeleccionadas = [];
+    }
+
+    private function esNotaCredito(): bool
+    {
+        return $this->tipoOperacion === ConsultaAfipComprobanteService::TIPO_NOTA_CREDITO;
+    }
+
+    private function validarTipoOperacion(): void
+    {
+        $this->validate([
+            'tipoOperacion' => [
+                'required',
+                Rule::in([
+                    ConsultaAfipComprobanteService::TIPO_FACTURA,
+                    ConsultaAfipComprobanteService::TIPO_NOTA_CREDITO,
+                ]),
+            ],
+        ], [
+            'tipoOperacion.required' => 'Seleccione si desea emitir factura o nota de crédito.',
+        ]);
     }
 
     /** @return \Illuminate\Support\Collection<string, int> */
@@ -326,8 +389,8 @@ class FacturacionMasivaAfip extends Component
             'cuotasSeleccionadas' => ['required', 'array', 'min:1'],
             'cuotasSeleccionadas.*' => ['integer', 'min:1'],
         ], [
-            'cuotasSeleccionadas.required' => 'Seleccione al menos una cuota a facturar.',
-            'cuotasSeleccionadas.min' => 'Seleccione al menos una cuota a facturar.',
+            'cuotasSeleccionadas.required' => 'Seleccione al menos una cuota.',
+            'cuotasSeleccionadas.min' => 'Seleccione al menos una cuota.',
         ]);
 
         $permitidos = $this->idsCuotasPermitidasComoString();
@@ -398,18 +461,15 @@ class FacturacionMasivaAfip extends Component
             ->values()
             ->all();
 
-        $plantillas = collect();
-        if ($this->paso >= 2) {
-            $plantillas = Cuota::query()
-                ->where('idTerlec', CuotasPlantillaCatalog::idTerlecActivo())
-                ->with(['cuotasTipo:id,nombre', 'cuotasMes:id,mes'])
-                ->orderBy('orden')
-                ->orderBy('id')
-                ->get();
-        }
+        $plantillas = Cuota::query()
+            ->where('idTerlec', CuotasPlantillaCatalog::idTerlecActivo())
+            ->with(['cuotasTipo:id,nombre', 'cuotasMes:id,mes'])
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get();
 
         $legajosBusqueda = null;
-        if (trim($this->buscarAlumno) !== '') {
+        if ($this->paso === 2 && trim($this->buscarAlumno) !== '') {
             $legajosBusqueda = GestionAranceles::buscarLegajos($this->buscarAlumno, 15);
         }
 
@@ -425,9 +485,12 @@ class FacturacionMasivaAfip extends Component
             'plantillas' => $plantillas,
             'cantidadCuotasSeleccionadas' => count($this->cuotasSeleccionadas),
             'cantidadAlumnosSeleccionados' => count($this->alumnosSeleccionados),
-            'puedeContinuar' => $cantidadSeleccionados > 0 || count($this->alumnosSeleccionados) > 0,
+            'puedeContinuarCuotas' => $this->tipoOperacion !== '' && count($this->cuotasSeleccionadas) > 0,
+            'puedeSeleccionarCuotas' => $this->tipoOperacion !== '',
+            'puedeContinuarAlumnos' => $cantidadSeleccionados > 0 || count($this->alumnosSeleccionados) > 0,
             'legajosBusqueda' => $legajosBusqueda,
             'idsAlumnosSeleccionados' => $idsAlumnosSeleccionados,
+            'esNotaCredito' => $this->esNotaCredito(),
             'ano' => $ano,
         ])->layout(layoutMenuStaff(), ['pageTitle' => "Facturación masiva AFIP — {$ano}"]);
     }

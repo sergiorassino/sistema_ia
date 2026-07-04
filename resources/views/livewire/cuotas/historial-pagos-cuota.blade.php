@@ -5,6 +5,7 @@
     use App\Support\Security\OpaqueRouteToken;
 
     $muestraCompAfip = tenantCuotasFacturacionAfipEnPago();
+    $muestraCambiarFechaPago = tenantCuotasFacturacionAfipModo() === 'pago';
     $vistaCuotasNav = ContextoEstudianteSesion::etiquetaVistaCuotas(ContextoEstudianteSesion::CUOTAS_GESTION);
 @endphp
 
@@ -51,9 +52,11 @@
                         <div class="gf-th gf-th-right gf-th-importe">Bonif.</div>
                         <div class="gf-th gf-th-right gf-th-importe">Interés</div>
                         <div class="gf-th gf-th-accion gf-th-accion-borrar gf-th-accion-label" title="Borrar pago">Borrar</div>
-                        <div class="gf-th gf-th-accion gf-th-accion-fecha gf-th-accion-label" title="Cambiar fecha de pago">
-                            <span class="gf-th-accion-fecha-label"><span>Cambiar</span><span>Fecha</span><span>Pago</span></span>
-                        </div>
+                        @if ($muestraCambiarFechaPago)
+                            <div class="gf-th gf-th-accion gf-th-accion-fecha gf-th-accion-label" title="Cambiar fecha de pago">
+                                <span class="gf-th-accion-fecha-label"><span>Cambiar</span><span>Fecha</span><span>Pago</span></span>
+                            </div>
+                        @endif
                     </div>
 
                     @foreach ($pagos as $pago)
@@ -130,17 +133,19 @@
                                     </button>
                                 @endif
                             </div>
-                            <div class="gf-td gf-td-accion gf-td-accion-fecha !py-1">
-                                <button type="button"
-                                        wire:click="abrirModalFechaPago({{ (int) $pago->id }})"
-                                        class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                        title="Cambiar fecha de pago">
-                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    <span class="sr-only">Cambiar fecha de pago</span>
-                                </button>
-                            </div>
+                            @if ($muestraCambiarFechaPago)
+                                <div class="gf-td gf-td-accion gf-td-accion-fecha !py-1">
+                                    <button type="button"
+                                            wire:click="abrirModalFechaPago({{ (int) $pago->id }})"
+                                            class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                            title="Cambiar fecha de pago">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span class="sr-only">Cambiar fecha de pago</span>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -148,7 +153,7 @@
         @endif
     </section>
 
-    @if ($modalFechaPagoAbierto)
+    @if ($muestraCambiarFechaPago && $modalFechaPagoAbierto)
         @teleport('body')
         <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
              role="dialog"
