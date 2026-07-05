@@ -27,6 +27,33 @@ final class GestionAranceles
     }
 
     /**
+     * Legajo con datos de familia y vínculos para facturación AFIP (devengamiento).
+     */
+    public static function legajoParaFacturacionAfip(int $idLegajo): ?Legajo
+    {
+        return Legajo::query()
+            ->with(['familia:id,apellido,responsable,dniResp,email'])
+            ->whereKey($idLegajo)
+            ->first([
+                'id',
+                'apellido',
+                'nombre',
+                'dni',
+                'legajo',
+                'idFamilias',
+                'nombrepad',
+                'dnipad',
+                'emailpad',
+                'nombremad',
+                'dnimad',
+                'emailmad',
+                'nombretut',
+                'dnitut',
+                'emailtut',
+            ]);
+    }
+
+    /**
      * Vista normal: todas las cuotas del ciclo activo y las impagas de años anteriores.
      *
      * @return Collection<int, CuotaGenerada>

@@ -1324,6 +1324,103 @@
         justify-content: center;
     }
 
+    /* Facturación masiva AFIP — vista previa devengamiento (ancho fluido, sin scroll horizontal) */
+    .gf.gf-facturacion-afip-previa {
+        display: block;
+        width: 100%;
+    }
+    .gf.gf-facturacion-afip-previa .gf-head,
+    .gf.gf-facturacion-afip-previa .gf-row {
+        width: 100%;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th,
+    .gf.gf-facturacion-afip-previa .gf-td {
+        box-sizing: border-box;
+        min-width: 0;
+        @apply px-1.5 py-1;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-apellido,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-apellido {
+        flex: 1 1 4.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-nombre,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-nombre {
+        flex: 1.1 1 4.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-dni,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-dni {
+        flex: 0 0 5rem;
+        width: 5rem;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-destinatario,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-destinatario {
+        flex: 1 1 4.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-dni-dest,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-dni-dest {
+        flex: 0 0 5rem;
+        width: 5rem;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-cuota,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-cuota {
+        flex: 0 0 5rem;
+        width: 5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-importe,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-importe {
+        flex: 0 0 5.25rem;
+        width: 5.25rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-estado {
+        flex: 1.5 1 6rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-estado {
+        flex: 1.5 1 6rem;
+        overflow: hidden;
+        white-space: normal;
+        line-height: 1.25;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .gf.gf-facturacion-afip-previa .gf-th.gf-th-accion,
+    .gf.gf-facturacion-afip-previa .gf-td.gf-td-accion {
+        flex: 0 0 3.75rem !important;
+        width: 3.75rem !important;
+        min-width: 3.75rem !important;
+        max-width: 3.75rem !important;
+        padding-left: 0.125rem;
+        padding-right: 0.125rem;
+        text-align: center;
+    }
+    .gf.gf-facturacion-afip-previa.gf-vcenter .gf-th.gf-th-accion,
+    .gf.gf-facturacion-afip-previa.gf-vcenter .gf-td.gf-td-accion {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Cooperadora — pagos por estudiante (detalle) */
     .gf.gf-coop-pagos-estudiante {
         display: block;

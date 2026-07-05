@@ -3,11 +3,14 @@
 namespace App\Livewire\Cuotas;
 
 use App\Models\Cuota;
+use App\Models\Familia;
 use App\Support\Cuotas\ConsultaAfipComprobanteService;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
+use App\Support\Cuotas\FacturacionAfipComun;
 use App\Support\Cuotas\FacturacionMasivaAfipService;
 use App\Support\Cuotas\GeneracionMasivaCuotasConsulta;
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\DniInput;
 use App\Support\PermisosCuotas;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\RateLimiter;
@@ -41,6 +44,27 @@ class FacturacionMasivaAfip extends Component
 
     /** @var array<string, mixed> */
     public array $resultado = [];
+
+    public bool $modalRespAdmiAbierto = false;
+
+    public ?int $respAdmiIdLegajo = null;
+
+    public ?int $respAdmiIdFamilia = null;
+
+    public string $respAdmiApellido = '';
+
+    public string $respAdmiNombre = '';
+
+    public string $respAdmiDni = '';
+
+    public string $respAdmiEmail = '';
+
+    public string $respAdmiVinculo = '';
+
+    /** @var array<string, array{nombre: string, dni: string}> */
+    public array $respAdmiVinculos = [];
+
+    public string $respAdmiEstudianteEtiqueta = '';
 
     public function mount(): void
     {
@@ -165,6 +189,148 @@ class FacturacionMasivaAfip extends Component
         );
         $this->paso = 3;
         $this->vistaPrevia = [];
+    }
+
+    public function abrirModalRespAdmi(int $idLegajo): void
+    {
+        abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
+
+        if (! $this->legajoEnAlcance($idLegajo)) {
+            $this->dispatch('se-swal-error', mensaje: 'El estudiante no pertenece al alcance seleccionado.');
+
+            return;
+        }
+
+        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
+        if ($legajo === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante.');
+
+            return;
+        }
+
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        $idFamilia = (int) $destinatario['idFamilia'];
+        if ($idFamilia <= 0) {
+            $this->dispatch('se-swal-error', mensaje: 'El estudiante no tiene familia asignada. Asigne una familia desde el legajo.');
+
+            return;
+        }
+
+        $this->respAdmiIdLegajo = $idLegajo;
+        $this->respAdmiIdFamilia = $idFamilia;
+        $this->respAdmiApellido = trim((string) ($legajo->familia?->apellido ?? ''));
+        $this->respAdmiNombre = (string) $destinatario['responsable'];
+        $this->respAdmiDni = (string) $destinatario['dniResp'];
+        $this->respAdmiEmail = trim((string) ($legajo->familia?->email ?? ''));
+        $this->respAdmiVinculos = FacturacionAfipComun::vinculosResponsableEconomico($legajo);
+        $this->respAdmiVinculo = '';
+        $this->respAdmiEstudianteEtiqueta = trim(($legajo->apellido ?? '').', '.($legajo->nombre ?? ''));
+        $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
+        $this->modalRespAdmiAbierto = true;
+    }
+
+    public function cerrarModalRespAdmi(): void
+    {
+        $this->modalRespAdmiAbierto = false;
+        $this->respAdmiIdLegajo = null;
+        $this->respAdmiIdFamilia = null;
+        $this->respAdmiApellido = '';
+        $this->respAdmiNombre = '';
+        $this->respAdmiDni = '';
+        $this->respAdmiEmail = '';
+        $this->respAdmiVinculo = '';
+        $this->respAdmiVinculos = [];
+        $this->respAdmiEstudianteEtiqueta = '';
+        $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
+    }
+
+    public function seleccionarRespAdmiVinculo(string $vinculo): void
+    {
+        if (! in_array($vinculo, ['padre', 'madre', 'tutor'], true)) {
+            return;
+        }
+
+        $fila = $this->respAdmiVinculos[$vinculo] ?? ['nombre' => '', 'dni' => '', 'email' => '', 'apellido' => ''];
+        $this->respAdmiVinculo = $vinculo;
+        $apellidoVinculo = trim((string) ($fila['apellido'] ?? ''));
+        if ($apellidoVinculo !== '') {
+            $this->respAdmiApellido = $apellidoVinculo;
+        }
+        $this->respAdmiNombre = trim((string) ($fila['nombre'] ?? ''));
+        $this->respAdmiDni = (string) ($fila['dni'] ?? '');
+        $this->respAdmiEmail = trim((string) ($fila['email'] ?? ''));
+        $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail']);
+    }
+
+    public function guardarRespAdmi(): void
+    {
+        abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
+
+        $idLegajo = (int) ($this->respAdmiIdLegajo ?? 0);
+        $idFamilia = (int) ($this->respAdmiIdFamilia ?? 0);
+        if ($idLegajo < 1 || $idFamilia < 1 || ! $this->legajoEnAlcance($idLegajo)) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo validar el estudiante seleccionado.');
+
+            return;
+        }
+
+        $rateKey = 'cuotas:facturacion-afip:resp-admi:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($rateKey, 20)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        $this->respAdmiDni = DniInput::digitsOnly($this->respAdmiDni);
+        $this->respAdmiEmail = mb_strtolower(trim($this->respAdmiEmail), 'UTF-8');
+        $this->validate([
+            'respAdmiApellido' => ['required', 'string', 'max:50'],
+            'respAdmiNombre' => ['required', 'string', 'max:50'],
+            'respAdmiDni' => ['required', 'digits_between:7,11'],
+            'respAdmiEmail' => ['nullable', 'email', 'max:100'],
+        ], [
+            'respAdmiApellido.required' => 'Indique el apellido de la familia.',
+            'respAdmiApellido.max' => 'El apellido no puede superar los 50 caracteres.',
+            'respAdmiNombre.required' => 'Indique el nombre del responsable económico.',
+            'respAdmiNombre.max' => 'El responsable no puede superar los 50 caracteres.',
+            'respAdmiDni.required' => 'Indique el DNI del responsable económico.',
+            'respAdmiDni.digits_between' => 'El DNI del responsable debe tener entre 7 y 11 dígitos.',
+            'respAdmiEmail.email' => 'El email no es válido.',
+            'respAdmiEmail.max' => 'El email no puede superar los 100 caracteres.',
+        ]);
+
+        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
+        if ($legajo === null || (int) ($legajo->idFamilias ?? 0) !== $idFamilia) {
+            $this->dispatch('se-swal-error', mensaje: 'La familia del estudiante cambió. Cierre el modal y vuelva a intentar.');
+
+            return;
+        }
+
+        $familia = Familia::query()->find($idFamilia);
+        if ($familia === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró la familia del estudiante.');
+
+            return;
+        }
+
+        $apellido = trim($this->respAdmiApellido);
+        $responsable = trim($this->respAdmiNombre);
+        $email = $this->respAdmiEmail;
+        $familia->update([
+            'apellido' => $apellido,
+            'responsable' => $responsable,
+            'dniResp' => $this->respAdmiDni,
+            'email' => $email !== '' ? $email : null,
+        ]);
+
+        $this->cerrarModalRespAdmi();
+
+        if ($this->vistaPrevia !== []) {
+            $this->armarVistaPrevia();
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: 'Responsable económico actualizado.');
     }
 
     public function quitarAlumno(int $idLegajo): void
@@ -349,6 +515,30 @@ class FacturacionMasivaAfip extends Component
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function legajoEnAlcance(int $idLegajo): bool
+    {
+        if ($idLegajo < 1) {
+            return false;
+        }
+
+        if (in_array($idLegajo, $this->idsLegajosValidados(), true)) {
+            return true;
+        }
+
+        $cursoIds = $this->idsCursosValidados();
+        if ($cursoIds === []) {
+            return false;
+        }
+
+        foreach (GeneracionMasivaCuotasConsulta::alumnosRegularesPorCursos($cursoIds) as $alumno) {
+            if ((int) ($alumno->id_legajo ?? 0) === $idLegajo) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function validarAlcanceEstudiantes(): void
