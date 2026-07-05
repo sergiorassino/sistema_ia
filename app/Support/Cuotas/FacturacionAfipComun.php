@@ -2,11 +2,13 @@
 
 namespace App\Support\Cuotas;
 
+use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Models\CuotaGenerada;
 use App\Models\CuotasMes;
 use App\Models\Ento;
 use App\Models\Familia;
 use App\Models\Legajo;
+use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -136,6 +138,98 @@ final class FacturacionAfipComun
         }
 
         return trim((string) (Familia::query()->whereKey($idFamilia)->value('dniResp') ?? ''));
+    }
+
+    /**
+     * @return array{
+     *     idFamilia: int,
+     *     responsable: string,
+     *     dniResp: string,
+     *     valido: bool,
+     *     motivo: string
+     * }
+     */
+    public static function destinatarioFacturaDesdeLegajo(Legajo $legajo): array
+    {
+        $idFamilia = (int) ($legajo->idFamilias ?? 0);
+        $responsable = self::responsableEconomicoFamilia($legajo);
+        $dniResp = self::dniRespDesdeFamilia($legajo);
+        $motivo = self::motivoDestinatarioInvalido($idFamilia, $responsable, $dniResp);
+
+        return [
+            'idFamilia' => $idFamilia,
+            'responsable' => $responsable,
+            'dniResp' => $dniResp,
+            'valido' => $motivo === null,
+            'motivo' => $motivo ?? '',
+        ];
+    }
+
+    public static function motivoDestinatarioInvalido(int $idFamilia, string $responsable, string $dniResp): ?string
+    {
+        if ($idFamilia <= 0 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
+            return 'El estudiante no tiene familia asignada.';
+        }
+
+        if (trim($responsable) === '') {
+            return 'Falta el responsable económico de la familia.';
+        }
+
+        if (self::documentoNumerico($dniResp) <= 0) {
+            return 'Falta o es inválido el DNI del responsable económico.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Opciones de padre, madre y tutor para asignar responsable económico de la familia.
+     *
+     * @return array{
+     *     padre: array{apellido: string, nombrePila: string, nombre: string, dni: string, email: string, tieneDatos: bool},
+     *     madre: array{apellido: string, nombrePila: string, nombre: string, dni: string, email: string, tieneDatos: bool},
+     *     tutor: array{apellido: string, nombrePila: string, nombre: string, dni: string, email: string, tieneDatos: bool}
+     * }
+     */
+    public static function vinculosResponsableEconomico(Legajo $legajo): array
+    {
+        return [
+            'padre' => self::filaVinculoResponsableEconomico(
+                (string) ($legajo->nombrepad ?? ''),
+                (string) ($legajo->dnipad ?? ''),
+                (string) ($legajo->emailpad ?? ''),
+            ),
+            'madre' => self::filaVinculoResponsableEconomico(
+                (string) ($legajo->nombremad ?? ''),
+                (string) ($legajo->dnimad ?? ''),
+                (string) ($legajo->emailmad ?? ''),
+            ),
+            'tutor' => self::filaVinculoResponsableEconomico(
+                (string) ($legajo->nombretut ?? ''),
+                (string) ($legajo->dnitut ?? ''),
+                (string) ($legajo->emailtut ?? ''),
+            ),
+        ];
+    }
+
+    /**
+     * @return array{apellido: string, nombrePila: string, nombre: string, dni: string, email: string, tieneDatos: bool}
+     */
+    private static function filaVinculoResponsableEconomico(string $nombreCompleto, string $dni, string $email = ''): array
+    {
+        $nombre = trim($nombreCompleto);
+        $partes = ResponsablesLegajoCooperadora::separarNombre($nombre);
+        $dniLimpio = preg_replace('/\D/', '', $dni) ?? '';
+        $emailLimpio = mb_strtolower(trim($email), 'UTF-8');
+
+        return [
+            'apellido' => trim((string) ($partes['apellido'] ?? '')),
+            'nombrePila' => trim((string) ($partes['nombre'] ?? '')),
+            'nombre' => $nombre,
+            'dni' => $dniLimpio,
+            'email' => $emailLimpio,
+            'tieneDatos' => $nombre !== '' || $dniLimpio !== '',
+        ];
     }
 
     /**

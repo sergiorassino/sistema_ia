@@ -33,7 +33,21 @@ final class FacturacionMasivaAfipService
      * @param  list<int>  $idCuotasPlantilla
      * @param  list<int>  $idLegajos  Legajos elegidos individualmente (se combinan con los de curso).
      * @return array{
-     *     porCurso: array<int, array{cursoNombre: string, alumnos: list<array{idLegajo: int, etiqueta: string, estado: string, puedeFacturar: bool, importe: float, conceptos: string}>}>,
+     *     filas: list<array{
+     *         idLegajo: int,
+     *         idFamilia: int,
+     *         apellido: string,
+     *         nombre: string,
+     *         dni: string,
+     *         destinatario: string,
+     *         dniDestinatario: string,
+     *         cuotaNombre: string,
+     *         importe: float,
+     *         puedeFacturar: bool,
+     *         estado: string,
+     *         idCurso: int,
+     *         cursoNombre: string
+     *     }>,
      *     total: int,
      *     totalAlumnos: int,
      *     cuotasNombre: string
@@ -50,38 +64,25 @@ final class FacturacionMasivaAfipService
             : self::gruposFacturables($cursoIds, $idCuotasPlantilla, $idLegajos);
         $cuotasNombre = self::etiquetaCuotasSeleccionadas($idCuotasPlantilla);
 
-        $porCurso = [];
+        $filas = [];
         $total = 0;
-        $totalAlumnos = 0;
+        $legajosContados = [];
 
         foreach ($grupos as $grupo) {
-            $puede = $grupo['puedeFacturar'];
-            if ($puede) {
+            $idLegajo = (int) $grupo['idLegajo'];
+            $legajosContados[$idLegajo] = true;
+
+            if ($grupo['puedeFacturar']) {
                 $total++;
             }
 
-            $idCurso = (int) $grupo['idCurso'];
-            $porCurso[$idCurso] ??= [
-                'cursoNombre' => (string) $grupo['cursoNombre'],
-                'alumnos' => [],
-            ];
-            $porCurso[$idCurso]['alumnos'][] = [
-                'idLegajo' => (int) $grupo['idLegajo'],
-                'etiqueta' => (string) $grupo['etiqueta'],
-                'estado' => (string) $grupo['estado'],
-                'puedeFacturar' => $puede,
-                'importe' => (float) $grupo['importeTotal'],
-                'conceptos' => (string) $grupo['conceptosTexto'],
-            ];
-            $totalAlumnos++;
+            $filas = array_merge($filas, self::filasVistaPreviaDesdeGrupo($grupo));
         }
 
-        ksort($porCurso);
-
         return [
-            'porCurso' => $porCurso,
+            'filas' => $filas,
             'total' => $total,
-            'totalAlumnos' => $totalAlumnos,
+            'totalAlumnos' => count($legajosContados),
             'cuotasNombre' => $cuotasNombre,
         ];
     }
@@ -277,7 +278,7 @@ final class FacturacionMasivaAfipService
 
         foreach ($alumnos as $alumno) {
             $idLegajo = (int) $alumno->id_legajo;
-            $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+            $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
             if ($legajo === null) {
                 continue;
             }
@@ -342,6 +343,19 @@ final class FacturacionMasivaAfipService
                 continue;
             }
 
+            $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+            if (! $destinatario['valido']) {
+                $grupos[] = self::filaGrupo(
+                    $alumno,
+                    $legajo,
+                    $registrosFacturables,
+                    false,
+                    (string) $destinatario['motivo'],
+                );
+
+                continue;
+            }
+
             $aFacturar = [];
             foreach ($registrosFacturables as $registro) {
                 $aFacturar[] = trim((string) ($registro->cuota?->nombre ?? 'Cuota')).' (se facturará)';
@@ -395,7 +409,7 @@ final class FacturacionMasivaAfipService
 
         foreach ($alumnos as $alumno) {
             $idLegajo = (int) $alumno->id_legajo;
-            $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+            $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
             if ($legajo === null) {
                 continue;
             }
@@ -642,6 +656,49 @@ final class FacturacionMasivaAfipService
         $nombre = trim((string) ($alumno->curso_nombre ?? ''));
 
         return $nombre !== '' ? $nombre : 'Estudiantes individuales';
+    }
+
+    /**
+     * @param  array<string, mixed>  $grupo
+     * @return list<array<string, mixed>>
+     */
+    private static function filasVistaPreviaDesdeGrupo(array $grupo): array
+    {
+        /** @var Legajo $legajo */
+        $legajo = $grupo['legajo'];
+        /** @var list<CuotaGenerada> $registros */
+        $registros = $grupo['registros'];
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        $base = [
+            'idLegajo' => (int) $grupo['idLegajo'],
+            'idFamilia' => (int) $destinatario['idFamilia'],
+            'apellido' => trim((string) ($legajo->apellido ?? '')),
+            'nombre' => trim((string) ($legajo->nombre ?? '')),
+            'dni' => (string) ($legajo->dni ?? ''),
+            'destinatario' => (string) $destinatario['responsable'],
+            'dniDestinatario' => (string) $destinatario['dniResp'],
+            'puedeFacturar' => (bool) $grupo['puedeFacturar'],
+            'estado' => (string) $grupo['estado'],
+            'idCurso' => (int) $grupo['idCurso'],
+            'cursoNombre' => (string) $grupo['cursoNombre'],
+        ];
+
+        if ($registros === []) {
+            return [array_merge($base, [
+                'cuotaNombre' => '—',
+                'importe' => 0.0,
+            ])];
+        }
+
+        $filas = [];
+        foreach ($registros as $registro) {
+            $filas[] = array_merge($base, [
+                'cuotaNombre' => trim((string) ($registro->cuota?->nombre ?? 'Cuota')),
+                'importe' => round((float) ($registro->importe ?? 0), 2),
+            ]);
+        }
+
+        return $filas;
     }
 
     /**
