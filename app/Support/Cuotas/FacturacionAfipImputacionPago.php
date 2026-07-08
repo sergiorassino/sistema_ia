@@ -52,25 +52,33 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'No se encontró el legajo del estudiante.'];
         }
 
+        $columnasEnto = [
+            'insti',
+            'direccion',
+            'localidad',
+            'telefono',
+            'cuit',
+            'domicFact',
+            'condIvaInst',
+            'aporteEstatal',
+            'condicionIva',
+            'ptoVta',
+            'ingresosBrutos',
+            'fechaInicioAct',
+        ];
+        if (Schema::hasColumn('ento', 'cuitFact')) {
+            $columnasEnto[] = 'cuitFact';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', (int) schoolCtx()->idNivel)
-            ->first([
-                'insti',
-                'direccion',
-                'localidad',
-                'telefono',
-                'cuit',
-                'domicFact',
-                'condIvaInst',
-                'aporteEstatal',
-                'condicionIva',
-                'ptoVta',
-                'ingresosBrutos',
-                'fechaInicioAct',
-            ]);
+            ->first($columnasEnto);
 
-        if ($ento === null || trim((string) $ento->cuit) === '') {
-            return ['ok' => false, 'mensaje' => 'Faltan datos AFIP institucionales (CUIT / ento).'];
+        if ($ento === null) {
+            return ['ok' => false, 'mensaje' => 'Faltan datos institucionales (ento) para facturar.'];
+        }
+        if ($ento->cuitParaFacturar() === '') {
+            return ['ok' => false, 'mensaje' => 'Falta configurar el CUIT de facturación en parámetros del sistema (Facturación AFIP).'];
         }
 
         $ptoVta = (int) ($ento->ptoVta ?? 0);
@@ -96,10 +104,11 @@ final class FacturacionAfipImputacionPago
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
         );
         $condicionIvaEmisor = ComprobanteAfipDatos::condIvaInstDesdeEnto($ento);
+        $cuitFacturacion = $ento->cuitParaFacturar();
 
         try {
             $emision = AfipWsfeEmision::emitirRecibo($config, [
-                'cuit' => (string) $ento->cuit,
+                'cuit' => $cuitFacturacion,
                 'pto_vta' => $ptoVta,
                 'doc_nro' => $docNro,
                 'importe' => $importeFacturar,
@@ -120,7 +129,7 @@ final class FacturacionAfipImputacionPago
         $nroRecibo = (int) $emision['cbte_hasta'];
         $sufijoSimulado = $simulado ? ' (simulado, sin envío a AFIP)' : '';
         $codigoBarras = AfipCodigoBarras::generar(
-            (string) $ento->cuit,
+            $cuitFacturacion,
             (int) $config['cbte_tipo'],
             $ptoVta,
             $cae,
@@ -162,11 +171,12 @@ final class FacturacionAfipImputacionPago
                 $sufijoSimulado,
                 $snapshotInst,
                 $cursoAlumno,
+                $cuitFacturacion,
             ): void {
                 $comprobante = ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
                     'razonSocial' => trim((string) $ento->insti),
-                    'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
+                    'cuitInstitucion' => preg_replace('/\D/', '', $cuitFacturacion),
                     'domicilioComercial' => $ento->domicilioComercialCompleto(),
                     'condicionIvaInstitucion' => $condicionIvaEmisor,
                     'telefonoInstitucion' => $snapshotInst['telefonoInstitucion'],
@@ -287,25 +297,33 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'No se encontró el legajo del estudiante.'];
         }
 
+        $columnasEnto = [
+            'insti',
+            'direccion',
+            'localidad',
+            'telefono',
+            'cuit',
+            'domicFact',
+            'condIvaInst',
+            'aporteEstatal',
+            'condicionIva',
+            'ptoVta',
+            'ingresosBrutos',
+            'fechaInicioAct',
+        ];
+        if (Schema::hasColumn('ento', 'cuitFact')) {
+            $columnasEnto[] = 'cuitFact';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', (int) schoolCtx()->idNivel)
-            ->first([
-                'insti',
-                'direccion',
-                'localidad',
-                'telefono',
-                'cuit',
-                'domicFact',
-                'condIvaInst',
-                'aporteEstatal',
-                'condicionIva',
-                'ptoVta',
-                'ingresosBrutos',
-                'fechaInicioAct',
-            ]);
+            ->first($columnasEnto);
 
-        if ($ento === null || trim((string) $ento->cuit) === '') {
-            return ['ok' => false, 'mensaje' => 'Faltan datos AFIP institucionales (CUIT / ento).'];
+        if ($ento === null) {
+            return ['ok' => false, 'mensaje' => 'Faltan datos institucionales (ento) para facturar.'];
+        }
+        if ($ento->cuitParaFacturar() === '') {
+            return ['ok' => false, 'mensaje' => 'Falta configurar el CUIT de facturación en parámetros del sistema (Facturación AFIP).'];
         }
 
         $ptoVta = (int) ($ento->ptoVta ?? 0);
@@ -331,10 +349,11 @@ final class FacturacionAfipImputacionPago
             (int) ($config['condicion_iva_receptor_id'] ?? 5),
         );
         $condicionIvaEmisor = ComprobanteAfipDatos::condIvaInstDesdeEnto($ento);
+        $cuitFacturacion = $ento->cuitParaFacturar();
 
         try {
             $emision = AfipWsfeEmision::emitirRecibo($config, [
-                'cuit' => (string) $ento->cuit,
+                'cuit' => $cuitFacturacion,
                 'pto_vta' => $ptoVta,
                 'doc_nro' => $docNro,
                 'importe' => $importeTotal,
@@ -357,7 +376,7 @@ final class FacturacionAfipImputacionPago
         $nroRecibo = (int) $emision['cbte_hasta'];
         $sufijoSimulado = $simulado ? ' (simulado, sin envío a AFIP)' : '';
         $codigoBarras = AfipCodigoBarras::generar(
-            (string) $ento->cuit,
+            $cuitFacturacion,
             (int) $config['cbte_tipo'],
             $ptoVta,
             $cae,
@@ -410,11 +429,12 @@ final class FacturacionAfipImputacionPago
                 $primerRegistro,
                 $snapshotInst,
                 $cursoAlumno,
+                $cuitFacturacion,
             ): void {
                 $comprobante = ComprobanteAfip::query()->create([
                     'nombreInstitucion' => trim((string) $ento->insti),
                     'razonSocial' => trim((string) $ento->insti),
-                    'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
+                    'cuitInstitucion' => preg_replace('/\D/', '', $cuitFacturacion),
                     'domicilioComercial' => $ento->domicilioComercialCompleto(),
                     'condicionIvaInstitucion' => $condicionIvaEmisor,
                     'telefonoInstitucion' => $snapshotInst['telefonoInstitucion'],

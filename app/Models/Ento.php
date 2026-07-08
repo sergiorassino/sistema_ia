@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Ento extends Model
 {
@@ -24,6 +25,7 @@ class Ento extends Model
         'cue',
         'ee',
         'cuit',
+        'cuitFact',
         'domicFact',
         'condIvaInst',
         'aporteEstatal',
@@ -72,6 +74,19 @@ class Ento extends Model
     protected $casts = [
         'ptoVta' => 'integer',
     ];
+
+    /**
+     * CUIT emisor para WSFE / comprobantes AFIP (`ento.cuitFact`).
+     * No usa el CUIT institucional: si falta o está vacío, retorna cadena vacía.
+     */
+    public function cuitParaFacturar(): string
+    {
+        if (! Schema::hasColumn('ento', 'cuitFact')) {
+            return '';
+        }
+
+        return trim((string) ($this->cuitFact ?? ''));
+    }
 
     /**
      * Domicilio comercial para comprobantes AFIP.

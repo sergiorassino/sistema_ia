@@ -126,7 +126,10 @@ final class FacturacionMasivaAfipService
 
         $ento = self::entoInstitucional();
         if ($ento === null) {
-            return self::resultadoVacio($idCuotasPlantilla, 'Faltan datos AFIP institucionales.');
+            return self::resultadoVacio(
+                $idCuotasPlantilla,
+                'Falta configurar el CUIT de facturación en parámetros del sistema (Facturación AFIP).',
+            );
         }
 
         $ptoVta = (int) ($ento->ptoVta ?? 0);
@@ -170,7 +173,7 @@ final class FacturacionMasivaAfipService
                 );
 
                 $payloadAfip[] = [
-                    'cuit' => (string) $ento->cuit,
+                    'cuit' => $ento->cuitParaFacturar(),
                     'pto_vta' => $ptoVta,
                     'doc_nro' => $docNro,
                     'importe' => (float) $grupo['importeTotal'],
@@ -769,7 +772,7 @@ final class FacturacionMasivaAfipService
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
         $conceptoPrincipal = count($conceptos) === 1 ? $conceptos[0] : 'CUOTAS ESCOLARES';
         $codigoBarras = AfipCodigoBarras::generar(
-            (string) $ento->cuit,
+            $ento->cuitParaFacturar(),
             (int) $config['cbte_tipo'],
             $ptoVta,
             $cae,
@@ -812,7 +815,7 @@ final class FacturacionMasivaAfipService
             ComprobanteAfip::query()->create([
                 'nombreInstitucion' => trim((string) $ento->insti),
                 'razonSocial' => trim((string) $ento->insti),
-                'cuitInstitucion' => preg_replace('/\D/', '', (string) $ento->cuit),
+                'cuitInstitucion' => preg_replace('/\D/', '', $ento->cuitParaFacturar()),
                 'domicilioComercial' => $ento->domicilioComercialCompleto(),
                 'condicionIvaInstitucion' => $condicionIvaEmisor,
                 'telefonoInstitucion' => $snapshotInst['telefonoInstitucion'],
@@ -862,25 +865,30 @@ final class FacturacionMasivaAfipService
 
     private static function entoInstitucional(): ?Ento
     {
+        $columnas = [
+            'insti',
+            'direccion',
+            'localidad',
+            'provincia',
+            'telefono',
+            'cuit',
+            'domicFact',
+            'condIvaInst',
+            'aporteEstatal',
+            'condicionIva',
+            'ptoVta',
+            'ingresosBrutos',
+            'fechaInicioAct',
+        ];
+        if (Schema::hasColumn('ento', 'cuitFact')) {
+            $columnas[] = 'cuitFact';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', (int) schoolCtx()->idNivel)
-            ->first([
-                'insti',
-                'direccion',
-                'localidad',
-                'provincia',
-                'telefono',
-                'cuit',
-                'domicFact',
-                'condIvaInst',
-                'aporteEstatal',
-                'condicionIva',
-                'ptoVta',
-                'ingresosBrutos',
-                'fechaInicioAct',
-            ]);
+            ->first($columnas);
 
-        if ($ento === null || trim((string) $ento->cuit) === '') {
+        if ($ento === null || $ento->cuitParaFacturar() === '') {
             return null;
         }
 

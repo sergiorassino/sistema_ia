@@ -31,6 +31,7 @@ class ParametrosSistemaForm extends Component
     public string $cue = '';
     public string $ee = '';
     public string $cuit = '';
+    public string $cuitFact = '';
     public string $domicFact = '';
     public string $condIvaInst = '';
     public string $aporteEstatal = '';
@@ -97,6 +98,9 @@ class ParametrosSistemaForm extends Component
         $this->cue = (string) ($ento->cue ?? '');
         $this->ee = (string) ($ento->ee ?? '');
         $this->cuit = (string) ($ento->cuit ?? '');
+        $this->cuitFact = Schema::hasColumn('ento', 'cuitFact')
+            ? (string) ($ento->cuitFact ?? '')
+            : '';
         $this->domicFact = Schema::hasColumn('ento', 'domicFact')
             ? (string) ($ento->domicFact ?? '')
             : '';
@@ -140,6 +144,7 @@ class ParametrosSistemaForm extends Component
             'cue' => ['nullable', 'string', 'max:30'],
             'ee' => ['nullable', 'string', 'max:30'],
             'cuit' => ['nullable', 'string', 'max:20'],
+            'cuitFact' => ['nullable', 'string', 'max:13'],
             'domicFact' => ['nullable', 'string', 'max:100'],
             'condIvaInst' => ['nullable', 'string', 'max:40'],
             'aporteEstatal' => ['nullable', 'string', 'max:10'],
@@ -243,6 +248,12 @@ class ParametrosSistemaForm extends Component
         $this->validate();
 
         if ($this->facturacionAfipHabilitadaEnTenant()) {
+            if (Schema::hasColumn('ento', 'cuitFact') && trim($this->cuitFact) === '') {
+                $this->addError('cuitFact', 'El CUIT de facturación es obligatorio para emitir comprobantes AFIP.');
+
+                return;
+            }
+
             $carpeta = trim($this->afipCertCarpeta);
             $key = trim($this->afipCertKey);
             $crt = trim($this->afipCertCrt);
@@ -295,6 +306,9 @@ class ParametrosSistemaForm extends Component
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
 
+        if (Schema::hasColumn('ento', 'cuitFact')) {
+            $payload['cuitFact'] = ($v = trim($this->cuitFact)) !== '' ? $v : null;
+        }
         if (Schema::hasColumn('ento', 'domicFact')) {
             $payload['domicFact'] = ($v = trim($this->domicFact)) !== '' ? $v : null;
         }
