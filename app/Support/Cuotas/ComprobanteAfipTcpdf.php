@@ -514,12 +514,29 @@ final class ComprobanteAfipTcpdf extends TCPDF
 
         foreach ($lineas as $linea) {
             $importeFmt = (string) ($linea['importeFmt'] ?? '0,00');
-            $this->SetXY(self::MARGEN_IZQ, $y);
+            $concepto = (string) ($linea['concepto'] ?? '');
+            $becaPorcentaje = (int) ($this->datos['becaPorcentaje'] ?? 0);
+            $becaImporteOriginalFmt = (string) ($this->datos['becaImporteOriginalFmt'] ?? '');
+
+            $descripcion = $concepto;
+            if ($becaPorcentaje > 0 && $becaImporteOriginalFmt !== '') {
+                $descripcion .= "\n(Beca {$becaPorcentaje} % - Importe Original de la cuota: {$becaImporteOriginalFmt})";
+            }
+
             TcpdfFuenteArial::aplicar($this, '', 8);
-            $this->Cell(130, self::ALTO_FILA, (string) ($linea['concepto'] ?? ''), 0, 0, 'L');
-            $this->Cell(25, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
-            $this->Cell(25, self::ALTO_FILA, $importeFmt, 0, 0, 'R');
-            $y += self::ALTO_FILA;
+            $altoFila = max(self::ALTO_FILA, $this->getStringHeight(130, $descripcion));
+
+            $x = self::MARGEN_IZQ;
+            $this->SetXY($x, $y);
+            $this->MultiCell(130, self::ALTO_FILA, $descripcion, 0, 'L', false, 0);
+
+            $this->SetXY($x + 130, $y);
+            $this->MultiCell(25, $altoFila, $importeFmt, 0, 'R', false, 0);
+
+            $this->SetXY($x + 130 + 25, $y);
+            $this->MultiCell(25, $altoFila, $importeFmt, 0, 'R', false, 0);
+
+            $y += $altoFila;
         }
 
         $this->yCursor = $y;
