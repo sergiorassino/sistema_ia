@@ -216,6 +216,18 @@ final class ComprobanteAfipDatos
             $dniResp = CuotasFormato::formatearDni($dniResp);
         }
 
+        // En el PDF, el DNI junto a la cuota es el del alumno; el receptor AFIP es dniResp.
+        $dniAlumno = '';
+        if ($registroCuota !== null) {
+            if (! $registroCuota->relationLoaded('legajo')) {
+                $registroCuota->load(['legajo:id,dni']);
+            }
+            $dniAlumno = trim((string) ($registroCuota->legajo?->dni ?? ''));
+            if ($dniAlumno !== '') {
+                $dniAlumno = CuotasFormato::formatearDni($dniAlumno);
+            }
+        }
+
         $urlQr = AfipComprobanteQrUrl::generar([
             'fecha_yyyy_mm_dd' => $fechaQr,
             'cuit' => (string) ($comprobante->cuitInstitucion ?? ''),
@@ -253,7 +265,7 @@ final class ComprobanteAfipDatos
             'condicionIvaInstitucion' => $condicionIvaInstitucion,
             'aporteEstatal' => $aporteEstatal,
             'fechaEmision' => $fechaEmision,
-            'docNro' => trim((string) ($comprobante->dni ?? '')),
+            'docNro' => $dniAlumno,
             'docTipo' => $docTipo,
             'nombreCliente' => trim((string) ($comprobante->nombreAlumno ?? '')),
             'nombreResp' => $nombreResp,
@@ -338,6 +350,7 @@ final class ComprobanteAfipDatos
         return CuotaGenerada::query()
             ->with([
                 'cuota:id,nombre',
+                'legajo:id,dni',
                 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase',
                 'curso.curplan:id,curPlanCurso',
                 'curso.turnoClase:id,nombre',

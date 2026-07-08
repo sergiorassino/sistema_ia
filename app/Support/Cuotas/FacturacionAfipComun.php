@@ -120,7 +120,7 @@ final class FacturacionAfipComun
     }
 
     /**
-     * DNI del responsable económico impreso en la factura: campo `familias.dniResp`.
+     * DNI del responsable económico (`familias.dniResp`): receptor AFIP y texto del PDF.
      */
     public static function dniRespDesdeFamilia(Legajo $legajo): string
     {
@@ -138,6 +138,14 @@ final class FacturacionAfipComun
         }
 
         return trim((string) (Familia::query()->whereKey($idFamilia)->value('dniResp') ?? ''));
+    }
+
+    /**
+     * Documento del receptor ante AFIP (`DocNro`): `familias.dniResp`.
+     */
+    public static function docNroReceptorDesdeLegajo(Legajo $legajo): int
+    {
+        return self::documentoNumerico(self::dniRespDesdeFamilia($legajo));
     }
 
     /**

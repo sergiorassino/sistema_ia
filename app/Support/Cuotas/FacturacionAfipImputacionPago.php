@@ -47,7 +47,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar la facturación AFIP del colegio.'];
         }
 
-        $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
         if ($legajo === null) {
             return ['ok' => false, 'mensaje' => 'No se encontró el legajo del estudiante.'];
         }
@@ -86,9 +86,14 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $docNro = self::documentoNumerico($legajo->dni ?? null);
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        if (! $destinatario['valido']) {
+            return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
+        }
+
+        $docNro = FacturacionAfipComun::documentoNumerico($destinatario['dniResp']);
         if ($docNro <= 0) {
-            return ['ok' => false, 'mensaje' => 'El estudiante no tiene DNI válido para facturar.'];
+            return ['ok' => false, 'mensaje' => 'Falta o es inválido el DNI del responsable económico.'];
         }
 
         [$fechaDesde, $fechaHasta] = self::periodoServicio($registro);
@@ -136,8 +141,8 @@ final class FacturacionAfipImputacionPago
             $vtoCaeYmd,
         );
 
-        $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
-        $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
+        $nombreResp = (string) $destinatario['responsable'];
+        $dniResp = (string) $destinatario['dniResp'];
         $concepto = mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? 'CUOTA')));
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
         $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
@@ -292,7 +297,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar la facturación AFIP del colegio.'];
         }
 
-        $legajo = GestionAranceles::legajoParaGestion($idLegajo);
+        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
         if ($legajo === null) {
             return ['ok' => false, 'mensaje' => 'No se encontró el legajo del estudiante.'];
         }
@@ -331,9 +336,14 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $docNro = self::documentoNumerico($legajo->dni ?? null);
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        if (! $destinatario['valido']) {
+            return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
+        }
+
+        $docNro = FacturacionAfipComun::documentoNumerico($destinatario['dniResp']);
         if ($docNro <= 0) {
-            return ['ok' => false, 'mensaje' => 'El estudiante no tiene DNI válido para facturar.'];
+            return ['ok' => false, 'mensaje' => 'Falta o es inválido el DNI del responsable económico.'];
         }
 
         [$fechaDesde, $fechaHasta] = self::periodoServicioLote($registros);
@@ -383,8 +393,8 @@ final class FacturacionAfipImputacionPago
             $vtoCaeYmd,
         );
 
-        $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
-        $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
+        $nombreResp = (string) $destinatario['responsable'];
+        $dniResp = (string) $destinatario['dniResp'];
         $conceptoPrincipal = count($conceptos) === 1
             ? $conceptos[0]
             : 'CUOTAS ESCOLARES';
