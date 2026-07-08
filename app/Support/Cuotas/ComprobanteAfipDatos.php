@@ -5,6 +5,7 @@ namespace App\Support\Cuotas;
 use App\Models\ComprobanteAfip;
 use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
+use App\Models\CuotasBeca;
 use App\Models\Ento;
 use App\Support\Afip\AfipComprobanteQrUrl;
 use App\Support\Afip\AfipCondicionIvaReceptor;
@@ -163,6 +164,7 @@ final class ComprobanteAfipDatos
         $telefonoInstitucion = trim((string) ($comprobante->telefonoInstitucion ?? ''));
         $aporteEstatal = trim((string) ($comprobante->aporteEstatal ?? ''));
         $cursoTexto = mb_strtoupper(trim((string) ($comprobante->cursoAlumno ?? '')));
+        $registroCuota = self::registroCuotaAsociado($comprobante);
 
         if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '' || $cursoTexto === '') {
             $ento = self::entoParaComprobantePdf();
@@ -179,8 +181,32 @@ final class ComprobanteAfipDatos
                 $aporteEstatal = self::aporteEstatalDesdeEnto($ento);
             }
             if ($cursoTexto === '') {
-                $registroCuota = self::registroCuotaAsociado($comprobante);
                 $cursoTexto = mb_strtoupper(trim((string) ($registroCuota?->curso?->nombreParaListado() ?? '')));
+            }
+        }
+
+        // En el PDF, la leyenda de beca se imprime debajo del concepto facturado (si aplica).
+        $becaPorcentaje = null;
+        $becaImporteOriginalFmt = null;
+        $idBeca = (int) ($registroCuota?->idCuotasbecas ?? 0);
+        if ($registroCuota !== null && $idBeca > 1) {
+            $porcentaje = null;
+            if ($registroCuota->relationLoaded('beca') && $registroCuota->beca !== null) {
+                $porcentaje = (float) ($registroCuota->beca->porcentaje ?? 0);
+            } else {
+                $porcentaje = CuotasBeca::query()->whereKey($idBeca)->value('porcentaje');
+                if ($porcentaje !== null) {
+                    $porcentaje = (float) $porcentaje;
+                }
+            }
+
+            $porcentaje = $porcentaje !== null ? max(0.0, min(100.0, $porcentaje)) : null;
+            $importeNeto = round((float) ($registroCuota->importe ?? 0), 2);
+            if ($porcentaje !== null && $porcentaje > 0 && $importeNeto > 0) {
+                $factor = 1.0 - ($porcentaje / 100.0);
+                $importeOriginal = $factor > 0.0 ? round($importeNeto / $factor, 2) : $importeNeto;
+                $becaPorcentaje = (int) round($porcentaje);
+                $becaImporteOriginalFmt = number_format($importeOriginal, 2, ',', '.');
             }
         }
 
@@ -242,6 +268,8 @@ final class ComprobanteAfipDatos
             'importe' => $importe,
             'importeFmt' => number_format($importe, 2, ',', '.'),
             'lineas' => self::lineasDesdeComprobante($comprobante),
+            'becaPorcentaje' => $becaPorcentaje,
+            'becaImporteOriginalFmt' => $becaImporteOriginalFmt,
             'cae' => trim((string) ($comprobante->cae ?? '')),
             'vtoCae' => $vtoCae,
             'urlQr' => $urlQr,
