@@ -91,6 +91,14 @@
             </p>
 
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div class="md:col-span-2">
+                    <label class="form-label">Domicilio fiscal (AFIP)</label>
+                    <input wire:model="domicFact" type="text" maxlength="100"
+                           class="form-input mt-1.5 @error('domicFact') border-red-400 @enderror"
+                           placeholder="Domicilio registrado ante AFIP (puede diferir del domicilio real)">
+                    @error('domicFact') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
                 <div>
                     <label class="form-label">Punto de venta</label>
                     <input wire:model="ptoVta" type="number" min="1" max="9999" step="1"

@@ -65,29 +65,36 @@ Portal completamente separado del login de Secretaría.
 
 ---
 
-## 2. Manejo de Contraseñas — Modo Híbrido
+## 2. Manejo de Contraseñas — Texto plano
 
-El sistema usa un **esquema híbrido** de contraseñas por razones legacy:
+Las contraseñas se almacenan en **texto plano** en las tablas legacy (`profesores.pwrd`,
+`legajos.pwrd`), alineado con el sistema ScriptCase original y la operativa del colegio.
 
 ```
 ┌─────────────────────┐     ┌──────────────────────────────┐
-│ Usuarios existentes │────►│ Contraseña en texto plano    │
-│ (legacy)            │     │ Comparación: hash_equals()   │
+│ Alta / edición /    │────►│ Texto plano en `pwrd`        │
+│ blanqueo de clave   │     │ (sin bcrypt ni otro hash)    │
 └─────────────────────┘     └──────────────────────────────┘
-
-┌─────────────────────┐     ┌──────────────────────────────┐
-│ Usuarios nuevos o   │────►│ Hash bcrypt ($2y$ / $2a$)    │
-│ blanqueo de clave   │     │ Comparación: password_verify()│
-└─────────────────────┘     └──────────────────────────────┘
+                                       │
+                                       ▼
+                             ┌──────────────────────────────┐
+                             │ Login: hash_equals()         │
+                             │ (ProfesorUserProvider /      │
+                             │  AlumnoUserProvider)         │
+                             └──────────────────────────────┘
 ```
 
-**Lógica de validación** (en `ProfesorUserProvider::validateCredentials`):
-1. Si `$stored` empieza con `$2y$` o `$2a$` → usar `password_verify()`.
-2. Si no → comparar con `hash_equals()` (texto plano legacy).
+**Lógica de validación** (en `ProfesorUserProvider` y `AlumnoUserProvider`):
+
+- Comparar la contraseña ingresada con el valor almacenado usando `hash_equals()`.
 
 **Regla para código nuevo:**
-- Al crear usuario nuevo o blanquear contraseña → guardar con `bcrypt()` (salvo la excepción §2.1).
-- Mismo criterio aplica a ambas tablas (`profesores` y `legajos`), salvo la excepción §2.1.
+
+- Al crear usuario, blanquear o cambiar contraseña → guardar **siempre en texto plano**.
+- **No** usar bcrypt ni migración automática a hash en el login.
+
+**Motivo operativo:** secretaría informa la clave al docente/alumno; la contraseña debe poder
+consultarse en ABM y enviarse por correo en recuperación olvidada cuando corresponda.
 
 ### 2.1 Alta de legajo docente (Menú de Secretaría)
 
@@ -102,7 +109,7 @@ Al **crear** un legajo nuevo en **Legajos del docente** (`LegajoProfesorForm`), 
 
 **Implementación:** `App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm::save()` — los campos `nivel` y `pwrd` están en `$guarded` del modelo `Profesor`, por lo que se asignan con asignación directa y un segundo `save()` tras el `create()`.
 
-**Login:** `ProfesorUserProvider` compara texto plano con `hash_equals()` cuando `pwrd` no es hash bcrypt.
+**Login:** `ProfesorUserProvider` compara con `hash_equals()`.
 
 **Edición:** al modificar un legajo existente **no** se altera `pwrd`; solo se establece en el alta.
 

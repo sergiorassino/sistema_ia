@@ -28,8 +28,9 @@ Estas reglas aplican a **todo módulo nuevo** y a cambios en módulos existentes
 10. ¿Permisos verificados (cadena `0/1` de `profesores.permisos`)?
 11. ¿URLs de PDF/descarga/autogestión sin IDs ni documentos en la ruta (§10 de `docs/06-reglas-de-seguridad.md`, `OpaqueRouteToken`)?
 
-## Contraseñas — modo híbrido
+## Contraseñas — texto plano
 
-- Legacy: texto plano → `hash_equals()`.
-- Nuevos/blanqueo: bcrypt → `password_verify()`.
-- Al crear usuario o blanquear clave: guardar con `bcrypt()`, **excepto** alta de legajo docente (`LegajoProfesorForm`), que usa `1234` en texto plano — ver `docs/03-autenticacion-y-permisos.md` §2.1.
+- Almacenamiento en `profesores.pwrd` y `legajos.pwrd` en **texto plano** (legacy ScriptCase).
+- Login: comparar con `hash_equals()` en `ProfesorUserProvider` / `AlumnoUserProvider`.
+- Alta, blanqueo o cambio de clave: guardar en texto plano (sin bcrypt).
+- Ver `docs/03-autenticacion-y-permisos.md` §2 y §2.1 (alta de legajo docente con `1234`).

@@ -24,6 +24,7 @@ class Ento extends Model
         'cue',
         'ee',
         'cuit',
+        'domicFact',
         'condIvaInst',
         'aporteEstatal',
         'ptoVta',
@@ -73,10 +74,16 @@ class Ento extends Model
     ];
 
     /**
-     * Domicilio comercial para comprobantes AFIP (dirección + localidad).
+     * Domicilio comercial para comprobantes AFIP.
+     * Prioriza `domicFact` (domicilio registrado en AFIP); si está vacío, dirección + localidad.
      */
     public function domicilioComercialCompleto(): string
     {
+        $domicAfip = trim((string) ($this->domicFact ?? ''));
+        if ($domicAfip !== '') {
+            return $domicAfip;
+        }
+
         $direccion = trim((string) ($this->direccion ?? ''));
         $localidad = trim((string) ($this->localidad ?? ''));
 
