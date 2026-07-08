@@ -165,7 +165,7 @@ final class FacturacionMasivaAfipService
                 $legajo = $grupo['legajo'];
                 /** @var list<CuotaGenerada> $registros */
                 $registros = $grupo['registros'];
-                $docNro = FacturacionAfipComun::documentoNumerico($legajo->dni ?? null);
+                $docNro = FacturacionAfipComun::docNroReceptorDesdeLegajo($legajo);
                 [$fechaDesde, $fechaHasta] = FacturacionAfipComun::periodoServicioLote($registros);
                 $condicionIvaId = AfipCondicionIvaReceptor::idDesdeEtiqueta(
                     $condicionAlumnoDefault,
@@ -335,13 +335,6 @@ final class FacturacionMasivaAfipService
                     ? implode('; ', $omitidos)
                     : 'No hay conceptos facturables.';
                 $grupos[] = self::filaGrupo($alumno, $legajo, [], false, $msg);
-
-                continue;
-            }
-
-            $docNro = FacturacionAfipComun::documentoNumerico($legajo->dni ?? null);
-            if ($docNro <= 0) {
-                $grupos[] = self::filaGrupo($alumno, $legajo, $registrosFacturables, false, 'DNI inválido del estudiante.');
 
                 continue;
             }
@@ -766,9 +759,9 @@ final class FacturacionMasivaAfipService
             $idsCuotas[] = (int) $registro->id;
         }
 
-        $docNro = FacturacionAfipComun::documentoNumerico($legajo->dni ?? null);
         $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
         $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
+        $docNro = FacturacionAfipComun::documentoNumerico($dniResp);
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
         $conceptoPrincipal = count($conceptos) === 1 ? $conceptos[0] : 'CUOTAS ESCOLARES';
         $codigoBarras = AfipCodigoBarras::generar(

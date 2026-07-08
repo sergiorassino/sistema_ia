@@ -469,7 +469,7 @@ final class ComprobanteAfipTcpdf extends TCPDF
         $this->Line(self::MARGEN_IZQ, $y, $xFin, $y);
         $y += 2.0;
 
-        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Resp. Económico:', (string) ($this->datos['nombreResp'] ?? ''));
+        $y = $this->filaEtiquetaValor($y, self::MARGEN_IZQ, 'Responsable:', (string) ($this->datos['nombreResp'] ?? ''));
         $yResp = $y - self::ALTO_FILA;
         $this->filaEtiquetaValor($yResp, $xMedio, 'DNI:', (string) ($this->datos['dniResp'] ?? ''));
 
