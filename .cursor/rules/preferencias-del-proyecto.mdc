@@ -18,7 +18,7 @@ Antes de trabajar en cualquier módulo, leer:
 
 1. `docs/01-descripcion-general.md` — Visión general, stack, estructura
 2. `docs/02-modelo-de-datos.md` — Tablas del núcleo, tabla `ento`, relaciones
-3. `docs/03-autenticacion-y-permisos.md` — Dos logins, passwords híbridos, permisos `0/1`
+3. `docs/03-autenticacion-y-permisos.md` — Dos logins, contraseñas en texto plano, permisos `0/1`
 4. `docs/04-identidad-visual.md` — Paleta de colores, logos, design system
 5. `docs/05-preferencias-y-convenciones.md` — Convenciones de código y preferencias
 6. `docs/06-reglas-de-seguridad.md` — Baseline de seguridad obligatorio

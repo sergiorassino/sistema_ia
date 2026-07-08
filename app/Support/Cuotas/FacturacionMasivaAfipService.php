@@ -871,6 +871,7 @@ final class FacturacionMasivaAfipService
                 'provincia',
                 'telefono',
                 'cuit',
+                'domicFact',
                 'condIvaInst',
                 'aporteEstatal',
                 'condicionIva',

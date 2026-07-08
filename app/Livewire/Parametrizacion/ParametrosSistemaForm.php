@@ -31,6 +31,7 @@ class ParametrosSistemaForm extends Component
     public string $cue = '';
     public string $ee = '';
     public string $cuit = '';
+    public string $domicFact = '';
     public string $condIvaInst = '';
     public string $aporteEstatal = '';
     public string $ptoVta = '';
@@ -96,6 +97,9 @@ class ParametrosSistemaForm extends Component
         $this->cue = (string) ($ento->cue ?? '');
         $this->ee = (string) ($ento->ee ?? '');
         $this->cuit = (string) ($ento->cuit ?? '');
+        $this->domicFact = Schema::hasColumn('ento', 'domicFact')
+            ? (string) ($ento->domicFact ?? '')
+            : '';
         $this->condIvaInst = Schema::hasColumn('ento', 'condIvaInst')
             ? (string) ($ento->condIvaInst ?? '')
             : '';
@@ -136,6 +140,7 @@ class ParametrosSistemaForm extends Component
             'cue' => ['nullable', 'string', 'max:30'],
             'ee' => ['nullable', 'string', 'max:30'],
             'cuit' => ['nullable', 'string', 'max:20'],
+            'domicFact' => ['nullable', 'string', 'max:100'],
             'condIvaInst' => ['nullable', 'string', 'max:40'],
             'aporteEstatal' => ['nullable', 'string', 'max:10'],
             'ptoVta' => ['nullable', 'integer', 'min:1', 'max:9999'],
@@ -290,6 +295,9 @@ class ParametrosSistemaForm extends Component
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
 
+        if (Schema::hasColumn('ento', 'domicFact')) {
+            $payload['domicFact'] = ($v = trim($this->domicFact)) !== '' ? $v : null;
+        }
         if (Schema::hasColumn('ento', 'condIvaInst')) {
             $payload['condIvaInst'] = ($v = trim($this->condIvaInst)) !== '' ? $v : null;
         }

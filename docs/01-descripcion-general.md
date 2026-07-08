@@ -92,7 +92,7 @@ Módulos de parametrización y gestión básica de alumnos.
 Ver [02-modelo-de-datos.md](02-modelo-de-datos.md) para detalle de tablas.
 
 **Ya implementado:**
-- Login de Secretaría (tabla `profesores`, auth custom con soporte bcrypt híbrido)
+- Login de Secretaría (tabla `profesores`, auth custom; contraseñas en texto plano)
 - SchoolContext (nivel + ciclo lectivo en sesión)
 - Middleware `EnsureSchoolContext`
 - ABM Ciclos Lectivos (`terlec`)

@@ -81,6 +81,13 @@ php artisan key:generate
 # Configurar BD en .env (apuntar a MySQL existente)
 # Ejecutar schema.sql y bd_con_datos.sql en MySQL
 
-php artisan serve
-npm run dev
+# Desarrollo local (puertos por defecto; SILAVET usa 8001 / 5174 en la misma PC)
+# Laravel: http://127.0.0.1:8000  ·  Vite: http://127.0.0.1:5173
+npm run dev:all
+
+# Alternativa: dos terminales
+# php artisan serve --host=127.0.0.1 --port=8000
+# npm run dev
+
+# Atajo en Cursor: Terminal → Run Task → Dev: Laravel + Vite
 ```
