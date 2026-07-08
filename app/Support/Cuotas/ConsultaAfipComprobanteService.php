@@ -41,12 +41,20 @@ final class ConsultaAfipComprobanteService
             return ['ok' => false, 'mensaje' => 'Seleccione factura o nota de crédito.'];
         }
 
+        $columnasEnto = ['cuit', 'ptoVta'];
+        if (Schema::hasColumn('ento', 'cuitFact')) {
+            $columnasEnto[] = 'cuitFact';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', (int) schoolCtx()->idNivel)
-            ->first(['cuit', 'ptoVta']);
+            ->first($columnasEnto);
 
-        if ($ento === null || trim((string) $ento->cuit) === '') {
-            return ['ok' => false, 'mensaje' => 'Faltan datos AFIP institucionales (CUIT / ento).'];
+        if ($ento === null) {
+            return ['ok' => false, 'mensaje' => 'Faltan datos institucionales (ento) para consultar AFIP.'];
+        }
+        if ($ento->cuitParaFacturar() === '') {
+            return ['ok' => false, 'mensaje' => 'Falta configurar el CUIT de facturación en parámetros del sistema (Facturación AFIP).'];
         }
 
         $ptoVtaDefault = (int) ($ento->ptoVta ?? 0);
@@ -61,7 +69,7 @@ final class ConsultaAfipComprobanteService
 
         $ptoVta = $parseo['pto_vta'];
         $cbteNro = $parseo['cbte_nro'];
-        $cuit = preg_replace('/\D/', '', (string) $ento->cuit) ?? '';
+        $cuit = preg_replace('/\D/', '', $ento->cuitParaFacturar()) ?? '';
 
         try {
             $datos = AfipWsfeConsulta::consultarComprobante($config, [

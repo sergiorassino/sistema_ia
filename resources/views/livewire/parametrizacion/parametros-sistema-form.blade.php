@@ -92,6 +92,14 @@
 
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div class="md:col-span-2">
+                    <label class="form-label">CUIT de facturación</label>
+                    <input wire:model="cuitFact" type="text" maxlength="13"
+                           class="form-input mt-1.5 font-mono @error('cuitFact') border-red-400 @enderror"
+                           placeholder="CUIT emisor ante AFIP (puede diferir del CUIT institucional)">
+                    @error('cuitFact') <p class="form-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="md:col-span-2">
                     <label class="form-label">Domicilio fiscal (AFIP)</label>
                     <input wire:model="domicFact" type="text" maxlength="100"
                            class="form-input mt-1.5 @error('domicFact') border-red-400 @enderror"
