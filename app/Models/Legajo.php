@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Legajo extends Authenticatable
 {
@@ -71,6 +73,47 @@ class Legajo extends Authenticatable
     public function getNombreCompletoAttribute(): string
     {
         return trim($this->apellido.', '.$this->nombre);
+    }
+
+    /**
+     * Base de datos MySQL seleccionada en la conexión activa (colegio / tenant actual).
+     */
+    public static function nombreBaseDatosConectada(): string
+    {
+        $row = DB::selectOne('SELECT DATABASE() AS db');
+
+        if ($row && $row->db !== null && (string) $row->db !== '') {
+            return (string) $row->db;
+        }
+
+        return (string) DB::getDatabaseName();
+    }
+
+    /**
+     * Columnas reales de `legajos` en la BD conectada (orden del esquema MySQL).
+     *
+     * @return list<string>
+     */
+    public static function columnasTabla(): array
+    {
+        if (! Schema::hasTable('legajos')) {
+            return [];
+        }
+
+        $schema = static::nombreBaseDatosConectada();
+        if ($schema === '') {
+            return [];
+        }
+
+        $rows = DB::select(
+            'SELECT COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+             ORDER BY ORDINAL_POSITION',
+            [$schema, 'legajos']
+        );
+
+        return array_map(static fn ($row) => (string) $row->COLUMN_NAME, $rows);
     }
 
     public function scopeBuscar($query, string $termino)

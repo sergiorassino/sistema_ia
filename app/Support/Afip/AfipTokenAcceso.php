@@ -19,17 +19,25 @@ final class AfipTokenAcceso
      *     cert_usuario_id: string,
      *     cert_key: string,
      *     cert_crt: string,
-     *     produccion: bool
+     *     produccion: bool,
+     *     service?: string
      * }  $config
      * @return array{token: string, sign: string}
      */
     public static function obtener(array $config): array
     {
+        $service = trim((string) ($config['service'] ?? 'wsfe'));
+        if ($service === '') {
+            $service = 'wsfe';
+        }
+
         $base = base_path('afipSE/cert/'.trim((string) $config['cert_usuario_id']));
         $cert = $base.'/'.trim((string) $config['cert_crt']);
         $privateKey = $base.'/'.trim((string) $config['cert_key']);
-        $tra = $base.'/TRA.xml';
-        $ta = $base.'/TA.xml';
+        $tra = $service === 'wsfe'
+            ? $base.'/TRA.xml'
+            : $base.'/TRA_'.$service.'.xml';
+        $ta = self::archivoTa($base, $service);
 
         foreach ([$cert, $privateKey] as $archivo) {
             if (! is_file($archivo)) {
@@ -53,7 +61,7 @@ final class AfipTokenAcceso
     <generationTime>{$generationTime}</generationTime>
     <expirationTime>{$expirationTime}</expirationTime>
   </header>
-  <service>wsfe</service>
+  <service>{$service}</service>
 </loginTicketRequest>
 XML;
 
@@ -139,6 +147,17 @@ XML;
             'token' => (string) $ta->credentials->token,
             'sign' => (string) $ta->credentials->sign,
         ];
+    }
+
+    private static function archivoTa(string $base, string $service): string
+    {
+        if ($service === 'wsfe') {
+            return $base.'/TA.xml';
+        }
+
+        $safe = preg_replace('/[^a-zA-Z0-9_-]/', '_', $service) ?? $service;
+
+        return $base.'/TA_'.$safe.'.xml';
     }
 
     private static function opensslBinario(): string

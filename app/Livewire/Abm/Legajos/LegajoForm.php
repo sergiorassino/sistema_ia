@@ -32,8 +32,8 @@ class LegajoForm extends Component
     /** Columnas que pertenecen a cada plantilla de pestaña del formulario. */
     private const TAB_COLUMNS = [
         'domicilio' => ['callenum', 'barrio', 'localidad', 'codpos', 'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais', 'telefono', 'email'],
-        'madre' => ['nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'vivemad', 'ocupacmad', 'domimad', 'telemad', 'emailmad'],
-        'padre' => ['nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'vivepad', 'ocupacpad', 'domipad', 'telepad', 'emailpad'],
+        'madre' => ['nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'vivemad', 'ocupacmad', 'domimad', 'telemad', 'telecelmad', 'emailmad'],
+        'padre' => ['nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'vivepad', 'ocupacpad', 'domipad', 'telepad', 'telecelpad', 'emailpad'],
         'tutor' => ['nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni'],
         'escolar' => ['escori', 'destino', 'parroquia', 'ec_padres', 'vivecon', 'hermanos', 'needes', 'needes_detalle', 'certDisc', 'identif', 'retira', 'emeravis', 'obs'],
     ];
@@ -107,6 +107,8 @@ class LegajoForm extends Component
 
     public string $telemad = '';
 
+    public string $telecelmad = '';
+
     public string $emailmad = '';
 
     public string $vivemad = '';
@@ -127,6 +129,8 @@ class LegajoForm extends Component
     public string $ocupacpad = '';
 
     public string $telepad = '';
+
+    public string $telecelpad = '';
 
     public string $emailpad = '';
 
@@ -234,8 +238,8 @@ class LegajoForm extends Component
     private const COLUMNAS_FORMULARIO_GESTIONADAS = [
         'apellido', 'nombre', 'dni', 'cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio',
         'callenum', 'barrio', 'localidad', 'codpos', 'ln_ciudad', 'ln_depto', 'ln_provincia', 'ln_pais', 'telefono', 'email',
-        'nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'domimad', 'ocupacmad', 'telemad', 'emailmad', 'vivemad',
-        'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'emailpad', 'vivepad',
+        'nombremad', 'dnimad', 'fechnacmad', 'nacionmad', 'estacivimad', 'domimad', 'ocupacmad', 'telemad', 'telecelmad', 'emailmad', 'vivemad',
+        'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'telecelpad', 'emailpad', 'vivepad',
         'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
         'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
         'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'pwrd',
@@ -996,6 +1000,7 @@ class LegajoForm extends Component
         $this->domimad = $l->domimad ?? '';
         $this->ocupacmad = $l->ocupacmad ?? '';
         $this->telemad = $l->telemad ?? '';
+        $this->telecelmad = $l->telecelmad ?? '';
         $this->emailmad = $l->emailmad ?? '';
         $this->vivemad = $l->vivemad ?? '';
 
@@ -1007,6 +1012,7 @@ class LegajoForm extends Component
         $this->domipad = $l->domipad ?? '';
         $this->ocupacpad = $l->ocupacpad ?? '';
         $this->telepad = $l->telepad ?? '';
+        $this->telecelpad = $l->telecelpad ?? '';
         $this->emailpad = $l->emailpad ?? '';
         $this->vivepad = $l->vivepad ?? '';
 
@@ -1089,6 +1095,7 @@ class LegajoForm extends Component
             'domimad' => $this->domimad,
             'ocupacmad' => $this->ocupacmad,
             'telemad' => $this->telemad,
+            'telecelmad' => $this->telecelmad,
             'emailmad' => $this->emailmad,
             'vivemad' => $this->vivemad,
             'nombrepad' => $this->nombrepad,
@@ -1099,6 +1106,7 @@ class LegajoForm extends Component
             'domipad' => $this->domipad,
             'ocupacpad' => $this->ocupacpad,
             'telepad' => $this->telepad,
+            'telecelpad' => $this->telecelpad,
             'emailpad' => $this->emailpad,
             'vivepad' => $this->vivepad,
             'nombretut' => $this->nombretut,

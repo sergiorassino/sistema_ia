@@ -77,6 +77,7 @@ final class ListadoCursoPdfFieldCatalog
         'legajos.sitlabmad' => ['label' => 'Madre — situación laboral', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'sitlabmad'],
         'legajos.lugtramad' => ['label' => 'Madre — lugar de trabajo', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'lugtramad'],
         'legajos.telemad' => ['label' => 'Madre — teléfono', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'telemad'],
+        'legajos.telecelmad' => ['label' => 'Madre — celular', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'telecelmad'],
         'legajos.telltm' => ['label' => 'Madre — tel. laboral', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'telltm'],
         'legajos.emailmad' => ['label' => 'Madre — email', 'group' => 'Madre', 'table' => 'legajos', 'column' => 'emailmad'],
         // — Padre —
@@ -92,6 +93,7 @@ final class ListadoCursoPdfFieldCatalog
         'legajos.sitlabpad' => ['label' => 'Padre — situación laboral', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'sitlabpad'],
         'legajos.lugtrapad' => ['label' => 'Padre — lugar de trabajo', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'lugtrapad'],
         'legajos.telepad' => ['label' => 'Padre — teléfono', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'telepad'],
+        'legajos.telecelpad' => ['label' => 'Padre — celular', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'telecelpad'],
         'legajos.telltp' => ['label' => 'Padre — tel. laboral', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'telltp'],
         'legajos.emailpad' => ['label' => 'Padre — email', 'group' => 'Padre', 'table' => 'legajos', 'column' => 'emailpad'],
         // — Tutor / responsable —

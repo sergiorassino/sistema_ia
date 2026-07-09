@@ -29,8 +29,8 @@ class CampoLegajo extends Model
         'orden_en_solapa' => 'integer',
     ];
 
-    /** Columnas de `legajos` excluidas de la parametrización. */
-    public const COLUMNAS_EXCLUIDAS = ['telecelmad', 'telecelpad'];
+    /** Columnas de `legajos` excluidas de la parametrización (vacío = todas las del esquema). */
+    public const COLUMNAS_EXCLUIDAS = [];
 
     /**
      * Apellido, nombre y DNI no se parametrizan: siempre en la solapa Alumno del formulario.
@@ -42,6 +42,36 @@ class CampoLegajo extends Model
     public function solapa(): BelongsTo
     {
         return $this->belongsTo(SolapaLegajo::class, 'solapa_legajo_id');
+    }
+
+    /**
+     * Posición de cada columna en `legajos` (1 = primera columna del esquema MySQL).
+     *
+     * @return array<string, int>
+     */
+    public static function mapaOrdenEsquemaLegajos(): array
+    {
+        $map = [];
+        foreach (Legajo::columnasTabla() as $i => $columna) {
+            $map[$columna] = $i + 1;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Ordena filas de `campos_legajo` según el orden físico de columnas en `legajos`.
+     *
+     * @param  \Illuminate\Support\Collection<int, static>  $campos
+     * @return \Illuminate\Support\Collection<int, static>
+     */
+    public static function ordenarPorEsquemaLegajos($campos)
+    {
+        $map = static::mapaOrdenEsquemaLegajos();
+
+        return $campos
+            ->sortBy(fn (self $c) => $map[$c->columna] ?? PHP_INT_MAX)
+            ->values();
     }
 
     // ─── Legajo ABM ───────────────────────────────────────────────────────────

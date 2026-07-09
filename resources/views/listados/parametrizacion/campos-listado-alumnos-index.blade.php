@@ -9,7 +9,7 @@
                     El PDF agrupa las columnas por solapa (<span class="font-mono">solapas_legajo.nombre</span>).
                     En <strong>Etiqueta</strong> podés definir el texto del label que verá el usuario en cada solapa del legajo; si lo dejás vacío, se usa el nombre por defecto del sistema.
                     <strong>Apellido, nombre y DNI</strong> no se listan aquí: siempre aparecen en la solapa Alumno.
-                    El orden dentro de cada solapa en el formulario sigue la columna «Orden en solapa».
+                    El listado sigue el orden de las columnas en la tabla <span class="font-mono">legajos</span>; la columna «Orden en solapa» define el orden dentro de cada solapa en el formulario.
                     Los campos sin solapa quedan ocultos del legajo y del PDF.
                 </p>
             </div>
@@ -30,6 +30,13 @@
                 Seleccioná la solapa, el <strong>orden en solapa</strong> y opcionalmente la <strong>etiqueta</strong> visible en el formulario para cada columna (excepto apellido, nombre y DNI, fijos en la solapa Alumno).
                 Si no asignás una solapa, el campo se oculta del legajo y del PDF.
             </p>
+            @if ($baseDatosLegajos !== '')
+                <p class="mt-2 text-xs text-neutral-500">
+                    Origen del esquema: base <span class="font-mono">{{ $baseDatosLegajos }}</span>
+                    · {{ $columnasEsquemaLegajos }} columna(s) en <span class="font-mono">legajos</span>.
+                    Si no coincide con el colegio esperado, revisá <span class="font-mono">DB_DATABASE</span> / <span class="font-mono">TENANT_SLUG</span> en el servidor y ejecutá <span class="font-mono">php artisan config:clear</span>.
+                </p>
+            @endif
             <div class="mt-4 flex flex-wrap items-center gap-3">
                 <button type="button" wire:click="sincronizarDesdeLegajos" wire:loading.attr="disabled" class="btn-primary btn-sm">
                     <span wire:loading.remove wire:target="sincronizarDesdeLegajos">Actualizar columnas desde esquema</span>
@@ -63,7 +70,7 @@
                 <table class="min-w-full border-collapse text-sm">
                     <thead class="bg-accent-50">
                         <tr>
-                            <th class="table-header w-16">Orden</th>
+                            <th class="table-header w-16">Pos.</th>
                             <th class="table-header">Columna</th>
                             <th class="table-header">Etiqueta</th>
                             <th class="table-header w-48">Solapa del legajo</th>

@@ -518,4 +518,19 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ARCA — consultas al padrón tributario
+    |--------------------------------------------------------------------------
+    */
+    'arca' => [
+        'padron_a13' => [
+            /** Activar en `config/tenants/{slug}.php` o cuando hay certificados en ento. */
+            'habilitado' => false,
+            'produccion' => true,
+            'simular' => false,
+            'simular_local' => true,
+        ],
+    ],
+
 ];
