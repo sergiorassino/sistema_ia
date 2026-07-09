@@ -1016,6 +1016,58 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
     }
 }
 
+if (! function_exists('tenantArcaPadronHabilitado')) {
+    function tenantArcaPadronHabilitado(): bool
+    {
+        if ((bool) config('tenant.arca.padron_a13.habilitado', false)) {
+            return true;
+        }
+
+        return tenantArcaPadronConfig() !== null;
+    }
+}
+
+if (! function_exists('tenantArcaPadronConfig')) {
+    /**
+     * Configuración ARCA Padrón A13 (certificados desde ento + flags del tenant).
+     *
+     * @return array<string, mixed>|null
+     */
+    function tenantArcaPadronConfig(): ?array
+    {
+        $cfg = config('tenant.arca.padron_a13');
+        if (! is_array($cfg)) {
+            return null;
+        }
+
+        $certsEnto = afipCertificadosDesdeEnto();
+        $certId = trim((string) ($certsEnto['cert_usuario_id'] ?? ''));
+        $certKey = trim((string) ($certsEnto['cert_key'] ?? ''));
+        $certCrt = trim((string) ($certsEnto['cert_crt'] ?? ''));
+
+        if ($certId === '' || $certKey === '' || $certCrt === '') {
+            return null;
+        }
+
+        $cfg['cert_usuario_id'] = $certId;
+        $cfg['cert_key'] = $certKey;
+        $cfg['cert_crt'] = $certCrt;
+        $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
+
+        $simularExplicitamenteFalse = array_key_exists('simular', $cfg) && $cfg['simular'] === false;
+        if ($simularExplicitamenteFalse) {
+            $cfg['simular'] = false;
+        } else {
+            $simularExplicito = (bool) ($cfg['simular'] ?? false);
+            $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
+            $cfg['simular'] = $simularExplicito
+                || (app()->environment('local') && $simularEnLocal);
+        }
+
+        return $cfg;
+    }
+}
+
 if (! function_exists('tenantLoginNivelesIds')) {
     /**
      * IDs de `niveles` visibles en `/loginUsuario` para este colegio.

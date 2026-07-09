@@ -6,6 +6,7 @@ use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Support\PermisosConfiguracion;
 use App\Listados\CamposLegajoSync;
 use App\Models\CampoLegajo;
+use App\Models\Legajo;
 use App\Models\SolapaLegajo;
 use Livewire\Component;
 
@@ -26,15 +27,23 @@ class CamposLegajoIndex extends Component
         $r = $sync->sincronizarDesdeSchema();
         $i = $r['insertados'];
         $e = $r['eliminados'];
+        $o = (int) ($r['orden_actualizado'] ?? 0);
+        $db = (string) ($r['base_datos'] ?? '');
+        $totalEsquema = (int) ($r['columnas_esquema'] ?? 0);
+        $origen = $db !== ''
+            ? "Base de datos: {$db}. Se leyeron {$totalEsquema} columna(s) de `legajos`."
+            : 'No se pudo determinar la base de datos conectada.';
 
-        if ($i === 0 && $e === 0) {
-            session()->flash('status', 'La lista ya está alineada con la tabla legajos: no hay columnas nuevas ni obsoletas.');
+        if ($i === 0 && $e === 0 && $o === 0) {
+            session()->flash('status', "La lista ya está alineada con la tabla legajos: no hay columnas nuevas ni obsoletas. {$origen}");
+        } elseif ($i === 0 && $e === 0 && $o > 0) {
+            session()->flash('status', "Se actualizó la posición de {$o} campo(s) para coincidir con el orden de la tabla legajos. {$origen}");
         } elseif ($i > 0 && $e > 0) {
-            session()->flash('status', "Se agregaron {$i} columna(s) nueva(s) y se quitaron {$e} que ya no existen en legajos.");
+            session()->flash('status', "Se agregaron {$i} columna(s) nueva(s) y se quitaron {$e} que ya no existen en legajos. {$origen}");
         } elseif ($i > 0) {
-            session()->flash('status', "Se agregaron {$i} columna(s) nueva(s) desde la tabla legajos.");
+            session()->flash('status', "Se agregaron {$i} columna(s) nueva(s) desde la tabla legajos. {$origen}");
         } else {
-            session()->flash('status', "Se quitaron {$e} campo(s) que ya no existen en la tabla legajos.");
+            session()->flash('status', "Se quitaron {$e} campo(s) que ya no existen en la tabla legajos. {$origen}");
         }
     }
 
@@ -91,25 +100,32 @@ class CamposLegajoIndex extends Component
             ->with('solapa');
 
         if ($this->filtroSolapa === '__sin__') {
-            $q->whereNull('solapa_legajo_id')
-                ->orderBy('orden')
-                ->orderBy('columna');
+            $q->whereNull('solapa_legajo_id');
         } elseif ($this->filtroSolapa !== '' && ctype_digit($this->filtroSolapa)) {
             $q->where('solapa_legajo_id', (int) $this->filtroSolapa)
                 ->orderBy('orden_en_solapa')
-                ->orderBy('columna');
-        } else {
-            $q->orderBy('orden')
                 ->orderBy('columna');
         }
 
         $campos = $q->get();
 
+        if ($this->filtroSolapa === '' || $this->filtroSolapa === '__sin__') {
+            $campos = CampoLegajo::ordenarPorEsquemaLegajos($campos);
+        }
+
         $solapas = SolapaLegajo::query()
             ->orderBy('orden')
             ->get(['id', 'nombre']);
 
-        return view('listados::parametrizacion.campos-listado-alumnos-index', compact('campos', 'solapas'))
+        $baseDatosLegajos = Legajo::nombreBaseDatosConectada();
+        $columnasEsquemaLegajos = count(Legajo::columnasTabla());
+
+        return view('listados::parametrizacion.campos-listado-alumnos-index', compact(
+            'campos',
+            'solapas',
+            'baseDatosLegajos',
+            'columnasEsquemaLegajos',
+        ))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Campos activos (Legajo del estudiante)']);
     }
 }

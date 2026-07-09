@@ -307,6 +307,13 @@
                     </div>
                     @endif
 
+                    @if($showFieldEnTab('telecelmad'))
+                    <div class="sm:col-span-2">
+                        <label class="form-label">Celular</label>
+                        <input wire:model="telecelmad" type="text" maxlength="50" class="form-input">
+                    </div>
+                    @endif
+
                     @if($showFieldEnTab('emailmad'))
                     <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
@@ -384,6 +391,13 @@
                     <div class="sm:col-span-2">
                         <label class="form-label">Teléfono</label>
                         <input wire:model="telepad" type="text" maxlength="50" class="form-input">
+                    </div>
+                    @endif
+
+                    @if($showFieldEnTab('telecelpad'))
+                    <div class="sm:col-span-2">
+                        <label class="form-label">Celular</label>
+                        <input wire:model="telecelpad" type="text" maxlength="50" class="form-input">
                     </div>
                     @endif
 

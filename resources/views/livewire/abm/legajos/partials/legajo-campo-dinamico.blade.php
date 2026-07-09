@@ -142,6 +142,10 @@
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
             <input wire:model="telemad" type="text" maxlength="50" class="form-input"></div>
         @break
+    @case('telecelmad')
+        <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
+            <input wire:model="telecelmad" type="text" maxlength="50" class="form-input"></div>
+        @break
     @case('emailmad')
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
             <input wire:model="emailmad" type="text" maxlength="50" class="form-input @error('emailmad') border-red-400 @enderror">
@@ -186,6 +190,10 @@
     @case('telepad')
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
             <input wire:model="telepad" type="text" maxlength="50" class="form-input"></div>
+        @break
+    @case('telecelpad')
+        <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
+            <input wire:model="telecelpad" type="text" maxlength="50" class="form-input"></div>
         @break
     @case('emailpad')
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>

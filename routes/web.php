@@ -144,6 +144,7 @@ use App\Livewire\Cuotas\SolicitudAyudaFamiliarIndex;
 use App\Livewire\Cuotas\HistorialPagosCuota;
 use App\Livewire\Cuotas\ComprobantesAfipCuota;
 use App\Livewire\Cuotas\ComprobantesAfipDevengamientoCuota;
+use App\Livewire\Arca\ConsultaCuitPorDniIndex;
 use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
 use App\Livewire\Cuotas\SiroCuponesVencidosIndex;
 use App\Livewire\Cuotas\SiroSubidaBaseDeudaIndex;
@@ -711,6 +712,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             ->where('ref', '[A-Za-z0-9_-]+')
             ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos.notificacion');
+    });
+
+    Route::prefix('arca')->group(function () use ($pi) {
+        Route::get('/consulta-cuit-dni', ConsultaCuitPorDniIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARCA_CONSULTA_CUIT_DNI)
+            ->name('arca.consulta-cuit-dni');
     });
 });
 
