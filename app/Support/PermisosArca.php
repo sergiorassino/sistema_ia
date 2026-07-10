@@ -27,4 +27,18 @@ final class PermisosArca
     {
         return self::puedeConsultaCuitPorDni();
     }
+
+    /** Guías PDF de configuración ARCA (facturación, padrón, etc.). */
+    public static function puedeDescargarGuiasArca(): bool
+    {
+        if (self::puedeConsultaCuitPorDni()) {
+            return true;
+        }
+
+        if (PermisosCuotas::puedeConsultaAfipComprobante() || PermisosCuotas::puedeFacturacionMasivaAfip()) {
+            return true;
+        }
+
+        return self::enAdministracion() && tienePermiso(PermisosConfiguracion::PARAMETROS_SISTEMA);
+    }
 }

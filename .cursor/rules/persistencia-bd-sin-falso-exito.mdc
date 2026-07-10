@@ -1,0 +1,55 @@
+---
+description: Guardados en BD legacy — no ignorar campos ni simular éxito si falta la columna
+alwaysApply: true
+---
+
+# Persistencia en BD — sin falsos éxitos
+
+Detalle: `docs/05-preferencias-y-convenciones.md` sección **14**.
+
+## Contexto
+
+Los tenants legacy pueden no tener columnas que el formulario expone. **No simular guardado exitoso** cuando el dato no se persistió.
+
+## Obligatorio en guardados (Livewire, controllers, servicios)
+
+Usar `App\Support\Database\PersistenciaColumnas`:
+
+1. `prepararPayload($tabla, $payload)` antes del `update`/`create`.
+   - Si el usuario ingresó valor y la columna no existe → **error visible** (`addError`, `se-swal-error`, etc.), **no** `flash('success')`.
+2. `try/catch (QueryException)` alrededor del guardado.
+   - Mensaje con `mensajeDesdeQueryException($e)` cuando aplique.
+3. `columnasNoPersistidas($tabla, $where, $valoresEsperados)` tras guardar.
+   - Si hay columnas con valor distinto al esperado → **error**, no éxito.
+
+## Prohibido
+
+```php
+// ❌ Omitir en silencio cuando el usuario sí cargó un valor
+if (! Schema::hasColumn('ento', 'cuit')) {
+    return;
+}
+$payload['cuit'] = $this->cuit;
+```
+
+```php
+// ❌ Éxito sin verificar
+Model::updateOrCreate(...);
+session()->flash('success', 'Guardado.');
+```
+
+## Permitido
+
+```php
+// ✅ Validar payload y reportar columnas faltantes con valor
+$preparado = PersistenciaColumnas::prepararPayload('ento', $payload);
+if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+    $this->addError('cuit', PersistenciaColumnas::mensajeColumnasInexistentes('ento', $preparado['columnas_con_valor_sin_columna']));
+    return;
+}
+```
+
+## Referencia
+
+- `app/Support/Database/PersistenciaColumnas.php`
+- `app/Livewire/Parametrizacion/ParametrosSistemaForm.php`

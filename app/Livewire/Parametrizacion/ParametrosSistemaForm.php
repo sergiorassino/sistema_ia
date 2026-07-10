@@ -3,9 +3,11 @@
 namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
 use App\Models\Terlec;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -97,7 +99,9 @@ class ParametrosSistemaForm extends Component
         $this->insti = (string) ($ento->insti ?? '');
         $this->cue = (string) ($ento->cue ?? '');
         $this->ee = (string) ($ento->ee ?? '');
-        $this->cuit = (string) ($ento->cuit ?? '');
+        $this->cuit = Schema::hasColumn('ento', 'cuit')
+            ? (string) ($ento->cuit ?? '')
+            : '';
         $this->cuitFact = Schema::hasColumn('ento', 'cuitFact')
             ? (string) ($ento->cuitFact ?? '')
             : '';
@@ -306,35 +310,20 @@ class ParametrosSistemaForm extends Component
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
         ];
 
-        if (Schema::hasColumn('ento', 'cuitFact')) {
+        if ($this->facturacionAfipHabilitadaEnTenant()) {
             $payload['cuitFact'] = ($v = trim($this->cuitFact)) !== '' ? $v : null;
-        }
-        if (Schema::hasColumn('ento', 'domicFact')) {
             $payload['domicFact'] = ($v = trim($this->domicFact)) !== '' ? $v : null;
-        }
-        if (Schema::hasColumn('ento', 'condIvaInst')) {
             $payload['condIvaInst'] = ($v = trim($this->condIvaInst)) !== '' ? $v : null;
-        }
-        if (Schema::hasColumn('ento', 'aporteEstatal')) {
             $payload['aporteEstatal'] = ($v = trim($this->aporteEstatal)) !== '' ? $v : null;
-        }
-
-        if (Schema::hasColumn('ento', 'afipCertCarpeta')) {
             $payload['afipCertCarpeta'] = ($v = trim($this->afipCertCarpeta)) !== '' ? $v : null;
             $payload['afipCertKey'] = ($v = trim($this->afipCertKey)) !== '' ? $v : null;
             $payload['afipCertCrt'] = ($v = trim($this->afipCertCrt)) !== '' ? $v : null;
         }
 
         if ($this->puedeEditarCamposSiro()) {
-            if (Schema::hasColumn('ento', 'siroPrefijoCPE')) {
-                $payload['siroPrefijoCPE'] = ($v = trim($this->siroPrefijoCPE)) !== '' ? $v : null;
-            }
-            if (Schema::hasColumn('ento', 'siroMje')) {
-                $payload['siroMje'] = ($v = trim($this->siroMje)) !== '' ? $v : null;
-            }
-            if (Schema::hasColumn('ento', 'siroIdentCuenta')) {
-                $payload['siroIdentCuenta'] = ($v = trim($this->siroIdentCuenta)) !== '' ? $v : null;
-            }
+            $payload['siroPrefijoCPE'] = ($v = trim($this->siroPrefijoCPE)) !== '' ? $v : null;
+            $payload['siroMje'] = ($v = trim($this->siroMje)) !== '' ? $v : null;
+            $payload['siroIdentCuenta'] = ($v = trim($this->siroIdentCuenta)) !== '' ? $v : null;
         }
 
         $payload = array_merge($payload, $this->payloadParametrosOperativos());
@@ -365,10 +354,44 @@ class ParametrosSistemaForm extends Component
             $logoPathEsperado = $logoPath;
         }
 
-        Ento::query()->updateOrCreate(
+        $preparado = PersistenciaColumnas::prepararPayload('ento', $payload, ['idNivel']);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            $this->reportarColumnasEntoFaltantes($preparado['columnas_con_valor_sin_columna']);
+
+            return;
+        }
+
+        $payloadEnto = array_merge($preparado['payload'], ['idNivel' => $idNivel]);
+
+        try {
+            Ento::query()->updateOrCreate(
+                ['idNivel' => $idNivel],
+                $payloadEnto,
+            );
+        } catch (QueryException $e) {
+            Log::warning('parametros-sistema: error al guardar en ento', [
+                'idNivel' => $idNivel,
+                'message' => $e->getMessage(),
+            ]);
+            $this->reportarErrorPersistenciaEnto(
+                'insti',
+                PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar en la base de datos. Intente nuevamente o contacte al administrador.',
+            );
+
+            return;
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'ento',
             ['idNivel' => $idNivel],
-            array_merge($payload, ['idNivel' => $idNivel]),
+            $preparado['payload'],
         );
+        if ($noPersistidas !== []) {
+            $this->reportarColumnasEntoNoPersistidas($noPersistidas);
+
+            return;
+        }
 
         if ($logoPathEsperado !== null) {
             $persistido = trim((string) Ento::query()
@@ -558,32 +581,93 @@ class ParametrosSistemaForm extends Component
         return $payload;
     }
 
+    /**
+     * Valores vacíos pueden omitirse si la columna no existe (docs §14).
+     * Si el usuario cargó un valor y falta la columna, {@see PersistenciaColumnas::prepararPayload} reporta error.
+     */
     private function asignarTerlecPayload(array &$payload, string $columna, int|string $valor): void
     {
-        if (! Schema::hasColumn('ento', $columna)) {
+        $id = trim((string) $valor);
+        if ($id !== '') {
+            $payload[$columna] = (int) $id;
+
             return;
         }
 
-        $id = trim((string) $valor);
-        $payload[$columna] = $id !== '' ? (int) $id : null;
+        if ($this->entoTieneColumna($columna)) {
+            $payload[$columna] = null;
+        }
     }
 
     private function asignarFlagPayload(array &$payload, string $columna, bool $activo): void
     {
-        if (! Schema::hasColumn('ento', $columna)) {
+        if ($activo) {
+            $payload[$columna] = 1;
+
             return;
         }
 
-        $payload[$columna] = $activo ? 1 : 0;
+        if ($this->entoTieneColumna($columna)) {
+            $payload[$columna] = 0;
+        }
     }
 
     private function asignarTextoPayload(array &$payload, string $columna, string $valor): void
     {
-        if (! Schema::hasColumn('ento', $columna)) {
+        $texto = trim($valor);
+        if ($texto !== '') {
+            $payload[$columna] = $texto;
+
             return;
         }
 
-        $payload[$columna] = ($v = trim($valor)) !== '' ? $v : null;
+        if ($this->entoTieneColumna($columna)) {
+            $payload[$columna] = null;
+        }
+    }
+
+    private function entoTieneColumna(string $columna): bool
+    {
+        return Schema::hasTable('ento') && Schema::hasColumn('ento', $columna);
+    }
+
+    /**
+     * @param  list<string>  $columnas
+     */
+    private function reportarColumnasEntoFaltantes(array $columnas): void
+    {
+        $mensaje = PersistenciaColumnas::mensajeColumnasInexistentes('ento', $columnas);
+        $this->reportarErrorPersistenciaEnto($columnas[0] ?? 'insti', $mensaje);
+    }
+
+    /**
+     * @param  list<string>  $columnas
+     */
+    private function reportarColumnasEntoNoPersistidas(array $columnas): void
+    {
+        $mensaje = PersistenciaColumnas::mensajeColumnasNoPersistidas('ento', $columnas);
+        $this->reportarErrorPersistenciaEnto($columnas[0] ?? 'insti', $mensaje);
+    }
+
+    private function reportarErrorPersistenciaEnto(string $columna, string $mensaje): void
+    {
+        $campo = $this->campoFormularioParaColumnaEnto($columna) ?? 'insti';
+        $this->addError($campo, $mensaje);
+
+        if ($campo !== 'insti' && $this->activeTab !== 'parametros') {
+            $this->addError('insti', $mensaje);
+        }
+
+        $this->dispatch('se-swal-error', mensaje: $mensaje);
+    }
+
+    private function campoFormularioParaColumnaEnto(string $columna): ?string
+    {
+        return match ($columna) {
+            'idTerlecVerNotas' => 'idTerlecVerNotas',
+            'logo_path', 'logo_original_name' => 'logo',
+            default => $columna,
+        };
     }
 
     private static function terlecIdParaInput(mixed $valor): int|string

@@ -63,6 +63,10 @@ Listados paginados: `WithPagination`, `POR_PAGINA = 50`, `resetPage()` al cambia
 
 En autogestión, PDFs y descargas por GET: **no** poner IDs de BD, DNI ni legajo en la URL. Usar `App\Support\Security\OpaqueRouteToken` o token en BD (aspirantes). Detalle: `docs/06-reglas-de-seguridad.md` §10 y `.cursor/rules/urls-sin-identificadores.mdc`.
 
+## Persistencia en BD (sin falsos éxitos)
+
+En guardados sobre tablas legacy multi-tenant: validar columnas con `App\Support\Database\PersistenciaColumnas`, capturar `QueryException` y verificar post-guardado. No omitir campos con valor si la columna no existe; no mostrar éxito si falló la persistencia. Detalle: `docs/05-preferencias-y-convenciones.md` §14 y `.cursor/rules/persistencia-bd-sin-falso-exito.mdc`.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

@@ -9,7 +9,9 @@ use App\Models\Ento;
 use App\Models\Familia;
 use App\Models\Legajo;
 use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
+use App\Support\Database\PersistenciaColumnas;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -157,8 +159,12 @@ final class FacturacionAfipComun
      *     motivo: string
      * }
      */
-    public static function destinatarioFacturaDesdeLegajo(Legajo $legajo): array
+    public static function destinatarioFacturaDesdeLegajo(Legajo $legajo, bool $asegurarFamilia = false): array
     {
+        if ($asegurarFamilia) {
+            self::asegurarFamiliaDesdeVinculosLegajo($legajo);
+        }
+
         $idFamilia = (int) ($legajo->idFamilias ?? 0);
         $responsable = self::responsableEconomicoFamilia($legajo);
         $dniResp = self::dniRespDesdeFamilia($legajo);
@@ -171,6 +177,129 @@ final class FacturacionAfipComun
             'valido' => $motivo === null,
             'motivo' => $motivo ?? '',
         ];
+    }
+
+    /**
+     * Si el estudiante no tiene familia asignada, crea una con datos del primer vínculo cargado
+     * (padre, madre o tutor) y la asigna al legajo.
+     *
+     * @return array{creada: bool, error: string, vinculo: string}
+     */
+    public static function asegurarFamiliaDesdeVinculosLegajo(Legajo $legajo): array
+    {
+        if (LegajoFamilia::tieneFamiliaAsignada($legajo)) {
+            return ['creada' => false, 'error' => '', 'vinculo' => ''];
+        }
+
+        $vinculo = self::primerVinculoResponsableEconomico($legajo);
+        if ($vinculo === null) {
+            return [
+                'creada' => false,
+                'error' => 'El estudiante no tiene padre, madre ni tutor cargados en el legajo.',
+                'vinculo' => '',
+            ];
+        }
+
+        $responsable = trim((string) ($vinculo['nombre'] ?? ''));
+        // familias.apellido: apellido y nombre del vínculo (padre/madre/tutor).
+        $apellidoFamilia = self::apellidoFamiliaDesdeVinculo($vinculo);
+        if ($apellidoFamilia === '') {
+            $apellidoFamilia = trim((string) ($legajo->apellido ?? ''));
+        }
+        if ($apellidoFamilia === '') {
+            return [
+                'creada' => false,
+                'error' => 'No se pudo determinar el apellido de la familia desde el legajo.',
+                'vinculo' => '',
+            ];
+        }
+
+        $dniResp = trim((string) ($vinculo['dni'] ?? ''));
+        // Solo email* del vínculo; si no es un email válido, queda vacío (no se usa teléfono).
+        $email = self::emailFehaciente($vinculo['email'] ?? '');
+        $claveVinculo = (string) ($vinculo['vinculo'] ?? '');
+
+        try {
+            $familia = DB::transaction(function () use ($legajo, $apellidoFamilia, $responsable, $dniResp, $email): Familia {
+                $payload = [
+                    'apellido' => mb_substr($apellidoFamilia, 0, 50),
+                    'responsable' => mb_substr($responsable, 0, 50),
+                    'dniResp' => $dniResp !== '' ? $dniResp : null,
+                    'email' => $email !== '' ? $email : '',
+                ];
+
+                $preparado = PersistenciaColumnas::prepararPayload('familias', $payload);
+                if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+                    throw new \RuntimeException(
+                        PersistenciaColumnas::mensajeColumnasInexistentes('familias', $preparado['columnas_con_valor_sin_columna'])
+                    );
+                }
+
+                $familia = Familia::query()->create($preparado['payload']);
+
+                Legajo::query()->whereKey($legajo->id)->update(['idFamilias' => $familia->id]);
+
+                return $familia;
+            });
+
+            $legajo->idFamilias = (int) $familia->id;
+            $legajo->setRelation('familia', $familia);
+
+            return ['creada' => true, 'error' => '', 'vinculo' => $claveVinculo];
+        } catch (Throwable) {
+            return [
+                'creada' => false,
+                'error' => 'No se pudo crear la familia automáticamente. Intente nuevamente o asigne una familia desde el legajo.',
+                'vinculo' => '',
+            ];
+        }
+    }
+
+    /**
+     * Primer vínculo con nombre cargado en el legajo (padre, madre, tutor).
+     *
+     * @return array{
+     *     vinculo: string,
+     *     apellido: string,
+     *     nombrePila: string,
+     *     nombre: string,
+     *     dni: string,
+     *     email: string,
+     *     tieneDatos: bool
+     * }|null
+     */
+    public static function primerVinculoResponsableEconomico(Legajo $legajo): ?array
+    {
+        $vinculos = self::vinculosResponsableEconomico($legajo);
+        foreach (['padre', 'madre', 'tutor'] as $clave) {
+            $fila = $vinculos[$clave] ?? null;
+            if ($fila !== null && trim((string) ($fila['nombre'] ?? '')) !== '') {
+                return array_merge($fila, ['vinculo' => $clave]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Texto para `familias.apellido` a partir de un vínculo (apellido y nombre).
+     *
+     * @param  array{apellido?: string, nombrePila?: string, nombre?: string}  $vinculo
+     */
+    public static function apellidoFamiliaDesdeVinculo(array $vinculo): string
+    {
+        $apellido = trim((string) ($vinculo['apellido'] ?? ''));
+        $nombrePila = trim((string) ($vinculo['nombrePila'] ?? ''));
+        if ($apellido !== '' && $nombrePila !== '') {
+            return trim($apellido.', '.$nombrePila);
+        }
+
+        $nombreCompleto = trim((string) ($vinculo['nombre'] ?? ''));
+        if ($nombreCompleto !== '') {
+            return $nombreCompleto;
+        }
+
+        return $apellido !== '' ? $apellido : $nombrePila;
     }
 
     public static function motivoDestinatarioInvalido(int $idFamilia, string $responsable, string $dniResp): ?string
@@ -228,16 +357,28 @@ final class FacturacionAfipComun
         $nombre = trim($nombreCompleto);
         $partes = ResponsablesLegajoCooperadora::separarNombre($nombre);
         $dniLimpio = preg_replace('/\D/', '', $dni) ?? '';
-        $emailLimpio = mb_strtolower(trim($email), 'UTF-8');
 
         return [
             'apellido' => trim((string) ($partes['apellido'] ?? '')),
             'nombrePila' => trim((string) ($partes['nombre'] ?? '')),
             'nombre' => $nombre,
             'dni' => $dniLimpio,
-            'email' => $emailLimpio,
+            'email' => self::emailFehaciente($email),
             'tieneDatos' => $nombre !== '' || $dniLimpio !== '',
         ];
+    }
+
+    /**
+     * Solo acepta un email con formato válido. No usa teléfonos ni otros campos del legajo.
+     */
+    public static function emailFehaciente(mixed $valor): string
+    {
+        $email = mb_strtolower(trim((string) ($valor ?? '')), 'UTF-8');
+        if ($email === '' || ! str_contains($email, '@')) {
+            return '';
+        }
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? $email : '';
     }
 
     /**

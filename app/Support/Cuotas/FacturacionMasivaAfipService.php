@@ -339,7 +339,7 @@ final class FacturacionMasivaAfipService
                 continue;
             }
 
-            $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+            $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
             if (! $destinatario['valido']) {
                 $grupos[] = self::filaGrupo(
                     $alumno,

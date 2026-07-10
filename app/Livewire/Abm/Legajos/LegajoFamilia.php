@@ -204,7 +204,7 @@ class LegajoFamilia extends Component
             'apellido' => $apellido,
             'responsable' => $responsable !== '' ? $responsable : null,
             'dniResp' => $dniResp !== '' ? $dniResp : null,
-            'email' => $email !== '' ? $email : null,
+            'email' => $email !== '' ? $email : '',
         ];
 
         if ($this->editFamiliaId) {
