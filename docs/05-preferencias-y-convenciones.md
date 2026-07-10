@@ -483,3 +483,34 @@ Detalle para el agente: `.cursor/rules/paginacion-listados-se.mdc`.
 - Mostrar el footer de paginación siempre, aunque `lastPage() === 1`.
 - Olvidar `resetPage()` al cambiar filtros (el usuario queda en la página 7 sin resultados).
 - Paginación fuera del card o con wrappers ad hoc (`border-t px-5 py-3`) en lugar de `se-matriz-list-footer`.
+
+---
+
+## 14. Persistencia en BD — sin falsos éxitos (obligatorio)
+
+En tenants legacy el esquema puede **no tener** todas las columnas que el código nuevo espera. Un formulario **no debe** mostrar éxito si algún dato ingresado por el usuario no se pudo guardar.
+
+### Prohibido
+
+- Omitir en silencio un campo del `payload` porque `Schema::hasColumn()` devolvió `false`, cuando el usuario **sí ingresó un valor** (o activó un flag).
+- Mostrar `session()->flash('success')`, `se-swal-exito` o mensaje equivalente si el `UPDATE`/`INSERT` falló o si el valor no quedó persistido.
+- Confiar solo en que Eloquent «no tiró excepción» sin verificar columnas ni releer el registro cuando el esquema es variable por tenant.
+
+### Patrón obligatorio
+
+Usar `App\Support\Database\PersistenciaColumnas`:
+
+1. **Antes de guardar:** `prepararPayload($tabla, $payload)` — si `columnas_con_valor_sin_columna` no está vacío, **error al usuario** (no guardar).
+2. **Durante el guardado:** `try/catch` de `QueryException` y mensaje con `mensajeDesdeQueryException()` (columna/tabla inexistente, etc.).
+3. **Después de guardar:** `columnasNoPersistidas($tabla, $where, $valoresEsperados)` — si hay discrepancias, **error** (no éxito).
+
+Valores vacíos (`null`, cadena vacía, flag en `false`) pueden omitirse del payload si la columna no existe; no es un error del usuario.
+
+### Referencia en código
+
+- Helper: `app/Support/Database/PersistenciaColumnas.php`
+- Implementación: `app/Livewire/Parametrizacion/ParametrosSistemaForm.php` (método `save()`)
+
+### Regla Cursor
+
+`.cursor/rules/persistencia-bd-sin-falso-exito.mdc`

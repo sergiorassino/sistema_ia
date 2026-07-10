@@ -117,7 +117,7 @@ class SwitchTenantCommand extends Command
 
         $known = array_merge(
             array_keys($this->dbMap),
-            ['epq', 'sfq', 'iess', 'montecristo', 'nssc', 'caixalsf', 'caiaxalsf', 'sanfranciscoasis', 'institutoramallo'],
+            ['epq', 'sfq', 'iess', 'montecristo', 'nssc', 'caixalsf', 'caiaxalsf', 'sanfranciscoasis', 'institutoramallo', '25demayo', 'csc'],
         );
         $known = array_unique($known);
         sort($known);

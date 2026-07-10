@@ -1,6 +1,8 @@
 -- =============================================================================
 -- Permiso IA orden 84 — Consulta CUIT por DNI (ARCA Padrón A13)
--- Equivalente a catálogo App\Support\PermisosIaCatalog::ADMIN_ARCA_CONSULTA_CUIT_DNI
+-- Equivalente a migración 2026_07_09_100000_add_permiso_ia_orden_84_arca_consulta_cuit_dni.php
+--
+-- Uso preferido: php artisan se:migrate-legacy --force
 --
 -- ADVERTENCIA: inserta en permisos_ia y extiende profesores.permisos_ia con '0'.
 -- Revisar y asignar el bit 84 a los usuarios que deban usar el módulo.

@@ -85,10 +85,26 @@
         </div>
 
         <div class="mt-8 border-t border-accent-200 pt-6">
-            <p class="se-section-title mb-1">Facturación AFIP</p>
-            <p class="mb-4 text-xs text-neutral-500">
-                Datos del emisor para comprobantes electrónicos. La condición frente al IVA del destinatario se aplica por defecto en cada factura.
-            </p>
+            <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="se-section-title mb-1">Facturación AFIP</p>
+                    <p class="text-xs text-neutral-500">
+                        Datos del emisor para comprobantes electrónicos. La condición frente al IVA del destinatario se aplica por defecto en cada factura.
+                    </p>
+                </div>
+                @if (\App\Support\PermisosArca::puedeDescargarGuiasArca())
+                    <a href="{{ route('arca.guia-configuracion-facturacion.pdf') }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-800 hover:bg-primary-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Guía ARCA (PDF)
+                    </a>
+                @endif
+            </div>
 
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div class="md:col-span-2">
@@ -437,3 +453,19 @@
         @endif
     </div>
 </div>
+
+@script
+<script>
+    (function () {
+        function mensajeDeEvento(event, fallback) {
+            return event?.mensaje ?? event?.detail?.mensaje ?? fallback;
+        }
+
+        $wire.on('se-swal-error', (event) => {
+            if (typeof window.seSwalError === 'function') {
+                window.seSwalError(mensajeDeEvento(event, 'No se pudo guardar.'), 'Parámetros del sistema');
+            }
+        });
+    })();
+</script>
+@endscript

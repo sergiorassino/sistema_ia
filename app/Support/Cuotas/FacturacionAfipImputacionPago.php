@@ -86,7 +86,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
         if (! $destinatario['valido']) {
             return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
         }
@@ -336,7 +336,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
+        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
         if (! $destinatario['valido']) {
             return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
         }

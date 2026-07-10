@@ -94,7 +94,7 @@
     <div class="border-t border-accent-200 bg-white px-4 py-4 sm:px-5">
         <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Estudiantes individuales</p>
         <p class="mt-1 text-xs text-neutral-600">
-            Busque por apellido, nombre o DNI y agregue uno o varios alumnos sin depender de la selección de cursos.
+            Busque por apellido, nombre o DNI. Solo se listan estudiantes que ya tienen generada la cuota seleccionada para facturar.
         </p>
         <label for="buscar-alumno-fact-afip" class="form-label mt-3">Buscar estudiante</label>
         <input id="buscar-alumno-fact-afip"
@@ -107,29 +107,33 @@
         @if (trim($buscarAlumno) === '')
             <p class="mt-2 text-xs text-neutral-500">Ingrese un criterio para ver resultados.</p>
         @elseif ($legajosBusqueda === null || $legajosBusqueda->isEmpty())
-            <p class="mt-2 text-xs text-neutral-600">No se encontraron estudiantes con ese criterio.</p>
+            <p class="mt-2 text-xs text-neutral-600">No se encontraron estudiantes con esa cuota generada para el criterio indicado.</p>
         @else
-            <ul class="mt-3 max-h-52 space-y-1.5 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50/30 p-2 sm:p-2.5">
+            <ul class="mt-3 max-h-72 space-y-0.5 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50/30 p-1.5">
                 @foreach ($legajosBusqueda as $legajo)
                     @php
                         $datos = GestionAranceles::datosListadoBusqueda($legajo);
                         $nombreCompleto = trim($legajo->apellido.', '.$legajo->nombre);
                         $yaSeleccionado = isset($idsAlumnosSeleccionados[(int) $legajo->id]);
+                        $meta = 'DNI '.CuotasFormato::formatearDni($legajo->dni)
+                            .' · '.($datos['curso'] !== '' ? $datos['curso'] : 'Sin curso actual');
                     @endphp
                     <li wire:key="buscar-alumno-afip-{{ $legajo->id }}"
-                        class="rounded-xl border border-transparent bg-white/70 px-2.5 py-2 transition hover:border-accent-200 hover:bg-white hover:shadow-sm">
+                        class="rounded-lg border border-transparent bg-white/70 px-2 py-1 transition hover:border-accent-200 hover:bg-white">
                         <div class="flex min-w-0 items-center gap-2">
-                            <p class="min-w-0 truncate text-sm font-semibold text-neutral-800" title="{{ $nombreCompleto }}">
+                            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800"
+                               title="{{ $nombreCompleto }} · {{ $meta }}">
                                 {!! CuotasFormato::resaltarTerminoBusqueda($nombreCompleto, $buscarAlumno) !!}
+                                <span class="ml-1.5 font-normal text-neutral-500">{{ $meta }}</span>
                             </p>
                             @if ($yaSeleccionado)
-                                <span class="inline-flex shrink-0 items-center rounded-lg bg-primary-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-700 ring-1 ring-primary-200/80">
+                                <span class="inline-flex shrink-0 items-center rounded-md bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-700 ring-1 ring-primary-200/80">
                                     Agregado
                                 </span>
                             @else
                                 <button type="button"
                                         wire:click="agregarAlumno({{ (int) $legajo->id }})"
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
+                                        class="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1">
                                     <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                                     </svg>
@@ -137,10 +141,6 @@
                                 </button>
                             @endif
                         </div>
-                        <p class="mt-0.5 truncate text-[11px] text-neutral-500">
-                            DNI {{ CuotasFormato::formatearDni($legajo->dni) }}
-                            · {{ $datos['curso'] !== '' ? $datos['curso'] : 'Sin curso actual' }}
-                        </p>
                     </li>
                 @endforeach
             </ul>

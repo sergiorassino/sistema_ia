@@ -89,7 +89,13 @@
 
                 <div class="grid gap-2 sm:grid-cols-2">
                     <div class="sm:col-span-2">
-                        <label class="form-label !mb-0.5" for="resp-admi-nombre">Responsable económico</label>
+                        <label class="form-label !mb-0.5 {{ $respAdmiFamiliaNueva ? 'text-amber-800' : '' }}" for="resp-admi-nombre">
+                            @if ($respAdmiFamiliaNueva)
+                                Responsable Económico: FAMILIA NO ENCONTRADA: Creando familia.
+                            @else
+                                Responsable económico
+                            @endif
+                        </label>
                         <input wire:model="respAdmiNombre"
                                id="resp-admi-nombre"
                                type="text"

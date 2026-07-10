@@ -496,6 +496,54 @@ final class GestionAranceles
     }
 
     /**
+     * Búsqueda de legajos que tienen al menos una cuota generada de las plantillas indicadas
+     * en el ciclo lectivo activo (agregar alumnos individuales en facturación AFIP).
+     *
+     * @param  list<int>  $idCuotasPlantilla
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Support\Collection<int, Legajo>
+     */
+    public static function buscarLegajosConCuotasPlantilla(string $termino, array $idCuotasPlantilla, int $porPagina = 20)
+    {
+        $idCuotasPlantilla = array_values(array_unique(array_filter(
+            array_map('intval', $idCuotasPlantilla),
+            fn (int $id) => $id > 0,
+        )));
+
+        if ($idCuotasPlantilla === []) {
+            return collect();
+        }
+
+        $idTerlec = (int) schoolCtx()->idTerlec;
+
+        $query = Legajo::query()
+            ->whereHas('matriculas', function (Builder $q) {
+                SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+            })
+            ->whereHas('cuotasGeneradas', function (Builder $q) use ($idTerlec, $idCuotasPlantilla) {
+                $q->where('idTerlec', $idTerlec)
+                    ->whereIn('idCuotas', $idCuotasPlantilla);
+            });
+
+        $termino = trim($termino);
+        if ($termino !== '') {
+            $query->buscar($termino);
+        }
+
+        return $query
+            ->with([
+                'matriculas' => function ($q) {
+                    $q->with(self::relacionesMatricula())
+                        ->orderByDesc('idTerlec')
+                        ->orderByDesc('id');
+                    SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+                },
+            ])
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->paginate($porPagina, ['id', 'apellido', 'nombre', 'dni', 'legajo']);
+    }
+
+    /**
      * Curso, nivel y beca para el listado de búsqueda (ciclo activo o última matrícula).
      *
      * @return array{curso: string, nivel: string, beca: string}

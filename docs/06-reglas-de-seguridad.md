@@ -88,6 +88,7 @@ Antes de considerar completo un módulo o PR:
 - [ ] Si hubo cambios de esquema o datos vía SQL o migraciones, ¿se ejecutaron solo bajo revisión humana (no automatizada por herramientas)?
 - [ ] ¿Quedó documentado al cierre el **SQL equivalente** (o comando Artisan explícito) para reproducir el cambio en BD, según §9.1?
 - [ ] ¿Las URLs visibles (rutas GET, PDF, descargas) **no** exponen IDs de BD, DNI, legajo ni otros identificadores enumerables (ver §10)?
+- [ ] ¿Los guardados validan columnas existentes, capturan `QueryException` y no muestran éxito si la BD no persistió los datos (ver `docs/05-preferencias-y-convenciones.md` §14)?
 
 ---
 

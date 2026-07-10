@@ -4,17 +4,23 @@ namespace App\Livewire\Cuotas;
 
 use App\Models\Cuota;
 use App\Models\Familia;
+use App\Models\Legajo;
+use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Support\Cuotas\ConsultaAfipComprobanteService;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
 use App\Support\Cuotas\FacturacionAfipComun;
 use App\Support\Cuotas\FacturacionMasivaAfipService;
 use App\Support\Cuotas\GeneracionMasivaCuotasConsulta;
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\DniInput;
 use App\Support\PermisosCuotas;
-use Illuminate\Validation\Rule;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Throwable;
 
 /**
  * Facturación masiva AFIP por devengamiento (manual).
@@ -65,6 +71,9 @@ class FacturacionMasivaAfip extends Component
     public array $respAdmiVinculos = [];
 
     public string $respAdmiEstudianteEtiqueta = '';
+
+    /** True cuando se acaba de crear la familia al abrir el modal (sin familia previa). */
+    public bool $respAdmiFamiliaNueva = false;
 
     public function mount(): void
     {
@@ -123,6 +132,24 @@ class FacturacionMasivaAfip extends Component
 
     public function updatedTipoOperacion(): void
     {
+        $this->vistaPrevia = [];
+        $this->resultado = [];
+    }
+
+    public function updatedCursosSeleccionados(): void
+    {
+        $this->invalidarVistaPreviaPorCambioAlcance();
+    }
+
+    /**
+     * Si ya había vista previa, la oculta al cambiar cursos o alumnos individuales.
+     */
+    private function invalidarVistaPreviaPorCambioAlcance(): void
+    {
+        if ($this->vistaPrevia === [] && $this->resultado === []) {
+            return;
+        }
+
         $this->vistaPrevia = [];
         $this->resultado = [];
     }
@@ -208,22 +235,88 @@ class FacturacionMasivaAfip extends Component
             return;
         }
 
+        $asegurado = ['creada' => false, 'error' => '', 'vinculo' => ''];
+        $cargaManualSinFamilia = false;
+
+        if (! LegajoFamilia::tieneFamiliaAsignada($legajo)) {
+            $vinculoDisponible = FacturacionAfipComun::primerVinculoResponsableEconomico($legajo);
+            if ($vinculoDisponible === null) {
+                // Sin padre/madre/tutor: abrir modal para carga manual (no bloquear).
+                $cargaManualSinFamilia = true;
+            } else {
+                $asegurado = FacturacionAfipComun::asegurarFamiliaDesdeVinculosLegajo($legajo);
+                if ($asegurado['error'] !== '') {
+                    // Si falló la creación automática, igual permitir carga manual.
+                    $cargaManualSinFamilia = true;
+                } else {
+                    $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
+                    if ($legajo === null) {
+                        $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante.');
+
+                        return;
+                    }
+                }
+            }
+        }
+
+        if ($cargaManualSinFamilia) {
+            $this->respAdmiIdLegajo = $idLegajo;
+            $this->respAdmiIdFamilia = null;
+            $this->respAdmiFamiliaNueva = true;
+            $this->respAdmiApellido = trim((string) ($legajo->apellido ?? ''));
+            $this->respAdmiNombre = '';
+            $this->respAdmiDni = '';
+            $this->respAdmiEmail = '';
+            $this->respAdmiVinculos = FacturacionAfipComun::vinculosResponsableEconomico($legajo);
+            $this->respAdmiVinculo = '';
+            $this->respAdmiEstudianteEtiqueta = trim(($legajo->apellido ?? '').', '.($legajo->nombre ?? ''));
+            $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
+            $this->modalRespAdmiAbierto = true;
+
+            return;
+        }
+
         $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo);
         $idFamilia = (int) $destinatario['idFamilia'];
-        if ($idFamilia <= 0) {
-            $this->dispatch('se-swal-error', mensaje: 'El estudiante no tiene familia asignada. Asigne una familia desde el legajo.');
+        if ($idFamilia <= 0 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
+            $this->respAdmiIdLegajo = $idLegajo;
+            $this->respAdmiIdFamilia = null;
+            $this->respAdmiFamiliaNueva = true;
+            $this->respAdmiApellido = trim((string) ($legajo->apellido ?? ''));
+            $this->respAdmiNombre = '';
+            $this->respAdmiDni = '';
+            $this->respAdmiEmail = '';
+            $this->respAdmiVinculos = FacturacionAfipComun::vinculosResponsableEconomico($legajo);
+            $this->respAdmiVinculo = '';
+            $this->respAdmiEstudianteEtiqueta = trim(($legajo->apellido ?? '').', '.($legajo->nombre ?? ''));
+            $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
+            $this->modalRespAdmiAbierto = true;
 
             return;
         }
 
         $this->respAdmiIdLegajo = $idLegajo;
         $this->respAdmiIdFamilia = $idFamilia;
+        $this->respAdmiFamiliaNueva = (bool) ($asegurado['creada'] ?? false);
         $this->respAdmiApellido = trim((string) ($legajo->familia?->apellido ?? ''));
         $this->respAdmiNombre = (string) $destinatario['responsable'];
         $this->respAdmiDni = (string) $destinatario['dniResp'];
-        $this->respAdmiEmail = trim((string) ($legajo->familia?->email ?? ''));
+        // Solo email de familias.email (o del vínculo email* del legajo); nunca teléfono u otros campos.
+        $this->respAdmiEmail = FacturacionAfipComun::emailFehaciente($legajo->familia?->email ?? '');
         $this->respAdmiVinculos = FacturacionAfipComun::vinculosResponsableEconomico($legajo);
-        $this->respAdmiVinculo = '';
+        $vinculoPreseleccionado = (string) ($asegurado['vinculo'] ?? '');
+        if ($vinculoPreseleccionado === '' && $this->respAdmiVinculos !== []) {
+            $primer = FacturacionAfipComun::primerVinculoResponsableEconomico($legajo);
+            $vinculoPreseleccionado = (string) ($primer['vinculo'] ?? '');
+        }
+        $this->respAdmiVinculo = in_array($vinculoPreseleccionado, ['padre', 'madre', 'tutor'], true)
+            ? $vinculoPreseleccionado
+            : '';
+        // Si el apellido de familia está vacío, completar con apellido y nombre del vínculo elegido.
+        if ($this->respAdmiApellido === '' && $this->respAdmiVinculo !== '') {
+            $filaPre = $this->respAdmiVinculos[$this->respAdmiVinculo] ?? [];
+            $this->respAdmiApellido = FacturacionAfipComun::apellidoFamiliaDesdeVinculo($filaPre);
+        }
         $this->respAdmiEstudianteEtiqueta = trim(($legajo->apellido ?? '').', '.($legajo->nombre ?? ''));
         $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
         $this->modalRespAdmiAbierto = true;
@@ -241,6 +334,7 @@ class FacturacionMasivaAfip extends Component
         $this->respAdmiVinculo = '';
         $this->respAdmiVinculos = [];
         $this->respAdmiEstudianteEtiqueta = '';
+        $this->respAdmiFamiliaNueva = false;
         $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail', 'respAdmiVinculo']);
     }
 
@@ -250,15 +344,15 @@ class FacturacionMasivaAfip extends Component
             return;
         }
 
-        $fila = $this->respAdmiVinculos[$vinculo] ?? ['nombre' => '', 'dni' => '', 'email' => '', 'apellido' => ''];
+        $fila = $this->respAdmiVinculos[$vinculo] ?? ['nombre' => '', 'dni' => '', 'email' => '', 'apellido' => '', 'nombrePila' => ''];
         $this->respAdmiVinculo = $vinculo;
-        $apellidoVinculo = trim((string) ($fila['apellido'] ?? ''));
-        if ($apellidoVinculo !== '') {
-            $this->respAdmiApellido = $apellidoVinculo;
+        // Solo completar apellido de familia si está vacío (apellido y nombre del vínculo).
+        if (trim($this->respAdmiApellido) === '') {
+            $this->respAdmiApellido = FacturacionAfipComun::apellidoFamiliaDesdeVinculo($fila);
         }
         $this->respAdmiNombre = trim((string) ($fila['nombre'] ?? ''));
         $this->respAdmiDni = (string) ($fila['dni'] ?? '');
-        $this->respAdmiEmail = trim((string) ($fila['email'] ?? ''));
+        $this->respAdmiEmail = FacturacionAfipComun::emailFehaciente($fila['email'] ?? '');
         $this->resetValidation(['respAdmiApellido', 'respAdmiNombre', 'respAdmiDni', 'respAdmiEmail']);
     }
 
@@ -268,7 +362,15 @@ class FacturacionMasivaAfip extends Component
 
         $idLegajo = (int) ($this->respAdmiIdLegajo ?? 0);
         $idFamilia = (int) ($this->respAdmiIdFamilia ?? 0);
-        if ($idLegajo < 1 || $idFamilia < 1 || ! $this->legajoEnAlcance($idLegajo)) {
+        $crearFamilia = $this->respAdmiFamiliaNueva && ($idFamilia < 1 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR);
+
+        if ($idLegajo < 1 || ! $this->legajoEnAlcance($idLegajo)) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo validar el estudiante seleccionado.');
+
+            return;
+        }
+
+        if (! $crearFamilia && $idFamilia < 1) {
             $this->dispatch('se-swal-error', mensaje: 'No se pudo validar el estudiante seleccionado.');
 
             return;
@@ -283,7 +385,7 @@ class FacturacionMasivaAfip extends Component
         RateLimiter::hit($rateKey, 60);
 
         $this->respAdmiDni = DniInput::digitsOnly($this->respAdmiDni);
-        $this->respAdmiEmail = mb_strtolower(trim($this->respAdmiEmail), 'UTF-8');
+        $this->respAdmiEmail = FacturacionAfipComun::emailFehaciente($this->respAdmiEmail);
         $this->validate([
             'respAdmiApellido' => ['required', 'string', 'max:50'],
             'respAdmiNombre' => ['required', 'string', 'max:50'],
@@ -301,15 +403,8 @@ class FacturacionMasivaAfip extends Component
         ]);
 
         $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
-        if ($legajo === null || (int) ($legajo->idFamilias ?? 0) !== $idFamilia) {
-            $this->dispatch('se-swal-error', mensaje: 'La familia del estudiante cambió. Cierre el modal y vuelva a intentar.');
-
-            return;
-        }
-
-        $familia = Familia::query()->find($idFamilia);
-        if ($familia === null) {
-            $this->dispatch('se-swal-error', mensaje: 'No se encontró la familia del estudiante.');
+        if ($legajo === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante.');
 
             return;
         }
@@ -317,12 +412,64 @@ class FacturacionMasivaAfip extends Component
         $apellido = trim($this->respAdmiApellido);
         $responsable = trim($this->respAdmiNombre);
         $email = $this->respAdmiEmail;
-        $familia->update([
+        $payload = [
             'apellido' => $apellido,
             'responsable' => $responsable,
             'dniResp' => $this->respAdmiDni,
-            'email' => $email !== '' ? $email : null,
-        ]);
+            'email' => $email !== '' ? $email : '',
+        ];
+
+        $preparado = PersistenciaColumnas::prepararPayload('familias', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: PersistenciaColumnas::mensajeColumnasInexistentes('familias', $preparado['columnas_con_valor_sin_columna']),
+            );
+
+            return;
+        }
+
+        try {
+            if ($crearFamilia) {
+                if (LegajoFamilia::tieneFamiliaAsignada($legajo)) {
+                    $this->dispatch('se-swal-error', mensaje: 'La familia del estudiante cambió. Cierre el modal y vuelva a intentar.');
+
+                    return;
+                }
+
+                DB::transaction(function () use ($idLegajo, $preparado): void {
+                    $familia = Familia::query()->create($preparado['payload']);
+                    Legajo::query()->whereKey($idLegajo)->update(['idFamilias' => $familia->id]);
+                });
+            } else {
+                if ((int) ($legajo->idFamilias ?? 0) !== $idFamilia) {
+                    $this->dispatch('se-swal-error', mensaje: 'La familia del estudiante cambió. Cierre el modal y vuelva a intentar.');
+
+                    return;
+                }
+
+                $familia = Familia::query()->find($idFamilia);
+                if ($familia === null) {
+                    $this->dispatch('se-swal-error', mensaje: 'No se encontró la familia del estudiante.');
+
+                    return;
+                }
+
+                $familia->update($preparado['payload']);
+            }
+        } catch (QueryException $e) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el responsable económico. Intente nuevamente.',
+            );
+
+            return;
+        } catch (Throwable) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar el responsable económico. Intente nuevamente.');
+
+            return;
+        }
 
         $this->cerrarModalRespAdmi();
 
@@ -330,7 +477,9 @@ class FacturacionMasivaAfip extends Component
             $this->armarVistaPrevia();
         }
 
-        $this->dispatch('se-swal-exito', mensaje: 'Responsable económico actualizado.');
+        $this->dispatch('se-swal-exito', mensaje: $crearFamilia
+            ? 'Familia creada y responsable económico guardado.'
+            : 'Responsable económico actualizado.');
     }
 
     public function quitarAlumno(int $idLegajo): void
@@ -339,6 +488,7 @@ class FacturacionMasivaAfip extends Component
             $this->alumnosSeleccionados,
             fn (array $alumno) => (int) ($alumno['id'] ?? 0) !== $idLegajo,
         ));
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function agregarAlumno(int $idLegajo): void
@@ -371,6 +521,7 @@ class FacturacionMasivaAfip extends Component
             'label' => $label,
         ];
         $this->resetErrorBag('alcanceEstudiantes');
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function quitarCurso(int $idCurso): void
@@ -380,17 +531,20 @@ class FacturacionMasivaAfip extends Component
             $this->cursosSeleccionados,
             fn (string $id) => $id !== $key,
         ));
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function seleccionarTodosCursos(): void
     {
         $this->cursosSeleccionados = $this->idsCursosPermitidosComoString()->keys()->all();
         $this->resetErrorBag('cursosSeleccionados');
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function quitarTodosCursos(): void
     {
         $this->cursosSeleccionados = [];
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function marcarNivel(int $idNivel): void
@@ -401,6 +555,7 @@ class FacturacionMasivaAfip extends Component
             $ids,
         )));
         $this->resetErrorBag('cursosSeleccionados');
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function quitarNivel(int $idNivel): void
@@ -410,6 +565,7 @@ class FacturacionMasivaAfip extends Component
             $this->cursosSeleccionados,
             fn (string $id) => ! isset($quitar[$id]),
         ));
+        $this->invalidarVistaPreviaPorCambioAlcance();
     }
 
     public function seleccionarTodasCuotas(): void
@@ -660,7 +816,10 @@ class FacturacionMasivaAfip extends Component
 
         $legajosBusqueda = null;
         if ($this->paso === 2 && trim($this->buscarAlumno) !== '') {
-            $legajosBusqueda = GestionAranceles::buscarLegajos($this->buscarAlumno, 15);
+            $cuotaIds = $this->idsCuotasValidadas();
+            $legajosBusqueda = $cuotaIds === []
+                ? collect()
+                : GestionAranceles::buscarLegajosConCuotasPlantilla($this->buscarAlumno, $cuotaIds, 15);
         }
 
         $idsAlumnosSeleccionados = array_flip(
