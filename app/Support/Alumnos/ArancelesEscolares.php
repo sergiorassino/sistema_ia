@@ -248,12 +248,13 @@ final class ArancelesEscolares
     }
 
     /**
-     * Facturas AFIP vigentes por cuota pagada — portal familia (historial).
+     * Facturas AFIP vigentes por cuota — portal familia (pendientes e historial).
+     * Solo incluye la factura activa; si fue anulada por nota de crédito, no figura.
      *
      * @param  Collection<int, CuotaGenerada>  $cuotas
      * @return array<int, ComprobanteAfip> idCuotaGenerada => factura
      */
-    public static function facturasAfipVigentesHistorial(Collection $cuotas): array
+    public static function facturasAfipVigentes(Collection $cuotas): array
     {
         if (! ComprobantesAfipCuotaService::moduloDisponible() || $cuotas->isEmpty()) {
             return [];
@@ -266,17 +267,7 @@ final class ArancelesEscolares
 
         $idLegajo = (int) $ctx->idLegajo;
         $idsCuotas = $cuotas
-            ->filter(function (CuotaGenerada $cuota) use ($idLegajo): bool {
-                if ((int) ($cuota->idLegajos ?? 0) !== $idLegajo) {
-                    return false;
-                }
-
-                if (tenantCuotasFacturacionAfipEnDevengamiento()) {
-                    return true;
-                }
-
-                return (float) ($cuota->faltapa ?? 0) <= 0;
-            })
+            ->filter(fn (CuotaGenerada $cuota): bool => (int) ($cuota->idLegajos ?? 0) === $idLegajo)
             ->map(fn (CuotaGenerada $cuota) => (int) $cuota->id)
             ->values()
             ->all();

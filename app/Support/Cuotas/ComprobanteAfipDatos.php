@@ -82,12 +82,14 @@ final class ComprobanteAfipDatos
             return null;
         }
 
-        $comprobante = ComprobanteAfip::query()->find($idComprobanteAfip);
-        if ($comprobante === null) {
+        // Solo la factura vigente: si hay NC que la anuló, no se descarga.
+        $facturaVigente = ComprobantesAfipCuotaService::facturaVigentePorCuotaGenerada($idCuotaGenerada);
+        if ($facturaVigente === null
+            || (int) $facturaVigente->idComprobanteAfip !== $idComprobanteAfip) {
             return null;
         }
 
-        return self::datosDesdeModelo($comprobante);
+        return self::datosDesdeModelo($facturaVigente);
     }
 
     /**
