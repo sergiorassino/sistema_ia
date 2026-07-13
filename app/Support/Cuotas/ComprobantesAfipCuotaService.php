@@ -34,24 +34,26 @@ final class ComprobantesAfipCuotaService
         return self::comprobantesDelPago($idCuotaPago);
     }
 
+    /**
+     * Consulta de comprobantes emitidos (no requiere certificados AFIP en ento).
+     * La emisión nueva sigue gated por tenantCuotasFacturacionAfipHabilitada().
+     */
     public static function moduloDisponible(): bool
     {
-        return tenantCuotasFacturacionAfipHabilitada()
+        return (bool) config('tenant.cuotas.facturacion_afip.habilitado', false)
             && Schema::hasTable('comprobanteafip');
     }
 
     public static function esFactura(ComprobanteAfip $comprobante): bool
     {
-        $config = tenantCuotasFacturacionAfipConfig();
-        $tipoFactura = (int) ($config['cbte_tipo'] ?? 15);
+        $tipoFactura = (int) config('tenant.cuotas.facturacion_afip.cbte_tipo', 15);
 
         return (int) ($comprobante->tipoComprobante ?? 0) === $tipoFactura;
     }
 
     public static function esNotaCredito(ComprobanteAfip $comprobante): bool
     {
-        $config = tenantCuotasFacturacionAfipConfig();
-        $tipoNc = (int) ($config['nota_credito_tipo'] ?? 12);
+        $tipoNc = (int) config('tenant.cuotas.facturacion_afip.nota_credito_tipo', 12);
 
         return (int) ($comprobante->tipoComprobante ?? 0) === $tipoNc;
     }

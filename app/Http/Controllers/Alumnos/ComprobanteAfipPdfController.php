@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Alumnos;
 use App\Http\Controllers\Controller;
 use App\Support\Cuotas\ComprobanteAfipDatos;
 use App\Support\Cuotas\ComprobanteAfipTcpdf;
+use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,7 +19,7 @@ class ComprobanteAfipPdfController extends Controller
     public function __invoke(Request $request, string $ref)
     {
         abort_unless(tenantAutogestionArancelesEscolaresHabilitada(), 404);
-        abort_unless(tenantCuotasFacturacionAfipHabilitada(), 404);
+        abort_unless(ComprobantesAfipCuotaService::moduloDisponible(), 404);
 
         $ctx = studentCtx();
         if (! $ctx->isValid()) {

@@ -101,7 +101,7 @@
         @else
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div class="gf gf-vcenter gf-cuotas-autogestion min-w-[1108px]">
+                    <div class="gf gf-vcenter gf-cuotas-autogestion {{ $muestraComprobanteAfip ? 'min-w-[1160px]' : 'min-w-[1108px]' }}">
                         <div class="gf-head">
                             <div class="gf-th w-[180px]">Apellido y nombre</div>
                             <div class="gf-th w-[95px]">Dni</div>
@@ -119,8 +119,8 @@
                                 <div class="gf-th gf-th-right w-[95px]">Saldo</div>
                             @endif
                             <div class="gf-th gf-th-accion gf-th-accion-cupon" title="Cupón de pago">Cupón</div>
-                            @if ($mostrarHistorial && $muestraComprobanteAfip)
-                                <div class="gf-th gf-th-accion gf-th-accion-afip" title="Factura AFIP">AFIP</div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-th gf-th-accion gf-th-accion-afip" title="Descargar factura">Factura</div>
                             @endif
                         </div>
 
@@ -181,18 +181,18 @@
                                         @endif
                                     @endif
                                 </div>
-                                @if ($mostrarHistorial && $muestraComprobanteAfip)
+                                @if ($muestraComprobanteAfip)
                                     <div class="gf-td gf-td-accion gf-td-accion-afip !py-1">
-                                        @if ($pagada && $facturaAfip)
+                                        @if ($facturaAfip)
                                             <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante-afip', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobanteAfipAutogestion((int) $facturaAfip->idComprobanteAfip, (int) $c->id, (int) studentCtx()->idLegajo)]) }}"
                                                target="_blank"
                                                rel="noopener noreferrer"
                                                class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                               title="Descargar factura AFIP">
+                                               title="Descargar factura">
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                                 </svg>
-                                                <span class="sr-only">Descargar factura AFIP</span>
+                                                <span class="sr-only">Descargar factura</span>
                                             </a>
                                         @endif
                                     </div>
@@ -216,6 +216,9 @@
                                     {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['neto']) }}
                                 </div>
                                 <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                                @if ($muestraComprobanteAfip)
+                                    <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
+                                @endif
                             </div>
                             <div class="gf-row gf-row--totales gf-cuotas-autogestion-totales"
                                  wire:key="ae-totales-intereses">
@@ -232,6 +235,9 @@
                                     {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['conIntereses']) }}
                                 </div>
                                 <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                                @if ($muestraComprobanteAfip)
+                                    <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
+                                @endif
                             </div>
                         @endif
                     </div>
