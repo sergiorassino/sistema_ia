@@ -451,18 +451,19 @@
     .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
         background-color: #d4e8ec;
     }
-    /* Portal familia — aranceles escolares (ancho del card, sin scroll horizontal) */
+    /* Portal familia — aranceles escolares (desktop: planilla con scroll; mobile: cards en Blade) */
     .gf.gf-cuotas-autogestion {
         display: block;
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
+        width: max-content;
+        min-width: 56rem;
+        max-width: none;
+        flex-shrink: 0;
     }
     .gf.gf-cuotas-autogestion .gf-head,
     .gf.gf-cuotas-autogestion .gf-row {
         width: 100%;
-        max-width: 100%;
-        min-width: 0;
+        min-width: 56rem;
+        max-width: none;
         flex-wrap: nowrap;
         align-items: stretch;
     }
@@ -502,7 +503,7 @@
     }
     .gf.gf-cuotas-autogestion .gf-col-cuota {
         flex: 1 1 0;
-        min-width: 0;
+        min-width: 6rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -711,6 +712,13 @@
     }
     .se-gestion-aranceles-btn--pagos:hover {
         background: #b91c1c;
+    }
+    /* Cards mobile: sin forzar ancho mínimo ni scroll horizontal en el card */
+    .se-gestion-aranceles-cards {
+        @apply w-full min-w-0;
+    }
+    .se-gestion-aranceles-card {
+        @apply min-w-0;
     }
     .se-gestion-aranceles-tabla {
         @apply w-full border-collapse text-[12px] text-neutral-800;

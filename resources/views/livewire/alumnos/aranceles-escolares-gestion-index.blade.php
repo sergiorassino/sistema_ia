@@ -1,8 +1,8 @@
 <div class="se-page max-w-7xl mx-auto">
     <section class="overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-sm">
         @if (tenantCuotasSiroHabilitado() && $encabezado && $encabezado['codigoPagoElectronico'] !== '')
-            <div class="se-hero rounded-none shadow-none" x-data="{ cpeCopiado: false }">
-                <div class="se-hero-inner flex-col gap-4 py-5 sm:px-8 sm:py-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+            <div class="se-gestion-aranceles-cpe se-hero rounded-none shadow-none" x-data="{ cpeCopiado: false }">
+                <div class="se-hero-inner relative z-[1] flex flex-col gap-4 py-5 sm:px-8 sm:py-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
                     <div class="min-w-0 flex-1">
                         <p class="se-eyebrow">
                             Código de Pago Electrónico (CPE)
@@ -11,8 +11,8 @@
                             Este código identifica al estudiante en el sistema de pagos del Banco Roela (Siro). Copie (al portapapeles) con el ícono junto al número, abra el Botón de Pagos y péguelo allí para acceder a los canales de pago online.
                         </p>
                     </div>
-                    <div class="flex max-w-full shrink-0 items-center gap-3 overflow-x-auto lg:mt-1">
-                        <p class="whitespace-nowrap text-lg font-bold tabular-nums tracking-wide text-white sm:text-xl lg:text-2xl">
+                    <div class="flex w-full min-w-0 shrink-0 items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 sm:w-auto sm:justify-start sm:overflow-x-auto lg:mt-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-0 lg:py-0">
+                        <p class="min-w-0 truncate text-lg font-bold tabular-nums tracking-wide text-white sm:whitespace-nowrap sm:text-xl lg:text-2xl">
                             {{ $encabezado['codigoPagoElectronico'] }}
                         </p>
                         <button type="button"
@@ -42,7 +42,7 @@
             </div>
         @endif
 
-        <div class="flex flex-wrap items-center justify-center gap-3 border-b border-accent-100 bg-white px-4 py-4 sm:gap-4 sm:px-6">
+        <div class="se-gestion-aranceles-toolbar flex flex-col gap-2 border-b border-accent-100 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:px-6">
             <button type="button"
                     x-on:click="
                         @if ($cuotas->isNotEmpty())
@@ -51,13 +51,13 @@
                             window.seSwalExito('No registra cuotas pendientes de pago.', 'Libre deuda');
                         @endif
                     "
-                    class="inline-flex items-center justify-center rounded-full bg-accent-100 px-5 py-2.5 text-sm font-semibold text-primary-800 transition hover:bg-accent-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+                    class="se-gestion-aranceles-btn se-gestion-aranceles-btn--secundario w-full sm:w-auto">
                 Emitir Libre Deuda
             </button>
             <a href="{{ se_route_url('alumnos.aranceles-escolares.resumen-pagos', ['ref' => \App\Support\Security\OpaqueRouteToken::forResumenPagosAutogestion((int) studentCtx()->idLegajo)]) }}"
                target="_blank"
                rel="noopener noreferrer"
-               class="inline-flex items-center justify-center rounded-full bg-accent-100 px-5 py-2.5 text-sm font-semibold text-primary-800 transition hover:bg-accent-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+               class="se-gestion-aranceles-btn se-gestion-aranceles-btn--secundario w-full sm:w-auto">
                 Resumen de Pagos
             </a>
             @if ($botonPagosUrl !== '')
@@ -74,7 +74,7 @@
                                 }
                             });
                         "
-                        class="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-bold tracking-wide text-white transition hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">
+                        class="se-gestion-aranceles-btn se-gestion-aranceles-btn--pagos w-full sm:w-auto">
                     BOTÓN DE PAGOS
                 </button>
             @endif
@@ -91,33 +91,106 @@
                 </p>
             </div>
         @else
-            <div class="w-full overflow-x-auto">
+            {{-- Mobile: cards (sin scroll horizontal) --}}
+            <div class="se-gestion-aranceles-cards space-y-3 p-4 md:hidden">
+                @foreach ($cuotas as $c)
+                    @php
+                        $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
+                        $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
+                        $apellido = trim((string) ($c->legajo->apellido ?? ''));
+                        $nombre = trim((string) ($c->legajo->nombre ?? ''));
+                    @endphp
+                    <article wire:key="ga-cuota-m-{{ $c->id }}"
+                             class="se-gestion-aranceles-card rounded-xl border border-accent-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Cuota</p>
+                                <p class="mt-0.5 text-sm font-bold uppercase leading-snug text-primary-800">{{ $nombreCuota }}</p>
+                            </div>
+                            <p class="shrink-0 text-base font-bold tabular-nums text-neutral-900">
+                                {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
+                            </p>
+                        </div>
+
+                        <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-neutral-700">
+                            <div class="min-w-0">
+                                <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Estudiante</dt>
+                                <dd class="mt-0.5 truncate uppercase">{{ $apellido }}, {{ $nombre }}</dd>
+                            </div>
+                            <div class="min-w-0">
+                                <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">DNI</dt>
+                                <dd class="mt-0.5 tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</dd>
+                            </div>
+                            <div class="min-w-0 col-span-2">
+                                <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Sala/Grado/Curso</dt>
+                                <dd class="mt-0.5 uppercase">{{ $nombreCurso }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Venc 1</dt>
+                                <dd class="mt-0.5 tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Venc 2</dt>
+                                <dd class="mt-0.5 tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</dd>
+                            </div>
+                        </dl>
+
+                        <div class="mt-4 border-t border-accent-100 pt-3">
+                            @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                <button type="button"
+                                        x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
+                                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                                        title="Cupón no disponible — cuota vencida">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    Cupón no disponible
+                                </button>
+                            @else
+                                <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-800 hover:bg-primary-100"
+                                   title="Descargar cupón de pago">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    Descargar cupón
+                                </a>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+
+            {{-- Desktop: tabla ancha con scroll horizontal si hace falta --}}
+            <div class="hidden w-full overflow-x-auto md:block">
                 <div class="flex justify-start">
-                    <table class="min-w-[980px] w-full border-collapse text-[12px] text-neutral-800">
+                    <table class="se-gestion-aranceles-tabla min-w-[980px]">
                         <thead>
                             <tr>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Apellido</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Nombre</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Dni</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Sala/Grado/Curso</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Cuota</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Venc 1</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Venc 2</th>
-                                <th scope="col" class="w-28 border border-accent-200 bg-accent-200 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Descargar Cupón</th>
-                                <th scope="col" class="border border-accent-200 bg-accent-200 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-neutral-700">Monto</th>
+                                <th scope="col">Apellido</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Dni</th>
+                                <th scope="col">Sala/Grado/Curso</th>
+                                <th scope="col">Cuota</th>
+                                <th scope="col">Venc 1</th>
+                                <th scope="col">Venc 2</th>
+                                <th scope="col" class="se-gestion-aranceles-tabla-th-accion">Descargar Cupón</th>
+                                <th scope="col" class="se-gestion-aranceles-tabla-th-monto">Monto</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($cuotas as $c)
-                                <tr wire:key="ga-cuota-{{ $c->id }}" @class(['hover:bg-accent-50', 'bg-accent-50/70' => $loop->even])>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle uppercase">{{ trim((string) ($c->legajo->apellido ?? '')) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle uppercase">{{ trim((string) ($c->legajo->nombre ?? '')) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle uppercase">{{ trim((string) ($c->curso?->nombreParaListado() ?? '')) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle font-bold uppercase">{{ trim((string) ($c->cuota?->nombre ?? '')) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 align-middle tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</td>
-                                    <td class="border border-accent-100 px-3 py-2 text-center align-middle">
+                                <tr wire:key="ga-cuota-{{ $c->id }}">
+                                    <td class="uppercase">{{ trim((string) ($c->legajo->apellido ?? '')) }}</td>
+                                    <td class="uppercase">{{ trim((string) ($c->legajo->nombre ?? '')) }}</td>
+                                    <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</td>
+                                    <td class="uppercase">{{ trim((string) ($c->curso?->nombreParaListado() ?? '')) }}</td>
+                                    <td class="font-bold uppercase">{{ trim((string) ($c->cuota?->nombre ?? '')) }}</td>
+                                    <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</td>
+                                    <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</td>
+                                    <td class="se-gestion-aranceles-tabla-td-accion">
                                         @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
                                             <button type="button"
                                                     x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
@@ -141,7 +214,7 @@
                                             </a>
                                         @endif
                                     </td>
-                                    <td class="border border-accent-100 px-3 py-2 text-right align-middle font-semibold tabular-nums">
+                                    <td class="se-gestion-aranceles-tabla-td-monto tabular-nums">
                                         {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
                                     </td>
                                 </tr>
