@@ -30,7 +30,7 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
         $meta = [
             'titulo' => 'Configuración ARCA para facturación electrónica',
             'subtitulo' => 'Guía para colegios sin FE habilitada · Certificados, Web Services y punto de venta',
-            'version' => '1.1',
+            'version' => '1.3',
             'generado' => now()->format('d/m/Y'),
             'colegio' => $colegio,
         ];
@@ -73,6 +73,7 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ['13. Delegación al contador', $pdf->guiaLinkId('contador')],
         ]);
 
+        // Contenido continuo: sin AddPage por sección (solo portada + índice arriba).
         $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '1. Antes de empezar', 'requisitos', function () use ($pdf): void {
             $pdf->guiaP(
@@ -99,7 +100,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             );
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '2. Panorama general', 'panorama', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -128,7 +128,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             );
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '3. Adherir servicios en ARCA', 'servicios', function () use ($pdf): void {
             $pdf->guiaNumbered($pdf, [
                 'Ingresar a www.arca.gob.ar con CUIT y Clave Fiscal.',
@@ -146,7 +145,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '4. Certificado digital (producción)', 'certificado', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -162,7 +160,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
                 'ARCA mostrará instrucciones para generar un CSR (pedido de certificado).',
             ]);
 
-            $pdf->AddPage();
             $pdf->guiaH2($pdf, '4.2 Generar clave y CSR (fuera de ARCA)');
             $pdf->guiaP(
                 $pdf,
@@ -237,7 +234,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             );
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '5. Autorizar Web Services', 'webservices', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -265,7 +261,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             $pdf->guiaP($pdf, 'Si el colegio no usará la consulta CUIT por DNI, este servicio es opcional.');
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '6. Punto de venta Web Services', 'puntoventa', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -296,7 +291,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             );
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '7. Homologación (recomendado)', 'homologacion', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -324,7 +318,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             );
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '8. Datos fiscales del emisor', 'datosfiscales', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -342,7 +335,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '9. Consulta CUIT por DNI', 'padron', function () use ($pdf): void {
             $pdf->guiaBox($pdf, 'Requisitos en ARCA', [
                 ['Servicio', 'ws_sr_padron_a13 autorizado al certificado del colegio.'],
@@ -358,7 +350,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '10. Checklist final', 'checklist', function () use ($pdf): void {
             $pdf->guiaNumbered($pdf, [
                 'Clave Fiscal nivel 3 o superior activa.',
@@ -372,7 +363,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '11. Qué entregar al implementador', 'entrega', function () use ($pdf): void {
             $pdf->guiaP(
                 $pdf,
@@ -391,7 +381,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '12. Problemas frecuentes', 'errores', function () use ($pdf): void {
             $pdf->guiaErrorTable($pdf, [
                 ['No autorizado al facturar', 'Certificado no vinculado a wsfe en Administrador de Relaciones.'],
@@ -403,7 +392,6 @@ final class GuiaConfiguracionArcaFacturacionTcpdf extends TCPDF
             ]);
         });
 
-        $pdf->AddPage();
         $pdf->guiaRenderSeccion($pdf, '13. Delegación al contador', 'contador', function () use ($pdf): void {
             $pdf->guiaNumbered($pdf, [
                 'El representante del colegio puede delegar en el Administrador de Relaciones los servicios al CUIT del estudio contable.',

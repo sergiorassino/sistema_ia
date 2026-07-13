@@ -256,7 +256,8 @@ final class FacturacionAfipComun
     }
 
     /**
-     * Primer vínculo con nombre cargado en el legajo (padre, madre, tutor).
+     * Primer vínculo usable como responsable económico: nombre y DNI (padre → madre → tutor).
+     * Si el padre tiene nombre pero no DNI, se continúa con madre/tutor.
      *
      * @return array{
      *     vinculo: string,
@@ -273,7 +274,13 @@ final class FacturacionAfipComun
         $vinculos = self::vinculosResponsableEconomico($legajo);
         foreach (['padre', 'madre', 'tutor'] as $clave) {
             $fila = $vinculos[$clave] ?? null;
-            if ($fila !== null && trim((string) ($fila['nombre'] ?? '')) !== '') {
+            if ($fila === null) {
+                continue;
+            }
+            $nombre = trim((string) ($fila['nombre'] ?? ''));
+            $dni = trim((string) ($fila['dni'] ?? ''));
+            $dniLen = strlen($dni);
+            if ($nombre !== '' && $dniLen >= 7 && $dniLen <= 11) {
                 return array_merge($fila, ['vinculo' => $clave]);
             }
         }
