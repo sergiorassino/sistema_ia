@@ -1618,9 +1618,15 @@ if (! function_exists('tenantAutogestionMenuInicioHabilitada')) {
 if (! function_exists('tenantAutogestionRutaInicio')) {
     /**
      * Ruta de destino tras login o acceso a `/alumnos`.
+     * Si «Inicio» está deshabilitado y hay aranceles, entra directo a Gestión de Aranceles.
      */
     function tenantAutogestionRutaInicio(): string
     {
+        if (! (bool) config('tenant.autogestion.menu_inicio.habilitado', true)
+            && tenantAutogestionArancelesEscolaresHabilitada()) {
+            return 'alumnos.aranceles-escolares';
+        }
+
         return 'alumnos.home';
     }
 }

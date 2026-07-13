@@ -4,12 +4,18 @@ namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaDashboard;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): View|RedirectResponse
     {
+        $destino = tenantAutogestionRutaInicio();
+        if ($destino !== 'alumnos.home') {
+            return redirect()->route($destino);
+        }
+
         $ctx = studentCtx();
 
         return view('alumnos.dashboard', [

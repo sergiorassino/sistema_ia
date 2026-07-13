@@ -3,6 +3,7 @@
 namespace App\Support\Arca;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -29,9 +30,12 @@ trait ArcaGuiaTcpdfLayout
 
     private const GUIA_MARGEN_DER = 14.0;
 
-    private const GUIA_MARGEN_SUP = 12.0;
+    /** Margen superior con header de marca (logo + nombre). */
+    private const GUIA_MARGEN_SUP = 22.0;
 
     private const GUIA_MARGEN_INF = 12.0;
+
+    private const GUIA_HEADER_LOGO = 10.0;
 
     /** @var array{titulo:string,subtitulo:string,version:string,generado:string,colegio:?string} */
     private array $guiaMeta = [];
@@ -40,16 +44,51 @@ trait ArcaGuiaTcpdfLayout
     private array $guiaSectionLinks = [];
 
     /**
+     * Header TCPDF: logo + nombre de Sistemas Escolares (todas las páginas salvo portada).
+     */
+    public function Header(): void
+    {
+        if ($this->getPage() === 1) {
+            return;
+        }
+
+        $x = self::GUIA_MARGEN_IZQ;
+        $y = 5.5;
+        $logoMm = self::GUIA_HEADER_LOGO;
+        $logoPath = $this->guiaLogoSistemaPath();
+
+        if ($logoPath !== null) {
+            $this->SetFillColor(255, 255, 255);
+            $this->RoundedRect($x, $y - 0.5, $logoMm + 1.5, $logoMm + 1.5, 1.5, '1111', 'F');
+            TcpdfLogoInstitucional::dibujarAjustado($this, $x + 0.75, $y + 0.25, $logoMm, $logoMm, $logoPath);
+        }
+
+        $nombre = $this->guiaNombreSistema();
+        $this->SetXY($x + $logoMm + 4.5, $y + 2.2);
+        $this->SetTextColor(...self::GUIA_COLOR_PRIMARIO);
+        TcpdfFuenteArial::aplicar($this, 'B', 10);
+        $this->Cell(0, 5, $nombre, 0, 1, 'L');
+
+        $w = $this->getPageWidth();
+        $this->SetDrawColor(...self::GUIA_COLOR_CALLOUT);
+        $this->SetLineWidth(0.35);
+        $lineY = $y + $logoMm + 3.0;
+        $this->Line(self::GUIA_MARGEN_IZQ, $lineY, $w - self::GUIA_MARGEN_DER, $lineY);
+    }
+
+    /**
      * @param  array{titulo:string,subtitulo:string,version:string,generado:string,colegio:?string}  $meta
      */
     protected function guiaInicializar(TCPDF $pdf, array $meta): void
     {
         $this->guiaMeta = $meta;
-        $pdf->SetCreator('Sistema Escolar');
-        $pdf->SetAuthor('Sistema Escolar');
+        $nombre = $this->guiaNombreSistema();
+        $pdf->SetCreator($nombre);
+        $pdf->SetAuthor($nombre);
         $pdf->SetTitle($meta['titulo']);
-        $pdf->setPrintHeader(false);
+        $pdf->setPrintHeader(true);
         $pdf->setPrintFooter(false);
+        $pdf->SetHeaderMargin(0);
         $pdf->SetAutoPageBreak(true, self::GUIA_MARGEN_INF);
         $pdf->SetMargins(self::GUIA_MARGEN_IZQ, self::GUIA_MARGEN_SUP, self::GUIA_MARGEN_DER);
     }
@@ -69,25 +108,48 @@ trait ArcaGuiaTcpdfLayout
     {
         $w = $pdf->getPageWidth();
         $h = $pdf->getPageHeight();
+        $nombreSistema = $this->guiaNombreSistema();
+        $logoPath = $this->guiaLogoSistemaPath();
+        $logoMm = 14.0;
 
         $pdf->SetFillColor(...self::GUIA_COLOR_PRIMARIO);
-        $pdf->Rect(0, 0, $w, 62, 'F');
+        $pdf->Rect(0, 0, $w, 68, 'F');
 
         $pdf->SetFillColor(...self::GUIA_COLOR_SECUNDARIO);
-        $pdf->Rect(0, 58, $w, 6, 'F');
+        $pdf->Rect(0, 64, $w, 6, 'F');
 
-        $pdf->SetXY(self::GUIA_MARGEN_IZQ, 16);
+        // Marca Sistemas Escolares (logo + nombre) en la franja de portada.
+        $marcaY = 10.0;
+        if ($logoPath !== null) {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->RoundedRect(self::GUIA_MARGEN_IZQ, $marcaY, $logoMm + 2, $logoMm + 2, 2.0, '1111', 'F');
+            TcpdfLogoInstitucional::dibujarAjustado(
+                $pdf,
+                self::GUIA_MARGEN_IZQ + 1,
+                $marcaY + 1,
+                $logoMm,
+                $logoMm,
+                $logoPath,
+            );
+            $pdf->SetXY(self::GUIA_MARGEN_IZQ + $logoMm + 5, $marcaY + 4.5);
+        } else {
+            $pdf->SetXY(self::GUIA_MARGEN_IZQ, $marcaY + 4.5);
+        }
         $pdf->SetTextColor(255, 255, 255);
-        TcpdfFuenteArial::aplicar($pdf, 'B', 19);
-        $pdf->MultiCell($w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 9, $this->guiaMeta['titulo'], 0, 'L', false, 1);
+        TcpdfFuenteArial::aplicar($pdf, 'B', 11);
+        $pdf->Cell(0, 6, $nombreSistema, 0, 1, 'L');
 
-        TcpdfFuenteArial::aplicar($pdf, '', 11);
-        $pdf->MultiCell($w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 6, $this->guiaMeta['subtitulo'], 0, 'L', false, 1);
+        $pdf->SetXY(self::GUIA_MARGEN_IZQ, $marcaY + $logoMm + 6);
+        TcpdfFuenteArial::aplicar($pdf, 'B', 18);
+        $pdf->MultiCell($w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 8.5, $this->guiaMeta['titulo'], 0, 'L', false, 1);
+
+        TcpdfFuenteArial::aplicar($pdf, '', 10.5);
+        $pdf->MultiCell($w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 5.5, $this->guiaMeta['subtitulo'], 0, 'L', false, 1);
 
         $pdf->SetTextColor(...self::GUIA_COLOR_TEXTO);
         $pdf->SetFillColor(...self::GUIA_COLOR_CAJA);
-        $pdf->RoundedRect(self::GUIA_MARGEN_IZQ, 82, $w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 48, 3.0, '1111', 'F');
-        $pdf->SetXY(self::GUIA_MARGEN_IZQ + 6, 90);
+        $pdf->RoundedRect(self::GUIA_MARGEN_IZQ, 88, $w - self::GUIA_MARGEN_IZQ - self::GUIA_MARGEN_DER, 48, 3.0, '1111', 'F');
+        $pdf->SetXY(self::GUIA_MARGEN_IZQ + 6, 96);
 
         TcpdfFuenteArial::aplicar($pdf, 'B', 10.5);
         $pdf->Cell(0, 6, 'Datos del documento', 0, 1, 'L');
@@ -138,10 +200,24 @@ trait ArcaGuiaTcpdfLayout
     }
 
     /**
+     * Si queda poco espacio útil, pasa a la página siguiente (evita títulos huérfanos).
+     * No fuerza un salto por sección: el contenido fluye de corrido.
+     */
+    protected function guiaAsegurarEspacioSeccion(TCPDF $pdf, float $minMm = 42.0): void
+    {
+        $limite = $pdf->getPageHeight() - self::GUIA_MARGEN_INF;
+        if ($pdf->GetY() + $minMm > $limite) {
+            $pdf->AddPage();
+        }
+    }
+
+    /**
      * @param  callable():void  $contenido
      */
     protected function guiaRenderSeccion(TCPDF $pdf, string $titulo, string $keyLink, callable $contenido): void
     {
+        $this->guiaAsegurarEspacioSeccion($pdf);
+
         if (isset($this->guiaSectionLinks[$keyLink])) {
             $pdf->SetLink($this->guiaSectionLinks[$keyLink], 0, -1);
         }
@@ -160,6 +236,8 @@ trait ArcaGuiaTcpdfLayout
         $pdf->Ln(2);
 
         $contenido();
+
+        $pdf->Ln(4);
     }
 
     protected function guiaLinkId(string $key): int
@@ -449,5 +527,19 @@ trait ArcaGuiaTcpdfLayout
         TcpdfFuenteArial::aplicar($pdf, '', 9.5);
         $pdf->SetTextColor(...self::GUIA_COLOR_TEXTO);
         $pdf->MultiCell(0, 5.5, $v, 0, 'L', false, 1);
+    }
+
+    private function guiaNombreSistema(): string
+    {
+        $nombre = trim((string) config('app.name', 'Sistemas Escolares'));
+
+        return $nombre !== '' ? $nombre : 'Sistemas Escolares';
+    }
+
+    private function guiaLogoSistemaPath(): ?string
+    {
+        $fallback = public_path('img/3.png');
+
+        return is_file($fallback) ? $fallback : null;
     }
 }

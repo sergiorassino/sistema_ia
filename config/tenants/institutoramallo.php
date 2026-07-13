@@ -31,30 +31,33 @@ return [
     ],
 
     'autogestion' => [
-        /**
-         * Cuotas pendientes y comprobante de pago — todos los niveles (sin niveles_deshabilitados).
+        /*
+         | Menú de Alumnos — solo Gestión de Aranceles (misma UI que San Francisco de Asís).
+         | Sin inicio, datos, ficha, calificaciones, inasistencias, horario ni comunicados.
          */
+        'menu_inicio' => [
+            'habilitado' => false,
+        ],
+        'actualizacion_datos' => [
+            'habilitado' => false,
+        ],
+        'ficha_matricula' => [
+            'habilitado' => false,
+        ],
         'aranceles_escolares' => [
             'habilitado' => true,
-            'implementacion' => 'institutoramallo',
+            'implementacion' => 'sanfranciscoasis',
+            'menu_etiqueta' => 'Gestión de Aranceles',
         ],
-
-        // Sin horario de clase en autogestión (ningún nivel).
         'horario_clase' => [
             'habilitado' => false,
         ],
-
-        // Sin consulta de calificaciones en autogestión (ningún nivel).
         'consulta_calificaciones' => [
             'habilitado' => false,
         ],
-
-        // Sin informe de inasistencias en autogestión (ningún nivel).
         'informe_inasistencias' => [
             'habilitado' => false,
         ],
-
-        // Sin cuaderno de comunicados ni push en autogestión (ningún nivel).
         'comunicaciones' => [
             'habilitado' => false,
         ],
