@@ -99,148 +99,145 @@
                 </p>
             </div>
         @else
-            <div class="w-full overflow-x-auto">
-                <div class="flex justify-start">
-                    <div class="gf gf-vcenter gf-cuotas-autogestion {{ $muestraComprobanteAfip ? 'min-w-[1160px]' : 'min-w-[1108px]' }}">
-                        <div class="gf-head">
-                            <div class="gf-th w-[180px]">Apellido y nombre</div>
-                            <div class="gf-th w-[95px]">Dni</div>
-                            <div class="gf-th w-[115px]">Sala/Grado/Curso</div>
-                            <div class="gf-th w-[100px]">Nivel</div>
-                            <div class="gf-th w-12">Año</div>
-                            <div class="gf-th w-[120px]">Cuota</div>
-                            <div class="gf-th w-[85px]">Venc 1</div>
-                            <div class="gf-th w-[85px]">Venc 2</div>
-                            <div class="gf-th w-[105px]">Actualizada al:</div>
-                            @if ($mostrarHistorial)
-                                <div class="gf-th gf-th-right w-[95px]">Pagado</div>
-                                <div class="gf-th gf-th-right w-[95px]">Saldo</div>
-                            @else
-                                <div class="gf-th gf-th-right w-[95px]">Saldo</div>
-                            @endif
-                            <div class="gf-th gf-th-accion gf-th-accion-cupon" title="Cupón de pago">Cupón</div>
-                            @if ($muestraComprobanteAfip)
-                                <div class="gf-th gf-th-accion gf-th-accion-afip" title="Descargar factura">Factura</div>
-                            @endif
-                        </div>
-
-                        @foreach ($cuotas as $c)
-                            @php
-                                $pagada = (float) ($c->faltapa ?? 0) <= 0;
-                                $rowEstadoClass = $mostrarHistorial
-                                    ? ($pagada ? 'gf-row--pagada' : 'gf-row--adeudada')
-                                    : '';
-                                $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
-                            @endphp
-                            <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
-                                 wire:key="cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}">
-                                <div class="gf-td w-[180px] uppercase">{{ trim(trim((string) ($c->legajo->apellido ?? '')).', '.trim((string) ($c->legajo->nombre ?? ''))) }}</div>
-                                <div class="gf-td w-[95px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</div>
-                                <div class="gf-td w-[115px] uppercase">{{ trim((string) ($c->curso?->nombreParaListado() ?? '')) }}</div>
-                                <div class="gf-td w-[100px] uppercase">{{ trim((string) ($c->curso?->nivel?->nivel ?? '')) }}</div>
-                                <div class="gf-td w-12 tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
-                                <div class="gf-td w-[120px] font-bold uppercase text-primary-800">{{ trim((string) ($c->cuota?->nombre ?? '')) }}</div>
-                                <div class="gf-td w-[85px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</div>
-                                <div class="gf-td w-[85px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</div>
-                                <div class="gf-td w-[105px] tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->nueVenc) }}</div>
-                                @if ($mostrarHistorial)
-                                    <div class="gf-td gf-th-right w-[95px] tabular-nums">
-                                        {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->pagado) }}
-                                    </div>
-                                    <div class="gf-td gf-th-right w-[95px] font-bold tabular-nums">
-                                        {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
-                                    </div>
-                                @else
-                                    <div class="gf-td gf-th-right w-[95px] font-bold tabular-nums">
-                                        {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
-                                    </div>
-                                @endif
-                                <div class="gf-td gf-td-accion gf-td-accion-cupon !py-1">
-                                    @if (! $mostrarHistorial || (float) $c->faltapa > 0)
-                                        @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
-                                            <button type="button"
-                                                    x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
-                                                    class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
-                                                    title="Cupón no disponible — cuota vencida">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                </svg>
-                                                <span class="sr-only">Cupón no disponible</span>
-                                            </button>
-                                        @else
-                                            <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
-                                               target="_blank"
-                                               rel="noopener noreferrer"
-                                               class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                               title="Emitir cupón de pago">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                </svg>
-                                                <span class="sr-only">Emitir cupón de pago</span>
-                                            </a>
-                                        @endif
-                                    @endif
-                                </div>
-                                @if ($muestraComprobanteAfip)
-                                    <div class="gf-td gf-td-accion gf-td-accion-afip !py-1">
-                                        @if ($facturaAfip)
-                                            <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante-afip', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobanteAfipAutogestion((int) $facturaAfip->idComprobanteAfip, (int) $c->id, (int) studentCtx()->idLegajo)]) }}"
-                                               target="_blank"
-                                               rel="noopener noreferrer"
-                                               class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                               title="Descargar factura">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                </svg>
-                                                <span class="sr-only">Descargar factura</span>
-                                            </a>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-
-                        @if (! $mostrarHistorial)
-                            <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-autogestion-totales"
-                                 wire:key="ae-totales-neto">
-                                <div class="gf-td w-[180px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[95px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[115px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[100px]" aria-hidden="true"></div>
-                                <div class="gf-td w-12" aria-hidden="true"></div>
-                                <div class="gf-td w-[120px] gf-td-total-label justify-end">Total neto</div>
-                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[105px]" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-total-importe gf-th-right w-[95px] tabular-nums whitespace-nowrap">
-                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['neto']) }}
-                                </div>
-                                <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
-                                @if ($muestraComprobanteAfip)
-                                    <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
-                                @endif
-                            </div>
-                            <div class="gf-row gf-row--totales gf-cuotas-autogestion-totales"
-                                 wire:key="ae-totales-intereses">
-                                <div class="gf-td w-[180px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[95px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[115px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[100px]" aria-hidden="true"></div>
-                                <div class="gf-td w-12" aria-hidden="true"></div>
-                                <div class="gf-td w-[120px] gf-td-total-label justify-end">Total con intereses al día de hoy</div>
-                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[85px]" aria-hidden="true"></div>
-                                <div class="gf-td w-[105px]" aria-hidden="true"></div>
-                                <div class="gf-td gf-td-total-importe gf-th-right w-[95px] tabular-nums whitespace-nowrap">
-                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['conIntereses']) }}
-                                </div>
-                                <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
-                                @if ($muestraComprobanteAfip)
-                                    <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
-                                @endif
-                            </div>
+            <div class="w-full">
+                <div class="gf gf-vcenter gf-cuotas-autogestion">
+                    <div class="gf-head">
+                        <div class="gf-th gf-col-dni">Dni</div>
+                        <div class="gf-th gf-col-curso">Sala/Grado/Curso</div>
+                        <div class="gf-th gf-col-nivel">Nivel</div>
+                        <div class="gf-th gf-col-ano">Año</div>
+                        <div class="gf-th gf-col-cuota">Cuota</div>
+                        <div class="gf-th gf-col-fecha">Venc 1</div>
+                        <div class="gf-th gf-col-fecha">Venc 2</div>
+                        <div class="gf-th gf-col-fecha" title="Actualizada al">Act.</div>
+                        @if ($mostrarHistorial)
+                            <div class="gf-th gf-th-right gf-col-importe">Pagado</div>
+                            <div class="gf-th gf-th-right gf-col-importe">Saldo</div>
+                        @else
+                            <div class="gf-th gf-th-right gf-col-importe">Saldo</div>
+                        @endif
+                        <div class="gf-th gf-th-accion gf-th-accion-cupon" title="Cupón de pago">Cupón</div>
+                        @if ($muestraComprobanteAfip)
+                            <div class="gf-th gf-th-accion gf-th-accion-afip" title="Descargar factura">Factura</div>
                         @endif
                     </div>
+
+                    @foreach ($cuotas as $c)
+                        @php
+                            $pagada = (float) ($c->faltapa ?? 0) <= 0;
+                            $rowEstadoClass = $mostrarHistorial
+                                ? ($pagada ? 'gf-row--pagada' : 'gf-row--adeudada')
+                                : '';
+                            $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
+                            $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
+                            $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
+                            $nombreNivel = trim((string) ($c->curso?->nivel?->nivel ?? ''));
+                        @endphp
+                        <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
+                             wire:key="cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}">
+                            <div class="gf-td gf-col-dni">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</div>
+                            <div class="gf-td gf-col-curso" title="{{ $nombreCurso }}">{{ $nombreCurso }}</div>
+                            <div class="gf-td gf-col-nivel" title="{{ $nombreNivel }}">{{ $nombreNivel }}</div>
+                            <div class="gf-td gf-col-ano tabular-nums">{{ $c->terlec?->ano ?? '' }}</div>
+                            <div class="gf-td gf-col-cuota font-bold uppercase text-primary-800" title="{{ $nombreCuota }}">{{ $nombreCuota }}</div>
+                            <div class="gf-td gf-col-fecha">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</div>
+                            <div class="gf-td gf-col-fecha">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</div>
+                            <div class="gf-td gf-col-fecha">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->nueVenc) }}</div>
+                            @if ($mostrarHistorial)
+                                <div class="gf-td gf-th-right gf-col-importe">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->pagado) }}
+                                </div>
+                                <div class="gf-td gf-th-right gf-col-importe font-bold">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
+                                </div>
+                            @else
+                                <div class="gf-td gf-th-right gf-col-importe font-bold">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
+                                </div>
+                            @endif
+                            <div class="gf-td gf-td-accion gf-td-accion-cupon !py-1">
+                                @if (! $mostrarHistorial || (float) $c->faltapa > 0)
+                                    @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                        <button type="button"
+                                                x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
+                                                class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                title="Cupón no disponible — cuota vencida">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                            </svg>
+                                            <span class="sr-only">Cupón no disponible</span>
+                                        </button>
+                                    @else
+                                        <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                           title="Emitir cupón de pago">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                            </svg>
+                                            <span class="sr-only">Emitir cupón de pago</span>
+                                        </a>
+                                    @endif
+                                @endif
+                            </div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-td gf-td-accion gf-td-accion-afip !py-1">
+                                    @if ($facturaAfip)
+                                        <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante-afip', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobanteAfipAutogestion((int) $facturaAfip->idComprobanteAfip, (int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                           title="Descargar factura">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                            </svg>
+                                            <span class="sr-only">Descargar factura</span>
+                                        </a>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+
+                    @if (! $mostrarHistorial)
+                        <div class="gf-row gf-row--totales gf-row--totales-inicio gf-cuotas-autogestion-totales"
+                             wire:key="ae-totales-neto">
+                            <div class="gf-td gf-col-dni" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-curso" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-nivel" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-ano" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-label">Total neto</div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-importe gf-th-right gf-col-importe">
+                                {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['neto']) }}
+                            </div>
+                            <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
+                            @endif
+                        </div>
+                        <div class="gf-row gf-row--totales gf-cuotas-autogestion-totales"
+                             wire:key="ae-totales-intereses">
+                            <div class="gf-td gf-col-dni" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-curso" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-nivel" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-ano" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-label">Total con intereses al día de hoy</div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-col-fecha" aria-hidden="true"></div>
+                            <div class="gf-td gf-td-total-importe gf-th-right gf-col-importe">
+                                {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($totalesAdeudados['conIntereses']) }}
+                            </div>
+                            <div class="gf-td gf-td-accion gf-td-accion-cupon" aria-hidden="true"></div>
+                            @if ($muestraComprobanteAfip)
+                                <div class="gf-td gf-td-accion gf-td-accion-afip" aria-hidden="true"></div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
 
