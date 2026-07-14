@@ -520,7 +520,7 @@ final class ComprobanteAfipTcpdf extends TCPDF
 
             $descripcion = $concepto;
             if ($becaPorcentaje > 0 && $becaImporteOriginalFmt !== '') {
-                $descripcion .= "\n(Beca {$becaPorcentaje} % - Importe Original de la cuota: {$becaImporteOriginalFmt})";
+                $descripcion .= "\n(Ayuda Familiar {$becaPorcentaje} % - Importe Original de la cuota: {$becaImporteOriginalFmt})";
             }
 
             TcpdfFuenteArial::aplicar($this, '', 8);
