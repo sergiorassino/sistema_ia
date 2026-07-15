@@ -117,12 +117,8 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         string $tituloDocumento,
     ): self {
         $pdf = new self($header, $tituloDocumento, false, true);
-        $primera = true;
         foreach ($consultas as $consulta) {
-            if (! $primera) {
-                $pdf->AddPage();
-            }
-            $primera = false;
+            $pdf->AddPage();
             $pdf->dibujarHoja($consulta);
         }
 

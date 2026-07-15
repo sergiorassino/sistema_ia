@@ -2,7 +2,10 @@
 
 namespace App\Services\SincroGe;
 
+use App\Support\Database\PersistenciaColumnas;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -20,6 +23,7 @@ use Throwable;
  * 4. Matrícula: debe existir en `matricula` (mismo `idTerlec`, `idNivel`, `idCursos`, `idLegajos`).
  * 5. Notas: siempre se arma el UPDATE con `ic01`–`ic28` y `calif` desde el CSV (celdas vacías → cadena vacía en BD, para reflejar borrados en GE).
  * 6. Validación opcional contra `notaspermitidas` del nivel.
+ * 7. Longitud máxima de cada columna (según esquema): si el valor no entra, la fila falla (evita truncado silencioso de MySQL). Errores de BD se capturan y no se cuentan como éxito.
  *
  * ## Criterio único de actualización (tabla `calificaciones`)
  * Exactamente **una** fila debe cumplir:
@@ -37,7 +41,13 @@ final class GeCsvImporter
     /** Evita respuestas enormes si el CSV tiene miles de filas con error. */
     private const MAX_ISSUES = 250;
 
-    /** Índices de columnas (0-based) según encabezado oficial GE. */
+    /**
+     * Cantidad exacta de columnas del layout GE/CIDI secundario actual (EE1220762 y equivalentes).
+     * Si GE agrega o quita columnas, fallar aquí evita importar con índices desfasados.
+     */
+    public const EXPECTED_COLUMN_COUNT = 82;
+
+    /** Índices de columnas (0-based) según encabezado oficial GE (bloque eval/JIS estable). */
     private const COL_CURSO = 0;
 
     private const COL_SECCION = 1;
@@ -52,7 +62,8 @@ final class GeCsvImporter
 
     private const COL_ESPACIO_CURRICULAR = 11;
 
-    private const COL_NOTA_FINAL = 72;
+    /** Índice fijo de «NOTA FINAL» en el layout GE actual (después de Apren. Eval. 1–8 y GRAL.). */
+    public const COL_NOTA_FINAL = 80;
 
     /** Pares [nota, recup1, recup2] por evaluación → ic01..ic24. */
     private const EVAL_COLS = [
@@ -80,19 +91,75 @@ final class GeCsvImporter
         'SEXTO AÑO' => 6,
     ];
 
+    /** @var array<string, int> nombre columna BD => longitud máxima (character_maximum_length) */
+    private array $columnMaxLengths = [];
+
     /** @var array<string, array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}|null> */
     private array $materiaCache = [];
 
     /** @var array<string, int|null> */
     private array $legajoCache = [];
 
+    /** @var array<string, bool> */
+    private array $matriculaCache = [];
+
     /** @var list<string> */
     private array $notasPermitidas = [];
+
+    /**
+     * Valida el encabezado contra el layout GE/CIDI secundario vigente.
+     * Devuelve mensaje de error o null si es válido. No escribe en BD.
+     *
+     * @param  list<string|null>|false  $header
+     */
+    public static function mensajeSiLayoutInvalido(array|false $header): ?string
+    {
+        if ($header === false || $header === []) {
+            return 'El archivo CSV está vacío o no tiene encabezado.';
+        }
+
+        $count = count($header);
+        if ($count !== self::EXPECTED_COLUMN_COUNT) {
+            return "El archivo tiene {$count} columnas, pero el sistema espera exactamente "
+                .self::EXPECTED_COLUMN_COUNT
+                .' (layout GE/CIDI secundario actual; Nota final en la columna '
+                .(self::COL_NOTA_FINAL + 1)
+                .'). GE puede haber cambiado el export: no se importó ningún dato. '
+                .'Actualice el módulo de sincronización antes de volver a intentar.';
+        }
+
+        $joined = mb_strtoupper(implode(';', array_map(
+            static fn ($v) => trim(str_replace("\xEF\xBB\xBF", '', (string) ($v ?? ''))),
+            $header
+        )), 'UTF-8');
+
+        if (! str_contains($joined, 'ESPACIO CURRICULAR') || ! str_contains($joined, 'NOTA EVAL 1')) {
+            return 'El encabezado no coincide con el listado GE/CIDI de calificaciones (faltan columnas esperadas). '
+                .'No se importó ningún dato.';
+        }
+
+        $nombreNotaFinal = mb_strtoupper(
+            trim(str_replace("\xEF\xBB\xBF", '', (string) ($header[self::COL_NOTA_FINAL] ?? ''))),
+            'UTF-8'
+        );
+        if ($nombreNotaFinal !== 'NOTA FINAL') {
+            return 'En la columna '.(self::COL_NOTA_FINAL + 1).' se esperaba «NOTA FINAL» y el archivo tiene «'
+                .trim((string) ($header[self::COL_NOTA_FINAL] ?? '')).'». '
+                .'El layout de GE cambió: no se importó ningún dato. Actualice el módulo de sincronización.';
+        }
+
+        return null;
+    }
 
     public function import(string $absolutePath, int $idTerlec, int $idNivel): GeCsvImportResult
     {
         if (! is_readable($absolutePath)) {
             throw new RuntimeException('No se puede leer el archivo CSV.');
+        }
+
+        // Archivos GE suelen tener miles de filas; cada una implica varias consultas.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
         }
 
         $handle = fopen($absolutePath, 'rb');
@@ -102,7 +169,9 @@ final class GeCsvImporter
 
         $this->materiaCache = [];
         $this->legajoCache = [];
+        $this->matriculaCache = [];
         $this->notasPermitidas = $this->loadNotasPermitidas($idNivel);
+        $this->columnMaxLengths = $this->loadColumnMaxLengths();
 
         $issues = [];
         $totalDataRows = 0;
@@ -114,8 +183,9 @@ final class GeCsvImporter
         try {
             // Encabezado
             $header = fgetcsv($handle, 0, self::DELIMITER);
-            if ($header === false) {
-                throw new RuntimeException('El archivo CSV está vacío o no tiene encabezado.');
+            $layoutError = self::mensajeSiLayoutInvalido($header);
+            if ($layoutError !== null) {
+                throw new RuntimeException($layoutError);
             }
 
             DB::beginTransaction();
@@ -200,6 +270,19 @@ final class GeCsvImporter
 
                 $payload = $this->buildGradePayload($row);
 
+                $oversized = $this->findOversizedFields($payload);
+                if ($oversized !== []) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'valor_demasiado_largo',
+                        'Hay valores que no entran en la columna de la base de datos: '.implode('; ', $oversized).'.',
+                        $context
+                    );
+
+                    continue;
+                }
+
                 $invalidNotes = $this->findInvalidNotes($payload);
                 if ($invalidNotes !== []) {
                     $skippedRows++;
@@ -213,7 +296,16 @@ final class GeCsvImporter
                     continue;
                 }
 
-                $updateResult = $this->updateCalificacionRow($idLegajos, $idTerlec, $materia, $payload);
+                try {
+                    $updateResult = $this->updateCalificacionRow($idLegajos, $idTerlec, $materia, $payload);
+                } catch (QueryException $e) {
+                    $skippedRows++;
+                    $msg = PersistenciaColumnas::mensajeDesdeQueryException($e)
+                        ?? 'Error de base de datos al guardar la calificación (el valor puede no caber en la columna o el esquema no coincide).';
+                    $issues[] = $this->issue($lineNumber, 'error_base_datos', $msg, $context);
+
+                    continue;
+                }
 
                 if ($updateResult === -2) {
                     $skippedRows++;
@@ -412,12 +504,21 @@ final class GeCsvImporter
 
     private function tieneMatricula(int $idTerlec, int $idNivel, int $idCursos, int $idLegajos): bool
     {
-        return DB::table('matricula')
+        $cacheKey = "{$idTerlec}|{$idNivel}|{$idCursos}|{$idLegajos}";
+        if (array_key_exists($cacheKey, $this->matriculaCache)) {
+            return $this->matriculaCache[$cacheKey];
+        }
+
+        $exists = DB::table('matricula')
             ->where('idTerlec', $idTerlec)
             ->where('idNivel', $idNivel)
             ->where('idCursos', $idCursos)
             ->where('idLegajos', $idLegajos)
             ->exists();
+
+        $this->matriculaCache[$cacheKey] = $exists;
+
+        return $exists;
     }
 
     /**
@@ -479,28 +580,28 @@ final class GeCsvImporter
     /**
      * @param  array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string}  $materia
      * @param  array<string, string>  $payload
-     * @return int 1 si hay exactamente una fila coincidente (aunque los valores no cambien), 0 si ninguna, -2 si varias
+     * @return int 1 si OK, 0 si ninguna, -2 si varias
      */
     private function updateCalificacionRow(int $idLegajos, int $idTerlec, array $materia, array $payload): int
     {
-        $where = [
-            'idLegajos' => $idLegajos,
-            'idTerlec' => $idTerlec,
-            'idMaterias' => $materia['idMaterias'],
-        ];
+        $ids = DB::table('calificaciones')
+            ->where('idLegajos', $idLegajos)
+            ->where('idTerlec', $idTerlec)
+            ->where('idMaterias', $materia['idMaterias'])
+            ->limit(2)
+            ->pluck('id');
 
-        $count = DB::table('calificaciones')->where($where)->count();
-
-        if ($count === 0) {
+        if ($ids->isEmpty()) {
             return 0;
         }
 
-        if ($count > 1) {
+        if ($ids->count() > 1) {
             return -2;
         }
 
-        // MySQL/Laravel devuelven 0 filas "afectadas" si los valores ya eran iguales; eso no es un error.
-        DB::table('calificaciones')->where($where)->update($payload);
+        // Validación de longitud previa + QueryException evitan truncados/silencios; se evita
+        // un SELECT post-guardado por fila (muy costoso en CSV de miles de registros).
+        DB::table('calificaciones')->where('id', (int) $ids->first())->update($payload);
 
         return 1;
     }
@@ -514,6 +615,62 @@ final class GeCsvImporter
             ->count();
 
         return "idLegajos={$idLegajos}, idTerlec={$idTerlec}, idMaterias={$idMaterias} → {$n} fila(s)";
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function loadColumnMaxLengths(): array
+    {
+        if (! Schema::hasTable('calificaciones')) {
+            return [];
+        }
+
+        $lengths = [];
+        foreach (Schema::getColumns('calificaciones') as $col) {
+            $name = (string) ($col['name'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $len = $col['length'] ?? null;
+            if ($len === null || $len === '') {
+                continue;
+            }
+            $lengths[$name] = (int) $len;
+        }
+
+        return $lengths;
+    }
+
+    /**
+     * @param  array<string, string>  $payload
+     * @return list<string>
+     */
+    private function findOversizedFields(array $payload): array
+    {
+        if ($this->columnMaxLengths === []) {
+            return [];
+        }
+
+        $oversized = [];
+        foreach ($payload as $field => $value) {
+            if ($value === '') {
+                continue;
+            }
+            $max = $this->columnMaxLengths[$field] ?? null;
+            if ($max === null || $max < 1) {
+                continue;
+            }
+            $len = mb_strlen($value, 'UTF-8');
+            if ($len > $max) {
+                $preview = mb_strlen($value, 'UTF-8') > 40
+                    ? mb_substr($value, 0, 40, 'UTF-8').'…'
+                    : $value;
+                $oversized[] = "{$field} ({$len} caracteres, máx. {$max}): «{$preview}»";
+            }
+        }
+
+        return $oversized;
     }
 
     /**
