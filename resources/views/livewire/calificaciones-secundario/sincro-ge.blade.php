@@ -30,10 +30,15 @@
             {{ session('warning') }}
         </div>
     @endif
+    @if (session('error'))
+        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <div class="se-card space-y-5 p-5 sm:p-6">
         <div class="space-y-2 text-sm text-neutral-600">
-            <p>Suba el archivo <strong>CSV</strong> exportado desde GE/CIDI (separador punto y coma, como el modelo <code class="text-xs">EE1242430.csv</code>).</p>
+            <p>Suba el archivo <strong>CSV</strong> exportado desde GE/CIDI (separador punto y coma). El layout actual debe tener exactamente <strong>{{ \App\Services\SincroGe\GeCsvImporter::EXPECTED_COLUMN_COUNT }} columnas</strong>; si GE cambia la cantidad, el sistema avisará y no importará datos.</p>
             <ul class="list-disc space-y-1 pl-5">
                 <li>Se sobrescriben siempre <code class="text-xs">ic01</code>–<code class="text-xs">ic28</code> y <code class="text-xs">calif</code> con lo que traiga el CSV; las celdas vacías borran el valor en el sistema (útil si en GE se borró una nota).</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel</strong> de su sesión actual.</li>
@@ -175,4 +180,28 @@
             @endif
         </div>
     @endif
+
+    @script
+    <script>
+        (function () {
+            function mensajeDeEvento(event, fallback) {
+                return event?.mensaje ?? event?.detail?.mensaje ?? fallback;
+            }
+
+            $wire.on('se-swal-exito', (event) => {
+                const mensaje = mensajeDeEvento(event, 'Importación completada.');
+                if (typeof window.seSwalExito === 'function') {
+                    window.seSwalExito(mensaje);
+                }
+            });
+
+            $wire.on('se-swal-error', (event) => {
+                const mensaje = mensajeDeEvento(event, 'La importación tuvo errores.');
+                if (typeof window.seSwalError === 'function') {
+                    window.seSwalError(mensaje);
+                }
+            });
+        })();
+    </script>
+    @endscript
 </div>

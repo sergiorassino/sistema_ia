@@ -67,11 +67,9 @@ class SincroGe extends Component
         $bytes = (int) ($this->archivoCsv->getSize() ?? 0);
         $this->archivoTamanioKb = $bytes > 0 ? (int) ceil($bytes / 1024) : null;
 
-        if (! $this->validarEncabezadoGe($this->archivoCsv)) {
-            $this->addError(
-                'archivoCsv',
-                'El archivo no coincide con el formato GE/CIDI (separador «;» y columnas de calificaciones). Verifique que exportó el listado correcto.'
-            );
+        $errorLayout = $this->validarEncabezadoGe($this->archivoCsv);
+        if ($errorLayout !== null) {
+            $this->addError('archivoCsv', $errorLayout);
             $this->archivoCsv = null;
             $this->archivoNombre = null;
             $this->archivoTamanioKb = null;
@@ -136,14 +134,22 @@ class SincroGe extends Component
 
         $path = null;
         try {
+            if (function_exists('set_time_limit')) {
+                @set_time_limit(300);
+            }
             $path = $this->resolveCsvAbsolutePath($this->archivoCsv);
             $result = $importer->import($path, $idTerlec, $idNivel);
             $this->ultimoResultado = $this->serializeResult($result);
 
-            if ($result->committed && $result->updatedRows > 0) {
-                session()->flash('success', $result->successMessage());
-            } elseif ($result->hasIssues() || $result->updatedRows === 0) {
-                session()->flash('warning', $result->successMessage());
+            $msg = $result->successMessage();
+            if ($result->hasIssues() || $result->skippedRows > 0) {
+                session()->flash('error', $msg);
+                $this->dispatch('se-swal-error', mensaje: $msg);
+            } elseif ($result->committed && $result->updatedRows > 0) {
+                session()->flash('success', $msg);
+                $this->dispatch('se-swal-exito', mensaje: $msg);
+            } else {
+                session()->flash('warning', $msg);
             }
 
             $this->quitarArchivo();
@@ -182,33 +188,28 @@ class SincroGe extends Component
         return null;
     }
 
-    private function validarEncabezadoGe(TemporaryUploadedFile $file): bool
+    /**
+     * @return string|null Mensaje de error de layout, o null si el encabezado es válido.
+     */
+    private function validarEncabezadoGe(TemporaryUploadedFile $file): ?string
     {
         $path = $file->getRealPath();
         if (! is_string($path) || $path === '' || ! is_readable($path)) {
             $path = $file->path();
         }
         if (! is_string($path) || $path === '' || ! is_readable($path)) {
-            return false;
+            return 'No se pudo leer el archivo subido para validar el encabezado.';
         }
 
         $handle = fopen($path, 'rb');
         if ($handle === false) {
-            return false;
+            return 'No se pudo abrir el archivo subido para validar el encabezado.';
         }
 
         $header = fgetcsv($handle, 0, ';');
         fclose($handle);
 
-        if (! is_array($header) || count($header) < 60) {
-            return false;
-        }
-
-        $joined = mb_strtoupper(implode(';', array_map('trim', $header)), 'UTF-8');
-
-        return str_contains($joined, 'NOTA FINAL')
-            && str_contains($joined, 'ESPACIO CURRICULAR')
-            && str_contains($joined, 'NOTA EVAL 1');
+        return GeCsvImporter::mensajeSiLayoutInvalido($header);
     }
 
     private function resolveCsvAbsolutePath(TemporaryUploadedFile $file): string

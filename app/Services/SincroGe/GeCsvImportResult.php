@@ -27,6 +27,10 @@ final class GeCsvImportResult
     public function successMessage(): string
     {
         if (! $this->committed) {
+            if ($this->hasIssues()) {
+                return 'No se guardó ningún cambio. Hay errores en el archivo; revise el detalle abajo.';
+            }
+
             return 'No se guardó ningún cambio en la base de datos.';
         }
 
@@ -34,12 +38,11 @@ final class GeCsvImportResult
             return 'El archivo se procesó, pero no se actualizó ninguna calificación.';
         }
 
-        $msg = "Importación completada: {$this->updatedRows} registro(s) actualizado(s) de {$this->totalDataRows} fila(s) del archivo.";
-
         if ($this->skippedRows > 0 || $this->hasIssues()) {
-            $msg .= ' Revise el detalle de advertencias y errores abajo.';
+            return "Importación parcial: {$this->updatedRows} registro(s) actualizado(s) de {$this->totalDataRows} fila(s); "
+                ."{$this->skippedRows} fila(s) con error no se grabaron. Revise el detalle abajo.";
         }
 
-        return $msg;
+        return "Importación completada: {$this->updatedRows} registro(s) actualizado(s) de {$this->totalDataRows} fila(s) del archivo.";
     }
 }
