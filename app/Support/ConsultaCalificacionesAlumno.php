@@ -222,6 +222,9 @@ final class ConsultaCalificacionesAlumno
         return TercerMateriaGestor::filasParaLegajo($idLegajo, $idNivel, $idTerlec);
     }
 
+    /** @var array<int, list<object{etiqueta: string, fuente: string, condicion_where: string}>> */
+    private static array $cacheDefsItemsBoletin = [];
+
     /**
      * @return list<object{materia: string, curso: string, linea: string}>
      */
@@ -231,11 +234,137 @@ final class ConsultaCalificacionesAlumno
     }
 
     /**
+     * Texto de previas por legajo (planillas lote): una sola consulta agrupada.
+     *
+     * @param  list<int>  $idLegajos
+     * @return array<int, string>
+     */
+    public static function materiasAdeudadasTextoPorLegajos(array $idLegajos, int $idTerlecActual, int $idNivel): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $idLegajos),
+            fn (int $id) => $id > 0
+        )));
+        if ($ids === [] || $idTerlecActual <= 0 || $idNivel <= 0) {
+            return [];
+        }
+
+        $lineasPorLegajo = [];
+        foreach (array_chunk($ids, 200) as $chunk) {
+            $raw = DB::table('calificaciones as c')
+                ->join('materias as m', function ($join) {
+                    $join->on('m.id', '=', 'c.idMaterias')
+                        ->on('m.idTerlec', '=', 'c.idTerlec');
+                })
+                ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+                ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
+                ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
+                ->leftJoin('terlec as t', 't.id', '=', 'c.idTerlec')
+                ->whereIn('c.idLegajos', $chunk)
+                ->where('c.apro', 1)
+                ->where('c.idTerlec', '<>', $idTerlecActual)
+                ->where('cu.idNivel', $idNivel)
+                ->orderBy('c.idLegajos')
+                ->orderByDesc('t.ano')
+                ->orderBy('m.materia')
+                ->select([
+                    'c.idLegajos',
+                    'm.materia',
+                    'cu.cursec',
+                    'cp.curPlanCurso',
+                    'tc.nombre as turnoClaseNombre',
+                    'cu.c',
+                    'cu.s',
+                ])
+                ->get();
+
+            foreach ($raw as $r) {
+                $materia = trim((string) ($r->materia ?? ''));
+                if ($materia === '') {
+                    continue;
+                }
+                $idLeg = (int) $r->idLegajos;
+                $cursoRaw = self::cursoLabelDesdeFilaCalificacion($r);
+                $cursoFmt = self::cursoTituloPalabras($cursoRaw);
+                $lineasPorLegajo[$idLeg][] = mb_strtoupper($materia, 'UTF-8').' ('.$cursoFmt.')';
+            }
+        }
+
+        $out = [];
+        foreach ($ids as $idLeg) {
+            $lineas = $lineasPorLegajo[$idLeg] ?? [];
+            $out[$idLeg] = $lineas === [] ? '' : implode(' - ', $lineas);
+        }
+
+        return $out;
+    }
+
+    /**
      * @return list<object{etiqueta: string, fuente: string, total: float}>
      */
     public static function itemsBoletinParaMatriculaPublic(int $idMatricula, int $idTerlec): array
     {
         return self::itemsBoletinParaMatricula($idMatricula, $idTerlec);
+    }
+
+    /**
+     * Ítems de boletín para muchas matrículas (unas pocas consultas GROUP BY, no una por alumno).
+     *
+     * @param  list<int>  $idMatriculas
+     * @return array<int, list<object{etiqueta: string, fuente: string, total: float}>>
+     */
+    public static function itemsBoletinPorMatriculas(array $idMatriculas, int $idTerlec): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $idMatriculas),
+            fn (int $id) => $id > 0
+        )));
+        if ($ids === []) {
+            return [];
+        }
+
+        $definiciones = self::definicionesItemsBoletinActivas($idTerlec);
+        $defsValidas = [];
+        foreach ($definiciones as $def) {
+            $etiqueta = trim((string) ($def->etiqueta ?? ''));
+            $fuente = trim((string) ($def->fuente ?? ''));
+            $cond = trim((string) ($def->condicion_where ?? ''));
+            if ($etiqueta === '' || ! in_array($fuente, self::ITEMS_BOLETIN_FUENTES, true) || ! self::condicionWhereItemsBoletinSegura($cond)) {
+                continue;
+            }
+            $defsValidas[] = (object) [
+                'etiqueta' => $etiqueta,
+                'fuente' => $fuente,
+                'condicion_where' => $cond,
+            ];
+        }
+
+        /** @var array<int, list<object{etiqueta: string, fuente: string, total: float}>> $out */
+        $out = [];
+        foreach ($ids as $idMat) {
+            $out[$idMat] = [];
+        }
+
+        if ($defsValidas === []) {
+            return $out;
+        }
+
+        foreach ($defsValidas as $def) {
+            $totales = self::sumarCantidadItemsBoletinPorMatriculas(
+                $def->fuente,
+                $def->condicion_where,
+                $ids
+            );
+            foreach ($ids as $idMat) {
+                $out[$idMat][] = (object) [
+                    'etiqueta' => $def->etiqueta,
+                    'fuente' => $def->fuente,
+                    'total' => $totales[$idMat] ?? 0.0,
+                ];
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -366,11 +495,17 @@ final class ConsultaCalificacionesAlumno
      */
     private static function definicionesItemsBoletinActivas(int $idTerlec): array
     {
+        if (array_key_exists($idTerlec, self::$cacheDefsItemsBoletin)) {
+            return self::$cacheDefsItemsBoletin[$idTerlec];
+        }
+
         if (! Schema::hasTable('itemsboletin')) {
+            self::$cacheDefsItemsBoletin[$idTerlec] = [];
+
             return [];
         }
 
-        return DB::table('itemsboletin')
+        self::$cacheDefsItemsBoletin[$idTerlec] = DB::table('itemsboletin')
             ->where('activo', true)
             ->where(function ($q) use ($idTerlec) {
                 $q->whereNull('idTerlec')
@@ -380,6 +515,8 @@ final class ConsultaCalificacionesAlumno
             ->orderBy('id')
             ->get(['etiqueta', 'fuente', 'condicion_where'])
             ->all();
+
+        return self::$cacheDefsItemsBoletin[$idTerlec];
     }
 
     /**
@@ -393,21 +530,7 @@ final class ConsultaCalificacionesAlumno
             return [];
         }
 
-        $definiciones = self::definicionesItemsBoletinActivas($idTerlec);
-
-        $out = [];
-        foreach ($definiciones as $def) {
-            $etiqueta = trim((string) ($def->etiqueta ?? ''));
-            $fuente = trim((string) ($def->fuente ?? ''));
-            $cond = trim((string) ($def->condicion_where ?? ''));
-            if ($etiqueta === '' || ! in_array($fuente, self::ITEMS_BOLETIN_FUENTES, true) || ! self::condicionWhereItemsBoletinSegura($cond)) {
-                continue;
-            }
-            $total = self::sumarCantidadItemsBoletin($fuente, $cond, $idMatricula);
-            $out[] = (object) ['etiqueta' => $etiqueta, 'fuente' => $fuente, 'total' => $total];
-        }
-
-        return $out;
+        return self::itemsBoletinPorMatriculas([$idMatricula], $idTerlec)[$idMatricula] ?? [];
     }
 
     /**
@@ -427,15 +550,39 @@ final class ConsultaCalificacionesAlumno
 
     private static function sumarCantidadItemsBoletin(string $tabla, string $condicionAnd, int $idMatricula): float
     {
-        $sum = DB::table($tabla)
-            ->where('idMatricula', $idMatricula)
-            ->whereRaw('('.$condicionAnd.')')
-            ->sum(DB::raw('COALESCE(cantidad, 0)'));
+        $totales = self::sumarCantidadItemsBoletinPorMatriculas($tabla, $condicionAnd, [$idMatricula]);
 
-        $v = (float) $sum;
+        return $totales[$idMatricula] ?? 0.0;
+    }
 
-        return $tabla === 'inasistencias'
-            ? round($v, 2)
-            : round($v, 0);
+    /**
+     * @param  list<int>  $idMatriculas
+     * @return array<int, float>
+     */
+    private static function sumarCantidadItemsBoletinPorMatriculas(string $tabla, string $condicionAnd, array $idMatriculas): array
+    {
+        $out = array_fill_keys($idMatriculas, 0.0);
+        if ($idMatriculas === []) {
+            return $out;
+        }
+
+        foreach (array_chunk($idMatriculas, 200) as $chunk) {
+            $rows = DB::table($tabla)
+                ->whereIn('idMatricula', $chunk)
+                ->whereRaw('('.$condicionAnd.')')
+                ->groupBy('idMatricula')
+                ->selectRaw('idMatricula, SUM(COALESCE(cantidad, 0)) as total')
+                ->get();
+
+            foreach ($rows as $row) {
+                $idMat = (int) $row->idMatricula;
+                $v = (float) ($row->total ?? 0);
+                $out[$idMat] = $tabla === 'inasistencias'
+                    ? round($v, 2)
+                    : round($v, 0);
+            }
+        }
+
+        return $out;
     }
 }
