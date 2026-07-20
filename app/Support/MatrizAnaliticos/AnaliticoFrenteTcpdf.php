@@ -165,11 +165,11 @@ final class AnaliticoFrenteTcpdf extends TCPDF
 
 
 
-        $logo = $this->datos['institucion']['logo_abs'] ?? null;
+        $escudo = $this->datos['institucion']['escudo_abs'] ?? null;
 
-        if (is_string($logo) && $logo !== '' && is_file($logo)) {
+        if (is_string($escudo) && $escudo !== '' && is_file($escudo)) {
 
-            $this->Image($logo, 100, 10, 12, 15, '', '', '', false, 300);
+            $this->Image($escudo, 100, 10, 12, 15, '', '', '', false, 300);
 
         }
 
