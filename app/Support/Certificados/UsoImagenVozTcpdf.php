@@ -3,6 +3,7 @@
 namespace App\Support\Certificados;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -14,14 +15,34 @@ final class UsoImagenVozTcpdf extends TCPDF
 
     private const FILL_GRIS = [232, 232, 232];
 
+    /**
+     * Celda izquierda del encabezado de la plantilla (logo fijo de Fader).
+     * Medido sobre autorizacionImagen.jpg (1241×1755 → A4 210 mm).
+     */
+    private const LOGO_AREA_X = 31.0;
+
+    private const LOGO_AREA_Y = 25.5;
+
+    private const LOGO_AREA_ANCHO = 37.5;
+
+    private const LOGO_AREA_ALTO = 25.0;
+
+    /** Cubre el párrafo de la plantilla (incluye nombre de colegio hardcodeado). */
+    private const TEXTO_AREA_Y = 55.0;
+
+    private const TEXTO_AREA_ALTO = 82.0;
+
     private const ANCHO_TEXTO = 152.0;
 
     private ?string $plantilla;
 
-    private function __construct(?string $plantilla)
+    private string $insti;
+
+    private function __construct(?string $plantilla, string $insti)
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->plantilla = $plantilla;
+        $this->insti = $insti;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Uso de imagen y voz');
@@ -35,9 +56,9 @@ final class UsoImagenVozTcpdf extends TCPDF
     /**
      * @param  list<array<string, mixed>>  $alumnos
      */
-    public static function generarLote(array $alumnos): self
+    public static function generarLote(array $alumnos, string $insti): self
     {
-        $pdf = new self(CusIsaVozImagenDatos::rutaPlantilla('autorizacionImagen.jpg'));
+        $pdf = new self(CusIsaVozImagenDatos::rutaPlantilla('autorizacionImagen.jpg'), $insti);
 
         foreach ($alumnos as $alumno) {
             $pdf->AddPage('P', 'A4');
@@ -72,6 +93,8 @@ final class UsoImagenVozTcpdf extends TCPDF
             $this->Image($this->plantilla, 0, 0, 210, 0, '', '', '', false, 300);
         }
 
+        $this->dibujarLogoInstitucional();
+
         $apellido = trim((string) ($alumno['apellido'] ?? ''));
         $nombre = trim((string) ($alumno['nombre'] ?? ''));
         $dni = trim((string) ($alumno['dni'] ?? ''));
@@ -80,12 +103,51 @@ final class UsoImagenVozTcpdf extends TCPDF
         $nombremad = trim((string) ($alumno['nombremad'] ?? ''));
         $dnimad = trim((string) ($alumno['dnimad'] ?? ''));
 
-        $texto = self::textoAutorizacion($apellido, $nombre, $dni, $nombrepad, $dnipad, $nombremad, $dnimad);
+        $texto = self::textoAutorizacion(
+            $apellido,
+            $nombre,
+            $dni,
+            $nombrepad,
+            $dnipad,
+            $nombremad,
+            $dnimad,
+            $this->insti,
+        );
 
-        $y = 60.0;
-        $this->SetXY(self::MARGEN_LATERAL, $y);
+        $this->SetFillColor(255, 255, 255);
+        $this->Rect(
+            self::MARGEN_LATERAL - 1.0,
+            self::TEXTO_AREA_Y,
+            self::ANCHO_TEXTO + 2.0,
+            self::TEXTO_AREA_ALTO,
+            'F',
+        );
+
+        $this->SetXY(self::MARGEN_LATERAL, self::TEXTO_AREA_Y + 2.0);
         TcpdfFuenteArial::aplicar($this, '', 11);
         $this->MultiCell(self::ANCHO_TEXTO, 6, $texto, 0, 'L', false, 1);
+    }
+
+    private function dibujarLogoInstitucional(): void
+    {
+        $this->SetFillColor(255, 255, 255);
+        $this->Rect(
+            self::LOGO_AREA_X,
+            self::LOGO_AREA_Y,
+            self::LOGO_AREA_ANCHO,
+            self::LOGO_AREA_ALTO,
+            'F',
+        );
+
+        $logoFile = pdfHeaderLogoAbsolutePath(schoolPdfHeaderData());
+        TcpdfLogoInstitucional::dibujarAjustado(
+            $this,
+            self::LOGO_AREA_X,
+            self::LOGO_AREA_Y,
+            self::LOGO_AREA_ANCHO,
+            self::LOGO_AREA_ALTO,
+            $logoFile,
+        );
     }
 
     private static function textoAutorizacion(
@@ -96,15 +158,25 @@ final class UsoImagenVozTcpdf extends TCPDF
         string $dnipad,
         string $nombremad,
         string $dnimad,
+        string $insti,
     ): string {
+        $escuela = $insti !== '' ? $insti : '..................................................';
+
+        $cierre = ' autorizamos a la institución educativa a la que asiste nuestro/a hijo/a,'
+            .' a tomar fotografías, videos, y grabar su voz, para ser utilizados en el ámbito educativo,'
+            .' como parte de las actividades del '.$escuela
+            .' del MINISTERIO DE EDUCACIÓN DE LA PROVINCIA DE CÓRDOBA.'
+            .' La presente autorización tiene por objeto facilitar la difusión de actividades institucionales,'
+            .' respetando siempre la dignidad e intimidad del/la estudiante, y sin fines comerciales.';
+
         if ($nombrepad === '' && $nombremad !== '') {
             return 'Quienes suscriben, (madre) '.$nombremad.', D.N.I. Nº '.$dnimad
-                .' madre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.',';
+                .' madre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.','.$cierre;
         }
 
         if ($nombremad === '' && $nombrepad !== '') {
             return 'Quienes suscriben, (padre) '.$nombrepad.', D.N.I. Nº '.$dnipad
-                .' padre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.',';
+                .' padre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.','.$cierre;
         }
 
         if ($nombremad === '' && $nombrepad === '') {
@@ -113,6 +185,6 @@ final class UsoImagenVozTcpdf extends TCPDF
 
         return 'Quienes suscriben, (padre) '.$nombrepad.', D.N.I. Nº '.$dnipad
             .' y (madre) '.$nombremad.', D.N.I. Nº '.$dnimad
-            .' padre y madre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.',';
+            .' padre y madre de '.$apellido.', '.$nombre.', D.N.I. Nº '.$dni.','.$cierre;
     }
 }
