@@ -33,13 +33,22 @@ final class ActaVolantePreviosTcpdf extends TCPDF
 
     private const ANCHO_PERM = 10.0;
 
-    private const ALTURA_FILA = 4.05;
+    /** Mínimo histórico (legacy −10 %); el alto real se calcula para llenar la hoja. */
+    private const ALTURA_FILA_MIN = 4.05;
 
     private const ALTURA_ENC_FILA1 = 4.5;
 
     private const ALTURA_ENC_SUB = 3.15;
 
     private const ALTURA_ENC_ROWSPAN = 7.65;
+
+    private const MARGEN_INF = 10.0;
+
+    /**
+     * Desde el fin de la grilla hasta el fin del pie (nota + firmas + totales), en mm.
+     * Debe coincidir con los offsets de dibujarActa() tras la tabla.
+     */
+    private const ALTURA_BLOQUE_POST_TABLA = 46.0;
 
     /** Espacio entre el bloque de encabezado (meta) y la grilla de alumnos. */
     private const SEP_ENCABEZADO_GRILLA = 3.0;
@@ -195,6 +204,7 @@ final class ActaVolantePreviosTcpdf extends TCPDF
     private function dibujarTablaActa(float $x, float $y, array $filasAlumnos): float
     {
         $yEnc = $this->dibujarEncabezadoTabla($x, $y);
+        $alturaFila = $this->alturaFilaCuerpo($yEnc);
         $y = $yEnc;
 
         for ($n = 1; $n <= $this->filasPorActa; $n++) {
@@ -202,11 +212,23 @@ final class ActaVolantePreviosTcpdf extends TCPDF
             $dni = isset($fila) && ($fila['dni'] ?? '') !== '' ? (string) $fila['dni'] : self::BLANK;
             $nombre = isset($fila) ? (string) ($fila['nombre'] ?? '') : self::BLANK;
 
-            $this->filaDatos($x, $y, (string) $n, $dni, $nombre);
-            $y += self::ALTURA_FILA;
+            $this->filaDatos($x, $y, $alturaFila, (string) $n, $dni, $nombre);
+            $y += $alturaFila;
         }
 
         return $y;
+    }
+
+    /** Reparte el espacio libre de la hoja A4 entre las filas de alumnos. */
+    private function alturaFilaCuerpo(float $yInicioFilas): float
+    {
+        $yFinTablaMax = $this->getPageHeight() - self::MARGEN_INF - self::ALTURA_BLOQUE_POST_TABLA;
+        $disponible = $yFinTablaMax - $yInicioFilas;
+        if ($disponible <= 0) {
+            return self::ALTURA_FILA_MIN;
+        }
+
+        return max(self::ALTURA_FILA_MIN, $disponible / $this->filasPorActa);
     }
 
     private function dibujarEncabezadoTabla(float $x, float $y): float
@@ -238,22 +260,22 @@ final class ActaVolantePreviosTcpdf extends TCPDF
         return $y + self::ALTURA_ENC_ROWSPAN;
     }
 
-    private function filaDatos(float $x, float $y, string $nro, string $dni, string $nombre): void
+    private function filaDatos(float $x, float $y, float $alturaFila, string $nro, string $dni, string $nombre): void
     {
         $xCur = $x;
-        $this->celdaRect($xCur, $y, self::ANCHO_NRO, self::ALTURA_FILA, $nro, 'C', 6, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_NRO, $alturaFila, $nro, 'C', 6, '');
         $xCur += self::ANCHO_NRO;
-        $this->celdaRect($xCur, $y, self::ANCHO_DNI, self::ALTURA_FILA, $dni, 'C', 7, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_DNI, $alturaFila, $dni, 'C', 7, '');
         $xCur += self::ANCHO_DNI;
-        $this->celdaRect($xCur, $y, self::ANCHO_NOM, self::ALTURA_FILA, $this->truncarNombre($nombre), 'L', 8, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_NOM, $alturaFila, $this->truncarNombre($nombre), 'L', 8, '');
         $xCur += self::ANCHO_NOM;
-        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, self::ALTURA_FILA, self::BLANK, 'C', 7, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, $alturaFila, self::BLANK, 'C', 7, '');
         $xCur += self::ANCHO_NOTA;
-        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, self::ALTURA_FILA, self::BLANK, 'C', 7, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, $alturaFila, self::BLANK, 'C', 7, '');
         $xCur += self::ANCHO_NOTA;
-        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, self::ALTURA_FILA, self::BLANK, 'C', 7, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_NOTA, $alturaFila, self::BLANK, 'C', 7, '');
         $xCur += self::ANCHO_NOTA;
-        $this->celdaRect($xCur, $y, self::ANCHO_PERM, self::ALTURA_FILA, self::BLANK, 'C', 7, '');
+        $this->celdaRect($xCur, $y, self::ANCHO_PERM, $alturaFila, self::BLANK, 'C', 7, '');
     }
 
     private function celdaRect(
