@@ -362,59 +362,24 @@ final class ConsultaCalificacionesAlumno
     private const ITEMS_BOLETIN_FUENTES = ['inasistencias', 'sanciones'];
 
     /**
-     * Ítems estándar del pie del boletín (referencia: configuración habitual en colegios del sistema).
-     * Se usan si {@see itemsboletin} no existe o no tiene filas activas.
-     *
-     * @return list<object{etiqueta: string, fuente: string, condicion_where: string}>
-     */
-    private static function definicionesItemsBoletinPorDefecto(): array
-    {
-        $filas = [
-            [1, 'Inasistencias Justificadas', 'inasistencias', "tipo <> 5 and just = 'J'"],
-            [2, 'Inasistencias Injustificadas', 'inasistencias', "tipo <> 5 and just = 'I'"],
-            [3, 'Total de Inasistencias', 'inasistencias', "tipo <> 5 and (just = 'J' or just = 'I')"],
-            [4, 'Inasistencias a Educación Física', 'inasistencias', 'tipo = 5'],
-            [5, 'Apercibimientos Orales', 'sanciones', 'idTipoSancion = 2'],
-            [6, 'Apercibimientos Escritos', 'sanciones', 'idTipoSancion = 3'],
-            [7, 'Amonestaciones', 'sanciones', 'idTipoSancion = 1 and publicada = 1'],
-            [8, 'Suspensiones', 'sanciones', 'idTipoSancion = 6'],
-        ];
-
-        $out = [];
-        foreach ($filas as [$orden, $etiqueta, $fuente, $cond]) {
-            $out[] = (object) [
-                'orden' => $orden,
-                'etiqueta' => $etiqueta,
-                'fuente' => $fuente,
-                'condicion_where' => $cond,
-            ];
-        }
-
-        return $out;
-    }
-
-    /**
      * @return list<object{etiqueta: string, fuente: string, condicion_where: string}>
      */
     private static function definicionesItemsBoletinActivas(int $idTerlec): array
     {
-        if (Schema::hasTable('itemsboletin')) {
-            $definiciones = DB::table('itemsboletin')
-                ->where('activo', true)
-                ->where(function ($q) use ($idTerlec) {
-                    $q->whereNull('idTerlec')
-                        ->orWhere('idTerlec', $idTerlec);
-                })
-                ->orderBy('orden')
-                ->orderBy('id')
-                ->get(['etiqueta', 'fuente', 'condicion_where']);
-
-            if ($definiciones->isNotEmpty()) {
-                return $definiciones->all();
-            }
+        if (! Schema::hasTable('itemsboletin')) {
+            return [];
         }
 
-        return self::definicionesItemsBoletinPorDefecto();
+        return DB::table('itemsboletin')
+            ->where('activo', true)
+            ->where(function ($q) use ($idTerlec) {
+                $q->whereNull('idTerlec')
+                    ->orWhere('idTerlec', $idTerlec);
+            })
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get(['etiqueta', 'fuente', 'condicion_where'])
+            ->all();
     }
 
     /**
