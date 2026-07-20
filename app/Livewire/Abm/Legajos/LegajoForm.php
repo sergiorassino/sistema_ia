@@ -758,7 +758,21 @@ class LegajoForm extends Component
                 return;
             }
 
-            Matricula::where('idLegajos', $this->id)->findOrFail($this->matriculaDeleteId)->delete();
+            $idMatricula = (int) $this->matriculaDeleteId;
+            $idLegajos = (int) $this->id;
+
+            DB::transaction(function () use ($idMatricula, $idLegajos) {
+                // Garantiza limpieza aunque el tenant no tenga FK ON DELETE CASCADE.
+                if (Schema::hasTable('calificaciones')) {
+                    DB::table('calificaciones')
+                        ->where('idLegajos', $idLegajos)
+                        ->where('idMatricula', $idMatricula)
+                        ->delete();
+                }
+
+                Matricula::where('idLegajos', $idLegajos)->findOrFail($idMatricula)->delete();
+            });
+
             session()->flash('success', 'Matrícula eliminada.');
         }
 

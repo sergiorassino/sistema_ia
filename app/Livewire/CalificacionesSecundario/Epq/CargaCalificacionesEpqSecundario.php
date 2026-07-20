@@ -4,6 +4,7 @@ namespace App\Livewire\CalificacionesSecundario\Epq;
 
 use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\PortalDocenteContext;
 use App\Livewire\CalificacionesSecundario\CargaCalificacionesSecundario;
@@ -38,7 +39,7 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
             return;
         }
 
-        $this->rows[$id]['ord'] = $r->ord;
+        // `ord` en UI es correlativo 1..n (asignado en fetchRowsSnapshot); no pisar con BD.
         foreach (CalificacionesEpqSecundarioCatalogo::CAMPOS_NOTA as $campo) {
             $this->rows[$id][$campo] = (string) ($r->{$campo} ?? '');
         }
@@ -50,6 +51,9 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
 
         $ctx = schoolCtx();
         $campos = CalificacionesEpqSecundarioCatalogo::CAMPOS_NOTA;
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
         $select = array_merge(
             ['c.id', 'c.ord', 'l.apellido', 'l.nombre'],
             array_map(fn (string $c) => 'c.'.$c, $campos),
@@ -57,20 +61,23 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
 
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->join('matricula as m', 'm.id', '=', 'c.idMatricula')
             ->where('c.idTerlec', (int) $ctx->idTerlec)
             ->where('c.idCursos', (int) $this->cursoId)
             ->where('c.idMaterias', (int) $this->materiaId)
+            ->whereIn('m.idCondiciones', $idsCondicionesRegulares)
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
             ->get($select);
 
         $out = [];
+        $nro = 1;
         foreach ($califs as $r) {
             $id = (int) $r->id;
             $row = [
                 'id' => $id,
-                'ord' => $r->ord,
+                'ord' => $nro++,
                 'alumno' => trim(((string) $r->apellido).', '.((string) $r->nombre)),
             ];
             foreach ($campos as $campo) {
