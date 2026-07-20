@@ -92,27 +92,35 @@
         </div>
 
         <p class="mb-3 text-xs text-neutral-600">
-            Deje «Presente» si asistió. Al elegir un tipo de inasistencia se guarda automáticamente.
+            Deje «Presente» si asistió. Al elegir un tipo de inasistencia se guarda automáticamente;
+            indique si es justificada o injustificada junto a cada select.
             Puede faltar solo a clase, solo a educación física, o a ambas.
         </p>
 
         <div class="se-card overflow-hidden">
             <div class="w-full overflow-x-auto">
-                <table class="min-w-[720px] w-full text-left text-sm">
+                <table class="min-w-[960px] w-full text-left text-sm">
                     <thead class="border-b border-accent-200 bg-accent-50/80">
                         <tr>
                             <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 w-10">#</th>
                             <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Alumno</th>
                             <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 min-w-[5rem] text-center">Condición</th>
-                            <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 min-w-[180px]">Inasist. a clase</th>
-                            <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 min-w-[180px]">Inasist. educ. física</th>
+                            <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 min-w-[280px]">Inasist. a clase</th>
+                            <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 min-w-[280px]">Inasist. educ. física</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-100">
                         @forelse ($alumnos as $idx => $a)
                             @php
                                 $idMat = (int) $a->id;
-                                $fila = $asistencia[$idMat] ?? ['clase' => '', 'edfis' => ''];
+                                $fila = $asistencia[$idMat] ?? [
+                                    'clase' => '',
+                                    'edfis' => '',
+                                    'just_clase' => 'I',
+                                    'just_edfis' => 'I',
+                                ];
+                                $tieneClase = trim((string) ($fila['clase'] ?? '')) !== '';
+                                $tieneEdFis = trim((string) ($fila['edfis'] ?? '')) !== '';
                             @endphp
                             <tr wire:key="tac-alumno-{{ $idMat }}" class="hover:bg-accent-50/60">
                                 <td class="px-3 py-2 tabular-nums text-neutral-500">{{ $idx + 1 }}</td>
@@ -126,26 +134,48 @@
                                     {{ ($a->condicion ?? '') !== '' ? $a->condicion : '—' }}
                                 </td>
                                 <td class="px-3 py-2">
-                                    <select wire:model.live="asistencia.{{ $idMat }}.clase"
-                                            class="form-select text-sm @error('asistencia.'.$idMat.'.clase') border-red-400 @enderror">
-                                        <option value="">Presente</option>
-                                        @foreach ($tiposClase as $t)
-                                            <option value="{{ $t->id }}">{{ $t->concepto }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="flex flex-wrap items-start gap-2">
+                                        <select wire:model.live="asistencia.{{ $idMat }}.clase"
+                                                class="form-select min-w-[9rem] flex-1 text-sm @error('asistencia.'.$idMat.'.clase') border-red-400 @enderror">
+                                            <option value="">Presente</option>
+                                            @foreach ($tiposClase as $t)
+                                                <option value="{{ $t->id }}">{{ $t->concepto }}</option>
+                                            @endforeach
+                                        </select>
+                                        <select wire:model.live="asistencia.{{ $idMat }}.just_clase"
+                                                @disabled(! $tieneClase)
+                                                class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_clase') border-red-400 @enderror">
+                                            <option value="I">Injustificada</option>
+                                            <option value="J">Justificada</option>
+                                        </select>
+                                    </div>
                                     @error('asistencia.'.$idMat.'.clase')
+                                        <p class="form-error mt-0.5">{{ $message }}</p>
+                                    @enderror
+                                    @error('asistencia.'.$idMat.'.just_clase')
                                         <p class="form-error mt-0.5">{{ $message }}</p>
                                     @enderror
                                 </td>
                                 <td class="px-3 py-2">
-                                    <select wire:model.live="asistencia.{{ $idMat }}.edfis"
-                                            class="form-select text-sm @error('asistencia.'.$idMat.'.edfis') border-red-400 @enderror">
-                                        <option value="">Presente</option>
-                                        @foreach ($tiposEdFis as $t)
-                                            <option value="{{ $t->id }}">{{ $t->concepto }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="flex flex-wrap items-start gap-2">
+                                        <select wire:model.live="asistencia.{{ $idMat }}.edfis"
+                                                class="form-select min-w-[9rem] flex-1 text-sm @error('asistencia.'.$idMat.'.edfis') border-red-400 @enderror">
+                                            <option value="">Presente</option>
+                                            @foreach ($tiposEdFis as $t)
+                                                <option value="{{ $t->id }}">{{ $t->concepto }}</option>
+                                            @endforeach
+                                        </select>
+                                        <select wire:model.live="asistencia.{{ $idMat }}.just_edfis"
+                                                @disabled(! $tieneEdFis)
+                                                class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_edfis') border-red-400 @enderror">
+                                            <option value="I">Injustificada</option>
+                                            <option value="J">Justificada</option>
+                                        </select>
+                                    </div>
                                     @error('asistencia.'.$idMat.'.edfis')
+                                        <p class="form-error mt-0.5">{{ $message }}</p>
+                                    @enderror
+                                    @error('asistencia.'.$idMat.'.just_edfis')
                                         <p class="form-error mt-0.5">{{ $message }}</p>
                                     @enderror
                                 </td>

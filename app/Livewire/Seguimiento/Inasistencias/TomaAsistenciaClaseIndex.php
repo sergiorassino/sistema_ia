@@ -15,9 +15,9 @@ class TomaAsistenciaClaseIndex extends Component
     public int|string $idCurso = '';
 
     /**
-     * idMatricula => ['clase' => idTipo|string, 'edfis' => idTipo|string]
+     * idMatricula => ['clase' => idTipo|string, 'edfis' => idTipo|string, 'just_clase' => J|I, 'just_edfis' => J|I]
      *
-     * @var array<int, array{clase: string, edfis: string}>
+     * @var array<int, array{clase: string, edfis: string, just_clase: string, just_edfis: string}>
      */
     public array $asistencia = [];
 
@@ -70,9 +70,28 @@ class TomaAsistenciaClaseIndex extends Component
             return;
         }
 
-        [$idMatriculaRaw, $campo] = explode('.', $key, 2);
+        [$idMatriculaRaw, $clave] = explode('.', $key, 2);
         $idMatricula = (int) $idMatriculaRaw;
-        if ($idMatricula < 1 || ! in_array($campo, [TomaAsistenciaClase::CAMPO_CLASE, TomaAsistenciaClase::CAMPO_ED_FIS], true)) {
+        $campo = TomaAsistenciaClase::campoDesdeClaveAsistencia($clave);
+        if ($idMatricula < 1 || $campo === null) {
+            return;
+        }
+
+        $justKey = TomaAsistenciaClase::claveJustDelCampo($campo);
+        if ($justKey !== null && isset($this->asistencia[$idMatricula])) {
+            $tipo = trim((string) ($this->asistencia[$idMatricula][$campo] ?? ''));
+            if ($tipo === '') {
+                $this->asistencia[$idMatricula][$justKey] = 'I';
+            } else {
+                $this->asistencia[$idMatricula][$justKey] = TomaAsistenciaClase::normalizarJust(
+                    $this->asistencia[$idMatricula][$justKey] ?? 'I'
+                );
+            }
+        }
+
+        // Solo justif. sin tipo de inasistencia: no hay registro que actualizar.
+        if (in_array($clave, [TomaAsistenciaClase::JUST_CLASE, TomaAsistenciaClase::JUST_ED_FIS], true)
+            && trim((string) ($this->asistencia[$idMatricula][$campo] ?? '')) === '') {
             return;
         }
 
@@ -101,6 +120,14 @@ class TomaAsistenciaClaseIndex extends Component
 
         $idCurso = (int) $this->idCurso;
         $valor = trim((string) ($this->asistencia[$idMatricula][$campo] ?? ''));
+        $justKey = TomaAsistenciaClase::claveJustDelCampo($campo);
+        $just = $justKey !== null
+            ? TomaAsistenciaClase::normalizarJust($this->asistencia[$idMatricula][$justKey] ?? 'I')
+            : 'I';
+
+        if ($justKey !== null && isset($this->asistencia[$idMatricula])) {
+            $this->asistencia[$idMatricula][$justKey] = $valor === '' ? 'I' : $just;
+        }
 
         try {
             TomaAsistenciaClase::sincronizarCelda(
@@ -109,6 +136,7 @@ class TomaAsistenciaClaseIndex extends Component
                 $this->fecha,
                 $campo,
                 $valor,
+                $just,
             );
         } catch (\Throwable $e) {
             $this->recargarFilaDesdeBd($idMatricula);
@@ -118,6 +146,9 @@ class TomaAsistenciaClaseIndex extends Component
         }
 
         $this->resetErrorBag('asistencia.'.$idMatricula.'.'.$campo);
+        if ($justKey !== null) {
+            $this->resetErrorBag('asistencia.'.$idMatricula.'.'.$justKey);
+        }
     }
 
     /** @return array{presentes_clase: int, presentes_ed_fis: int, ausentes: int, llegadas_tarde: int, retiros: int, educacion_fisica: int} */
