@@ -2,6 +2,8 @@
 
 namespace App\Support\Examenes;
 
+use App\Support\CalificacionesColoquioSecundario;
+use App\Support\Database\PersistenciaColumnas;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -66,7 +68,7 @@ final class MateriasAdeudadasNotasExamen
      *     folio?: string|null
      * } $datos
      *
-     * @return 'ok'|'no_encontrada'|'condicion_invalida'
+     * @return 'ok'|'ok_aprobada'|'no_encontrada'|'condicion_invalida'
      */
     public static function registrarNueva(array $datos): string
     {
@@ -101,17 +103,113 @@ final class MateriasAdeudadasNotasExamen
             return 'no_encontrada';
         }
 
-        DB::table('notasexamen')->insert([
-            'idCalificaciones' => $idCalificacion,
-            'idLegajos' => $idLegajos,
-            'fecha' => $fecha,
-            'nota' => mb_substr($nota, 0, 10),
-            'condExamen' => $cond !== '' ? mb_substr($cond, 0, 2) : null,
-            'libro' => self::truncarOpcional($datos['libro'] ?? null, 10),
-            'folio' => self::truncarOpcional($datos['folio'] ?? null, 10),
-        ]);
+        $libro = self::truncarOpcional($datos['libro'] ?? null, 10);
+        $folio = self::truncarOpcional($datos['folio'] ?? null, 10);
+        $aprobada = false;
 
-        return 'ok';
+        DB::transaction(function () use (
+            $idCalificacion,
+            $idLegajos,
+            $idNivel,
+            $fecha,
+            $nota,
+            $cond,
+            $libro,
+            $folio,
+            &$aprobada,
+        ): void {
+            DB::table('notasexamen')->insert([
+                'idCalificaciones' => $idCalificacion,
+                'idLegajos' => $idLegajos,
+                'fecha' => $fecha,
+                'nota' => mb_substr($nota, 0, 10),
+                'condExamen' => $cond !== '' ? mb_substr($cond, 0, 2) : null,
+                'libro' => $libro,
+                'folio' => $folio,
+            ]);
+
+            $aprobada = self::aprobarSiNotaSuficiente(
+                $idCalificacion,
+                $idLegajos,
+                $idNivel,
+                $nota,
+                $fecha,
+            );
+        });
+
+        return $aprobada ? 'ok_aprobada' : 'ok';
+    }
+
+    /**
+     * Si la nota es ≥ 7 y la materia sigue adeudada (`apro = 1`), la pasa a matriz (`apro = 2`)
+     * y deja de figurar en pendientes (mismo criterio que coloquios / cierre anual).
+     * La rendición (fecha, nota, libro, folio) permanece en `notasexamen`.
+     */
+    public static function aprobarSiNotaSuficiente(
+        int $idCalificacion,
+        int $idLegajos,
+        int $idNivel,
+        string $nota,
+        string $fecha,
+    ): bool {
+        if ($idCalificacion < 1 || $idLegajos < 1 || $idNivel < 1) {
+            return false;
+        }
+
+        if (! CalificacionesColoquioSecundario::notaColoquioAprobada($nota)) {
+            return false;
+        }
+
+        if (! self::esFechaValida($fecha)) {
+            return false;
+        }
+
+        $fila = DB::table('calificaciones as c')
+            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->leftJoin('matricula as ma', 'ma.id', '=', 'c.idMatricula')
+            ->leftJoin('condiciones as co', 'co.id', '=', 'ma.idCondiciones')
+            ->where('c.id', $idCalificacion)
+            ->where('c.idLegajos', $idLegajos)
+            ->where('cu.idNivel', $idNivel)
+            ->where('c.apro', 1)
+            ->select(['c.id', 'c.idTerlec', 'co.condicion as condicion_matricula'])
+            ->first();
+
+        if ($fila === null) {
+            return false;
+        }
+
+        $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fecha);
+        $calif = CalificacionesColoquioSecundario::califDesdeNotaColoquio($nota);
+        $condMat = trim((string) ($fila->condicion_matricula ?? ''));
+        $condMat = $condMat !== '' ? mb_substr($condMat, 0, 20) : 'Regular';
+        $escuapro = self::nombreInstitucion($idNivel);
+
+        $payload = [
+            'apro' => 2,
+            'calif' => $calif !== '' ? mb_substr($calif, 0, 10) : mb_substr(trim($nota), 0, 10),
+            'mes' => (int) $fechaCarbon->format('n'),
+            'ano' => (int) $fechaCarbon->format('Y'),
+            'cond' => $condMat,
+            'escuapro' => $escuapro,
+            'condAdeuda' => null,
+            'inscri' => 0,
+        ];
+
+        $preparado = PersistenciaColumnas::prepararPayload('calificaciones', $payload);
+        $update = $preparado['payload'];
+
+        if (! array_key_exists('apro', $update)) {
+            return false;
+        }
+
+        $afectados = DB::table('calificaciones')
+            ->where('id', $idCalificacion)
+            ->where('idLegajos', $idLegajos)
+            ->where('apro', 1)
+            ->update($update);
+
+        return $afectados > 0;
     }
 
     public static function calificacionAdeudadaDelAlumno(int $idCalificacion, int $idLegajos, int $idNivel): bool
@@ -127,6 +225,13 @@ final class MateriasAdeudadasNotasExamen
             ->where('cu.idNivel', $idNivel)
             ->where('c.apro', 1)
             ->exists();
+    }
+
+    private static function nombreInstitucion(int $idNivel): string
+    {
+        $insti = trim((string) DB::table('ento')->where('idNivel', $idNivel)->value('insti'));
+
+        return $insti !== '' ? mb_substr($insti, 0, 100) : '';
     }
 
     private static function esFechaValida(string $fecha): bool

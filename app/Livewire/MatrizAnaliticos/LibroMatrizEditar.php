@@ -67,6 +67,7 @@ class LibroMatrizEditar extends Component
         $this->idLegajos = $idLegajos;
         $this->alumno = $alumno;
         $this->buscarRetorno = LibroMatrizAnalitico::buscarRetornoListado();
+        $ctx = schoolCtx();
         $this->cargarLineasDesdeServidor($idLegajos, (int) $ctx->idNivel);
     }
 

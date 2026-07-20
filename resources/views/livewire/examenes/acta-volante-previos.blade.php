@@ -1,4 +1,4 @@
-{{-- Actas volantes de examen (previas): una hoja PDF por materia del plan + condición de adeudo. --}}
+{{-- Actas volantes de examen (previas): modalidad por tenant (curso | curso_seccion). --}}
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -37,7 +37,12 @@
                 <div>
                     <p class="se-section-title">Actas a imprimir</p>
                     <p class="mt-1 text-sm text-neutral-600">
-                        Cada fila es una combinación de materia del plan y condición de adeudo con alumnos inscriptos.
+                        @if ($modalidadCursoSeccion ?? true)
+                            Cada fila es una combinación de materia del plan, condición de adeudo y curso/sección.
+                        @else
+                            Cada fila es una combinación de materia del plan y condición de adeudo
+                            (reúne alumnos de las distintas secciones de ese curso).
+                        @endif
                         Se imprime una hoja PDF por acta seleccionada.
                     </p>
                 </div>
@@ -70,7 +75,13 @@
                                     <span class="sr-only">Seleccionar</span>
                                 </th>
                                 <th scope="col" class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Materia (plan)</th>
-                                <th scope="col" class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Curso (plan)</th>
+                                <th scope="col" class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                    @if ($modalidadCursoSeccion ?? true)
+                                        Curso / sección
+                                    @else
+                                        Curso (plan)
+                                    @endif
+                                </th>
                                 <th scope="col" class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Condición</th>
                                 <th scope="col" class="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Inscriptos</th>
                             </tr>

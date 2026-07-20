@@ -1092,6 +1092,21 @@ if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     }
 }
 
+if (! function_exists('tenantExamenesActaVolantePreviosModalidad')) {
+    /**
+     * Modalidad de armado de actas volantes de previos.
+     * Valores: `curso_seccion` (default) | `curso`.
+     */
+    function tenantExamenesActaVolantePreviosModalidad(): string
+    {
+        $modo = strtolower(trim((string) config('tenant.examenes.acta_volante_previos_modalidad', 'curso_seccion')));
+
+        return in_array($modo, ['curso', 'curso_seccion'], true)
+            ? $modo
+            : 'curso_seccion';
+    }
+}
+
 if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
     /**
      * Variante del informe de progreso escolar (primario).
