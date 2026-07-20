@@ -3,6 +3,7 @@
 namespace App\Support\Certificados;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -11,6 +12,27 @@ use TCPDF;
 final class CertificadoUnicoSaludTcpdf extends TCPDF
 {
     private const FILL_GRIS = [232, 232, 232];
+
+    /**
+     * Tapa completa del logo/texto legacy incrustado en cus.jpg (escudo + leyenda arqueada).
+     * Debe cubrir todo el bloque superior izquierdo, no solo el escudo.
+     */
+    private const LEGACY_LOGO_TAPA_X = 2.0;
+
+    private const LEGACY_LOGO_TAPA_Y = 3.0;
+
+    private const LEGACY_LOGO_TAPA_ANCHO = 61.0;
+
+    private const LEGACY_LOGO_TAPA_ALTO = 38.0;
+
+    /** Área útil para dibujar el logo institucional del colegio activo. */
+    private const LOGO_INST_X = 15.0;
+
+    private const LOGO_INST_Y = 6.0;
+
+    private const LOGO_INST_ANCHO = 32.0;
+
+    private const LOGO_INST_ALTO = 28.0;
 
     private ?string $plantilla;
 
@@ -68,6 +90,8 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
             $this->Image($this->plantilla, 0, 0, 210, 0, '', '', '', false, 300);
         }
 
+        $this->dibujarLogoInstitucional();
+
         $cursec = (string) ($alumno['cursec'] ?? '');
         $this->SetXY(155, 10);
         TcpdfFuenteArial::aplicar($this, 'BI', 9);
@@ -109,5 +133,27 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
         $this->Cell(50, 6, 'Cel. del padre: '.(string) ($alumno['telepad'] ?? ''), 0, 0, 'L');
 
         $this->Rect(13, 39, 185, 32);
+    }
+
+    private function dibujarLogoInstitucional(): void
+    {
+        $this->SetFillColor(255, 255, 255);
+        $this->Rect(
+            self::LEGACY_LOGO_TAPA_X,
+            self::LEGACY_LOGO_TAPA_Y,
+            self::LEGACY_LOGO_TAPA_ANCHO,
+            self::LEGACY_LOGO_TAPA_ALTO,
+            'F',
+        );
+
+        $logoFile = pdfHeaderLogoAbsolutePath(schoolPdfHeaderData());
+        TcpdfLogoInstitucional::dibujarAjustado(
+            $this,
+            self::LOGO_INST_X,
+            self::LOGO_INST_Y,
+            self::LOGO_INST_ANCHO,
+            self::LOGO_INST_ALTO,
+            $logoFile,
+        );
     }
 }

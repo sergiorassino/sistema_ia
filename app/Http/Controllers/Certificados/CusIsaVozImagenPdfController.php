@@ -76,7 +76,7 @@ class CusIsaVozImagenPdfController extends Controller
         $pdf = match ($tipoValido) {
             CusIsaVozImagenDatos::TIPO_CUS => CertificadoUnicoSaludTcpdf::generarLote($alumnos),
             CusIsaVozImagenDatos::TIPO_ISA => InformeSaludAnualTcpdf::generarLote($alumnos, (string) $ctx['insti']),
-            CusIsaVozImagenDatos::TIPO_VOZ_IMAGEN => UsoImagenVozTcpdf::generarLote($alumnos),
+            CusIsaVozImagenDatos::TIPO_VOZ_IMAGEN => UsoImagenVozTcpdf::generarLote($alumnos, (string) $ctx['insti']),
         };
 
         return match ($tipoValido) {
