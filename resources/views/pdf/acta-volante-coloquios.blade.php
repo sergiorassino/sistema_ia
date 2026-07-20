@@ -60,7 +60,7 @@
             border-collapse: collapse;
             table-layout: fixed;
         }
-        /* Alturas legacy FPDF: fila 4.5mm, encabezado 5mm / 3.5mm — reducidas 10 %. */
+        /* Encabezado legacy FPDF (5mm / 3.5mm) −10 %. Cuerpo: ~5.0mm para llenar A4 (40 filas). */
         table.acta th, table.acta td {
             border: 1px solid #000;
             padding: 0 1.8px;
@@ -71,7 +71,7 @@
         table.acta thead tr:first-child th { height: 4.5mm; max-height: 4.5mm; font-size: 6pt; font-weight: normal; text-align: center; }
         table.acta thead th[rowspan="2"] { height: 7.65mm; max-height: 7.65mm; }
         table.acta thead tr.sub th { height: 3.15mm; max-height: 3.15mm; font-size: 6pt; }
-        table.acta tbody td { height: 4.05mm; max-height: 4.05mm; }
+        table.acta tbody td { height: 5.0mm; max-height: 5.0mm; }
         table.acta tbody td.col-nro { font-size: 6pt; text-align: center; }
         table.acta tbody td.col-dni { font-size: 7pt; text-align: center; }
         table.acta tbody td.col-nom {
