@@ -4,6 +4,7 @@ namespace App\Livewire\CalificacionesSecundario;
 
 use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -19,7 +20,8 @@ use Livewire\Component;
  *
  * Flujo:
  * 1) El usuario elige curso y materia (IDs reales de `materias.id`).
- * 2) Se listan filas de `calificaciones` para ese curso/materia/ciclo lectivo.
+ * 2) Se listan filas de `calificaciones` para ese curso/materia/ciclo lectivo
+ *    con matrícula regular (`matricula.idCondiciones = 1`).
  * 3) Cada celda editable guarda con `saveCell()` (disparado desde Blade con `wire:blur` / `wire:change`).
  *    Las notas ingresadas en módulos (ic**) y coloquios (Dic/Feb) deben existir en `notaspermitidas`
  *    para el `idNivel` del contexto (si hay al menos una fila configurada para ese nivel).
@@ -215,7 +217,7 @@ class CargaCalificacionesSecundario extends Component
             return;
         }
 
-        $this->rows[$id]['ord'] = $r->ord;
+        // `ord` en UI es correlativo 1..n (asignado en fetchRowsSnapshot); no pisar con BD.
         foreach ([
             'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
             'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
@@ -259,13 +261,18 @@ class CargaCalificacionesSecundario extends Component
         $this->ensureScopeOr404();
 
         $ctx = schoolCtx();
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
 
-        // Join con `legajos` solo para mostrar nombre (no se edita desde acá).
+        // Join con `legajos` (nombre) y `matricula` (solo regulares: idCondiciones = 1).
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->join('matricula as m', 'm.id', '=', 'c.idMatricula')
             ->where('c.idTerlec', (int) $ctx->idTerlec)
             ->where('c.idCursos', (int) $this->cursoId)
             ->where('c.idMaterias', (int) $this->materiaId)
+            ->whereIn('m.idCondiciones', $idsCondicionesRegulares)
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
@@ -287,11 +294,12 @@ class CargaCalificacionesSecundario extends Component
             ]);
 
         $out = [];
+        $nro = 1;
         foreach ($califs as $r) {
             $id = (int) $r->id;
             $out[$id] = [
                 'id' => $id,
-                'ord' => $r->ord,
+                'ord' => $nro++,
                 'alumno' => trim(((string) $r->apellido).', '.((string) $r->nombre)),
                 'ic01' => (string) ($r->ic01 ?? ''),
                 'ic02' => (string) ($r->ic02 ?? ''),
