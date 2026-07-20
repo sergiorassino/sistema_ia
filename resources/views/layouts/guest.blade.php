@@ -40,7 +40,7 @@
                         Consultá calificaciones, comunicaciones y avisos de la institución.
                     </p>
                     <p class="mt-3 text-sm leading-relaxed text-white/70">
-                        Ingresá con tu DNI y la contraseña que te indicó secretaría.
+                        Ingresá con tu DNI y contraseña.
                     </p>
                 @else
                     <h1 class="mt-3 text-3xl xl:text-[2rem] font-bold leading-tight tracking-tight">

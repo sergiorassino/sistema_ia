@@ -34,6 +34,11 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
     private const ALTURA_ENCABEZADO_INST = 22.0;
 
+    /** Línea meta (alumno / DNI / curso): separadores vs. datos destacados. */
+    private const META_FUENTE_SEP = 6.5;
+
+    private const META_FUENTE_DATO = 7.5;
+
     private const ANCHO_LOGO = 17.0;
 
     /** Pie con firmas: columna texto 38 % (como pie-texto en DomPDF). */
@@ -202,22 +207,52 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
             $this->Cell(self::ANCHO_UTIL, 3.5, 'Ciclo lectivo '.$ano, 0, 2, 'C');
         }
 
+        $this->SetXY(self::MARGEN_IZQ, $this->GetY() + 1);
+        $this->dibujarLineaMetaAlumno($consulta);
+
+        return $this->GetY() + 1.5;
+    }
+
+    /**
+     * Apellido, nombre, DNI y curso en negrita y 1 pt más grande que los separadores.
+     *
+     * @param  array<string, mixed>  $consulta
+     */
+    private function dibujarLineaMetaAlumno(array $consulta): void
+    {
         $alumno = trim((string) ($consulta['alumnoLinea'] ?? ''));
         $dni = trim((string) ($consulta['dni'] ?? ''));
         $curso = trim((string) ($consulta['cursoLabel'] ?? ''));
-        $meta = $alumno;
+
+        if ($alumno === '' && $dni === '' && $curso === '') {
+            return;
+        }
+
+        $this->SetTextColor(0, 0, 0);
+        $lineHeight = 4.0;
+
+        if ($alumno !== '') {
+            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
+            $this->Write($lineHeight, $alumno, '', false, 'L', false);
+        }
+
         if ($dni !== '') {
-            $meta .= ' · D.N.I. '.$dni;
+            $this->SetFont(self::FUENTE, '', self::META_FUENTE_SEP);
+            $this->Write($lineHeight, ' · D.N.I. ', '', false, 'L', false);
+            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
+            $this->Write($lineHeight, $dni, '', false, 'L', false);
         }
+
         if ($curso !== '') {
-            $meta .= ' · '.$curso;
+            $this->SetFont(self::FUENTE, '', self::META_FUENTE_SEP);
+            $this->Write($lineHeight, ' · ', '', false, 'L', false);
+            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
+            $this->Write($lineHeight, $curso, '', false, 'L', true);
+
+            return;
         }
 
-        $this->SetFont(self::FUENTE, '', 6.5);
-        $this->SetXY(self::MARGEN_IZQ, $this->GetY() + 1);
-        $this->Cell(self::ANCHO_UTIL, 4, $meta, 0, 1, 'L');
-
-        return $this->GetY() + 1.5;
+        $this->Ln(0);
     }
 
     /**
@@ -498,9 +533,10 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->dibujarLineaFirma($xPadreLinea, $yLineaBase, self::PIE_FIRMA_W_LINEA);
         $this->dibujarLineaFirma($xDirectivo, $yLineaBase, self::PIE_FIRMA_W_LINEA);
         $this->SetFont(self::FUENTE, '', 6);
-        $this->SetXY($xPadreLinea, $yLineaBase + 2.5);
+        $yEtiqueta = $yLineaBase + 2.0;
+        $this->SetXY($xPadreLinea, $yEtiqueta);
         $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Padre / Madre / Tutor', 0, 0, 'C');
-        $this->SetXY($xDirectivo, $yLineaBase + 2.5);
+        $this->SetXY($xDirectivo, $yEtiqueta);
         $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Directivo', 0, 0, 'C');
     }
 
@@ -625,7 +661,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->SetDrawColor(51, 51, 51);
         $this->SetLineWidth(0.2);
         $this->SetLineStyle(['width' => 0.2, 'dash' => '1,1', 'color' => [51, 51, 51]]);
-        $this->Line($x, $y + 7, $x + $w, $y + 7);
+        $this->Line($x, $y, $x + $w, $y);
         $this->SetLineStyle(['width' => 0.26, 'dash' => 0, 'color' => [51, 51, 51]]);
     }
 
