@@ -19,8 +19,51 @@ final class TomaAsistenciaClase
 
     public const CAMPO_ED_FIS = 'edfis';
 
+    public const JUST_CLASE = 'just_clase';
+
+    public const JUST_ED_FIS = 'just_edfis';
+
     /** ID legacy de educación física en {@see Inasistencia::$tipo}. */
     public const TIPO_LEGACY_EDUCACION_FISICA = 5;
+
+    public static function claveJustDelCampo(string $campo): ?string
+    {
+        return match ($campo) {
+            self::CAMPO_CLASE => self::JUST_CLASE,
+            self::CAMPO_ED_FIS => self::JUST_ED_FIS,
+            default => null,
+        };
+    }
+
+    public static function campoDesdeClaveAsistencia(string $clave): ?string
+    {
+        return match ($clave) {
+            self::CAMPO_CLASE, self::JUST_CLASE => self::CAMPO_CLASE,
+            self::CAMPO_ED_FIS, self::JUST_ED_FIS => self::CAMPO_ED_FIS,
+            default => null,
+        };
+    }
+
+    /** Normaliza a `J` o `I` (default injustificada). */
+    public static function normalizarJust(mixed $just): string
+    {
+        return strtoupper(trim((string) ($just ?? ''))) === 'J' ? 'J' : 'I';
+    }
+
+    /**
+     * Fila vacía de asistencia (presente en ambos rubros).
+     *
+     * @return array{clase: string, edfis: string, just_clase: string, just_edfis: string}
+     */
+    public static function filaAsistenciaVacia(): array
+    {
+        return [
+            self::CAMPO_CLASE => '',
+            self::CAMPO_ED_FIS => '',
+            self::JUST_CLASE => 'I',
+            self::JUST_ED_FIS => 'I',
+        ];
+    }
 
     /** @return Collection<int, InasistenciaValor> */
     public static function tiposClase(): Collection
@@ -175,7 +218,7 @@ final class TomaAsistenciaClase
      * Estado de selects por matrícula para una fecha.
      *
      * @param  Collection<int, object{id: int}>  $alumnos
-     * @return array<int, array{clase: string, edfis: string}>
+     * @return array<int, array{clase: string, edfis: string, just_clase: string, just_edfis: string}>
      */
     public static function estadoAsistenciaDesdeBd(Collection $alumnos, string $fecha): array
     {
@@ -183,10 +226,7 @@ final class TomaAsistenciaClase
         $estado = [];
 
         foreach ($ids as $idMatricula) {
-            $estado[$idMatricula] = [
-                self::CAMPO_CLASE => '',
-                self::CAMPO_ED_FIS => '',
-            ];
+            $estado[$idMatricula] = static::filaAsistenciaVacia();
         }
 
         if ($ids->isEmpty() || $fecha === '') {
@@ -197,7 +237,7 @@ final class TomaAsistenciaClase
             ->whereIn('idMatricula', $ids->all())
             ->whereDate('fecha', $fecha)
             ->orderBy('id')
-            ->get(['id', 'idMatricula', 'tipo']);
+            ->get(['id', 'idMatricula', 'tipo', 'just']);
 
         foreach ($registros as $i) {
             $idMatricula = (int) $i->idMatricula;
@@ -211,7 +251,11 @@ final class TomaAsistenciaClase
             }
 
             $campo = static::tipoEsEducacionFisica($tipo) ? self::CAMPO_ED_FIS : self::CAMPO_CLASE;
+            $justKey = static::claveJustDelCampo($campo);
             $estado[$idMatricula][$campo] = (string) $tipo;
+            if ($justKey !== null) {
+                $estado[$idMatricula][$justKey] = static::normalizarJust($i->just);
+            }
         }
 
         return $estado;
@@ -229,10 +273,12 @@ final class TomaAsistenciaClase
         string $fecha,
         string $campo,
         string $idTipoRaw,
+        string $just = 'I',
     ): string {
         static::matriculaDelCurso($idMatricula, $idCurso) ?? abort(404);
 
         $idTipo = trim($idTipoRaw) !== '' ? (int) $idTipoRaw : 0;
+        $justNorm = static::normalizarJust($just);
 
         if ($idTipo <= 0) {
             $borrados = static::eliminarRegistrosRubro($idMatricula, $fecha, $campo);
@@ -250,7 +296,7 @@ final class TomaAsistenciaClase
             throw new \InvalidArgumentException('Tipo de inasistencia inexistente.');
         }
 
-        $payload = static::payloadDesdeValor($idMatricula, $fecha, $idTipo, $valor);
+        $payload = static::payloadDesdeValor($idMatricula, $fecha, $idTipo, $valor, $justNorm);
         $existente = static::registroRubro($idMatricula, $fecha, $campo);
 
         if ($existente === null) {
@@ -279,8 +325,13 @@ final class TomaAsistenciaClase
     /**
      * @return array{idMatricula: int, fecha: string, tipo: string, cantidad: float|null, just: string, obs: null}
      */
-    private static function payloadDesdeValor(int $idMatricula, string $fecha, int $idTipo, InasistenciaValor $valor): array
-    {
+    private static function payloadDesdeValor(
+        int $idMatricula,
+        string $fecha,
+        int $idTipo,
+        InasistenciaValor $valor,
+        string $just = 'I',
+    ): array {
         $cantidad = $valor->cantidad !== null ? round((float) $valor->cantidad, 2) : null;
 
         return [
@@ -288,7 +339,7 @@ final class TomaAsistenciaClase
             'fecha' => $fecha,
             'tipo' => (string) $idTipo,
             'cantidad' => $cantidad,
-            'just' => 'I',
+            'just' => static::normalizarJust($just),
             'obs' => null,
         ];
     }
@@ -364,7 +415,7 @@ final class TomaAsistenciaClase
     /**
      * Totales del día según el tipo elegido en cada columna.
      *
-     * @param  array<int, array{clase: string, edfis: string}>  $asistencia
+     * @param  array<int, array{clase: string, edfis: string, just_clase?: string, just_edfis?: string}>  $asistencia
      * @return array{
      *     presentes_clase: int,
      *     presentes_ed_fis: int,
