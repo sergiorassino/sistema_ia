@@ -131,6 +131,13 @@ class MateriasAdeudadasNotasIndex extends Component
                 session()->flash('success', 'Nota de examen registrada.');
                 $this->cerrarModal();
             })(),
+            'ok_aprobada' => (function () {
+                session()->flash(
+                    'success',
+                    'Nota registrada. La materia quedó aprobada (nota ≥ 7) y ya no figura entre las adeudadas.',
+                );
+                $this->cerrarModal();
+            })(),
             'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, EQ o TM.'),
             default => $this->addError('notas', 'No se pudo registrar la nota. Verifique los datos y la materia seleccionada.'),
         };

@@ -249,11 +249,12 @@ final class HistorialExamenes
      *     folio?: string|null
      * } $datos
      *
-     * @return 'ok'|'no_encontrada'|'condicion_invalida'
+     * @return 'ok'|'ok_aprobada'|'no_encontrada'|'condicion_invalida'
      */
     public static function actualizar(int $idNota, int $idLegajos, int $idNivel, array $datos): string
     {
-        if (self::registro($idNota, $idLegajos, $idNivel) === null) {
+        $registro = self::registro($idNota, $idLegajos, $idNivel);
+        if ($registro === null) {
             return 'no_encontrada';
         }
 
@@ -276,18 +277,43 @@ final class HistorialExamenes
             return 'no_encontrada';
         }
 
-        DB::table('notasexamen')
-            ->where('id', $idNota)
-            ->where('idLegajos', $idLegajos)
-            ->update([
-                'fecha' => $fecha,
-                'nota' => mb_substr($nota, 0, 10),
-                'condExamen' => $cond !== '' ? mb_substr($cond, 0, 2) : null,
-                'libro' => self::truncarOpcional($datos['libro'] ?? null, 10),
-                'folio' => self::truncarOpcional($datos['folio'] ?? null, 10),
-            ]);
+        $libro = self::truncarOpcional($datos['libro'] ?? null, 10);
+        $folio = self::truncarOpcional($datos['folio'] ?? null, 10);
+        $aprobada = false;
 
-        return 'ok';
+        DB::transaction(function () use (
+            $idNota,
+            $idLegajos,
+            $idNivel,
+            $registro,
+            $fecha,
+            $nota,
+            $cond,
+            $libro,
+            $folio,
+            &$aprobada,
+        ): void {
+            DB::table('notasexamen')
+                ->where('id', $idNota)
+                ->where('idLegajos', $idLegajos)
+                ->update([
+                    'fecha' => $fecha,
+                    'nota' => mb_substr($nota, 0, 10),
+                    'condExamen' => $cond !== '' ? mb_substr($cond, 0, 2) : null,
+                    'libro' => $libro,
+                    'folio' => $folio,
+                ]);
+
+            $aprobada = MateriasAdeudadasNotasExamen::aprobarSiNotaSuficiente(
+                (int) $registro['idCalificacion'],
+                $idLegajos,
+                $idNivel,
+                $nota,
+                $fecha,
+            );
+        });
+
+        return $aprobada ? 'ok_aprobada' : 'ok';
     }
 
     /**

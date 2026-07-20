@@ -595,7 +595,7 @@ final class ManualSistemaCatalog
                             'Busque al alumno por nombre o DNI.',
                             'Carga manual: registre las materias adeudadas si no figuran.',
                             'Inscribir a examen: indique materia y mesa según el asistente.',
-                            'Carga de notas: ingrese el resultado del examen.',
+                            'Carga de notas: ingrese el resultado del examen. Si la nota es 7 o más, la materia se aprueba y deja de figurar como adeudada.',
                             'Historial: consulte mesas anteriores del alumno.',
                         ],
                         [

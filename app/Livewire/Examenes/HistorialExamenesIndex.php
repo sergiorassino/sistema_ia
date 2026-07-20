@@ -146,6 +146,13 @@ class HistorialExamenesIndex extends Component
                 session()->flash('success', 'Registro de examen actualizado.');
                 $this->cerrarModales();
             })(),
+            'ok_aprobada' => (function () {
+                session()->flash(
+                    'success',
+                    'Registro actualizado. La materia quedó aprobada (nota ≥ 7) y ya no figura entre las adeudadas.',
+                );
+                $this->cerrarModales();
+            })(),
             'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, EQ o TM.'),
             default => $this->addError('historial', 'No se pudo actualizar el registro.'),
         };

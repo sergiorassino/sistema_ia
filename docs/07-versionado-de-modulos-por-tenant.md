@@ -65,6 +65,22 @@ return [
 
 Default en `config/tenant.php`: `false`. Consumir con `tenantBoletinMuestraTercerMateria()` o `config('tenant.boletin.mostrar_tercer_materia')`.
 
+Modalidad de actas volantes de previos (secundario):
+
+- Default en `config/tenant.php`: `curso_seccion` (una acta por `idMatPlan` + condición + sección estructural; nunca por el texto del nombre de materia).
+- Alternativa `curso`: reúne alumnos de distintas secciones del mismo `idMatPlan`.
+
+```php
+// config/tenants/{slug}.php — solo si difiere del default
+return [
+    'examenes' => [
+        'acta_volante_previos_modalidad' => 'curso',
+    ],
+];
+```
+
+Consumir con `tenantExamenesActaVolantePreviosModalidad()`.
+
 Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
 
 ```php

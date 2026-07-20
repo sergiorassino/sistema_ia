@@ -81,6 +81,7 @@ class ActaVolantePreviosIndex extends Component
         $actas = collect();
         $cantidadSeleccionadas = 0;
         $pdfUrl = null;
+        $modalidadCursoSeccion = ActaVolantePrevios::esModalidadCursoSeccion();
 
         if ($preparacionLista) {
             $actas = $this->actasPendientes();
@@ -106,6 +107,7 @@ class ActaVolantePreviosIndex extends Component
             'cantidadSeleccionadas',
             'pdfUrl',
             'preparacionLista',
+            'modalidadCursoSeccion',
         ))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Actas volantes de examen']);
     }

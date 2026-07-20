@@ -259,6 +259,17 @@ return [
     ],
 
     /**
+     * Exámenes (previas) — actas volantes.
+     * `acta_volante_previos_modalidad`:
+     * - `curso_seccion`: una acta por materia del plan + condición + curso/sección (`cursos.Id`).
+     * - `curso`: una acta por materia del plan + condición (reúne secciones del mismo año de plan).
+     * Override en `config/tenants/{slug}.php` cuando el colegio use otra modalidad.
+     */
+    'examenes' => [
+        'acta_volante_previos_modalidad' => 'curso_seccion',
+    ],
+
+    /**
      * Calificaciones inicial — variantes por `implementacion`.
      * Claves conocidas: `estandar` (Montecristo / flujo legacy), `sfq` (en desarrollo), `montecristo` (PDF sin aprendizajes ni cierre).
      */
