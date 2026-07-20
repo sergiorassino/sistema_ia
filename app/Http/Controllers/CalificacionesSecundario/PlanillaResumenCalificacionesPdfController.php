@@ -4,10 +4,10 @@ namespace App\Http\Controllers\CalificacionesSecundario;
 
 use App\Http\Controllers\Controller;
 use App\Models\Curso;
+use App\Support\CalificacionesSecundario\PlanillaResumenCalificacionesTcpdf;
 use App\Support\Listados\ListadoCursoExportParams;
 use App\Support\PermisosIaCatalog;
 use App\Support\PlanillaResumenCalificacionesSecundario;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -23,7 +23,10 @@ class PlanillaResumenCalificacionesPdfController extends Controller
             'Sin permiso para planilla resumen de calificaciones.',
         );
 
-        @ini_set('memory_limit', '512M');
+        @ini_set('memory_limit', '1024M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
 
         $key = 'planilla-resumen-calificaciones-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {
@@ -74,6 +77,7 @@ class PlanillaResumenCalificacionesPdfController extends Controller
         }
 
         $ano = $secciones[0]['ano'] ?? null;
+        $anoInt = $ano !== null ? (int) $ano : null;
 
         if (count($secciones) === 1) {
             $slug = Str::slug('planilla-resumen-'.($secciones[0]['cursoLabel'] ?? ''), '_');
@@ -84,16 +88,12 @@ class PlanillaResumenCalificacionesPdfController extends Controller
             $slug = 'planilla_resumen';
         }
 
-        $pdf = Pdf::loadView('pdf.planilla-resumen-calificaciones', [
-            'pdfHeader' => schoolPdfHeaderData(),
-            'ano' => $ano,
-            'secciones' => $secciones,
-        ])->setPaper('a4', 'landscape');
+        $pdf = PlanillaResumenCalificacionesTcpdf::generar(
+            schoolPdfHeaderData(),
+            $anoInt,
+            $secciones,
+        );
 
-        $response = $pdf->stream($slug.'.pdf');
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return PlanillaResumenCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
     }
 }

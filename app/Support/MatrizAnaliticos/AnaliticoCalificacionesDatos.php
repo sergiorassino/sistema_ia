@@ -217,7 +217,7 @@ final class AnaliticoCalificacionesDatos
                 'materia' => $materia,
                 'calif_num' => '----',
                 'calif_letras' => $letras,
-                'cond' => $cond,
+                'cond' => self::etiquetaCondicionImpreso($cond),
                 'mes' => $mes,
                 'ano' => $ano,
                 'escuapro' => $escuapro,
@@ -242,12 +242,23 @@ final class AnaliticoCalificacionesDatos
             'materia' => $materia,
             'calif_num' => $calif,
             'calif_letras' => $letras,
-            'cond' => $cond,
+            'cond' => self::etiquetaCondicionImpreso($cond),
             'mes' => $mes,
             'ano' => $ano,
             'escuapro' => $escuapro,
             'modo' => 'nota',
         ];
+    }
+
+    /** Etiqueta de condición para el PDF (Pase / Analítico). */
+    private static function etiquetaCondicionImpreso(string $cond): string
+    {
+        $codigo = strtoupper(trim($cond));
+
+        return match ($codigo) {
+            'PR' => 'Prev.',
+            default => $cond,
+        };
     }
 
     private static function mostrarMes(mixed $mes): string

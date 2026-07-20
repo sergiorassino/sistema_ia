@@ -31,21 +31,112 @@ final class PlanillaResumenCalificacionesSecundario
      */
     public static function build(int $cursoId): array
     {
-        $ctx = schoolCtx();
+        $secciones = self::buildSecciones([$cursoId]);
+        if ($secciones === []) {
+            abort(404);
+        }
 
+        $sec = $secciones[0];
+        unset($sec['layout']);
+
+        return $sec;
+    }
+
+    /**
+     * Varias planillas en orden de curso (misma estructura que {@see build()} + layout por sección).
+     *
+     * Prefetch de previas e ítems de boletín para todos los alumnos de todos los cursos
+     * (evita N+1 al imprimir "Todos").
+     *
+     * @param  list<int>  $cursoIds
+     * @return list<array{
+     *     cursoLabel: string,
+     *     ano: int|null,
+     *     materias: list<array{id: int, abrev: string}>,
+     *     estudiantes: list<array<string, mixed>>,
+     *     layout: array{cantidad: int, fontPt: float, paddingPx: float, lineHeight: float}
+     * }>
+     */
+    public static function buildSecciones(array $cursoIds): array
+    {
+        $ctx = schoolCtx();
+        $idTerlec = (int) $ctx->idTerlec;
+        $idNivel = (int) $ctx->idNivel;
+        $ano = $ctx->terlecAno();
+        $anoInt = $ano !== null ? (int) $ano : null;
+
+        $preparados = [];
+        $allLegajos = [];
+        $allMatriculas = [];
+
+        foreach ($cursoIds as $cursoId) {
+            $cursoId = (int) $cursoId;
+            if ($cursoId < 1) {
+                continue;
+            }
+            $prep = self::prepararCurso($cursoId, $idTerlec, $idNivel, $anoInt);
+            if ($prep === null) {
+                continue;
+            }
+            $preparados[] = $prep;
+            foreach ($prep['idLegajos'] as $idLeg) {
+                $allLegajos[$idLeg] = $idLeg;
+            }
+            foreach ($prep['idMatriculas'] as $idMat) {
+                $allMatriculas[$idMat] = $idMat;
+            }
+        }
+
+        if ($preparados === []) {
+            return [];
+        }
+
+        $previasPorLegajo = ConsultaCalificacionesAlumno::materiasAdeudadasTextoPorLegajos(
+            array_values($allLegajos),
+            $idTerlec,
+            $idNivel
+        );
+        $itemsPorMatricula = ConsultaCalificacionesAlumno::itemsBoletinPorMatriculas(
+            array_values($allMatriculas),
+            $idTerlec
+        );
+
+        $secciones = [];
+        foreach ($preparados as $prep) {
+            $data = self::armarSeccion($prep, $previasPorLegajo, $itemsPorMatricula, $ano);
+            $data['layout'] = self::metricasLayout(count($data['estudiantes']));
+            $secciones[] = $data;
+        }
+
+        return $secciones;
+    }
+
+    /**
+     * @return array{
+     *     cursoLabel: string,
+     *     materiasLista: list<array{id: int, abrev: string}>,
+     *     matriculas: Collection<int, Matricula>,
+     *     califsPorLegajo: array<int, array<int, array<string, string>>>,
+     *     inasPorMatricula: array<int, InasistenciasResumen>,
+     *     idLegajos: list<int>,
+     *     idMatriculas: list<int>
+     * }|null
+     */
+    private static function prepararCurso(int $cursoId, int $idTerlec, int $idNivel, ?int $ano): ?array
+    {
         $curso = Curso::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->where('idTerlec', $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->where('Id', $cursoId)
             ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
 
         if (! $curso) {
-            abort(404);
+            return null;
         }
 
         $materias = DB::table('materias')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->where('idCursos', $cursoId)
             ->orderBy('ord')
             ->orderBy('id')
@@ -67,8 +158,8 @@ final class PlanillaResumenCalificacionesSecundario
             ->with('legajo')
             ->join('legajos as l', 'l.id', '=', 'matricula.idLegajos')
             ->where('matricula.idCursos', $cursoId)
-            ->where('matricula.idTerlec', (int) $ctx->idTerlec)
-            ->where('matricula.idNivel', (int) $ctx->idNivel)
+            ->where('matricula.idTerlec', $idTerlec)
+            ->where('matricula.idNivel', $idNivel)
             ->whereIn('matricula.idCondiciones', $idsCondicionesRegulares)
             ->whereNull('matricula.fechaBaja')
             ->orderBy('l.apellido')
@@ -77,18 +168,51 @@ final class PlanillaResumenCalificacionesSecundario
             ->get();
 
         $idMaterias = array_column($materiasLista, 'id');
-        $califsPorLegajo = self::calificacionesPorLegajo($cursoId, $idMaterias, (int) $ctx->idTerlec);
+        $califsPorLegajo = self::calificacionesPorLegajo($cursoId, $idMaterias, $idTerlec);
 
-        $idTerlec = (int) $ctx->idTerlec;
-        $idNivel = (int) $ctx->idNivel;
-        $ano = $ctx->terlecAno();
         $idMatriculas = $matriculas->map(fn (Matricula $m) => (int) $m->id)->all();
-        $inasPorMatricula = self::resumenesInasistenciasPorMatricula($idMatriculas, $ano !== null ? (int) $ano : null);
-        $previasPorLegajo = [];
+        $idLegajos = $matriculas->map(fn (Matricula $m) => (int) $m->idLegajos)->unique()->values()->all();
+        $inasPorMatricula = self::resumenesInasistenciasPorMatricula($idMatriculas, $ano);
 
+        return [
+            'cursoLabel' => $curso->nombreParaListado(),
+            'materiasLista' => $materiasLista,
+            'matriculas' => $matriculas,
+            'califsPorLegajo' => $califsPorLegajo,
+            'inasPorMatricula' => $inasPorMatricula,
+            'idLegajos' => $idLegajos,
+            'idMatriculas' => $idMatriculas,
+        ];
+    }
+
+    /**
+     * @param  array{
+     *     cursoLabel: string,
+     *     materiasLista: list<array{id: int, abrev: string}>,
+     *     matriculas: Collection<int, Matricula>,
+     *     califsPorLegajo: array<int, array<int, array<string, string>>>,
+     *     inasPorMatricula: array<int, InasistenciasResumen>
+     * }  $prep
+     * @param  array<int, string>  $previasPorLegajo
+     * @param  array<int, list<object{etiqueta: string, fuente: string, total: float}>>  $itemsPorMatricula
+     * @return array{
+     *     cursoLabel: string,
+     *     ano: int|null,
+     *     materias: list<array{id: int, abrev: string}>,
+     *     estudiantes: list<array<string, mixed>>
+     * }
+     */
+    private static function armarSeccion(
+        array $prep,
+        array $previasPorLegajo,
+        array $itemsPorMatricula,
+        ?int $ano,
+    ): array {
+        $materiasLista = $prep['materiasLista'];
         $estudiantes = [];
         $ord = 0;
-        foreach ($matriculas as $mat) {
+
+        foreach ($prep['matriculas'] as $mat) {
             $ord++;
             $legajo = $mat->legajo;
             $idLegajo = (int) $mat->idLegajos;
@@ -99,17 +223,9 @@ final class PlanillaResumenCalificacionesSecundario
 
             foreach ($materiasLista as $matDef) {
                 $idMateria = (int) $matDef['id'];
-                $row = $califsPorLegajo[$idLegajo][$idMateria] ?? self::filaCalificacionVacia();
+                $row = $prep['califsPorLegajo'][$idLegajo][$idMateria] ?? self::filaCalificacionVacia();
                 $porMateria[$idMateria] = self::celdasMateria($row);
                 $promediosMateria[] = trim((string) ($row['calif'] ?? ''));
-            }
-
-            if (! array_key_exists($idLegajo, $previasPorLegajo)) {
-                $adeudadas = ConsultaCalificacionesAlumno::materiasAdeudadasParaLegajo($idLegajo, $idTerlec, $idNivel);
-                $previasPorLegajo[$idLegajo] = collect($adeudadas)
-                    ->map(fn (object $a) => (string) ($a->linea ?? ''))
-                    ->filter(fn (string $s) => $s !== '')
-                    ->implode(' - ');
             }
 
             $estudiantes[] = [
@@ -117,49 +233,21 @@ final class PlanillaResumenCalificacionesSecundario
                 'alumno' => trim(((string) ($legajo?->apellido ?? '')).', '.((string) ($legajo?->nombre ?? ''))),
                 'materias' => $porMateria,
                 'resumen' => self::resumenEstudiante(
-                    $idMatricula,
-                    $idTerlec,
                     $promediosMateria,
                     count($materiasLista),
-                    $inasPorMatricula[$idMatricula] ?? null,
-                    $previasPorLegajo[$idLegajo]
+                    $prep['inasPorMatricula'][$idMatricula] ?? null,
+                    $previasPorLegajo[$idLegajo] ?? '',
+                    $itemsPorMatricula[$idMatricula] ?? [],
                 ),
             ];
         }
 
         return [
-            'cursoLabel' => $curso->nombreParaListado(),
-            'ano' => $ctx->terlecAno(),
+            'cursoLabel' => $prep['cursoLabel'],
+            'ano' => $ano,
             'materias' => $materiasLista,
             'estudiantes' => $estudiantes,
         ];
-    }
-
-    /**
-     * Varias planillas en orden de curso (misma estructura que {@see build()} + layout por sección).
-     *
-     * @param  list<int>  $cursoIds
-     * @return list<array{
-     *     cursoLabel: string,
-     *     ano: int|null,
-     *     materias: list<array{id: int, abrev: string}>,
-     *     estudiantes: list<array<string, mixed>>,
-     *     layout: array{cantidad: int, fontPt: float, paddingPx: float, lineHeight: float}
-     * }>
-     */
-    public static function buildSecciones(array $cursoIds): array
-    {
-        $secciones = [];
-        foreach ($cursoIds as $cursoId) {
-            if ($cursoId < 1) {
-                continue;
-            }
-            $data = self::build($cursoId);
-            $data['layout'] = self::metricasLayout(count($data['estudiantes']));
-            $secciones[] = $data;
-        }
-
-        return $secciones;
     }
 
     /**
@@ -251,6 +339,7 @@ final class PlanillaResumenCalificacionesSecundario
 
     /**
      * @param  list<string>  $promediosMateria
+     * @param  list<object{etiqueta: string, fuente: string, total: float}>  $items
      * @return array{
      *     numRep: int,
      *     inas: string,
@@ -261,14 +350,12 @@ final class PlanillaResumenCalificacionesSecundario
      * }
      */
     private static function resumenEstudiante(
-        int $idMatricula,
-        int $idTerlec,
         array $promediosMateria,
         int $totalMateriasAnio,
         ?InasistenciasResumen $inasResumen,
         string $previas,
+        array $items,
     ): array {
-        $items = ConsultaCalificacionesAlumno::itemsBoletinParaMatriculaPublic($idMatricula, $idTerlec);
         $inas = self::valorItemBoletin($items, 'inasistencias');
         $amon = self::valorItemBoletin($items, 'sanciones');
 
