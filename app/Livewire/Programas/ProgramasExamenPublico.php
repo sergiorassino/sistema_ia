@@ -11,7 +11,7 @@ use Livewire\Component;
  * Descarga pública de programas de examen (sin login).
  *
  * Lee programas aprobados desde la tabla `doc_pp` (tipo prog, aprobado = 1).
- * El año ofrecido es el ciclo lectivo activo del sistema (`ento.idTerlecVerNotas`).
+ * Los años del selector vienen de `tenant.programas_examen.anios` (por colegio).
  */
 #[Layout('layouts.programas-examen')]
 class ProgramasExamenPublico extends Component
@@ -28,7 +28,7 @@ class ProgramasExamenPublico extends Component
      */
     public function aniosDisponibles(): array
     {
-        return DocPpConsulta::aniosLectivosSistema();
+        return tenantProgramasExamenAnios();
     }
 
     public function elegirAnio(int $anio): void

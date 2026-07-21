@@ -409,22 +409,24 @@ return [
 
     /**
      * Descarga pública de programas de examen (sin login).
-     * Lee programas aprobados desde la tabla `materias` (pp_prog / pp_aprobProg).
+     * Lee programas aprobados desde la tabla `doc_pp` (tipo prog, aprobado = 1).
      *
      * Por defecto deshabilitado. Activar en `config/tenants/{slug}.php` con `habilitado => true`.
      *
      * Resuelto en código (no va en tenant):
      *   - `ento.codCol` → segmento de colegio en la ruta de archivos
      *   - nivel pedagógico → inic / prim / secu / terc
-     *   - año lectivo → `ento.idTerlecVerNotas` por nivel
      *
      * Opcional en tenant:
      *   - `base_url`: solo si los PDF se sirven desde otro dominio (legado).
      *     Si falta, la URL pública es `{APP_URL}/archivos/...` (carpeta public/archivos del sistema).
+     *   - `anios`: años lectivos del selector público (ej. `[2026, 2025, 2024]`).
+     *     Si está vacío, fallback a los años de `ento.idTerlecVerNotas` por nivel.
      */
     'programas_examen' => [
         'habilitado' => false,
         'base_url' => null,
+        'anios' => [],
     ],
 
     /**
