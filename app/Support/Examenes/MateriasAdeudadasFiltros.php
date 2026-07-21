@@ -71,4 +71,18 @@ final class MateriasAdeudadasFiltros
             default => $cond !== '' ? $cond : 'Examen',
         };
     }
+
+    /** Condición de examen (PR/EQ/LI/TM) → valor persistido en `calificaciones.cond` al aprobar. */
+    public static function condCalificacionDesdeExamen(?string $condExamen): string
+    {
+        $codigo = strtoupper(trim((string) $condExamen));
+
+        return match ($codigo) {
+            'PR' => 'Prev.',
+            'EQ' => 'Equiv.',
+            'LI' => 'Libre',
+            'TM' => 'Regular',
+            default => 'Regular',
+        };
+    }
 }
