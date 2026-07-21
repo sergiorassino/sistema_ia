@@ -4,6 +4,7 @@ namespace App\Livewire\Seguimiento\Inasistencias;
 
 use App\Support\PermisosIaCatalog;
 use App\Support\Seguimiento\TomaAsistenciaClase;
+use App\Support\Tea\TeaInstanciasPendientes;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -218,6 +219,13 @@ class TomaAsistenciaClaseIndex extends Component
             ? TomaAsistenciaClase::alumnosDelCurso($idCurso)
             : collect();
 
+        $teaPendientesPorMatricula = [];
+        if ($alumnos->isNotEmpty()) {
+            $teaPendientesPorMatricula = TeaInstanciasPendientes::porMatriculas(
+                $alumnos->pluck('id')->map(static fn ($id) => (int) $id)->all(),
+            );
+        }
+
         return view('livewire.seguimiento.inasistencias.toma-asistencia-clase', [
             'cursos' => $cursos,
             'curso' => $curso,
@@ -226,6 +234,7 @@ class TomaAsistenciaClaseIndex extends Component
             'tiposEdFis' => TomaAsistenciaClase::tiposEducacionFisica(),
             'puedeCargarGrilla' => $this->filtrosCompletos(),
             'resumen' => $this->resumenTotales,
+            'teaPendientesPorMatricula' => $teaPendientesPorMatricula,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Toma de asistencia a clase']);
     }
 }

@@ -57,6 +57,9 @@ return [
         'informe_inasistencias' => [
             'niveles_deshabilitados' => [1, 2],
         ],
+        'tea_registros' => [
+            'implementacion' => 'montecristo',
+        ],
     ],
 
     'autogestion' => [

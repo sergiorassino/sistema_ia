@@ -487,6 +487,7 @@ INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
 (39, 37, 'SEGUIMIENTO DISCIPLINARIO', 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'),
 (40, 38, 'ASISTENCIA ESTUDIANTES', 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'),
 (81, 81, 'ASISTENCIA ESTUDIANTES', 'Parte diario del preceptor: selección de curso(s), fecha e impresión PDF por día.'),
+(85, 85, 'ASISTENCIA ESTUDIANTES', 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'),
 (44, 44, 'MATRÍCULA WEB', 'Documentos de aceptación (PDF por nivel): compromiso educativo, AEC, normativas y traslado para el portal de estudiantes.')
 ON DUPLICATE KEY UPDATE
   `orden` = VALUES(`orden`),

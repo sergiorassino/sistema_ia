@@ -177,6 +177,7 @@ permisos_ia = "111111111111111..."
 - Configuración granular (órdenes 25–36): `tienePermisoConfig($orden)` → alias de `tienePermiso`.
 - Seguimiento disciplinario: orden **37** (`PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO`).
 - Gestión de inasistencias del estudiante: orden **38** (`PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION`).
+- Gestión de TEA por inasistencias: orden **85** (`PermisosIaCatalog::TEA_ESTUDIANTES_GESTION`).
 - Rutas: middleware `permiso:N` o `permiso-config:N`.
 - Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.
 - Menú: `@if (tienePermiso(N))` por ítem o grupo.

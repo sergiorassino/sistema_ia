@@ -453,13 +453,12 @@ if (! function_exists('pdfHeaderLogoAbsolutePath')) {
             return $logo;
         }
 
-        foreach ([studentLogoStoragePath(), schoolLogoStoragePath()] as $resolver) {
-            $path = $resolver();
-            if (! is_string($path) || trim($path) === '') {
+        foreach ([studentLogoStoragePath(), schoolLogoStoragePath()] as $relativePath) {
+            if (! is_string($relativePath) || trim($relativePath) === '') {
                 continue;
             }
 
-            $abs = Storage::disk('public')->path(trim($path));
+            $abs = Storage::disk('public')->path(trim($relativePath));
             if (is_file($abs)) {
                 return $abs;
             }
@@ -1514,6 +1513,60 @@ if (! function_exists('tenantSecretariaInformeInasistenciasHabilitada')) {
         }
 
         return ! in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true);
+    }
+}
+
+if (! function_exists('tenantTeaRegistroImplementacion')) {
+    /**
+     * Implementación TCPDF de impresos TEA del tenant (`montecristo` o `caixalsf` por defecto).
+     */
+    function tenantTeaRegistroImplementacion(): string
+    {
+        $impl = config('tenant.secretaria.tea_registros.implementacion');
+
+        return filled($impl) ? (string) $impl : 'caixalsf';
+    }
+}
+
+if (! function_exists('tenantTeaRegistroPlantillaPdf')) {
+    /**
+     * Ruta absoluta a la plantilla PDF estática de un tipo TEA (reinco2025_tipo.id), o null si no está configurada.
+     *
+     * Config: `tenant.secretaria.tea_registros.plantillas_pdf` — claves 1–5, ruta relativa a resources/.
+     */
+    function tenantTeaRegistroPlantillaPdf(int $idTipo): ?string
+    {
+        if ($idTipo <= 0) {
+            return null;
+        }
+
+        $plantillas = config('tenant.secretaria.tea_registros.plantillas_pdf', []);
+        if (! is_array($plantillas)) {
+            return null;
+        }
+
+        $relative = $plantillas[$idTipo] ?? null;
+        if (! filled($relative)) {
+            return null;
+        }
+
+        $path = resource_path((string) $relative);
+
+        return is_file($path) ? $path : null;
+    }
+}
+
+if (! function_exists('tenantTeaRegistroPdfDisponible')) {
+    function tenantTeaRegistroPdfDisponible(int $idTipo): bool
+    {
+        if (tenantTeaRegistroPlantillaPdf($idTipo) !== null) {
+            return true;
+        }
+
+        return match (tenantTeaRegistroImplementacion()) {
+            'montecristo' => \App\Support\Tea\TeaRegistroMontecristoTcpdf::soportaTipo($idTipo),
+            default => \App\Support\Tea\TeaRegistroCaixalsfTcpdf::soportaTipo($idTipo),
+        };
     }
 }
 

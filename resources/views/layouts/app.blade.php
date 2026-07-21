@@ -756,6 +756,22 @@
                     <span class="truncate">Gestión de Inasistencias del Estudiante</span>
                 </a>
                 @endif
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::TEA_ESTUDIANTES_GESTION))
+                <a href="{{ route('seguimiento.tea') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => ($route ?? '') === 'seguimiento.tea'
+                           || ($route ?? '') === 'seguimiento.tea.create'
+                           || ($route ?? '') === 'seguimiento.tea.edit',
+                   ])
+                   title="{{ seSidebarTooltip('Gestión de TEA por inasistencias', \App\Support\PermisosIaCatalog::TEA_ESTUDIANTES_GESTION) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                    <span class="truncate">Gestión de TEA</span>
+                </a>
+                @endif
                 @if (tienePermiso(1))
                 <a href="{{ route('seguimiento.toma-asistencia-clase') }}"
                    @class([

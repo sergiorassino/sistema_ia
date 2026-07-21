@@ -361,6 +361,24 @@ return [
             'niveles_deshabilitados' => [],
         ],
         /**
+         * Registros TEA — tablas legacy únicas `reinco2025` y `reinco2025_tipo` (no varían por ciclo).
+         *
+         * - `implementacion`: generador TCPDF por tenant. Default `caixalsf` (Res. 11/25).
+         *   Solo Montecristo usa `montecristo` (Res. 188/18); override en `config/tenants/montecristo.php`.
+         * - `plantillas_pdf`: PDF estático por id de reinco2025_tipo (1–5), ruta relativa a resources/.
+         *   Si hay plantilla para un tipo, tiene prioridad sobre `implementacion`.
+         */
+        'tea_registros' => [
+            'implementacion' => 'caixalsf',
+            'plantillas_pdf' => [
+                1 => null,
+                2 => null,
+                3 => null,
+                4 => null,
+                5 => null,
+            ],
+        ],
+        /**
          * Consulta de calificaciones (Menú de Secretaría → CALIFICACIONES Secundario).
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          */
