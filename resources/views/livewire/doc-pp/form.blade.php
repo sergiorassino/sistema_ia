@@ -52,20 +52,79 @@
             </div>
         @endif
 
-        <div>
-            <label class="form-label" for="docpp-archivo">
+        @php
+            $docPpMaxKb = max(512, (int) config('doc_pp.max_kb', 1024));
+            $docPpMaxMb = max(1, (int) round($docPpMaxKb / 1024));
+        @endphp
+        <div
+            x-data="{
+                maxBytes: {{ $docPpMaxKb * 1024 }},
+                maxMb: {{ $docPpMaxMb }},
+                async alElegir(ev) {
+                    const input = ev.target;
+                    const file = input.files && input.files[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    if (file.size > this.maxBytes) {
+                        input.value = '';
+                        if (typeof seSwalPdfDemasiadoGrande === 'function') {
+                            seSwalPdfDemasiadoGrande(this.maxMb);
+                        }
+                        return;
+                    }
+
+                    try {
+                        await new Promise((resolve, reject) => {
+                            this.$wire.upload(
+                                'archivoPdf',
+                                file,
+                                () => resolve(),
+                                () => reject(new Error('upload')),
+                            );
+                        });
+                    } catch (e) {
+                        if (typeof seSwalError === 'function') {
+                            seSwalError('No se pudo subir el archivo. Intente nuevamente.');
+                        }
+                    } finally {
+                        input.value = '';
+                    }
+                },
+            }"
+        >
+            <span class="form-label">
                 @if ($tieneArchivo)
                     Reemplazar PDF (opcional)
                 @else
                     Archivo PDF <span class="text-red-600">*</span>
                 @endif
-            </label>
-            <input id="docpp-archivo" type="file" wire:model="archivoPdf" accept="application/pdf,.pdf"
-                   class="mt-1.5 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
-            <div wire:loading wire:target="archivoPdf" class="mt-1 text-xs text-neutral-500">Subiendo archivo…</div>
+            </span>
+            <div class="mt-1.5 flex flex-wrap items-center gap-3">
+                <label for="docpp-archivo" class="btn-secondary inline-flex cursor-pointer items-center gap-2 py-2.5">
+                    <svg class="h-4 w-4 shrink-0 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    {{ $archivoPdf ? 'Cambiar archivo' : 'Seleccionar PDF' }}
+                    <input id="docpp-archivo" type="file" accept="application/pdf,.pdf" class="sr-only"
+                           x-on:change="alElegir($event)">
+                </label>
+                @if ($archivoPdf)
+                    <span class="min-w-0 max-w-full truncate text-sm text-neutral-700" title="{{ $archivoPdf->getClientOriginalName() }}">
+                        {{ $archivoPdf->getClientOriginalName() }}
+                    </span>
+                @elseif ($tieneArchivo)
+                    <span class="text-sm text-neutral-500">Se mantendrá el archivo actual</span>
+                @else
+                    <span class="text-sm text-neutral-500">Ningún archivo seleccionado</span>
+                @endif
+            </div>
+            <div wire:loading wire:target="archivoPdf" class="mt-1 text-xs font-medium text-primary-700">Subiendo archivo…</div>
             @error('archivoPdf')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
+            <p class="mt-1 text-xs text-neutral-500">Solo PDF · máx. {{ $docPpMaxMb }} MB</p>
         </div>
 
         <div class="flex items-center justify-between gap-4 rounded-2xl border border-accent-200 bg-accent-50/60 px-4 py-3">
@@ -102,11 +161,17 @@
             @else
                 <span></span>
             @endif
-            <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/40">
-                <span wire:loading.remove wire:target="guardar,archivoPdf">Guardar</span>
-                <span wire:loading wire:target="guardar,archivoPdf">Guardando…</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('doc-pp.index') }}" wire:navigate
+                   class="inline-flex items-center gap-2 rounded-xl border border-accent-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500/40">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/40">
+                    <span wire:loading.remove wire:target="guardar,archivoPdf">Guardar</span>
+                    <span wire:loading wire:target="guardar,archivoPdf">Guardando…</span>
+                </button>
+            </div>
         </div>
     </form>
 
@@ -115,6 +180,12 @@
         $wire.on('se-swal-error', ({ mensaje }) => {
             if (typeof seSwalError === 'function') {
                 seSwalError(mensaje);
+            }
+        });
+
+        $wire.on('doc-pp-pdf-demasiado-grande', ({ maxMb }) => {
+            if (typeof seSwalPdfDemasiadoGrande === 'function') {
+                seSwalPdfDemasiadoGrande(maxMb || 1);
             }
         });
     </script>

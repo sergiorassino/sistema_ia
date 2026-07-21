@@ -26,6 +26,10 @@
                     <svg class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                     Aprobado (visible para estudiantes)
                 </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <svg class="h-5 w-5 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    Ver PDF
+                </span>
             </div>
         </div>
     </section>
@@ -104,6 +108,7 @@
                                                 'id' => $fila->id,
                                                 'tipo' => \App\Support\DocPp\DocPpStorage::TIPO_PLAN,
                                                 'estado' => $estadoPlan,
+                                                'idDoc' => isset($fila->plan_id) ? (int) $fila->plan_id : null,
                                             ])
                                         </td>
                                         <td class="px-3 py-2 text-xs text-neutral-600 bg-amber-50/20 max-w-[10rem] truncate" title="{{ $fila->plan_obs ?? '' }}">{{ $fila->plan_obs ?? '' }}</td>
@@ -112,6 +117,7 @@
                                                 'id' => $fila->id,
                                                 'tipo' => \App\Support\DocPp\DocPpStorage::TIPO_PROG,
                                                 'estado' => $estadoProg,
+                                                'idDoc' => isset($fila->prog_id) ? (int) $fila->prog_id : null,
                                             ])
                                         </td>
                                         <td class="px-3 py-2 text-xs text-neutral-600 bg-emerald-50/20 max-w-[10rem] truncate" title="{{ $fila->prog_obs ?? '' }}">{{ $fila->prog_obs ?? '' }}</td>

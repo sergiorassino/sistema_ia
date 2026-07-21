@@ -215,7 +215,7 @@ final class DocPpStorage
             return 'Solo se permiten archivos PDF.';
         }
 
-        $maxKb = max(512, (int) config('doc_pp.max_kb', 20480));
+        $maxKb = max(512, (int) config('doc_pp.max_kb', 1024));
         if ($archivo->getSize() > ($maxKb * 1024)) {
             return 'El archivo supera el tamaño máximo permitido ('.number_format($maxKb / 1024, 0).' MB).';
         }
