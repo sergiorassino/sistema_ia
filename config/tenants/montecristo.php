@@ -85,6 +85,8 @@ return [
 
     'programas_examen' => [
         'habilitado' => true,
+        // Años ofrecidos en /programas-examen (más reciente primero).
+        'anios' => [2026, 2025, 2024],
     ],
 
     'doc_pp' => [

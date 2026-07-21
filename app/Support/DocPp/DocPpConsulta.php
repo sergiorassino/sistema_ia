@@ -170,7 +170,7 @@ final class DocPpConsulta
         return DocPp::query()
             ->from('doc_pp')
             ->join('materias', 'materias.id', '=', 'doc_pp.idMaterias')
-            ->join('cursos', 'cursos.Id', '=', 'doc_pp.idCursos')
+            ->join('cursos', 'cursos.Id', '=', 'materias.idCursos')
             ->select([
                 'doc_pp.id',
                 'doc_pp.idNivel',
@@ -182,9 +182,13 @@ final class DocPpConsulta
             ->where('doc_pp.tipo', DocPpStorage::TIPO_PROG)
             ->where('doc_pp.aprobado', 1)
             ->where('doc_pp.nombre_archivo', '!=', '')
+            ->orderBy('doc_pp.idNivel')
             ->orderByRaw('COALESCE(cursos.orden, 9999) asc')
+            ->orderBy('cursos.c')
+            ->orderBy('cursos.s')
             ->orderBy('cursos.cursec')
-            ->orderBy('materias.ord')
+            ->orderByRaw('COALESCE(materias.ord, 9999) asc')
+            ->orderBy('materias.materia')
             ->orderBy('materias.id')
             ->get()
             ->map(function (object $fila) use ($anio) {

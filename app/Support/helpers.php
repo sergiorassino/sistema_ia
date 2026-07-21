@@ -10,6 +10,7 @@ use App\Push\WebPushService;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Cooperadora\CooperadoraConfig;
 use App\Support\Cuotas\CuotasImportesCatalog;
+use App\Support\DocPp\DocPpConsulta;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use App\Support\NivelSistema;
 use App\Support\PermisosConfiguracion;
@@ -385,6 +386,28 @@ if (! function_exists('entoInstitutionalLogoUrlFallback')) {
     }
 }
 
+if (! function_exists('entoInstitutionalNombre')) {
+    /**
+     * Primer `ento.insti` no vacío (cualquier nivel). Útil en pantallas públicas sin schoolCtx.
+     */
+    function entoInstitutionalNombre(): string
+    {
+        static $memo = null;
+
+        if ($memo !== null) {
+            return $memo;
+        }
+
+        $insti = trim((string) (Ento::query()
+            ->whereNotNull('insti')
+            ->where('insti', '<>', '')
+            ->orderBy('idNivel')
+            ->value('insti') ?? ''));
+
+        return $memo = $insti;
+    }
+}
+
 if (! function_exists('matriculaWebDocumentoUrl')) {
     /**
      * URL para ver/descargar un PDF de aceptación de matrícula web del nivel indicado (o el activo en secretaría).
@@ -597,7 +620,7 @@ if (! function_exists('schoolNombre')) {
     /**
      * Nombre institucional del colegio para el nivel activo en sesión.
      * Lee `ento.insti` filtrado por `schoolCtx()->idNivel`.
-     * Fallback: `config('tenant.nombre')` y luego 'Colegio'.
+     * Sin contexto (pantallas públicas): primer `ento.insti`, luego `config('tenant.nombre')`, luego 'Colegio'.
      */
     function schoolNombre(): string
     {
@@ -617,6 +640,11 @@ if (! function_exists('schoolNombre')) {
             if ($insti !== '') {
                 return $memo = $insti;
             }
+        }
+
+        $desdeEnto = entoInstitutionalNombre();
+        if ($desdeEnto !== '') {
+            return $memo = $desdeEnto;
         }
 
         return $memo = (string) config('tenant.nombre', 'Colegio');
@@ -1330,6 +1358,36 @@ if (! function_exists('tenantProgramasExamenHabilitado')) {
     function tenantProgramasExamenHabilitado(): bool
     {
         return (bool) config('tenant.programas_examen.habilitado', false);
+    }
+}
+
+if (! function_exists('tenantProgramasExamenAnios')) {
+    /**
+     * Años lectivos del formulario público `/programas-examen`.
+     * Si el tenant define `programas_examen.anios`, se usan esos (orden decreciente).
+     * Si la lista está vacía, fallback a los años de `ento.idTerlecVerNotas`.
+     *
+     * @return list<int>
+     */
+    function tenantProgramasExamenAnios(): array
+    {
+        $configurados = config('tenant.programas_examen.anios', []);
+        if (! is_array($configurados) || $configurados === []) {
+            return DocPpConsulta::aniosLectivosSistema();
+        }
+
+        $anios = [];
+        foreach ($configurados as $anio) {
+            $n = (int) $anio;
+            if ($n > 1990 && $n < 2100) {
+                $anios[] = $n;
+            }
+        }
+
+        $anios = array_values(array_unique($anios));
+        rsort($anios);
+
+        return $anios;
     }
 }
 
