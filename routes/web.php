@@ -300,6 +300,9 @@ use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Livewire\Seguimiento\Inasistencias\InformeInasistenciasLoteIndex;
 use App\Livewire\Seguimiento\Inasistencias\TomaAsistenciaClaseIndex;
+use App\Livewire\Seguimiento\Tea\TeaForm;
+use App\Livewire\Seguimiento\Tea\TeaIndex;
+use App\Http\Controllers\TeaRegistroPdfController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionalIconController;
 use App\Http\Controllers\ManualComunicacionInstitucionalPdfController;
@@ -1318,6 +1321,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->name('seguimiento.inasistencias.edit');
         Route::post('/seguimiento/inasistencias/informe/pdf', InformeInasistenciasPdfController::class)
             ->name('seguimiento.inasistencias.informe.pdf');
+    });
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::TEA_ESTUDIANTES_GESTION)->group(function () {
+        Route::get('/seguimiento/tea', TeaIndex::class)
+            ->name('seguimiento.tea');
+        Route::get('/seguimiento/tea/nuevo', TeaForm::class)
+            ->name('seguimiento.tea.create');
+        Route::get('/seguimiento/tea/{id}/editar', TeaForm::class)
+            ->whereNumber('id')
+            ->name('seguimiento.tea.edit');
+        Route::get('/seguimiento/tea/registro/{id}/pdf', TeaRegistroPdfController::class)
+            ->whereNumber('id')
+            ->name('seguimiento.tea.registro.pdf');
     });
     Route::get('/seguimiento/inasistencias/sincro-cidi', SincroCidiInasistencias::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI)

@@ -193,6 +193,9 @@ final class PermisosIaCatalog
     /** Menú de Administración — consulta CUIT/CUIL por DNI en ARCA (Padrón A13). */
     public const ADMIN_ARCA_CONSULTA_CUIT_DNI = 84;
 
+    /** Gestión de TEA por inasistencias: registros reinco2025, alta/edición/baja e impresión PDF. */
+    public const TEA_ESTUDIANTES_GESTION = 85;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -280,6 +283,7 @@ final class PermisosIaCatalog
             ['id' => 79, 'orden' => self::EMAILS_MASIVOS_BORRAR, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar Correo Masivo a Estudiantes: eliminar mensajes escritos y envíos registrados en el historial.'],
             ['id' => 80, 'orden' => self::LEGAJOS_DOCENTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver contraseña de acceso del docente en el listado de legajos (botón Ver Pwrd).'],
             ['id' => 84, 'orden' => self::ADMIN_ARCA_CONSULTA_CUIT_DNI, 'tema' => 'ARCA', 'descripcion' => 'Consultar CUIT/CUIL asociado a un DNI en ARCA (Padrón Alcance 13).'],
+            ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],
         ];
     }
 

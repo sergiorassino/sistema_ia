@@ -37,7 +37,15 @@
                 <select id="se-inas-alumno" wire:model.live="idMatricula" class="form-select mt-1.5" @disabled(! $idCurso)>
                     <option value="">— Seleccione —</option>
                     @foreach ($alumnos as $a)
-                        <option value="{{ $a->id }}">{{ trim(($a->apellido ?? '').', '.($a->nombre ?? '')) }}{{ $a->dni ? ' · DNI '.$a->dni : '' }}</option>
+                        @php
+                            $idAlumno = (int) $a->id;
+                            $etiquetaAlumno = trim(($a->apellido ?? '').', '.($a->nombre ?? '')).($a->dni ? ' · DNI '.$a->dni : '');
+                            $teaAlumno = $teaPendientesPorMatricula[$idAlumno] ?? [];
+                            if ($teaAlumno !== []) {
+                                $etiquetaAlumno .= ' ⚠ TEA pendiente';
+                            }
+                        @endphp
+                        <option value="{{ $a->id }}">{{ $etiquetaAlumno }}</option>
                     @endforeach
                 </select>
                 @if ($idCurso && $alumnos->isEmpty())
@@ -52,9 +60,19 @@
             <div class="border-b border-accent-200 bg-white px-5 py-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
-                        <p class="text-sm font-semibold text-neutral-900">
-                            {{ $matricula->legajo?->apellido }}, {{ $matricula->legajo?->nombre }}
-                        </p>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p class="text-sm font-semibold text-neutral-900">
+                                {{ $matricula->legajo?->apellido }}, {{ $matricula->legajo?->nombre }}
+                            </p>
+                            @if ($teaPendientes !== [])
+                                <x-tea-aviso-pendiente
+                                    destacado
+                                    :matricula="(int) $matricula->id"
+                                    :curso="(int) ($matricula->idCursos ?? 0) ?: null"
+                                    :pendientes="$teaPendientes"
+                                />
+                            @endif
+                        </div>
                         <p class="mt-0.5 text-xs text-neutral-500">
                             {{ $matricula->curso?->nombreParaListado() ?? '—' }} · Matrícula #{{ $matricula->id }}
                         </p>
@@ -159,7 +177,7 @@
                                 <th class="table-header w-24">Cantidad</th>
                                 <th class="table-header w-28">Justificada</th>
                                 <th class="table-header">Observaciones</th>
-                                <th class="table-header w-36 text-right">Acciones</th>
+                                <th class="table-header w-44 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-accent-200 bg-white">
@@ -186,12 +204,12 @@
                                     <td class="table-cell">
                                         <div class="line-clamp-2">{{ $i->obs ?? '—' }}</div>
                                     </td>
-                                    <td class="table-cell">
-                                        <div class="flex flex-wrap justify-end gap-1">
-                                            <a class="btn-secondary btn-sm" href="{{ route('seguimiento.inasistencias.edit', ['id' => $i->id]) }}">
+                                    <td class="table-cell whitespace-nowrap">
+                                        <div class="flex flex-nowrap items-center justify-end gap-1.5">
+                                            <a class="btn-secondary btn-sm shrink-0" href="{{ route('seguimiento.inasistencias.edit', ['id' => $i->id]) }}">
                                                 Editar
                                             </a>
-                                            <button type="button" wire:click="confirmDelete({{ $i->id }})" class="btn-danger btn-sm">
+                                            <button type="button" wire:click="confirmDelete({{ $i->id }})" class="btn-danger btn-sm shrink-0">
                                                 Borrar
                                             </button>
                                         </div>

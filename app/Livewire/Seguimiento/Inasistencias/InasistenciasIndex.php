@@ -9,6 +9,7 @@ use App\Models\Matricula;
 use App\Support\InformeInasistencias;
 use App\Support\InasistenciasResumen;
 use App\Support\Navegacion\ContextoEstudianteSesion;
+use App\Support\Tea\TeaInstanciasPendientes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -232,12 +233,21 @@ class InasistenciasIndex extends Component
         $matricula = $this->matriculaSeleccionada();
         $inasistencias = collect();
         $resumen = null;
+        $teaPendientes = [];
+        $teaPendientesPorMatricula = [];
 
         if ($matricula) {
             $inasistencias = $this->inasistenciasDeMatricula((int) $matricula->id);
             $resumen = InasistenciasResumen::desdeColeccion($inasistencias);
+            $teaPendientes = TeaInstanciasPendientes::deMatricula((int) $matricula->id);
         } elseif ((int) $this->idMatricula > 0) {
             $this->idMatricula = '';
+        }
+
+        if ($cursoId > 0 && $alumnos->isNotEmpty()) {
+            $teaPendientesPorMatricula = TeaInstanciasPendientes::porMatriculas(
+                $alumnos->pluck('id')->map(static fn ($id) => (int) $id)->all(),
+            );
         }
 
         $tiposInasistencia = InformeInasistencias::tiposDisponibles();
@@ -269,6 +279,8 @@ class InasistenciasIndex extends Component
             'etiquetaPeriodoFiltro',
             'fechaMinimaFiltro',
             'fechaMaximaFiltro',
+            'teaPendientes',
+            'teaPendientesPorMatricula',
         ))
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Inasistencias del Estudiante']);
     }

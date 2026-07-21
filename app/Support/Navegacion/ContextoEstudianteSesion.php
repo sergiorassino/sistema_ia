@@ -9,6 +9,8 @@ final class ContextoEstudianteSesion
 {
     public const SEGUIMIENTO_INASISTENCIAS = 'seguimiento_inasistencias';
 
+    public const SEGUIMIENTO_TEA = 'seguimiento_tea';
+
     public const SEGUIMIENTO_DISCIPLINARIO = 'seguimiento_disciplinario';
 
     public const SEGUIMIENTO_DISCIPLINARIO_ANTECEDENTES = 'seguimiento_disciplinario_antecedentes';
