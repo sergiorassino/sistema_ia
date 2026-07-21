@@ -27,7 +27,7 @@ class DocPpForm extends Component
 
     public string $cursecEtiqueta = '';
 
-    public bool $aprobado = false;
+    public bool $aprobado = true;
 
     public string $observaciones = '';
 
@@ -69,8 +69,19 @@ class DocPpForm extends Component
         $this->resetValidation('archivoPdf');
         $error = DocPpStorage::validarPdf($this->archivoPdf);
         if ($error !== null) {
+            $maxKb = max(512, (int) config('doc_pp.max_kb', 1024));
+            $superaTamano = $this->archivoPdf instanceof TemporaryUploadedFile
+                && $this->archivoPdf->getSize() > ($maxKb * 1024);
+
             $this->addError('archivoPdf', $error);
             $this->archivoPdf = null;
+
+            if ($superaTamano) {
+                $this->dispatch(
+                    'doc-pp-pdf-demasiado-grande',
+                    maxMb: max(1, (int) round($maxKb / 1024)),
+                );
+            }
         }
     }
 

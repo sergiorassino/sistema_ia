@@ -32,6 +32,53 @@ window.seSwalAviso = function (mensaje, titulo = 'Atención') {
     });
 };
 
+/**
+ * PDF supera el límite de doc_pp: aviso con enlace a iLovePDF para comprimir.
+ *
+ * @param {number} [maxMb=1]
+ * @returns {Promise<void>}
+ */
+window.seSwalPdfDemasiadoGrande = function (maxMb = 1) {
+    const limite = Number(maxMb) > 0 ? Number(maxMb) : 1;
+    const url = 'https://www.ilovepdf.com/es/comprimir_pdf';
+    const abrir = () => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    if (typeof Swal === 'undefined') {
+        window.alert(
+            'El PDF supera el límite de ' + limite + ' MB. Puede comprimirlo en: ' + url,
+        );
+        return Promise.resolve();
+    }
+
+    return Swal.fire({
+        icon: 'warning',
+        title: 'Archivo demasiado grande',
+        html:
+            'El PDF supera el límite de <strong>' +
+            limite +
+            ' MB</strong>.<br><br>' +
+            'Puede comprimirlo gratis en línea y luego volver a subirlo:<br>' +
+            '<a href="' +
+            url +
+            '" target="_blank" rel="noopener noreferrer" ' +
+            'style="color:#40848D;font-weight:600;text-decoration:underline;">' +
+            'www.ilovepdf.com/es/comprimir_pdf</a>',
+        showCancelButton: true,
+        confirmButtonText: 'Abrir iLovePDF',
+        cancelButtonText: 'Cerrar',
+        confirmButtonColor: '#40848D',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+        focusCancel: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            abrir();
+        }
+    });
+};
+
 /** SweetAlert2 — error / operación rechazada. */
 window.seSwalError = function (mensaje, titulo = 'No se pudo completar') {
     if (typeof Swal === 'undefined') {
