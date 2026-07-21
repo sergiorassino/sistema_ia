@@ -57,6 +57,17 @@ return [
             'throw' => false,
         ],
 
+        /**
+         * Programas y planificaciones por colegio (legacy ScriptCase: /archivos/{codCol}/…).
+         * En producción suele ser public/archivos o un enlace simbólico al repositorio compartido.
+         */
+        'archivos' => [
+            'driver' => 'local',
+            'root' => env('ARCHIVOS_ROOT', public_path('archivos')),
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

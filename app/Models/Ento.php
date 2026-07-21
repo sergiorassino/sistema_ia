@@ -25,6 +25,7 @@ class Ento extends Model
         'cue',
         'ee',
         'cuit',
+        'codCol',
         'cuitFact',
         'domicFact',
         'condIvaInst',

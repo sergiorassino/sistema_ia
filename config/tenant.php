@@ -409,25 +409,21 @@ return [
 
     /**
      * Descarga pública de programas de examen (sin login).
-     * Lee las tablas legacy `pp{año}` (ej. pp2020) y enlaza los PDF alojados
-     * en un servidor de archivos externo.
+     * Lee programas aprobados desde la tabla `materias` (pp_prog / pp_aprobProg).
      *
-     * Por defecto deshabilitado para todos los colegios. Activar solo en
-     * `config/tenants/{slug}.php` con `habilitado => true` y el resto de claves.
+     * Por defecto deshabilitado. Activar en `config/tenants/{slug}.php` con `habilitado => true`.
      *
-     *   - `habilitado`: registra la ruta pública /programas-examen (ausente si false).
-     *   - `glo_codcol`: código de colegio usado en la ruta de archivos (fallback: slug).
-     *   - `nivel`: segmento de carpeta del servidor de archivos (legacy `secu`).
-     *   - `base_url`: dominio y ruta base del repositorio de archivos del colegio
-     *     (sin barra final; ej. `https://sistemasescolares1.com/archivos` para NSSC).
-     *   - `anios`: años ofrecidos en el menú; deben existir como tablas `pp{año}`.
+     * Resuelto en código (no va en tenant):
+     *   - `ento.codCol` → segmento de colegio en la ruta de archivos
+     *   - nivel pedagógico → inic / prim / secu / terc
+     *   - año lectivo → `ento.idTerlecVerNotas` por nivel
+     *
+     * Opcional en tenant:
+     *   - `base_url`: URL base del repositorio (sin barra final). Si falta, usa `{APP_URL}/archivos`.
      */
     'programas_examen' => [
         'habilitado' => false,
-        'glo_codcol' => null,
-        'nivel' => 'secu',
-        'base_url' => 'https://sistesco.site/archivos',
-        'anios' => [],
+        'base_url' => null,
     ],
 
     /**
