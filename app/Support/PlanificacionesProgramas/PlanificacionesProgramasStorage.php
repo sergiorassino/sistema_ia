@@ -107,19 +107,48 @@ final class PlanificacionesProgramasStorage
     }
 
     /**
-     * Nombre de archivo: {codCol}_{año}_{cursec}_{materia}.pdf
+     * Nombre de archivo según plantilla del tenant:
+     * `config('tenant.planificaciones_programas.nombre_archivo')`.
+     * Default: {codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf  ({tipo} = Plan|Prog).
      */
-    public static function generarNombreArchivo(int $anio, int $idNivel, string $cursec, string $materia): string
+    public static function generarNombreArchivo(int $anio, int $idNivel, string $tipo, string $cursec, string $materia): string
     {
         $codCol = self::codCol($idNivel);
         if ($codCol === '') {
             throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
         }
 
-        $cursecLimpio = self::sanitizarSegmentoNombre($cursec, 'curso');
-        $materiaLimpia = self::sanitizarSegmentoNombre($materia, 'materia');
+        $sufijoTipo = match ($tipo) {
+            self::TIPO_PLAN => 'Plan',
+            self::TIPO_PROG => 'Prog',
+            default => throw new \InvalidArgumentException('Tipo de documento inválido.'),
+        };
 
-        return $codCol.'_'.$anio.'_'.$cursecLimpio.'_'.$materiaLimpia.'.pdf';
+        $plantilla = trim((string) config(
+            'tenant.planificaciones_programas.nombre_archivo',
+            '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf',
+        ));
+        if ($plantilla === '') {
+            $plantilla = '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf';
+        }
+
+        $reemplazos = [
+            '{codCol}' => self::sanitizarSegmentoNombre($codCol, 'COL'),
+            '{anio}' => (string) $anio,
+            '{cursec}' => self::sanitizarSegmentoNombre($cursec, 'curso'),
+            '{materia}' => self::sanitizarSegmentoNombre($materia, 'materia'),
+            '{tipo}' => $sufijoTipo,
+        ];
+
+        $nombre = str_replace(array_keys($reemplazos), array_values($reemplazos), $plantilla);
+        $nombre = preg_replace('/_+/', '_', $nombre) ?? $nombre;
+        $nombre = trim($nombre, '._');
+
+        if (! str_ends_with(strtolower($nombre), '.pdf')) {
+            $nombre .= '.pdf';
+        }
+
+        return $nombre;
     }
 
     private static function sanitizarSegmentoNombre(string $texto, string $fallback): string
@@ -134,14 +163,28 @@ final class PlanificacionesProgramasStorage
 
     public static function urlPublica(int $anio, string $tipo, int $idNivel, string $nombreArchivo): string
     {
-        $baseConfig = config('tenant.programas_examen.base_url');
-        $base = is_string($baseConfig) && trim($baseConfig) !== ''
-            ? rtrim(trim($baseConfig), '/')
-            : rtrim((string) config('app.url', ''), '/').'/archivos';
-
+        $base = self::baseUrlPublica();
         $ruta = self::rutaRelativaArchivo($anio, $tipo, $idNivel, $nombreArchivo);
 
         return $base.'/'.implode('/', array_map('rawurlencode', explode('/', $ruta)));
+    }
+
+    /**
+     * Base pública del repositorio: tenant.base_url → ARCHIVOS_URL → {APP_URL}/archivos.
+     */
+    public static function baseUrlPublica(): string
+    {
+        $tenant = config('tenant.programas_examen.base_url');
+        if (is_string($tenant) && trim($tenant) !== '') {
+            return rtrim(trim($tenant), '/');
+        }
+
+        $envUrl = config('filesystems.disks.archivos.url');
+        if (is_string($envUrl) && trim($envUrl) !== '') {
+            return rtrim(trim($envUrl), '/');
+        }
+
+        return rtrim((string) config('app.url', ''), '/').'/archivos';
     }
 
     public static function guardarPdf(int $anio, string $tipo, int $idNivel, string $nombreArchivo, TemporaryUploadedFile|UploadedFile $archivo): void

@@ -86,4 +86,9 @@ return [
     'programas_examen' => [
         'habilitado' => true,
     ],
+
+    'planificaciones_programas' => [
+        // MC_2026_PRIMERO_A_LENGUA_Y_LITERATURA_Plan.pdf / …_Prog.pdf
+        'nombre_archivo' => '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf',
+    ],
 ];

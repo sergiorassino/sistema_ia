@@ -58,12 +58,17 @@ return [
         ],
 
         /**
-         * Programas y planificaciones por colegio (legacy ScriptCase: /archivos/{codCol}/…).
-         * En producción suele ser public/archivos o un enlace simbólico al repositorio compartido.
+         * Programas y planificaciones por colegio (legacy: /archivos/{codCol}/{nivel}/{año}/…).
+         *
+         * Local: por defecto `public/archivos` (public_path).
+         * Servidor: si la carpeta está en la raíz web (`public_html/archivos`), definir en `.env`:
+         *   ARCHIVOS_ROOT=/home/USUARIO/public_html/archivos
+         * URL pública de descarga: ARCHIVOS_URL o tenant programas_examen.base_url.
          */
         'archivos' => [
             'driver' => 'local',
             'root' => env('ARCHIVOS_ROOT', public_path('archivos')),
+            'url' => env('ARCHIVOS_URL'),
             'visibility' => 'public',
             'throw' => false,
         ],
