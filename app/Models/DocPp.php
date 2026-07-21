@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Materia extends Model
+class DocPp extends Model
 {
-    protected $table = 'materias';
+    protected $table = 'doc_pp';
 
     protected $primaryKey = 'id';
 
@@ -15,34 +15,32 @@ class Materia extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'ord',
         'idNivel',
         'idTerlec',
+        'idMaterias',
         'idCursos',
-        'idCurPlan',
-        'idMatPlan',
-        'materia',
-        'abrev',
-        'cierre1e',
-        'cierre2e',
-        'esInstitucional',
-        'infoCalif',
-        'escala',
+        'tipo',
+        'nombre_archivo',
+        'aprobado',
+        'observaciones',
+        'subido_por',
+        'subido_en',
     ];
 
     protected $casts = [
-        'ord' => 'integer',
         'idNivel' => 'integer',
         'idTerlec' => 'integer',
+        'idMaterias' => 'integer',
         'idCursos' => 'integer',
-        'idCurPlan' => 'integer',
-        'idMatPlan' => 'integer',
-        'cierre1e' => 'integer',
-        'cierre2e' => 'integer',
-        'esInstitucional' => 'integer',
-        'infoCalif' => 'integer',
-        'escala' => 'integer',
+        'aprobado' => 'integer',
+        'subido_por' => 'integer',
+        'subido_en' => 'datetime',
     ];
+
+    public function materia()
+    {
+        return $this->belongsTo(Materia::class, 'idMaterias', 'id');
+    }
 
     public function curso()
     {

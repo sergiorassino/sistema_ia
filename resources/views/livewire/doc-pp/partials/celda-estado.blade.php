@@ -1,5 +1,5 @@
 @php
-    $ruta = route('planificaciones-programas.form', ['id' => $id, 'tipo' => $tipo]);
+    $ruta = route('doc-pp.form', ['id' => $id, 'tipo' => $tipo]);
 @endphp
 
 <a href="{{ $ruta }}"

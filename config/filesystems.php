@@ -58,17 +58,14 @@ return [
         ],
 
         /**
-         * Programas y planificaciones por colegio (legacy: /archivos/{codCol}/{nivel}/{año}/…).
-         *
-         * Local: por defecto `public/archivos` (public_path).
-         * Servidor: si la carpeta está en la raíz web (`public_html/archivos`), definir en `.env`:
-         *   ARCHIVOS_ROOT=/home/USUARIO/public_html/archivos
-         * URL pública de descarga: ARCHIVOS_URL o tenant programas_examen.base_url.
+         * Programas y planificaciones por colegio.
+         * Siempre dentro del public de este despliegue: public/archivos/{codCol}/{nivel}/{año}/…
+         * Cada colegio tiene su propio repositorio junto a su sistema (no public_html/archivos compartido).
          */
         'archivos' => [
             'driver' => 'local',
-            'root' => env('ARCHIVOS_ROOT', public_path('archivos')),
-            'url' => env('ARCHIVOS_URL'),
+            'root' => public_path('archivos'),
+            'url' => rtrim((string) env('APP_URL', ''), '/').'/archivos',
             'visibility' => 'public',
             'throw' => false,
         ],

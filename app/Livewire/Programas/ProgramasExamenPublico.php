@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Programas;
 
-use App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta;
+use App\Support\DocPp\DocPpConsulta;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -10,7 +10,7 @@ use Livewire\Component;
 /**
  * Descarga pública de programas de examen (sin login).
  *
- * Lee programas aprobados desde la tabla `materias` (pp_prog / pp_aprobProg).
+ * Lee programas aprobados desde la tabla `doc_pp` (tipo prog, aprobado = 1).
  * El año ofrecido es el ciclo lectivo activo del sistema (`ento.idTerlecVerNotas`).
  */
 #[Layout('layouts.programas-examen')]
@@ -24,13 +24,11 @@ class ProgramasExamenPublico extends Component
     }
 
     /**
-     * Años lectivos del sistema, del más reciente al más antiguo.
-     *
      * @return list<int>
      */
     public function aniosDisponibles(): array
     {
-        return PlanificacionesProgramasConsulta::aniosLectivosSistema();
+        return DocPpConsulta::aniosLectivosSistema();
     }
 
     public function elegirAnio(int $anio): void
@@ -46,8 +44,6 @@ class ProgramasExamenPublico extends Component
     }
 
     /**
-     * Programas aprobados del año elegido.
-     *
      * @return Collection<int, object>
      */
     public function programas(): Collection
@@ -56,20 +52,7 @@ class ProgramasExamenPublico extends Component
             return collect();
         }
 
-        if (PlanificacionesProgramasConsulta::columnasFaltantes() !== []) {
-            return collect();
-        }
-
-        return PlanificacionesProgramasConsulta::filasPublicasPorAnio($this->anio)
-            ->map(function (object $fila) {
-                $cursec = PlanificacionesProgramasConsulta::etiquetaCurso($fila);
-                $partes = preg_split('/\s+/', trim($cursec), 2);
-                $fila->curso = $partes[0] ?? $cursec;
-                $fila->seccion = $partes[1] ?? '';
-                $fila->nombreMateria = (string) $fila->materia;
-
-                return $fila;
-            });
+        return DocPpConsulta::programasPublicosPorAnio($this->anio);
     }
 
     public function render()

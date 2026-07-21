@@ -9,7 +9,7 @@
             <div class="flex shrink-0 flex-wrap gap-2">
                 @if ($tieneArchivo)
                     <button type="button"
-                            x-on:click="seSwalConfirmar('¿Eliminar el archivo y borrar los datos asociados?', 'Eliminar').then(ok => ok && $wire.eliminar())"
+                            x-on:click="seSwalConfirmar('¿Eliminar el archivo y el registro asociado?', 'Eliminar').then(ok => ok && $wire.eliminar())"
                             class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -17,7 +17,7 @@
                         Eliminar
                     </button>
                 @endif
-                <button type="submit" form="pp-form-guardar"
+                <button type="submit" form="docpp-form-guardar"
                         class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-accent-100">
                     « Guardar y volver
                 </button>
@@ -25,7 +25,7 @@
         </div>
     </section>
 
-    <form id="pp-form-guardar" wire:submit="guardar" class="se-card mt-6 space-y-5 p-5 sm:p-6">
+    <form id="docpp-form-guardar" wire:submit="guardar" class="se-card mt-6 space-y-5 p-5 sm:p-6">
         <div class="grid gap-5 sm:grid-cols-2">
             <div>
                 <label class="form-label">Año lectivo</label>
@@ -45,17 +45,28 @@
                    class="form-input mt-1.5 w-full bg-accent-50 text-neutral-700">
         </div>
 
-        @if (! $tieneArchivo || $archivoPdf)
+        @if ($tieneArchivo && $nombreArchivo !== '')
             <div>
-                <label class="form-label" for="pp-archivo">Archivo PDF @if (! $tieneArchivo)<span class="text-red-600">*</span>@endif</label>
-                <input id="pp-archivo" type="file" wire:model="archivoPdf" accept="application/pdf,.pdf"
-                       class="mt-1.5 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
-                <div wire:loading wire:target="archivoPdf" class="mt-1 text-xs text-neutral-500">Subiendo archivo…</div>
-                @error('archivoPdf')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
+                <label class="form-label">Archivo actual</label>
+                <p class="mt-1.5 break-all rounded-xl border border-accent-200 bg-accent-50 px-3 py-2 text-sm text-neutral-700">{{ $nombreArchivo }}</p>
             </div>
         @endif
+
+        <div>
+            <label class="form-label" for="docpp-archivo">
+                @if ($tieneArchivo)
+                    Reemplazar PDF (opcional)
+                @else
+                    Archivo PDF <span class="text-red-600">*</span>
+                @endif
+            </label>
+            <input id="docpp-archivo" type="file" wire:model="archivoPdf" accept="application/pdf,.pdf"
+                   class="mt-1.5 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+            <div wire:loading wire:target="archivoPdf" class="mt-1 text-xs text-neutral-500">Subiendo archivo…</div>
+            @error('archivoPdf')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
 
         <div class="flex items-center justify-between gap-4 rounded-2xl border border-accent-200 bg-accent-50/60 px-4 py-3">
             <div>
@@ -70,8 +81,8 @@
         </div>
 
         <div>
-            <label class="form-label" for="pp-obs">Observaciones</label>
-            <textarea id="pp-obs" wire:model="observaciones" rows="4"
+            <label class="form-label" for="docpp-obs">Observaciones</label>
+            <textarea id="docpp-obs" wire:model="observaciones" rows="4"
                       class="form-input mt-1.5 w-full resize-y leading-relaxed"
                       placeholder="Notas internas sobre el documento…"></textarea>
             @error('observaciones')

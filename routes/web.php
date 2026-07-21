@@ -72,9 +72,9 @@ use App\Livewire\Aspirantes\InstanciaForm as AspirantesInstanciaForm;
 use App\Livewire\Aspirantes\InstanciaIndex as AspirantesInstanciaIndex;
 use App\Livewire\Parametrizacion\CamposAspirantesIndex;
 use App\Livewire\Programas\ProgramasExamenPublico;
-use App\Livewire\PlanificacionesProgramas\PlanificacionesProgramasForm;
-use App\Livewire\PlanificacionesProgramas\PlanificacionesProgramasIndex;
-use App\Http\Controllers\PlanificacionesProgramas\PlanificacionesProgramasArchivoController;
+use App\Livewire\DocPp\DocPpForm;
+use App\Livewire\DocPp\DocPpIndex;
+use App\Http\Controllers\DocPp\DocPpArchivoController;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
@@ -1002,18 +1002,18 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/examenes/tercer-materia/acta-compromiso/{idCalificacion}', ActaCompromisoTercerMateriaPdfController::class)
             ->whereNumber('idCalificacion')
             ->name('examenes.tercer-materia.acta-compromiso.pdf');
-        Route::get('/planificaciones-programas', PlanificacionesProgramasIndex::class)
+        Route::get('/doc-pp', DocPpIndex::class)
             ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
-            ->name('planificaciones-programas.index');
-        Route::get('/planificaciones-programas/{id}/{tipo}', PlanificacionesProgramasForm::class)
+            ->name('doc-pp.index');
+        Route::get('/doc-pp/archivo/{ref}', DocPpArchivoController::class)
+            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('doc-pp.archivo');
+        Route::get('/doc-pp/{id}/{tipo}', DocPpForm::class)
             ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
             ->whereNumber('id')
             ->whereIn('tipo', ['plan', 'prog'])
-            ->name('planificaciones-programas.form');
-        Route::get('/planificaciones-programas/archivo/{ref}', PlanificacionesProgramasArchivoController::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
-            ->where('ref', '[A-Za-z0-9_-]+')
-            ->name('planificaciones-programas.archivo');
+            ->name('doc-pp.form');
     });
 
     Route::get('/horarios/carga', HorariosCargaIndex::class)

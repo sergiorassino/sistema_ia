@@ -12,7 +12,7 @@ return new class extends Migration
             [
                 'id' => 86,
                 'tema' => 'EXÁMENES',
-                'descripcion' => 'Gestión de planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla materias).',
+                'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).',
             ],
         );
     }
