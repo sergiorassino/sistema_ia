@@ -70,12 +70,9 @@ final class DocPpStorage
         return NivelSistema::segmentoArchivos($idNivel);
     }
 
-    public static function directorioRelativo(int $anio, string $tipo, int $idNivel): string
+    public static function directorioRelativo(int $anio, string $tipo, int $idNivel, ?string $codColOverride = null): string
     {
-        $codCol = self::codCol($idNivel);
-        if ($codCol === '') {
-            throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
-        }
+        $codCol = self::resolverCodCol($idNivel, $codColOverride);
 
         return $codCol
             .'/'.self::segmentoNivel($idNivel)
@@ -83,9 +80,14 @@ final class DocPpStorage
             .'/'.self::carpetaPorTipo($tipo);
     }
 
-    public static function rutaRelativaArchivo(int $anio, string $tipo, int $idNivel, string $nombreArchivo): string
-    {
-        return self::directorioRelativo($anio, $tipo, $idNivel).'/'.ltrim($nombreArchivo, '/');
+    public static function rutaRelativaArchivo(
+        int $anio,
+        string $tipo,
+        int $idNivel,
+        string $nombreArchivo,
+        ?string $codColOverride = null,
+    ): string {
+        return self::directorioRelativo($anio, $tipo, $idNivel, $codColOverride).'/'.ltrim($nombreArchivo, '/');
     }
 
     /**
@@ -97,11 +99,9 @@ final class DocPpStorage
         string $tipo,
         string $cursec,
         string $materia,
+        ?string $codColOverride = null,
     ): string {
-        $codCol = self::codCol($idNivel);
-        if ($codCol === '') {
-            throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
-        }
+        $codCol = self::resolverCodCol($idNivel, $codColOverride);
 
         $partes = [
             self::sanitizarSegmentoNombre($codCol, 'COL'),
@@ -113,6 +113,16 @@ final class DocPpStorage
         ];
 
         return implode('_', $partes).'.pdf';
+    }
+
+    private static function resolverCodCol(int $idNivel, ?string $codColOverride): string
+    {
+        $codCol = $codColOverride !== null ? trim($codColOverride) : self::codCol($idNivel);
+        if ($codCol === '') {
+            throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
+        }
+
+        return $codCol;
     }
 
     private static function sanitizarSegmentoNombre(string $texto, string $fallback): string
