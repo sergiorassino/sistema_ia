@@ -134,6 +134,7 @@ final class MateriasAdeudadasNotasExamen
                 $idNivel,
                 $nota,
                 $fecha,
+                $cond,
             );
         });
 
@@ -151,6 +152,7 @@ final class MateriasAdeudadasNotasExamen
         int $idNivel,
         string $nota,
         string $fecha,
+        string $condExamen = '',
     ): bool {
         if ($idCalificacion < 1 || $idLegajos < 1 || $idNivel < 1) {
             return false;
@@ -166,13 +168,11 @@ final class MateriasAdeudadasNotasExamen
 
         $fila = DB::table('calificaciones as c')
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
-            ->leftJoin('matricula as ma', 'ma.id', '=', 'c.idMatricula')
-            ->leftJoin('condiciones as co', 'co.id', '=', 'ma.idCondiciones')
             ->where('c.id', $idCalificacion)
             ->where('c.idLegajos', $idLegajos)
             ->where('cu.idNivel', $idNivel)
             ->where('c.apro', 1)
-            ->select(['c.id', 'c.idTerlec', 'co.condicion as condicion_matricula'])
+            ->select(['c.id', 'c.idTerlec', 'c.condAdeuda'])
             ->first();
 
         if ($fila === null) {
@@ -181,8 +181,14 @@ final class MateriasAdeudadasNotasExamen
 
         $fechaCarbon = Carbon::createFromFormat('Y-m-d', $fecha);
         $calif = CalificacionesColoquioSecundario::califDesdeNotaColoquio($nota);
-        $condMat = trim((string) ($fila->condicion_matricula ?? ''));
-        $condMat = $condMat !== '' ? mb_substr($condMat, 0, 20) : 'Regular';
+        $condOrigen = trim($condExamen) !== ''
+            ? $condExamen
+            : trim((string) ($fila->condAdeuda ?? ''));
+        $condCalif = mb_substr(
+            MateriasAdeudadasFiltros::condCalificacionDesdeExamen($condOrigen),
+            0,
+            20,
+        );
         $escuapro = self::nombreInstitucion($idNivel);
 
         $payload = [
@@ -190,7 +196,7 @@ final class MateriasAdeudadasNotasExamen
             'calif' => $calif !== '' ? mb_substr($calif, 0, 10) : mb_substr(trim($nota), 0, 10),
             'mes' => (int) $fechaCarbon->format('n'),
             'ano' => (int) $fechaCarbon->format('Y'),
-            'cond' => $condMat,
+            'cond' => $condCalif,
             'escuapro' => $escuapro,
             'condAdeuda' => null,
             'inscri' => 0,

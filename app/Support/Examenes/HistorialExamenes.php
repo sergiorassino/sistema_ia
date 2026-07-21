@@ -310,6 +310,7 @@ final class HistorialExamenes
                 $idNivel,
                 $nota,
                 $fecha,
+                $cond,
             );
         });
 
