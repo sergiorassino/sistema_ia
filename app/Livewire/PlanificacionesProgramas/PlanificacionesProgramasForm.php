@@ -132,7 +132,13 @@ class PlanificacionesProgramasForm extends Component
                 return;
             }
 
-            $nuevoNombre = PlanificacionesProgramasStorage::generarNombreArchivo($anio, $idNivel, $cursec, $this->materiaNombre);
+            $nuevoNombre = PlanificacionesProgramasStorage::generarNombreArchivo(
+                $anio,
+                $idNivel,
+                $this->tipo,
+                $cursec,
+                $this->materiaNombre,
+            );
             try {
                 PlanificacionesProgramasStorage::guardarPdf($anio, $this->tipo, $idNivel, $nuevoNombre, $this->archivoPdf);
             } catch (\Throwable $e) {

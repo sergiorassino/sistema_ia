@@ -418,12 +418,31 @@ return [
      *   - nivel pedagógico → inic / prim / secu / terc
      *   - año lectivo → `ento.idTerlecVerNotas` por nivel
      *
-     * Opcional en tenant:
-     *   - `base_url`: URL base del repositorio (sin barra final). Si falta, usa `{APP_URL}/archivos`.
+     * Opcional en tenant / .env:
+     *   - `base_url` (tenant) o `ARCHIVOS_URL` (.env): URL pública del repositorio (sin barra final).
+     *   - Disco físico: `ARCHIVOS_ROOT` en .env (ruta absoluta). Por defecto: `public/archivos`.
+     *     En hosting con `public_html/archivos`: `ARCHIVOS_ROOT=/home/…/public_html/archivos`.
      */
     'programas_examen' => [
         'habilitado' => false,
         'base_url' => null,
+    ],
+
+    /**
+     * Subida de planificaciones y programas (Menú de Secretaría).
+     *
+     * `nombre_archivo`: plantilla del PDF. Placeholders:
+     *   {codCol}  → ento.codCol
+     *   {anio}    → año lectivo
+     *   {cursec}  → curso/sección (sanitizado)
+     *   {materia} → nombre de la materia (sanitizado)
+     *   {tipo}    → Plan | Prog según el documento
+     *
+     * Default (Montecristo): MC_2026_PRIMERO_A_LENGUA_Y_LITERATURA_Plan.pdf
+     * Override parcial en `config/tenants/{slug}.php` → `planificaciones_programas.nombre_archivo`.
+     */
+    'planificaciones_programas' => [
+        'nombre_archivo' => '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf',
     ],
 
     /**
