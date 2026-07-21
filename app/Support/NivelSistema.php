@@ -110,6 +110,20 @@ final class NivelSistema
         return $id !== null ? (int) $id : null;
     }
 
+    /**
+     * Segmento de carpeta en el repositorio `archivos/{codCol}/{segmento}/…`.
+     */
+    public static function segmentoArchivos(int $idNivel): string
+    {
+        return match ($idNivel) {
+            self::INICIAL => 'inic',
+            self::PRIMARIO => 'prim',
+            self::SECUNDARIO => 'secu',
+            self::TERCIARIO => 'terc',
+            default => 'secu',
+        };
+    }
+
     public static function resolverIdPedagogico(int $candidato): ?int
     {
         if (! self::esNivelPedagogico($candidato)) {

@@ -82,4 +82,8 @@ return [
     'modulos' => [
         'solicitud_evaluacion' => true,
     ],
+
+    'programas_examen' => [
+        'habilitado' => true,
+    ],
 ];

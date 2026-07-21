@@ -48,7 +48,7 @@
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias') || request()->routeIs('listados.docentes', 'listados.docentes.pdf', 'listados.docentes.excel')) ? 'true' : 'false' }},
-        examenes: {{ str_starts_with($route ?? '', 'examenes.') ? 'true' : 'false' }},
+        examenes: {{ str_starts_with($route ?? '', 'examenes.') || str_starts_with($route ?? '', 'planificaciones-programas.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
         certificados: {{ str_starts_with($route ?? '', 'certificados.') ? 'true' : 'false' }},
         horarios: {{ str_starts_with($route ?? '', 'horarios.') ? 'true' : 'false' }},
@@ -930,6 +930,20 @@
                               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                     </svg>
                     <span class="truncate">Gestión de Tercer Materia</span>
+                </a>
+                @endif
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS))
+                <a href="{{ route('planificaciones-programas.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('planificaciones-programas.*'),
+                   ])
+                   title="{{ seSidebarTooltip('Subida y aprobación de planificaciones y programas de examen', \App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Planificaciones y programas</span>
                 </a>
                 @endif
             </div>

@@ -9,8 +9,6 @@
 return [
     'programas_examen' => [
         'habilitado' => true,
-        'glo_codcol' => 'nssc',
         'base_url' => 'https://sistemasescolares1.com/archivos',
-        'anios' => [2022, 2021, 2020, 2019],
     ],
 ];
