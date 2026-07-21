@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Livewire\PlanificacionesProgramas;
+namespace App\Livewire\DocPp;
 
+use App\Support\DocPp\DocPpConsulta;
 use App\Support\PermisosIaCatalog;
-use App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class PlanificacionesProgramasIndex extends Component
+class DocPpIndex extends Component
 {
     use WithPagination;
 
@@ -15,11 +15,12 @@ class PlanificacionesProgramasIndex extends Component
 
     public string $busqueda = '';
 
-    public string $orden = PlanificacionesProgramasConsulta::ORDEN_CURSO;
+    public string $orden = DocPpConsulta::ORDEN_CURSO;
 
     public function mount(): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS), 403);
+        abort_unless(tenantDocPpHabilitado(), 404);
     }
 
     public function updatedBusqueda(): void
@@ -35,11 +36,11 @@ class PlanificacionesProgramasIndex extends Component
     public function render()
     {
         $ctx = schoolCtx();
-        $columnasFaltantes = PlanificacionesProgramasConsulta::columnasFaltantes();
+        $tablaOk = DocPpConsulta::tablaDisponible();
 
         $filas = collect();
-        if ($columnasFaltantes === []) {
-            $filas = PlanificacionesProgramasConsulta::listadoPaginado(
+        if ($tablaOk) {
+            $filas = DocPpConsulta::listadoPaginado(
                 (int) $ctx->idNivel,
                 (int) $ctx->idTerlec,
                 $this->busqueda,
@@ -48,9 +49,9 @@ class PlanificacionesProgramasIndex extends Component
             );
         }
 
-        return view('livewire.planificaciones-programas.index', [
+        return view('livewire.doc-pp.index', [
             'filas' => $filas,
-            'columnasFaltantes' => $columnasFaltantes,
+            'tablaDisponible' => $tablaOk,
         ]);
     }
 }

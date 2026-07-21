@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Support\PlanificacionesProgramas;
+namespace App\Support\DocPp;
 
 use App\Models\Ento;
-use App\Support\EntoTerlecVerNotas;
 use App\Support\NivelSistema;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
@@ -11,9 +10,12 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
- * Almacenamiento de PDF de planificaciones y programas en el repositorio `archivos/`.
+ * Repositorio de PDF de planificaciones y programas (módulo doc_pp).
+ *
+ * Nombre canónico fijo:
+ * {codCol}_{anio}_{nivel}_{cursec}_{materia}_{Plan|Prog}.pdf
  */
-final class PlanificacionesProgramasStorage
+final class DocPpStorage
 {
     public const TIPO_PLAN = 'plan';
 
@@ -36,46 +38,27 @@ final class PlanificacionesProgramasStorage
         return in_array($tipo, self::tiposValidos(), true);
     }
 
-    /**
-     * @return array{
-     *     flag: string,
-     *     aprob: string,
-     *     obs: string,
-     *     nombre: string,
-     *     carpeta: string
-     * }
-     */
-    public static function columnasPorTipo(string $tipo): array
+    public static function carpetaPorTipo(string $tipo): string
     {
         return match ($tipo) {
-            self::TIPO_PLAN => [
-                'flag' => 'pp_plan',
-                'aprob' => 'pp_aprobPlan',
-                'obs' => 'pp_obsPlan',
-                'nombre' => 'pp_nombrePlan',
-                'carpeta' => self::CARPETA_PLANIFICACIONES,
-            ],
-            self::TIPO_PROG => [
-                'flag' => 'pp_prog',
-                'aprob' => 'pp_aprobProg',
-                'obs' => 'pp_obsProg',
-                'nombre' => 'pp_nombreProg',
-                'carpeta' => self::CARPETA_PROGRAMAS,
-            ],
+            self::TIPO_PLAN => self::CARPETA_PLANIFICACIONES,
+            self::TIPO_PROG => self::CARPETA_PROGRAMAS,
             default => throw new \InvalidArgumentException('Tipo de documento inválido.'),
         };
     }
 
-    /**
-     * Código de colegio desde `ento.codCol` (por nivel pedagógico).
-     */
+    public static function sufijoTipo(string $tipo): string
+    {
+        return match ($tipo) {
+            self::TIPO_PLAN => 'Plan',
+            self::TIPO_PROG => 'Prog',
+            default => throw new \InvalidArgumentException('Tipo de documento inválido.'),
+        };
+    }
+
     public static function codCol(int $idNivel): string
     {
-        if ($idNivel < 1) {
-            return '';
-        }
-
-        if (! Schema::hasColumn('ento', 'codCol')) {
+        if ($idNivel < 1 || ! Schema::hasColumn('ento', 'codCol')) {
             return '';
         }
 
@@ -89,7 +72,6 @@ final class PlanificacionesProgramasStorage
 
     public static function directorioRelativo(int $anio, string $tipo, int $idNivel): string
     {
-        $cols = self::columnasPorTipo($tipo);
         $codCol = self::codCol($idNivel);
         if ($codCol === '') {
             throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
@@ -98,7 +80,7 @@ final class PlanificacionesProgramasStorage
         return $codCol
             .'/'.self::segmentoNivel($idNivel)
             .'/'.$anio
-            .'/'.$cols['carpeta'];
+            .'/'.self::carpetaPorTipo($tipo);
     }
 
     public static function rutaRelativaArchivo(int $anio, string $tipo, int $idNivel, string $nombreArchivo): string
@@ -107,70 +89,56 @@ final class PlanificacionesProgramasStorage
     }
 
     /**
-     * Nombre de archivo según plantilla del tenant:
-     * `config('tenant.planificaciones_programas.nombre_archivo')`.
-     * Default: {codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf  ({tipo} = Plan|Prog).
+     * {codCol}_{anio}_{nivel}_{cursec}_{materia}_{Plan|Prog}.pdf
      */
-    public static function generarNombreArchivo(int $anio, int $idNivel, string $tipo, string $cursec, string $materia): string
-    {
+    public static function generarNombreArchivo(
+        int $anio,
+        int $idNivel,
+        string $tipo,
+        string $cursec,
+        string $materia,
+    ): string {
         $codCol = self::codCol($idNivel);
         if ($codCol === '') {
             throw new \RuntimeException('No está configurado ento.codCol para el nivel pedagógico activo.');
         }
 
-        $sufijoTipo = match ($tipo) {
-            self::TIPO_PLAN => 'Plan',
-            self::TIPO_PROG => 'Prog',
-            default => throw new \InvalidArgumentException('Tipo de documento inválido.'),
-        };
-
-        $plantilla = trim((string) config(
-            'tenant.planificaciones_programas.nombre_archivo',
-            '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf',
-        ));
-        if ($plantilla === '') {
-            $plantilla = '{codCol}_{anio}_{cursec}_{materia}_{tipo}.pdf';
-        }
-
-        $reemplazos = [
-            '{codCol}' => self::sanitizarSegmentoNombre($codCol, 'COL'),
-            '{anio}' => (string) $anio,
-            '{cursec}' => self::sanitizarSegmentoNombre($cursec, 'curso'),
-            '{materia}' => self::sanitizarSegmentoNombre($materia, 'materia'),
-            '{tipo}' => $sufijoTipo,
+        $partes = [
+            self::sanitizarSegmentoNombre($codCol, 'COL'),
+            (string) $anio,
+            self::segmentoNivel($idNivel),
+            self::sanitizarSegmentoNombre($cursec, 'curso'),
+            self::sanitizarSegmentoNombre($materia, 'materia'),
+            self::sufijoTipo($tipo),
         ];
 
-        $nombre = str_replace(array_keys($reemplazos), array_values($reemplazos), $plantilla);
-        $nombre = preg_replace('/_+/', '_', $nombre) ?? $nombre;
-        $nombre = trim($nombre, '._');
-
-        if (! str_ends_with(strtolower($nombre), '.pdf')) {
-            $nombre .= '.pdf';
-        }
-
-        return $nombre;
+        return implode('_', $partes).'.pdf';
     }
 
     private static function sanitizarSegmentoNombre(string $texto, string $fallback): string
     {
-        $limpio = preg_replace('/\s+/', ' ', trim($texto)) ?? '';
+        $limpio = mb_strtoupper(trim($texto), 'UTF-8');
+        $limpio = strtr($limpio, [
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U', 'Ñ' => 'N',
+            'Ä' => 'A', 'Ë' => 'E', 'Ï' => 'I', 'Ö' => 'O',
+            'á' => 'A', 'é' => 'E', 'í' => 'I', 'ó' => 'O', 'ú' => 'U', 'ü' => 'U', 'ñ' => 'N',
+        ]);
+        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $limpio);
+        if (is_string($converted) && $converted !== '') {
+            $limpio = $converted;
+        }
+        $limpio = preg_replace('/\s+/', ' ', $limpio) ?? '';
         $limpio = str_replace(' ', '_', $limpio);
-        $limpio = preg_replace('/[^A-Za-z0-9_-]/u', '_', $limpio) ?? $fallback;
+        $limpio = preg_replace('/[^A-Za-z0-9_-]/', '_', $limpio) ?? $fallback;
+        $limpio = preg_replace('/_+/', '_', $limpio) ?? $limpio;
         $limpio = trim($limpio, '_');
 
         return $limpio !== '' ? $limpio : $fallback;
     }
 
-    public static function urlPublica(int $anio, string $tipo, int $idNivel, string $nombreArchivo): string
-    {
-        $base = self::baseUrlPublica();
-        $ruta = self::rutaRelativaArchivo($anio, $tipo, $idNivel, $nombreArchivo);
-
-        return $base.'/'.implode('/', array_map('rawurlencode', explode('/', $ruta)));
-    }
-
     /**
-     * Base pública del repositorio: tenant.base_url → ARCHIVOS_URL → {APP_URL}/archivos.
+     * Base pública: tenant.programas_examen.base_url (legado) → disco archivos.url → {APP_URL}/archivos.
+     * Disco físico: siempre public/archivos de este sistema.
      */
     public static function baseUrlPublica(): string
     {
@@ -179,20 +147,30 @@ final class PlanificacionesProgramasStorage
             return rtrim(trim($tenant), '/');
         }
 
-        $envUrl = config('filesystems.disks.archivos.url');
-        if (is_string($envUrl) && trim($envUrl) !== '') {
-            return rtrim(trim($envUrl), '/');
+        $diskUrl = config('filesystems.disks.archivos.url');
+        if (is_string($diskUrl) && trim($diskUrl) !== '') {
+            return rtrim(trim($diskUrl), '/');
         }
 
         return rtrim((string) config('app.url', ''), '/').'/archivos';
     }
 
-    public static function guardarPdf(int $anio, string $tipo, int $idNivel, string $nombreArchivo, TemporaryUploadedFile|UploadedFile $archivo): void
+    public static function urlPublica(int $anio, string $tipo, int $idNivel, string $nombreArchivo): string
     {
         $ruta = self::rutaRelativaArchivo($anio, $tipo, $idNivel, $nombreArchivo);
-        $directorio = dirname($ruta);
 
-        Storage::disk(self::DISK)->makeDirectory($directorio);
+        return self::baseUrlPublica().'/'.implode('/', array_map('rawurlencode', explode('/', $ruta)));
+    }
+
+    public static function guardarPdf(
+        int $anio,
+        string $tipo,
+        int $idNivel,
+        string $nombreArchivo,
+        TemporaryUploadedFile|UploadedFile $archivo,
+    ): void {
+        $ruta = self::rutaRelativaArchivo($anio, $tipo, $idNivel, $nombreArchivo);
+        Storage::disk(self::DISK)->makeDirectory(dirname($ruta));
         Storage::disk(self::DISK)->put($ruta, $archivo->get());
     }
 
@@ -237,7 +215,7 @@ final class PlanificacionesProgramasStorage
             return 'Solo se permiten archivos PDF.';
         }
 
-        $maxKb = max(512, (int) config('planificaciones_programas.max_kb', 20480));
+        $maxKb = max(512, (int) config('doc_pp.max_kb', 20480));
         if ($archivo->getSize() > ($maxKb * 1024)) {
             return 'El archivo supera el tamaño máximo permitido ('.number_format($maxKb / 1024, 0).' MB).';
         }

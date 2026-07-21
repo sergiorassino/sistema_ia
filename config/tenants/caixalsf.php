@@ -18,9 +18,4 @@ return [
             'habilitado' => false,
         ],
     ],
-
-    'planificaciones_programas' => [
-        // 2026_PRIMERO_A_LENGUA_Y_LITERATURA_Prog.pdf / …_Plan.pdf
-        'nombre_archivo' => '{anio}_{cursec}_{materia}_{tipo}.pdf',
-    ],
 ];

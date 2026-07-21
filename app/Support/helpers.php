@@ -1333,6 +1333,17 @@ if (! function_exists('tenantProgramasExamenHabilitado')) {
     }
 }
 
+if (! function_exists('tenantDocPpHabilitado')) {
+    /**
+     * Módulo nuevo de planificaciones y programas (tabla doc_pp).
+     * Activar en `config/tenants/{slug}.php` → `doc_pp.habilitado`.
+     */
+    function tenantDocPpHabilitado(): bool
+    {
+        return (bool) config('tenant.doc_pp.habilitado', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosImplementacion')) {
     /**
      * Variante de formulario de actualización de datos (`estandar`, `sanfranciscoasis`, …).

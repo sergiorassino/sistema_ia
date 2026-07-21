@@ -9,10 +9,9 @@
     <section class="se-hero">
         <div class="se-hero-inner space-y-3">
             <p class="se-eyebrow">Exámenes · Programas</p>
-            <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Gestión de planificaciones y programas</h2>
+            <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Planificaciones y programas</h2>
             <p class="max-w-3xl text-sm text-white/85">
-                Facilita el acceso de los estudiantes a los programas de examen. Los PDF se almacenan en el repositorio
-                institucional (<code class="rounded bg-white/10 px-1 text-xs">archivos/…</code>).
+                Repositorio institucional de PDF. El nombre del archivo identifica colegio, año, nivel, curso, materia y tipo.
             </p>
             <div class="flex flex-wrap gap-4 text-xs text-white/80">
                 <span class="inline-flex items-center gap-1.5">
@@ -31,17 +30,17 @@
         </div>
     </section>
 
-    @if ($columnasFaltantes !== [])
+    @if (! $tablaDisponible)
         <div class="se-card mt-6 border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950" role="alert">
-            <p class="font-semibold">Columnas faltantes en la tabla <code>materias</code></p>
-            <p class="mt-1">Este tenant no tiene las columnas necesarias: {{ implode(', ', $columnasFaltantes) }}.</p>
+            <p class="font-semibold">Falta la tabla <code>doc_pp</code></p>
+            <p class="mt-1">Ejecute el SQL de creación de la tabla en este tenant antes de usar el módulo.</p>
         </div>
     @else
         <div class="se-toolbar mt-6 flex-col !items-stretch gap-4 sm:flex-row sm:items-end">
             <div class="w-full max-w-md">
-                <label for="pp-busqueda" class="form-label">Búsqueda rápida</label>
+                <label for="docpp-busqueda" class="form-label">Búsqueda rápida</label>
                 <div class="relative mt-1.5">
-                    <input id="pp-busqueda" type="search" wire:model.live.debounce.300ms="busqueda"
+                    <input id="docpp-busqueda" type="search" wire:model.live.debounce.300ms="busqueda"
                            class="form-input w-full pl-10" placeholder="Materia o curso…" autocomplete="off">
                     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -49,10 +48,10 @@
                 </div>
             </div>
             <div class="w-full max-w-xs">
-                <label for="pp-orden" class="form-label">Ordenar por</label>
-                <select id="pp-orden" wire:model.live="orden" class="form-select mt-1.5 w-full">
-                    <option value="{{ \App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta::ORDEN_CURSO }}">Curso y materia</option>
-                    <option value="{{ \App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta::ORDEN_MATERIA }}">Materia</option>
+                <label for="docpp-orden" class="form-label">Ordenar por</label>
+                <select id="docpp-orden" wire:model.live="orden" class="form-select mt-1.5 w-full">
+                    <option value="{{ \App\Support\DocPp\DocPpConsulta::ORDEN_CURSO }}">Curso y materia</option>
+                    <option value="{{ \App\Support\DocPp\DocPpConsulta::ORDEN_MATERIA }}">Materia</option>
                 </select>
             </div>
         </div>
@@ -86,30 +85,36 @@
                             <tbody>
                                 @foreach ($filas as $fila)
                                     @php
-                                        $estadoPlan = \App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta::estadoDocumento($fila, \App\Support\PlanificacionesProgramas\PlanificacionesProgramasStorage::TIPO_PLAN);
-                                        $estadoProg = \App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta::estadoDocumento($fila, \App\Support\PlanificacionesProgramas\PlanificacionesProgramasStorage::TIPO_PROG);
-                                        $cursec = \App\Support\PlanificacionesProgramas\PlanificacionesProgramasConsulta::etiquetaCurso($fila);
+                                        $estadoPlan = \App\Support\DocPp\DocPpConsulta::estadoCelda(
+                                            isset($fila->plan_id) ? (int) $fila->plan_id : null,
+                                            isset($fila->plan_aprobado) ? (int) $fila->plan_aprobado : null,
+                                        );
+                                        $estadoProg = \App\Support\DocPp\DocPpConsulta::estadoCelda(
+                                            isset($fila->prog_id) ? (int) $fila->prog_id : null,
+                                            isset($fila->prog_aprobado) ? (int) $fila->prog_aprobado : null,
+                                        );
+                                        $cursec = \App\Support\DocPp\DocPpConsulta::etiquetaCurso($fila);
                                     @endphp
-                                    <tr wire:key="pp-row-{{ $fila->id }}" class="border-b border-accent-100 hover:bg-accent-50/60">
+                                    <tr wire:key="docpp-row-{{ $fila->id }}" class="border-b border-accent-100 hover:bg-accent-50/60">
                                         <td class="px-3 py-2 tabular-nums text-neutral-700 whitespace-nowrap">{{ number_format((int) $fila->ano_lectivo, 0, ',', '.') }}</td>
                                         <td class="px-3 py-2 font-medium text-neutral-800 whitespace-nowrap">{{ $cursec }}</td>
                                         <td class="px-3 py-2 text-neutral-800">{{ $fila->materia }}</td>
                                         <td class="px-3 py-2 text-center bg-amber-50/30">
-                                            @include('livewire.planificaciones-programas.partials.celda-estado', [
+                                            @include('livewire.doc-pp.partials.celda-estado', [
                                                 'id' => $fila->id,
-                                                'tipo' => \App\Support\PlanificacionesProgramas\PlanificacionesProgramasStorage::TIPO_PLAN,
+                                                'tipo' => \App\Support\DocPp\DocPpStorage::TIPO_PLAN,
                                                 'estado' => $estadoPlan,
                                             ])
                                         </td>
-                                        <td class="px-3 py-2 text-xs text-neutral-600 bg-amber-50/20 max-w-[10rem] truncate" title="{{ $fila->pp_obsPlan ?? '' }}">{{ $fila->pp_obsPlan ?? '' }}</td>
+                                        <td class="px-3 py-2 text-xs text-neutral-600 bg-amber-50/20 max-w-[10rem] truncate" title="{{ $fila->plan_obs ?? '' }}">{{ $fila->plan_obs ?? '' }}</td>
                                         <td class="px-3 py-2 text-center bg-emerald-50/30">
-                                            @include('livewire.planificaciones-programas.partials.celda-estado', [
+                                            @include('livewire.doc-pp.partials.celda-estado', [
                                                 'id' => $fila->id,
-                                                'tipo' => \App\Support\PlanificacionesProgramas\PlanificacionesProgramasStorage::TIPO_PROG,
+                                                'tipo' => \App\Support\DocPp\DocPpStorage::TIPO_PROG,
                                                 'estado' => $estadoProg,
                                             ])
                                         </td>
-                                        <td class="px-3 py-2 text-xs text-neutral-600 bg-emerald-50/20 max-w-[10rem] truncate" title="{{ $fila->pp_obsProg ?? '' }}">{{ $fila->pp_obsProg ?? '' }}</td>
+                                        <td class="px-3 py-2 text-xs text-neutral-600 bg-emerald-50/20 max-w-[10rem] truncate" title="{{ $fila->prog_obs ?? '' }}">{{ $fila->prog_obs ?? '' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -196,7 +196,7 @@ final class PermisosIaCatalog
     /** Gestión de TEA por inasistencias: registros reinco2025, alta/edición/baja e impresión PDF. */
     public const TEA_ESTUDIANTES_GESTION = 85;
 
-    /** Subida, aprobación y borrado de planificaciones y programas de examen (tabla materias). */
+    /** Planificaciones y programas (tabla doc_pp): subida, aprobación, visualización y baja de PDF. */
     public const PLANIFICACIONES_PROGRAMAS = 86;
 
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
@@ -287,7 +287,7 @@ final class PermisosIaCatalog
             ['id' => 80, 'orden' => self::LEGAJOS_DOCENTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver contraseña de acceso del docente en el listado de legajos (botón Ver Pwrd).'],
             ['id' => 84, 'orden' => self::ADMIN_ARCA_CONSULTA_CUIT_DNI, 'tema' => 'ARCA', 'descripcion' => 'Consultar CUIT/CUIL asociado a un DNI en ARCA (Padrón Alcance 13).'],
             ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],
-            ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Gestión de planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla materias).'],
+            ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).'],
         ];
     }
 

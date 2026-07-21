@@ -56,7 +56,7 @@ final class OpaqueRouteToken
 
     public const PURPOSE_EMAILS_MASIVOS_ADJUNTO = 'emails-masivos.adjunto';
 
-    public const PURPOSE_PLANIFICACIONES_PROGRAMAS_ARCHIVO = 'planificaciones-programas.archivo';
+    public const PURPOSE_DOC_PP_ARCHIVO = 'doc-pp.archivo';
 
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
@@ -191,11 +191,10 @@ final class OpaqueRouteToken
         return self::encode(self::PURPOSE_DOC_ESTUDIANTE_AUTOGESTION, $idDocEstudianteTipo, $idLegajo);
     }
 
-    public static function forPlanificacionesProgramasArchivo(int $idMateria, string $tipo): string
+    public static function forDocPpArchivo(int $idDocPp): string
     {
-        return self::encodePayload(self::PURPOSE_PLANIFICACIONES_PROGRAMAS_ARCHIVO, [
-            'm' => $idMateria,
-            't' => $tipo,
+        return self::encodePayload(self::PURPOSE_DOC_PP_ARCHIVO, [
+            'd' => $idDocPp,
         ]);
     }
 
