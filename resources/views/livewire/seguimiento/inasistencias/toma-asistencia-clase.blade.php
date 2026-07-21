@@ -98,120 +98,117 @@
         </p>
 
         <div class="se-card overflow-hidden">
-            <table class="w-full text-left text-sm">
-                <colgroup>
-                    <col class="w-9">
-                    <col>
-                    <col class="w-[5.5rem]">
-                    <col class="w-[19.5rem]">
-                    <col class="w-[19.5rem]">
-                </colgroup>
-                <thead class="border-b border-accent-200 bg-accent-50/80">
-                    <tr>
-                        <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">#</th>
-                        <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Alumno</th>
-                        <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 text-center">Condición</th>
-                        <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Inasist. a clase</th>
-                        <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Inasist. educ. física</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($alumnos as $idx => $a)
-                        @php
-                            $idMat = (int) $a->id;
-                            $fila = $asistencia[$idMat] ?? [
-                                'clase' => '',
-                                'edfis' => '',
-                                'just_clase' => 'I',
-                                'just_edfis' => 'I',
-                            ];
-                            $tieneClase = trim((string) ($fila['clase'] ?? '')) !== '';
-                            $tieneEdFis = trim((string) ($fila['edfis'] ?? '')) !== '';
-                            $teaPendientes = $teaPendientesPorMatricula[$idMat] ?? [];
-                        @endphp
-                        <tr wire:key="tac-alumno-{{ $idMat }}" @class([
-                            'hover:bg-accent-50/60',
-                            'border-b border-accent-100' => $teaPendientes === [],
-                        ])>
-                            <td class="px-3 py-2 tabular-nums text-neutral-500 align-top">{{ $idx + 1 }}</td>
-                            <td class="px-3 py-2 align-top">
-                                <p class="font-medium text-neutral-900">{{ $a->apellido }}, {{ $a->nombre }}</p>
-                                @if ($a->dni)
-                                    <p class="text-xs text-neutral-500">DNI {{ $a->dni }}</p>
-                                @endif
-                            </td>
-                            <td class="px-3 py-2 text-center text-xs text-neutral-700 align-top">
-                                {{ ($a->condicion ?? '') !== '' ? $a->condicion : '—' }}
-                            </td>
-                            <td class="px-3 py-2 align-top">
-                                <div class="flex flex-nowrap items-center gap-2">
-                                    <select wire:model.live="asistencia.{{ $idMat }}.clase"
-                                            class="form-select w-[9rem] shrink-0 text-sm @error('asistencia.'.$idMat.'.clase') border-red-400 @enderror">
-                                        <option value="">Presente</option>
-                                        @foreach ($tiposClase as $t)
-                                            <option value="{{ $t->id }}">{{ $t->concepto }}</option>
-                                        @endforeach
-                                    </select>
-                                    <select wire:model.live="asistencia.{{ $idMat }}.just_clase"
-                                            @disabled(! $tieneClase)
-                                            class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_clase') border-red-400 @enderror">
-                                        <option value="I">Injustificada</option>
-                                        <option value="J">Justificada</option>
-                                    </select>
-                                </div>
-                                @error('asistencia.'.$idMat.'.clase')
-                                    <p class="form-error mt-0.5">{{ $message }}</p>
-                                @enderror
-                                @error('asistencia.'.$idMat.'.just_clase')
-                                    <p class="form-error mt-0.5">{{ $message }}</p>
-                                @enderror
-                            </td>
-                            <td class="px-3 py-2 align-top">
-                                <div class="flex flex-nowrap items-center gap-2">
-                                    <select wire:model.live="asistencia.{{ $idMat }}.edfis"
-                                            class="form-select w-[9rem] shrink-0 text-sm @error('asistencia.'.$idMat.'.edfis') border-red-400 @enderror">
-                                        <option value="">Presente</option>
-                                        @foreach ($tiposEdFis as $t)
-                                            <option value="{{ $t->id }}">{{ $t->concepto }}</option>
-                                        @endforeach
-                                    </select>
-                                    <select wire:model.live="asistencia.{{ $idMat }}.just_edfis"
-                                            @disabled(! $tieneEdFis)
-                                            class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_edfis') border-red-400 @enderror">
-                                        <option value="I">Injustificada</option>
-                                        <option value="J">Justificada</option>
-                                    </select>
-                                </div>
-                                @error('asistencia.'.$idMat.'.edfis')
-                                    <p class="form-error mt-0.5">{{ $message }}</p>
-                                @enderror
-                                @error('asistencia.'.$idMat.'.just_edfis')
-                                    <p class="form-error mt-0.5">{{ $message }}</p>
-                                @enderror
-                            </td>
-                        </tr>
-                        @if ($teaPendientes !== [])
-                            <tr wire:key="tac-tea-{{ $idMat }}" class="border-b border-accent-100 hover:bg-accent-50/60">
-                                <td class="px-3 pb-2 pt-0"></td>
-                                <td colspan="4" class="px-3 pb-2 pt-0">
-                                    <x-tea-aviso-pendiente
-                                        multilinea
-                                        :matricula="$idMat"
-                                        :curso="(int) $curso->Id"
-                                        :pendientes="$teaPendientes"
-                                    />
-                                </td>
+            <div class="w-full overflow-x-auto">
+                <div class="flex justify-start">
+                    <table class="min-w-[960px] w-full text-left text-sm">
+                        <thead class="border-b border-accent-200 bg-accent-50/80">
+                            <tr>
+                                <th class="w-10 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">#</th>
+                                <th class="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Alumno</th>
+                                <th class="min-w-[5rem] px-3 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Condición</th>
+                                <th class="min-w-[280px] px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Inasist. a clase</th>
+                                <th class="min-w-[280px] px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">Inasist. educ. física</th>
                             </tr>
-                        @endif
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-neutral-500">
-                                No hay alumnos con condición 1, 2, 3 o 4 en este curso.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($alumnos as $idx => $a)
+                                @php
+                                    $idMat = (int) $a->id;
+                                    $fila = $asistencia[$idMat] ?? [
+                                        'clase' => '',
+                                        'edfis' => '',
+                                        'just_clase' => 'I',
+                                        'just_edfis' => 'I',
+                                    ];
+                                    $tieneClase = trim((string) ($fila['clase'] ?? '')) !== '';
+                                    $tieneEdFis = trim((string) ($fila['edfis'] ?? '')) !== '';
+                                    $teaPendientes = $teaPendientesPorMatricula[$idMat] ?? [];
+                                @endphp
+                                <tr wire:key="tac-alumno-{{ $idMat }}" @class([
+                                    'hover:bg-accent-50/60',
+                                    'border-b border-accent-100' => $teaPendientes === [],
+                                ])>
+                                    <td class="px-3 py-2 align-top tabular-nums text-neutral-500">{{ $idx + 1 }}</td>
+                                    <td class="px-3 py-2 align-top">
+                                        <p class="font-medium text-neutral-900">{{ $a->apellido }}, {{ $a->nombre }}</p>
+                                        @if ($a->dni)
+                                            <p class="text-xs text-neutral-500">DNI {{ $a->dni }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2 align-top text-center text-xs text-neutral-700">
+                                        {{ ($a->condicion ?? '') !== '' ? $a->condicion : '—' }}
+                                    </td>
+                                    <td class="px-3 py-2 align-top">
+                                        <div class="flex flex-wrap items-start gap-2">
+                                            <select wire:model.live="asistencia.{{ $idMat }}.clase"
+                                                    class="form-select min-w-[9rem] flex-1 text-sm @error('asistencia.'.$idMat.'.clase') border-red-400 @enderror">
+                                                <option value="">Presente</option>
+                                                @foreach ($tiposClase as $t)
+                                                    <option value="{{ $t->id }}">{{ $t->concepto }}</option>
+                                                @endforeach
+                                            </select>
+                                            <select wire:model.live="asistencia.{{ $idMat }}.just_clase"
+                                                    @disabled(! $tieneClase)
+                                                    class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_clase') border-red-400 @enderror">
+                                                <option value="I">Injustificada</option>
+                                                <option value="J">Justificada</option>
+                                            </select>
+                                        </div>
+                                        @error('asistencia.'.$idMat.'.clase')
+                                            <p class="form-error mt-0.5">{{ $message }}</p>
+                                        @enderror
+                                        @error('asistencia.'.$idMat.'.just_clase')
+                                            <p class="form-error mt-0.5">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                    <td class="px-3 py-2 align-top">
+                                        <div class="flex flex-wrap items-start gap-2">
+                                            <select wire:model.live="asistencia.{{ $idMat }}.edfis"
+                                                    class="form-select min-w-[9rem] flex-1 text-sm @error('asistencia.'.$idMat.'.edfis') border-red-400 @enderror">
+                                                <option value="">Presente</option>
+                                                @foreach ($tiposEdFis as $t)
+                                                    <option value="{{ $t->id }}">{{ $t->concepto }}</option>
+                                                @endforeach
+                                            </select>
+                                            <select wire:model.live="asistencia.{{ $idMat }}.just_edfis"
+                                                    @disabled(! $tieneEdFis)
+                                                    class="form-select w-[9.5rem] shrink-0 text-sm disabled:cursor-not-allowed disabled:opacity-50 @error('asistencia.'.$idMat.'.just_edfis') border-red-400 @enderror">
+                                                <option value="I">Injustificada</option>
+                                                <option value="J">Justificada</option>
+                                            </select>
+                                        </div>
+                                        @error('asistencia.'.$idMat.'.edfis')
+                                            <p class="form-error mt-0.5">{{ $message }}</p>
+                                        @enderror
+                                        @error('asistencia.'.$idMat.'.just_edfis')
+                                            <p class="form-error mt-0.5">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                @if ($teaPendientes !== [])
+                                    <tr wire:key="tac-tea-{{ $idMat }}" class="border-b border-accent-100 hover:bg-accent-50/60">
+                                        <td class="px-3 pb-2 pt-0"></td>
+                                        <td colspan="4" class="px-3 pb-2 pt-0">
+                                            <x-tea-aviso-pendiente
+                                                multilinea
+                                                :matricula="$idMat"
+                                                :curso="(int) $curso->Id"
+                                                :pendientes="$teaPendientes"
+                                            />
+                                        </td>
+                                    </tr>
+                                @endif
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-sm text-neutral-500">
+                                        No hay alumnos con condición 1, 2, 3 o 4 en este curso.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     @elseif ($puedeCargarGrilla && ! $grillaCargada)
         <div class="se-card px-6 py-8 text-center text-sm text-neutral-600">
