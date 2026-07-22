@@ -31,9 +31,13 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
     private const ANCHO_NOTA = 5.0;
 
+    /** Inasistencias justificadas / injustificadas (mismo ancho que notas). */
+    private const ANCHO_INA = self::ANCHO_NOTA;
+
     private const ANCHO_DNI = 15.0;
 
-    private const ANCHO_OBS = 25.0;
+    /** Reducido de 25 mm para compensar las 2 cols. de inasistencias (mismo ancho total que antes). */
+    private const ANCHO_OBS = 15.0;
 
     private const ALTURA_FILA_ALUMNO = 4.0;
 
@@ -116,7 +120,16 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
     /**
      * @param  array<string, mixed>  $sec
-     * @return array{cantCurr: int, cantInst: int, anchoCurr: float, anchoInst: float, xDni: float, xObs: float}
+     * @return array{
+     *     cantCurr: int,
+     *     cantInst: int,
+     *     anchoCurr: float,
+     *     anchoInst: float,
+     *     xJust: float,
+     *     xInju: float,
+     *     xDni: float,
+     *     xObs: float
+     * }
      */
     private function layoutMaterias(array $sec): array
     {
@@ -124,7 +137,9 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $cantInst = count($sec['materiasInstitucionales'] ?? []);
         $anchoCurr = $cantCurr * self::ANCHO_NOTA;
         $anchoInst = $cantInst * self::ANCHO_NOTA;
-        $xDni = self::X_INICIO_MATERIAS + $anchoCurr + $anchoInst;
+        $xJust = self::X_INICIO_MATERIAS + $anchoCurr + $anchoInst;
+        $xInju = $xJust + self::ANCHO_INA;
+        $xDni = $xInju + self::ANCHO_INA;
         $xObs = $xDni + self::ANCHO_DNI;
 
         return [
@@ -132,6 +147,8 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             'cantInst' => $cantInst,
             'anchoCurr' => $anchoCurr,
             'anchoInst' => $anchoInst,
+            'xJust' => $xJust,
+            'xInju' => $xInju,
             'xDni' => $xDni,
             'xObs' => $xObs,
         ];
@@ -222,7 +239,8 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             $this->SetXY($xInst + self::ANCHO_NOTA, $yInst);
         }
 
-        $this->SetXY($layout['xDni'], $yInst);
+        $this->SetXY($layout['xJust'], $yInst);
+        $this->Cell(self::ANCHO_INA * 2, $altoFilaEnc, 'Inasistencias', 1, 0, 'C');
         $this->Cell(self::ANCHO_DNI, $altoFilaEnc, 'D.N.I.', 1, 0, 'C');
         $this->Cell(self::ANCHO_OBS, $altoFilaEnc, 'Observaciones', 1, 0, 'C');
         $this->Ln($altoFilaEnc);
@@ -260,7 +278,7 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         $materiasCurriculares = $sec['materiasCurriculares'] ?? [];
         /** @var list<array{materia: string, abrev: string}> $materiasInstitucionales */
         $materiasInstitucionales = $sec['materiasInstitucionales'] ?? [];
-        /** @var list<array{nro: int, nombre: string, dni: string, obsAnual: string, notas: list<string>}> $alumnos */
+        /** @var list<array{nro: int, nombre: string, dni: string, justificadas: string, injustificadas: string, obsAnual: string, notas: list<string>}> $alumnos */
         $alumnos = $sec['alumnos'] ?? [];
         $layout = $this->layoutMaterias($sec);
         $cantMate = $layout['cantCurr'] + $layout['cantInst'];
@@ -298,6 +316,23 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             $x += self::ANCHO_NOTA;
         }
 
+        $this->SetXY($layout['xJust'], self::Y_ENC_MATERIAS);
+        $this->Cell(self::ANCHO_INA, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
+        $this->dibujarTextoVerticalEnCelda(
+            $layout['xJust'] + (self::ANCHO_INA / 2),
+            self::Y_ENC_MATERIAS,
+            self::ALTURA_ENC_MATERIAS,
+            'Justificadas',
+        );
+        $this->SetXY($layout['xInju'], self::Y_ENC_MATERIAS);
+        $this->Cell(self::ANCHO_INA, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
+        $this->dibujarTextoVerticalEnCelda(
+            $layout['xInju'] + (self::ANCHO_INA / 2),
+            self::Y_ENC_MATERIAS,
+            self::ALTURA_ENC_MATERIAS,
+            'Injustificadas',
+        );
+
         $this->SetXY($layout['xDni'], self::Y_ENC_MATERIAS);
         $this->Cell(self::ANCHO_DNI, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
         $this->Cell(self::ANCHO_OBS, self::ALTURA_ENC_MATERIAS, '', 1, 0, 'C');
@@ -329,7 +364,9 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
                 }
             }
 
-            $this->SetXY($layout['xDni'], $y);
+            $this->SetXY($layout['xJust'], $y);
+            $this->Cell(self::ANCHO_INA, self::ALTURA_FILA_ALUMNO, (string) ($alumno['justificadas'] ?? ''), 1, 0, 'C');
+            $this->Cell(self::ANCHO_INA, self::ALTURA_FILA_ALUMNO, (string) ($alumno['injustificadas'] ?? ''), 1, 0, 'C');
             $this->Cell(self::ANCHO_DNI, self::ALTURA_FILA_ALUMNO, (string) ($alumno['dni'] ?? ''), 1, 0, 'C');
             $this->dibujarCeldaObservaciones($alumno, $esApreciacionFinal, $layout['xObs'], $y);
         }
