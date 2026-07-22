@@ -20,6 +20,29 @@
         </div>
     </section>
 
+    @if ($cicloDistintoAlAnoActual)
+        <div class="rounded-2xl border-2 border-red-700 bg-red-600 px-5 py-4 text-white shadow-md sm:px-6 sm:py-5"
+             role="alert"
+             aria-live="assertive">
+            <div class="flex gap-3 sm:gap-4">
+                <svg class="mt-0.5 h-7 w-7 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <div class="min-w-0 space-y-1">
+                    <p class="text-base font-bold tracking-tight sm:text-lg">
+                        Atención: el ciclo lectivo de la sesión no es el año actual
+                    </p>
+                    <p class="text-sm leading-relaxed text-white/95 sm:text-[15px]">
+                        Está trabajando en el ciclo <strong>{{ $cicloAnoSesion }}</strong>, pero la fecha de hoy corresponde al año
+                        <strong>{{ $anoCalendario }}</strong>. La importación usará matrículas y calificaciones de
+                        <strong>{{ $cicloAnoSesion }}</strong>. Si no es intencional, cambie el ciclo lectivo en el selector del menú antes de continuar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if (session('success'))
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
             {{ session('success') }}
