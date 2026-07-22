@@ -6,6 +6,7 @@ use App\Models\EmailEnviado;
 use App\Models\Profesor;
 use App\Support\EmailsMasivos\EmailsMasivosEscritoEnvios;
 use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -42,15 +43,14 @@ class EmailsMasivosHistorial extends Component
             return;
         }
 
-        $ctx = schoolCtx();
-        $seed = EmailsMasivosEscritoEnvios::seedEnAlcance($idSeed, (int) $ctx->idNivel);
+        $seed = EmailsMasivosEscritoEnvios::seedEnAlcance($idSeed);
         if ($seed === null) {
             $this->dispatch('se-swal-error', mensaje: 'El envío ya no existe.');
 
             return;
         }
 
-        $total = EmailsMasivosEscritoEnvios::eliminarCampana($seed, (int) $ctx->idNivel);
+        $total = EmailsMasivosEscritoEnvios::eliminarCampana($seed);
         if ($total <= 0) {
             $this->dispatch('se-swal-error', mensaje: 'No se encontraron registros de envío para eliminar.');
 
@@ -64,8 +64,8 @@ class EmailsMasivosHistorial extends Component
     {
         $ctx = schoolCtx();
 
-        $query = EmailEnviado::query()
-            ->where('idNiveles', (int) $ctx->idNivel);
+        $query = EmailEnviado::query();
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNiveles');
 
         if ($this->periodo === 'actual') {
             $query->where('idTerlec', (int) $ctx->idTerlec);

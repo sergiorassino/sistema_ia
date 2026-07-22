@@ -3,6 +3,8 @@
 namespace App\Support\EmailsMasivos;
 
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\Listados\ListadoCursoConsulta;
+use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
 
 final class DestinatariosEmailsMasivos
@@ -14,43 +16,97 @@ final class DestinatariosEmailsMasivos
     }
 
     /**
-     * @return list<array{id:int,label:string,dni:?string,idCurso:int}>
+     * Cursos del ciclo activo según alcance de sesión (Admin = todos los pedagógicos).
+     *
+     * @return list<array{id:int,label:string,idNivel:int}>
      */
-    public static function buscarAlumnosRegulares(int $idNivel, int $idTerlec, string $termino, int $limit = 50): array
+    public static function cursosDelContexto(int $idTerlec): array
+    {
+        return ListadoCursoConsulta::cursosPermitidosEnContexto()
+            ->filter(fn ($c) => (int) $c->idTerlec === $idTerlec)
+            ->map(fn ($c) => [
+                'id' => (int) $c->Id,
+                'label' => ListadoCursoConsulta::etiquetaCursoConNivel($c),
+                'idNivel' => (int) $c->idNivel,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array{id:int,label:string,dni:?string,idCurso:int,idNivel:int,nivelLabel:string,cursoLabel:string}>
+     */
+    public static function buscarAlumnosRegulares(int $idTerlec, string $termino, int $limit = 80): array
     {
         $t = trim($termino);
         if ($t === '') {
             return [];
         }
 
-        $prefix = addcslashes($t, '%_\\') . '%';
+        $limit = max(1, min(100, $limit));
 
-        return self::queryMatriculaRegular($idNivel, $idTerlec)
-            ->where(function ($w) use ($prefix, $t) {
-                $w->where('l.apellido', 'like', $prefix)
-                    ->orWhere('l.nombre', 'like', $prefix);
-                if (ctype_digit($t)) {
-                    $w->orWhere('l.dni', (int) $t);
-                }
-            })
-            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni', 'm.idCursos'])
-            ->distinct()
+        $query = self::queryMatriculaRegular($idTerlec)
+            ->leftJoin('niveles as n', 'n.id', '=', 'm.idNivel')
+            ->leftJoin('cursos as c', 'c.Id', '=', 'm.idCursos');
+
+        self::aplicarFiltroBusquedaLegajo($query, $t);
+
+        $rows = $query
+            ->select([
+                'l.id',
+                'l.apellido',
+                'l.nombre',
+                'l.dni',
+                'm.idCursos',
+                'm.idNivel',
+                'n.nivel as nivelNombre',
+                'n.abrev as nivelAbrev',
+                'c.cursec',
+            ])
+            ->orderBy('m.idNivel')
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
-            ->limit(max(1, min(100, $limit)))
-            ->get()
-            ->map(fn ($r) => self::mapFilaAlumno($r))
-            ->all();
+            ->orderBy('m.idCursos')
+            ->limit($limit * 3)
+            ->get();
+
+        $vistos = [];
+        $out = [];
+        foreach ($rows as $r) {
+            $id = (int) $r->id;
+            if (isset($vistos[$id])) {
+                continue;
+            }
+            $vistos[$id] = true;
+            $out[] = self::mapFilaAlumno($r);
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+
+        return $out;
     }
 
     /**
-     * @return list<array{id:int,label:string,dni:?string,idCurso:int}>
+     * @return list<array{id:int,label:string,dni:?string,idCurso:int,idNivel:int,nivelLabel:string,cursoLabel:string}>
      */
-    public static function alumnosRegularesPorCurso(int $idNivel, int $idTerlec, int $idCurso): array
+    public static function alumnosRegularesPorCurso(int $idTerlec, int $idCurso): array
     {
-        return self::queryMatriculaRegular($idNivel, $idTerlec)
+        return self::queryMatriculaRegular($idTerlec)
+            ->leftJoin('niveles as n', 'n.id', '=', 'm.idNivel')
+            ->leftJoin('cursos as c', 'c.Id', '=', 'm.idCursos')
             ->where('m.idCursos', $idCurso)
-            ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni', 'm.idCursos'])
+            ->select([
+                'l.id',
+                'l.apellido',
+                'l.nombre',
+                'l.dni',
+                'm.idCursos',
+                'm.idNivel',
+                'n.nivel as nivelNombre',
+                'n.abrev as nivelAbrev',
+                'c.cursec',
+            ])
             ->distinct()
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
@@ -60,29 +116,33 @@ final class DestinatariosEmailsMasivos
     }
 
     /**
-     * @return array{idCurso:int}|null
+     * @return array{idCurso:int,idNivel:int}|null
      */
-    public static function matriculaRegularDeLegajo(int $idNivel, int $idTerlec, int $idLegajo): ?array
+    public static function matriculaRegularDeLegajo(int $idTerlec, int $idLegajo): ?array
     {
-        $row = self::queryMatriculaRegular($idNivel, $idTerlec)
+        $row = self::queryMatriculaRegular($idTerlec)
             ->where('m.idLegajos', $idLegajo)
-            ->select(['m.idCursos'])
+            ->select(['m.idCursos', 'm.idNivel'])
             ->first();
 
         if ($row === null) {
             return null;
         }
 
-        return ['idCurso' => (int) $row->idCursos];
+        return [
+            'idCurso' => (int) $row->idCursos,
+            'idNivel' => (int) $row->idNivel,
+        ];
     }
 
     /**
-     * @param  list<array{idLegajo:int,idCurso:int,label:string,cursoLabel:string,marcado:bool}>  $lineasMarcadas
+     * @param  list<array{idLegajo:int,idCurso:int,idNivel?:int,label:string,cursoLabel:string,marcado:bool}>  $lineasMarcadas
      * @return list<array{
      *     email:string,
      *     tipo:string,
      *     idLegajo:int,
      *     idCurso:int,
+     *     idNivel:int,
      *     alumnoLabel:string,
      *     cursoLabel:string
      * }>
@@ -142,6 +202,7 @@ final class DestinatariosEmailsMasivos
                     'tipo' => $item['tipo'],
                     'idLegajo' => $idLegajo,
                     'idCurso' => (int) $linea['idCurso'],
+                    'idNivel' => (int) ($linea['idNivel'] ?? 0),
                     'alumnoLabel' => (string) $linea['label'],
                     'cursoLabel' => (string) ($linea['cursoLabel'] ?? ''),
                 ];
@@ -214,27 +275,80 @@ final class DestinatariosEmailsMasivos
         return array_values(array_filter(array_map('trim', explode('|', $attached))));
     }
 
-    private static function queryMatriculaRegular(int $idNivel, int $idTerlec)
+    private static function queryMatriculaRegular(int $idTerlec)
     {
-        return DB::table('matricula as m')
+        $query = DB::table('matricula as m')
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
-            ->where('m.idNivel', $idNivel)
             ->where('m.idTerlec', $idTerlec)
             ->whereIn('m.idCondiciones', self::idsCondicionesRegulares())
-            ->whereNull('m.fechaBaja')
+            ->where(function ($w) {
+                $w->whereNull('m.fechaBaja')
+                    ->orWhere('m.fechaBaja', '0000-00-00')
+                    ->orWhere('m.fechaBaja', '');
+            })
             ->whereNotNull('m.idLegajos');
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'm.idNivel');
+
+        return $query;
     }
 
     /**
-     * @return array{id:int,label:string,dni:?string,idCurso:int}
+     * Misma lógica que {@see \App\Models\Legajo::scopeBuscar()} sobre alias `l`.
+     */
+    private static function aplicarFiltroBusquedaLegajo($query, string $termino): void
+    {
+        $termino = trim($termino);
+        if ($termino === '') {
+            return;
+        }
+
+        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $termino) . '%';
+        $palabras = preg_split('/\s+/u', $termino, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $query->where(function ($q) use ($like, $palabras) {
+            $q->where('l.apellido', 'like', $like)
+                ->orWhere('l.nombre', 'like', $like)
+                ->orWhere('l.dni', 'like', $like)
+                ->orWhereRaw("CONCAT(l.apellido, ' ', l.nombre) LIKE ?", [$like])
+                ->orWhereRaw("CONCAT(l.apellido, ', ', l.nombre) LIKE ?", [$like]);
+
+            if (count($palabras) >= 2) {
+                $apellido = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $palabras[0]) . '%';
+                $nombre = '%' . str_replace(['%', '_'], ['\\%', '\\_'], implode(' ', array_slice($palabras, 1))) . '%';
+
+                $q->orWhere(function ($sub) use ($apellido, $nombre) {
+                    $sub->where('l.apellido', 'like', $apellido)
+                        ->where('l.nombre', 'like', $nombre);
+                });
+
+                $q->orWhere(function ($sub) use ($apellido, $nombre) {
+                    $sub->where('l.nombre', 'like', $apellido)
+                        ->where('l.apellido', 'like', $nombre);
+                });
+            }
+        });
+    }
+
+    /**
+     * @return array{id:int,label:string,dni:?string,idCurso:int,idNivel:int,nivelLabel:string,cursoLabel:string}
      */
     private static function mapFilaAlumno(object $r): array
     {
+        $nivel = trim((string) ($r->nivelAbrev ?? ''));
+        if ($nivel === '') {
+            $nivel = trim((string) ($r->nivelNombre ?? ''));
+        }
+        $curso = trim((string) ($r->cursec ?? ''));
+
         return [
             'id' => (int) $r->id,
             'label' => trim((string) $r->apellido . ', ' . (string) $r->nombre),
             'dni' => $r->dni !== null ? (string) $r->dni : null,
             'idCurso' => (int) $r->idCursos,
+            'idNivel' => (int) ($r->idNivel ?? 0),
+            'nivelLabel' => $nivel,
+            'cursoLabel' => $curso,
         ];
     }
 }

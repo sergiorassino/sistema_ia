@@ -2,7 +2,6 @@
 
 namespace App\Livewire\EmailsMasivos\Concerns;
 
-use App\Push\DestinatariosRepository;
 use App\Support\EmailsMasivos\DestinatariosEmailsMasivos;
 
 trait SeleccionDestinatariosCorreoMasivo
@@ -22,11 +21,11 @@ trait SeleccionDestinatariosCorreoMasivo
     /** @var list<array{id:int,label:string}> */
     public array $alumnosSeleccionados = [];
 
-    /** @var list<array{id:int,label:string}> */
+    /** @var list<array{id:int,label:string,idNivel?:int}> */
     public array $cursosSeleccionados = [];
 
     /**
-     * @var list<array{key:string,idLegajo:int,idCurso:int,label:string,cursoLabel:string,marcado:bool}>
+     * @var list<array{key:string,idLegajo:int,idCurso:int,idNivel:int,label:string,cursoLabel:string,marcado:bool}>
      */
     public array $lineasAlumnos = [];
 
@@ -34,7 +33,7 @@ trait SeleccionDestinatariosCorreoMasivo
 
     public string $modalAlumnosFiltro = '';
 
-    /** @var list<array{id:int,label:string,dni:?string,idCurso:int}> */
+    /** @var list<array{id:int,label:string,dni:?string,idCurso:int,idNivel:int}> */
     public array $modalAlumnosLista = [];
 
     /** @var list<int> */
@@ -44,7 +43,7 @@ trait SeleccionDestinatariosCorreoMasivo
 
     public string $modalCursosFiltro = '';
 
-    /** @var list<array{id:int,label:string}> */
+    /** @var list<array{id:int,label:string,idNivel:int}> */
     public array $modalCursosLista = [];
 
     /** @var list<int> */
@@ -105,7 +104,7 @@ trait SeleccionDestinatariosCorreoMasivo
 
         $this->alumnosSeleccionados = $out;
         $this->modalAlumnosAbierto = false;
-        $this->reconstruirLineasDesdeAlumnos((int) $ctx->idNivel, (int) $ctx->idTerlec);
+        $this->reconstruirLineasDesdeAlumnos((int) $ctx->idTerlec);
     }
 
     public function abrirModalCursos(): void
@@ -133,9 +132,18 @@ trait SeleccionDestinatariosCorreoMasivo
             }
             $fromLista = $labelsPorId->get($id);
             if ($fromLista !== null) {
-                $out[] = ['id' => $id, 'label' => (string) $fromLista['label']];
+                $out[] = [
+                    'id' => $id,
+                    'label' => (string) $fromLista['label'],
+                    'idNivel' => (int) ($fromLista['idNivel'] ?? 0),
+                ];
             } elseif ($prev->has($id)) {
-                $out[] = ['id' => $id, 'label' => (string) $prev->get($id)['label']];
+                $prevRow = $prev->get($id);
+                $out[] = [
+                    'id' => $id,
+                    'label' => (string) $prevRow['label'],
+                    'idNivel' => (int) ($prevRow['idNivel'] ?? 0),
+                ];
             }
         }
 
@@ -143,7 +151,7 @@ trait SeleccionDestinatariosCorreoMasivo
         $this->modalCursosAbierto = false;
 
         $ctx = schoolCtx();
-        $this->reconstruirLineasDesdeCursos((int) $ctx->idNivel, (int) $ctx->idTerlec);
+        $this->reconstruirLineasDesdeCursos((int) $ctx->idTerlec);
     }
 
     public function modalCursosSeleccionarTodos(): void
@@ -153,21 +161,25 @@ trait SeleccionDestinatariosCorreoMasivo
 
     public function toggleLineaAlumno(string $key): void
     {
-        foreach ($this->lineasAlumnos as $i => $linea) {
+        $lineas = $this->lineasAlumnos;
+        foreach ($lineas as $i => $linea) {
             if (($linea['key'] ?? '') === $key) {
-                $this->lineasAlumnos[$i]['marcado'] = ! ($linea['marcado'] ?? false);
+                $lineas[$i]['marcado'] = ! (bool) ($linea['marcado'] ?? false);
                 break;
             }
         }
+        $this->lineasAlumnos = $lineas;
     }
 
     public function marcarTodosLineasCurso(int $idCurso, bool $marcado): void
     {
-        foreach ($this->lineasAlumnos as $i => $linea) {
+        $lineas = $this->lineasAlumnos;
+        foreach ($lineas as $i => $linea) {
             if ((int) ($linea['idCurso'] ?? 0) === $idCurso) {
-                $this->lineasAlumnos[$i]['marcado'] = $marcado;
+                $lineas[$i]['marcado'] = $marcado;
             }
         }
+        $this->lineasAlumnos = $lineas;
     }
 
     /**
@@ -210,12 +222,12 @@ trait SeleccionDestinatariosCorreoMasivo
         ));
     }
 
-    protected function reconstruirLineasDesdeAlumnos(int $idNivel, int $idTerlec): void
+    protected function reconstruirLineasDesdeAlumnos(int $idTerlec): void
     {
         $lineas = [];
         foreach ($this->alumnosSeleccionados as $alumno) {
             $idLegajo = (int) $alumno['id'];
-            $mat = DestinatariosEmailsMasivos::matriculaRegularDeLegajo($idNivel, $idTerlec, $idLegajo);
+            $mat = DestinatariosEmailsMasivos::matriculaRegularDeLegajo($idTerlec, $idLegajo);
             if ($mat === null) {
                 continue;
             }
@@ -223,6 +235,7 @@ trait SeleccionDestinatariosCorreoMasivo
                 'key' => 'a-' . $idLegajo,
                 'idLegajo' => $idLegajo,
                 'idCurso' => (int) $mat['idCurso'],
+                'idNivel' => (int) $mat['idNivel'],
                 'label' => (string) $alumno['label'],
                 'cursoLabel' => '',
                 'marcado' => true,
@@ -231,17 +244,19 @@ trait SeleccionDestinatariosCorreoMasivo
         $this->lineasAlumnos = $lineas;
     }
 
-    protected function reconstruirLineasDesdeCursos(int $idNivel, int $idTerlec): void
+    protected function reconstruirLineasDesdeCursos(int $idTerlec): void
     {
         $lineas = [];
         foreach ($this->cursosSeleccionados as $curso) {
             $idCurso = (int) $curso['id'];
-            $alumnos = DestinatariosEmailsMasivos::alumnosRegularesPorCurso($idNivel, $idTerlec, $idCurso);
+            $idNivelCurso = (int) ($curso['idNivel'] ?? 0);
+            $alumnos = DestinatariosEmailsMasivos::alumnosRegularesPorCurso($idTerlec, $idCurso);
             foreach ($alumnos as $a) {
                 $lineas[] = [
                     'key' => $idCurso . '-' . $a['id'],
                     'idLegajo' => (int) $a['id'],
                     'idCurso' => $idCurso,
+                    'idNivel' => (int) ($a['idNivel'] ?: $idNivelCurso),
                     'label' => (string) $a['label'],
                     'cursoLabel' => (string) $curso['label'],
                     'marcado' => true,
@@ -254,7 +269,7 @@ trait SeleccionDestinatariosCorreoMasivo
     protected function recargarModalAlumnosLista(): void
     {
         $ctx = schoolCtx();
-        if (! $ctx->idNivel || ! $ctx->idTerlec) {
+        if (! $ctx->idTerlec) {
             $this->modalAlumnosLista = [];
 
             return;
@@ -268,23 +283,22 @@ trait SeleccionDestinatariosCorreoMasivo
         }
 
         $this->modalAlumnosLista = DestinatariosEmailsMasivos::buscarAlumnosRegulares(
-            (int) $ctx->idNivel,
             (int) $ctx->idTerlec,
             $t,
-            50,
+            80,
         );
     }
 
     protected function recargarModalCursosLista(): void
     {
         $ctx = schoolCtx();
-        if (! $ctx->idNivel || ! $ctx->idTerlec) {
+        if (! $ctx->idTerlec) {
             $this->modalCursosLista = [];
 
             return;
         }
 
-        $all = DestinatariosRepository::cursosDelContexto((int) $ctx->idNivel, (int) $ctx->idTerlec);
+        $all = DestinatariosEmailsMasivos::cursosDelContexto((int) $ctx->idTerlec);
         $f = mb_strtolower(trim($this->modalCursosFiltro));
         if ($f !== '') {
             $all = array_values(array_filter(

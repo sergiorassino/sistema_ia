@@ -107,7 +107,9 @@ class EmailsMasivosEnviar extends Component
             'superaAviso' => $nEnvios > EmailsMasivosConfig::maxDestinatariosAviso()
                 && $nEnvios <= EmailsMasivosConfig::maxDestinatariosPorEnvio(),
             'simulado' => EmailsMasivosConfig::simulado(),
-            'lineasPorCurso' => collect($this->lineasAlumnos)->groupBy('idCurso'),
+            'lineasPorCurso' => collect($this->lineasAlumnos)
+                ->map(fn (array $linea, int $index) => $linea + ['_i' => $index])
+                ->groupBy('idCurso'),
             'adjuntosLista' => DestinatariosEmailsMasivos::parseAttached($this->attached),
             'envioCompletado' => $this->resultadoDestinatarios !== [],
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Enviar correo masivo']);
