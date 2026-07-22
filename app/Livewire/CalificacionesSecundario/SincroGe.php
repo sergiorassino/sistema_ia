@@ -277,7 +277,13 @@ class SincroGe extends Component
 
     public function render()
     {
-        return view('livewire.calificaciones-secundario.sincro-ge')
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar calificaciones desde CIDI (secundario)']);
+        $cicloAno = schoolCtx()->terlecAno();
+        $anoCalendario = (int) now()->format('Y');
+
+        return view('livewire.calificaciones-secundario.sincro-ge', [
+            'cicloAnoSesion' => $cicloAno,
+            'anoCalendario' => $anoCalendario,
+            'cicloDistintoAlAnoActual' => $cicloAno !== null && (int) $cicloAno !== $anoCalendario,
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar calificaciones desde CIDI (secundario)']);
     }
 }

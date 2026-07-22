@@ -13,11 +13,43 @@
         $lineaDia ?? '',
         ! empty($turnoTitulo) ? 'Turno: '.$turnoTitulo : '',
     ])->map(fn ($v) => trim((string) $v))->filter()->implode(' · ');
+
+    // Impreso sobre media A4 vertical / A5 (148 × 210 mm), centrada en bandeja A4.
+    $altoImpresoMm = 210.0;
+    $padTopMm = 8.0;
+    $padBottomMm = 6.0;
+    $altoUtilMm = $altoImpresoMm - $padTopMm - $padBottomMm;
+
+    $renglonesManual = 12;
+    $altoCabeceraMm = 16.5;
+    $altoMetaMm = 10.0;
+    $gapMm = 1.5;
+    // Filas de título de ambas grillas: compactas para no desbordar la media hoja.
+    $altoThMm = 3.0;
+    $altoFilaManualMm = 4.0;
+
+    $filasHorario = is_array($filasHorario ?? null) ? $filasHorario : [];
+    $nFirmas = max(1, count($filasHorario));
+
+    $altoBloqueManualMm = $altoThMm + ($renglonesManual * $altoFilaManualMm);
+    $altoFijoMm = $altoCabeceraMm + $altoMetaMm + $gapMm
+        + $altoBloqueManualMm + $gapMm + $altoThMm;
+    // Holgura: el render DomPDF suele superar un poco las estimaciones de cabecera/meta.
+    $holguraMm = 3.0;
+    $altoCuerpoFirmasMm = max($nFirmas * 5.5, $altoUtilMm - $altoFijoMm - $holguraMm);
+    $altoFilaFirmaMm = round(($altoCuerpoFirmasMm / $nFirmas) * 0.98, 2);
+
+    $hManual = number_format($altoFilaManualMm, 2, '.', '');
+    $hTh = number_format($altoThMm, 2, '.', '');
+    $hFirma = number_format($altoFilaFirmaMm, 2, '.', '');
+    $hImpreso = number_format($altoImpresoMm, 2, '.', '');
+    $padTop = number_format($padTopMm, 2, '.', '');
+    $padBottom = number_format($padBottomMm, 2, '.', '');
 @endphp
 
-<table class="pagina-margenes" cellspacing="0" cellpadding="0" border="0" style="width:15cm;max-width:15cm;margin:0 0 0 22mm;border-collapse:collapse;border-spacing:0;">
+<table class="pagina-margenes" cellspacing="0" cellpadding="0" border="0" style="width:15cm;max-width:15cm;height:{{ $hImpreso }}mm;margin:0 0 0 22mm;border-collapse:collapse;border-spacing:0;">
 <tr>
-<td class="celda-pagina" style="vertical-align:top;text-align:left;box-sizing:border-box;width:15cm;max-width:15cm;padding:12mm 8mm 10mm 8mm;border:0;margin:0;">
+<td class="celda-pagina" style="vertical-align:top;text-align:left;box-sizing:border-box;width:15cm;max-width:15cm;height:{{ $hImpreso }}mm;padding:{{ $padTop }}mm 8mm {{ $padBottom }}mm 8mm;border:0;margin:0;">
 
 <div class="cabecera-institucional" style="width:calc(100% - 12px - 1.5pt);max-width:calc(100% - 12px - 1.5pt);overflow:hidden;">
     <table cellspacing="0" cellpadding="0" border="0">
@@ -97,17 +129,17 @@
 <table class="grid">
     <thead>
     <tr>
-        <th style="width:{{ $pA }}%;min-width:0;max-width:{{ $pA }}%;overflow:hidden;">Estudiantes Ausentes</th>
-        <th style="width:{{ $pB }}%;min-width:0;max-width:{{ $pB }}%;overflow:hidden;">Estudiantes Retirados</th>
-        <th style="width:{{ $pC }}%;min-width:0;max-width:{{ $pC }}%;overflow:hidden;">Observaciones</th>
+        <th style="width:{{ $pA }}%;min-width:0;max-width:{{ $pA }}%;height:{{ $hTh }}mm;overflow:hidden;">Estudiantes Ausentes</th>
+        <th style="width:{{ $pB }}%;min-width:0;max-width:{{ $pB }}%;height:{{ $hTh }}mm;overflow:hidden;">Estudiantes Retirados</th>
+        <th style="width:{{ $pC }}%;min-width:0;max-width:{{ $pC }}%;height:{{ $hTh }}mm;overflow:hidden;">Observaciones</th>
     </tr>
     </thead>
     <tbody>
-    @for ($r = 0; $r < 10; $r++)
+    @for ($r = 0; $r < $renglonesManual; $r++)
         <tr>
-            <td class="celda-manual" style="width:{{ $pA }}%;min-width:0;max-width:{{ $pA }}%;overflow:hidden;">&nbsp;</td>
-            <td class="celda-manual" style="width:{{ $pB }}%;min-width:0;max-width:{{ $pB }}%;overflow:hidden;">&nbsp;</td>
-            <td class="celda-manual" style="width:{{ $pC }}%;min-width:0;max-width:{{ $pC }}%;overflow:hidden;">&nbsp;</td>
+            <td class="celda-manual" style="width:{{ $pA }}%;min-width:0;max-width:{{ $pA }}%;height:{{ $hManual }}mm;overflow:hidden;">&nbsp;</td>
+            <td class="celda-manual" style="width:{{ $pB }}%;min-width:0;max-width:{{ $pB }}%;height:{{ $hManual }}mm;overflow:hidden;">&nbsp;</td>
+            <td class="celda-manual" style="width:{{ $pC }}%;min-width:0;max-width:{{ $pC }}%;height:{{ $hManual }}mm;overflow:hidden;">&nbsp;</td>
         </tr>
     @endfor
     </tbody>
@@ -122,21 +154,21 @@
     $pF = number_format($wF, 2, '.', '');
 @endphp
 
-<table class="grid">
+<table class="grid" style="margin-bottom:0;">
     <thead>
     <tr>
-        <th style="width:{{ $pH }}%;min-width:0;max-width:{{ $pH }}%;overflow:hidden;">&nbsp;</th>
-        <th style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;overflow:hidden;">Espacios curriculares</th>
-        <th style="width:{{ $pF }}%;min-width:0;max-width:{{ $pF }}%;overflow:hidden;">Firma del profesor</th>
+        <th style="width:{{ $pH }}%;min-width:0;max-width:{{ $pH }}%;height:{{ $hTh }}mm;overflow:hidden;">&nbsp;</th>
+        <th style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;height:{{ $hTh }}mm;overflow:hidden;">Espacios curriculares</th>
+        <th style="width:{{ $pF }}%;min-width:0;max-width:{{ $pF }}%;height:{{ $hTh }}mm;overflow:hidden;">Firma del profesor</th>
     </tr>
     </thead>
     <tbody>
     @foreach ($filasHorario as $fila)
         <tr>
-            <td class="celda-hora" style="width:{{ $pH }}%;min-width:0;max-width:{{ $pH }}%;overflow:hidden;">
+            <td class="celda-hora" style="width:{{ $pH }}%;min-width:0;max-width:{{ $pH }}%;height:{{ $hFirma }}mm;overflow:hidden;">
                 {{ $fila['etiquetaReloj'] }}
             </td>
-            <td class="celda-espacio" style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;overflow:hidden;">
+            <td class="celda-espacio" style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;height:{{ $hFirma }}mm;overflow:hidden;">
                 @php $lineasEsp = preg_split("/\r\n|\n|\r/", (string) ($fila['espacio'] ?? '')) ?: []; @endphp
                 @foreach ($lineasEsp as $ln)
                     @if (trim($ln) !== '')
@@ -144,7 +176,7 @@
                     @endif
                 @endforeach
             </td>
-            <td class="celda-firma" style="width:{{ $pF }}%;min-width:0;max-width:{{ $pF }}%;overflow:hidden;">&nbsp;</td>
+            <td class="celda-firma" style="width:{{ $pF }}%;min-width:0;max-width:{{ $pF }}%;height:{{ $hFirma }}mm;overflow:hidden;">&nbsp;</td>
         </tr>
     @endforeach
     </tbody>

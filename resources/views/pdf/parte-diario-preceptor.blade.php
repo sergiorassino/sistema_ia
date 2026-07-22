@@ -1,5 +1,6 @@
 {{--
-  Parte diario — hoja A4; una o más páginas (un curso por hoja).
+  Parte diario — PDF A4; impreso útil = media A4 vertical / A5 (148 × 210 mm).
+  Una o más páginas (un curso por hoja).
 --}}
 <!DOCTYPE html>
 <html lang="es">
@@ -43,13 +44,13 @@
             width: 15cm;
             max-width: 15cm;
             box-sizing: border-box;
-            padding: 12mm 8mm 10mm 8mm;
+            padding: 8mm 8mm 6mm 8mm;
             border: 0;
         }
         .cabecera-institucional {
             width: calc(100% - 12px - 1.5pt);
             max-width: calc(100% - 12px - 1.5pt);
-            margin: 0 0 6px 0;
+            margin: 0 0 1.5mm 0;
             border: 0.75pt solid #111;
             border-radius: 8px;
             padding: 4px 6px;
@@ -91,7 +92,7 @@
         }
         .fila-meta {
             width: 100%;
-            margin: 2px 0 4px 0;
+            margin: 0 0 1.5mm 0;
             font-size: 6.5pt;
         }
         .fila-meta table { width: 100%; border-collapse: collapse; }
@@ -128,7 +129,7 @@
             max-width: 100%;
             table-layout: fixed;
             border-collapse: collapse;
-            margin-bottom: 4px;
+            margin-bottom: 1.5mm;
             box-sizing: border-box;
         }
         table.grid th, table.grid td {
@@ -142,22 +143,27 @@
         table.grid th {
             text-align: center;
             font-weight: 700;
-            font-size: 6pt;
-            padding: 2px;
+            font-size: 5.5pt;
+            line-height: 1;
+            padding: 0 2px;
+            vertical-align: middle;
         }
-        .celda-manual { height: 11px; }
         .celda-hora {
             text-align: center;
             font-size: 5.8pt;
             font-weight: 700;
             padding: 1px 2px;
+            vertical-align: middle;
         }
         .celda-espacio {
             text-align: left;
             font-size: 6pt;
             line-height: 1.1;
+            vertical-align: middle;
         }
-        .celda-firma { height: 14px; }
+        .celda-firma {
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
