@@ -59,10 +59,14 @@ final class DesempenosCsvColumnMapper
                 $this->map['nombre'] = $i;
             } elseif (str_contains($h, 'desem')) {
                 $this->map['desemp'] = $i;
+            } elseif (
+                // «Injustificadas» también contiene «justificad»: evaluar injust primero.
+                str_contains($h, 'injust')
+                || (str_contains($h, 'inasist') && str_contains($h, 'injust'))
+            ) {
+                $this->map['inju'] = $i;
             } elseif (str_contains($h, 'justificad') && $this->map['just'] === null) {
                 $this->map['just'] = $i;
-            } elseif (str_contains($h, 'injust') || (str_contains($h, 'inasist') && str_contains($h, 'injust'))) {
-                $this->map['inju'] = $i;
             } elseif (str_contains($h, 'inasist') && $this->map['just'] === null) {
                 $this->map['just'] = $i;
             }

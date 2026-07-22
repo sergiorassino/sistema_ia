@@ -2,7 +2,9 @@
 
 namespace App\Services\SincroDesempenos;
 
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\SincroDesempenos\DesempenosCsvColumnMapper;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -155,11 +157,52 @@ final class DesempenosCsvImporter
 
                 $payload = [
                     $updateFields[0] => $campos['desemp'],
-                    $updateFields[1] => $campos['just'],
-                    $updateFields[2] => $campos['inju'],
+                    $updateFields[1] => $this->normalizarInasistencia($campos['just']),
+                    $updateFields[2] => $this->normalizarInasistencia($campos['inju']),
                 ];
 
-                DB::table('matricula')->where('id', $idMatricula)->update($payload);
+                $preparado = PersistenciaColumnas::prepararPayload('matricula', $payload);
+                if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'columnas_inexistentes',
+                        PersistenciaColumnas::mensajeColumnasInexistentes(
+                            'matricula',
+                            $preparado['columnas_con_valor_sin_columna']
+                        ),
+                        $context
+                    );
+
+                    continue;
+                }
+
+                if ($preparado['payload'] === []) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'sin_columnas',
+                        'No hay columnas de desempeño/inasistencias disponibles en matrícula para este tenant.',
+                        $context
+                    );
+
+                    continue;
+                }
+
+                try {
+                    DB::table('matricula')->where('id', $idMatricula)->update($preparado['payload']);
+                } catch (QueryException $e) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'error_bd',
+                        PersistenciaColumnas::mensajeDesdeQueryException($e)
+                            ?? 'No se pudo actualizar la matrícula.',
+                        $context
+                    );
+
+                    continue;
+                }
 
                 $updatedRows++;
                 $pendingUpdates++;
@@ -230,6 +273,30 @@ final class DesempenosCsvImporter
         }
 
         return null;
+    }
+
+    /**
+     * Normaliza el conteo de inasistencias del CSV (acepta vacío → cadena vacía; numérico → texto limpio).
+     */
+    private function normalizarInasistencia(string $raw): string
+    {
+        $texto = trim($raw);
+        if ($texto === '') {
+            return '';
+        }
+
+        // "0", "0.0", "1", "1,5" → conservar dígitos útiles sin basura.
+        $normalizado = str_replace(',', '.', $texto);
+        if (is_numeric($normalizado)) {
+            $float = (float) $normalizado;
+            if ($float == (int) $float) {
+                return (string) (int) $float;
+            }
+
+            return rtrim(rtrim(sprintf('%.2f', $float), '0'), '.');
+        }
+
+        return $texto;
     }
 
     private function resolveCursoId(int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?int
