@@ -59,7 +59,7 @@ final class BoletinIpeSanJoseDatos
 
         $grado = (int) ($matricula->curso?->c ?? 0);
         $cicloEscolar = BoletinIpeSanJoseLayout::cicloEscolarDesdeGrado($grado);
-        $columnas = self::armarColumnasBoletin($form);
+        $columnas = self::armarColumnasBoletin($form, $matricula);
 
         $legajo = $matricula->legajo;
         $apellido = trim((string) ($legajo?->apellido ?? ''));
@@ -88,12 +88,13 @@ final class BoletinIpeSanJoseDatos
     }
 
     /**
-     * Columnas del PDF: oficiales (izq.), institucionales (centro) e inasistencias (vacías en encabezado).
+     * Columnas del PDF: oficiales (izq.), institucionales (centro) e inasistencias
+     * (`matricula.just1`/`inju1` en 1ª etapa, `just2`/`inju2` en 2ª; de la sync de desempeños GE).
      *
      * @param  array{materias: Collection<int, object>, notas: array<int, array{ic01: string, ic02: string, ic03: string}>}  $form
      * @return list<array{ord: int, materia: string, ic01: string, ic02: string, ic03: string}>
      */
-    private static function armarColumnasBoletin(array $form): array
+    private static function armarColumnasBoletin(array $form, Matricula $matricula): array
     {
         $slots = BoletinIpeSanJoseLayout::slots();
         $columnas = array_fill(0, $slots['total'], self::columnaVacia());
@@ -121,7 +122,41 @@ final class BoletinIpeSanJoseDatos
             $columnas[$slots['offsetInstit'] + $i] = self::columnaDesdeMateria($m, $form);
         }
 
+        $offsetIna = $slots['offsetInasist'];
+        $columnas[$offsetIna] = [
+            'ord' => 0,
+            'materia' => 'Justificadas',
+            'ic01' => self::formatoInasistencia($matricula->just1 ?? null),
+            'ic02' => self::formatoInasistencia($matricula->just2 ?? null),
+            'ic03' => '',
+        ];
+        $columnas[$offsetIna + 1] = [
+            'ord' => 0,
+            'materia' => 'Injustificadas',
+            'ic01' => self::formatoInasistencia($matricula->inju1 ?? null),
+            'ic02' => self::formatoInasistencia($matricula->inju2 ?? null),
+            'ic03' => '',
+        ];
+
         return $columnas;
+    }
+
+    private static function formatoInasistencia(mixed $valor): string
+    {
+        if ($valor === null) {
+            return '';
+        }
+
+        $texto = trim((string) $valor);
+        if ($texto === '') {
+            return '';
+        }
+
+        if (is_numeric($texto) && (float) $texto == 0.0) {
+            return '0';
+        }
+
+        return $texto;
     }
 
     /**
