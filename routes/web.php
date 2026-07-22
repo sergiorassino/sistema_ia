@@ -1002,15 +1002,15 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/examenes/tercer-materia/acta-compromiso/{idCalificacion}', ActaCompromisoTercerMateriaPdfController::class)
             ->whereNumber('idCalificacion')
             ->name('examenes.tercer-materia.acta-compromiso.pdf');
-        Route::get('/doc-pp', DocPpIndex::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
-            ->name('doc-pp.index');
+    });
+
+    // Planificaciones y programas (doc_pp): permiso 86 — fuera del grupo de exámenes (12)
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)->group(function () {
+        Route::get('/doc-pp', DocPpIndex::class)->name('doc-pp.index');
         Route::get('/doc-pp/archivo/{ref}', DocPpArchivoController::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
             ->where('ref', '[A-Za-z0-9_-]+')
             ->name('doc-pp.archivo');
         Route::get('/doc-pp/{id}/{tipo}', DocPpForm::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PLANIFICACIONES_PROGRAMAS)
             ->whereNumber('id')
             ->whereIn('tipo', ['plan', 'prog'])
             ->name('doc-pp.form');
