@@ -107,6 +107,38 @@ final class GeCsvImporter
     private array $notasPermitidas = [];
 
     /**
+     * Tope de fragmentos a unir cuando GE inserta saltos de línea sin comillas
+     * en textos largos (p. ej. «Apren. Eval.»).
+     */
+    private const MAX_ROW_STITCH = 20;
+
+    /**
+     * Une dos resultados consecutivos de fgetcsv: el salto de línea no citado
+     * queda dentro del último campo de $first y el resto de columnas de $next se anexan.
+     *
+     * @param  list<string|null>  $first
+     * @param  list<string|null>  $next
+     * @return list<string|null>
+     */
+    public static function mergeRowFragments(array $first, array $next): array
+    {
+        if ($first === []) {
+            return $next;
+        }
+
+        $merged = $first;
+        $lastIdx = count($merged) - 1;
+        $merged[$lastIdx] = (string) ($merged[$lastIdx] ?? '')."\n".(string) ($next[0] ?? '');
+
+        $n = count($next);
+        for ($i = 1; $i < $n; $i++) {
+            $merged[] = $next[$i];
+        }
+
+        return $merged;
+    }
+
+    /**
      * Valida el encabezado contra el layout GE/CIDI secundario vigente.
      * Devuelve mensaje de error o null si es válido. No escribe en BD.
      *
@@ -190,7 +222,7 @@ final class GeCsvImporter
 
             DB::beginTransaction();
 
-            while (($rawRow = fgetcsv($handle, 0, self::DELIMITER)) !== false) {
+            while (($rawRow = $this->readLogicalCsvRow($handle)) !== false) {
                 $lineNumber++;
 
                 if ($this->isEmptyRow($rawRow)) {
@@ -367,6 +399,60 @@ final class GeCsvImporter
     }
 
     /**
+     * Lee una fila lógica del CSV GE/CIDI.
+     *
+     * GE a veces exporta textos largos (Apren. Eval.) con saltos de línea reales
+     * y sin comillas CSV. Eso parte una sola fila en varios fgetcsv (y deja
+     * restos tipo «;;;;;;;;INSCRIPTO»). Acá se reensamblan hasta completar
+     * EXPECTED_COLUMN_COUNT, sin absorber la siguiente fila de alumno.
+     *
+     * @param  resource  $handle
+     * @return list<string|null>|false
+     */
+    private function readLogicalCsvRow($handle): array|false
+    {
+        $row = fgetcsv($handle, 0, self::DELIMITER);
+        if ($row === false) {
+            return false;
+        }
+
+        $merges = 0;
+        while (count($row) < self::EXPECTED_COLUMN_COUNT && $merges < self::MAX_ROW_STITCH) {
+            $pos = ftell($handle);
+            if ($pos === false) {
+                break;
+            }
+
+            $next = fgetcsv($handle, 0, self::DELIMITER);
+            if ($next === false) {
+                break;
+            }
+
+            // No fusionar si el siguiente fragmento ya es una fila nueva de alumno.
+            if ($this->pareceInicioDeFilaGe($next)) {
+                fseek($handle, $pos);
+
+                break;
+            }
+
+            $row = self::mergeRowFragments($row, $next);
+            $merges++;
+        }
+
+        return $row;
+    }
+
+    /**
+     * @param  list<string|null>  $row
+     */
+    private function pareceInicioDeFilaGe(array $row): bool
+    {
+        $curso = mb_strtoupper(trim((string) ($row[0] ?? '')), 'UTF-8');
+
+        return isset(self::CURSO_TEXTO[$curso]);
+    }
+
+    /**
      * @param  list<string|null>  $rawRow
      * @return list<string>
      */
@@ -384,6 +470,9 @@ final class GeCsvImporter
             if (! mb_check_encoding($s, 'UTF-8')) {
                 $s = mb_convert_encoding($s, 'UTF-8', 'ISO-8859-1');
             }
+
+            // Textos de Apren. partidos por CRLF: una sola línea para no ensuciar payload/contextos.
+            $s = preg_replace("/[\r\n]+/u", ' ', $s) ?? $s;
 
             $out[] = trim($s);
         }
