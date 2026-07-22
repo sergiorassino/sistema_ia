@@ -63,7 +63,7 @@
         <div class="space-y-2 text-sm text-neutral-600">
             <p>Suba el archivo <strong>CSV</strong> exportado desde GE/CIDI (separador punto y coma). El layout actual debe tener exactamente <strong>{{ \App\Services\SincroGe\GeCsvImporter::EXPECTED_COLUMN_COUNT }} columnas</strong>; si GE cambia la cantidad, el sistema avisará y no importará datos.</p>
             <ul class="list-disc space-y-1 pl-5">
-                <li>Si GE parte una fila por textos largos en «Apren. Eval.» (saltos de línea sin comillas), el sistema la reensambla y no cuenta esos restos vacíos como filas.</li>
+                <li>Si GE parte una fila por textos largos en «Apren. Eval.» (saltos de línea sin comillas), el sistema la reensambla —incluidas continuaciones ya rellenadas a 82 columnas— y no cuenta esos restos como filas.</li>
                 <li>Se sobrescriben siempre <code class="text-xs">ic01</code>–<code class="text-xs">ic28</code> y <code class="text-xs">calif</code> con lo que traiga el CSV; las celdas vacías borran el valor en el sistema (útil si en GE se borró una nota).</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel</strong> de su sesión actual.</li>
                 <li>El sistema debe encontrar <strong>exactamente un</strong> registro de notas del alumno para esa materia y ese año lectivo: mismo alumno (DNI), mismo ciclo lectivo que tiene seleccionado y misma materia del curso que coincide con el código del CSV. Es el mismo criterio que si cargara las notas en <strong>Carga de calificaciones</strong> eligiendo curso y materia. Si no existe ese registro o hay más de uno duplicado, la fila del archivo se marca en el informe y no se graba.</li>
