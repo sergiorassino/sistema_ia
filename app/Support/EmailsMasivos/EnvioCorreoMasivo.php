@@ -226,13 +226,18 @@ final class EnvioCorreoMasivo
     ): void {
         $fechhora = now();
         foreach ($destinatarios as $d) {
+            $idNivelEnvio = (int) ($d['idNivel'] ?? 0);
+            if ($idNivelEnvio < 1) {
+                $idNivelEnvio = $idNivel;
+            }
+
             EmailEnviado::query()->create([
                 'mailDestino' => $d['email'],
                 'fechhora' => $fechhora,
                 'idProfesores' => (int) $profesor->id,
                 'idLegajos' => $d['idLegajo'],
                 'idCursos' => $d['idCurso'],
-                'idNiveles' => $idNivel,
+                'idNiveles' => $idNivelEnvio,
                 'idTerlec' => $idTerlec,
                 'subject' => mb_substr(trim($asunto), 0, 254),
                 'texto' => $html,

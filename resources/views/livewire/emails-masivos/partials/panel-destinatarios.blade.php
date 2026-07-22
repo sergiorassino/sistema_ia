@@ -56,7 +56,7 @@
         <div class="max-h-56 overflow-y-auto rounded-xl border border-accent-200">
             @if ($tipoDestino === 'cursos')
                 @foreach ($lineasPorCurso as $idCurso => $lineas)
-                    <div class="border-b border-accent-100 px-3 py-2">
+                    <div class="border-b border-accent-100 px-3 py-2" wire:key="curso-lineas-{{ $idCurso }}">
                         <div class="flex justify-between text-xs font-semibold uppercase text-neutral-600">
                             <span>{{ $lineas->first()['cursoLabel'] ?? 'Curso' }}</span>
                             <span>
@@ -66,17 +66,21 @@
                             </span>
                         </div>
                         @foreach ($lineas as $linea)
-                            <label class="mt-1 flex items-center gap-2 text-sm">
-                                <input type="checkbox" wire:click.prevent="toggleLineaAlumno('{{ $linea['key'] }}')" @checked(! empty($linea['marcado']))>
+                            <label wire:key="linea-{{ $linea['key'] }}" class="mt-1 flex items-center gap-2 text-sm">
+                                <input type="checkbox"
+                                       class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                                       wire:model.live="lineasAlumnos.{{ $linea['_i'] }}.marcado">
                                 {{ $linea['label'] }}
                             </label>
                         @endforeach
                     </div>
                 @endforeach
             @else
-                @foreach ($lineasAlumnos as $linea)
-                    <label class="flex items-center gap-2 border-b border-accent-50 px-3 py-2 text-sm">
-                        <input type="checkbox" wire:click.prevent="toggleLineaAlumno('{{ $linea['key'] }}')" @checked(! empty($linea['marcado']))>
+                @foreach ($lineasAlumnos as $index => $linea)
+                    <label wire:key="linea-{{ $linea['key'] }}" class="flex items-center gap-2 border-b border-accent-50 px-3 py-2 text-sm">
+                        <input type="checkbox"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                               wire:model.live="lineasAlumnos.{{ $index }}.marcado">
                         {{ $linea['label'] }}
                     </label>
                 @endforeach

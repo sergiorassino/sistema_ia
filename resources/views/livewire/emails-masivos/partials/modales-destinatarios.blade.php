@@ -12,10 +12,26 @@
                     @forelse ($modalAlumnosLista as $a)
                         <label class="flex items-center gap-2 border-b border-accent-50 py-2 text-sm">
                             <input type="checkbox" value="{{ $a['id'] }}" wire:model="modalAlumnosMarcados">
-                            <span>{{ $a['label'] }} @if($a['dni'])<span class="text-neutral-500">· DNI {{ $a['dni'] }}</span>@endif</span>
+                            <span class="min-w-0">
+                                <span class="font-medium text-neutral-900">{{ $a['label'] }}</span>
+                                @if (! empty($a['nivelLabel']) || ! empty($a['cursoLabel']))
+                                    <span class="text-neutral-500">
+                                        · {{ trim(implode(' · ', array_filter([(string) ($a['nivelLabel'] ?? ''), (string) ($a['cursoLabel'] ?? '')]))) }}
+                                    </span>
+                                @endif
+                                @if (! empty($a['dni']))
+                                    <span class="text-neutral-400">· DNI {{ $a['dni'] }}</span>
+                                @endif
+                            </span>
                         </label>
                     @empty
-                        <p class="py-6 text-center text-sm text-neutral-500">Escriba al menos un carácter para buscar.</p>
+                        <p class="py-6 text-center text-sm text-neutral-500">
+                            @if (trim($modalAlumnosFiltro) === '')
+                                Escriba apellido, nombre o DNI para buscar en todos los niveles del ciclo.
+                            @else
+                                No hay alumnos regulares que coincidan.
+                            @endif
+                        </p>
                     @endforelse
                 </div>
                 <div class="flex shrink-0 justify-end gap-2 border-t border-accent-100 bg-accent-50 px-5 py-4">

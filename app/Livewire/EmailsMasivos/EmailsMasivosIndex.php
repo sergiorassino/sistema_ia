@@ -44,7 +44,7 @@ class EmailsMasivosIndex extends Component
         }
 
         $ctx = schoolCtx();
-        if (EmailsMasivosEscritoEnvios::escritoTieneEnvios($escrito, (int) $ctx->idNivel)) {
+        if (EmailsMasivosEscritoEnvios::escritoTieneEnvios($escrito)) {
             $this->dispatch(
                 'se-swal-error',
                 mensaje: 'Este mensaje ya fue enviado. Elimine primero todos los envíos registrados en el historial.',
@@ -78,16 +78,12 @@ class EmailsMasivosIndex extends Component
                 DB::raw('SUBSTRING(`text`, 1, 220) AS text'),
             ])
             ->paginate(25);
-        $ctx = schoolCtx();
 
         $filasEnvio = EmailEscrito::query()
             ->whereIn('id', $escritos->pluck('id'))
             ->get(['id', 'subject', 'text', 'attached']);
 
-        $escritosConEnvios = EmailsMasivosEscritoEnvios::idsConEnvios(
-            $filasEnvio,
-            (int) $ctx->idNivel,
-        );
+        $escritosConEnvios = EmailsMasivosEscritoEnvios::idsConEnvios($filasEnvio);
 
         return view('livewire.emails-masivos.emails-masivos-index', [
             'escritos' => $escritos,

@@ -9,6 +9,7 @@ use App\Support\EmailsMasivos\DestinatariosEmailsMasivos;
 use App\Support\EmailsMasivos\EmailsMasivosAdjuntosStorage;
 use App\Support\EmailsMasivos\EmailsMasivosEscritoEnvios;
 use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -34,15 +35,14 @@ class EmailsMasivosCampanaShow extends Component
             return;
         }
 
-        $ctx = schoolCtx();
-        $seed = EmailsMasivosEscritoEnvios::seedEnAlcance($this->idSeed, (int) $ctx->idNivel);
+        $seed = EmailsMasivosEscritoEnvios::seedEnAlcance($this->idSeed);
         if ($seed === null) {
             $this->dispatch('se-swal-error', mensaje: 'El envío ya no existe.');
 
             return;
         }
 
-        $total = EmailsMasivosEscritoEnvios::eliminarCampana($seed, (int) $ctx->idNivel);
+        $total = EmailsMasivosEscritoEnvios::eliminarCampana($seed);
         if ($total <= 0) {
             $this->dispatch('se-swal-error', mensaje: 'No se encontraron registros de envío para eliminar.');
 
@@ -55,22 +55,21 @@ class EmailsMasivosCampanaShow extends Component
 
     public function render()
     {
-        $ctx = schoolCtx();
-        $seed = EmailEnviado::query()
-            ->where('id', $this->idSeed)
-            ->where('idNiveles', (int) $ctx->idNivel)
-            ->first();
+        $seedQuery = EmailEnviado::query()->where('id', $this->idSeed);
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($seedQuery, 'idNiveles');
+        $seed = $seedQuery->first();
 
         abort_if($seed === null, 404);
 
-        $envios = EmailEnviado::query()
+        $enviosQuery = EmailEnviado::query()
             ->from('emails_enviados as e')
             ->leftJoin('legajos as l', 'l.id', '=', 'e.idLegajos')
             ->where('e.idProfesores', $seed->idProfesores)
             ->where('e.fechhora', $seed->fechhora)
             ->where('e.subject', $seed->subject)
-            ->where('e.texto', $seed->texto)
-            ->where('e.idNiveles', (int) $ctx->idNivel)
+            ->where('e.texto', $seed->texto);
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($enviosQuery, 'e.idNiveles');
+        $envios = $enviosQuery
             ->orderBy('e.mailDestino')
             ->get([
                 'e.*',
