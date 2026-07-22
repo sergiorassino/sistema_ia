@@ -65,6 +65,9 @@ final class GeCsvImporter
     /** Índice fijo de «NOTA FINAL» en el layout GE actual (después de Apren. Eval. 1–8 y GRAL.). */
     public const COL_NOTA_FINAL = 80;
 
+    /** Índice fijo de «ESTADO» en el layout GE actual. */
+    private const COL_ESTADO = 81;
+
     /** Pares [nota, recup1, recup2] por evaluación → ic01..ic24. */
     private const EVAL_COLS = [
         [15, 17, 19],
@@ -136,6 +139,112 @@ final class GeCsvImporter
         }
 
         return $merged;
+    }
+
+    /**
+     * Une una continuación «rellenada» a 82 columnas (patrón NSSC/GE):
+     * la fila de alumno queda sin ESTADO y el resto del texto Apren./horarios
+     * + INSCRIPTO viene en la(s) línea(s) siguiente(s), cada una también con 82 cols.
+     *
+     * @param  list<string|null>  $base
+     * @param  list<string|null>  $cont
+     * @return list<string|null>
+     */
+    public static function mergePaddedContinuation(array $base, array $cont): array
+    {
+        $expected = self::EXPECTED_COLUMN_COUNT;
+        while (count($base) < $expected) {
+            $base[] = '';
+        }
+        $base = array_slice($base, 0, $expected);
+
+        $end = count($cont) - 1;
+        while ($end >= 0 && trim((string) ($cont[$end] ?? '')) === '') {
+            $end--;
+        }
+        if ($end < 0) {
+            return $base;
+        }
+        $useful = array_slice($cont, 0, $end + 1);
+
+        $padStart = $expected;
+        for ($i = $expected - 1; $i >= 0; $i--) {
+            if (trim((string) ($base[$i] ?? '')) !== '') {
+                $padStart = $i + 1;
+                break;
+            }
+        }
+
+        $slots = $expected - $padStart;
+        if ($slots <= 0) {
+            $last = $expected - 1;
+            for ($i = $expected - 1; $i >= 0; $i--) {
+                if (trim((string) ($base[$i] ?? '')) !== '') {
+                    $last = $i;
+                    break;
+                }
+            }
+            foreach ($useful as $val) {
+                if (trim((string) $val) === '') {
+                    continue;
+                }
+                $base[$last] = rtrim((string) ($base[$last] ?? ''))."\n".trim((string) $val);
+            }
+
+            return $base;
+        }
+
+        if (count($useful) > $slots) {
+            $useful = self::compressFieldsToSlots($useful, $slots);
+        }
+
+        foreach ($useful as $j => $val) {
+            $base[$padStart + $j] = $val;
+        }
+
+        return $base;
+    }
+
+    /**
+     * Reduce campos de una continuación al cupo de columnas vacías al final,
+     * quitando vacíos intermedios (GE suele meter un «;» de más al partir la línea).
+     *
+     * @param  list<string|null>  $fields
+     * @return list<string|null>
+     */
+    public static function compressFieldsToSlots(array $fields, int $slots): array
+    {
+        if ($slots < 1) {
+            return [];
+        }
+
+        while (count($fields) > $slots) {
+            $removed = false;
+            for ($i = count($fields) - 2; $i >= 1; $i--) {
+                if (trim((string) ($fields[$i] ?? '')) === '') {
+                    array_splice($fields, $i, 1);
+                    $removed = true;
+                    break;
+                }
+            }
+            if ($removed) {
+                continue;
+            }
+
+            $last = array_pop($fields);
+            while (count($fields) > $slots - 1) {
+                $extra = array_shift($fields);
+                if ($fields === []) {
+                    $fields[] = $extra;
+                    break;
+                }
+                $fields[0] = rtrim((string) ($fields[0] ?? '')).' '.trim((string) ($extra ?? ''));
+            }
+            $fields[] = $last;
+            break;
+        }
+
+        return $fields;
     }
 
     /**
@@ -401,10 +510,11 @@ final class GeCsvImporter
     /**
      * Lee una fila lógica del CSV GE/CIDI.
      *
-     * GE a veces exporta textos largos (Apren. Eval.) con saltos de línea reales
-     * y sin comillas CSV. Eso parte una sola fila en varios fgetcsv (y deja
-     * restos tipo «;;;;;;;;INSCRIPTO»). Acá se reensamblan hasta completar
-     * EXPECTED_COLUMN_COUNT, sin absorber la siguiente fila de alumno.
+     * GE a veces exporta textos largos (Apren. Eval. / horarios) con saltos de línea
+     * reales y sin comillas CSV. Hay dos variantes:
+     * 1) Fragmentos con menos de 82 columnas (p. ej. Montecristo).
+     * 2) Fragmentos ya «rellenados» a 82 columnas, sin ESTADO, y continuación
+     *    en la línea siguiente (p. ej. NSSC: «Operaciones básicas…» / «14:05»).
      *
      * @param  resource  $handle
      * @return list<string|null>|false
@@ -428,7 +538,6 @@ final class GeCsvImporter
                 break;
             }
 
-            // No fusionar si el siguiente fragmento ya es una fila nueva de alumno.
             if ($this->pareceInicioDeFilaGe($next)) {
                 fseek($handle, $pos);
 
@@ -437,6 +546,39 @@ final class GeCsvImporter
 
             $row = self::mergeRowFragments($row, $next);
             $merges++;
+        }
+
+        // Variante rellenada a 82 cols: fila de alumno sin ESTADO + continuaciones.
+        $padMerges = 0;
+        while (
+            $this->pareceInicioDeFilaGe($row)
+            && $this->estadoVacio($row)
+            && $padMerges < self::MAX_ROW_STITCH
+        ) {
+            $pos = ftell($handle);
+            if ($pos === false) {
+                break;
+            }
+
+            $next = fgetcsv($handle, 0, self::DELIMITER);
+            if ($next === false) {
+                break;
+            }
+
+            if ($this->pareceInicioDeFilaGe($next)) {
+                fseek($handle, $pos);
+
+                break;
+            }
+
+            if ($this->isEmptyRow($next)) {
+                $padMerges++;
+
+                continue;
+            }
+
+            $row = self::mergePaddedContinuation($row, $next);
+            $padMerges++;
         }
 
         return $row;
@@ -450,6 +592,14 @@ final class GeCsvImporter
         $curso = mb_strtoupper(trim((string) ($row[0] ?? '')), 'UTF-8');
 
         return isset(self::CURSO_TEXTO[$curso]);
+    }
+
+    /**
+     * @param  list<string|null>  $row
+     */
+    private function estadoVacio(array $row): bool
+    {
+        return trim((string) ($row[self::COL_ESTADO] ?? '')) === '';
     }
 
     /**
