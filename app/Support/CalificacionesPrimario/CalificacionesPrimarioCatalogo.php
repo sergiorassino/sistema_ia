@@ -384,6 +384,21 @@ final class CalificacionesPrimarioCatalogo
         return self::normalizarEtapaCargaMateria($etapa) === 2 ? 'obs2' : 'obs1';
     }
 
+    /**
+     * Columnas de inasistencias en `matricula` para la planilla PDF según etapa.
+     * Apreciación final no tiene par just/inju anual → sin campos.
+     *
+     * @return array{just: ?string, inju: ?string}
+     */
+    public static function camposInasistenciasPlanilla(int $etapa): array
+    {
+        return match (self::normalizarEtapaPlanilla($etapa)) {
+            2 => ['just' => 'just2', 'inju' => 'inju2'],
+            self::ETAPA_APRECIACION_FINAL => ['just' => null, 'inju' => null],
+            default => ['just' => 'just1', 'inju' => 'inju1'],
+        };
+    }
+
     /** @return list<string> */
     public static function camposNotaTodos(): array
     {

@@ -181,10 +181,14 @@ final class PlanillaCalificacionesPrimarioDatos
                     $notas[] = (string) ($notasPorMatricula[$idMatricula][$idMaterias] ?? '');
                 }
 
+                $inasistencias = self::inasistenciasDeMatricula($mat, $etapa);
+
                 $alumnos[] = [
                     'nro' => $nro,
                     'nombre' => trim($apellido.' '.$nombre),
                     'dni' => trim((string) ($legajo?->dni ?? '')),
+                    'justificadas' => $inasistencias['justificadas'],
+                    'injustificadas' => $inasistencias['injustificadas'],
                     'obsAnual' => trim((string) ($mat->obsAnual ?? '')),
                     'notas' => $notas,
                 ];
@@ -204,6 +208,42 @@ final class PlanillaCalificacionesPrimarioDatos
         }
 
         return $secciones;
+    }
+
+    /**
+     * Inasistencias de etapa desde `matricula` (just1/inju1 o just2/inju2).
+     *
+     * @return array{justificadas: string, injustificadas: string}
+     */
+    private static function inasistenciasDeMatricula(Matricula $mat, int $etapa): array
+    {
+        $campos = CalificacionesPrimarioCatalogo::camposInasistenciasPlanilla($etapa);
+        $campoJust = $campos['just'];
+        $campoInju = $campos['inju'];
+
+        return [
+            'justificadas' => $campoJust === null ? '' : self::formatoInasistencia($mat->{$campoJust} ?? null),
+            'injustificadas' => $campoInju === null ? '' : self::formatoInasistencia($mat->{$campoInju} ?? null),
+        ];
+    }
+
+    private static function formatoInasistencia(mixed $valor): string
+    {
+        if ($valor === null) {
+            return '';
+        }
+
+        $texto = trim((string) $valor);
+        if ($texto === '') {
+            return '';
+        }
+
+        // Evitar "0.0" / "0.00" cuando el legacy guarda cero numérico.
+        if (is_numeric($texto) && (float) $texto == 0.0) {
+            return '0';
+        }
+
+        return $texto;
     }
 
     /**
