@@ -32,7 +32,6 @@ class CorreoMasivoEstudiantesMail extends Mailable
 
         return new Envelope(
             from: new Address($this->emailRemitente, $this->nombreRemitente),
-            to: [new Address($this->emailRemitente, $this->nombreRemitente)],
             bcc: $bcc,
             subject: $this->asunto,
         );
