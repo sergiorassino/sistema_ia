@@ -944,22 +944,27 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     });
 
     // Material Didáctico — acceso: Admin (68) | Profesor (69) | Solo Lectura (70)
+    // Los órdenes separados por coma son OR (ver CheckPermiso con ...$ordenes).
     Route::prefix('material-didactico')->group(function () {
+        $pi = \App\Support\PermisosIaCatalog::class;
+
         // Listado: cualquiera con algún permiso del módulo puede ver
-        Route::get('/', ReservasDashboard::class)->name('material-didactico.index');
+        Route::get('/', ReservasDashboard::class)
+            ->middleware('permiso:'.$pi::RESERVA_MATERIAL_ADMIN.','.$pi::RESERVA_MATERIAL_PROFESOR.','.$pi::RESERVA_MATERIAL_LECTURA)
+            ->name('material-didactico.index');
 
         // Registrar y editar: Admin (68) o Profesor (69)
         Route::get('/reservar', ReservaForm::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN.','.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->middleware('permiso:'.$pi::RESERVA_MATERIAL_ADMIN.','.$pi::RESERVA_MATERIAL_PROFESOR)
             ->name('material-didactico.reservar');
         Route::get('/reservar/{id}/editar', ReservaForm::class)
             ->whereNumber('id')
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN.','.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_PROFESOR)
+            ->middleware('permiso:'.$pi::RESERVA_MATERIAL_ADMIN.','.$pi::RESERVA_MATERIAL_PROFESOR)
             ->name('material-didactico.reservar.edit');
 
         // Recursos (ABM): solo Admin
         Route::get('/recursos', RecursosAdmin::class)
-            ->middleware('permiso:'.\App\Support\PermisosIaCatalog::RESERVA_MATERIAL_ADMIN)
+            ->middleware('permiso:'.$pi::RESERVA_MATERIAL_ADMIN)
             ->name('material-didactico.recursos');
     });
 

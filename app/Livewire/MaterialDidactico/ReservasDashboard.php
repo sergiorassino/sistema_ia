@@ -41,7 +41,7 @@ class ReservasDashboard extends Component
         if ($this->esPortalDocente()) {
             abort_unless(tenantPortalDocenteRecursosDidacticosListado(), 404);
         } else {
-            abort_unless(rrdRol() !== null, 403);
+            abort_unless(rrdRol() !== null, 403, 'No tiene permiso para acceder a esta sección.');
         }
 
         $this->fecha = now()->format('Y-m-d');
