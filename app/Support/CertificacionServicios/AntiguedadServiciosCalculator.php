@@ -228,9 +228,9 @@ final class AntiguedadServiciosCalculator
             $ini = self::asDate($l['fechaInicio'] ?? null);
             $fin = self::asDate($l['fechaFin'] ?? null);
             $filasLicencias[] = self::diffYmd($ini, $fin);
-            $parcial = $l['parcial'] ?? null;
-            // Solo descuenta si está explícitamente en No (0). Vacío o Sí → no descuenta.
-            if ($parcial !== null && $parcial !== '' && ! self::esParcial($parcial)) {
+            $parcial = $l['parcial'] ?? 0;
+            // Descuenta salvo que sea explícitamente parcial (Sí). null/vacío/0 = No (legacy ScriptCase).
+            if (! self::esParcial($parcial)) {
                 $periodosLicNoParcial[] = ['inicio' => $ini, 'fin' => $fin];
             }
         }
