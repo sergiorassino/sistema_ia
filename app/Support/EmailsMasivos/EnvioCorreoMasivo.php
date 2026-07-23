@@ -57,10 +57,7 @@ final class EnvioCorreoMasivo
         $asunto = mb_substr(trim((string) $escrito->subject), 0, 254);
         $html = (string) $escrito->text;
         $attached = (string) ($escrito->attached ?? '');
-        $nombreRemitente = trim(($profesor->apellido ?? '') . ', ' . ($profesor->nombre ?? ''));
-        if ($nombreRemitente === ',') {
-            $nombreRemitente = 'Institución';
-        }
+        $nombreRemitente = self::nombreColegio($idNivel);
 
         $emailsBcc = array_map(static fn (array $d) => $d['email'], $destinatarios);
         $pathsAbs = EmailsMasivosAdjuntosStorage::pathsAbsolutosCampana($idTerlec, (int) $escrito->id, $attached);
@@ -244,6 +241,23 @@ final class EnvioCorreoMasivo
                 'attached' => $attached,
             ]);
         }
+    }
+
+    /**
+     * Nombre visible en el From del correo (institución del nivel, no el usuario SMTP).
+     */
+    private static function nombreColegio(int $idNivel): string
+    {
+        if ($idNivel > 0) {
+            $insti = trim((string) (DB::table('ento')->where('idNivel', $idNivel)->value('insti') ?? ''));
+            if ($insti !== '') {
+                return $insti;
+            }
+        }
+
+        $fallback = trim((string) schoolNombre());
+
+        return $fallback !== '' ? $fallback : 'Institución';
     }
 
     /**

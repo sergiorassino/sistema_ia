@@ -6,9 +6,11 @@
 
     $permAsignacionPpc = \App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO;
 
+    $permCertServicios = \App\Support\PermisosIaCatalog::CERTIFICACION_SERVICIOS;
+
 @endphp
 
-@if (tienePermiso($permLegajosDocente) || tienePermiso($permAsignacionPpc) || tienePermiso(23))
+@if (tienePermiso($permLegajosDocente) || tienePermiso($permAsignacionPpc) || tienePermiso(23) || tienePermiso($permCertServicios))
 
     <div class="mt-4"></div>
 
@@ -20,7 +22,7 @@
 
             @click="toggleGroup('docentes')"
 
-            title="{{ seSidebarTooltip('Docentes / Usuarios v1.0', [11, 48, 23]) }}">
+            title="{{ seSidebarTooltip('Docentes / Usuarios v1.0', [11, 48, 23, $permCertServicios]) }}">
 
         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 
@@ -192,6 +194,26 @@
 
             </a>
 
+        @endif
+
+        @if (tienePermiso($permCertServicios))
+            @php
+                if (! \Illuminate\Support\Facades\Route::has('docentes.certificacion-servicios')) {
+                    throw new \RuntimeException("Sidebar: falta la ruta 'docentes.certificacion-servicios'.");
+                }
+            @endphp
+            <a href="{{ route('docentes.certificacion-servicios') }}"
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                   'is-active shadow-sm' => str_starts_with($route ?? '', 'docentes.certificacion-servicios'),
+               ])
+               title="{{ seSidebarTooltip('Certificación de servicios', $permCertServicios) }}">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="truncate">Certificación de servicios</span>
+            </a>
         @endif
 
     </div>
