@@ -105,11 +105,8 @@ final class CertificacionServicios
             ->orderBy('idlicencias')
             ->get()
             ->map(static function (LicenciaDocente $r): array {
-                $parcialRaw = $r->parcial;
-                $parcial = '';
-                if ($parcialRaw !== null && trim((string) $parcialRaw) !== '') {
-                    $parcial = AntiguedadServiciosCalculator::esParcial($parcialRaw) ? 1 : 0;
-                }
+                // Legacy ScriptCase: null se comporta como No (0). En UI siempre '0'/'1' (string) para el <select>.
+                $parcial = AntiguedadServiciosCalculator::esParcial($r->parcial) ? '1' : '0';
 
                 return [
                     'id' => (int) $r->idlicencias,
@@ -312,7 +309,7 @@ final class CertificacionServicios
             $filasLicencias[] = [
                 'fechaInicio' => self::fechaParaMostrar($l['fechaInicio']),
                 'fechaFin' => self::fechaParaMostrar($l['fechaFin']),
-                'parcial' => ((string) ($l['parcial'] ?? '') === '1' || (int) ($l['parcial'] ?? -1) === 1) ? 'Si' : (((string) ($l['parcial'] ?? '') === '0' || (int) ($l['parcial'] ?? -1) === 0) ? 'No' : '—'),
+                'parcial' => AntiguedadServiciosCalculator::esParcial($l['parcial'] ?? 0) ? 'Si' : 'No',
                 'anios' => $calc['filasLicencias'][$i]['anios'] ?? 0,
                 'meses' => $calc['filasLicencias'][$i]['meses'] ?? 0,
                 'dias' => $calc['filasLicencias'][$i]['dias'] ?? 0,
@@ -424,10 +421,11 @@ final class CertificacionServicios
         return (int) $s;
     }
 
-    public static function parcialParaDb(mixed $parcial): ?int
+    public static function parcialParaDb(mixed $parcial): int
     {
+        // Vacío / null → No (0), como ScriptCase (null == 0).
         if ($parcial === null || $parcial === '') {
-            return null;
+            return 0;
         }
 
         return AntiguedadServiciosCalculator::esParcial($parcial) ? 1 : 0;

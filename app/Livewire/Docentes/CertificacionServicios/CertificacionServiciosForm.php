@@ -171,11 +171,11 @@ class CertificacionServiciosForm extends Component
         $this->bloqueado = true;
 
         try {
-            $resultado = CertificacionServicios::guardarLicencia($this->idPersonal, null, [
-                'fechaInicio' => '',
-                'fechaFin' => '',
-                'parcial' => '',
-            ]);
+        $resultado = CertificacionServicios::guardarLicencia($this->idPersonal, null, [
+            'fechaInicio' => '',
+            'fechaFin' => '',
+            'parcial' => '0',
+        ]);
             if (! $resultado['ok']) {
                 $this->dispatch('se-swal-error', mensaje: $resultado['error'] ?? 'No se pudo insertar la licencia.');
 
@@ -322,7 +322,11 @@ class CertificacionServiciosForm extends Component
     }
 
     /**
-     * @return array{subtotal: array{anios: int, meses: int, dias: int}, antiguedad: array{ok: bool, anios: int, meses: int, dias: int}}
+     * @return array{
+     *     subtotal: array{anios: int, meses: int, dias: int},
+     *     licencias: array{anios: int, meses: int, dias: int},
+     *     antiguedad: array{ok: bool, anios: int, meses: int, dias: int}
+     * }
      */
     public function resumenAntiguedad(): array
     {
@@ -342,6 +346,7 @@ class CertificacionServiciosForm extends Component
 
         return [
             'subtotal' => $calc['subtotal'],
+            'licencias' => $calc['descuentoLicencias'],
             'antiguedad' => $calc['antiguedad'],
         ];
     }

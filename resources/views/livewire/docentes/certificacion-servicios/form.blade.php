@@ -26,12 +26,15 @@
 
         @php
             $sub = $resumen['subtotal'];
+            $lic = $resumen['licencias'];
             $ant = $resumen['antiguedad'];
+            $fmt = static fn (array $p): string => $p['anios'].'a '.$p['meses'].'m '.$p['dias'].'d';
         @endphp
         <div class="flex flex-wrap items-center gap-2 text-[11px]">
-            <span class="se-pill">Subtotal (sin solapes): {{ $sub['anios'] }}a {{ $sub['meses'] }}m {{ $sub['dias'] }}d</span>
+            <span class="se-pill">Subtotal servicios: {{ $fmt($sub) }}</span>
+            <span class="se-pill">Subtotal licencias: {{ $fmt($lic) }}</span>
             @if ($ant['ok'])
-                <span class="se-pill">Antigüedad (− lic. no parciales): {{ $ant['anios'] }}a {{ $ant['meses'] }}m {{ $ant['dias'] }}d</span>
+                <span class="se-pill">Total (servicios − licencias): {{ $fmt($ant) }}</span>
             @else
                 <span class="rounded-full bg-red-100 px-2.5 py-0.5 font-semibold text-red-700">Licencias superan el subtotal de servicios</span>
             @endif
@@ -56,16 +59,16 @@
                 <div class="flex justify-start">
                     <div class="gf min-w-[62rem]" wire:key="serv-grid-{{ $serviciosGridKey }}">
                         <div class="gf-head">
-                            <div class="gf-th w-10 shrink-0" aria-hidden="true"></div>
+                            <div class="gf-th w-10 shrink-0 text-center" title="Eliminar">Acc.</div>
                             <div class="gf-th w-28 shrink-0">Cargo</div>
                             <div class="gf-th w-28 shrink-0">Titular / Supl.</div>
                             <div class="gf-th w-40 shrink-0">Nro. resolución</div>
-                            <div class="gf-th w-32 shrink-0">Fecha alta</div>
+                            <div class="gf-th w-36 shrink-0">Fecha alta</div>
                             <div class="gf-th w-36 shrink-0">Fecha baja</div>
                             <div class="gf-th w-16 shrink-0 text-center">Hs cát.</div>
-                            <div class="gf-th w-12 shrink-0 text-center">Años</div>
-                            <div class="gf-th w-12 shrink-0 text-center">Meses</div>
-                            <div class="gf-th w-12 shrink-0 text-center">Días</div>
+                            <div class="gf-th w-14 shrink-0 text-center">Años</div>
+                            <div class="gf-th w-14 shrink-0 text-center">Meses</div>
+                            <div class="gf-th w-14 shrink-0 text-center">Días</div>
                         </div>
 
                         @forelse ($serviciosVisibles as $id => $fila)
@@ -75,7 +78,7 @@
                                 $sinBaja = ($fila['fechaBaja'] ?? '') === '';
                             @endphp
                             <div class="gf-row gf-row-hover" wire:key="serv-row-{{ $id }}">
-                                <div class="gf-td-actions w-10 shrink-0 !justify-center">
+                                <div class="gf-td w-10 shrink-0 !flex items-center justify-center !px-0">
                                     <button type="button"
                                             data-id="{{ $id }}"
                                             class="inline-flex h-7 w-7 items-center justify-center text-red-600 hover:bg-red-50"
@@ -92,35 +95,35 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="gf-cell w-28 shrink-0">
+                                <div class="gf-td w-28 shrink-0 !p-0">
                                     <input type="text" wire:model.blur="servicios.{{ $id }}.cargo" wire:blur="guardarServicioFila({{ $id }})" class="gf-input">
                                 </div>
-                                <div class="gf-cell w-28 shrink-0">
+                                <div class="gf-td w-28 shrink-0 !p-0">
                                     <select wire:model="servicios.{{ $id }}.titularSuplente" wire:change="guardarServicioFila({{ $id }})" class="gf-select">
                                         <option value="">—</option>
                                         <option value="TITULAR">TITULAR</option>
                                         <option value="SUPLENTE">SUPLENTE</option>
                                     </select>
                                 </div>
-                                <div class="gf-cell w-40 shrink-0">
+                                <div class="gf-td w-40 shrink-0 !p-0">
                                     <input type="text" wire:model.blur="servicios.{{ $id }}.nroResolucion" wire:blur="guardarServicioFila({{ $id }})" class="gf-input">
                                 </div>
-                                <div class="gf-cell w-32 shrink-0">
+                                <div class="gf-td w-36 shrink-0 !p-0">
                                     <input type="date" wire:model="servicios.{{ $id }}.fechaAlta" wire:change="guardarServicioFila({{ $id }})" class="gf-input">
                                 </div>
-                                <div class="gf-cell w-36 shrink-0 !flex-col !items-stretch !justify-center !py-0">
+                                <div class="gf-td w-36 shrink-0 !p-0 !flex !flex-col !items-stretch !justify-center">
                                     <input type="date" wire:model="servicios.{{ $id }}.fechaBaja" wire:change="guardarServicioFila({{ $id }})"
                                            class="gf-input" title="Vacío = Continúa (sigue en el cargo)">
                                     @if ($sinBaja)
                                         <span class="px-2 pb-1 text-[9px] font-semibold uppercase tracking-wide text-primary-700">Continúa</span>
                                     @endif
                                 </div>
-                                <div class="gf-cell w-16 shrink-0">
+                                <div class="gf-td w-16 shrink-0 !p-0">
                                     <input type="text" wire:model.blur="servicios.{{ $id }}.hsCatedra" wire:blur="guardarServicioFila({{ $id }})" class="gf-input text-center">
                                 </div>
-                                <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['anios'] }}</div>
-                                <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['meses'] }}</div>
-                                <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['dias'] }}</div>
+                                <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['anios'] }}</div>
+                                <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['meses'] }}</div>
+                                <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['dias'] }}</div>
                             </div>
                         @empty
                             <div class="gf-empty">Sin servicios cargados.</div>
@@ -146,15 +149,15 @@
             </div>
 
             <div class="w-full overflow-x-auto se-grid-angosta-wrap">
-                <div class="gf min-w-[40rem]" wire:key="lic-grid-{{ $licenciasGridKey }}">
+                <div class="gf min-w-[42rem]" wire:key="lic-grid-{{ $licenciasGridKey }}">
                     <div class="gf-head">
-                        <div class="gf-th w-10 shrink-0" aria-hidden="true"></div>
-                        <div class="gf-th w-32 shrink-0">Fecha inicio</div>
-                        <div class="gf-th w-32 shrink-0">Fecha fin</div>
-                        <div class="gf-th w-24 shrink-0">Parcial</div>
-                        <div class="gf-th w-12 shrink-0 text-center">Años</div>
-                        <div class="gf-th w-12 shrink-0 text-center">Meses</div>
-                        <div class="gf-th w-12 shrink-0 text-center">Días</div>
+                        <div class="gf-th w-10 shrink-0 text-center" title="Eliminar">Acc.</div>
+                        <div class="gf-th w-36 shrink-0">Fecha inicio</div>
+                        <div class="gf-th w-36 shrink-0">Fecha fin</div>
+                        <div class="gf-th w-28 shrink-0">Parcial</div>
+                        <div class="gf-th w-14 shrink-0 text-center">Años</div>
+                        <div class="gf-th w-14 shrink-0 text-center">Meses</div>
+                        <div class="gf-th w-14 shrink-0 text-center">Días</div>
                     </div>
 
                     @forelse ($licenciasVisibles as $id => $fila)
@@ -163,7 +166,7 @@
                             $dur = $this->duracionLicencia($id);
                         @endphp
                         <div class="gf-row gf-row-hover" wire:key="lic-row-{{ $id }}">
-                            <div class="gf-td-actions w-10 shrink-0 !justify-center">
+                            <div class="gf-td w-10 shrink-0 !flex items-center justify-center !px-0">
                                 <button type="button"
                                         data-id="{{ $id }}"
                                         class="inline-flex h-7 w-7 items-center justify-center text-red-600 hover:bg-red-50"
@@ -180,22 +183,21 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div class="gf-cell w-32 shrink-0">
+                            <div class="gf-td w-36 shrink-0 !p-0">
                                 <input type="date" wire:model="licencias.{{ $id }}.fechaInicio" wire:change="guardarLicenciaFila({{ $id }})" class="gf-input">
                             </div>
-                            <div class="gf-cell w-32 shrink-0">
+                            <div class="gf-td w-36 shrink-0 !p-0">
                                 <input type="date" wire:model="licencias.{{ $id }}.fechaFin" wire:change="guardarLicenciaFila({{ $id }})" class="gf-input">
                             </div>
-                            <div class="gf-cell w-24 shrink-0">
+                            <div class="gf-td w-28 shrink-0 !p-0">
                                 <select wire:model="licencias.{{ $id }}.parcial" wire:change="guardarLicenciaFila({{ $id }})" class="gf-select">
-                                    <option value="">—</option>
                                     <option value="0">No</option>
                                     <option value="1">Sí</option>
                                 </select>
                             </div>
-                            <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['anios'] }}</div>
-                            <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['meses'] }}</div>
-                            <div class="gf-td w-12 shrink-0 text-center tabular-nums">{{ $dur['dias'] }}</div>
+                            <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['anios'] }}</div>
+                            <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['meses'] }}</div>
+                            <div class="gf-td w-14 shrink-0 text-center tabular-nums">{{ $dur['dias'] }}</div>
                         </div>
                     @empty
                         <div class="gf-empty">Sin licencias cargadas.</div>
