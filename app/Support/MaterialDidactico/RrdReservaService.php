@@ -49,16 +49,16 @@ class RrdReservaService
         }
 
         // Carga de recursos para las validaciones previas a la transacción
+        // (catálogo compartido entre niveles; id_nivel del recurso no restringe el uso)
         /** @var \Illuminate\Database\Eloquent\Collection<int,RrdRecurso> $recursos */
         $recursos = RrdRecurso::query()
             ->whereIn('id', $idsRecursos)
-            ->where('id_nivel', (int) ($ctx->idNivel ?? 0))
             ->where('activo', true)
             ->with('disponibilidades')
             ->get();
 
         if ($recursos->count() !== count($idsRecursos)) {
-            throw new RrdReservaException('Uno o más recursos no son válidos o no pertenecen al nivel activo.');
+            throw new RrdReservaException('Uno o más recursos no son válidos o no están activos.');
         }
 
         $omitirAntelacion = self::omitirAntelacion($esAdmin, $datos);
@@ -178,13 +178,12 @@ class RrdReservaService
         /** @var \Illuminate\Database\Eloquent\Collection<int,RrdRecurso> $recursos */
         $recursos = RrdRecurso::query()
             ->whereIn('id', $idsRecursos)
-            ->where('id_nivel', (int) ($ctx->idNivel ?? 0))
             ->where('activo', true)
             ->with('disponibilidades')
             ->get();
 
         if ($recursos->count() !== count($idsRecursos)) {
-            throw new RrdReservaException('Uno o más recursos no son válidos.');
+            throw new RrdReservaException('Uno o más recursos no son válidos o no están activos.');
         }
 
         $omitirAntelacion = self::omitirAntelacion($esAdmin, $datos);
