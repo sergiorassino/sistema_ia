@@ -90,15 +90,15 @@ class RecursosAdmin extends Component
 
         $ctx = schoolCtx();
         $data = [
-            'id_nivel' => (int) ($ctx->idNivel ?? 0),
-            'nombre'   => trim($this->grupoNombre),
-            'orden'    => $this->grupoOrden,
-            'activo'   => $this->grupoActivo,
+            'nombre' => trim($this->grupoNombre),
+            'orden'  => $this->grupoOrden,
+            'activo' => $this->grupoActivo,
         ];
 
         if ($this->grupoEditId) {
             RrdGrupo::enContexto()->findOrFail($this->grupoEditId)->update($data);
         } else {
+            $data['id_nivel'] = (int) ($ctx->idNivel ?? 0);
             RrdGrupo::create($data);
         }
 
@@ -173,13 +173,11 @@ class RecursosAdmin extends Component
 
         $ctx = schoolCtx();
 
-        // Verificar que el grupo pertenezca al nivel
-        RrdGrupo::where('id_nivel', (int) ($ctx->idNivel ?? 0))
-            ->findOrFail($this->recursoGrupoId);
+        // Catálogo compartido: cualquier grupo activo del colegio es válido
+        RrdGrupo::enContexto()->findOrFail($this->recursoGrupoId);
 
         $data = [
             'id_grupo'             => $this->recursoGrupoId,
-            'id_nivel'             => (int) ($ctx->idNivel ?? 0),
             'nombre'               => trim($this->recursoNombre),
             'antelacion_min_horas' => $this->recursoAntelacion,
             'orden'                => $this->recursoOrden,
@@ -190,6 +188,7 @@ class RecursosAdmin extends Component
         if ($this->recursoEditId) {
             RrdRecurso::enContexto()->findOrFail($this->recursoEditId)->update($data);
         } else {
+            $data['id_nivel'] = (int) ($ctx->idNivel ?? 0);
             RrdRecurso::create($data);
         }
 
@@ -225,7 +224,7 @@ class RecursosAdmin extends Component
         $this->dispEditId = $id;
         if ($id) {
             $d = RrdRecursoDisponibilidad::whereHas('recurso', function ($q) {
-                $q->where('id_nivel', (int) (schoolCtx()->idNivel ?? 0));
+                $q->enContexto();
             })->findOrFail($id);
             $this->dispDia        = $d->dia_semana;
             $this->dispHoraInicio = substr($d->hora_inicio, 0, 5);
@@ -278,7 +277,7 @@ class RecursosAdmin extends Component
     public function eliminarDisp(int $id): void
     {
         RrdRecursoDisponibilidad::whereHas('recurso', function ($q) {
-            $q->where('id_nivel', (int) (schoolCtx()->idNivel ?? 0));
+            $q->enContexto();
         })->findOrFail($id)->delete();
         $this->dispatch('se-swal-exito', mensaje: 'Ventana eliminada.');
     }

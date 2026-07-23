@@ -38,11 +38,13 @@ class RrdGrupo extends Model
     // Scopes y helpers de consulta
     // ---------------------------------------------------------------
 
+    /**
+     * Catálogo compartido entre todos los niveles del colegio.
+     * id_nivel se conserva al crear (auditoría del contexto), pero no filtra visibilidad.
+     */
     public function scopeEnContexto(Builder $query): Builder
     {
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
-
-        return $query->where('id_nivel', $idNivel);
+        return $query;
     }
 
     public function scopeActivos(Builder $query): Builder
