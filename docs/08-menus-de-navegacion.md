@@ -165,7 +165,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 | Comunicación institucional | |
 | **Gestión de cuotas** (solo nivel 5) | |
 | **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
-| **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes; según permisos 11, 48 y 23) | |
+| **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes, certificación de servicios; según permisos 11, 48, 23 y 87) | |
 | Configuración (incl. Permisos del sistema; sin planes/curplan ni cursos/materias del año) | **Gestión de planes y cursos modelo**; **Gestión de cursos y materias del año** |
 
 **Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
@@ -195,4 +195,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-06-01:** Viajes / salidas educativas: solo Menú de Secretaría en niveles 1–4; no Administración, Docentes ni Alumnos.
 - **2026-06-04:** Menú de Administración como layout y portal propios; rutas `/cuotas` y `/mora` aisladas con `menu.portal:administracion`.
 - **2026-06-04:** Tres grupos CALIFICACIONES por nivel (Inicial / Primario / Secundario) en el Menú de Secretaría; el bloque secundario renombrado y acotado a `niveles.id = 3`.
-- **2026-06-13:** Menú de Docentes: sidebar dinámico por tenant/nivel (`PortalDocenteMenu`); calificaciones primario con variantes `implementacion` (`CalificacionesPrimarioModulos`).
+- **2026-07-23:** Certificación de servicios en grupo DOCENTES / USUARIOS (permiso IA orden 87): carga de `certificacion`/`licencias` e impresión PDF.

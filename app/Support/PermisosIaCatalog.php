@@ -199,6 +199,9 @@ final class PermisosIaCatalog
     /** Planificaciones y programas (tabla doc_pp): subida, aprobación, visualización y baja de PDF. */
     public const PLANIFICACIONES_PROGRAMAS = 86;
 
+    /** Certificación de servicios docentes: carga de períodos, licencias e impresión PDF. */
+    public const CERTIFICACION_SERVICIOS = 87;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -288,6 +291,7 @@ final class PermisosIaCatalog
             ['id' => 84, 'orden' => self::ADMIN_ARCA_CONSULTA_CUIT_DNI, 'tema' => 'ARCA', 'descripcion' => 'Consultar CUIT/CUIL asociado a un DNI en ARCA (Padrón Alcance 13).'],
             ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],
             ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).'],
+            ['id' => 87, 'orden' => self::CERTIFICACION_SERVICIOS, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Certificación de servicios: carga de períodos de servicio y licencias, e impresión del certificado PDF.'],
         ];
     }
 

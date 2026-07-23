@@ -80,6 +80,19 @@ La tabla `ento` almacena la configuración institucional, con **un registro por 
 
 ---
 
+## 4.1 Certificación de servicios (docentes)
+
+Tablas legacy (no crear con migración; existen en tenants que usan el módulo):
+
+| Tabla | Descripción | PK | FK docente |
+|-------|-------------|-----|------------|
+| `certificacion` | Períodos de servicio (cargo, T/S, resolución, alta/baja, hs) | `idcertificacion` | `idpersonal` → `profesores.id` |
+| `licencias` | Licencias (inicio/fin; `parcial` 0/1) | `idlicencias` | `idPersonal` → `profesores.id` |
+
+Años/meses/días **no** se guardan: se calculan en `AntiguedadServiciosCalculator`. Baja vacía / `0000-00-00` = “Continúa” (en cálculo se usa la fecha de emisión). Columna de baja en BD: **`FechaBaja`** (F mayúscula; no `fechaBaja`).
+
+---
+
 ## 5. Convenciones de Eloquent para tablas legacy
 
 Los modelos Eloquent deben respetar la estructura existente:

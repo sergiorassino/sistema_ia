@@ -57,7 +57,10 @@
                 <div class="border-b border-accent-200 bg-white px-5 py-4">
                     <p class="se-section-title">Destinatarios del envío (BCC)</p>
                     <p class="mt-1 text-sm text-neutral-600">
-                        <strong>{{ $nEnvios }}</strong> correo(s) · Remitente: {{ $profesor?->email }}
+                        <strong>{{ $nEnvios }}</strong> correo(s) · Remitente: {{ schoolNombre() }}
+                        @if ($profesor?->email)
+                            <span class="text-neutral-500">({{ $profesor->email }})</span>
+                        @endif
                     </p>
                     @if ($superaTope)
                         <p class="mt-2 text-sm font-semibold text-red-700">Supera el máximo de {{ $maxEnvio }}. Reduzca la selección.</p>

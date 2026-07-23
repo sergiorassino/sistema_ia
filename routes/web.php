@@ -86,6 +86,7 @@ use App\Livewire\Abm\Legajos\LegajosIndex;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
 use App\Livewire\Abm\LegajosProfesor\LegajosProfesorIndex;
 use App\Http\Controllers\Docentes\InformeInasistenciasDocentePdfController;
+use App\Http\Controllers\Docentes\CertificacionServiciosPdfController;
 use App\Livewire\Docentes\Inasistencias\CargosDocenteIndex;
 use App\Livewire\Docentes\Inasistencias\InformeBimestreShow;
 use App\Livewire\Docentes\Inasistencias\InasistenciaDocenteForm;
@@ -93,6 +94,8 @@ use App\Livewire\Docentes\Inasistencias\InasistenciasDocenteShow;
 use App\Livewire\Docentes\Inasistencias\EnvioMasivoInasistenciasDocentes;
 use App\Livewire\Docentes\Inasistencias\InasistenciasDocentesIndex;
 use App\Livewire\Docentes\Inasistencias\RankingInasistenciasMateriasCursos;
+use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosIndex;
+use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosForm;
 use App\Http\Controllers\Docentes\RankingInasistenciasMateriasCursosCsvController;
 use App\Support\InasistenciasDocentes;
 use App\Livewire\Abm\MateriasAnio\MateriasAnioIndex;
@@ -1399,6 +1402,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/{idProfesor}/informe/{bimestre}/pdf', InformeInasistenciasDocentePdfController::class)
             ->whereNumber(['idProfesor', 'bimestre'])
             ->name('docentes.inasistencias.informe.pdf');
+    });
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::CERTIFICACION_SERVICIOS)->prefix('docentes/certificacion-servicios')->group(function () {
+        Route::get('/', CertificacionServiciosIndex::class)->name('docentes.certificacion-servicios');
+        Route::post('/pdf', CertificacionServiciosPdfController::class)->name('docentes.certificacion-servicios.pdf');
+        Route::get('/{idPersonal}', CertificacionServiciosForm::class)->whereNumber('idPersonal')->name('docentes.certificacion-servicios.form');
     });
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
