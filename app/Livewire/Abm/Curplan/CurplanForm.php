@@ -199,14 +199,15 @@ class CurplanForm extends Component
         $this->validate($this->matRules());
 
         $d = $this->matDraft;
+        // Legacy matplan: codGE/codGE2/codGE3 (y abrev) suelen ser NOT NULL; vacío = '' no null.
         $payload = [
             'idCurPlan' => (int) $this->id,
             'matPlanMateria' => trim((string) ($d['matPlanMateria'] ?? '')),
             'ord' => (int) ($d['ord'] ?? 0),
-            'abrev' => trim((string) ($d['abrev'] ?? '')) !== '' ? trim((string) $d['abrev']) : null,
-            'codGE' => trim((string) ($d['codGE'] ?? '')) !== '' ? trim((string) $d['codGE']) : null,
-            'codGE2' => trim((string) ($d['codGE2'] ?? '')) !== '' ? trim((string) $d['codGE2']) : null,
-            'codGE3' => trim((string) ($d['codGE3'] ?? '')) !== '' ? trim((string) $d['codGE3']) : null,
+            'abrev' => trim((string) ($d['abrev'] ?? '')),
+            'codGE' => trim((string) ($d['codGE'] ?? '')),
+            'codGE2' => trim((string) ($d['codGE2'] ?? '')),
+            'codGE3' => trim((string) ($d['codGE3'] ?? '')),
         ];
 
         if ($this->matEditingId && $this->matEditingId > 0) {

@@ -71,7 +71,7 @@ sistemaPrueba/
     │   │   └── Abm/            # Módulos ABM (Terlec, Niveles, Legajos)
     │   ├── Models/              # Eloquent models (legacy tables)
     │   └── Support/             # SchoolContext, helpers
-    ├── docs/                    # ← Documentación del proyecto
+    ├── docs/                    # ← Documentación del proyecto (+ docs/modulos/ por módulo)
     ├── resources/views/
     │   ├── layouts/             # app (Secretaría), alumno, docente, guest
     │   └── livewire/            # Vistas Livewire

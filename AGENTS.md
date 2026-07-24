@@ -67,6 +67,10 @@ En autogestión, PDFs y descargas por GET: **no** poner IDs de BD, DNI ni legajo
 
 En guardados sobre tablas legacy multi-tenant: validar columnas con `App\Support\Database\PersistenciaColumnas`, capturar `QueryException` y verificar post-guardado. No omitir campos con valor si la columna no existe; no mostrar éxito si falló la persistencia. Detalle: `docs/05-preferencias-y-convenciones.md` §14 y `.cursor/rules/persistencia-bd-sin-falso-exito.mdc`.
 
+## Documentación por módulo
+
+Antes de cambiar comportamiento de un módulo existente, leer (o crear) su ficha en `docs/modulos/` (plantilla e índice en `docs/modulos/README.md`). Ahí viven propósito, modalidades, permisos, tablas, flujos y trampas específicas.
+
 ## Resto del baseline
 
 Seguridad, permisos, `schoolCtx`, Blade, etc.: `docs/06-reglas-de-seguridad.md` y las reglas en `.cursor/rules/` (por ejemplo `seguridad-php-mysql-laravel.mdc`, `preferencias-del-proyecto.mdc`).

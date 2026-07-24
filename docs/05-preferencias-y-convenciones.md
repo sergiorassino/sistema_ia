@@ -263,6 +263,7 @@ Antes de cerrar un PDF con columnas variables: comparar con `planilla-calificaci
 - Cuando aparezcan nuevas preferencias/restricciones, agregarlas en este archivo.
 - Los archivos de documentación se numeran secuencialmente para facilitar la lectura.
 - Personalización multi-colegio: [07-versionado-de-modulos-por-tenant.md](07-versionado-de-modulos-por-tenant.md).
+- **Reglas de funcionamiento por módulo** (propósito, permisos, tablas, flujos, trampas): carpeta [modulos/](modulos/README.md). Al tocar un módulo, leer (o crear) su doc antes de cambiar comportamiento.
 
 ---
 
