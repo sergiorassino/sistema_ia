@@ -6,6 +6,7 @@ namespace App\Support\Certificados;
 
 
 
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 
@@ -126,7 +127,7 @@ final class CertificadoAsistenciaProfesorTcpdf extends TCPDF
 
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
 
-            $this->Image($logo, self::MARGEN_IZQ + 5, $y0 + 1, 15, 20, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), self::MARGEN_IZQ + 5, $y0 + 1, 15, 20, '', '', '', false, 300);
 
         }
 

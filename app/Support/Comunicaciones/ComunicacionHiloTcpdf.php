@@ -3,6 +3,7 @@
 namespace App\Support\Comunicaciones;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 /**
@@ -100,7 +101,7 @@ final class ComunicacionHiloTcpdf extends TCPDF
 
         $logo = $this->header['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x + 2, $y + 1.5, 11, 13, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 2, $y + 1.5, 11, 13, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($this->header['insti'] ?? ''));

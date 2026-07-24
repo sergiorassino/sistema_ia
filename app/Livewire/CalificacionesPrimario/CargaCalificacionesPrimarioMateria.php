@@ -303,12 +303,21 @@ class CargaCalificacionesPrimarioMateria extends Component
                 ['value' => $campo],
             )->validate();
 
-            CalificacionesPrimarioDatos::guardarObservacionCalificacion(
-                $mat,
-                (int) $this->materiaId,
-                $campo,
-                $value,
-            );
+            try {
+                CalificacionesPrimarioDatos::guardarObservacionCalificacion(
+                    $mat,
+                    (int) $this->materiaId,
+                    $campo,
+                    $value,
+                );
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                if ($e->getStatusCode() === 422) {
+                    $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                    return;
+                }
+                throw $e;
+            }
 
             if (isset($this->filas[$idMatricula])) {
                 $this->filas[$idMatricula]['notas'][$campo] = $value;
@@ -345,12 +354,21 @@ class CargaCalificacionesPrimarioMateria extends Component
             return;
         }
 
-        CalificacionesPrimarioDatos::guardarNota(
-            $mat,
-            (int) $this->materiaId,
-            $campo,
-            $value,
-        );
+        try {
+            CalificacionesPrimarioDatos::guardarNota(
+                $mat,
+                (int) $this->materiaId,
+                $campo,
+                $value,
+            );
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
 
         if (isset($this->filas[$idMatricula])) {
             $this->filas[$idMatricula]['notas'][$campo] = $value;

@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Schema;
  * Lectura y persistencia del formulario manual de calificaciones (primario).
  *
  * Vínculo materia ↔ calificación: `calificaciones.idMaterias` (como secundario y Sincro GE).
- * `calificaciones.ord` se mantiene como copia desnormalizada de `materias.ord` al insertar;
+ * `calificaciones.ord` se mantiene como copia desnormalizada de `materias.ord` al seed de matrícula;
  * en lectura legacy se acepta fallback por `ord` solo si `idMaterias` está vacío en la fila.
+ * La carga manual solo actualiza filas existentes (no crea `calificaciones`).
  */
 final class CalificacionesPrimarioDatos
 {
@@ -228,31 +229,18 @@ final class CalificacionesPrimarioDatos
         $idMatricula = (int) $matricula->id;
         $existente = self::buscarCalificacion($idMatricula, $idMaterias, (int) $materia->ord);
 
-        if ($existente !== null) {
-            $payload = [$campo => $valor];
-            if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
-                $payload['idMaterias'] = $idMaterias;
-            }
-
-            DB::table('calificaciones')
-                ->where('id', (int) $existente->id)
-                ->update($payload);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        DB::table('calificaciones')->insert([
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => $idMaterias,
-            'ord' => (int) $materia->ord,
-            'ic01' => $campo === 'ic01' ? $valor : '',
-            'ic02' => $campo === 'ic02' ? $valor : '',
-            'ic03' => $campo === 'ic03' ? $valor : '',
-            'dic' => $campo === CalificacionesPrimarioCatalogo::CAMPO_INTENSIFICACION ? $valor : '',
-        ]);
+        $payload = [$campo => $valor];
+        if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
+            $payload['idMaterias'] = $idMaterias;
+        }
+
+        DB::table('calificaciones')
+            ->where('id', (int) $existente->id)
+            ->update($payload);
     }
 
     public static function guardarObservacionCalificacion(
@@ -278,29 +266,18 @@ final class CalificacionesPrimarioDatos
         $idMatricula = (int) $matricula->id;
         $existente = self::buscarCalificacion($idMatricula, $idMaterias, (int) $materia->ord);
 
-        if ($existente !== null) {
-            $payload = [$campo => $valor];
-            if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
-                $payload['idMaterias'] = $idMaterias;
-            }
-
-            DB::table('calificaciones')
-                ->where('id', (int) $existente->id)
-                ->update($payload);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        DB::table('calificaciones')->insert([
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => $idMaterias,
-            'ord' => (int) $materia->ord,
-            'obs01' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_1 ? $valor : '',
-            'obs02' => $campo === CalificacionesPrimarioCatalogo::CAMPO_OBS_ETAPA_2 ? $valor : '',
-        ]);
+        $payload = [$campo => $valor];
+        if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
+            $payload['idMaterias'] = $idMaterias;
+        }
+
+        DB::table('calificaciones')
+            ->where('id', (int) $existente->id)
+            ->update($payload);
     }
 
     /**

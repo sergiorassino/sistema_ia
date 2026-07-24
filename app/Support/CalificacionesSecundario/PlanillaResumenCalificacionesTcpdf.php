@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesSecundario;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use App\Support\Pdf\TcpdfMultiCellJustificado;
 use App\Support\PlanillaResumenCalificacionesSecundario;
 use TCPDF;
@@ -233,7 +234,7 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
 
         $logo = $this->pdfHeader['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x + 2.5, $y + 2, self::ANCHO_LOGO, self::ANCHO_LOGO, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 2.5, $y + 2, self::ANCHO_LOGO, self::ANCHO_LOGO, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($this->pdfHeader['insti'] ?? ''));

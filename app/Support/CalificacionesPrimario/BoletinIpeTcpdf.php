@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesPrimario;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
 
@@ -142,7 +143,7 @@ final class BoletinIpeTcpdf extends TCPDF
         $logo = $this->resolverLogoArchivo();
         if ($logo !== null) {
             $this->Image(
-                $logo,
+                TcpdfImagenPng::fuenteTcpdf($logo),
                 $xy1 + 2,
                 $xy1 + ((self::ALTO_ENCABEZADO_INST - self::ALTO_LOGO) / 2),
                 self::ANCHO_LOGO,

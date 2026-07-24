@@ -116,7 +116,16 @@ class CargaCalificacionesEpqForm extends Component
             ['value' => ['nullable', 'string', 'max:15']],
         )->validate();
 
-        CalificacionesEpqDatos::guardarNota($mat, $idMaterias, $campo, $value);
+        try {
+            CalificacionesEpqDatos::guardarNota($mat, $idMaterias, $campo, $value);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
 
         if (isset($this->notas[$idMaterias])) {
             $this->notas[$idMaterias][$campo] = $value;

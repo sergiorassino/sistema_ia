@@ -111,7 +111,16 @@ class CargaCalificacionesInicialSfqIndicadoresForm extends Component
             CalificacionesInicialSfqPortalDocente::abortSiProfesorSinMatricula($this->idMatricula);
         }
 
-        CalificacionesInicialSfqDatos::guardarIndicadores($mat, $this->campoIc, $this->filas);
+        try {
+            CalificacionesInicialSfqDatos::guardarIndicadores($mat, $this->campoIc, $this->filas);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
     }
 
     public function render()

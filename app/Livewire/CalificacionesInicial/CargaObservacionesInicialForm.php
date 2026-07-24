@@ -148,6 +148,16 @@ class CargaObservacionesInicialForm extends Component
 
         try {
             CalificacionesInicialObservacionesDatos::guardar($matricula, $materia, $this->observacionesPorEtapa);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            report($e);
+            $this->dispatch('se-swal-error', mensaje: 'No se pudieron guardar las observaciones. Verifique los datos e intente nuevamente.');
+
+            return;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('se-swal-error', mensaje: 'No se pudieron guardar las observaciones. Verifique los datos e intente nuevamente.');
