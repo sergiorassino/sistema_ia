@@ -3,6 +3,7 @@
 namespace App\Support\Listados;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
@@ -150,7 +151,7 @@ final class EstudiantesDatosTcpdf extends TCPDF
 
         $logo = $this->resolverLogoArchivo($header);
         if ($logo !== null) {
-            $this->Image($logo, $x + 2, $y + 2, 12, 14, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 2, $y + 2, 12, 14, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($header['insti'] ?? ''));

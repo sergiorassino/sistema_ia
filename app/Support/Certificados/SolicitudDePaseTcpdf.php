@@ -6,6 +6,7 @@ namespace App\Support\Certificados;
 
 
 
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 
@@ -120,7 +121,7 @@ final class SolicitudDePaseTcpdf extends TCPDF
         $logo = $inst['logo_abs'] ?? null;
 
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, self::LOGO_X, self::LOGO_Y, self::LOGO_ANCHO, self::LOGO_ALTO, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), self::LOGO_X, self::LOGO_Y, self::LOGO_ANCHO, self::LOGO_ALTO, '', '', '', false, 300);
         }
 
         $this->SetFont(self::FUENTE, '', 8);

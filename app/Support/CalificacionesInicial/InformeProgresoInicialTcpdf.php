@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesInicial;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use App\Support\Pdf\TcpdfMultiCellJustificado;
 use Illuminate\Support\Facades\Storage;
 use TCPDF;
@@ -324,7 +325,7 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         $logo = $this->resolverLogoArchivo();
         if ($logo !== null) {
             $this->Image(
-                $logo,
+                TcpdfImagenPng::fuenteTcpdf($logo),
                 self::MARGEN_IZQ,
                 $yInicio,
                 self::ANCHO_LOGO,

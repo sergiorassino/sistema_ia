@@ -207,12 +207,21 @@ class CargaCalificacionesPrimarioForm extends Component
             return;
         }
 
-        CalificacionesPrimarioDatos::guardarNota(
-            $mat,
-            $idMaterias,
-            $campo,
-            $value,
-        );
+        try {
+            CalificacionesPrimarioDatos::guardarNota(
+                $mat,
+                $idMaterias,
+                $campo,
+                $value,
+            );
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
 
         if (isset($this->notas[$idMaterias])) {
             $this->notas[$idMaterias][$campo] = $value;

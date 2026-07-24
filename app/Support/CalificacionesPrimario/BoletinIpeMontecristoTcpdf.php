@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesPrimario;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use App\Support\Pdf\TcpdfMultiCellJustificado;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -154,7 +155,7 @@ final class BoletinIpeMontecristoTcpdf extends TCPDF
         $logo = $this->resolverLogoArchivo();
         if ($logo !== null) {
             $this->Image(
-                $logo,
+                TcpdfImagenPng::fuenteTcpdf($logo),
                 self::MARGEN_IZQ + 5,
                 $xy1 + 1,
                 self::ANCHO_LOGO,

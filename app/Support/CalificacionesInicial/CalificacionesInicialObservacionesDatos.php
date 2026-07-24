@@ -284,28 +284,14 @@ final class CalificacionesInicialObservacionesDatos
             ->where('ord', $ord)
             ->first(['id']);
 
-        if ($existente !== null) {
-            DB::table('calificaciones')
-                ->where('id', (int) $existente->id)
-                ->where('idMatricula', $idMatricula)
-                ->update([$campo => $valor]);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        $payload = [];
-        foreach (self::camposObservacion() as $col) {
-            $payload[$col] = $col === $campo ? $valor : '';
-        }
-
-        DB::table('calificaciones')->insert(array_merge([
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => (int) $materia->id,
-            'ord' => $ord,
-        ], $payload));
+        DB::table('calificaciones')
+            ->where('id', (int) $existente->id)
+            ->where('idMatricula', $idMatricula)
+            ->update([$campo => $valor]);
     }
 
     /**
@@ -329,22 +315,13 @@ final class CalificacionesInicialObservacionesDatos
             ->where('ord', $ord)
             ->first(['id']);
 
-        if ($existente !== null) {
-            DB::table('calificaciones')
-                ->where('id', (int) $existente->id)
-                ->where('idMatricula', $idMatricula)
-                ->update($payload);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        DB::table('calificaciones')->insert(array_merge([
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => (int) $materia->id,
-            'ord' => $ord,
-        ], $payload));
+        DB::table('calificaciones')
+            ->where('id', (int) $existente->id)
+            ->where('idMatricula', $idMatricula)
+            ->update($payload);
     }
 }

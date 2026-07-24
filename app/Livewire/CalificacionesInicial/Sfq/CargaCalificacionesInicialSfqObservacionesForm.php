@@ -119,7 +119,16 @@ class CargaCalificacionesInicialSfqObservacionesForm extends Component
             CalificacionesInicialSfqPortalDocente::abortSiProfesorSinMatricula($this->idMatricula);
         }
 
-        CalificacionesInicialSfqDatos::guardarObservacionCampo($mat, $campo, $value);
+        try {
+            CalificacionesInicialSfqDatos::guardarObservacionCampo($mat, $campo, $value);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
 
         if (property_exists($this, $campo)) {
             $this->{$campo} = $value;

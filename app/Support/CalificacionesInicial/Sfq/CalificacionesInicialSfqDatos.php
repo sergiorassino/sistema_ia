@@ -332,7 +332,7 @@ final class CalificacionesInicialSfqDatos
         abort_if($materia === null, 422, 'No hay materia principal configurada para el curso.');
 
         $ic = self::filasAIC($filas);
-        self::upsertCampoCalificacion($matricula, (int) $materia->id, (int) $materia->ord, [$campoIc => $ic]);
+        self::actualizarCampoCalificacion($matricula, (int) $materia->id, (int) $materia->ord, [$campoIc => $ic]);
     }
 
     /**
@@ -397,7 +397,7 @@ final class CalificacionesInicialSfqDatos
         $materia = self::materiaPrincipalCurso((int) $matricula->idCursos);
         abort_if($materia === null, 422, 'No hay materia principal configurada para el curso.');
 
-        self::upsertCampoCalificacion(
+        self::actualizarCampoCalificacion(
             $matricula,
             (int) $materia->id,
             (int) $materia->ord,
@@ -427,7 +427,7 @@ final class CalificacionesInicialSfqDatos
         $materia = self::materiaPrincipalCurso((int) $matricula->idCursos);
         abort_if($materia === null, 422, 'No hay materia principal configurada para el curso.');
 
-        self::upsertCampoCalificacion(
+        self::actualizarCampoCalificacion(
             $matricula,
             (int) $materia->id,
             (int) $materia->ord,
@@ -436,9 +436,12 @@ final class CalificacionesInicialSfqDatos
     }
 
     /**
+     * Actualiza campos en la fila existente de `calificaciones`.
+     * No crea filas: deben existir por seed de matrícula (o INSERT de datos).
+     *
      * @param  array<string, string>  $campos
      */
-    private static function upsertCampoCalificacion(
+    private static function actualizarCampoCalificacion(
         Matricula $matricula,
         int $idMateria,
         int $ord,
@@ -451,23 +454,14 @@ final class CalificacionesInicialSfqDatos
             ->where('ord', $ord)
             ->first(['id']);
 
-        if ($existente !== null) {
-            DB::table('calificaciones')
-                ->where('id', (int) $existente->id)
-                ->where('idMatricula', $idMatricula)
-                ->update($campos);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        DB::table('calificaciones')->insert(array_merge([
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => $idMateria,
-            'ord' => $ord,
-        ], $campos));
+        DB::table('calificaciones')
+            ->where('id', (int) $existente->id)
+            ->where('idMatricula', $idMatricula)
+            ->update($campos);
     }
 
     /**

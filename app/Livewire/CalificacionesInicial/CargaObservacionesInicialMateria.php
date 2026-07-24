@@ -211,7 +211,16 @@ class CargaObservacionesInicialMateria extends Component
             ['value' => $campo],
         )->validate();
 
-        CalificacionesInicialObservacionesDatos::guardarCelda($matricula, $materia, $campo, $value);
+        try {
+            CalificacionesInicialObservacionesDatos::guardarCelda($matricula, $materia, $campo, $value);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() === 422) {
+                $this->dispatch('se-swal-error', mensaje: $e->getMessage());
+
+                return;
+            }
+            throw $e;
+        }
 
         if (isset($this->filas[$idMatricula])) {
             $etapa = $campo === 'obs02' ? 2 : 1;

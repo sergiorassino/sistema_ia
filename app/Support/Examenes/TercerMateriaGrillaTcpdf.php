@@ -2,6 +2,7 @@
 
 namespace App\Support\Examenes;
 
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 /**
@@ -121,7 +122,7 @@ final class TercerMateriaGrillaTcpdf extends TCPDF
         $this->Rect($x0, $y0, self::ANCHO_GRILLA, self::ALTURA_CAJA_ENCABEZADO, 'D');
 
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x0 + 4, $y0 + 1, 18, 20, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x0 + 4, $y0 + 1, 18, 20, '', '', '', false, 300);
         }
 
         $this->SetXY($x0, $y0 + 3);

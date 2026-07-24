@@ -109,29 +109,15 @@ final class CalificacionesEpqDatos
         $idMatricula = (int) $matricula->id;
         $existente = self::buscarCalificacion($idMatricula, $idMaterias, (int) $materia->ord);
 
-        if ($existente !== null) {
-            $payload = [$campo => $valor];
-            if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
-                $payload['idMaterias'] = $idMaterias;
-            }
-            DB::table('calificaciones')->where('id', (int) $existente->id)->update($payload);
-
-            return;
+        if ($existente === null) {
+            abort(422, 'No existe el registro de calificación para este alumno y materia.');
         }
 
-        $insert = [
-            'idMatricula' => $idMatricula,
-            'idLegajos' => (int) $matricula->idLegajos,
-            'idTerlec' => (int) $matricula->idTerlec,
-            'idCursos' => (int) $matricula->idCursos,
-            'idMaterias' => $idMaterias,
-            'ord' => (int) $materia->ord,
-        ];
-        foreach (CalificacionesEpqCatalogo::CAMPOS_NOTA as $c) {
-            $insert[$c] = $c === $campo ? $valor : '';
+        $payload = [$campo => $valor];
+        if ((int) ($existente->idMaterias ?? 0) !== $idMaterias) {
+            $payload['idMaterias'] = $idMaterias;
         }
-
-        DB::table('calificaciones')->insert($insert);
+        DB::table('calificaciones')->where('id', (int) $existente->id)->update($payload);
     }
 
     public static function guardarInfoAdicional(int $idMatricula, string $campo, string $valor): void

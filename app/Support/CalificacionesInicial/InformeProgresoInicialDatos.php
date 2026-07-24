@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Datos del Informe de Progreso Escolar — nivel inicial (layout provincial).
- * Espacios curriculares: solo `materias.infoCalif = 1` (sin JUSTIFICADAS / INJUSTIFICADAS).
+ *
+ * Espacios curriculares: preferir `materias.infoCalif = 1` (flag «Inf.» en Materias del año).
+ * Si el curso no tiene ninguna materia marcada, se incluyen todas salvo JUSTIFICADAS / INJUSTIFICADAS
+ * (evita un PDF solo con portada cuando el flag no fue configurado).
  */
 final class InformeProgresoInicialDatos
 {
@@ -218,20 +221,34 @@ final class InformeProgresoInicialDatos
             ->orderBy('id')
             ->get(['id', 'ord', 'materia', 'infoCalif']);
 
-        $materiasPdf = [];
+        $candidatas = [];
         foreach ($materiasRows as $row) {
             $nombreMateria = trim((string) $row->materia);
-            $idMateria = (int) $row->id;
-            $ord = (int) $row->ord;
-
             $materiaUpper = mb_strtoupper($nombreMateria);
             if (in_array($materiaUpper, ['JUSTIFICADAS', 'INJUSTIFICADAS'], true)) {
                 continue;
             }
 
-            if ((int) ($row->infoCalif ?? 0) !== 1) {
+            $candidatas[] = $row;
+        }
+
+        $hayMarcadasParaInforme = false;
+        foreach ($candidatas as $row) {
+            if ((int) ($row->infoCalif ?? 0) === 1) {
+                $hayMarcadasParaInforme = true;
+                break;
+            }
+        }
+
+        $materiasPdf = [];
+        foreach ($candidatas as $row) {
+            if ($hayMarcadasParaInforme && (int) ($row->infoCalif ?? 0) !== 1) {
                 continue;
             }
+
+            $nombreMateria = trim((string) $row->materia);
+            $idMateria = (int) $row->id;
+            $ord = (int) $row->ord;
 
             $obs = self::observacionesPorMateria($idMatricula, $idMateria, $ord);
             $indicadores = self::indicadoresPorMateria($idMateria);

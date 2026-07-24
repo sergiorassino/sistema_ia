@@ -2,6 +2,7 @@
 
 namespace App\Support\CalificacionesSecundario;
 
+use App\Support\Pdf\TcpdfImagenPng;
 use App\Support\PlanillaCalificacionesSecundario;
 use App\Support\PromedioAnualCalificacionesSecundario;
 use TCPDF;
@@ -163,7 +164,7 @@ final class PlanillaCalificacionesTcpdf extends TCPDF
 
         $logo = $this->pdfHeader['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x + 3, $y + 2, 17, 17, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 3, $y + 2, 17, 17, '', '', '', false, 300);
         }
 
         $insti = trim($this->pdfHeader['insti'] ?? '');

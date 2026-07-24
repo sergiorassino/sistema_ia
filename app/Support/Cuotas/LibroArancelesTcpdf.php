@@ -3,6 +3,7 @@
 namespace App\Support\Cuotas;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 /**
@@ -161,7 +162,7 @@ final class LibroArancelesTcpdf extends TCPDF
 
         $logo = $header['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x + 5, $y + 1, 21, 21, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 5, $y + 1, 21, 21, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($header['insti'] ?? ''));

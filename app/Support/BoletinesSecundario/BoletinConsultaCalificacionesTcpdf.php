@@ -3,6 +3,7 @@
 namespace App\Support\BoletinesSecundario;
 
 use App\Support\Examenes\TercerMateriaGestor;
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 /**
@@ -159,7 +160,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
         $logo = $this->header['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x0 + 3, $y + 2, self::ANCHO_LOGO, self::ANCHO_LOGO, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x0 + 3, $y + 2, self::ANCHO_LOGO, self::ANCHO_LOGO, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($this->header['insti'] ?? ''));

@@ -4,6 +4,7 @@ namespace App\Support\Listados;
 
 use App\Models\Sexo;
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use Illuminate\Support\Collection;
 use TCPDF;
 
@@ -207,7 +208,7 @@ final class ListadoCursoTcpdf extends TCPDF
 
         $logo = $header['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image($logo, $x + 2, $y + 2, 12, 14, '', '', '', false, 300);
+            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 2, $y + 2, 12, 14, '', '', '', false, 300);
         }
 
         $insti = trim((string) ($header['insti'] ?? ''));
