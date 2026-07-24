@@ -31,6 +31,25 @@ final class CalificacionesPrimarioNotasPermitidas
             : self::ESCALA_CONCEPTOS;
     }
 
+    /** Etiqueta corta para UI (listados / selects). */
+    public static function etiquetaEscala(mixed $escala): string
+    {
+        return self::normalizarEscala($escala) === self::ESCALA_LITERALES
+            ? 'Literales'
+            : 'Conceptos';
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function opcionesEscalaParaSelect(): array
+    {
+        return [
+            self::ESCALA_CONCEPTOS => self::etiquetaEscala(self::ESCALA_CONCEPTOS),
+            self::ESCALA_LITERALES => self::etiquetaEscala(self::ESCALA_LITERALES),
+        ];
+    }
+
     /**
      * @return array<int, list<string>>
      */

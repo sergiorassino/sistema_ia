@@ -2241,9 +2241,9 @@
 
     /* Asignaturas del año — grilla compacta a ancho útil */
     .gf.gf-materias-anio {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
+        width: max-content;
+        min-width: 68rem;
+        max-width: none;
         display: block;
     }
     .gf.gf-materias-anio .gf-head,
@@ -2280,10 +2280,10 @@
         text-align: center;
     }
     .gf.gf-materias-anio .gf-ma-col-fk {
-        flex: 0 0 3.1rem;
-        width: 3.1rem;
-        min-width: 3.1rem;
-        text-align: center;
+        flex: 0 0 10rem;
+        width: 10rem;
+        min-width: 10rem;
+        text-align: left;
     }
     .gf.gf-materias-anio .gf-ma-col-fk-xs > div,
     .gf.gf-materias-anio .gf-ma-col-fk > div,
@@ -2293,8 +2293,8 @@
         white-space: nowrap;
     }
     .gf.gf-materias-anio .gf-ma-col-materia {
-        flex: 1 1 5rem;
-        min-width: 0;
+        flex: 1 1 8rem;
+        min-width: 8rem;
         overflow: hidden;
     }
     .gf.gf-materias-anio .gf-ma-col-materia .gf-inline,
@@ -2316,10 +2316,10 @@
         text-align: center;
     }
     .gf.gf-materias-anio .gf-ma-col-escala {
-        flex: 0 0 4.25rem;
-        width: 4.25rem;
-        min-width: 4.25rem;
-        text-align: center;
+        flex: 0 0 6.5rem;
+        width: 6.5rem;
+        min-width: 6.5rem;
+        text-align: left;
     }
     .gf.gf-materias-anio .gf-ma-escala-wrap {
         position: relative;
@@ -2339,7 +2339,7 @@
         background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") center / contain no-repeat;
     }
     .gf.gf-materias-anio .gf-ma-escala-select {
-        @apply w-full border-0 bg-transparent p-0 m-0 font-mono text-neutral-700 rounded-none;
+        @apply w-full border-0 bg-transparent p-0 m-0 text-neutral-700 rounded-none;
         box-sizing: border-box;
         outline: none;
         font: inherit;
@@ -2348,7 +2348,7 @@
         min-width: 0;
         padding-left: 0.15rem;
         padding-right: 1.15rem;
-        text-align: center;
+        text-align: left;
         cursor: pointer;
         appearance: none;
         -webkit-appearance: none;

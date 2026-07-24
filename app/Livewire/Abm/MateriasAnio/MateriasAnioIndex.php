@@ -636,6 +636,41 @@ class MateriasAnioIndex extends Component
     }
 
     /**
+     * Etiqueta de curso del año (mismo criterio que el filtro superior).
+     */
+    public static function etiquetaCurso(Curso $c): string
+    {
+        $label = trim((string) ($c->cursec ?? ''));
+        $turnoEtq = $c->relationLoaded('turnoClase')
+            ? trim((string) ($c->turnoClase?->nombre ?? ''))
+            : '';
+        $extra = collect([$c->c ?? null, $c->s ?? null, $turnoEtq !== '' ? $turnoEtq : null])
+            ->filter(fn ($v) => $v !== null && trim((string) $v) !== '')
+            ->implode(' ');
+        $display = $label !== '' ? $label : ('Curso '.$c->Id);
+
+        return $extra !== '' ? ($display.' · '.$extra) : $display;
+    }
+
+    public static function etiquetaCurplan(Curplan $cp): string
+    {
+        $curso = trim((string) ($cp->curPlanCurso ?? ''));
+        $planAbrev = trim((string) ($cp->plan?->abrev ?? ''));
+        if ($planAbrev !== '' && $curso !== '') {
+            return $planAbrev.' · '.$curso;
+        }
+
+        return $curso !== '' ? $curso : ('#'.$cp->id);
+    }
+
+    public static function etiquetaMatplan(Matplan $mp): string
+    {
+        $nombre = trim((string) ($mp->matPlanMateria ?? ''));
+
+        return $nombre !== '' ? $nombre : ('#'.$mp->id);
+    }
+
+    /**
      * @return array{0:Collection<int, mixed>,1:Collection<int, mixed>,2:Collection<int, mixed>}
      */
     protected function options(): array
@@ -705,6 +740,16 @@ class MateriasAnioIndex extends Component
         [$cursos, $curplanes, $matplanes] = $this->options();
 
         $matplanesByCurplan = $matplanes->groupBy('idCurPlan');
+        $etiquetasCurso = $cursos->mapWithKeys(
+            fn (Curso $c) => [(int) $c->Id => self::etiquetaCurso($c)]
+        );
+        $etiquetasCurplan = $curplanes->mapWithKeys(
+            fn (Curplan $cp) => [(int) $cp->id => self::etiquetaCurplan($cp)]
+        );
+        $etiquetasMatplan = $matplanes->mapWithKeys(
+            fn (Matplan $mp) => [(int) $mp->id => self::etiquetaMatplan($mp)]
+        );
+        $opcionesEscala = CalificacionesPrimarioNotasPermitidas::opcionesEscalaParaSelect();
         $tieneEsInstitucional = Schema::hasColumn('materias', 'esInstitucional');
         $tieneInfoCalif = Schema::hasColumn('materias', 'infoCalif');
         $tieneEscala = Schema::hasColumn('materias', 'escala');
@@ -714,6 +759,10 @@ class MateriasAnioIndex extends Component
             'cursos',
             'curplanes',
             'matplanesByCurplan',
+            'etiquetasCurso',
+            'etiquetasCurplan',
+            'etiquetasMatplan',
+            'opcionesEscala',
             'tieneEsInstitucional',
             'tieneInfoCalif',
             'tieneEscala',

@@ -42,30 +42,26 @@
             <select id="se-mat-curso" wire:model.live="cursoId" class="form-select mt-1.5 w-full">
                 <option value="">— Seleccione curso —</option>
                 @foreach ($cursos as $c)
-                    @php
-                        $label = trim((string) ($c->cursec ?? ''));
-                        $turnoEtq = $c->turnoClase?->nombre;
-                        $extra = collect([$c->c ?? null, $c->s ?? null, $turnoEtq])->filter(fn ($v) => $v !== null && trim((string) $v) !== '')->implode(' ');
-                        $display = $label !== '' ? $label : ('Curso ' . $c->Id);
-                    @endphp
                     <option value="{{ $c->Id }}">
-                        {{ $c->Id }} — {{ $display }}{{ $extra !== '' ? ' · ' . $extra : '' }}
+                        {{ $c->Id }} — {{ $etiquetasCurso[(int) $c->Id] ?? ('Curso '.$c->Id) }}
                     </option>
                 @endforeach
             </select>
         </div>
     </div>
 
-    <div class="se-card overflow-hidden p-2 sm:p-3">
-        <div class="gf gf-materias-anio gf-vcenter" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
+    <div class="se-card p-2 sm:p-3">
+        <div class="w-full overflow-x-auto">
+            <div class="flex justify-start">
+                <div class="gf gf-materias-anio gf-vcenter" wire:key="materias-anio-curso-{{ (int) ($cursoId ?? 0) }}">
             <div class="gf-head">
                 <div class="gf-th gf-ma-col-id" title="id">ID</div>
                 <div class="gf-th gf-ma-col-ord" title="ord">Ord</div>
                 <div class="gf-th gf-ma-col-fk-xs" title="idNivel">Niv</div>
-                <div class="gf-th gf-ma-col-fk" title="idCursos">Curso</div>
+                <div class="gf-th gf-ma-col-fk" title="idCursos → cursos">Curso</div>
                 <div class="gf-th gf-ma-col-fk-xs" title="idTerlec">Ter</div>
-                <div class="gf-th gf-ma-col-fk" title="idCurPlan">CPl</div>
-                <div class="gf-th gf-ma-col-fk" title="idMatPlan">MPl</div>
+                <div class="gf-th gf-ma-col-fk" title="idCurPlan → curplan.curPlanCurso">CPl</div>
+                <div class="gf-th gf-ma-col-fk" title="idMatPlan → matplan.matPlanMateria">MPl</div>
                 <div class="gf-th gf-ma-col-materia">Materia</div>
                 <div class="gf-th gf-ma-col-abrev">Abrev</div>
                 @if ($tieneEsInstitucional)
@@ -75,7 +71,7 @@
                     <div class="gf-th gf-ma-col-flag" title="La materia aparece en síntesis y calificaciones del informe">Inf.</div>
                 @endif
                 @if ($tieneEscala)
-                    <div class="gf-th gf-ma-col-escala" title="Escala de calificación (1 = conceptos, 2 = ML/L/EL/P/EP/PPI)">Esc.</div>
+                    <div class="gf-th gf-ma-col-escala" title="Escala: Conceptos (E, MB…) o Literales (ML, L, EL, P, EP, PPI)">Esc.</div>
                 @endif
                 <div class="gf-th-right gf-ma-col-acciones">Acciones</div>
             </div>
@@ -97,10 +93,11 @@
 
                     <div class="gf-td gf-ma-col-fk">
                         <select wire:model.defer="create.idCursos"
-                                class="gf-inline-select font-mono text-neutral-700 @error('create.idCursos') ring-2 ring-red-400 @enderror">
+                                class="gf-inline-select text-neutral-700 @error('create.idCursos') ring-2 ring-red-400 @enderror"
+                                title="Curso del año">
                             <option value="">—</option>
                             @foreach ($cursos as $c)
-                                <option value="{{ $c->Id }}">{{ $c->Id }}</option>
+                                <option value="{{ $c->Id }}">{{ $etiquetasCurso[(int) $c->Id] ?? $c->Id }}</option>
                             @endforeach
                         </select>
                         @error('create.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
@@ -113,10 +110,11 @@
 
                     <div class="gf-td gf-ma-col-fk">
                         <select wire:model.live="create.idCurPlan"
-                                class="gf-inline-select font-mono text-neutral-700 @error('create.idCurPlan') ring-2 ring-red-400 @enderror">
+                                class="gf-inline-select text-neutral-700 @error('create.idCurPlan') ring-2 ring-red-400 @enderror"
+                                title="Curso modelo (curplan)">
                             <option value="">—</option>
                             @foreach ($curplanes as $cp)
-                                <option value="{{ $cp->id }}">{{ $cp->id }}</option>
+                                <option value="{{ $cp->id }}">{{ $etiquetasCurplan[(int) $cp->id] ?? $cp->id }}</option>
                             @endforeach
                         </select>
                         @error('create.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
@@ -125,10 +123,11 @@
                     <div class="gf-td gf-ma-col-fk">
                         @php $cpId = (int) ($create['idCurPlan'] ?? 0); @endphp
                         <select wire:model.defer="create.idMatPlan"
-                                class="gf-inline-select font-mono text-neutral-700 @error('create.idMatPlan') ring-2 ring-red-400 @enderror">
+                                class="gf-inline-select text-neutral-700 @error('create.idMatPlan') ring-2 ring-red-400 @enderror"
+                                title="Materia modelo (matplan)">
                             <option value="">—</option>
                             @foreach (($matplanesByCurplan[$cpId] ?? collect()) as $mp)
-                                <option value="{{ $mp->id }}">{{ $mp->id }}</option>
+                                <option value="{{ $mp->id }}">{{ $etiquetasMatplan[(int) $mp->id] ?? $mp->id }}</option>
                             @endforeach
                         </select>
                         @error('create.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
@@ -170,8 +169,9 @@
                                 <select wire:model.defer="create.escala"
                                         class="gf-ma-escala-select @error('create.escala') ring-2 ring-red-400 @enderror"
                                         title="Escala de calificación">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
+                                    @foreach ($opcionesEscala as $valor => $etiqueta)
+                                        <option value="{{ $valor }}">{{ $etiqueta }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             @error('create.escala') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
@@ -210,14 +210,15 @@
                     <div class="gf-td gf-ma-col-fk">
                         @if ($editingId === $m->id)
                             <select wire:model.defer="draft.{{ $m->id }}.idCursos"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCursos') ring-2 ring-red-400 @enderror">
+                                    class="gf-inline-select text-neutral-700 @error('draft.'.$m->id.'.idCursos') ring-2 ring-red-400 @enderror"
+                                    title="Curso del año">
                                 @foreach ($cursos as $c)
-                                    <option value="{{ $c->Id }}">{{ $c->Id }}</option>
+                                    <option value="{{ $c->Id }}">{{ $etiquetasCurso[(int) $c->Id] ?? $c->Id }}</option>
                                 @endforeach
                             </select>
                             @error('draft.'.$m->id.'.idCursos') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         @else
-                            <div class="font-mono text-neutral-700" title="idCursos">{{ $m->idCursos }}</div>
+                            <div class="text-neutral-700" title="idCursos={{ $m->idCursos }}">{{ $etiquetasCurso[(int) $m->idCursos] ?? ('#'.$m->idCursos) }}</div>
                         @endif
                     </div>
 
@@ -228,14 +229,15 @@
                     <div class="gf-td gf-ma-col-fk">
                         @if ($editingId === $m->id)
                             <select wire:model.live="draft.{{ $m->id }}.idCurPlan"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idCurPlan') ring-2 ring-red-400 @enderror">
+                                    class="gf-inline-select text-neutral-700 @error('draft.'.$m->id.'.idCurPlan') ring-2 ring-red-400 @enderror"
+                                    title="Curso modelo (curplan)">
                                 @foreach ($curplanes as $cp)
-                                    <option value="{{ $cp->id }}">{{ $cp->id }}</option>
+                                    <option value="{{ $cp->id }}">{{ $etiquetasCurplan[(int) $cp->id] ?? $cp->id }}</option>
                                 @endforeach
                             </select>
                             @error('draft.'.$m->id.'.idCurPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         @else
-                            <div class="font-mono text-neutral-700" title="idCurPlan">{{ $m->idCurPlan }}</div>
+                            <div class="text-neutral-700" title="idCurPlan={{ $m->idCurPlan }}">{{ $etiquetasCurplan[(int) $m->idCurPlan] ?? ('#'.$m->idCurPlan) }}</div>
                         @endif
                     </div>
 
@@ -243,14 +245,15 @@
                         @if ($editingId === $m->id)
                             @php $cpId = (int) ($draft[$m->id]['idCurPlan'] ?? 0); @endphp
                             <select wire:model.defer="draft.{{ $m->id }}.idMatPlan"
-                                    class="gf-inline-select font-mono text-neutral-700 @error('draft.'.$m->id.'.idMatPlan') ring-2 ring-red-400 @enderror">
+                                    class="gf-inline-select text-neutral-700 @error('draft.'.$m->id.'.idMatPlan') ring-2 ring-red-400 @enderror"
+                                    title="Materia modelo (matplan)">
                                 @foreach (($matplanesByCurplan[$cpId] ?? collect()) as $mp)
-                                    <option value="{{ $mp->id }}">{{ $mp->id }}</option>
+                                    <option value="{{ $mp->id }}">{{ $etiquetasMatplan[(int) $mp->id] ?? $mp->id }}</option>
                                 @endforeach
                             </select>
                             @error('draft.'.$m->id.'.idMatPlan') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
                         @else
-                            <div class="font-mono text-neutral-700" title="idMatPlan">{{ $m->idMatPlan }}</div>
+                            <div class="text-neutral-700" title="idMatPlan={{ $m->idMatPlan }}">{{ $etiquetasMatplan[(int) $m->idMatPlan] ?? ('#'.$m->idMatPlan) }}</div>
                         @endif
                     </div>
 
@@ -321,8 +324,9 @@
                                     <select wire:model.defer="draft.{{ $m->id }}.escala"
                                             class="gf-ma-escala-select @error('draft.'.$m->id.'.escala') ring-2 ring-red-400 @enderror"
                                             title="Escala de calificación">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
+                                        @foreach ($opcionesEscala as $valor => $etiqueta)
+                                            <option value="{{ $valor }}">{{ $etiqueta }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 @error('draft.'.$m->id.'.escala') <div class="text-[10px] text-red-700 mt-1">{{ $message }}</div> @enderror
@@ -331,9 +335,10 @@
                                     <select wire:change="guardarEscala({{ $m->id }}, $event.target.value)"
                                             wire:key="materia-anio-escala-{{ $m->id }}-{{ (int) ($m->escala ?? 1) }}"
                                             class="gf-ma-escala-select"
-                                            title="1 = conceptos (E, MB…) · 2 = ML, L, EL, P, EP, PPI">
-                                        <option value="1" @selected((int) ($m->escala ?? 1) === 1)>1</option>
-                                        <option value="2" @selected((int) ($m->escala ?? 1) === 2)>2</option>
+                                            title="Conceptos (E, MB…) · Literales (ML, L, EL, P, EP, PPI)">
+                                        @foreach ($opcionesEscala as $valor => $etiqueta)
+                                            <option value="{{ $valor }}" @selected((int) ($m->escala ?? 1) === (int) $valor)>{{ $etiqueta }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             @endif
@@ -366,6 +371,8 @@
                     <div class="gf-empty">No hay materias registradas para el año lectivo actual.</div>
                 @endunless
             @endforelse
+                </div>
+            </div>
         </div>
     </div>
 
