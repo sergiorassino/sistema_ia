@@ -27,8 +27,9 @@ final class ListadoDocentesExportParams
     public static function normalizarCamposSeleccion(array $pedidos): array
     {
         $campos = ListadoDocentesPdfFieldCatalog::normalizeSelection($pedidos);
+        $campos = CampoProfesor::aplicarVisibilidadListadoPdf($campos);
 
-        return CampoProfesor::aplicarVisibilidadListadoPdf($campos);
+        return ListadoDocentesPdfFieldCatalog::restringirPorPermisoDatosPersonales($campos);
     }
 
     public static function normalizarSubtitulo(?string $valor): string

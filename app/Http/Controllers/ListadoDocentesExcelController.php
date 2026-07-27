@@ -6,7 +6,6 @@ use App\Support\Listados\ListadoDocentesConsulta;
 use App\Support\Listados\ListadoDocentesExcelExportSpec;
 use App\Support\Listados\ListadoDocentesExcelExporter;
 use App\Support\Listados\ListadoDocentesExportParams;
-use App\Support\PermisosIaCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,7 +16,7 @@ class ListadoDocentesExcelController extends Controller
 {
     public function __invoke(Request $request, ListadoDocentesExcelExporter $exporter): StreamedResponse
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403);
+        abort_unless(puedeConsultarLegajosDocentes(), 403);
 
         $key = 'listado-docentes-excel:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -42,6 +41,19 @@ class ListadoDocentesExcelController extends Controller
     {
         $rolesInput = $request->query('roles');
         if ($rolesInput === null || $rolesInput === '') {
+            if (! puedeVerDatosPersonalesDocentes()) {
+                $roleIds = ListadoDocentesConsulta::rolesDisponibles()
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
+
+                return new ListadoDocentesExcelExportSpec(
+                    roleIds: $roleIds,
+                    campoKeys: ListadoDocentesPdfFieldCatalog::DEFAULT_KEYS,
+                );
+            }
+
             return new ListadoDocentesExcelExportSpec;
         }
 

@@ -156,6 +156,38 @@ if (! function_exists('puedeConsultarLegajosEstudiantes')) {
     }
 }
 
+if (! function_exists('puedeConsultarLegajosDocentes')) {
+    /**
+     * Consulta de legajos y listado de docentes (apellido, nombre, DNI; más campos con orden 88).
+     * Alta/edición/baja: {@see puedeModificarLegajosDocentes()} (permiso orden 11).
+     */
+    function puedeConsultarLegajosDocentes(): bool
+    {
+        return true;
+    }
+}
+
+if (! function_exists('puedeModificarLegajosDocentes')) {
+    /**
+     * Crear, editar y eliminar legajos de docentes (permiso orden 11).
+     */
+    function puedeModificarLegajosDocentes(): bool
+    {
+        return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES);
+    }
+}
+
+if (! function_exists('puedeVerDatosPersonalesDocentes')) {
+    /**
+     * Datos personales de docentes (más allá de apellido, nombre y DNI) en legajo, PDF y Excel.
+     * Orden {@see \App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES}.
+     */
+    function puedeVerDatosPersonalesDocentes(): bool
+    {
+        return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES);
+    }
+}
+
 if (! function_exists('tienePermiso')) {
     /**
      * Permiso concedido en profesores.permisos_ia (cadena 0/1 por orden del catálogo permisos_ia).

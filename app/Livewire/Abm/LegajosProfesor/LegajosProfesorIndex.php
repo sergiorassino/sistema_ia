@@ -53,7 +53,7 @@ class LegajosProfesorIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para legajos de docentes.');
+        abort_unless(puedeConsultarLegajosDocentes(), 403, 'Sin permiso para consultar legajos de docentes.');
 
         $focus = request()->integer('focus');
         $this->focusId = $focus > 0 ? $focus : null;
@@ -83,7 +83,7 @@ class LegajosProfesorIndex extends Component
 
     public function confirmDelete(int $id): void
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para eliminar legajos de docentes.');
+        abort_unless(puedeModificarLegajosDocentes(), 403, 'Sin permiso para eliminar legajos de docentes.');
 
         $p = $this->scopedProfesorOrFail($id);
         $deps = $this->dependenciasParaBorrar($id);
@@ -133,7 +133,7 @@ class LegajosProfesorIndex extends Component
 
     public function delete(): void
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para eliminar legajos de docentes.');
+        abort_unless(puedeModificarLegajosDocentes(), 403, 'Sin permiso para eliminar legajos de docentes.');
 
         $key = 'legajos-profesor:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
