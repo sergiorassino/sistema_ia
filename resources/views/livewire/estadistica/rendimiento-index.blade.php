@@ -27,7 +27,7 @@
         <div class="se-card p-5 flex flex-col sm:col-span-2 lg:col-span-1">
             <h3 class="text-base font-semibold text-neutral-800">3) Estadística por Estudiante</h3>
             <p class="text-sm text-neutral-500 mt-2 flex-1">
-                Desempeño por alumno. Filtros: todos, por curso o por estudiante individual.
+                Desempeño por alumno. Elegí curso o estudiante para consultar.
                 Se destaca en rojo cuando tiene 3 o más materias sin aprobar durante el año.
             </p>
             <a href="{{ route('estadistica.rendimiento.porEstudiante') }}" class="btn-primary mt-4 w-fit">Ir a Estadística por Estudiante</a>

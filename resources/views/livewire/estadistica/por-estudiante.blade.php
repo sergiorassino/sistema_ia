@@ -19,7 +19,7 @@
             <div>
                 <label for="curso-est" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Por curso</label>
                 <select wire:model.live="cursoId" id="curso-est" class="form-input mt-1 min-w-[10rem]">
-                    <option value="0">— Todos —</option>
+                    <option value="0">— Elegir —</option>
                     @foreach ($cursos as $c)
                         <option value="{{ $c['id'] }}">{{ $c['cursec'] }}</option>
                     @endforeach
@@ -28,7 +28,7 @@
             <div>
                 <label for="legajo-est" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Por estudiante</label>
                 <select wire:model.live="legajoId" id="legajo-est" class="form-input mt-1 min-w-[16rem] max-w-full">
-                    <option value="0">— Todos —</option>
+                    <option value="0">— Elegir —</option>
                     @foreach ($alumnos as $a)
                         <option value="{{ $a['id'] }}">{{ $a['label'] }}</option>
                     @endforeach
@@ -40,6 +40,8 @@
 
     @if ($idTerlec <= 0)
         <div class="se-card p-6 text-center text-neutral-500 text-sm">Seleccioná un año lectivo en el contexto de sesión.</div>
+    @elseif (! $filtrosActivos)
+        <div class="se-card p-6 text-center text-neutral-500 text-sm">Elegí un curso o un estudiante para ver las estadísticas.</div>
     @elseif ($resumen !== null)
         @include('livewire.estadistica.partials.resumen-promocion-cards', [
             'resumenPromocion' => $resumenPromocion,
