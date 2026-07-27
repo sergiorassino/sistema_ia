@@ -6,7 +6,6 @@ use App\Models\CampoProfesor;
 use App\Support\Listados\ListadoDocentesConsulta;
 use App\Support\Listados\ListadoDocentesExportParams;
 use App\Support\Listados\ListadoDocentesPdfFieldCatalog;
-use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -24,8 +23,18 @@ class ListadoDocentes extends Component
 
     public function mount(): void
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403);
+        abort_unless(puedeConsultarLegajosDocentes(), 403);
         $this->camposSeleccionados = CampoProfesor::aplicarVisibilidadListadoPdf($this->camposSeleccionados);
+        $this->camposSeleccionados = ListadoDocentesPdfFieldCatalog::restringirPorPermisoDatosPersonales(
+            $this->camposSeleccionados
+        );
+    }
+
+    public function updatedCamposSeleccionados(): void
+    {
+        $this->camposSeleccionados = ListadoDocentesPdfFieldCatalog::restringirPorPermisoDatosPersonales(
+            ListadoDocentesPdfFieldCatalog::normalizeSelection($this->camposSeleccionados)
+        );
     }
 
     public function quitarRol(int $idRol): void
@@ -83,7 +92,8 @@ class ListadoDocentes extends Component
             ->values()
             ->all();
 
-        $camposPorGrupo = ListadoDocentesPdfFieldCatalog::groupedForUiPorSolapas();
+        $camposPorGrupo = ListadoDocentesPdfFieldCatalog::groupedForUiPorSolapasSegunPermiso();
+        $puedeVerDatosPersonales = puedeVerDatosPersonalesDocentes();
 
         return view('listados::livewire.listados.docentes', [
             'roles' => $roles,
@@ -91,6 +101,7 @@ class ListadoDocentes extends Component
             'cantidadSeleccionados' => $cantidadSeleccionados,
             'rolesSeleccionadosResumen' => $rolesSeleccionadosResumen,
             'camposPorGrupo' => $camposPorGrupo,
+            'puedeVerDatosPersonales' => $puedeVerDatosPersonales,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Listado de docentes']);
     }
 
@@ -176,6 +187,12 @@ class ListadoDocentes extends Component
 
     public function seleccionarTodos(): void
     {
+        if (! puedeVerDatosPersonalesDocentes()) {
+            $this->seleccionarSoloDefecto();
+
+            return;
+        }
+
         $soloLegajos = CampoProfesor::columnasProfesoresVisiblesParaUi();
         $this->camposSeleccionados = collect(ListadoDocentesPdfFieldCatalog::allowedKeys())
             ->filter(function (string $k) use ($soloLegajos) {

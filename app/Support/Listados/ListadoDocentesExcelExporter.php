@@ -37,6 +37,8 @@ final class ListadoDocentesExcelExporter
             $campos = $spec->campoKeys;
         }
 
+        $campos = ListadoDocentesPdfFieldCatalog::restringirPorPermisoDatosPersonales($campos);
+
         $columnasMeta = ListadoDocentesPdfFieldCatalog::columnsForPdf($campos);
 
         $todosLosRoles = ListadoDocentesConsulta::rolesDisponibles();

@@ -8,7 +8,6 @@ use App\Models\Profesor;
 use App\Models\ProfesorTipo;
 use App\Models\Sexo;
 use App\Models\SolapaLegajoProfesor;
-use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -90,9 +89,11 @@ class LegajoProfesorForm extends Component
 
     public function mount(?int $id = null): void
     {
-        if (! $id && ! tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES)) {
+        if (! $id && ! puedeModificarLegajosDocentes()) {
             abort(403, 'Sin permiso para crear legajos de docentes.');
         }
+
+        abort_unless(puedeConsultarLegajosDocentes(), 403, 'Sin permiso para consultar legajos de docentes.');
 
         $this->id = $id;
         if ($id) {
@@ -102,7 +103,7 @@ class LegajoProfesorForm extends Component
 
     private function requireModificarLegajoDocente(): void
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403, 'Sin permiso para modificar legajos de docentes.');
+        abort_unless(puedeModificarLegajosDocentes(), 403, 'Sin permiso para modificar legajos de docentes.');
     }
 
     protected function rules(): array
@@ -185,6 +186,10 @@ class LegajoProfesorForm extends Component
             $allData = array_filter($allData, fn ($col) => isset($set[$col]), ARRAY_FILTER_USE_KEY);
         }
 
+        if (! puedeVerDatosPersonalesDocentes()) {
+            $allData = array_intersect_key($allData, array_flip(self::CORE_COLUMNS));
+        }
+
         $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
         if ($idNivel < 1) {
             session()->flash('warning', 'No hay nivel activo en el contexto. Seleccione nivel en el login.');
@@ -231,11 +236,19 @@ class LegajoProfesorForm extends Component
     private function loadProfesor(int $id): void
     {
         $p = $this->scopedProfesorOrFail($id);
+        $puedeVerDatos = puedeVerDatosPersonalesDocentes();
 
         $this->apellido = $p->apellido ?? '';
         $this->nombre = $p->nombre ?? '';
         $this->dni = (string) ($p->dni ?? '');
         $this->IdTipoProf = (int) ($p->IdTipoProf ?? 0);
+
+        if (! $puedeVerDatos) {
+            $this->profesorExtras = [];
+
+            return;
+        }
+
         $this->cuil = $p->cuil ?? '';
         $this->sexo = $p->sexo !== null && $p->sexo !== '' ? (int) $p->sexo : '';
         $this->email = $p->email ?? '';
@@ -438,13 +451,22 @@ class LegajoProfesorForm extends Component
             $this->activeTab = array_key_first($tabsVisibles) ?? 'docente';
         }
 
-        $puedeEditar = tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES);
+        $puedeEditar = puedeModificarLegajosDocentes();
+        $puedeVerDatosPersonales = puedeVerDatosPersonalesDocentes();
+
+        if (! $puedeVerDatosPersonales) {
+            $tabsVisibles = ['docente' => $tabsVisibles['docente'] ?? 'DOCENTE'];
+            $columnasPorSolapaSlug = [];
+            $modoParametrizado = true;
+            $this->activeTab = 'docente';
+        }
+
         $pageTitle = $this->id
             ? ($puedeEditar ? 'Editar legajo docente' : 'Consultar legajo docente')
             : 'Nuevo legajo docente';
 
         return view('livewire.abm.legajos-profesor.form', compact(
-            'roles', 'sexosOpciones', 'estadosCivilesOpciones', 'tabsVisibles', 'modoParametrizado', 'columnasPorSolapaSlug', 'puedeEditar',
+            'roles', 'sexosOpciones', 'estadosCivilesOpciones', 'tabsVisibles', 'modoParametrizado', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeVerDatosPersonales',
         ))->layout(layoutMenuStaff(), ['pageTitle' => $pageTitle]);
     }
 }

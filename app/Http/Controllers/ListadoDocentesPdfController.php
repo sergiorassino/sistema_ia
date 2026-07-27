@@ -6,7 +6,6 @@ use App\Support\Listados\ListadoDocentesConsulta;
 use App\Support\Listados\ListadoDocentesExportParams;
 use App\Support\Listados\ListadoDocentesPdfFieldCatalog;
 use App\Support\Listados\ListadoDocentesTcpdf;
-use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -19,7 +18,7 @@ class ListadoDocentesPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
-        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_DOCENTES), 403);
+        abort_unless(puedeConsultarLegajosDocentes(), 403);
 
         $key = 'listado-docentes-pdf:'.(auth()->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 30)) {

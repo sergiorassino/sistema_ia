@@ -23,6 +23,64 @@ final class ListadoDocentesPdfFieldCatalog
         'profesores.dni',
     ];
 
+    /**
+     * Sin permiso de datos personales, solo estas columnas (apellido, nombre, DNI).
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function restringirPorPermisoDatosPersonales(array $keys): array
+    {
+        if (puedeVerDatosPersonalesDocentes()) {
+            return $keys;
+        }
+
+        $allowed = array_flip(self::DEFAULT_KEYS);
+        $out = [];
+        foreach ($keys as $k) {
+            if (isset($allowed[$k]) && ! in_array($k, $out, true)) {
+                $out[] = $k;
+            }
+        }
+
+        return $out !== [] ? $out : self::DEFAULT_KEYS;
+    }
+
+    /**
+     * Bloques de columnas para la UI del listado, respetando el permiso de datos personales.
+     *
+     * @return list<array{titulo: string, items: list<array{key: string, label: string}>}>
+     */
+    public static function groupedForUiPorSolapasSegunPermiso(): array
+    {
+        $blocks = self::groupedForUiPorSolapas();
+        if (puedeVerDatosPersonalesDocentes()) {
+            return $blocks;
+        }
+
+        $allowed = array_flip(self::DEFAULT_KEYS);
+        $out = [];
+        foreach ($blocks as $bloque) {
+            $items = [];
+            foreach ($bloque['items'] as $item) {
+                if (isset($allowed[$item['key']])) {
+                    $items[] = $item;
+                }
+            }
+            if ($items !== []) {
+                $out[] = ['titulo' => $bloque['titulo'], 'items' => $items];
+            }
+        }
+
+        return $out !== []
+            ? $out
+            : [['titulo' => 'Identificación', 'items' => [
+                ['key' => 'profesores.apellido', 'label' => 'Apellido'],
+                ['key' => 'profesores.nombre', 'label' => 'Nombre'],
+                ['key' => 'profesores.dni', 'label' => 'DNI'],
+            ]]];
+    }
+
     /** @var array<string, array{label: string, group: string, table: string, column: string, needs_profesortipo?: bool}>|null */
     private static ?array $mergedDefinitions = null;
 

@@ -31,6 +31,9 @@
                     <p class="mt-2 text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Un registro por nivel
                         @if ($id)<span class="text-white/45"> · </span> ID {{ $id }}@endif
+                        @unless ($puedeVerDatosPersonales)
+                            <span class="mt-1 block text-white/70">Solo apellido, nombre y DNI (sin permiso de datos personales).</span>
+                        @endunless
                     </p>
                 </div>
             </div>
@@ -90,20 +93,22 @@
                         </select>
                         @error('IdTipoProf') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    @if($modoParametrizado)
-                        @foreach($columnasPorSolapaSlug['docente'] ?? [] as $campo)
-                            @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => $campo, 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
-                        @endforeach
-                    @else
-                        @php
-                            $todosCampos = ['cuil','sexo','email','emailInsti','callenum','barrio','telefono','celular','nacion','estacivi','legJunta','legEscuela','fechnaci','titulo','numreg','apto','incapac','escalafonD','escalafonE','cargo','obs'];
-                        @endphp
-                        @foreach($todosCampos as $col)
-                            @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => ['columna' => $col, 'etiqueta' => null], 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
-                        @endforeach
+                    @if ($puedeVerDatosPersonales)
+                        @if($modoParametrizado)
+                            @foreach($columnasPorSolapaSlug['docente'] ?? [] as $campo)
+                                @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => $campo, 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
+                            @endforeach
+                        @else
+                            @php
+                                $todosCampos = ['cuil','sexo','email','emailInsti','callenum','barrio','telefono','celular','nacion','estacivi','legJunta','legEscuela','fechnaci','titulo','numreg','apto','incapac','escalafonD','escalafonE','cargo','obs'];
+                            @endphp
+                            @foreach($todosCampos as $col)
+                                @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => ['columna' => $col, 'etiqueta' => null], 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
+                            @endforeach
+                        @endif
                     @endif
                 </div>
-            @elseif($modoParametrizado)
+            @elseif($puedeVerDatosPersonales && $modoParametrizado)
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     @forelse(($columnasPorSolapaSlug[$activeTab] ?? []) as $campo)
                         @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => $campo, 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
@@ -111,7 +116,7 @@
                         <p class="text-sm text-neutral-500 sm:col-span-2">No hay campos asignados a esta solapa en Campos activos.</p>
                     @endforelse
                 </div>
-            @else
+            @elseif($puedeVerDatosPersonales)
                 <p class="text-sm text-neutral-500">Configure campos activos para mostrar contenido en esta solapa.</p>
             @endif
         </div>

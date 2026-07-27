@@ -23,7 +23,7 @@
                         <span class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50">Registros</span>
                         <span class="text-xl font-bold tabular-nums">{{ $profesores->total() }}</span>
                     </span>
-                    @if (tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES))
+                    @if (puedeModificarLegajosDocentes())
                         <a href="{{ route('abm.legajos-profesor.create') }}"
                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@
                                 <td class="table-cell text-neutral-700">{{ $p->tipo?->tipo ?? '—' }}</td>
                                 <td class="table-cell text-right">
                                     <div class="flex flex-wrap justify-end gap-2">
-                                        @if (tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES))
+                                        @if (puedeModificarLegajosDocentes())
                                             <a href="{{ route('abm.legajos-profesor.edit', $p->id) }}" class="btn-secondary btn-sm">Editar</a>
                                             @if (tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES_VER_CONTRASEÑA))
                                                 <button type="button" wire:click="verPassword({{ $p->id }})" class="btn-secondary btn-sm">Ver Pwrd</button>

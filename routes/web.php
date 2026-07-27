@@ -1390,7 +1390,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
     Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
 
-    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->name('abm.legajos-profesor');
+    Route::get('/abm/legajos-profesor', LegajosProfesorIndex::class)->name('abm.legajos-profesor');
     Route::get('/abm/legajos-profesor/nuevo', LegajoProfesorForm::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->name('abm.legajos-profesor.create');
     Route::get('/abm/legajos-profesor/{id}/editar', LegajoProfesorForm::class)->whereNumber('id')->name('abm.legajos-profesor.edit');
 
@@ -1431,9 +1431,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/listados/ficha-matricula/zip', FichaMatriculaSecretariaZipController::class)
         ->name('listados.ficha-matricula.zip');
 
-    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES)->group(function () {
-        Route::get('/listados/docentes', ListadoDocentes::class)->name('listados.docentes');
-        Route::get('/listados/docentes/listado', ListadoDocentesPdfController::class)->name('listados.docentes.pdf');
-        Route::get('/listados/docentes/excel', ListadoDocentesExcelController::class)->name('listados.docentes.excel');
-    });
+    Route::get('/listados/docentes', ListadoDocentes::class)->name('listados.docentes');
+    Route::get('/listados/docentes/listado', ListadoDocentesPdfController::class)->name('listados.docentes.pdf');
+    Route::get('/listados/docentes/excel', ListadoDocentesExcelController::class)->name('listados.docentes.excel');
 });
