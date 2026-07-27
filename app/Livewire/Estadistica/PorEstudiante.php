@@ -31,23 +31,29 @@ class PorEstudiante extends Component
     public function render()
     {
         $idTerlec = $this->idTerlecContexto();
-        $servicio = new AprobacionEstadistica;
+        $filtrosActivos = $this->cursoId > 0 || $this->legajoId > 0;
 
         $filtroCurso = $this->cursoId > 0 ? $this->cursoId : null;
         $filtroLegajo = $this->legajoId > 0 ? $this->legajoId : null;
 
-        $reporte = $idTerlec > 0
-            ? $servicio->reportePorEstudiante($idTerlec, $filtroCurso, $filtroLegajo)
-            : null;
+        $resumen = null;
+        $resumenPromocion = null;
+        $porEstudiante = [];
+        $inasPorLegajo = [];
+        $previasPorLegajo = [];
+        $matriculaPorLegajo = [];
 
-        $resumen = $reporte['resumen'] ?? null;
-        $resumenPromocion = $reporte['resumen_promocion'] ?? null;
-        $porEstudiante = $reporte['por_estudiante'] ?? [];
+        if ($idTerlec > 0 && $filtrosActivos) {
+            $reporte = (new AprobacionEstadistica)->reportePorEstudiante($idTerlec, $filtroCurso, $filtroLegajo);
+            $resumen = $reporte['resumen'] ?? null;
+            $resumenPromocion = $reporte['resumen_promocion'] ?? null;
+            $porEstudiante = $reporte['por_estudiante'] ?? [];
 
-        $idsLegajos = array_column($porEstudiante, 'idLegajos');
-        $inasPorLegajo = EstadisticaRendimientoConsulta::inasistenciasPorLegajo($idTerlec, $filtroCurso, $idsLegajos);
-        $previasPorLegajo = EstadisticaRendimientoConsulta::tienePreviasPorLegajo($idTerlec, $idsLegajos);
-        $matriculaPorLegajo = EstadisticaRendimientoConsulta::matriculaPorLegajo($idTerlec, $idsLegajos);
+            $idsLegajos = array_column($porEstudiante, 'idLegajos');
+            $inasPorLegajo = EstadisticaRendimientoConsulta::inasistenciasPorLegajo($idTerlec, $filtroCurso, $idsLegajos);
+            $previasPorLegajo = EstadisticaRendimientoConsulta::tienePreviasPorLegajo($idTerlec, $idsLegajos);
+            $matriculaPorLegajo = EstadisticaRendimientoConsulta::matriculaPorLegajo($idTerlec, $idsLegajos);
+        }
 
         $chartBarras = EstadisticaRendimientoConsulta::porcentajesApilados(
             $porEstudiante,
@@ -59,6 +65,7 @@ class PorEstudiante extends Component
             'anoLabel' => EstadisticaRendimientoConsulta::anoLabel($idTerlec),
             'cursos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::cursos($idTerlec) : collect(),
             'alumnos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::alumnos($idTerlec) : collect(),
+            'filtrosActivos' => $filtrosActivos,
             'resumen' => $resumen,
             'resumenPromocion' => $resumenPromocion,
             'porEstudiante' => $porEstudiante,

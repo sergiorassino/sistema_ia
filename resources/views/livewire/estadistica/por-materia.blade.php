@@ -19,7 +19,7 @@
             <div>
                 <label for="materia-curso" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Por materia y curso</label>
                 <select wire:model.live="materiaCurso" id="materia-curso" class="form-input mt-1 min-w-[14rem] max-w-full">
-                    <option value="0">— Todas —</option>
+                    <option value="0">— Elegir —</option>
                     @foreach ($materiasCursos as $mc)
                         <option value="{{ $mc['idMaterias'] }}-{{ $mc['idCursos'] }}">{{ $mc['label'] }}</option>
                     @endforeach
@@ -28,7 +28,7 @@
             <div>
                 <label for="curso-filtro" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Por curso</label>
                 <select wire:model.live="cursoId" id="curso-filtro" class="form-input mt-1 min-w-[10rem]">
-                    <option value="0">— Todos —</option>
+                    <option value="0">— Elegir —</option>
                     @foreach ($cursos as $c)
                         <option value="{{ $c['id'] }}">{{ $c['cursec'] }}</option>
                     @endforeach
@@ -44,6 +44,8 @@
 
     @if ($idTerlec <= 0)
         <div class="se-card p-6 text-center text-neutral-500 text-sm">Seleccioná un año lectivo en el contexto de sesión.</div>
+    @elseif (! $filtrosActivos)
+        <div class="se-card p-6 text-center text-neutral-500 text-sm">Elegí una materia o un curso para ver las estadísticas.</div>
     @elseif ($resumen !== null)
         @include('livewire.estadistica.partials.resumen-cards', ['resumen' => $resumen, 'anoLabel' => $anoLabel])
 

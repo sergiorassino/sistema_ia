@@ -32,18 +32,25 @@ class PorMateria extends Component
     public function render()
     {
         $idTerlec = $this->idTerlecContexto();
-        $servicio = new AprobacionEstadistica;
+        [$filtroMateriaRaw, $filtroCursoMc] = $this->parseMateriaCurso();
+        $filtrosActivos = $this->cursoId > 0 || $filtroMateriaRaw > 0;
 
-        [$filtroMateria, $filtroCursoMc] = $this->parseMateriaCurso();
         $filtroCurso = $this->cursoId > 0 ? $this->cursoId : ($filtroCursoMc > 0 ? $filtroCursoMc : null);
-        $filtroMateria = $filtroMateria > 0 ? $filtroMateria : null;
+        $filtroMateria = $filtroMateriaRaw > 0 ? $filtroMateriaRaw : null;
 
-        $reporte = $idTerlec > 0
-            ? $servicio->reportePorMateria($idTerlec, $filtroMateria, $filtroCurso, NivelSistema::SECUNDARIO)
-            : null;
+        $resumen = null;
+        $porMateriaCurso = [];
 
-        $resumen = $reporte['resumen'] ?? null;
-        $porMateriaCurso = ($filtroMateria === null) ? ($reporte['por_materia_curso'] ?? []) : [];
+        if ($idTerlec > 0 && $filtrosActivos) {
+            $reporte = (new AprobacionEstadistica)->reportePorMateria(
+                $idTerlec,
+                $filtroMateria,
+                $filtroCurso,
+                NivelSistema::SECUNDARIO,
+            );
+            $resumen = $reporte['resumen'] ?? null;
+            $porMateriaCurso = ($filtroMateria === null) ? ($reporte['por_materia_curso'] ?? []) : [];
+        }
 
         $chartBarras = EstadisticaRendimientoConsulta::porcentajesApilados(
             $porMateriaCurso,
@@ -55,6 +62,7 @@ class PorMateria extends Component
             'anoLabel' => EstadisticaRendimientoConsulta::anoLabel($idTerlec),
             'cursos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::cursos($idTerlec) : collect(),
             'materiasCursos' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::materiasCursos($idTerlec) : collect(),
+            'filtrosActivos' => $filtrosActivos,
             'resumen' => $resumen,
             'porMateriaCurso' => $porMateriaCurso,
             'pctResumen' => $resumen ? EstadisticaRendimientoConsulta::porcentajesResumen($resumen) : [0, 0, 0, 0],

@@ -91,8 +91,11 @@ final class EstadisticaRendimientoConsulta
     }
 
     /**
+     * Totales de inasistencias de clase (excluye Educación Física, tipo 5).
+     * Usa SUM(cantidad): en varios tenants hay una fila resumen por tipo, no un registro por día.
+     *
      * @param  list<int>  $idsLegajos
-     * @return array<int, int> idLegajos => cantidad inasistencias
+     * @return array<int, float> idLegajos => total inasistencias
      */
     public static function inasistenciasPorLegajo(int $idTerlec, ?int $idCursos, array $idsLegajos): array
     {
@@ -109,7 +112,7 @@ final class EstadisticaRendimientoConsulta
             ->where('mat.idCondiciones', 1)
             ->whereIn('mat.idLegajos', $idsLegajos)
             ->groupBy('mat.idLegajos')
-            ->selectRaw('mat.idLegajos, COUNT(i.id) as inas');
+            ->selectRaw('mat.idLegajos, COALESCE(SUM(i.cantidad), 0) as inas');
 
         if ($idCursos !== null && $idCursos > 0) {
             $query->where('mat.idCursos', $idCursos);
@@ -117,7 +120,7 @@ final class EstadisticaRendimientoConsulta
 
         $out = [];
         foreach ($query->get() as $row) {
-            $out[(int) $row->idLegajos] = (int) $row->inas;
+            $out[(int) $row->idLegajos] = round((float) $row->inas, 2);
         }
 
         return $out;

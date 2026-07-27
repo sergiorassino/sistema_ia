@@ -19,7 +19,7 @@
             <div>
                 <label for="profesor-filtro" class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Por docente</label>
                 <select wire:model.live="profesorId" id="profesor-filtro" class="form-input mt-1 min-w-[14rem] max-w-full">
-                    <option value="0">— Todos —</option>
+                    <option value="0">— Elegir —</option>
                     @foreach ($profesores as $pr)
                         <option value="{{ $pr['id'] }}">{{ $pr['label'] }}</option>
                     @endforeach
@@ -31,9 +31,11 @@
 
     @if ($idTerlec <= 0)
         <div class="se-card p-6 text-center text-neutral-500 text-sm">Seleccioná un año lectivo en el contexto de sesión.</div>
+    @elseif (! $filtrosActivos)
+        <div class="se-card p-6 text-center text-neutral-500 text-sm">Elegí un docente para ver las estadísticas.</div>
     @elseif (empty($porProfesor))
         <div class="se-card p-6 text-center text-neutral-500 text-sm">
-            No hay datos de calificaciones para los docentes del año seleccionado, o no hay profesores con materias en nivel medio.
+            No hay datos de calificaciones para el docente seleccionado, o no tiene materias en nivel medio.
         </div>
     @else
         <h3 class="text-sm font-semibold text-neutral-800 mb-3">

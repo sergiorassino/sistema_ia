@@ -27,33 +27,32 @@ class PorDocente extends Component
     public function render()
     {
         $idTerlec = $this->idTerlecContexto();
-        $servicio = new AprobacionEstadistica;
-
-        $filas = $idTerlec > 0
-            ? $servicio->estadisticasPorDocente($idTerlec, $this->profesorId > 0 ? $this->profesorId : null)
-            : [];
+        $filtrosActivos = $this->profesorId > 0;
 
         $porProfesor = [];
-        foreach ($filas as $r) {
-            $idP = $r['idProfesor'];
-            if (! isset($porProfesor[$idP])) {
-                $porProfesor[$idP] = [
-                    'apellido' => $r['apellido'],
-                    'nombre' => $r['nombre'],
-                    'materias' => [],
-                    'total' => 0,
-                    'durante_anio' => 0,
-                    'diciembre' => 0,
-                    'febrero' => 0,
-                    'pendientes' => 0,
-                ];
+        if ($idTerlec > 0 && $filtrosActivos) {
+            $filas = (new AprobacionEstadistica)->estadisticasPorDocente($idTerlec, $this->profesorId);
+            foreach ($filas as $r) {
+                $idP = $r['idProfesor'];
+                if (! isset($porProfesor[$idP])) {
+                    $porProfesor[$idP] = [
+                        'apellido' => $r['apellido'],
+                        'nombre' => $r['nombre'],
+                        'materias' => [],
+                        'total' => 0,
+                        'durante_anio' => 0,
+                        'diciembre' => 0,
+                        'febrero' => 0,
+                        'pendientes' => 0,
+                    ];
+                }
+                $porProfesor[$idP]['materias'][] = $r;
+                $porProfesor[$idP]['total'] += $r['total'];
+                $porProfesor[$idP]['durante_anio'] += $r['durante_anio'];
+                $porProfesor[$idP]['diciembre'] += $r['diciembre'];
+                $porProfesor[$idP]['febrero'] += $r['febrero'];
+                $porProfesor[$idP]['pendientes'] += $r['pendientes'];
             }
-            $porProfesor[$idP]['materias'][] = $r;
-            $porProfesor[$idP]['total'] += $r['total'];
-            $porProfesor[$idP]['durante_anio'] += $r['durante_anio'];
-            $porProfesor[$idP]['diciembre'] += $r['diciembre'];
-            $porProfesor[$idP]['febrero'] += $r['febrero'];
-            $porProfesor[$idP]['pendientes'] += $r['pendientes'];
         }
 
         $chartComparativa = EstadisticaRendimientoConsulta::porcentajesApilados(
@@ -65,6 +64,7 @@ class PorDocente extends Component
             'idTerlec' => $idTerlec,
             'anoLabel' => EstadisticaRendimientoConsulta::anoLabel($idTerlec),
             'profesores' => $idTerlec > 0 ? EstadisticaRendimientoConsulta::profesores($idTerlec) : collect(),
+            'filtrosActivos' => $filtrosActivos,
             'porProfesor' => $porProfesor,
             'chartComparativa' => $chartComparativa,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Estadística por docente']);
