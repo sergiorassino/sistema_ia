@@ -106,6 +106,8 @@ class CusIsaVozImagenIndex extends Component
     }
 
     /**
+     * Alumnos regulares del curso (nivel y ciclo del contexto activo).
+     *
      * @return Collection<int, Matricula>
      */
     public function matriculasDelCurso(): Collection
@@ -114,31 +116,7 @@ class CusIsaVozImagenIndex extends Component
             return collect();
         }
 
-        $ctx = schoolCtx();
-
-        $cursoOk = Curso::query()
-            ->where('idNivel', $ctx->idNivel)
-            ->where('idTerlec', $ctx->idTerlec)
-            ->where('Id', (int) $this->cursoId)
-            ->exists();
-
-        if (! $cursoOk) {
-            return collect();
-        }
-
-        return Matricula::query()
-            ->with('legajo')
-            ->where('idCursos', (int) $this->cursoId)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
-            ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+        return CusIsaVozImagenDatos::matriculasRegularesDelCurso((int) $this->cursoId);
     }
 
     public function cursos(): Collection

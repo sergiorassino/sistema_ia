@@ -9,6 +9,7 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 |--------|---------|
 | Reserva de Material Didáctico | [reserva-material-didactico.md](reserva-material-didactico.md) |
 | Gestión de asignaturas del año | [materias-anio.md](materias-anio.md) |
+| Estadística de rendimiento escolar | [estadistica-rendimiento-escolar.md](estadistica-rendimiento-escolar.md) |
 
 ## Plantilla
 

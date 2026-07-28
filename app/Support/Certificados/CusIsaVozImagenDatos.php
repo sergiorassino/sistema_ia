@@ -6,6 +6,8 @@ use App\Models\Curso;
 use App\Models\Ento;
 use App\Models\Matricula;
 use App\Models\Terlec;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -18,6 +20,47 @@ final class CusIsaVozImagenDatos
     public const TIPO_ISA = 'isa';
 
     public const TIPO_VOZ_IMAGEN = 'voz-imagen';
+
+    /**
+     * Matrículas regulares (idCondiciones = 1) del curso, nivel y ciclo del contexto.
+     *
+     * @return Collection<int, Matricula>
+     */
+    public static function matriculasRegularesDelCurso(int $cursoId): Collection
+    {
+        if ($cursoId <= 0) {
+            return collect();
+        }
+
+        $ctx = schoolCtx();
+        $idNivel = (int) $ctx->idNivel;
+        $idTerlec = (int) $ctx->idTerlec;
+
+        if ($idNivel < 1 || $idTerlec < 1) {
+            return collect();
+        }
+
+        $cursoOk = Curso::query()
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->where('Id', $cursoId)
+            ->exists();
+
+        if (! $cursoOk) {
+            return collect();
+        }
+
+        return self::queryRegularesCurso($cursoId, $idNivel, $idTerlec)
+            ->with('legajo')
+            ->get()
+            ->sortBy(function (Matricula $m) {
+                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
+                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
+
+                return [$a, $n];
+            })
+            ->values();
+    }
 
     /**
      * @param  list<int>  $idsMatricula
@@ -58,11 +101,8 @@ final class CusIsaVozImagenDatos
         }
 
         /** @var Collection<int, Matricula> $matriculas */
-        $matriculas = Matricula::query()
+        $matriculas = self::queryRegularesCurso($cursoId, $idNivel, $idTerlec)
             ->with(['legajo', 'curso'])
-            ->where('idCursos', $cursoId)
-            ->where('idNivel', $idNivel)
-            ->where('idTerlec', $idTerlec)
             ->whereIn('id', $ids->all())
             ->get();
 
@@ -198,5 +238,22 @@ final class CusIsaVozImagenDatos
         }
 
         return $texto;
+    }
+
+    /**
+     * @return Builder<Matricula>
+     */
+    private static function queryRegularesCurso(int $cursoId, int $idNivel, int $idTerlec): Builder
+    {
+        $idsCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES,
+        );
+
+        return Matricula::query()
+            ->where('idCursos', $cursoId)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->whereIn('idCondiciones', $idsCondiciones)
+            ->whereNull('fechaBaja');
     }
 }
