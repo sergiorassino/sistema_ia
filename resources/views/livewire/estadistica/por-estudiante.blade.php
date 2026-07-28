@@ -253,13 +253,7 @@
                 </div>
             </div>
         @endif
-
-        @include('livewire.estadistica.partials.tabla-ordenable-script')
-
-        @script
-        <script>
-            @include('livewire.estadistica.partials.estadistica-charts-init')
-        </script>
-        @endscript
     @endif
+
+    @include('livewire.estadistica.partials.tabla-ordenable-script')
 </div>

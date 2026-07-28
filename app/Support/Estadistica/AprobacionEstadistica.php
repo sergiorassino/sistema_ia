@@ -195,15 +195,10 @@ final class AprobacionEstadistica
     ): array {
         $resumen = self::contadorResumenVacio();
         $agrupado = [];
-        $incluirDetalle = $idMaterias === null || $idMaterias <= 0;
 
         foreach ($this->cursorFilasMateriaCurso($idTerlec, null, $idMaterias, $idCursos, $idNivel) as $row) {
             $estado = self::estadoAprobacionPorMateria($row);
             self::acumularResumen($resumen, $estado);
-
-            if (! $incluirDetalle) {
-                continue;
-            }
 
             $key = ($row['idMaterias'] ?? 0).'_'.($row['idCursos'] ?? 0);
             if (! isset($agrupado[$key])) {

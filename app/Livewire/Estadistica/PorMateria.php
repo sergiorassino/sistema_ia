@@ -49,7 +49,7 @@ class PorMateria extends Component
                 NivelSistema::SECUNDARIO,
             );
             $resumen = $reporte['resumen'] ?? null;
-            $porMateriaCurso = ($filtroMateria === null) ? ($reporte['por_materia_curso'] ?? []) : [];
+            $porMateriaCurso = $reporte['por_materia_curso'] ?? [];
         }
 
         $chartBarras = EstadisticaRendimientoConsulta::porcentajesApilados(

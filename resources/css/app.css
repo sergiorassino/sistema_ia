@@ -129,10 +129,10 @@
         min-height: 4rem;
     }
     [data-se-estad-chart-panel]:not(.se-estad-chart-panel--ready) {
-        visibility: hidden;
+        opacity: 0;
     }
     [data-se-estad-chart-panel].se-estad-chart-panel--ready {
-        visibility: visible;
+        opacity: 1;
     }
 
     /* Asegura que los bordes (border-r, etc.) se rendericen en tablas */
