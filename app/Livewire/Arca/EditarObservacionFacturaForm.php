@@ -3,35 +3,46 @@
 namespace App\Livewire\Arca;
 
 use App\Models\Ento;
+use App\Models\Nivel;
 use App\Support\Arca\ObsFacturaHtmlSanitizer;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\NivelSistema;
 use App\Support\PermisosArca;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
+use RuntimeException;
 
 /**
- * Edición de `ento.obsFactura` — texto HTML del impreso de factura AFIP.
+ * Edición de `ento.obsFactura` por nivel pedagógico (Inicial, Primario, Secundario).
  */
 class EditarObservacionFacturaForm extends Component
 {
-    public string $obsFactura = '';
+    public string $obsInicial = '';
+
+    public string $obsPrimario = '';
+
+    public string $obsSecundario = '';
 
     public function mount(): void
     {
         abort_unless(PermisosArca::puedeEditarObservacionFactura(), 404);
 
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
-        abort_if($idNivel < 1, 403, 'Seleccione un nivel en el contexto activo.');
+        if (! Schema::hasColumn('ento', 'obsFactura')) {
+            return;
+        }
 
-        /** @var Ento $ento */
-        $ento = Ento::query()->firstOrNew(['idNivel' => $idNivel]);
+        $porNivel = Ento::query()
+            ->whereIn('idNivel', self::idsNivelesEditables())
+            ->get(['idNivel', 'obsFactura'])
+            ->keyBy(fn (Ento $e) => (int) $e->idNivel);
 
-        $this->obsFactura = Schema::hasColumn('ento', 'obsFactura')
-            ? (string) ($ento->obsFactura ?? '')
-            : '';
+        $this->obsInicial = (string) ($porNivel->get(NivelSistema::INICIAL)?->obsFactura ?? '');
+        $this->obsPrimario = (string) ($porNivel->get(NivelSistema::PRIMARIO)?->obsFactura ?? '');
+        $this->obsSecundario = (string) ($porNivel->get(NivelSistema::SECUNDARIO)?->obsFactura ?? '');
     }
 
     public function guardar(): void
@@ -46,76 +57,151 @@ class EditarObservacionFacturaForm extends Component
         }
         RateLimiter::hit($key, 60);
 
-        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
-        if ($idNivel < 1) {
-            $this->dispatch('se-swal-error', mensaje: 'Seleccione un nivel en el contexto activo.');
-
-            return;
-        }
-
-        $this->obsFactura = ObsFacturaHtmlSanitizer::limpiar($this->obsFactura);
-        if (ObsFacturaHtmlSanitizer::estaVacio($this->obsFactura)) {
-            $this->obsFactura = '';
-        }
+        $this->obsInicial = $this->normalizarHtml($this->obsInicial);
+        $this->obsPrimario = $this->normalizarHtml($this->obsPrimario);
+        $this->obsSecundario = $this->normalizarHtml($this->obsSecundario);
 
         $this->validate([
-            'obsFactura' => ['nullable', 'string', 'max:65000'],
+            'obsInicial' => ['nullable', 'string', 'max:65000'],
+            'obsPrimario' => ['nullable', 'string', 'max:65000'],
+            'obsSecundario' => ['nullable', 'string', 'max:65000'],
         ]);
 
-        $payload = [
-            'idNivel' => $idNivel,
-            'obsFactura' => $this->obsFactura,
-        ];
-
-        $preparado = PersistenciaColumnas::prepararPayload('ento', $payload, ['idNivel']);
-        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
-            $mensaje = PersistenciaColumnas::mensajeColumnasInexistentes(
+        /** @var array<int, array{payload: array<string, mixed>, columnas_con_valor_sin_columna: list<string>}> $preparados */
+        $preparados = [];
+        foreach ($this->valoresPorNivel() as $idNivel => $html) {
+            $preparado = PersistenciaColumnas::prepararPayload(
                 'ento',
-                $preparado['columnas_con_valor_sin_columna'],
+                ['idNivel' => $idNivel, 'obsFactura' => $html],
+                ['idNivel'],
             );
-            $this->addError('obsFactura', $mensaje);
-            $this->dispatch('se-swal-error', mensaje: $mensaje);
+            if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+                $mensaje = PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'ento',
+                    $preparado['columnas_con_valor_sin_columna'],
+                );
+                $this->addError($this->campoParaNivel($idNivel), $mensaje);
+                $this->dispatch('se-swal-error', mensaje: $mensaje);
 
-            return;
+                return;
+            }
+            $preparados[$idNivel] = $preparado;
         }
 
         try {
-            Ento::query()->updateOrCreate(
-                ['idNivel' => $idNivel],
-                $preparado['payload'],
-            );
+            DB::transaction(function () use ($preparados): void {
+                foreach ($preparados as $idNivel => $preparado) {
+                    Ento::query()->updateOrCreate(
+                        ['idNivel' => $idNivel],
+                        $preparado['payload'],
+                    );
+
+                    $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+                        'ento',
+                        ['idNivel' => $idNivel],
+                        $preparado['payload'],
+                    );
+                    if ($noPersistidas !== []) {
+                        throw new RuntimeException(
+                            PersistenciaColumnas::mensajeColumnasNoPersistidas('ento', $noPersistidas)
+                        );
+                    }
+                }
+            });
         } catch (QueryException $e) {
             Log::warning('arca-obs-factura: error al guardar en ento', [
-                'idNivel' => $idNivel,
                 'message' => $e->getMessage(),
             ]);
             $mensaje = PersistenciaColumnas::mensajeDesdeQueryException($e)
                 ?? 'No se pudo guardar en la base de datos. Intente nuevamente.';
-            $this->addError('obsFactura', $mensaje);
             $this->dispatch('se-swal-error', mensaje: $mensaje);
+
+            return;
+        } catch (RuntimeException $e) {
+            $this->dispatch('se-swal-error', mensaje: $e->getMessage());
 
             return;
         }
 
-        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
-            'ento',
-            ['idNivel' => $idNivel],
-            $preparado['payload'],
-        );
-        if ($noPersistidas !== []) {
-            $mensaje = PersistenciaColumnas::mensajeColumnasNoPersistidas('ento', $noPersistidas);
-            $this->addError('obsFactura', $mensaje);
-            $this->dispatch('se-swal-error', mensaje: $mensaje);
+        $this->dispatch('se-swal-exito', mensaje: 'Observaciones de factura guardadas para los tres niveles.');
+    }
 
-            return;
-        }
+    /**
+     * @return list<array{id: int, etiqueta: string, wireModel: string, value: string, errorKey: string}>
+     */
+    public function bloquesNivel(): array
+    {
+        $nombres = Nivel::query()
+            ->whereIn('id', self::idsNivelesEditables())
+            ->get(['id', 'nivel'])
+            ->keyBy('id');
 
-        $this->dispatch('se-swal-exito', mensaje: 'Observación de factura guardada.');
+        return [
+            [
+                'id' => NivelSistema::INICIAL,
+                'etiqueta' => trim((string) ($nombres->get(NivelSistema::INICIAL)?->nivel ?? 'Inicial')),
+                'wireModel' => 'obsInicial',
+                'value' => $this->obsInicial,
+                'errorKey' => 'obsInicial',
+            ],
+            [
+                'id' => NivelSistema::PRIMARIO,
+                'etiqueta' => trim((string) ($nombres->get(NivelSistema::PRIMARIO)?->nivel ?? 'Primario')),
+                'wireModel' => 'obsPrimario',
+                'value' => $this->obsPrimario,
+                'errorKey' => 'obsPrimario',
+            ],
+            [
+                'id' => NivelSistema::SECUNDARIO,
+                'etiqueta' => trim((string) ($nombres->get(NivelSistema::SECUNDARIO)?->nivel ?? 'Secundario')),
+                'wireModel' => 'obsSecundario',
+                'value' => $this->obsSecundario,
+                'errorKey' => 'obsSecundario',
+            ],
+        ];
     }
 
     public function render()
     {
-        return view('livewire.arca.editar-observacion-factura-form')
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Editar Observación Factura']);
+        return view('livewire.arca.editar-observacion-factura-form', [
+            'bloques' => $this->bloquesNivel(),
+            'columnaDisponible' => Schema::hasColumn('ento', 'obsFactura'),
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Editar Observación Factura']);
+    }
+
+    /** @return list<int> */
+    private static function idsNivelesEditables(): array
+    {
+        return [
+            NivelSistema::INICIAL,
+            NivelSistema::PRIMARIO,
+            NivelSistema::SECUNDARIO,
+        ];
+    }
+
+    /** @return array<int, string> */
+    private function valoresPorNivel(): array
+    {
+        return [
+            NivelSistema::INICIAL => $this->obsInicial,
+            NivelSistema::PRIMARIO => $this->obsPrimario,
+            NivelSistema::SECUNDARIO => $this->obsSecundario,
+        ];
+    }
+
+    private function normalizarHtml(string $html): string
+    {
+        $limpio = ObsFacturaHtmlSanitizer::limpiar($html);
+
+        return ObsFacturaHtmlSanitizer::estaVacio($limpio) ? '' : $limpio;
+    }
+
+    private function campoParaNivel(int $idNivel): string
+    {
+        return match ($idNivel) {
+            NivelSistema::INICIAL => 'obsInicial',
+            NivelSistema::PRIMARIO => 'obsPrimario',
+            default => 'obsSecundario',
+        };
     }
 }

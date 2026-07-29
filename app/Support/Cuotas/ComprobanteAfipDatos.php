@@ -189,7 +189,7 @@ final class ComprobanteAfipDatos
             }
         }
 
-        $obsFacturaHtml = self::obsFacturaHtmlDesdeEnto();
+        $obsFacturaHtml = self::obsFacturaHtmlDesdeEnto($registroCuota);
 
         // En el PDF, la leyenda de beca se imprime debajo del concepto facturado (si aplica).
         $becaPorcentaje = null;
@@ -358,7 +358,7 @@ final class ComprobanteAfipDatos
             ->with([
                 'cuota:id,nombre',
                 'legajo:id,dni',
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
                 'curso.curplan:id,curPlanCurso',
                 'curso.turnoClase:id,nombre',
             ])
@@ -385,9 +385,6 @@ final class ComprobanteAfipDatos
         if (Schema::hasColumn('ento', 'aporteEstatal')) {
             $columnas[] = 'aporteEstatal';
         }
-        if (Schema::hasColumn('ento', 'obsFactura')) {
-            $columnas[] = 'obsFactura';
-        }
 
         return $columnas;
     }
@@ -405,30 +402,38 @@ final class ComprobanteAfipDatos
     }
 
     /**
-     * Observación del impreso: prioriza `ento` de Administración (donde se edita en ARCA),
-     * luego el nivel del contexto (secretaría / autogestión).
+     * Observación del impreso según el nivel pedagógico del alumno (curso de la cuota).
      */
-    private static function obsFacturaHtmlDesdeEnto(): string
+    private static function obsFacturaHtmlDesdeEnto(?CuotaGenerada $registroCuota): string
     {
         if (! Schema::hasColumn('ento', 'obsFactura')) {
             return '';
         }
 
-        $ids = [];
-        $ids[] = NivelSistema::ADMINISTRACION;
-        $ctx = self::idNivelParaEnto();
-        if ($ctx > 0 && $ctx !== NivelSistema::ADMINISTRACION) {
-            $ids[] = $ctx;
+        $idNivel = 0;
+        if ($registroCuota !== null) {
+            if (! $registroCuota->relationLoaded('curso')) {
+                $registroCuota->load(['curso:Id,idNivel']);
+            }
+            $idNivel = (int) ($registroCuota->curso?->idNivel ?? 0);
         }
 
-        foreach ($ids as $idNivel) {
-            $html = trim((string) (Ento::query()->where('idNivel', $idNivel)->value('obsFactura') ?? ''));
-            if ($html !== '') {
-                return $html;
+        if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
+            $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        }
+
+        if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
+            $ctx = self::idNivelParaEnto();
+            if (NivelSistema::esNivelPedagogico($ctx)) {
+                $idNivel = $ctx;
             }
         }
 
-        return '';
+        if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
+            return '';
+        }
+
+        return trim((string) (Ento::query()->where('idNivel', $idNivel)->value('obsFactura') ?? ''));
     }
 
     public static function condIvaInstDesdeEnto(?Ento $ento): string
