@@ -37,6 +37,7 @@ class Ento extends Model
         'condicionIva',
         'ingresosBrutos',
         'fechaInicioAct',
+        'obsFactura',
         'categoria',
         'direccion',
         'localidad',

@@ -22,10 +22,15 @@ final class PermisosArca
         return self::tiene(PermisosIaCatalog::ADMIN_ARCA_CONSULTA_CUIT_DNI);
     }
 
+    public static function puedeEditarObservacionFactura(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_ARCA_OBS_FACTURA);
+    }
+
     /** Grupo sidebar «ARCA». */
     public static function muestraGrupoArca(): bool
     {
-        return self::puedeConsultaCuitPorDni();
+        return self::puedeConsultaCuitPorDni() || self::puedeEditarObservacionFactura();
     }
 
     /** Guías PDF de configuración ARCA (facturación, padrón, etc.). */

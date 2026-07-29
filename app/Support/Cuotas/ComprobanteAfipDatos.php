@@ -9,6 +9,7 @@ use App\Models\CuotasBeca;
 use App\Models\Ento;
 use App\Support\Afip\AfipComprobanteQrUrl;
 use App\Support\Afip\AfipCondicionIvaReceptor;
+use App\Support\NivelSistema;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 
@@ -168,6 +169,7 @@ final class ComprobanteAfipDatos
         $cursoTexto = mb_strtoupper(trim((string) ($comprobante->cursoAlumno ?? '')));
         $registroCuota = self::registroCuotaAsociado($comprobante);
 
+        $ento = null;
         if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '' || $cursoTexto === '') {
             $ento = self::entoParaComprobantePdf();
             if ($nombreInstitucion === '') {
@@ -186,6 +188,8 @@ final class ComprobanteAfipDatos
                 $cursoTexto = mb_strtoupper(trim((string) ($registroCuota?->curso?->nombreParaListado() ?? '')));
             }
         }
+
+        $obsFacturaHtml = self::obsFacturaHtmlDesdeEnto();
 
         // En el PDF, la leyenda de beca se imprime debajo del concepto facturado (si aplica).
         $becaPorcentaje = null;
@@ -284,6 +288,7 @@ final class ComprobanteAfipDatos
             'lineas' => self::lineasDesdeComprobante($comprobante),
             'becaPorcentaje' => $becaPorcentaje,
             'becaImporteOriginalFmt' => $becaImporteOriginalFmt,
+            'obsFacturaHtml' => $obsFacturaHtml,
             'cae' => trim((string) ($comprobante->cae ?? '')),
             'vtoCae' => $vtoCae,
             'urlQr' => $urlQr,
@@ -380,6 +385,9 @@ final class ComprobanteAfipDatos
         if (Schema::hasColumn('ento', 'aporteEstatal')) {
             $columnas[] = 'aporteEstatal';
         }
+        if (Schema::hasColumn('ento', 'obsFactura')) {
+            $columnas[] = 'obsFactura';
+        }
 
         return $columnas;
     }
@@ -394,6 +402,33 @@ final class ComprobanteAfipDatos
         return Ento::query()
             ->where('idNivel', $idNivel)
             ->first(self::columnasEntoParaPdf());
+    }
+
+    /**
+     * Observación del impreso: prioriza `ento` de Administración (donde se edita en ARCA),
+     * luego el nivel del contexto (secretaría / autogestión).
+     */
+    private static function obsFacturaHtmlDesdeEnto(): string
+    {
+        if (! Schema::hasColumn('ento', 'obsFactura')) {
+            return '';
+        }
+
+        $ids = [];
+        $ids[] = NivelSistema::ADMINISTRACION;
+        $ctx = self::idNivelParaEnto();
+        if ($ctx > 0 && $ctx !== NivelSistema::ADMINISTRACION) {
+            $ids[] = $ctx;
+        }
+
+        foreach ($ids as $idNivel) {
+            $html = trim((string) (Ento::query()->where('idNivel', $idNivel)->value('obsFactura') ?? ''));
+            if ($html !== '') {
+                return $html;
+            }
+        }
+
+        return '';
     }
 
     public static function condIvaInstDesdeEnto(?Ento $ento): string

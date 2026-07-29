@@ -109,6 +109,7 @@ final class ComprobanteAfipTcpdf extends TCPDF
         $this->dibujarEncabezado();
         $this->dibujarBloqueCliente();
         $this->dibujarDetalleConceptos();
+        $this->dibujarObservacionFactura();
         $this->dibujarTotal();
         $this->dibujarPieArca();
     }
@@ -540,6 +541,40 @@ final class ComprobanteAfipTcpdf extends TCPDF
         }
 
         $this->yCursor = $y;
+    }
+
+    private function dibujarObservacionFactura(): void
+    {
+        $html = trim((string) ($this->datos['obsFacturaHtml'] ?? ''));
+        if ($html === '') {
+            return;
+        }
+
+        $textoPlano = trim(html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($textoPlano === '') {
+            return;
+        }
+
+        $y = $this->yCursor + 3.0;
+        TcpdfFuenteArial::aplicar($this, '', 8);
+
+        // Debajo del concepto (y de la leyenda de beca, si hubo). Párrafos con interlineado.
+        $wrapped = '<div style="font-size:8pt; line-height:1.4;">'.$html.'</div>';
+        $this->writeHTMLCell(
+            self::ANCHO_UTIL,
+            0,
+            self::MARGEN_IZQ,
+            $y,
+            $wrapped,
+            0,
+            1,
+            false,
+            true,
+            'L',
+            true,
+        );
+
+        $this->yCursor = $this->GetY() + 2.0;
     }
 
     private function dibujarTotal(): void

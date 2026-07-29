@@ -199,6 +199,9 @@ final class PermisosIaCatalog
     /** Menú de Administración — consulta CUIT/CUIL por DNI en ARCA (Padrón A13). */
     public const ADMIN_ARCA_CONSULTA_CUIT_DNI = 84;
 
+    /** Menú de Administración — editar observación del impreso de factura AFIP. */
+    public const ADMIN_ARCA_OBS_FACTURA = 89;
+
     /** Gestión de TEA por inasistencias: registros reinco2025, alta/edición/baja e impresión PDF. */
     public const TEA_ESTUDIANTES_GESTION = 85;
 
@@ -296,6 +299,7 @@ final class PermisosIaCatalog
             ['id' => 80, 'orden' => self::LEGAJOS_DOCENTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver contraseña de acceso del docente en el listado de legajos (botón Ver Pwrd).'],
             ['id' => 88, 'orden' => self::LEGAJOS_DOCENTES_DATOS_PERSONALES, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver, imprimir y exportar datos personales completos de docentes (sin este permiso solo apellido, nombre y DNI).'],
             ['id' => 84, 'orden' => self::ADMIN_ARCA_CONSULTA_CUIT_DNI, 'tema' => 'ARCA', 'descripcion' => 'Consultar CUIT/CUIL asociado a un DNI en ARCA (Padrón Alcance 13).'],
+            ['id' => 89, 'orden' => self::ADMIN_ARCA_OBS_FACTURA, 'tema' => 'ARCA', 'descripcion' => 'Editar la observación que aparece en el impreso de factura AFIP.'],
             ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],
             ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).'],
             ['id' => 87, 'orden' => self::CERTIFICACION_SERVICIOS, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Certificación de servicios: carga de períodos de servicio y licencias, e impresión del certificado PDF.'],
