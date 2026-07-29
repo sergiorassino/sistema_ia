@@ -8,6 +8,7 @@ use App\Models\Inasistencia;
 use App\Models\Matricula;
 use App\Support\InformeInasistencias;
 use App\Support\InasistenciasResumen;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\Tea\TeaInstanciasPendientes;
 use Illuminate\Support\Collection;
@@ -126,10 +127,15 @@ class InasistenciasIndex extends Component
     /** @return Collection<int, object> */
     private function alumnosDelCurso(int $idCurso): Collection
     {
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         return Matricula::query()
             ->where('matricula.idNivel', schoolCtx()->idNivel)
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
+            ->whereIn('matricula.idCondiciones', $idsCondicionesRegulares)
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre')
@@ -150,10 +156,15 @@ class InasistenciasIndex extends Component
             return null;
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         return Matricula::query()
             ->with(['legajo', 'curso'])
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->find($id);
     }
 
