@@ -69,7 +69,7 @@
         gestionMora: {{ str_starts_with($route ?? '', 'mora.') ? 'true' : 'false' }},
         mediosPago: {{ \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null) ? 'true' : 'false' }},
         mediosPagoSiro: {{ \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null) ? 'true' : 'false' }},
-        arca: {{ ($route ?? '') === 'arca.consulta-cuit-dni' ? 'true' : 'false' }},
+        arca: {{ in_array($route ?? '', ['arca.consulta-cuit-dni', 'arca.observacion-factura'], true) ? 'true' : 'false' }},
         comunicaciones: false,
     },
     isDesktopPeekLayout() {

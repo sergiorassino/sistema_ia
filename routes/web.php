@@ -153,6 +153,7 @@ use App\Livewire\Cuotas\ComprobantesAfipDevengamientoCuota;
 use App\Http\Controllers\Arca\GuiaAutorizacionArcaPadronA13PdfController;
 use App\Http\Controllers\Arca\GuiaConfiguracionArcaFacturacionPdfController;
 use App\Livewire\Arca\ConsultaCuitPorDniIndex;
+use App\Livewire\Arca\EditarObservacionFacturaForm;
 use App\Livewire\Cuotas\ConsultaAfipComprobanteIndex;
 use App\Livewire\Cuotas\SiroCuponesVencidosIndex;
 use App\Livewire\Cuotas\SiroSubidaBaseDeudaIndex;
@@ -729,6 +730,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/consulta-cuit-dni', ConsultaCuitPorDniIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARCA_CONSULTA_CUIT_DNI)
             ->name('arca.consulta-cuit-dni');
+        Route::get('/observacion-factura', EditarObservacionFacturaForm::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARCA_OBS_FACTURA)
+            ->name('arca.observacion-factura');
         Route::get('/guia-autorizacion-padron-a13.pdf', GuiaAutorizacionArcaPadronA13PdfController::class)
             ->middleware('permiso:'.$pi::ADMIN_ARCA_CONSULTA_CUIT_DNI)
             ->name('arca.guia-autorizacion-padron-a13.pdf');
