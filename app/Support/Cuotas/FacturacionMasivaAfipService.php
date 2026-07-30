@@ -311,8 +311,10 @@ final class FacturacionMasivaAfipService
             $conceptos = [];
             $omitidos = [];
 
+            ImputacionPagoCalculo::precargarFormulas($registros);
+
             foreach ($registros as $registro) {
-                $importe = round((float) ($registro->importe ?? 0), 2);
+                $importe = FacturacionAfipComun::importeAFacturarDevengamiento($registro);
                 if ($importe <= 0) {
                     $omitidos[] = trim((string) ($registro->cuota?->nombre ?? 'Cuota')).' (importe cero)';
 
@@ -686,11 +688,13 @@ final class FacturacionMasivaAfipService
             ])];
         }
 
+        ImputacionPagoCalculo::precargarFormulas($registros);
+
         $filas = [];
         foreach ($registros as $registro) {
             $filas[] = array_merge($base, [
                 'cuotaNombre' => trim((string) ($registro->cuota?->nombre ?? 'Cuota')),
-                'importe' => round((float) ($registro->importe ?? 0), 2),
+                'importe' => FacturacionAfipComun::importeAFacturarDevengamiento($registro),
             ]);
         }
 
@@ -747,17 +751,22 @@ final class FacturacionMasivaAfipService
     ): string {
         /** @var list<CuotaGenerada> $registros */
         $registros = $grupo['registros'];
-        $importeTotal = (float) $grupo['importeTotal'];
         $conceptos = [];
         $importesLinea = [];
         $idsCuotas = [];
+        $importeTotal = 0.0;
+
+        ImputacionPagoCalculo::precargarFormulas($registros);
 
         foreach ($registros as $registro) {
-            $importe = round((float) ($registro->importe ?? 0), 2);
+            $importe = FacturacionAfipComun::importeAFacturarDevengamiento($registro);
             $conceptos[] = mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? 'CUOTA')));
             $importesLinea[] = number_format($importe, 2, '.', '');
             $idsCuotas[] = (int) $registro->id;
+            $importeTotal += $importe;
         }
+
+        $importeTotal = round($importeTotal, 2);
 
         $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
         $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
