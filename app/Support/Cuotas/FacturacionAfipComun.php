@@ -11,6 +11,7 @@ use App\Models\Legajo;
 use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use App\Support\Database\PersistenciaColumnas;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -20,6 +21,37 @@ use Throwable;
  */
 final class FacturacionAfipComun
 {
+    /**
+     * Importe a facturar por cuota en modo devengamiento.
+     *
+     * Neto (`cuotasgeneradas.importe`). Si la fórmula del 1.er vencimiento es
+     * bonificación (`signo1v = '-'` con valor > 0), neto − bonificación
+     * (mismo criterio que el cupón al 1.er venc.); si no, el neto.
+     */
+    public static function importeAFacturarDevengamiento(CuotaGenerada $registro): float
+    {
+        $neto = round((float) ($registro->importe ?? 0), 2);
+        if ($neto <= 0) {
+            return 0.0;
+        }
+
+        $fechaRef = $registro->venc1 instanceof CarbonInterface
+            ? $registro->venc1->copy()->startOfDay()
+            : Carbon::today();
+
+        $calc = ImputacionPagoCalculo::calcular($registro, $neto, $fechaRef);
+        if (! ($calc['esBonificacion'] ?? false)) {
+            return $neto;
+        }
+
+        $bonificacion = round((float) ($calc['bonificacion'] ?? 0), 2);
+        if ($bonificacion <= 0) {
+            return $neto;
+        }
+
+        return round(max(0, $neto - $bonificacion), 2);
+    }
+
     /**
      * @param  list<CuotaGenerada>  $registros
      * @return array{0: string, 1: string}

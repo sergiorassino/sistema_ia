@@ -113,6 +113,8 @@ return [
 
 Consumir con `tenantCuotasInteresMoraEsDiario()` o `tenantCuotasInteresMoraModo()`. Afecta imputación, PDF morosos y cupón de pago.
 
+Facturación AFIP en modo `devengamiento` — importe a emitir (todos los colegios): neto (`cuotasgeneradas.importe`); si la fórmula del 1.er vencimiento es bonificación (`cuotasimportes.signo1v = '-'` con valor > 0), neto − bonificación. Lógica en `FacturacionAfipComun::importeAFacturarDevengamiento()`.
+
 Correo de recibos cooperadora (origen estudiantes), distinto del cuaderno de comunicados:
 
 - Credenciales SMTP del despliegue: `COOP_MAIL_*` en `.env` (mailer `cooperadora` en `config/mail.php`).
