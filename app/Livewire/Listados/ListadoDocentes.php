@@ -93,7 +93,7 @@ class ListadoDocentes extends Component
             ->all();
 
         $camposPorGrupo = ListadoDocentesPdfFieldCatalog::groupedForUiPorSolapasSegunPermiso();
-        $puedeVerDatosPersonales = puedeVerDatosPersonalesDocentes();
+        $puedeVerDatosPersonales = puedeModificarLegajosDocentes();
 
         return view('listados::livewire.listados.docentes', [
             'roles' => $roles,
@@ -187,7 +187,7 @@ class ListadoDocentes extends Component
 
     public function seleccionarTodos(): void
     {
-        if (! puedeVerDatosPersonalesDocentes()) {
+        if (! puedeModificarLegajosDocentes()) {
             $this->seleccionarSoloDefecto();
 
             return;

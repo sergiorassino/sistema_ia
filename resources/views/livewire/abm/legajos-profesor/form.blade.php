@@ -32,7 +32,7 @@
                         {{ schoolCtx()->nivelNombre() }} · Un registro por nivel
                         @if ($id)<span class="text-white/45"> · </span> ID {{ $id }}@endif
                         @unless ($puedeVerDatosPersonales)
-                            <span class="mt-1 block text-white/70">Solo apellido, nombre y DNI (sin permiso de datos personales).</span>
+                            <span class="mt-1 block text-white/70">Solo apellido, nombre y DNI (consulta sin permiso de edición).</span>
                         @endunless
                     </p>
                 </div>
@@ -70,19 +70,20 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label class="form-label">Apellido *</label>
-                        <input wire:model="apellido" type="text" maxlength="50" class="form-input @error('apellido') border-red-400 @enderror">
+                        <input wire:model="apellido" type="text" maxlength="50" class="form-input @error('apellido') border-red-400 @enderror" @readonly(! $puedeEditar)>
                         @error('apellido') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="form-label">Nombre *</label>
-                        <input wire:model="nombre" type="text" maxlength="50" class="form-input @error('nombre') border-red-400 @enderror">
+                        <input wire:model="nombre" type="text" maxlength="50" class="form-input @error('nombre') border-red-400 @enderror" @readonly(! $puedeEditar)>
                         @error('nombre') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="form-label">DNI *</label>
-                        <input wire:model="dni" type="text" inputmode="numeric" maxlength="11" class="form-input @error('dni') border-red-400 @enderror">
+                        <input wire:model="dni" type="text" inputmode="numeric" maxlength="11" class="form-input @error('dni') border-red-400 @enderror" @readonly(! $puedeEditar)>
                         @error('dni') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
+                    @if ($puedeVerDatosPersonales)
                     <div>
                         <label class="form-label">Rol *</label>
                         <select wire:model="IdTipoProf" class="form-select @error('IdTipoProf') border-red-400 @enderror">
@@ -93,7 +94,6 @@
                         </select>
                         @error('IdTipoProf') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    @if ($puedeVerDatosPersonales)
                         @if($modoParametrizado)
                             @foreach($columnasPorSolapaSlug['docente'] ?? [] as $campo)
                                 @include('livewire.abm.legajos-profesor.partials.profesor-campo-dinamico', ['campo' => $campo, 'sexosOpciones' => $sexosOpciones, 'estadosCivilesOpciones' => $estadosCivilesOpciones])
