@@ -346,12 +346,15 @@ return [
     /**
      * Menú de Secretaría — impresión de ficha de matrícula por curso (PDF en lote).
      * `implementacion`: variante en código (`sanfranciscoasis` = con aceptación de documentos;
-     * `montecristo` = solicitud de matrícula solo datos; `sanjose` = solicitud A4 San José).
+     * `montecristo` = solicitud de matrícula solo datos; `sanjose` = solicitud A4 San José;
+     * `iess` = ficha con autorización de imágenes IESS VCP).
+     * `niveles_deshabilitados`: IDs de `niveles` sin ítem ni PDF (p. ej. `[1, 2]` solo secundario).
      */
     'secretaria' => [
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
+            'niveles_deshabilitados' => [],
         ],
         /**
          * Informe de inasistencias por curso (Menú de Secretaría → ASISTENCIA ESTUDIANTES).

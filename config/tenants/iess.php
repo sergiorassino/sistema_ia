@@ -18,4 +18,11 @@ return [
             ],
         ],
     ],
+
+    'secretaria' => [
+        'ficha_matricula' => [
+            'habilitado' => true,
+            'implementacion' => 'iess',
+        ],
+    ],
 ];
