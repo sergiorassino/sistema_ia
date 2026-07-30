@@ -534,7 +534,7 @@ if (! function_exists('schoolPdfHeaderData')) {
     /**
      * Datos institucionales para encabezados de PDFs (Dompdf).
      *
-     * @return array{insti:string,direccion:string,localidad:string,cue:string,ee:string,logo_file:?string}
+     * @return array{insti:string,direccion:string,localidad:string,provincia:string,cue:string,ee:string,logo_file:?string}
      */
     function schoolPdfHeaderData(): array
     {
@@ -544,19 +544,26 @@ if (! function_exists('schoolPdfHeaderData')) {
                 'insti' => '',
                 'direccion' => '',
                 'localidad' => '',
+                'provincia' => '',
                 'cue' => '',
                 'ee' => '',
                 'logo_file' => null,
             ];
         }
 
+        $columnasEnto = ['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path'];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'provincia')) {
+            $columnasEnto[] = 'provincia';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', $idNivel)
-            ->first(['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path']);
+            ->first($columnasEnto);
 
         $insti = trim((string) ($ento?->insti ?? ''));
         $direccion = trim((string) ($ento?->direccion ?? ''));
         $localidad = trim((string) ($ento?->localidad ?? ''));
+        $provincia = trim((string) ($ento?->provincia ?? ''));
         $cue = trim((string) ($ento?->cue ?? ''));
         $ee = trim((string) ($ento?->ee ?? ''));
 
@@ -582,6 +589,7 @@ if (! function_exists('schoolPdfHeaderData')) {
             'insti' => $insti,
             'direccion' => $direccion,
             'localidad' => $localidad,
+            'provincia' => $provincia,
             'cue' => $cue,
             'ee' => $ee,
             'logo_file' => $logoFile,
@@ -593,7 +601,7 @@ if (! function_exists('studentPdfHeaderData')) {
     /**
      * Encabezado institucional para PDFs del portal alumno (Dompdf), según `studentCtx()->idNivel`.
      *
-     * @return array{insti:string,direccion:string,localidad:string,cue:string,ee:string,logo_file:?string}
+     * @return array{insti:string,direccion:string,localidad:string,provincia:string,cue:string,ee:string,logo_file:?string}
      */
     function studentPdfHeaderData(): array
     {
@@ -603,19 +611,26 @@ if (! function_exists('studentPdfHeaderData')) {
                 'insti' => '',
                 'direccion' => '',
                 'localidad' => '',
+                'provincia' => '',
                 'cue' => '',
                 'ee' => '',
                 'logo_file' => null,
             ];
         }
 
+        $columnasEnto = ['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path'];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('ento', 'provincia')) {
+            $columnasEnto[] = 'provincia';
+        }
+
         $ento = Ento::query()
             ->where('idNivel', $idNivel)
-            ->first(['insti', 'direccion', 'localidad', 'cue', 'ee', 'logo_path']);
+            ->first($columnasEnto);
 
         $insti = trim((string) ($ento?->insti ?? ''));
         $direccion = trim((string) ($ento?->direccion ?? ''));
         $localidad = trim((string) ($ento?->localidad ?? ''));
+        $provincia = trim((string) ($ento?->provincia ?? ''));
         $cue = trim((string) ($ento?->cue ?? ''));
         $ee = trim((string) ($ento?->ee ?? ''));
 
@@ -641,6 +656,7 @@ if (! function_exists('studentPdfHeaderData')) {
             'insti' => $insti,
             'direccion' => $direccion,
             'localidad' => $localidad,
+            'provincia' => $provincia,
             'cue' => $cue,
             'ee' => $ee,
             'logo_file' => $logoFile,
@@ -1523,7 +1539,7 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
 
 if (! function_exists('tenantSecretariaFichaMatriculaImplementacion')) {
     /**
-     * Variante de ficha de matrícula para secretaría (`sanfranciscoasis` | `montecristo` | `sanjose`).
+     * Variante de ficha de matrícula para secretaría (`sanfranciscoasis` | `montecristo` | `sanjose` | `iess`).
      */
     function tenantSecretariaFichaMatriculaImplementacion(): ?string
     {
@@ -1536,6 +1552,7 @@ if (! function_exists('tenantSecretariaFichaMatriculaImplementacion')) {
 if (! function_exists('tenantSecretariaFichaMatriculaHabilitada')) {
     /**
      * Si el Menú de Secretaría incluye impresión de ficha de matrícula por curso.
+     * `niveles_deshabilitados`: IDs de `niveles` sin ítem ni PDF (p. ej. `[1, 2]` solo secundario).
      */
     function tenantSecretariaFichaMatriculaHabilitada(): bool
     {
@@ -1543,7 +1560,19 @@ if (! function_exists('tenantSecretariaFichaMatriculaHabilitada')) {
             return false;
         }
 
-        return filled(tenantSecretariaFichaMatriculaImplementacion());
+        if (! filled(tenantSecretariaFichaMatriculaImplementacion())) {
+            return false;
+        }
+
+        $nivelesDeshabilitados = config('tenant.secretaria.ficha_matricula.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
+            $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -1555,7 +1584,7 @@ if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
     {
         return match (tenantSecretariaFichaMatriculaImplementacion()) {
             'montecristo', 'sanjose' => 'Ficha de Solicitud de Matrícula',
-            'sanfranciscoasis' => 'Ficha de Matrícula',
+            'sanfranciscoasis', 'iess' => 'Ficha de Matrícula',
             default => 'Ficha de Matrícula',
         };
     }

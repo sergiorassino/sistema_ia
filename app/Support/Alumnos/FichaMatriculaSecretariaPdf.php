@@ -28,7 +28,7 @@ final class FichaMatriculaSecretariaPdf
 
         foreach ($ids as $idMatricula) {
             $datos = match ($implementacion) {
-                'sanfranciscoasis' => FichaMatriculaDatos::paraMatricula($idMatricula),
+                'sanfranciscoasis', 'iess' => FichaMatriculaDatos::paraMatricula($idMatricula),
                 'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
                 default => null,
             };
@@ -61,6 +61,10 @@ final class FichaMatriculaSecretariaPdf
         return match ($implementacion) {
             'sanfranciscoasis' => FichaMatriculaConAceptacionTcpdf::respuestaHttp(
                 FichaMatriculaConAceptacionTcpdf::generarLote($hojas, $header),
+                $slug.'.pdf',
+            ),
+            'iess' => FichaMatriculaIessTcpdf::respuestaHttp(
+                FichaMatriculaIessTcpdf::generarLote($hojas, $header),
                 $slug.'.pdf',
             ),
             'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::respuestaHttp(

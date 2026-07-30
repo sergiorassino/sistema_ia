@@ -9,6 +9,8 @@
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
                         @if ($implementacion === 'sanfranciscoasis')
                             · Formato con aceptación de documentos
+                        @elseif ($implementacion === 'iess')
+                            · Formato IESS (todos los niveles)
                         @elseif ($implementacion === 'montecristo')
                             · Formato solicitud de matrícula (solo datos)
                         @elseif ($implementacion === 'sanjose')
