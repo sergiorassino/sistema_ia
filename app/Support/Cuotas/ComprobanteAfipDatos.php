@@ -170,7 +170,7 @@ final class ComprobanteAfipDatos
         $registroCuota = self::registroCuotaAsociado($comprobante);
 
         $ento = null;
-        if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '' || $cursoTexto === '') {
+        if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '') {
             $ento = self::entoParaComprobantePdf();
             if ($nombreInstitucion === '') {
                 $nombreInstitucion = trim((string) ($ento?->insti ?? ''));
@@ -184,10 +184,9 @@ final class ComprobanteAfipDatos
             if ($aporteEstatal === '') {
                 $aporteEstatal = self::aporteEstatalDesdeEnto($ento);
             }
-            if ($cursoTexto === '') {
-                $cursoTexto = mb_strtoupper(trim((string) ($registroCuota?->curso?->nombreParaListado() ?? '')));
-            }
         }
+
+        $cursoTexto = FacturacionAfipComun::cursoTextoConNivel($cursoTexto, $registroCuota);
 
         $obsFacturaHtml = self::obsFacturaHtmlDesdeEnto($registroCuota);
 
@@ -361,6 +360,7 @@ final class ComprobanteAfipDatos
                 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
                 'curso.curplan:id,curPlanCurso',
                 'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
             ])
             ->find($id);
     }

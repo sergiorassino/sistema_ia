@@ -287,7 +287,14 @@ final class FacturacionMasivaAfipService
             }
 
             $registros = CuotaGenerada::query()
-                ->with(['cuota:id,nombre', 'terlec:id,ano', 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase'])
+                ->with([
+                    'cuota:id,nombre',
+                    'terlec:id,ano',
+                    'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                    'curso.curplan:id,curPlanCurso',
+                    'curso.turnoClase:id,nombre',
+                    'curso.nivel:id,nivel',
+                ])
                 ->where('idLegajos', $idLegajo)
                 ->where('idTerlec', $idTerlec)
                 ->whereIn('idCuotas', $idCuotasPlantilla)
@@ -413,7 +420,14 @@ final class FacturacionMasivaAfipService
             }
 
             $registros = CuotaGenerada::query()
-                ->with(['cuota:id,nombre', 'terlec:id,ano', 'curso:Id,cursec,c,s,idCurPlan,idTurnoClase'])
+                ->with([
+                    'cuota:id,nombre',
+                    'terlec:id,ano',
+                    'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
+                    'curso.curplan:id,curPlanCurso',
+                    'curso.turnoClase:id,nombre',
+                    'curso.nivel:id,nivel',
+                ])
                 ->where('idLegajos', $idLegajo)
                 ->where('idTerlec', $idTerlec)
                 ->whereIn('idCuotas', $idCuotasPlantilla)

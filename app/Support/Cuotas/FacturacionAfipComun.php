@@ -146,13 +146,56 @@ final class FacturacionAfipComun
     {
         if (! $registro->relationLoaded('curso')) {
             $registro->load([
-                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase',
+                'curso:Id,cursec,c,s,idCurPlan,idTurnoClase,idNivel',
                 'curso.curplan:id,curPlanCurso',
                 'curso.turnoClase:id,nombre',
+                'curso.nivel:id,nivel',
             ]);
+        } elseif ($registro->curso !== null && ! $registro->curso->relationLoaded('nivel')) {
+            $registro->curso->load(['nivel:id,nivel']);
         }
 
-        return mb_strtoupper(trim((string) ($registro->curso?->nombreParaListado() ?? '')));
+        $curso = mb_strtoupper(trim((string) ($registro->curso?->nombreParaListado() ?? '')));
+        $nivel = mb_strtoupper(trim((string) ($registro->curso?->nivel?->nivel ?? '')));
+
+        if ($curso === '') {
+            return $nivel;
+        }
+        if ($nivel === '' || str_contains($curso, $nivel)) {
+            return $curso;
+        }
+
+        return trim($curso.' '.$nivel);
+    }
+
+    /**
+     * Completa el texto de curso/sección con el nivel si aún no figura (p. ej. reimpresiones con snapshot viejo).
+     */
+    public static function cursoTextoConNivel(string $cursoTexto, ?CuotaGenerada $registro): string
+    {
+        $cursoTexto = mb_strtoupper(trim($cursoTexto));
+        if ($registro === null) {
+            return $cursoTexto;
+        }
+        if ($cursoTexto === '') {
+            return self::cursoTextoDesdeRegistro($registro);
+        }
+
+        if (! $registro->relationLoaded('curso')) {
+            $registro->load([
+                'curso:Id,idNivel',
+                'curso.nivel:id,nivel',
+            ]);
+        } elseif ($registro->curso !== null && ! $registro->curso->relationLoaded('nivel')) {
+            $registro->curso->load(['nivel:id,nivel']);
+        }
+
+        $nivel = mb_strtoupper(trim((string) ($registro->curso?->nivel?->nivel ?? '')));
+        if ($nivel === '' || str_contains($cursoTexto, $nivel)) {
+            return $cursoTexto;
+        }
+
+        return trim($cursoTexto.' '.$nivel);
     }
 
     /**
