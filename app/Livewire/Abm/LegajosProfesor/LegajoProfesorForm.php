@@ -186,10 +186,6 @@ class LegajoProfesorForm extends Component
             $allData = array_filter($allData, fn ($col) => isset($set[$col]), ARRAY_FILTER_USE_KEY);
         }
 
-        if (! puedeVerDatosPersonalesDocentes()) {
-            $allData = array_intersect_key($allData, array_flip(self::CORE_COLUMNS));
-        }
-
         $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
         if ($idNivel < 1) {
             session()->flash('warning', 'No hay nivel activo en el contexto. Seleccione nivel en el login.');
@@ -236,7 +232,7 @@ class LegajoProfesorForm extends Component
     private function loadProfesor(int $id): void
     {
         $p = $this->scopedProfesorOrFail($id);
-        $puedeVerDatos = puedeVerDatosPersonalesDocentes();
+        $puedeVerDatos = puedeModificarLegajosDocentes();
 
         $this->apellido = $p->apellido ?? '';
         $this->nombre = $p->nombre ?? '';
@@ -452,7 +448,8 @@ class LegajoProfesorForm extends Component
         }
 
         $puedeEditar = puedeModificarLegajosDocentes();
-        $puedeVerDatosPersonales = puedeVerDatosPersonalesDocentes();
+        // Sin orden 11: solo consulta de apellido, nombre y DNI (sin edición).
+        $puedeVerDatosPersonales = $puedeEditar;
 
         if (! $puedeVerDatosPersonales) {
             $tabsVisibles = ['docente' => $tabsVisibles['docente'] ?? 'DOCENTE'];

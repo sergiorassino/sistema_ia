@@ -113,9 +113,7 @@ Al **crear** un legajo nuevo en **Legajos del docente** (`LegajoProfesorForm`), 
 
 **Edición:** al modificar un legajo existente **no** se altera `pwrd`; solo se establece en el alta.
 
-**Datos personales (orden 88):** quien no tiene `LEGAJOS_DOCENTES_DATOS_PERSONALES` (88) solo ve apellido, nombre y DNI (y rol en el formulario); listado PDF/Excel queda limitado a apellido, nombre y DNI. Con el 88 se exponen el resto de campos personales.
-
-**Alta/edición/baja (orden 11):** la consulta de legajos y el listado/impresión/Excel básicos están disponibles para todos los usuarios de Secretaría (`puedeConsultarLegajosDocentes()`). El permiso `LEGAJOS_DOCENTES` (11) vía `puedeModificarLegajosDocentes()` habilita crear, editar y eliminar.
+**Legajos docentes (orden 11):** con `LEGAJOS_DOCENTES` (`puedeModificarLegajosDocentes()`) se pueden crear, editar y eliminar legajos con todos los campos, e imprimir/exportar columnas completas en listados. Sin ese permiso, la consulta (`puedeConsultarLegajosDocentes()`) y los listados PDF/Excel quedan limitados a apellido, nombre y DNI en solo lectura.
 
 ---
 
@@ -182,8 +180,7 @@ permisos_ia = "111111111111111..."
 - Seguimiento disciplinario: orden **37** (`PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO`).
 - Gestión de inasistencias del estudiante: orden **38** (`PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION`).
 - Gestión de TEA por inasistencias: orden **85** (`PermisosIaCatalog::TEA_ESTUDIANTES_GESTION`).
-- Datos personales de docentes (legajo / listado PDF-Excel): orden **88** (`PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES`). Sin este permiso solo se listan, imprimen y exportan apellido, nombre y DNI (`puedeVerDatosPersonalesDocentes()`).
-- Alta/edición/baja de legajos docentes: orden **11** (`puedeModificarLegajosDocentes()`). La consulta e impresión básica no requieren este permiso (`puedeConsultarLegajosDocentes()`).
+- Legajos docentes (ABM + listado PDF/Excel): orden **11** (`PermisosIaCatalog::LEGAJOS_DOCENTES`, `puedeModificarLegajosDocentes()`). Con permiso: alta/edición/baja y datos completos. Sin permiso: solo consulta e impresión de apellido, nombre y DNI (`puedeConsultarLegajosDocentes()`).
 - Rutas: middleware `permiso:N` o `permiso-config:N`.
 - Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.
 - Menú: `@if (tienePermiso(N))` por ítem o grupo.

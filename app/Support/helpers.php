@@ -158,8 +158,8 @@ if (! function_exists('puedeConsultarLegajosEstudiantes')) {
 
 if (! function_exists('puedeConsultarLegajosDocentes')) {
     /**
-     * Consulta de legajos y listado de docentes (apellido, nombre, DNI; más campos con orden 88).
-     * Alta/edición/baja: {@see puedeModificarLegajosDocentes()} (permiso orden 11).
+     * Consulta de legajos y listado de docentes (apellido, nombre, DNI).
+     * Con permiso orden 11: alta/edición/baja y datos completos ({@see puedeModificarLegajosDocentes()}).
      */
     function puedeConsultarLegajosDocentes(): bool
     {
@@ -169,7 +169,8 @@ if (! function_exists('puedeConsultarLegajosDocentes')) {
 
 if (! function_exists('puedeModificarLegajosDocentes')) {
     /**
-     * Crear, editar y eliminar legajos de docentes (permiso orden 11).
+     * Crear, editar y eliminar legajos de docentes con todos los campos (permiso orden 11).
+     * Sin este permiso solo se consultan apellido, nombre y DNI (y listados PDF/Excel limitados a esos campos).
      */
     function puedeModificarLegajosDocentes(): bool
     {
@@ -179,12 +180,12 @@ if (! function_exists('puedeModificarLegajosDocentes')) {
 
 if (! function_exists('puedeVerDatosPersonalesDocentes')) {
     /**
-     * Datos personales de docentes (más allá de apellido, nombre y DNI) en legajo, PDF y Excel.
-     * Orden {@see \App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES}.
+     * Datos personales completos de docentes en legajo, PDF y Excel.
+     * Equivale al permiso orden 11 ({@see puedeModificarLegajosDocentes()}).
      */
     function puedeVerDatosPersonalesDocentes(): bool
     {
-        return tienePermiso(\App\Support\PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES);
+        return puedeModificarLegajosDocentes();
     }
 }
 

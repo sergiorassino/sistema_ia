@@ -6,6 +6,7 @@ use App\Support\Listados\ListadoDocentesConsulta;
 use App\Support\Listados\ListadoDocentesExcelExportSpec;
 use App\Support\Listados\ListadoDocentesExcelExporter;
 use App\Support\Listados\ListadoDocentesExportParams;
+use App\Support\Listados\ListadoDocentesPdfFieldCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
@@ -41,7 +42,7 @@ class ListadoDocentesExcelController extends Controller
     {
         $rolesInput = $request->query('roles');
         if ($rolesInput === null || $rolesInput === '') {
-            if (! puedeVerDatosPersonalesDocentes()) {
+            if (! puedeModificarLegajosDocentes()) {
                 $roleIds = ListadoDocentesConsulta::rolesDisponibles()
                     ->pluck('id')
                     ->map(fn ($id) => (int) $id)

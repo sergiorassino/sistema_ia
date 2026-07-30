@@ -24,14 +24,14 @@ final class ListadoDocentesPdfFieldCatalog
     ];
 
     /**
-     * Sin permiso de datos personales, solo estas columnas (apellido, nombre, DNI).
+     * Sin permiso de legajos docentes (orden 11), solo estas columnas (apellido, nombre, DNI).
      *
      * @param  list<string>  $keys
      * @return list<string>
      */
     public static function restringirPorPermisoDatosPersonales(array $keys): array
     {
-        if (puedeVerDatosPersonalesDocentes()) {
+        if (puedeModificarLegajosDocentes()) {
             return $keys;
         }
 
@@ -47,14 +47,14 @@ final class ListadoDocentesPdfFieldCatalog
     }
 
     /**
-     * Bloques de columnas para la UI del listado, respetando el permiso de datos personales.
+     * Bloques de columnas para la UI del listado, respetando el permiso de legajos docentes (orden 11).
      *
      * @return list<array{titulo: string, items: list<array{key: string, label: string}>}>
      */
     public static function groupedForUiPorSolapasSegunPermiso(): array
     {
         $blocks = self::groupedForUiPorSolapas();
-        if (puedeVerDatosPersonalesDocentes()) {
+        if (puedeModificarLegajosDocentes()) {
             return $blocks;
         }
 

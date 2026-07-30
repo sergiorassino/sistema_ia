@@ -13,12 +13,12 @@ return new class extends Migration
             return;
         }
 
-        $permiso = collect(PermisosIaCatalog::definicionCatalogo())
-            ->firstWhere('orden', PermisosIaCatalog::LEGAJOS_DOCENTES_DATOS_PERSONALES);
-
-        if ($permiso === null) {
-            return;
-        }
+        $permiso = [
+            'id' => 88,
+            'orden' => 88,
+            'tema' => 'LEGAJOS DOCENTES',
+            'descripcion' => 'Ver, imprimir y exportar datos personales completos de docentes (sin este permiso solo apellido, nombre y DNI).',
+        ];
 
         DB::table('permisos_ia')->updateOrInsert(['id' => $permiso['id']], $permiso);
 

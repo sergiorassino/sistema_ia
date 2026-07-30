@@ -31,7 +31,7 @@
                            'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => $this->puedeExportarExcelCompleto(),
                            'pointer-events-none border-white/10 bg-white/20 text-white/50' => ! $this->puedeExportarExcelCompleto(),
                        ])
-                       title="{{ $puedeVerDatosPersonales ? 'Todos los roles, todas las columnas del legajo docente. Archivo Docentes'.schoolCtx()->terlecAno().'.xlsx' : 'Todos los roles; solo apellido, nombre y DNI (sin permiso de datos personales).' }}">
+                       title="{{ $puedeVerDatosPersonales ? 'Todos los roles, todas las columnas del legajo docente. Archivo Docentes'.schoolCtx()->terlecAno().'.xlsx' : 'Todos los roles; solo apellido, nombre y DNI (sin permiso de edición de legajos docentes).' }}">
                         Exportar Excel
                     </a>
                 @endif
@@ -145,7 +145,7 @@
                         @if ($puedeVerDatosPersonales)
                             <p class="mt-1 text-sm text-neutral-600">Un bloque por cada solapa del legajo docente (<span class="font-mono">solapas_legajo_profesor</span>). Dentro: columnas de <span class="font-mono">campos_profesores</span> asignadas a esa solapa. Slug <span class="font-mono">docente</span>: incluye apellido, nombre, DNI y rol.</p>
                         @else
-                            <p class="mt-1 text-sm text-neutral-600">Sin permiso de datos personales: solo se pueden listar, imprimir y exportar apellido, nombre y DNI.</p>
+                            <p class="mt-1 text-sm text-neutral-600">Sin permiso de edición de legajos docentes: solo se pueden listar, imprimir y exportar apellido, nombre y DNI.</p>
                         @endif
                     </div>
                     <div class="flex flex-wrap gap-2">
