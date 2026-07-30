@@ -929,7 +929,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         });
 
     Route::get('/horarios/configuracion', HorariosConfigIndex::class)
-        ->middleware('permiso:13')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::HORARIOS)
         ->name('horarios.config');
 
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::VIAJES_SALIDAS_EDUCATIVAS)->group(function () {
@@ -1028,8 +1028,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->name('doc-pp.form');
     });
 
+    // Permiso 13 (HORARIOS): solo configuración y carga. Impresión y PDFs: sin ese permiso.
     Route::get('/horarios/carga', HorariosCargaIndex::class)
-        ->middleware('permiso:13')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::HORARIOS)
         ->name('horarios.carga');
     Route::get('/horarios/impresion', HorariosImpresionIndex::class)
         ->name('horarios.impresion');

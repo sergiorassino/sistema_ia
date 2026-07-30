@@ -168,7 +168,7 @@
         </div>
     @endif
 
-    @if (tienePermiso(13))
+    @if (tienePermiso(\App\Support\PermisosIaCatalog::HORARIOS))
         <div class="flex flex-wrap gap-3 text-sm">
             <a href="{{ route('horarios.carga') }}" class="font-semibold text-primary-700 hover:underline">Carga</a>
             <a href="{{ route('horarios.config') }}" class="font-semibold text-primary-700 hover:underline">Configuración</a>
