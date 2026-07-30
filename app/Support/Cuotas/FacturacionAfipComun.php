@@ -24,14 +24,46 @@ final class FacturacionAfipComun
     /**
      * Importe a facturar por cuota en modo devengamiento.
      *
-     * Neto (`cuotasgeneradas.importe`). Si la fórmula del 1.er vencimiento es
-     * bonificación (`signo1v = '-'` con valor > 0), neto − bonificación
-     * (mismo criterio que el cupón al 1.er venc.); si no, el neto.
+     * Neto (`cuotasgeneradas.importe`, ya con beca si aplica). Si la fórmula del
+     * 1.er vencimiento es bonificación (`signo1v = '-'` con valor > 0),
+     * neto − bonificación; si no, el neto.
      */
     public static function importeAFacturarDevengamiento(CuotaGenerada $registro): float
     {
         $neto = round((float) ($registro->importe ?? 0), 2);
-        if ($neto <= 0) {
+
+        return self::aplicarBonificacionPrimerVencimiento($registro, $neto);
+    }
+
+    /**
+     * Importe de la leyenda «Importe Original de la cuota» (PDF AFIP con beca).
+     *
+     * Parte del neto sin beca (importe de catálogo / pre-beca) y, si la cuota
+     * tiene bonificación en el 1.er vencimiento, resta esa bonificación.
+     */
+    public static function importeOriginalLeyendaBeca(CuotaGenerada $registro, float $porcentajeBeca): float
+    {
+        $importeConBeca = round((float) ($registro->importe ?? 0), 2);
+        if ($importeConBeca <= 0) {
+            return 0.0;
+        }
+
+        $porcentajeBeca = max(0.0, min(100.0, $porcentajeBeca));
+        $factor = 1.0 - ($porcentajeBeca / 100.0);
+        $netoSinBeca = $factor > 0.0
+            ? round($importeConBeca / $factor, 2)
+            : $importeConBeca;
+
+        return self::aplicarBonificacionPrimerVencimiento($registro, $netoSinBeca);
+    }
+
+    /**
+     * Si el 1.er vencimiento tiene bonificación, $base − bonificación; si no, $base.
+     */
+    public static function aplicarBonificacionPrimerVencimiento(CuotaGenerada $registro, float $base): float
+    {
+        $base = round(max(0, $base), 2);
+        if ($base <= 0) {
             return 0.0;
         }
 
@@ -39,17 +71,17 @@ final class FacturacionAfipComun
             ? $registro->venc1->copy()->startOfDay()
             : Carbon::today();
 
-        $calc = ImputacionPagoCalculo::calcular($registro, $neto, $fechaRef);
+        $calc = ImputacionPagoCalculo::calcular($registro, $base, $fechaRef);
         if (! ($calc['esBonificacion'] ?? false)) {
-            return $neto;
+            return $base;
         }
 
         $bonificacion = round((float) ($calc['bonificacion'] ?? 0), 2);
         if ($bonificacion <= 0) {
-            return $neto;
+            return $base;
         }
 
-        return round(max(0, $neto - $bonificacion), 2);
+        return round(max(0, $base - $bonificacion), 2);
     }
 
     /**

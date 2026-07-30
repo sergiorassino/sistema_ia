@@ -207,12 +207,12 @@ final class ComprobanteAfipDatos
             }
 
             $porcentaje = $porcentaje !== null ? max(0.0, min(100.0, $porcentaje)) : null;
-            $importeNeto = round((float) ($registroCuota->importe ?? 0), 2);
-            if ($porcentaje !== null && $porcentaje > 0 && $importeNeto > 0) {
-                $factor = 1.0 - ($porcentaje / 100.0);
-                $importeOriginal = $factor > 0.0 ? round($importeNeto / $factor, 2) : $importeNeto;
-                $becaPorcentaje = (int) round($porcentaje);
-                $becaImporteOriginalFmt = number_format($importeOriginal, 2, ',', '.');
+            if ($porcentaje !== null && $porcentaje > 0) {
+                $importeLeyenda = FacturacionAfipComun::importeOriginalLeyendaBeca($registroCuota, $porcentaje);
+                if ($importeLeyenda > 0) {
+                    $becaPorcentaje = (int) round($porcentaje);
+                    $becaImporteOriginalFmt = number_format($importeLeyenda, 2, ',', '.');
+                }
             }
         }
 
