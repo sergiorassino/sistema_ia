@@ -4,9 +4,13 @@ namespace App\Support\MatrizAnaliticos;
 
 use App\Models\AnaliticoDato;
 use App\Models\Calificacion;
+use App\Models\NombreMateria;
 use App\Support\CalificacionesSecundario\CierreAnualSecundario;
+use App\Support\Database\PersistenciaColumnas;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Libro matriz / pase / analítico: listado de legajos y edición de calificaciones en matriz.
@@ -150,7 +154,10 @@ final class LibroMatrizAnalitico
      *     id: int,
      *     ano_lectivo: int|string,
      *     curso: string,
+     *     idMaterias: int,
+     *     materia_base: string,
      *     materia: string,
+     *     tiene_override: bool,
      *     calif: string,
      *     mes: string,
      *     ano: string,
@@ -163,14 +170,23 @@ final class LibroMatrizAnalitico
     public static function lineasEdicion(int $idLegajos, int $idNivel, string $apellido = '', string $nombre = ''): array
     {
         $filas = CierreAnualSecundario::historialAlumno($idLegajos, $idNivel, $apellido, $nombre);
+        $overrides = self::overridesNombreMateriaPorLegajo($idLegajos);
         $out = [];
 
         foreach ($filas as $f) {
+            $idMaterias = (int) ($f['idMaterias'] ?? 0);
+            $materiaBase = trim((string) ($f['materia'] ?? ''));
+            $override = $idMaterias > 0 ? trim((string) ($overrides[$idMaterias] ?? '')) : '';
+            $tieneOverride = $override !== '';
+
             $out[] = [
                 'id' => (int) $f['id'],
                 'ano_lectivo' => $f['ano_lectivo'],
                 'curso' => $f['curso'],
-                'materia' => $f['materia'],
+                'idMaterias' => $idMaterias,
+                'materia_base' => $materiaBase,
+                'materia' => $tieneOverride ? $override : $materiaBase,
+                'tiene_override' => $tieneOverride,
                 'calif' => $f['calif'],
                 'mes' => self::valorCampoEditable($f['mes'] ?? null),
                 'ano' => self::valorCampoEditable($f['ano'] ?? null),
@@ -182,6 +198,179 @@ final class LibroMatrizAnalitico
         }
 
         return $out;
+    }
+
+    /**
+     * Mapa idMaterias → nombreMateria (solo no vacíos) para un legajo.
+     *
+     * @return array<int, string>
+     */
+    public static function overridesNombreMateriaPorLegajo(int $idLegajos): array
+    {
+        if ($idLegajos < 1 || ! Schema::hasTable('nombresmaterias')) {
+            return [];
+        }
+
+        $rows = NombreMateria::query()
+            ->where('idLegajos', $idLegajos)
+            ->orderByDesc('id')
+            ->get(['idMaterias', 'nombreMateria']);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $idMaterias = (int) ($row->idMaterias ?? 0);
+            if ($idMaterias < 1 || isset($out[$idMaterias])) {
+                continue;
+            }
+            $nombre = trim((string) ($row->nombreMateria ?? ''));
+            if ($nombre === '') {
+                continue;
+            }
+            $out[$idMaterias] = $nombre;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array{ok: bool, error: string|null}
+     */
+    public static function guardarOverrideNombreMateria(
+        int $idLegajos,
+        int $idNivel,
+        int $idMaterias,
+        string $nombreMateria,
+    ): array {
+        if ($idLegajos < 1 || $idNivel < 1 || $idMaterias < 1) {
+            return ['ok' => false, 'error' => 'Datos inválidos para el override de asignatura.'];
+        }
+
+        if (self::alumno($idLegajos) === null) {
+            return ['ok' => false, 'error' => 'Legajo no encontrado.'];
+        }
+
+        if (! self::materiaPerteneceAlumnoNivel($idMaterias, $idLegajos, $idNivel)) {
+            return ['ok' => false, 'error' => 'La asignatura no pertenece al historial de este alumno.'];
+        }
+
+        if (! Schema::hasTable('nombresmaterias')) {
+            return ['ok' => false, 'error' => 'La tabla nombresmaterias no existe en esta base.'];
+        }
+
+        $nombre = trim($nombreMateria);
+        if ($nombre === '') {
+            return ['ok' => false, 'error' => 'Ingrese el nombre de asignatura para el analítico.'];
+        }
+        if (mb_strlen($nombre) > 300) {
+            return ['ok' => false, 'error' => 'El nombre no puede superar 300 caracteres.'];
+        }
+
+        $payload = [
+            'idLegajos' => $idLegajos,
+            'idMaterias' => $idMaterias,
+            'nombreMateria' => $nombre,
+        ];
+
+        $preparado = PersistenciaColumnas::prepararPayload('nombresmaterias', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'nombresmaterias',
+                    $preparado['columnas_con_valor_sin_columna'],
+                ),
+            ];
+        }
+
+        try {
+            $existente = NombreMateria::query()
+                ->where('idLegajos', $idLegajos)
+                ->where('idMaterias', $idMaterias)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($existente !== null) {
+                $existente->update($preparado['payload']);
+                $where = ['id' => (int) $existente->id];
+            } else {
+                $creado = NombreMateria::query()->create($preparado['payload']);
+                $where = ['id' => (int) $creado->id];
+            }
+        } catch (QueryException $e) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el override de asignatura.',
+            ];
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'nombresmaterias',
+            $where,
+            $preparado['payload'],
+        );
+        if ($noPersistidas !== []) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasNoPersistidas('nombresmaterias', $noPersistidas),
+            ];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
+    /**
+     * @return array{ok: bool, error: string|null}
+     */
+    public static function eliminarOverrideNombreMateria(
+        int $idLegajos,
+        int $idNivel,
+        int $idMaterias,
+    ): array {
+        if ($idLegajos < 1 || $idNivel < 1 || $idMaterias < 1) {
+            return ['ok' => false, 'error' => 'Datos inválidos para quitar el override.'];
+        }
+
+        if (self::alumno($idLegajos) === null) {
+            return ['ok' => false, 'error' => 'Legajo no encontrado.'];
+        }
+
+        if (! self::materiaPerteneceAlumnoNivel($idMaterias, $idLegajos, $idNivel)) {
+            return ['ok' => false, 'error' => 'La asignatura no pertenece al historial de este alumno.'];
+        }
+
+        if (! Schema::hasTable('nombresmaterias')) {
+            return ['ok' => false, 'error' => 'La tabla nombresmaterias no existe en esta base.'];
+        }
+
+        try {
+            NombreMateria::query()
+                ->where('idLegajos', $idLegajos)
+                ->where('idMaterias', $idMaterias)
+                ->delete();
+        } catch (QueryException $e) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo quitar el override de asignatura.',
+            ];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
+    public static function materiaPerteneceAlumnoNivel(int $idMaterias, int $idLegajos, int $idNivel): bool
+    {
+        if ($idMaterias < 1 || $idLegajos < 1 || $idNivel < 1) {
+            return false;
+        }
+
+        return DB::table('calificaciones as c')
+            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->where('c.idLegajos', $idLegajos)
+            ->where('c.idMaterias', $idMaterias)
+            ->where('cu.idNivel', $idNivel)
+            ->exists();
     }
 
     /**
@@ -238,6 +427,61 @@ final class LibroMatrizAnalitico
         });
 
         return ['ok' => $ok, 'omitidos' => $omitidos];
+    }
+
+    /** Campos editables de la grilla del matriz. */
+    public const CAMPOS_LINEA_EDITABLES = ['calif', 'mes', 'ano', 'cond', 'escuapro'];
+
+    /**
+     * Guarda un solo campo de una fila del matriz (blur de celda).
+     *
+     * @return array{ok: bool, error: string|null, valor_normalizado: string|null}
+     */
+    public static function guardarCampoLinea(
+        int $idLegajos,
+        int $idNivel,
+        int $id,
+        string $campo,
+        string $valor,
+    ): array {
+        $campo = trim($campo);
+        if (! in_array($campo, self::CAMPOS_LINEA_EDITABLES, true)) {
+            return ['ok' => false, 'error' => 'Campo no editable.', 'valor_normalizado' => null];
+        }
+
+        if ($idLegajos < 1 || $idNivel < 1 || $id < 1) {
+            return ['ok' => false, 'error' => 'Datos inválidos.', 'valor_normalizado' => null];
+        }
+
+        if (! self::calificacionPerteneceAlumnoNivel($id, $idLegajos, $idNivel)) {
+            return ['ok' => false, 'error' => 'La calificación no pertenece a este alumno.', 'valor_normalizado' => null];
+        }
+
+        $payload = match ($campo) {
+            'calif' => ['calif' => self::truncar($valor, 10)],
+            'mes' => ['mes' => self::normalizarMes($valor)],
+            'ano' => ['ano' => self::normalizarAnoMatricula($valor)],
+            'cond' => ['cond' => self::truncar($valor, 20)],
+            'escuapro' => ['escuapro' => self::truncar($valor, 100)],
+            default => null,
+        };
+
+        if ($payload === null) {
+            return ['ok' => false, 'error' => 'Campo no editable.', 'valor_normalizado' => null];
+        }
+
+        Calificacion::query()
+            ->where('id', $id)
+            ->where('idLegajos', $idLegajos)
+            ->update($payload);
+
+        $normalizado = match ($campo) {
+            'mes' => $payload['mes'] === null ? '' : (string) $payload['mes'],
+            'ano' => $payload['ano'] === null ? '' : (string) $payload['ano'],
+            default => (string) ($payload[$campo] ?? ''),
+        };
+
+        return ['ok' => true, 'error' => null, 'valor_normalizado' => $normalizado];
     }
 
     /**

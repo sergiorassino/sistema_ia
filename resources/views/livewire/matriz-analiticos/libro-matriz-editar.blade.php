@@ -1,4 +1,4 @@
-{{-- Edición en grilla de calificaciones del matriz (secundario) — estilo planilla compacta. --}}
+{{-- Edición en grilla de calificaciones del matriz (secundario) — guardado por celda al blur. --}}
 <div class="se-cierre-anual-fill se-matriz-edit-fill">
     <div class="se-cierre-anual-grid se-cierre-anual-grid--matriz-edit gap-2 min-h-0 flex-1">
         <section class="se-hero se-matriz-edit-hero min-w-0 shrink-0">
@@ -25,7 +25,7 @@
                         Datos Adicionales
                     </button>
                     <button type="button"
-                            wire:click="solicitarVolver"
+                            wire:click="volver"
                             class="inline-flex items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -37,35 +37,13 @@
         </section>
 
         <div class="se-matriz-edit-body">
-            @if (session('success'))
-                <div class="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900" role="status">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             @error('guardar')
                 <div class="shrink-0 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-900" role="alert">
                     {{ $message }}
                 </div>
             @enderror
 
-            <form wire:submit="guardar"
-                  @class([
-                      'se-matriz-edit-panel min-h-0 flex-1',
-                      'se-matriz-edit-panel--solo-grilla' => count($lineas) === 0,
-                  ])>
-                @if (count($lineas) > 0)
-                    <div class="se-matriz-edit-bar se-matriz-edit-bar--top justify-end">
-                        <button type="submit"
-                                wire:loading.attr="disabled"
-                                wire:target="guardar"
-                                class="btn-matriz-save shrink-0">
-                            <span wire:loading.remove wire:target="guardar">Guardar todo</span>
-                            <span wire:loading wire:target="guardar">Guardando…</span>
-                        </button>
-                    </div>
-                @endif
-
+            <div class="se-matriz-edit-panel se-matriz-edit-panel--solo-grilla min-h-0 flex-1">
                 {{-- Cabecera fuera del scroll vertical (mismo patrón que cierre anual; evita bleed con sticky). --}}
                 <div class="se-cierre-anual-grilla se-matriz-excel-grilla se-matriz-excel-grilla--unified">
                     @if (count($lineas) > 0)
@@ -112,15 +90,36 @@
                                 <col style="width:17.5%">
                                 <col style="width:12%">
                             </colgroup>
-                            <tbody class="bg-white">
+                            <tbody class="bg-white" data-se-matriz-tbody>
                                     @forelse ($lineas as $i => $lin)
                                         <tr wire:key="matriz-lin-{{ $lin['id'] }}">
                                             <td><span class="se-matriz-excel-read tabular-nums">{{ $lin['ano_lectivo'] }}</span></td>
                                             <td><span class="se-matriz-excel-read" title="{{ $lin['curso'] }}">{{ $lin['curso'] !== '' ? $lin['curso'] : '—' }}</span></td>
-                                            <td><span class="se-matriz-excel-read font-medium" title="{{ $lin['materia'] }}">{{ $lin['materia'] }}</span></td>
+                                            <td>
+                                                <div class="se-matriz-excel-materia-cell">
+                                                    <button type="button"
+                                                            wire:click="abrirModalNombreMateria({{ $i }})"
+                                                            class="se-matriz-excel-nombre-btn {{ ! empty($lin['tiene_override']) ? 'se-matriz-excel-nombre-btn--activo' : '' }}"
+                                                            title="{{ ! empty($lin['tiene_override']) ? 'Editar nombre para analítico' : 'Definir nombre para analítico' }}"
+                                                            aria-label="Nombre de asignatura para analítico: {{ $lin['materia'] }}">
+                                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <span @class([
+                                                              'se-matriz-excel-read font-medium min-w-0 flex-1',
+                                                              'se-matriz-excel-read--override' => ! empty($lin['tiene_override']),
+                                                          ])
+                                                          title="{{ $lin['materia'] }}{{ ! empty($lin['tiene_override']) ? ' (nombre para analítico)' : '' }}">{{ $lin['materia'] }}</span>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <input type="text"
+                                                       id="se-matriz-{{ (int) $lin['id'] }}-calif"
+                                                       data-se-matriz-nav
                                                        wire:model="lineas.{{ $i }}.calif"
+                                                       wire:blur="guardarCelda({{ $i }}, 'calif', $event.target.value)"
                                                        maxlength="10"
                                                        @class([
                                                            'se-matriz-excel-input text-center',
@@ -130,7 +129,10 @@
                                             </td>
                                             <td>
                                                 <input type="text"
+                                                       id="se-matriz-{{ (int) $lin['id'] }}-mes"
+                                                       data-se-matriz-nav
                                                        wire:model="lineas.{{ $i }}.mes"
+                                                       wire:blur="guardarCelda({{ $i }}, 'mes', $event.target.value)"
                                                        maxlength="2"
                                                        inputmode="numeric"
                                                        @class([
@@ -141,7 +143,10 @@
                                             </td>
                                             <td>
                                                 <input type="text"
+                                                       id="se-matriz-{{ (int) $lin['id'] }}-ano"
+                                                       data-se-matriz-nav
                                                        wire:model="lineas.{{ $i }}.ano"
+                                                       wire:blur="guardarCelda({{ $i }}, 'ano', $event.target.value)"
                                                        maxlength="4"
                                                        inputmode="numeric"
                                                        @class([
@@ -152,7 +157,10 @@
                                             </td>
                                             <td>
                                                 <input type="text"
+                                                       id="se-matriz-{{ (int) $lin['id'] }}-cond"
+                                                       data-se-matriz-nav
                                                        wire:model="lineas.{{ $i }}.cond"
+                                                       wire:blur="guardarCelda({{ $i }}, 'cond', $event.target.value)"
                                                        maxlength="20"
                                                        @class([
                                                            'se-matriz-excel-input',
@@ -162,7 +170,10 @@
                                             </td>
                                             <td>
                                                 <input type="text"
+                                                       id="se-matriz-{{ (int) $lin['id'] }}-escuapro"
+                                                       data-se-matriz-nav
                                                        wire:model="lineas.{{ $i }}.escuapro"
+                                                       wire:blur="guardarCelda({{ $i }}, 'escuapro', $event.target.value)"
                                                        maxlength="100"
                                                        @class([
                                                            'se-matriz-excel-input',
@@ -185,60 +196,9 @@
                         </table>
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    @if ($modalSalirAbierto)
-        @teleport('body')
-        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
-             role="dialog"
-             aria-modal="true"
-             aria-labelledby="matriz-salir-titulo"
-             wire:key="matriz-modal-salir">
-            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
-                 wire:click="cerrarModalSalir"
-                 aria-hidden="true"></div>
-
-            <div class="relative z-10 my-auto w-full max-w-md rounded-2xl border border-accent-200 bg-white p-6 shadow-xl ring-1 ring-black/5"
-                 @click.stop>
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <h3 id="matriz-salir-titulo" class="mt-4 text-center text-base font-bold text-neutral-900">
-                    Cambios sin guardar
-                </h3>
-                <p class="mt-2 text-center text-sm text-neutral-600">
-                    Hay modificaciones en la grilla que aún no se guardaron.
-                    ¿Desea guardar antes de volver al listado?
-                </p>
-                <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
-                    <button type="button"
-                            wire:click="guardarYSalir"
-                            wire:loading.attr="disabled"
-                            wire:target="guardarYSalir"
-                            class="btn-primary w-full sm:w-auto">
-                        <span wire:loading.remove wire:target="guardarYSalir">Guardar y salir</span>
-                        <span wire:loading wire:target="guardarYSalir">Guardando…</span>
-                    </button>
-                    <button type="button"
-                            wire:click="salirSinGuardar"
-                            class="btn-secondary w-full sm:w-auto">
-                        Salir sin guardar
-                    </button>
-                    <button type="button"
-                            wire:click="cerrarModalSalir"
-                            class="btn-secondary w-full sm:w-auto">
-                        Seguir editando
-                    </button>
-                </div>
             </div>
         </div>
-        @endteleport
-    @endif
+    </div>
 
     @if ($modalDatosAdicionalesAbierto)
         @teleport('body')
@@ -298,6 +258,97 @@
         </div>
         @endteleport
     @endif
+
+    @if ($modalNombreMateriaAbierto)
+        @teleport('body')
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="matriz-nombre-materia-titulo"
+             wire:key="matriz-modal-nombre-materia">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                 wire:click="cerrarModalNombreMateria"
+                 aria-hidden="true"></div>
+
+            <div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5"
+                 @click.stop>
+                <div class="flex shrink-0 items-center justify-between gap-3 border-b border-accent-200 px-5 py-4">
+                    <h3 id="matriz-nombre-materia-titulo" class="text-base font-bold text-neutral-900">
+                        Nombre para analítico
+                    </h3>
+                    <button type="button"
+                            wire:click="cerrarModalNombreMateria"
+                            class="rounded-lg p-1.5 text-neutral-500 transition hover:bg-accent-50 hover:text-neutral-800"
+                            aria-label="Cerrar">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <form wire:submit="guardarNombreMateriaOverride" class="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-4">
+                    @error('guardarNombreOverride')
+                        <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    <div>
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Asignatura en materias</p>
+                        <p class="mt-1 text-sm text-neutral-800">{{ $nombreOverrideMateriaBase !== '' ? $nombreOverrideMateriaBase : '—' }}</p>
+                    </div>
+
+                    <div>
+                        <label for="matriz-nombre-override-valor" class="block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                            Nombre en certificado analítico
+                        </label>
+                        <input id="matriz-nombre-override-valor"
+                               type="text"
+                               wire:model="nombreOverrideValor"
+                               maxlength="300"
+                               @class([
+                                   'mt-1.5 w-full rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2.5 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',
+                                   'border-red-400 focus:border-red-500 focus:ring-red-400/30' => $errors->has('nombreOverrideValor'),
+                               ])>
+                        @error('nombreOverrideValor')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1.5 text-[11px] text-neutral-500">
+                            Este texto se usa en los PDF del analítico. La grilla lo muestra en rojo cuando hay override.
+                        </p>
+                    </div>
+                </form>
+
+                <div class="flex shrink-0 flex-col-reverse gap-2 border-t border-accent-200 bg-accent-50/80 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        @if ($nombreOverrideTiene)
+                            <button type="button"
+                                    class="btn-secondary text-red-700 hover:border-red-300 hover:bg-red-50"
+                                    x-on:click="window.seSwalConfirmar('¿Quitar el nombre especial? El analítico volverá a usar el nombre de materias.', 'Quitar override', { confirmButtonText: 'Sí, quitar' }).then((ok) => { if (ok) $wire.eliminarNombreMateriaOverride(); })">
+                                Quitar override
+                            </button>
+                        @endif
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                        <button type="button"
+                                wire:click="cerrarModalNombreMateria"
+                                class="btn-secondary">
+                            Cancelar
+                        </button>
+                        <button type="button"
+                                wire:click="guardarNombreMateriaOverride"
+                                wire:loading.attr="disabled"
+                                wire:target="guardarNombreMateriaOverride"
+                                class="btn-primary">
+                            <span wire:loading.remove wire:target="guardarNombreMateriaOverride">Guardar</span>
+                            <span wire:loading wire:target="guardarNombreMateriaOverride">Guardando…</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
 </div>
 
 @script
@@ -305,6 +356,11 @@
     $wire.on('se-swal-exito', ({ mensaje }) => {
         if (typeof seSwalExito === 'function') {
             seSwalExito(mensaje ?? 'Guardado.');
+        }
+    });
+    $wire.on('se-swal-error', ({ mensaje }) => {
+        if (typeof seSwalError === 'function') {
+            seSwalError(mensaje ?? 'No se pudo completar la acción.');
         }
     });
 </script>

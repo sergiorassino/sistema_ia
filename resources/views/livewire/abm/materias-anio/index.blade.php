@@ -1,3 +1,4 @@
+<div>
 <div class="se-page">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"
@@ -375,48 +376,91 @@
             </div>
         </div>
     </div>
+</div>
 
     @if ($showConfirm)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4 backdrop-blur-sm">
-            <div class="w-full max-w-sm rounded-2xl border border-accent-200 bg-white shadow-xl" @click.stop>
-                <div class="px-6 py-5">
-                    <div class="flex items-start gap-3">
-                        @if ($deleteId)
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
-                                <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @teleport('body')
+            <div class="fixed inset-0 z-[2000] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                 role="dialog" aria-modal="true" aria-labelledby="se-mat-anio-delete-title"
+                 wire:key="materias-anio-delete-modal-{{ $deleteId }}">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cancelDelete"></div>
+                <div class="relative z-10 my-auto flex w-full max-w-2xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),40rem)]"
+                     @click.stop>
+                    <div class="shrink-0 border-b border-accent-200 px-6 py-5">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full {{ $deleteStep === 2 ? 'bg-red-100' : 'bg-amber-100' }}">
+                                <svg class="h-5 w-5 {{ $deleteStep === 2 ? 'text-red-600' : 'text-amber-700' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                                 </svg>
                             </div>
-                        @else
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                                <svg class="h-5 w-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-                                </svg>
+                            <div class="min-w-0">
+                                <h3 id="se-mat-anio-delete-title" class="mb-1 text-base font-semibold text-neutral-900">
+                                    @if ($deleteStep === 1)
+                                        {{ $deleteCalifCount > 0 ? 'Advertencia: se eliminarán calificaciones' : 'Advertencia: se eliminarán datos asociados' }}
+                                    @else
+                                        Confirmar eliminación
+                                    @endif
+                                </h3>
+                                <p class="text-sm text-neutral-600">{{ $deleteInfo }}</p>
+                                @if ($deleteStep === 1 && $deleteOtrosResumen !== '')
+                                    <p class="mt-2 text-xs text-neutral-500">
+                                        También se borrarán otros registros asociados: {{ $deleteOtrosResumen }}.
+                                    </p>
+                                @endif
                             </div>
-                        @endif
-                        <div>
-                            <h3 class="mb-1 text-base font-semibold text-neutral-900">
-                                {{ $deleteId ? 'Confirmar eliminación' : 'No se puede eliminar' }}
-                            </h3>
-                            <p class="text-sm text-neutral-600">{{ $deleteInfo }}</p>
                         </div>
                     </div>
-                </div>
-                <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/60 px-6 py-4">
-                    <button type="button" wire:click="$set('showConfirm', false)" class="btn-secondary">
-                        {{ $deleteId ? 'Cancelar' : 'Cerrar' }}
-                    </button>
-                    @if ($deleteId)
-                        <button type="button" wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
-                            <span wire:loading.remove wire:target="delete">Eliminar</span>
-                            <span wire:loading wire:target="delete">Eliminando…</span>
-                        </button>
+
+                    @if ($deleteStep === 1 && $deletePreview !== [])
+                        <div class="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+                            <p class="mb-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                Registros de calificaciones a eliminar
+                                @if ($deleteCalifCount > count($deletePreview))
+                                    (mostrando {{ count($deletePreview) }} de {{ $deleteCalifCount }})
+                                @endif
+                            </p>
+                            <div class="overflow-x-auto rounded-xl border border-accent-200">
+                                <table class="min-w-full text-left text-sm">
+                                    <thead class="bg-accent-50 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                                        <tr>
+                                            <th class="px-3 py-2">Materia</th>
+                                            <th class="px-3 py-2">Curso</th>
+                                            <th class="px-3 py-2">Alumno</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-accent-100">
+                                        @foreach ($deletePreview as $fila)
+                                            <tr class="hover:bg-accent-50/60">
+                                                <td class="px-3 py-2 text-neutral-800">{{ $fila['materia'] }}</td>
+                                                <td class="px-3 py-2 text-neutral-700">{{ $fila['curso'] }}</td>
+                                                <td class="px-3 py-2 text-neutral-700">{{ $fila['alumno'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     @endif
+
+                    <div class="flex shrink-0 justify-end gap-3 border-t border-accent-200 bg-accent-50/60 px-6 py-4">
+                        <button type="button" wire:click="cancelDelete" class="btn-secondary">
+                            Cancelar
+                        </button>
+                        @if ($deleteStep === 1)
+                            <button type="button" wire:click="avanzarConfirmacionDelete" class="btn-danger">
+                                Continuar
+                            </button>
+                        @else
+                            <button type="button" wire:click="eliminarMateriaConfirmada" wire:loading.attr="disabled" class="btn-danger">
+                                <span wire:loading.remove wire:target="eliminarMateriaConfirmada">Sí, eliminar</span>
+                                <span wire:loading wire:target="eliminarMateriaConfirmada">Eliminando…</span>
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
+        @endteleport
     @endif
 </div>
 

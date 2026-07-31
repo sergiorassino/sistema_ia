@@ -12,7 +12,7 @@ return [
     'boletin_primario' => [
         // Mismo PDF que NSSC (A4 vertical, selector 1ª/2ª etapa).
         'ipe_implementacion' => 'estandar',
-        'menu_etiqueta_boletin_ipe' => 'Calificaciones',
+        'menu_etiqueta_boletin_ipe' => 'Boletines',
     ],
 
     'calificaciones_primario' => [

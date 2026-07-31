@@ -1806,6 +1806,126 @@ function bindCuotasImportesForm() {
 }
 
 /**
+ * Libro matriz — edición: flechas y Enter entre celdas editables.
+ * Al cambiar de celda el `wire:blur` existente dispara el guardado.
+ */
+function seMatrizBuildNavMatrix(tbody) {
+    const matrix = [];
+    tbody.querySelectorAll(':scope > tr').forEach((tr) => {
+        const row = [];
+        tr.querySelectorAll('input[data-se-matriz-nav]').forEach((inp) => {
+            if (inp.disabled || inp.readOnly) {
+                return;
+            }
+            row.push(inp);
+        });
+        if (row.length) {
+            matrix.push(row);
+        }
+    });
+    return matrix;
+}
+
+function seMatrizFindNavPos(matrix, el) {
+    for (let r = 0; r < matrix.length; r++) {
+        const c = matrix[r].indexOf(el);
+        if (c >= 0) {
+            return { row: r, col: c };
+        }
+    }
+    return null;
+}
+
+function seMatrizFocusNavCell(inp) {
+    if (!inp) {
+        return;
+    }
+    inp.focus({ preventScroll: false });
+    if (typeof inp.select === 'function') {
+        inp.select();
+    }
+    if (typeof inp.scrollIntoView === 'function') {
+        inp.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+}
+
+function bindMatrizEditarTabla() {
+    document.querySelectorAll('[data-se-matriz-tbody]').forEach((tbody) => {
+        if (tbody._seMatrizBound) {
+            return;
+        }
+        tbody._seMatrizBound = true;
+
+        tbody.addEventListener(
+            'keydown',
+            (e) => {
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    return;
+                }
+                const el = e.target;
+                if (!el || el.tagName !== 'INPUT' || !el.hasAttribute('data-se-matriz-nav')) {
+                    return;
+                }
+
+                const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+                if (!navKeys.includes(e.key)) {
+                    return;
+                }
+
+                const matrix = seMatrizBuildNavMatrix(tbody);
+                const pos = seMatrizFindNavPos(matrix, el);
+                if (!pos) {
+                    return;
+                }
+
+                const nrows = matrix.length;
+                const ncols = matrix[0] ? matrix[0].length : 0;
+                if (!nrows || !ncols) {
+                    return;
+                }
+
+                const { row, col } = pos;
+                let nr = row;
+                let nc = col;
+
+                if (e.key === 'ArrowLeft') {
+                    nc = col - 1;
+                } else if (e.key === 'ArrowRight') {
+                    nc = col + 1;
+                } else if (e.key === 'ArrowUp') {
+                    nr = row - 1;
+                } else if (e.key === 'ArrowDown') {
+                    nr = row + 1;
+                } else if (e.key === 'Enter') {
+                    if (row + 1 < nrows) {
+                        nr = row + 1;
+                        nc = col;
+                    } else if (col + 1 < ncols) {
+                        nr = 0;
+                        nc = col + 1;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (nr < 0 || nr >= nrows || nc < 0 || nc >= ncols) {
+                    return;
+                }
+
+                const next = matrix[nr][nc];
+                if (!next || next === el) {
+                    return;
+                }
+
+                e.preventDefault();
+                seMatrizFocusNavCell(next);
+            },
+            true,
+        );
+    });
+}
+
+/**
  * Alinea cabecera y cuerpo cuando el tbody tiene barra vertical (scrollbar-gutter / overflow).
  */
 function syncCierreHeadScrollbarGutter(head, body) {
@@ -1878,6 +1998,7 @@ document.addEventListener('DOMContentLoaded', () => {
     queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCalifInicialObsMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
+    queueMicrotask(bindMatrizEditarTabla);
     queueMicrotask(bindCierreAnualGrillas);
 });
 
@@ -1955,6 +2076,7 @@ document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCalifInicialObsMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
+    queueMicrotask(bindMatrizEditarTabla);
     queueMicrotask(bindCierreAnualGrillas);
     queueMicrotask(triggerSeSidebarOverflowSync);
     window.setTimeout(triggerSeSidebarOverflowSync, 200);
@@ -1975,6 +2097,9 @@ document.addEventListener('livewire:init', () => {
                 queueMicrotask(bindCalifPrimarioTablas);
                 queueMicrotask(bindCalifPrimarioMateriaTablas);
                 queueMicrotask(bindCalifInicialObsMateriaTablas);
+            }
+            if (document.querySelector('[data-se-matriz-tbody]')) {
+                queueMicrotask(bindMatrizEditarTabla);
             }
             queueMicrotask(bindCuotasImportesForm);
             queueMicrotask(bindCierreAnualGrillas);

@@ -28,6 +28,12 @@ class MateriasAnioIndex extends Component
     public bool $showConfirm = false;
     public ?int $deleteId = null;
     public string $deleteInfo = '';
+    /** 1 = primer aviso (con listado), 2 = segunda confirmación definitiva. */
+    public int $deleteStep = 1;
+    /** @var list<array{materia: string, curso: string, alumno: string}> */
+    public array $deletePreview = [];
+    public string $deleteOtrosResumen = '';
+    public int $deleteCalifCount = 0;
 
     /**
      * Filtro superior.
@@ -563,76 +569,279 @@ class MateriasAnioIndex extends Component
             abort(404);
         }
 
-        $deps = collect([
-            'calificaciones' => fn () => DB::table('calificaciones')->where('idMaterias', $id)->count(),
-            'evaluac' => fn () => DB::table('evaluac')->where('idMateria', $id)->count(),
-            'fechascalendario' => fn () => DB::table('fechascalendario')->where('idMateria', $id)->count(),
-            'horarios' => fn () => DB::table('horarios')->where('idMaterias', $id)->count(),
-            'ief' => fn () => DB::table('ief')->where('idMaterias', $id)->count(),
-            'mesasexamen' => fn () => DB::table('mesasexamen')->where('idMaterias', $id)->count(),
-            'plapro' => fn () => DB::table('plapro')->where('idMateria', $id)->count(),
-            'ppc' => fn () => DB::table('ppc')->where('idMateria', $id)->count(),
-        ])->map(function ($fn) {
-            try {
-                return (int) $fn();
-            } catch (\Throwable $e) {
-                return 0;
-            }
-        });
+        $label = trim((string) ($m->materia ?? ''));
+        $label = $label !== '' ? $label : ('ID '.$m->id);
+
+        try {
+            $deps = $this->contarDependenciasMateria($id);
+        } catch (\Throwable $e) {
+            report($e);
+            $deps = collect(['calificaciones' => 0]);
+        }
 
         $total = (int) $deps->sum();
+        $this->deleteCalifCount = (int) ($deps->get('calificaciones') ?? 0);
+
+        try {
+            $this->deletePreview = $this->deleteCalifCount > 0
+                ? $this->listarCalificacionesAEliminar($id, $label)
+                : [];
+        } catch (\Throwable $e) {
+            report($e);
+            $this->deletePreview = [];
+        }
+
+        $this->deleteOtrosResumen = $deps
+            ->except('calificaciones')
+            ->filter(fn ($v) => (int) $v > 0)
+            ->map(fn ($v, $k) => "{$v} {$k}")
+            ->implode(', ');
+
+        $this->deleteId = (int) $m->id;
+        $this->deleteStep = 1;
 
         if ($total > 0) {
-            $detail = $deps
-                ->filter(fn ($v) => (int) $v > 0)
-                ->map(fn ($v, $k) => "{$v} {$k}")
-                ->implode(', ');
-
-            $this->deleteInfo = "No se puede eliminar la materia porque está siendo utilizada: {$detail}.";
-            $this->deleteId = null;
+            $this->deleteInfo = $this->deleteCalifCount > 0
+                ? "Se van a eliminar {$this->deleteCalifCount} registro(s) de calificaciones de los estudiantes de esta materia y curso. Revise el listado antes de continuar."
+                : "Al eliminar la materia \"{$label}\" también se borrarán registros asociados ({$this->deleteOtrosResumen}).";
         } else {
-            $label = trim((string) ($m->materia ?? ''));
-            $label = $label !== '' ? $label : ('ID ' . $m->id);
-            $this->deleteId = (int) $m->id;
             $this->deleteInfo = "¿Confirma eliminar la materia \"{$label}\"?";
+            $this->deleteStep = 2;
         }
 
         $this->showConfirm = true;
     }
 
-    public function delete(): void
+    public function avanzarConfirmacionDelete(): void
     {
-        $key = 'materias-anio:delete:' . (auth()->id() ?? 'guest');
+        if (! $this->deleteId || ! $this->showConfirm || (int) $this->deleteStep !== 1) {
+            return;
+        }
+
+        $label = $this->etiquetaMateriaEnConfirmacion();
+        $n = $this->deleteCalifCount;
+        $extra = $this->deleteOtrosResumen !== ''
+            ? " También se borrarán: {$this->deleteOtrosResumen}."
+            : '';
+        $this->deleteStep = 2;
+        $this->deleteInfo = $n > 0
+            ? "Última confirmación: se eliminarán definitivamente {$n} registro(s) de calificaciones de los estudiantes de la materia \"{$label}\" y su curso, junto con la materia.{$extra} Esta acción no se puede deshacer."
+            : "Última confirmación: ¿eliminar definitivamente la materia \"{$label}\"?{$extra} Esta acción no se puede deshacer.";
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showConfirm = false;
+        $this->reset('deleteId', 'deleteInfo', 'deleteStep', 'deletePreview', 'deleteOtrosResumen', 'deleteCalifCount');
+        $this->deleteStep = 1;
+    }
+
+    public function eliminarMateriaConfirmada(): void
+    {
+        $key = 'materias-anio:delete:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
             session()->flash('error', 'Demasiados intentos. Espere un momento e intente nuevamente.');
-            $this->showConfirm = false;
-            $this->reset('deleteId', 'deleteInfo');
+            $this->cancelDelete();
+
             return;
         }
         RateLimiter::hit($key, 60);
 
-        if ($this->deleteId) {
-            $ctx = schoolCtx();
+        $deleteId = (int) ($this->deleteId ?? 0);
+        if ($deleteId <= 0 || (int) $this->deleteStep !== 2) {
+            session()->flash('error', 'Confirmación incompleta. Vuelva a intentar eliminar la materia.');
+            $this->cancelDelete();
 
-            $m = DB::table('materias')
-                ->where('idNivel', (int) $ctx->idNivel)
-                ->where('idTerlec', (int) $ctx->idTerlec)
-                ->where('id', $this->deleteId)
-                ->first();
-
-            if ($m) {
-                try {
-                    DB::table('materias')->where('id', (int) $m->id)->delete();
-                    session()->flash('success', 'Materia eliminada.');
-                } catch (\Throwable $e) {
-                    report($e);
-                    session()->flash('error', 'No se pudo eliminar la materia (dependencias / restricciones).');
-                }
-            }
+            return;
         }
 
-        $this->showConfirm = false;
-        $this->reset('deleteId', 'deleteInfo');
+        $ctx = schoolCtx();
+
+        $m = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('id', $deleteId)
+            ->first();
+
+        if (! $m) {
+            $this->cancelDelete();
+            session()->flash('error', 'La materia ya no está disponible.');
+
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($deleteId) {
+                $this->eliminarDependenciasMateria($deleteId);
+                DB::table('materias')->where('id', $deleteId)->delete();
+            });
+            session()->flash('success', 'Materia eliminada.');
+        } catch (\Throwable $e) {
+            report($e);
+            session()->flash('error', 'No se pudo eliminar la materia (dependencias / restricciones).');
+        }
+
+        $this->cancelDelete();
+    }
+
+    /**
+     * @return Collection<string, int>
+     */
+    protected function contarDependenciasMateria(int $idMateria): Collection
+    {
+        return collect($this->mapDependenciasMateria($idMateria))
+            ->map(function (callable $fn) {
+                try {
+                    return (int) $fn();
+                } catch (\Throwable $e) {
+                    return 0;
+                }
+            });
+    }
+
+    /**
+     * @return array<string, callable(): int>
+     */
+    protected function mapDependenciasMateria(int $idMateria): array
+    {
+        return [
+            'calificaciones' => fn () => Schema::hasTable('calificaciones')
+                ? (int) DB::table('calificaciones')->where('idMaterias', $idMateria)->count()
+                : 0,
+            'evaluac' => fn () => Schema::hasTable('evaluac')
+                ? (int) DB::table('evaluac')->where('idMateria', $idMateria)->count()
+                : 0,
+            'fechascalendario' => fn () => Schema::hasTable('fechascalendario')
+                ? (int) DB::table('fechascalendario')->where('idMateria', $idMateria)->count()
+                : 0,
+            'horarios' => fn () => Schema::hasTable('horarios')
+                ? (int) DB::table('horarios')->where('idMaterias', $idMateria)->count()
+                : 0,
+            'ief' => fn () => Schema::hasTable('ief')
+                ? (int) DB::table('ief')->where('idMaterias', $idMateria)->count()
+                : 0,
+            'mesasexamen' => fn () => Schema::hasTable('mesasexamen')
+                ? (int) DB::table('mesasexamen')->where('idMaterias', $idMateria)->count()
+                : 0,
+            'plapro' => fn () => Schema::hasTable('plapro')
+                ? (int) DB::table('plapro')->where('idMateria', $idMateria)->count()
+                : 0,
+            'ppc' => fn () => Schema::hasTable('ppc')
+                ? (int) DB::table('ppc')->where('idMateria', $idMateria)->count()
+                : 0,
+        ];
+    }
+
+    protected function eliminarDependenciasMateria(int $idMateria): void
+    {
+        $borrados = [
+            'calificaciones' => fn () => DB::table('calificaciones')->where('idMaterias', $idMateria)->delete(),
+            'evaluac' => fn () => DB::table('evaluac')->where('idMateria', $idMateria)->delete(),
+            'fechascalendario' => fn () => DB::table('fechascalendario')->where('idMateria', $idMateria)->delete(),
+            'horarios' => fn () => DB::table('horarios')->where('idMaterias', $idMateria)->delete(),
+            'ief' => fn () => DB::table('ief')->where('idMaterias', $idMateria)->delete(),
+            'mesasexamen' => fn () => DB::table('mesasexamen')->where('idMaterias', $idMateria)->delete(),
+            'plapro' => fn () => DB::table('plapro')->where('idMateria', $idMateria)->delete(),
+            'ppc' => fn () => DB::table('ppc')->where('idMateria', $idMateria)->delete(),
+        ];
+
+        foreach ($borrados as $tabla => $fn) {
+            if (! Schema::hasTable($tabla)) {
+                continue;
+            }
+            try {
+                $fn();
+            } catch (\Throwable $e) {
+                report($e);
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * @return list<array{materia: string, curso: string, alumno: string}>
+     */
+    protected function listarCalificacionesAEliminar(int $idMateria, string $materiaLabel): array
+    {
+        if (! Schema::hasTable('calificaciones')) {
+            return [];
+        }
+
+        $select = [
+            'c.id',
+            'c.idCursos',
+            'c.idLegajos',
+            'l.apellido',
+            'l.nombre',
+            'cu.cursec',
+            'cu.c',
+            'cu.s',
+        ];
+        if (Schema::hasColumn('legajos', 'dni')) {
+            $select[] = 'l.dni';
+        }
+
+        $rows = DB::table('calificaciones as c')
+            ->leftJoin('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->leftJoin('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->where('c.idMaterias', $idMateria)
+            ->orderBy('l.apellido')
+            ->orderBy('l.nombre')
+            ->orderBy('c.id')
+            ->limit(500)
+            ->get($select);
+
+        return $rows->map(function ($r) use ($materiaLabel) {
+            $ape = trim((string) ($r->apellido ?? ''));
+            $nom = trim((string) ($r->nombre ?? ''));
+            $alumno = trim($ape.($ape !== '' && $nom !== '' ? ', ' : '').$nom);
+            if ($alumno === '') {
+                $idLeg = (int) ($r->idLegajos ?? 0);
+                $alumno = $idLeg > 0 ? ('Legajo #'.$idLeg) : 'Alumno sin identificar';
+            }
+            $doc = trim((string) ($r->dni ?? ''));
+            if ($doc !== '') {
+                $alumno .= ' · DNI '.$doc;
+            }
+
+            $cursoLabel = trim((string) ($r->cursec ?? ''));
+            $extra = collect([$r->c ?? null, $r->s ?? null])
+                ->filter(fn ($v) => $v !== null && trim((string) $v) !== '')
+                ->implode(' ');
+            if ($cursoLabel === '') {
+                $cursoLabel = ((int) ($r->idCursos ?? 0) > 0) ? ('Curso '.(int) $r->idCursos) : '—';
+            } elseif ($extra !== '') {
+                $cursoLabel .= ' · '.$extra;
+            }
+
+            return [
+                'materia' => $materiaLabel,
+                'curso' => $cursoLabel,
+                'alumno' => $alumno,
+            ];
+        })->all();
+    }
+
+    protected function etiquetaMateriaEnConfirmacion(): string
+    {
+        if ($this->deletePreview !== [] && isset($this->deletePreview[0]['materia'])) {
+            return (string) $this->deletePreview[0]['materia'];
+        }
+
+        if (! $this->deleteId) {
+            return '';
+        }
+
+        $ctx = schoolCtx();
+        $nombre = DB::table('materias')
+            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('id', (int) $this->deleteId)
+            ->value('materia');
+
+        $label = trim((string) ($nombre ?? ''));
+
+        return $label !== '' ? $label : ('ID '.$this->deleteId);
     }
 
     /**
