@@ -9,6 +9,8 @@ final class ListadoEstudiantesFormatoCatalog
 {
     public const MODELO_CUADRICULADO = 'cuadriculado';
 
+    public const MODELO_RENGLON = 'renglon';
+
     public const MODELO_CALENDARIO = 'calendario';
 
     /** @return list<string> */
@@ -16,6 +18,7 @@ final class ListadoEstudiantesFormatoCatalog
     {
         return [
             self::MODELO_CUADRICULADO,
+            self::MODELO_RENGLON,
             self::MODELO_CALENDARIO,
         ];
     }
@@ -33,6 +36,7 @@ final class ListadoEstudiantesFormatoCatalog
     {
         return match (self::normalize($modelo)) {
             self::MODELO_CUADRICULADO => 'Listado con Cuadriculado',
+            self::MODELO_RENGLON => 'Listado con Renglón',
             self::MODELO_CALENDARIO => 'Listado con Calendario',
             default => 'Listado con Cuadriculado',
         };
@@ -53,6 +57,11 @@ final class ListadoEstudiantesFormatoCatalog
                 'key' => self::MODELO_CUADRICULADO,
                 'label' => self::etiqueta(self::MODELO_CUADRICULADO),
                 'descripcion' => 'Apellido y nombre por estudiante, con cuadros vacíos para uso eventual.',
+            ],
+            [
+                'key' => self::MODELO_RENGLON,
+                'label' => self::etiqueta(self::MODELO_RENGLON),
+                'descripcion' => 'Apellido y nombre por estudiante, con un renglón vacío para uso eventual.',
             ],
             [
                 'key' => self::MODELO_CALENDARIO,
