@@ -1,4 +1,4 @@
-<div class="se-page max-w-3xl">
+<div class="se-page max-w-6xl">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
@@ -10,6 +10,45 @@
             </div>
         </div>
     </section>
+
+    <div class="space-y-4">
+    <div class="se-card overflow-hidden">
+        <div class="border-b border-accent-200 bg-white px-5 py-4">
+            <p class="text-sm font-semibold text-neutral-900">Evaluaciones ya previstas ese día</p>
+            <p class="mt-0.5 text-xs text-neutral-500">
+                {{ $curso->nombreParaListado() }} · {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}
+                · {{ $evaluaciones->count() }} / {{ $maxPorDia }} permitidas
+            </p>
+        </div>
+        <div class="w-full overflow-x-auto">
+            <table class="min-w-[560px] border-collapse sm:min-w-full">
+                <thead class="bg-accent-50">
+                    <tr>
+                        <th class="table-header w-48">Materia</th>
+                        <th class="table-header">Temas</th>
+                        <th class="table-header w-56">Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-accent-200 bg-white">
+                    @forelse ($evaluaciones as $e)
+                        <tr class="transition-colors hover:bg-accent-50/60">
+                            <td class="table-cell">
+                                {{ $etiquetasMateria[(int) $e->idMateria] ?? ('Materia #'.$e->idMateria) }}
+                            </td>
+                            <td class="table-cell">{{ $e->temas ?: '—' }}</td>
+                            <td class="table-cell">{{ $e->obs ?: '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="table-cell py-6 text-center text-sm text-neutral-500">
+                                Todavía no hay evaluaciones registradas para este curso en esa fecha.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <form wire:submit="save" class="se-card space-y-5 p-5 sm:p-6">
         <div>
@@ -71,4 +110,5 @@
             <a href="{{ route($rutaVolver, $volverConFiltros) }}" class="btn-secondary">Volver</a>
         </div>
     </form>
+    </div>
 </div>

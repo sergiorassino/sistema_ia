@@ -36,13 +36,19 @@
             </div>
             <div>
                 <label for="se-sol-eval-curso" class="form-label">Curso</label>
-                <select id="se-sol-eval-curso" wire:model.live="idCurso" class="form-select mt-1.5" @disabled(! $fecha)>
+                <select id="se-sol-eval-curso"
+                        wire:model.live="idCurso"
+                        wire:key="se-sol-eval-curso-{{ $fecha !== '' ? $fecha : 'sin-fecha' }}"
+                        class="form-select mt-1.5"
+                        @disabled($fecha === '')>
                     <option value="">— Seleccione —</option>
                     @foreach ($cursos as $c)
                         <option value="{{ $c->Id }}">{{ $c->nombreParaListado() }}</option>
                     @endforeach
                 </select>
-                @if ($cursos->isEmpty())
+                @if ($fecha === '')
+                    <p class="mt-1.5 text-xs text-neutral-500">Primero elija la fecha para habilitar el curso.</p>
+                @elseif ($cursos->isEmpty())
                     <p class="mt-1.5 text-xs text-amber-800">No hay cursos disponibles para su usuario en el año actual.</p>
                 @endif
                 @error('idCurso')
@@ -55,8 +61,12 @@
         @enderror
     </div>
 
-    @if ($curso && $fecha)
-        <div class="se-card overflow-hidden">
+    @if ($fecha !== '' && (int) $idCurso < 1)
+        <div class="se-soft-card px-5 py-4 text-sm text-neutral-600">
+            Seleccione un curso para ver las evaluaciones previstas ese día.
+        </div>
+    @elseif ($curso && $fecha !== '')
+        <div class="se-card overflow-hidden" wire:key="se-sol-eval-list-{{ $fecha }}-{{ (int) $idCurso }}">
             <div class="border-b border-accent-200 bg-white px-5 py-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
@@ -92,7 +102,7 @@
                     </thead>
                     <tbody class="divide-y divide-accent-200 bg-white">
                         @forelse ($evaluaciones as $e)
-                            <tr class="transition-colors hover:bg-accent-50/60">
+                            <tr class="transition-colors hover:bg-accent-50/60" wire:key="se-sol-eval-row-{{ $e->Id }}">
                                 <td class="table-cell">
                                     {{ $etiquetasMateria[(int) $e->idMateria] ?? ('Materia #'.$e->idMateria) }}
                                 </td>
@@ -119,7 +129,7 @@
                 </div>
             @endif
         </div>
-    @elseif ($fecha && $idCurso)
+    @elseif ($fecha !== '' && (int) $idCurso > 0)
         <div class="se-soft-card px-5 py-4 text-sm text-neutral-600">
             El curso seleccionado no está disponible en su contexto.
         </div>

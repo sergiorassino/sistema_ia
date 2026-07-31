@@ -46,15 +46,18 @@
     </section>
 
     <div class="se-soft-card mb-4 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        El filtro de fecha usa la <strong>fecha de evaluación</strong> (cuándo se rinde), no la fecha/hora de carga del registro.
         En este módulo no se revisan la cantidad de evaluaciones por día: si va a hacer cambios, verifique la cantidad de evaluaciones por día que le queda a cada curso.
     </div>
 
     <div class="se-toolbar flex-col !items-stretch gap-4 lg:flex-row lg:items-end">
         <div class="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-                <label for="se-gest-eval-filtro-fecha" class="form-label">Fecha</label>
+                <label for="se-gest-eval-filtro-fecha" class="form-label">Fecha de evaluación</label>
                 <input id="se-gest-eval-filtro-fecha" type="date" wire:model.live="filtroFecha"
-                       class="form-input mt-1.5">
+                       class="form-input mt-1.5"
+                       title="Filtra por la fecha en que se rinde la evaluación (fecheval), no por la de carga">
+                <p class="mt-1 text-[10px] text-neutral-500">Día en que se rinde (no la fecha de carga del registro).</p>
             </div>
             <div>
                 <label for="se-gest-eval-filtro-curso" class="form-label">Curso</label>
@@ -88,7 +91,12 @@
         <div class="se-soft-card px-5 py-10 text-center">
             <p class="text-sm text-neutral-600">
                 @if ($filtrosActivos)
-                    No hay evaluaciones que coincidan con los filtros seleccionados.
+                    @if ($filtroFechaExacta)
+                        No hay evaluaciones programadas para el {{ \Carbon\Carbon::parse($filtroFecha)->format('d/m/Y') }}.
+                        Si acaba de cargar solicitudes, revise la fecha de evaluación (puede ser un día distinto al de la carga).
+                    @else
+                        No hay evaluaciones que coincidan con los filtros seleccionados.
+                    @endif
                 @elseif ($mostrarHistorial)
                     No hay evaluaciones registradas para el año lectivo actual.
                 @else
@@ -101,13 +109,18 @@
             </a>
         </div>
     @else
-        @if (! $mostrarHistorial && ! $filtrosActivos)
+        @if ($filtroFechaExacta)
+            <p class="mb-4 text-xs text-neutral-500">
+                Mostrando evaluaciones del {{ \Carbon\Carbon::parse($filtroFecha)->format('d/m/Y') }}.
+            </p>
+        @elseif (! $mostrarHistorial && ! $filtrosActivos)
             <p class="mb-4 text-xs text-neutral-500">
                 Mostrando evaluaciones desde el {{ now()->format('d/m/Y') }} en adelante.
+                Para fechas anteriores use «Mostrar Historial» o filtre por fecha.
             </p>
         @elseif (! $mostrarHistorial && $filtrosActivos)
             <p class="mb-4 text-xs text-neutral-500">
-                Evaluaciones futuras filtradas (desde el {{ now()->format('d/m/Y') }}).
+                Evaluaciones desde el {{ now()->format('d/m/Y') }} en adelante, con los filtros aplicados.
             </p>
         @endif
         <div class="space-y-6">
@@ -135,7 +148,7 @@
                                     <th class="table-header w-48">Materia</th>
                                     <th class="table-header">Temas</th>
                                     <th class="table-header w-48">Observaciones</th>
-                                    <th class="table-header w-32">Registrado</th>
+                                    <th class="table-header w-32">Cargado</th>
                                     <th class="table-header w-36 text-right">Acciones</th>
                                 </tr>
                             </thead>

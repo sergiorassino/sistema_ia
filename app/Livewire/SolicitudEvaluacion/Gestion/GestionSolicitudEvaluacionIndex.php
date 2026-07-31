@@ -45,7 +45,7 @@ class GestionSolicitudEvaluacionIndex extends Component
 
     public function updatedFiltroFecha(mixed $value): void
     {
-        $this->filtroFecha = is_scalar($value) ? trim((string) $value) : '';
+        $this->filtroFecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($value);
         $this->resetPage();
     }
 
@@ -121,13 +121,18 @@ class GestionSolicitudEvaluacionIndex extends Component
     public function render()
     {
         $hoy = now()->toDateString();
+        $this->filtroFecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($this->filtroFecha);
         $filtros = $this->filtrosBusqueda();
         $filtrosActivos = $this->filtroFecha !== ''
             || (int) $this->filtroIdCurso > 0
             || (int) $this->filtroIdMateria > 0;
+        $filtroFechaExacta = $this->filtroFecha !== '';
 
         $paginadas = null;
-        if ($this->mostrarHistorial) {
+        if ($filtroFechaExacta) {
+            // Fecha concreta: ese día completo (pasado o futuro), sin exigir "desde hoy".
+            $agrupadas = SolicitudEvaluacionConsulta::evaluacionesAgrupadasPorFecha(null, $filtros);
+        } elseif ($this->mostrarHistorial) {
             $paginadas = SolicitudEvaluacionConsulta::evaluacionesHistorialPaginadas(self::POR_PAGINA, $filtros);
             $agrupadas = SolicitudEvaluacionConsulta::agruparEvaluacionesPorFecha(collect($paginadas->items()));
         } else {
@@ -151,6 +156,7 @@ class GestionSolicitudEvaluacionIndex extends Component
             'cursos' => $cursos,
             'materiasFiltro' => $materiasFiltro,
             'filtrosActivos' => $filtrosActivos,
+            'filtroFechaExacta' => $filtroFechaExacta,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Solicitudes de Evaluación']);
     }
 }
