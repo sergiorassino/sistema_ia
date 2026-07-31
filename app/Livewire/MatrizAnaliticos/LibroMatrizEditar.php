@@ -8,6 +8,7 @@ use Livewire\Component;
 
 /**
  * Edición en grilla de calificaciones del matriz (secundario) por alumno.
+ * Cada celda se guarda al salir del foco (`guardarCelda`).
  */
 class LibroMatrizEditar extends Component
 {
@@ -22,9 +23,17 @@ class LibroMatrizEditar extends Component
     /** @var array<int, array{calif: string, mes: string, ano: string, cond: string, escuapro: string}> */
     public array $lineasSnapshot = [];
 
-    public bool $modalSalirAbierto = false;
-
     public bool $modalDatosAdicionalesAbierto = false;
+
+    public bool $modalNombreMateriaAbierto = false;
+
+    public int $nombreOverrideIdMaterias = 0;
+
+    public string $nombreOverrideMateriaBase = '';
+
+    public string $nombreOverrideValor = '';
+
+    public bool $nombreOverrideTiene = false;
 
     public ?int $idAnaliticoDato = null;
 
@@ -71,43 +80,94 @@ class LibroMatrizEditar extends Component
         $this->cargarLineasDesdeServidor($idLegajos, (int) $ctx->idNivel);
     }
 
-    public function solicitarVolver(): void
+    public function volver(): void
     {
-        if ($this->tieneCambiosSinGuardar()) {
-            $this->modalSalirAbierto = true;
+        $this->irAlListado();
+    }
+
+    /**
+     * Persistencia al salir de una celda editable.
+     */
+    public function guardarCelda(int $indice, string $campo, mixed $valor = null): void
+    {
+        abort_unless(tienePermiso(16), 403);
+
+        $campo = trim($campo);
+        if (! in_array($campo, LibroMatrizAnalitico::CAMPOS_LINEA_EDITABLES, true)) {
+            return;
+        }
+
+        $linea = $this->lineas[$indice] ?? null;
+        if (! is_array($linea)) {
+            return;
+        }
+
+        $id = (int) ($linea['id'] ?? 0);
+        if ($id < 1) {
+            return;
+        }
+
+        $strValor = trim((string) ($valor ?? $linea[$campo] ?? ''));
+        $this->lineas[$indice][$campo] = $strValor;
+
+        $anterior = trim((string) ($this->lineasSnapshot[$id][$campo] ?? ''));
+        if ($strValor === $anterior) {
+            return;
+        }
+
+        $key = 'matrizAnaliticos:celda:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 240)) {
+            $this->addError('guardar', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $this->resetErrorBag('guardar');
+        $this->resetErrorBag('lineas.'.$indice.'.'.$campo);
+
+        $max = match ($campo) {
+            'calif' => 10,
+            'mes' => 2,
+            'ano' => 4,
+            'cond' => 20,
+            'escuapro' => 100,
+            default => 100,
+        };
+
+        $this->validate([
+            'lineas.'.$indice.'.'.$campo => ['nullable', 'string', 'max:'.$max],
+        ]);
+
+        $ctx = schoolCtx();
+        $res = LibroMatrizAnalitico::guardarCampoLinea(
+            $this->idLegajos,
+            (int) $ctx->idNivel,
+            $id,
+            $campo,
+            $strValor,
+        );
+
+        if (! $res['ok']) {
+            $this->lineas[$indice][$campo] = $anterior;
+            $this->addError('guardar', $res['error'] ?? 'No se pudo guardar la celda.');
+            $this->addError('lineas.'.$indice.'.'.$campo, $res['error'] ?? 'Error al guardar.');
 
             return;
         }
 
-        $this->irAlListado();
-    }
-
-    public function cerrarModalSalir(): void
-    {
-        $this->modalSalirAbierto = false;
-    }
-
-    public function salirSinGuardar(): void
-    {
-        $this->modalSalirAbierto = false;
-        $this->irAlListado();
-    }
-
-    public function guardarYSalir(): void
-    {
-        if ($this->persistirLineas()) {
-            $this->modalSalirAbierto = false;
-            $this->irAlListado();
-        } else {
-            $this->modalSalirAbierto = false;
+        $normalizado = (string) ($res['valor_normalizado'] ?? $strValor);
+        $this->lineas[$indice][$campo] = $normalizado;
+        if (! isset($this->lineasSnapshot[$id])) {
+            $this->lineasSnapshot[$id] = [
+                'calif' => '',
+                'mes' => '',
+                'ano' => '',
+                'cond' => '',
+                'escuapro' => '',
+            ];
         }
-    }
-
-    public function guardar(): void
-    {
-        if ($this->persistirLineas()) {
-            session()->flash('success', $this->mensajeExitoGuardado);
-        }
+        $this->lineasSnapshot[$id][$campo] = $normalizado;
     }
 
     public function abrirModalDatosAdicionales(): void
@@ -120,6 +180,109 @@ class LibroMatrizEditar extends Component
     public function cerrarModalDatosAdicionales(): void
     {
         $this->modalDatosAdicionalesAbierto = false;
+    }
+
+    public function abrirModalNombreMateria(int $indice): void
+    {
+        abort_unless(tienePermiso(16), 403);
+
+        $linea = $this->lineas[$indice] ?? null;
+        if (! is_array($linea)) {
+            return;
+        }
+
+        $idMaterias = (int) ($linea['idMaterias'] ?? 0);
+        if ($idMaterias < 1) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo identificar la asignatura.');
+
+            return;
+        }
+
+        $this->nombreOverrideIdMaterias = $idMaterias;
+        $this->nombreOverrideMateriaBase = trim((string) ($linea['materia_base'] ?? $linea['materia'] ?? ''));
+        $this->nombreOverrideTiene = (bool) ($linea['tiene_override'] ?? false);
+        $this->nombreOverrideValor = $this->nombreOverrideTiene
+            ? trim((string) ($linea['materia'] ?? ''))
+            : $this->nombreOverrideMateriaBase;
+        $this->resetErrorBag('nombreOverrideValor');
+        $this->resetErrorBag('guardarNombreOverride');
+        $this->modalNombreMateriaAbierto = true;
+    }
+
+    public function cerrarModalNombreMateria(): void
+    {
+        $this->modalNombreMateriaAbierto = false;
+        $this->nombreOverrideIdMaterias = 0;
+        $this->nombreOverrideMateriaBase = '';
+        $this->nombreOverrideValor = '';
+        $this->nombreOverrideTiene = false;
+    }
+
+    public function guardarNombreMateriaOverride(): void
+    {
+        abort_unless(tienePermiso(16), 403);
+
+        $key = 'matrizAnaliticos:nombre-override:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->addError('guardarNombreOverride', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $validated = $this->validate([
+            'nombreOverrideValor' => ['required', 'string', 'max:300'],
+        ], [], [
+            'nombreOverrideValor' => 'nombre para analítico',
+        ]);
+
+        $ctx = schoolCtx();
+        $res = LibroMatrizAnalitico::guardarOverrideNombreMateria(
+            $this->idLegajos,
+            (int) $ctx->idNivel,
+            $this->nombreOverrideIdMaterias,
+            (string) $validated['nombreOverrideValor'],
+        );
+
+        if (! $res['ok']) {
+            $this->addError('guardarNombreOverride', $res['error'] ?? 'No se pudo guardar.');
+
+            return;
+        }
+
+        $this->aplicarOverridesEnLineas();
+        $this->cerrarModalNombreMateria();
+        $this->dispatch('se-swal-exito', mensaje: 'Nombre de asignatura para analítico guardado.');
+    }
+
+    public function eliminarNombreMateriaOverride(): void
+    {
+        abort_unless(tienePermiso(16), 403);
+
+        $key = 'matrizAnaliticos:nombre-override-del:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->addError('guardarNombreOverride', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ctx = schoolCtx();
+        $res = LibroMatrizAnalitico::eliminarOverrideNombreMateria(
+            $this->idLegajos,
+            (int) $ctx->idNivel,
+            $this->nombreOverrideIdMaterias,
+        );
+
+        if (! $res['ok']) {
+            $this->addError('guardarNombreOverride', $res['error'] ?? 'No se pudo quitar el override.');
+
+            return;
+        }
+
+        $this->aplicarOverridesEnLineas();
+        $this->cerrarModalNombreMateria();
+        $this->dispatch('se-swal-exito', mensaje: 'Se quitó el nombre especial del analítico.');
     }
 
     public function guardarDatosAdicionales(): void
@@ -162,54 +325,6 @@ class LibroMatrizEditar extends Component
         $this->analParaPre = $datos['analParaPre'];
     }
 
-    private string $mensajeExitoGuardado = '';
-
-    private function tieneCambiosSinGuardar(): bool
-    {
-        return $this->snapshotLineas($this->lineas) !== $this->lineasSnapshot;
-    }
-
-    private function persistirLineas(): bool
-    {
-        abort_unless(tienePermiso(16), 403);
-
-        $key = 'matrizAnaliticos:guardar:'.(auth()->id() ?? 'guest');
-        if (RateLimiter::tooManyAttempts($key, 20)) {
-            $this->addError('guardar', 'Demasiados intentos. Espere un momento e intente nuevamente.');
-
-            return false;
-        }
-        RateLimiter::hit($key, 60);
-
-        $validated = $this->validate($this->reglasLineas());
-
-        $ctx = schoolCtx();
-        $res = LibroMatrizAnalitico::guardarLineas(
-            $this->idLegajos,
-            (int) $ctx->idNivel,
-            $validated['lineas'],
-        );
-
-        if ($res['ok'] < 1) {
-            $this->addError('guardar', 'No se pudo guardar ningún registro. Verifique los datos.');
-
-            return false;
-        }
-
-        $msg = $res['ok'] === 1
-            ? 'Se guardó 1 registro.'
-            : 'Se guardaron '.$res['ok'].' registros.';
-
-        if ($res['omitidos'] > 0) {
-            $msg .= ' '.$res['omitidos'].' fila(s) no se actualizaron.';
-        }
-
-        $this->mensajeExitoGuardado = $msg;
-        $this->cargarLineasDesdeServidor($this->idLegajos, (int) $ctx->idNivel);
-
-        return true;
-    }
-
     private function cargarLineasDesdeServidor(int $idLegajos, int $idNivel): void
     {
         $this->lineas = LibroMatrizAnalitico::lineasEdicion(
@@ -219,6 +334,22 @@ class LibroMatrizEditar extends Component
             (string) ($this->alumno['nombre'] ?? ''),
         );
         $this->lineasSnapshot = $this->snapshotLineas($this->lineas);
+    }
+
+    /** Actualiza solo nombres/override sin pisar calificaciones editadas en la grilla. */
+    private function aplicarOverridesEnLineas(): void
+    {
+        $overrides = LibroMatrizAnalitico::overridesNombreMateriaPorLegajo($this->idLegajos);
+
+        foreach ($this->lineas as $i => $lin) {
+            $idMaterias = (int) ($lin['idMaterias'] ?? 0);
+            $base = trim((string) ($lin['materia_base'] ?? ''));
+            $override = $idMaterias > 0 ? trim((string) ($overrides[$idMaterias] ?? '')) : '';
+            $tiene = $override !== '';
+
+            $this->lineas[$i]['tiene_override'] = $tiene;
+            $this->lineas[$i]['materia'] = $tiene ? $override : $base;
+        }
     }
 
     /**
@@ -255,22 +386,6 @@ class LibroMatrizEditar extends Component
             LibroMatrizAnalitico::urlListado($this->buscarRetorno),
             navigate: true,
         );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function reglasLineas(): array
-    {
-        return [
-            'lineas' => ['required', 'array'],
-            'lineas.*.id' => ['required', 'integer', 'min:1'],
-            'lineas.*.calif' => ['nullable', 'string', 'max:10'],
-            'lineas.*.mes' => ['nullable', 'string', 'max:2'],
-            'lineas.*.ano' => ['nullable', 'string', 'max:4'],
-            'lineas.*.cond' => ['nullable', 'string', 'max:20'],
-            'lineas.*.escuapro' => ['nullable', 'string', 'max:100'],
-        ];
     }
 
     public function render()

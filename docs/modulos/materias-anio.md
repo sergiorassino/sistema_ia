@@ -27,6 +27,16 @@ Columnas opcionales por tenant: `esInstitucional`, `infoCalif`, `escala`.
 2. Listar / crear / editar filas de `materias`.
 3. «Matplan» copia nombre, abreviatura y orden desde la materia modelo.
 
+## Eliminación de materia
+
+Si la materia tiene dependencias (p. ej. `calificaciones`, `ppc`, horarios), **sí se permite el borrado** con doble confirmación:
+
+1. Primer aviso: lista de calificaciones a borrar (materia, curso, alumno) y resumen de otros registros asociados.
+2. Segundo aviso: confirmación definitiva irreversible.
+3. En transacción: se borran dependencias directas y luego la fila de `materias`.
+
+Sin dependencias: un solo paso de confirmación.
+
 ## Archivos clave
 
 - `app/Livewire/Abm/MateriasAnio/MateriasAnioIndex.php`
@@ -37,9 +47,11 @@ Columnas opcionales por tenant: `esInstitucional`, `infoCalif`, `escala`.
 
 - No guardar IDs de curso/curplan/matplan fuera del alcance del nivel/ciclo.
 - No calcular promedios aquí; solo configuración de materias del año.
+- No bloquear el borrado solo por tener calificaciones; exigir doble confirmación con listado.
 
 ## Checklist al modificar
 
 - [ ] Labels de FK usan tablas relacionadas (no solo el ID).
 - [ ] Selects de edición conservan el `value` numérico.
 - [ ] Grilla ancha: scroll horizontal con `justify-start` (no centrar bajo el sidebar).
+- [ ] Borrado con dependencias: doble aviso + listado de calificaciones + cascada en transacción.

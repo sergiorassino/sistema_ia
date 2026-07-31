@@ -9,7 +9,7 @@
 return [
     'boletin_primario' => [
         'ipe_implementacion' => 'sanjose',
-        'menu_etiqueta_boletin_ipe' => 'Calificaciones',
+        'menu_etiqueta_boletin_ipe' => 'Boletines',
     ],
 
     'calificaciones_primario' => [

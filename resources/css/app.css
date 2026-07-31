@@ -2833,6 +2833,22 @@
     .se-matriz-excel-tabla .se-matriz-excel-read {
         @apply block truncate px-1 py-0 text-[11px];
     }
+    .se-matriz-excel-tabla .se-matriz-excel-read--override {
+        @apply text-red-600;
+    }
+    .se-matriz-excel-materia-cell {
+        @apply flex min-w-0 items-center gap-0.5 px-0.5;
+        height: 1.35rem;
+    }
+    .se-matriz-excel-materia-cell .se-matriz-excel-read {
+        @apply px-0.5;
+    }
+    .se-matriz-excel-nombre-btn {
+        @apply inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-primary-600 transition hover:bg-primary-100 hover:text-primary-800 focus:outline-none focus:ring-1 focus:ring-primary-500;
+    }
+    .se-matriz-excel-nombre-btn--activo {
+        @apply text-red-600 hover:bg-red-50 hover:text-red-700 focus:ring-red-400;
+    }
     .se-matriz-excel-tabla .se-matriz-excel-apro {
         @apply inline-block max-w-full truncate px-1 text-[10px] font-medium text-gray-700;
     }
