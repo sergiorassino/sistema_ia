@@ -21,8 +21,9 @@ class SolicitudEvaluacionIndex extends Component
 
         if (request()->boolean('continuar')) {
             $ctx = ContextoEstudianteSesion::leer(ContextoEstudianteSesion::SOLICITUD_EVALUACION);
-            $this->fecha = (string) ($ctx['fecha'] ?? '');
-            $this->idCurso = (string) ($ctx['curso'] ?? '');
+            $this->fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($ctx['fecha'] ?? '');
+            $cursoCtx = (int) ($ctx['curso'] ?? 0);
+            $this->idCurso = $cursoCtx > 0 ? (string) $cursoCtx : '';
 
             return;
         }
@@ -43,20 +44,25 @@ class SolicitudEvaluacionIndex extends Component
 
     public function updatedFecha(mixed $value): void
     {
-        $this->fecha = is_scalar($value) ? trim((string) $value) : '';
+        $this->fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($value);
+        if ($this->fecha === '') {
+            $this->idCurso = '';
+        }
         $this->persistirContextoEnSesion();
     }
 
     public function updatedIdCurso(mixed $value): void
     {
-        $this->idCurso = is_scalar($value) ? (string) $value : '';
+        $id = is_scalar($value) ? (int) $value : 0;
+        $this->idCurso = $id > 0 ? (string) $id : '';
         $this->persistirContextoEnSesion();
     }
 
     public function irASolicitarNueva(): mixed
     {
         $idCurso = (int) $this->idCurso;
-        $fecha = trim($this->fecha);
+        $fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($this->fecha);
+        $this->fecha = $fecha;
 
         if ($idCurso < 1 || $fecha === '') {
             $this->addError('idCurso', 'Seleccione la fecha y el curso antes de continuar.');
@@ -93,7 +99,11 @@ class SolicitudEvaluacionIndex extends Component
         $cursos = SolicitudEvaluacionConsulta::cursosParaSelector($soloDocente);
 
         $idCurso = (int) $this->idCurso;
-        $fecha = $this->fecha;
+        $fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($this->fecha);
+        if ($fecha !== $this->fecha) {
+            $this->fecha = $fecha;
+        }
+
         $curso = null;
         $evaluaciones = collect();
         $etiquetasMateria = [];

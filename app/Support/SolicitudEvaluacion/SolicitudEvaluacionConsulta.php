@@ -72,7 +72,7 @@ final class SolicitudEvaluacionConsulta
         }
 
         return self::cursosParaSelector($soloCursosDelDocente)
-            ->firstWhere('Id', $idCurso);
+            ->first(fn (Curso $curso) => (int) $curso->getKey() === $idCurso);
     }
 
     /**
@@ -113,30 +113,68 @@ final class SolicitudEvaluacionConsulta
             ->exists();
     }
 
+    /** Normaliza fecha de input/HTML a Y-m-d; vacío si no es válida. */
+    public static function normalizarFechaYmd(mixed $fecha): string
+    {
+        $raw = is_scalar($fecha) ? trim((string) $fecha) : '';
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $raw, $m) === 1) {
+            $ymd = substr($m[0], 0, 10);
+            $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $ymd);
+
+            return ($dt && $dt->format('Y-m-d') === $ymd) ? $ymd : '';
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $raw, $m) === 1) {
+            $ymd = sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+            $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $ymd);
+
+            return ($dt && $dt->format('Y-m-d') === $ymd) ? $ymd : '';
+        }
+
+        return '';
+    }
+
     /** @return Collection<int, Evaluac> */
     public static function evaluacionesDelCursoEnFecha(int $idCurso, string $fechaYmd): Collection
     {
+        $fechaYmd = self::normalizarFechaYmd($fechaYmd);
         if ($idCurso < 1 || $fechaYmd === '') {
             return collect();
         }
 
+        $ctx = schoolCtx();
+
         return Evaluac::query()
             ->with('curso')
-            ->where('idCurso', $idCurso)
-            ->whereDate('fecheval', $fechaYmd)
-            ->orderBy('Id')
+            ->join('cursos as c', 'c.Id', '=', 'evaluac.idCurso')
+            ->where('evaluac.idCurso', $idCurso)
+            ->where('c.idNivel', (int) $ctx->idNivel)
+            ->where('c.idTerlec', (int) $ctx->idTerlec)
+            ->where('evaluac.fecheval', $fechaYmd)
+            ->orderBy('evaluac.Id')
+            ->select('evaluac.*')
             ->get();
     }
 
     public static function cantidadEnFecha(int $idCurso, string $fechaYmd): int
     {
+        $fechaYmd = self::normalizarFechaYmd($fechaYmd);
         if ($idCurso < 1 || $fechaYmd === '') {
             return 0;
         }
 
+        $ctx = schoolCtx();
+
         return Evaluac::query()
-            ->where('idCurso', $idCurso)
-            ->whereDate('fecheval', $fechaYmd)
+            ->join('cursos as c', 'c.Id', '=', 'evaluac.idCurso')
+            ->where('evaluac.idCurso', $idCurso)
+            ->where('c.idNivel', (int) $ctx->idNivel)
+            ->where('c.idTerlec', (int) $ctx->idTerlec)
+            ->where('evaluac.fecheval', $fechaYmd)
             ->count();
     }
 
@@ -259,13 +297,16 @@ final class SolicitudEvaluacionConsulta
      */
     private static function aplicarFiltrosEvaluacion(\Illuminate\Database\Eloquent\Builder $q, ?string $fechaDesdeYmd, array $filtros): void
     {
-        if ($fechaDesdeYmd !== null && $fechaDesdeYmd !== '') {
-            $q->whereDate('evaluac.fecheval', '>=', $fechaDesdeYmd);
-        }
+        $fecha = self::normalizarFechaYmd($filtros['fecha'] ?? '');
 
-        $fecha = trim((string) ($filtros['fecha'] ?? ''));
+        // Fecha exacta tiene prioridad: no combinar con "desde hoy" (anularía fechas pasadas).
         if ($fecha !== '') {
-            $q->whereDate('evaluac.fecheval', $fecha);
+            $q->where('evaluac.fecheval', $fecha);
+        } else {
+            $fechaDesdeYmd = self::normalizarFechaYmd($fechaDesdeYmd);
+            if ($fechaDesdeYmd !== '') {
+                $q->where('evaluac.fecheval', '>=', $fechaDesdeYmd);
+            }
         }
 
         $idCurso = (int) ($filtros['idCurso'] ?? 0);

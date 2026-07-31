@@ -33,10 +33,12 @@ class SolicitudEvaluacionForm extends Component
         }
 
         $this->idCurso = (string) ($ctx['curso'] ?? request()->query('idCurso', ''));
-        $this->fecha = (string) ($ctx['fecha'] ?? request()->query('fecha', ''));
+        $this->fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd(
+            $ctx['fecha'] ?? request()->query('fecha', '')
+        );
 
         $idCurso = (int) $this->idCurso;
-        $fecha = trim($this->fecha);
+        $fecha = $this->fecha;
 
         if ($idCurso < 1 || $fecha === '') {
             $rutaIndex = $this->esPortalDocente()
@@ -93,7 +95,8 @@ class SolicitudEvaluacionForm extends Component
         $this->validate();
 
         $idCurso = (int) $this->idCurso;
-        $fecha = $this->fecha;
+        $fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($this->fecha);
+        $this->fecha = $fecha;
         $idMateria = (int) $this->idMateria;
 
         abort_if($idCurso < 1 || $fecha === '', 404);
@@ -140,10 +143,15 @@ class SolicitudEvaluacionForm extends Component
     public function render()
     {
         $idCurso = (int) $this->idCurso;
+        $fecha = SolicitudEvaluacionConsulta::normalizarFechaYmd($this->fecha);
+        $this->fecha = $fecha;
+
         $curso = SolicitudEvaluacionConsulta::cursoEnContexto($idCurso, $this->esPortalDocente());
         abort_if($curso === null, 404);
 
         $materias = SolicitudEvaluacionConsulta::materiasDelCurso($idCurso);
+        $evaluaciones = SolicitudEvaluacionConsulta::evaluacionesDelCursoEnFecha($idCurso, $fecha);
+        $etiquetasMateria = SolicitudEvaluacionConsulta::etiquetasMateriaParaEvaluaciones($evaluaciones);
 
         $layout = $this->esPortalDocente() ? 'layouts.docente' : 'layouts.app';
         $rutaVolver = $this->esPortalDocente()
@@ -153,6 +161,9 @@ class SolicitudEvaluacionForm extends Component
         return view('livewire.solicitud-evaluacion.form', [
             'curso' => $curso,
             'materias' => $materias,
+            'evaluaciones' => $evaluaciones,
+            'etiquetasMateria' => $etiquetasMateria,
+            'maxPorDia' => SolicitudEvaluacionConsulta::MAX_EVALUACIONES_POR_DIA,
             'rutaVolver' => $rutaVolver,
             'volverConFiltros' => ['continuar' => 1],
         ])->layout($layout, ['pageTitle' => 'Nueva solicitud de evaluación']);
