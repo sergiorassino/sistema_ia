@@ -1186,7 +1186,7 @@ if (! function_exists('tenantExamenesActaVolantePreviosModalidad')) {
 if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
     /**
      * Variante del informe de progreso escolar (primario).
-     * Valores: `estandar` (vertical) | `sanjose` (apaisado) | `montecristo` (extracurriculares institucionales).
+     * Valores: `estandar` (vertical) | `sanjose` (apaisado) | `montecristo` (extracurriculares) | `caixalsf` (vertical Caixal SF).
      */
     function tenantBoletinPrimarioIpeImplementacion(): string
     {
@@ -1199,13 +1199,13 @@ if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
 if (! function_exists('tenantBoletinPrimarioMenuEtiquetaBoletinIpe')) {
     /**
      * Etiqueta del ítem de boletín IPE en CALIFICACIONES (Primario) del Menú de Secretaría.
-     * Default `Boletines IPE`; personalizar en `config/tenants/{slug}.php`.
+     * Default `IPE (Informe de Progreso Escolar)`; personalizar en `config/tenants/{slug}.php`.
      */
     function tenantBoletinPrimarioMenuEtiquetaBoletinIpe(): string
     {
-        $etiqueta = trim((string) config('tenant.boletin_primario.menu_etiqueta_boletin_ipe', 'Boletines IPE'));
+        $etiqueta = trim((string) config('tenant.boletin_primario.menu_etiqueta_boletin_ipe', 'IPE (Informe de Progreso Escolar)'));
 
-        return $etiqueta !== '' ? $etiqueta : 'Boletines IPE';
+        return $etiqueta !== '' ? $etiqueta : 'IPE (Informe de Progreso Escolar)';
     }
 }
 

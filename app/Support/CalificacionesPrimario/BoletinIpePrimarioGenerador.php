@@ -17,7 +17,7 @@ final class BoletinIpePrimarioGenerador
 
     public static function usaSelectorEtapa(): bool
     {
-        return in_array(self::implementacion(), ['estandar', 'montecristo'], true);
+        return in_array(self::implementacion(), ['estandar', 'montecristo', 'caixalsf'], true);
     }
 
     /** Boletín único sin selector de etapa (p. ej. San José primario). */
@@ -50,6 +50,7 @@ final class BoletinIpePrimarioGenerador
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseDatos::buildForMatriculaEnContextoEscolar($idMatricula),
             'montecristo' => BoletinIpeMontecristoDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa),
+            'caixalsf' => BoletinIpeCaixalsfDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa),
             default => BoletinIpeDatos::buildForMatriculaEnContextoEscolar($idMatricula, $etapa),
         };
     }
@@ -69,6 +70,7 @@ final class BoletinIpePrimarioGenerador
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseDatos::buildDesdeMatricula($mat),
             'montecristo' => BoletinIpeMontecristoDatos::buildDesdeMatricula($mat, $etapa),
+            'caixalsf' => BoletinIpeCaixalsfDatos::buildDesdeMatricula($mat, $etapa),
             default => BoletinIpeDatos::buildDesdeMatricula($mat, $etapa),
         };
     }
@@ -82,6 +84,7 @@ final class BoletinIpePrimarioGenerador
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarHoja($datos, $header),
             'montecristo' => BoletinIpeMontecristoTcpdf::generarHoja($datos, $header, $mostrarMarcaAgua),
+            'caixalsf' => BoletinIpeCaixalsfTcpdf::generarHoja($datos, $header),
             default => BoletinIpeTcpdf::generarHoja($datos, $header),
         };
     }
@@ -95,6 +98,7 @@ final class BoletinIpePrimarioGenerador
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::generarLote($hojas, $header),
             'montecristo' => BoletinIpeMontecristoTcpdf::generarLote($hojas, $header, $mostrarMarcaAgua),
+            'caixalsf' => BoletinIpeCaixalsfTcpdf::generarLote($hojas, $header),
             default => BoletinIpeTcpdf::generarLote($hojas, $header),
         };
     }
@@ -104,6 +108,7 @@ final class BoletinIpePrimarioGenerador
         return match (self::implementacion()) {
             'sanjose' => BoletinIpeSanJoseTcpdf::respuestaHttp($pdf, $nombreArchivo),
             'montecristo' => BoletinIpeMontecristoTcpdf::respuestaHttp($pdf, $nombreArchivo),
+            'caixalsf' => BoletinIpeCaixalsfTcpdf::respuestaHttp($pdf, $nombreArchivo),
             default => BoletinIpeTcpdf::respuestaHttp($pdf, $nombreArchivo),
         };
     }

@@ -10,9 +10,9 @@
 
 return [
     'boletin_primario' => [
-        // Mismo PDF que NSSC (A4 vertical, selector 1ª/2ª etapa).
-        'ipe_implementacion' => 'estandar',
-        'menu_etiqueta_boletin_ipe' => 'Boletines',
+        // IPE A4 vertical Caixal SF (selector 1ª/2ª etapa, ciclo en subtítulo, inasistencias de matrícula).
+        'ipe_implementacion' => 'caixalsf',
+        'menu_etiqueta_boletin_ipe' => 'IPE (Informe de Progreso Escolar)',
     ],
 
     'calificaciones_primario' => [

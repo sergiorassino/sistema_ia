@@ -214,13 +214,13 @@ return [
 
     /**
      * Boletín IPE — nivel primario.
-     * `implementacion`: `estandar` (A4 vertical) | `sanjose` (A4 apaisado, matriz) | `montecristo` (extracurriculares institucionales).
+     * `ipe_implementacion`: `estandar` (A4 vertical) | `sanjose` (A4 apaisado, matriz) | `montecristo` (extracurriculares) | `caixalsf` (A4 vertical, ciclo + inasistencias matrícula).
      */
     'boletin_primario' => [
         'ipe_implementacion' => 'estandar',
         'director_firma' => '',
         /** Texto del ítem en CALIFICACIONES (Primario) del Menú de Secretaría. */
-        'menu_etiqueta_boletin_ipe' => 'Boletines IPE',
+        'menu_etiqueta_boletin_ipe' => 'IPE (Informe de Progreso Escolar)',
         /**
          * Membrete circular de la portada — Boletín (Prim), implementación epq.
          * Ruta relativa a `public/` (p. ej. `img/tenants/{slug}/boletin-prim-membrete.png`).
