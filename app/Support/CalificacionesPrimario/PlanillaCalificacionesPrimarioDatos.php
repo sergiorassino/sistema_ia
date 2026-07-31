@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Ento;
 use App\Models\Matricula;
 use App\Support\AnoEnLetrasEs;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -148,12 +149,18 @@ final class PlanillaCalificacionesPrimarioDatos
 
             $idsMaterias = array_column($materiasLista, 'id');
 
+            $idsCondiciones = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+                ListadoCursoCondicionFiltro::REGULARES,
+            );
+
             $matriculas = Matricula::query()
                 ->with('legajo')
                 ->join('legajos as l', 'l.id', '=', 'matricula.idLegajos')
                 ->where('matricula.idCursos', (int) $curso->Id)
                 ->where('matricula.idTerlec', (int) $ctx->idTerlec)
                 ->where('matricula.idNivel', (int) $ctx->idNivel)
+                ->whereIn('matricula.idCondiciones', $idsCondiciones)
+                ->whereNull('matricula.fechaBaja')
                 ->orderBy('l.apellido')
                 ->orderBy('l.nombre')
                 ->select('matricula.*')
