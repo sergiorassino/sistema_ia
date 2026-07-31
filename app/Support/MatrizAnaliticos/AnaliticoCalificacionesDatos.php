@@ -3,10 +3,14 @@
 namespace App\Support\MatrizAnaliticos;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Consultas y mapeo de filas de calificaciones para PDFs del analítico (frente y reverso).
+ *
+ * Origen de renglones: materias del curso/año lectivo de cada matrícula histórica del alumno
+ * (no el plan modelo del año actual). Las notas se cruzan con calificaciones si existen.
  */
 final class AnaliticoCalificacionesDatos
 {
@@ -102,7 +106,10 @@ final class AnaliticoCalificacionesDatos
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int|string, mixed>  $nombresMaterias
+     * Renglones de un año pedagógico (`cursos.c`): materias de las matrículas históricas
+     * de ese año, con calificación si hay fila en `calificaciones`.
+     *
+     * @param  Collection<int|string, mixed>  $nombresMaterias
      * @return list<array{
      *     materia: string,
      *     calif_num: string,
@@ -116,48 +123,103 @@ final class AnaliticoCalificacionesDatos
      */
     public static function filasAnioCurso(int $idLegajos, int $idNivel, int $c, $nombresMaterias): array
     {
-        $rows = DB::table('calificaciones as c')
-            ->join('materias as ma', 'ma.id', '=', 'c.idMaterias')
-            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
-            ->join('matricula as m', 'm.id', '=', 'c.idMatricula')
-            ->where('c.idLegajos', $idLegajos)
-            ->where('c.ord', '<', 16)
+        if ($idLegajos < 1 || $idNivel < 1 || $c < 1) {
+            return [];
+        }
+
+        $matriculas = DB::table('matricula as m')
+            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            ->join('terlec as t', 't.id', '=', 'm.idTerlec')
+            ->where('m.idLegajos', $idLegajos)
+            ->where('m.idNivel', $idNivel)
             ->where('cu.c', $c)
             ->where('cu.idNivel', $idNivel)
-            ->where('m.idCondiciones', '<>', 7)
-            ->orderBy('c.idTerlec')
-            ->orderBy('c.idCursos')
-            ->orderBy('c.ord')
+            ->orderBy('t.ano')
+            ->orderBy('m.id')
             ->get([
-                'c.calif',
-                'c.mes',
-                'c.ano',
-                'c.cond',
-                'c.escuapro',
-                'ma.materia',
-                'ma.id as idMaterias',
+                'm.id as idMatricula',
+                'm.idTerlec',
+                'm.idCursos',
             ]);
+
+        if ($matriculas->isEmpty()) {
+            return [];
+        }
+
+        $out = [];
+        $idsMatricula = $matriculas->pluck('idMatricula')->map(fn ($id) => (int) $id)->all();
+        $califs = self::calificacionesPorMatriculas($idLegajos, $idsMatricula);
+
+        foreach ($matriculas as $mat) {
+            $idMatricula = (int) $mat->idMatricula;
+            $idTerlec = (int) $mat->idTerlec;
+            $idCursos = (int) $mat->idCursos;
+
+            $materias = DB::table('materias as ma')
+                ->where('ma.idCursos', $idCursos)
+                ->where('ma.idTerlec', $idTerlec)
+                ->orderBy('ma.ord')
+                ->orderBy('ma.id')
+                ->get(['ma.id', 'ma.materia', 'ma.ord']);
+
+            foreach ($materias as $ma) {
+                $idMaterias = (int) ($ma->id ?? 0);
+                $materia = trim((string) ($ma->materia ?? ''));
+                if ($materia === '') {
+                    continue;
+                }
+
+                if ($idMaterias > 0 && isset($nombresMaterias[$idMaterias])) {
+                    $override = trim((string) $nombresMaterias[$idMaterias]);
+                    if ($override !== '') {
+                        $materia = $override;
+                    }
+                }
+
+                $cal = $califs[$idMatricula][$idMaterias] ?? null;
+                $out[] = self::mapearFila(
+                    $materia,
+                    trim((string) ($cal->calif ?? '')),
+                    trim((string) ($cal->cond ?? '')),
+                    self::mostrarMes($cal->mes ?? null),
+                    self::mostrarAno($cal->ano ?? null),
+                    trim((string) ($cal->escuapro ?? '')),
+                );
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<int>  $idsMatricula
+     * @return array<int, array<int, object>>
+     */
+    private static function calificacionesPorMatriculas(int $idLegajos, array $idsMatricula): array
+    {
+        if ($idsMatricula === []) {
+            return [];
+        }
+
+        $rows = DB::table('calificaciones')
+            ->where('idLegajos', $idLegajos)
+            ->whereIn('idMatricula', $idsMatricula)
+            ->where('ord', '<', 16)
+            ->orderBy('id')
+            ->get(['id', 'idMatricula', 'idMaterias', 'calif', 'mes', 'ano', 'cond', 'escuapro']);
 
         $out = [];
         foreach ($rows as $row) {
+            $idMatricula = (int) ($row->idMatricula ?? 0);
             $idMaterias = (int) ($row->idMaterias ?? 0);
-            $materia = trim((string) ($row->materia ?? ''));
-            if ($idMaterias > 0 && isset($nombresMaterias[$idMaterias])) {
-                $override = trim((string) $nombresMaterias[$idMaterias]);
-                if ($override !== '') {
-                    $materia = $override;
-                }
+            if ($idMatricula < 1 || $idMaterias < 1) {
+                continue;
             }
-
-            $calif = trim((string) ($row->calif ?? ''));
-            $out[] = self::mapearFila(
-                $materia,
-                $calif,
-                trim((string) ($row->cond ?? '')),
-                self::mostrarMes($row->mes ?? null),
-                self::mostrarAno($row->ano ?? null),
-                trim((string) ($row->escuapro ?? '')),
-            );
+            // Si hubiera duplicados, conservar el primero (orden por id).
+            if (isset($out[$idMatricula][$idMaterias])) {
+                continue;
+            }
+            $out[$idMatricula][$idMaterias] = $row;
         }
 
         return $out;
