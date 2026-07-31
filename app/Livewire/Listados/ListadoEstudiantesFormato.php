@@ -5,7 +5,7 @@ namespace App\Livewire\Listados;
 use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoEstudiantesFormatoCatalog;
 use App\Support\Listados\ListadoEstudiantesFormatoMes;
-use App\Support\ProfesorMenuPortal;
+use App\Support\PortalDocente\ListadoEstudiantesFormatoPortalDocente;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -111,7 +111,7 @@ class ListadoEstudiantesFormato extends Component
             }
         }
 
-        return route('listados.estudiantes-formato.pdf', $params);
+        return ListadoEstudiantesFormatoPortalDocente::routePdf($params);
     }
 
     public function render()
@@ -174,7 +174,7 @@ class ListadoEstudiantesFormato extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'modelos' => ListadoEstudiantesFormatoCatalog::paraUi(),
             'meses' => ListadoEstudiantesFormatoMes::opcionesSelector(),
-        ])->layout(ProfesorMenuPortal::layoutStaff(), ['pageTitle' => 'Listados de Estudiantes con Formato']);
+        ])->layout(ListadoEstudiantesFormatoPortalDocente::layout(), ['pageTitle' => 'Listados de Estudiantes con Formato']);
     }
 
     /** @return Collection<string, int> */
