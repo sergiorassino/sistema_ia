@@ -92,7 +92,7 @@
                             </colgroup>
                             <tbody class="bg-white" data-se-matriz-tbody>
                                     @forelse ($lineas as $i => $lin)
-                                        <tr wire:key="matriz-lin-{{ $lin['id'] }}">
+                                        <tr wire:key="matriz-lin-{{ $i }}-{{ $lin['id'] }}-{{ $lin['idMaterias'] }}">
                                             <td><span class="se-matriz-excel-read tabular-nums">{{ $lin['ano_lectivo'] }}</span></td>
                                             <td><span class="se-matriz-excel-read" title="{{ $lin['curso'] }}">{{ $lin['curso'] !== '' ? $lin['curso'] : '—' }}</span></td>
                                             <td>

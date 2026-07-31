@@ -138,17 +138,25 @@ final class CierreAnualSecundario
             return [];
         }
 
-        $raw = DB::table('calificaciones as c')
+        // Materias del curso/año lectivo de cada matrícula histórica (no el plan del año actual).
+        $raw = DB::table('matricula as mat')
+            ->join('cursos as cu', 'cu.Id', '=', 'mat.idCursos')
+            ->join('terlec as t', 't.id', '=', 'mat.idTerlec')
             ->join('materias as m', function ($join) {
-                $join->on('m.id', '=', 'c.idMaterias')
-                    ->on('m.idTerlec', '=', 'c.idTerlec');
+                $join->on('m.idCursos', '=', 'mat.idCursos')
+                    ->on('m.idTerlec', '=', 'mat.idTerlec');
             })
-            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->leftJoin('calificaciones as c', function ($join) use ($idLegajos) {
+                $join->on('c.idMatricula', '=', 'mat.id')
+                    ->on('c.idMaterias', '=', 'm.id')
+                    ->where('c.idLegajos', '=', $idLegajos)
+                    ->where('c.ord', '<', 16);
+            })
             ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
             ->leftJoin('matplan as mp', 'mp.id', '=', 'm.idMatPlan')
             ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
-            ->join('terlec as t', 't.id', '=', 'c.idTerlec')
-            ->where('c.idLegajos', $idLegajos)
+            ->where('mat.idLegajos', $idLegajos)
+            ->where('mat.idNivel', $idNivel)
             ->where('cu.idNivel', $idNivel)
             ->select([
                 'c.id',
@@ -184,6 +192,10 @@ final class CierreAnualSecundario
                     .' AS curplan_orden_ref'
                 ),
             ])
+            ->orderBy('t.ano')
+            ->orderBy('mat.id')
+            ->orderBy('m.ord')
+            ->orderBy('m.id')
             ->get();
 
         $out = [];
@@ -195,7 +207,7 @@ final class CierreAnualSecundario
 
             $apro = (int) ($r->apro ?? 0);
             $out[] = [
-                'id' => (int) $r->id,
+                'id' => (int) ($r->id ?? 0),
                 'apellido' => $apellido,
                 'nombre' => $nombre,
                 'ano_lectivo' => $r->ano_lectivo ?? '',

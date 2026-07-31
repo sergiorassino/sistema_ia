@@ -46,20 +46,23 @@ trait AnaliticoTcpdfGrilla
             if (! is_array($fila)) {
                 continue;
             }
-            if ((string) ($fila['modo'] ?? 'vacio') === 'vacio') {
+
+            $materia = trim((string) ($fila['materia'] ?? ''));
+            // Sin calificación: igual se imprime el nombre del espacio curricular.
+            if ((string) ($fila['modo'] ?? 'vacio') === 'vacio' && $materia === '') {
                 $this->grillaFilaVacia();
 
                 continue;
             }
 
             $this->grillaFilaDatos(
-                $this->grillaTruncarMateria((string) ($fila['materia'] ?? '')),
+                $this->grillaTruncarMateria($materia),
                 (string) ($fila['calif_num'] ?? '----'),
-                (string) ($fila['calif_letras'] ?? ''),
+                (string) ($fila['calif_letras'] ?? '------------'),
                 (string) ($fila['cond'] ?? '----'),
                 (string) ($fila['mes'] ?? '----'),
                 (string) ($fila['ano'] ?? '----'),
-                (string) ($fila['escuapro'] ?? ''),
+                (string) ($fila['escuapro'] ?? '------------------------------'),
             );
         }
     }
@@ -128,7 +131,21 @@ trait AnaliticoTcpdfGrilla
             return '-------------------------';
         }
 
-        return mb_strlen($materia) > 40 ? mb_substr($materia, 0, 40) : $materia;
+        $this->SetFont(self::GRILLA_FUENTE, '', 7);
+        $max = self::GRILLA_W_MATERIA - 2;
+        if ($this->GetStringWidth($materia, self::GRILLA_FUENTE, '', 7) <= $max) {
+            return $materia;
+        }
+
+        $len = mb_strlen($materia);
+        for ($i = $len; $i > 0; $i--) {
+            $candidato = mb_substr($materia, 0, $i).'…';
+            if ($this->GetStringWidth($candidato, self::GRILLA_FUENTE, '', 7) <= $max) {
+                return $candidato;
+            }
+        }
+
+        return mb_substr($materia, 0, 1).'…';
     }
 
     protected function grillaTruncarEscuapro(string $texto): string
