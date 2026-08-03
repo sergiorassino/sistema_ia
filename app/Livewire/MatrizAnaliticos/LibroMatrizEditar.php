@@ -231,7 +231,7 @@ class LibroMatrizEditar extends Component
         RateLimiter::hit($key, 60);
 
         $validated = $this->validate([
-            'nombreOverrideValor' => ['required', 'string', 'max:300'],
+            'nombreOverrideValor' => ['nullable', 'string', 'max:300'],
         ], [], [
             'nombreOverrideValor' => 'nombre para analítico',
         ]);
@@ -241,7 +241,7 @@ class LibroMatrizEditar extends Component
             $this->idLegajos,
             (int) $ctx->idNivel,
             $this->nombreOverrideIdMaterias,
-            (string) $validated['nombreOverrideValor'],
+            (string) ($validated['nombreOverrideValor'] ?? ''),
         );
 
         if (! $res['ok']) {
@@ -344,8 +344,8 @@ class LibroMatrizEditar extends Component
         foreach ($this->lineas as $i => $lin) {
             $idMaterias = (int) ($lin['idMaterias'] ?? 0);
             $base = trim((string) ($lin['materia_base'] ?? ''));
-            $override = $idMaterias > 0 ? trim((string) ($overrides[$idMaterias] ?? '')) : '';
-            $tiene = $override !== '';
+            $tiene = $idMaterias > 0 && array_key_exists($idMaterias, $overrides);
+            $override = $tiene ? trim((string) $overrides[$idMaterias]) : '';
 
             $this->lineas[$i]['tiene_override'] = $tiene;
             $this->lineas[$i]['materia'] = $tiene ? $override : $base;
