@@ -3,7 +3,6 @@
 namespace App\Support\MatrizAnaliticos;
 
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,9 +32,7 @@ final class AnaliticoCalificacionesDatos
             return [];
         }
 
-        $nombresMaterias = DB::table('nombresmaterias')
-            ->where('idLegajos', $idLegajos)
-            ->pluck('nombreMateria', 'idMaterias');
+        $nombresMaterias = LibroMatrizAnalitico::overridesNombreMateriaPorLegajo($idLegajos);
 
         $bloques = [];
         foreach ($cursosTitulos as $c => $titulo) {
@@ -109,7 +106,7 @@ final class AnaliticoCalificacionesDatos
      * Renglones de un año pedagógico (`cursos.c`): materias de las matrículas históricas
      * de ese año, con calificación si hay fila en `calificaciones`.
      *
-     * @param  Collection<int|string, mixed>  $nombresMaterias
+     * @param  array<int, string>  $nombresMaterias
      * @return list<array{
      *     materia: string,
      *     calif_num: string,
@@ -169,11 +166,9 @@ final class AnaliticoCalificacionesDatos
                     continue;
                 }
 
-                if ($idMaterias > 0 && isset($nombresMaterias[$idMaterias])) {
-                    $override = trim((string) $nombresMaterias[$idMaterias]);
-                    if ($override !== '') {
-                        $materia = $override;
-                    }
+                if ($idMaterias > 0 && array_key_exists($idMaterias, $nombresMaterias)) {
+                    // Vacío permitido: oculta el nombre de materias en el PDF del analítico.
+                    $materia = trim((string) $nombresMaterias[$idMaterias]);
                 }
 
                 $cal = $califs[$idMatricula][$idMaterias] ?? null;

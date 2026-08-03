@@ -176,8 +176,8 @@ final class LibroMatrizAnalitico
         foreach ($filas as $f) {
             $idMaterias = (int) ($f['idMaterias'] ?? 0);
             $materiaBase = trim((string) ($f['materia'] ?? ''));
-            $override = $idMaterias > 0 ? trim((string) ($overrides[$idMaterias] ?? '')) : '';
-            $tieneOverride = $override !== '';
+            $tieneOverride = $idMaterias > 0 && array_key_exists($idMaterias, $overrides);
+            $override = $tieneOverride ? trim((string) $overrides[$idMaterias]) : '';
 
             $out[] = [
                 'id' => (int) $f['id'],
@@ -201,7 +201,9 @@ final class LibroMatrizAnalitico
     }
 
     /**
-     * Mapa idMaterias → nombreMateria (solo no vacíos) para un legajo.
+     * Mapa idMaterias → nombreMateria para un legajo.
+     * Incluye cadenas vacías: un registro en nombresmaterias fuerza el texto del analítico
+     * (incluso en blanco) frente al nombre de materias.
      *
      * @return array<int, string>
      */
@@ -219,14 +221,10 @@ final class LibroMatrizAnalitico
         $out = [];
         foreach ($rows as $row) {
             $idMaterias = (int) ($row->idMaterias ?? 0);
-            if ($idMaterias < 1 || isset($out[$idMaterias])) {
+            if ($idMaterias < 1 || array_key_exists($idMaterias, $out)) {
                 continue;
             }
-            $nombre = trim((string) ($row->nombreMateria ?? ''));
-            if ($nombre === '') {
-                continue;
-            }
-            $out[$idMaterias] = $nombre;
+            $out[$idMaterias] = trim((string) ($row->nombreMateria ?? ''));
         }
 
         return $out;
@@ -258,9 +256,6 @@ final class LibroMatrizAnalitico
         }
 
         $nombre = trim($nombreMateria);
-        if ($nombre === '') {
-            return ['ok' => false, 'error' => 'Ingrese el nombre de asignatura para el analítico.'];
-        }
         if (mb_strlen($nombre) > 300) {
             return ['ok' => false, 'error' => 'El nombre no puede superar 300 caracteres.'];
         }

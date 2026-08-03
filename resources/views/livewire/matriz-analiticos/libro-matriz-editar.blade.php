@@ -314,7 +314,7 @@
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                         <p class="mt-1.5 text-[11px] text-neutral-500">
-                            Este texto se usa en los PDF del analítico. La grilla lo muestra en rojo cuando hay override.
+                            Este texto se usa en los PDF del analítico (puede dejarse en blanco). La grilla lo muestra en rojo cuando hay override.
                         </p>
                     </div>
                 </form>
