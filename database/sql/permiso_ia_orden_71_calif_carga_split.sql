@@ -8,7 +8,7 @@
 UPDATE `permisos_ia` SET
     `orden` = 9,
     `tema` = 'CALIFICACIONES',
-    `descripcion` = 'Importar calificaciones desde CSV CIDI/GE (primario y secundario).'
+    `descripcion` = 'Importar calificaciones desde CSV CIDI/GE (inicial, primario y secundario).'
 WHERE `id` = 10;
 
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES

@@ -28,7 +28,7 @@ final class PermisosIaCatalog
 
     public const COM_REVISION = 8;
 
-    /** Importar calificaciones desde CSV CIDI/GE (primario y secundario). */
+    /** Importar calificaciones desde CSV CIDI/GE (inicial, primario y secundario). */
     public const CALIF_SINCRO_CIDI = 9;
 
     /** Carga manual de calificaciones e indicadores (inicial, primario y secundario). */
@@ -205,6 +205,9 @@ final class PermisosIaCatalog
     /** Certificación de servicios docentes: carga de períodos, licencias e impresión PDF. */
     public const CERTIFICACION_SERVICIOS = 87;
 
+    /** Registro de asistencia mensual (PDF por curso(s) y mes) y ABM de feriados del nivel. */
+    public const REGISTRO_ASISTENCIA = 90;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -218,7 +221,7 @@ final class PermisosIaCatalog
             ['id' => 7, 'orden' => self::COM_BORRAR_PROPIO, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar mensajes propios en un hilo.'],
             ['id' => 8, 'orden' => self::COM_BORRAR_OTROS, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar mensajes de otros participantes en un hilo.'],
             ['id' => 9, 'orden' => self::COM_REVISION, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Acceder a la bandeja de revisión de comunicados.'],
-            ['id' => 10, 'orden' => self::CALIF_SINCRO_CIDI, 'tema' => 'CALIFICACIONES', 'descripcion' => 'Importar calificaciones desde CSV CIDI/GE (primario y secundario).'],
+            ['id' => 10, 'orden' => self::CALIF_SINCRO_CIDI, 'tema' => 'CALIFICACIONES', 'descripcion' => 'Importar calificaciones desde CSV CIDI/GE (inicial, primario y secundario).'],
             ['id' => 71, 'orden' => self::CALIF_CARGA, 'tema' => 'CALIFICACIONES', 'descripcion' => 'Carga manual de calificaciones e indicadores (inicial, primario y secundario).'],
             ['id' => 11, 'orden' => self::CALIF_COLOQUIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Carga de coloquios Dic / Feb (secundario).'],
             ['id' => 12, 'orden' => self::LEGAJOS_DOCENTES, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Crear, editar y eliminar legajos de docentes (todos los campos). Sin este permiso solo se consultan apellido, nombre y DNI, y los listados PDF/Excel quedan limitados a esos campos.'],
@@ -296,6 +299,7 @@ final class PermisosIaCatalog
             ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],
             ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).'],
             ['id' => 87, 'orden' => self::CERTIFICACION_SERVICIOS, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Certificación de servicios: carga de períodos de servicio y licencias, e impresión del certificado PDF.'],
+            ['id' => 90, 'orden' => self::REGISTRO_ASISTENCIA, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Registro de asistencia: impresión PDF mensual por curso(s) (con o sin datos) y administración de feriados del nivel.'],
         ];
     }
 

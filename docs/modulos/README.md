@@ -12,6 +12,7 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 | Estadística de rendimiento escolar | [estadistica-rendimiento-escolar.md](estadistica-rendimiento-escolar.md) |
 | Ficha de matrícula (Secretaría) | [ficha-matricula-secretaria.md](ficha-matricula-secretaria.md) |
 | IPE / boletín primario | [boletin-ipe-primario.md](boletin-ipe-primario.md) |
+| Registro de Asistencia | [registro-asistencia.md](registro-asistencia.md) |
 
 ## Plantilla
 

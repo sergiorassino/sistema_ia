@@ -28,6 +28,32 @@
          x-show="groups.calificacionesInicial && !sidebarCollapsed"
          x-collapse
          x-cloak>
+        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI))
+        <a href="{{ route('calificacionesInicial.sincroGe') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+               'is-active shadow-sm' => ($route ?? '') === 'calificacionesInicial.sincroGe',
+           ])
+           title="{{ seSidebarTooltip('Descargar Calificaciones desde GE (inicial)', 9) }}">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span class="truncate">Descargar Calificaciones desde GE</span>
+        </a>
+        <a href="{{ route('calificacionesInicial.sincroDesempenos') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+               'is-active shadow-sm' => ($route ?? '') === 'calificacionesInicial.sincroDesempenos',
+           ])
+           title="{{ seSidebarTooltip('Descargar Desempeños desde GE (inicial)', 9) }}">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="truncate">Descargar Desempeños desde GE</span>
+        </a>
+        @endif
         @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
         <a href="{{ route('calificacionesInicial.indicadores') }}"
            @class([

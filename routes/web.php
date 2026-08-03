@@ -38,6 +38,7 @@ use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
 use App\Http\Controllers\InformeInasistenciasLotePdfController;
 use App\Http\Controllers\ParteDiarioPreceptorPdfController;
+use App\Http\Controllers\RegistroAsistenciaPdfController;
 use App\Http\Controllers\FichaMatriculaSecretariaPdfController;
 use App\Http\Controllers\FichaMatriculaSecretariaZipController;
 use App\Http\Controllers\LibroMatriculaPdfController;
@@ -233,6 +234,8 @@ use App\Livewire\CalificacionesInicial\CargaObservacionesInicialAlumnos;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialForm;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialIndex;
 use App\Livewire\CalificacionesInicial\CargaObservacionesInicialMateria;
+use App\Livewire\CalificacionesInicial\SincroDesempenos as SincroDesempenosInicial;
+use App\Livewire\CalificacionesInicial\SincroGe as SincroGeInicial;
 use App\Http\Controllers\CalificacionesInicial\BoletinInicialSfqLotePdfController;
 use App\Http\Controllers\CalificacionesInicial\BoletinInicialSfqPdfController;
 use App\Http\Controllers\CalificacionesInicial\InformeProgresoInicialLotePdfController;
@@ -307,6 +310,8 @@ use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
 use App\Livewire\Seguimiento\Inasistencias\InformeInasistenciasLoteIndex;
 use App\Livewire\Seguimiento\Inasistencias\TomaAsistenciaClaseIndex;
+use App\Livewire\Seguimiento\RegistroAsistencia\FeriadosIndex;
+use App\Livewire\Seguimiento\RegistroAsistencia\RegistroAsistenciaIndex;
 use App\Livewire\Seguimiento\Tea\TeaForm;
 use App\Livewire\Seguimiento\Tea\TeaIndex;
 use App\Http\Controllers\TeaRegistroPdfController;
@@ -1037,7 +1042,14 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)
         ->name('horarios.pdf.profesor');
 
-    // Calificaciones (nivel inicial): indicadores por materia y etapa
+    // Calificaciones (nivel inicial): GE/CIDI, indicadores por materia y etapa
+    Route::get('/calificaciones-inicial/sincro-ge', SincroGeInicial::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
+        ->name('calificacionesInicial.sincroGe');
+    Route::get('/calificaciones-inicial/sincro-desempenos', SincroDesempenosInicial::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
+        ->name('calificacionesInicial.sincroDesempenos');
+
     Route::get('/calificaciones-inicial/indicadores', EditarIndicadoresIndex::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesInicial.indicadores');
@@ -1377,6 +1389,16 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/seguimiento/partes-diarios/pdf', ParteDiarioPreceptorPdfController::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PARTE_DIARIO_PRECEPTOR)
         ->name('seguimiento.partes-diarios.pdf');
+
+    Route::get('/seguimiento/registro-asistencia', RegistroAsistenciaIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::REGISTRO_ASISTENCIA)
+        ->name('seguimiento.registro-asistencia');
+    Route::get('/seguimiento/registro-asistencia/pdf', RegistroAsistenciaPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::REGISTRO_ASISTENCIA)
+        ->name('seguimiento.registro-asistencia.pdf');
+    Route::get('/seguimiento/registro-asistencia/feriados', FeriadosIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::REGISTRO_ASISTENCIA)
+        ->name('seguimiento.registro-asistencia.feriados');
 
     }); // fin menu.portal:secretaria (pedagógico)
 

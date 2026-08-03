@@ -35,7 +35,7 @@ Cada nivel pedagógico tiene **su propio** grupo desplegable en el sidebar (solo
 
 | Grupo en sidebar | `niveles.id` | Ítems actuales |
 |------------------|--------------|----------------|
-| **CALIFICACIONES (Inicial)** | 1 | Editar indicadores (`calificacionesInicial.indicadores`, permiso 71) · Carga de observaciones (`calificacionesInicial.observaciones`, permiso 71) · Informe de progreso escolar (`calificacionesInicial.informeProgreso`, permiso 71) |
+| **CALIFICACIONES (Inicial)** | 1 | Descargar Calificaciones desde GE (`calificacionesInicial.sincroGe`, permiso 9) · Descargar Desempeños desde GE (`calificacionesInicial.sincroDesempenos`, permiso 9) · Editar indicadores (`calificacionesInicial.indicadores`, permiso 71) · Carga de observaciones (`calificacionesInicial.observaciones`, permiso 71) · Informe de progreso escolar (`calificacionesInicial.informeProgreso`, permiso 71) |
 | **CALIFICACIONES (Primario)** | 2 | Descargar Calificaciones desde GE (`calificacionesPrimario.sincroGe`, permiso 9) · Descargar Desempeños desde GE (`calificacionesPrimario.sincroDesempenos`, permiso 9) · Carga de calificaciones por estudiante (`calificacionesPrimario.carga`, permiso 71) · Carga de calificaciones por materia (`calificacionesPrimario.cargaMateria`, permiso 71) · IPE (Informe de Progreso Escolar) (`calificacionesPrimario.boletinIpe`, permiso 71) · Planilla de calificaciones (`calificacionesPrimario.planilla`, permiso 71) |
 | **CALIFICACIONES (Secundario)** | 3 | Descargar calificaciones desde CIDI (`calificacionesSecundario.sincroGe`, permiso 9) · Carga de calificaciones (`calificacionesSecundario.carga`, permiso 71) · resto de módulos (`consulta`, `planilla`, `boletinesSecundario.*`, etc.) |
 

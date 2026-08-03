@@ -92,4 +92,12 @@ return [
     'doc_pp' => [
         'habilitado' => true,
     ],
+
+    // Registro de asistencia: inicial/primario en blanco (llenado manual); secundario usa el default con_datos.
+    'registro_asistencia' => [
+        'por_nivel' => [
+            1 => 'sin_datos',
+            2 => 'sin_datos',
+        ],
+    ],
 ];
