@@ -20,6 +20,7 @@ final class CidiInasistenciasCsvImportResult
         public readonly bool $committed,
         public readonly array $issues = [],
         public readonly bool $issuesTruncated = false,
+        public readonly int $deletedRows = 0,
     ) {}
 
     public function filasModificadas(): int
@@ -38,7 +39,7 @@ final class CidiInasistenciasCsvImportResult
             return 'No se guardó ningún cambio en la base de datos.';
         }
 
-        if ($this->filasModificadas() === 0) {
+        if ($this->filasModificadas() === 0 && $this->deletedRows === 0) {
             $msg = 'El archivo se procesó sin cambios en la base de datos.';
             if ($this->skippedSinCambioRows > 0) {
                 $msg .= " {$this->skippedSinCambioRows} fila(s) ya coincidían con CIDI.";
@@ -49,10 +50,13 @@ final class CidiInasistenciasCsvImportResult
 
         $partes = [];
         if ($this->insertedRows > 0) {
-            $partes[] = "{$this->insertedRows} nueva(s)";
+            $partes[] = "{$this->insertedRows} registrada(s)";
         }
         if ($this->updatedRows > 0) {
             $partes[] = "{$this->updatedRows} actualizada(s)";
+        }
+        if ($this->deletedRows > 0) {
+            $partes[] = "{$this->deletedRows} eliminada(s) (ya no figuran en CIDI)";
         }
 
         $msg = 'Importación completada: '.implode(', ', $partes).'.';

@@ -3,8 +3,9 @@
 namespace App\Livewire\Seguimiento\Inasistencias;
 
 use App\Models\InasistenciaValor;
-use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImporter;
 use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImportResult;
+use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImporter;
+use App\Services\SincroCidiInasistencias\CidiInasistenciasDiarioCsvImporter;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -140,7 +141,7 @@ class SincroCidiInasistencias extends Component
         $this->resetValidation('archivoCsv');
     }
 
-    public function importar(CidiInasistenciasCsvImporter $importer): void
+    public function importar(): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::INASISTENCIAS_SINCRO_CIDI), 403);
 
@@ -185,7 +186,7 @@ class SincroCidiInasistencias extends Component
 
         try {
             $path = $this->resolveCsvAbsolutePath($this->archivoCsv);
-            $result = $importer->import($path, $idTerlec, $idNivel);
+            $result = $this->resolverImporter()->import($path, $idTerlec, $idNivel);
             $this->ultimoResultado = $this->serializeResult($result);
 
             if ($result->committed && $result->filasModificadas() > 0) {
@@ -314,17 +315,30 @@ class SincroCidiInasistencias extends Component
     private function serializeResult(CidiInasistenciasCsvImportResult $result): array
     {
         return [
-            'totalDataRows' => $result->totalDataRows,
-            'insertedRows' => $result->insertedRows,
-            'updatedRows' => $result->updatedRows,
-            'skippedRows' => $result->skippedRows,
+            'totalDataRows'      => $result->totalDataRows,
+            'insertedRows'       => $result->insertedRows,
+            'updatedRows'        => $result->updatedRows,
+            'deletedRows'        => $result->deletedRows,
+            'skippedRows'        => $result->skippedRows,
             'skippedPresenteRows' => $result->skippedPresenteRows,
             'skippedSinCambioRows' => $result->skippedSinCambioRows,
-            'committed' => $result->committed,
-            'message' => $result->successMessage(),
-            'issues' => $result->issues,
-            'issuesTruncated' => $result->issuesTruncated,
+            'committed'          => $result->committed,
+            'message'            => $result->successMessage(),
+            'issues'             => $result->issues,
+            'issuesTruncated'    => $result->issuesTruncated,
         ];
+    }
+
+    /**
+     * Devuelve la instancia del importer según la variante configurada para el tenant.
+     */
+    private function resolverImporter(): CidiInasistenciasCsvImporter|CidiInasistenciasDiarioCsvImporter
+    {
+        if (tenantSincroCidiInasistenciasImplementacion() === 'diario') {
+            return new CidiInasistenciasDiarioCsvImporter();
+        }
+
+        return new CidiInasistenciasCsvImporter();
     }
 
     public function render()
@@ -338,8 +352,9 @@ class SincroCidiInasistencias extends Component
         );
 
         return view('livewire.seguimiento.inasistencias.sincro-cidi', [
-            'tiposInasistencia' => $tiposInasistencia,
+            'tiposInasistencia'      => $tiposInasistencia,
             'textosCidiConfigurados' => $textosCidiConfigurados,
+            'implementacion'         => tenantSincroCidiInasistenciasImplementacion(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar inasistencias desde CIDI']);
     }
 }

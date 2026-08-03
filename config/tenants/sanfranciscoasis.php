@@ -58,6 +58,11 @@ return [
         ],
     ],
 
+    'sincro_cidi_inasistencias' => [
+        // Variante con just derivado del Tipo del CSV y match flexible en texto_cidi.
+        'implementacion' => 'diario',
+    ],
+
     'autogestion' => [
         'actualizacion_datos' => [
             'habilitado' => true,
