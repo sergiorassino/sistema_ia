@@ -41,6 +41,9 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
 
     private const ALTURA_FILA_ALUMNO = 4.0;
 
+    /** Margen interno horizontal al medir/recortar el nombre (mm). */
+    private const PADDING_NOMBRE = 1.0;
+
     private const ALTURA_ENC_MATERIAS = 52.0;
 
     private const Y_ENC_MATERIAS = 61.0;
@@ -348,7 +351,7 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
             $this->SetXY(self::MARGEN_IZQ, $y);
             TcpdfFuenteArial::aplicar($this, '', 6);
             $this->Cell(self::ANCHO_NRO, self::ALTURA_FILA_ALUMNO, (string) ($alumno['nro'] ?? $f), 1, 0, 'C');
-            $this->Cell(self::ANCHO_NOMBRE, self::ALTURA_FILA_ALUMNO, (string) ($alumno['nombre'] ?? ''), 1, 0, 'L');
+            $this->dibujarCeldaNombre((string) ($alumno['nombre'] ?? ''), $y);
 
             $this->SetXY(self::X_INICIO_MATERIAS, $y);
             $notas = is_array($alumno['notas'] ?? null) ? $alumno['notas'] : [];
@@ -376,6 +379,42 @@ final class PlanillaCalificacionesPrimarioTcpdf extends TCPDF
         }
 
         return $yInicioFilas + ($f * self::ALTURA_FILA_ALUMNO) + self::ALTURA_FILA_ALUMNO;
+    }
+
+    /**
+     * Nombre del alumno dentro del ancho fijo: recorta con "..." si no entra.
+     * Evita que nombres largos se superpongan a la primera columna de notas.
+     */
+    private function dibujarCeldaNombre(string $nombre, float $y): void
+    {
+        $x = $this->GetX();
+        $texto = $this->nombreAjustadoAlAncho(trim($nombre));
+
+        $this->Cell(self::ANCHO_NOMBRE, self::ALTURA_FILA_ALUMNO, '', 1, 0, 'L');
+        $this->SetXY($x, $y);
+        $this->Cell(self::ANCHO_NOMBRE, self::ALTURA_FILA_ALUMNO, $texto, 0, 0, 'L');
+    }
+
+    private function nombreAjustadoAlAncho(string $nombre): string
+    {
+        if ($nombre === '') {
+            return '';
+        }
+
+        $maxW = self::ANCHO_NOMBRE - self::PADDING_NOMBRE;
+        TcpdfFuenteArial::aplicar($this, '', 6);
+        if ($this->GetStringWidth($nombre) <= $maxW) {
+            return $nombre;
+        }
+
+        $ellipsis = '...';
+        $ellipsisW = $this->GetStringWidth($ellipsis);
+        $texto = $nombre;
+        while ($texto !== '' && $this->GetStringWidth($texto) + $ellipsisW > $maxW) {
+            $texto = mb_substr($texto, 0, -1);
+        }
+
+        return $texto === '' ? $ellipsis : rtrim($texto).$ellipsis;
     }
 
     /**
