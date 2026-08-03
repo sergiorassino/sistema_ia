@@ -10,10 +10,10 @@ use Throwable;
 /**
  * Importa inasistencias desde el CSV «InasistenciasDetalle» exportado por CIDI/GE.
  *
- * - Omite filas con tipo PRESENTE.
- * - Resuelve alumno por DNI y curso/división del archivo (mismo criterio que sincro calificaciones).
- * - Inserta o actualiza en `inasistencias` (clave: matrícula + fecha + tipo).
- * - Si el registro ya existe y coincide con CIDI, no hace nada; si difiere cantidad/just/obs, actualiza.
+ * Estrategia: dentro de una única transacción, primero elimina todos los registros con
+ * obs = 'CIDI' del ciclo lectivo y nivel activos, luego inserta las filas del archivo
+ * (omitiendo PRESENTE). Así los registros borrados en CIDI desaparecen automáticamente.
+ * Los registros cargados manualmente (obs distinto) no se tocan.
  */
 final class CidiInasistenciasCsvImporter
 {
@@ -83,15 +83,13 @@ final class CidiInasistenciasCsvImporter
         $this->legajoCache = [];
         $this->matriculaCache = [];
 
-        $issues = [];
-        $totalDataRows = 0;
-        $insertedRows = 0;
-        $updatedRows = 0;
-        $skippedRows = 0;
+        $issues             = [];
+        $totalDataRows      = 0;
+        $insertedRows       = 0;
+        $skippedRows        = 0;
         $skippedPresenteRows = 0;
-        $skippedSinCambioRows = 0;
-        $lineNumber = 0;
-        $pendingChanges = 0;
+        $lineNumber         = 0;
+        $deletedRows        = 0;
 
         try {
             $header = fgetcsv($handle, 0, self::DELIMITER);
@@ -101,6 +99,10 @@ final class CidiInasistenciasCsvImporter
 
             DB::beginTransaction();
 
+            // Fase 1: eliminar todos los registros CIDI del ciclo/nivel activos.
+            $deletedRows = $this->eliminarRegistrosCidi($idTerlec, $idNivel);
+
+            // Fase 2: insertar los registros del archivo (omitir PRESENTE).
             while (($rawRow = fgetcsv($handle, 0, self::DELIMITER)) !== false) {
                 $lineNumber++;
 
@@ -120,8 +122,8 @@ final class CidiInasistenciasCsvImporter
                 $totalDataRows++;
 
                 $cursoNum = $this->mapCurso($row[self::COL_CURSO] ?? '');
-                $seccion = trim((string) ($row[self::COL_SECCION] ?? ''));
-                $dniRaw = trim((string) ($row[self::COL_DNI] ?? ''));
+                $seccion  = trim((string) ($row[self::COL_SECCION] ?? ''));
+                $dniRaw   = trim((string) ($row[self::COL_DNI] ?? ''));
                 $fechaRaw = trim((string) ($row[self::COL_FECHA] ?? ''));
 
                 $context = $this->formatIssueContext($row);
@@ -197,33 +199,11 @@ final class CidiInasistenciasCsvImporter
                 }
 
                 $payload = $this->buildPayload($idMatricula, $fecha, $resolvedTipo);
-                $sync = $this->sincronizarRegistro($payload);
-
-                if ($sync === 'inserted') {
-                    $insertedRows++;
-                    $pendingChanges++;
-                } elseif ($sync === 'updated') {
-                    $updatedRows++;
-                    $pendingChanges++;
-                } elseif ($sync === 'unchanged') {
-                    $skippedSinCambioRows++;
-                } else {
-                    $skippedRows++;
-                    $issues[] = $this->issue(
-                        $lineNumber,
-                        'inasistencia_ambigua',
-                        'Hay más de un registro con la misma matrícula, fecha y tipo; no se actualizó.',
-                        $context
-                    );
-                }
+                Inasistencia::create($payload);
+                $insertedRows++;
             }
 
-            $committed = $pendingChanges > 0;
-            if ($committed) {
-                DB::commit();
-            } else {
-                DB::rollBack();
-            }
+            DB::commit();
 
             $issuesTruncated = count($issues) > self::MAX_ISSUES;
             if ($issuesTruncated) {
@@ -231,15 +211,16 @@ final class CidiInasistenciasCsvImporter
             }
 
             return new CidiInasistenciasCsvImportResult(
-                totalDataRows: $totalDataRows,
-                insertedRows: $insertedRows,
-                updatedRows: $updatedRows,
-                skippedRows: $skippedRows,
+                totalDataRows:       $totalDataRows,
+                insertedRows:        $insertedRows,
+                updatedRows:         0,
+                skippedRows:         $skippedRows,
                 skippedPresenteRows: $skippedPresenteRows,
-                skippedSinCambioRows: $skippedSinCambioRows,
-                committed: $committed,
-                issues: $issues,
-                issuesTruncated: $issuesTruncated,
+                skippedSinCambioRows: 0,
+                committed:           true,
+                issues:              $issues,
+                issuesTruncated:     $issuesTruncated,
+                deletedRows:         $deletedRows,
             );
         } catch (Throwable $e) {
             if (DB::transactionLevel() > 0) {
@@ -250,6 +231,23 @@ final class CidiInasistenciasCsvImporter
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * Elimina todos los registros con obs='CIDI' del ciclo lectivo y nivel indicados.
+     * Solo toca registros marcados por importaciones anteriores; los manuales (obs distinto) se preservan.
+     */
+    private function eliminarRegistrosCidi(int $idTerlec, int $idNivel): int
+    {
+        return (int) DB::table('inasistencias')
+            ->where('obs', 'CIDI')
+            ->whereIn('idMatricula', function ($q) use ($idTerlec, $idNivel) {
+                $q->select('id')
+                    ->from('matricula')
+                    ->where('idTerlec', $idTerlec)
+                    ->where('idNivel', $idNivel);
+            })
+            ->delete();
     }
 
     /**

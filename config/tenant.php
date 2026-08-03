@@ -558,6 +558,20 @@ return [
     ],
 
     /**
+     * Sincronización CIDI — importación de inasistencias (Menú de Secretaría → ASISTENCIA ESTUDIANTES).
+     *
+     * `implementacion`: clave de variante del importer:
+     *   - `detalle` (default): match exacto del Tipo completo a `texto_cidi`; `just` por heurísticas.
+     *     Requiere una fila de catálogo por cada variante (AUSENTE JUSTIFICADO / AUSENTE INJUSTIFICADO).
+     *   - `diario`:  match flexible (quita JUSTIFICADO/INJUSTIFICADO y fracciones al buscar); `just` siempre
+     *     derivado de la columna Tipo (contiene JUSTIFICADO → J, INJUSTIFICADO → I; resto → J).
+     *     Permite un solo concepto AUSENTE en el catálogo para ambas justificaciones.
+     */
+    'sincro_cidi_inasistencias' => [
+        'implementacion' => 'detalle',
+    ],
+
+    /**
      * Registro de asistencia (Menú de Secretaría → ASISTENCIA ESTUDIANTES).
      * `por_nivel`: clave = `niveles.id`, valor = `con_datos` | `sin_datos`.
      * Default implícito si falta la clave: `con_datos` en todos los niveles.

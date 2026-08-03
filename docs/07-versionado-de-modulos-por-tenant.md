@@ -100,6 +100,22 @@ return [
 
 Consumir con `tenantRegistroAsistenciaImplementacion()`. Detalle: [modulos/registro-asistencia.md](modulos/registro-asistencia.md).
 
+Sincronización CIDI de inasistencias — variante del importer:
+
+- `detalle` (default): match exacto del texto Tipo completo contra `texto_cidi`; requiere filas distintas para AUSENTE JUSTIFICADO e INJUSTIFICADO; `just` por heurísticas.
+- `diario`: match flexible (quita JUSTIFICADO/INJUSTIFICADO y fracciones si el exacto no existe); `just` siempre derivado del texto de la columna Tipo del CSV; permite un solo concepto AUSENTE en el catálogo.
+
+```php
+// config/tenants/sanfranciscoasis.php
+return [
+    'sincro_cidi_inasistencias' => [
+        'implementacion' => 'diario',
+    ],
+];
+```
+
+Consumir con `tenantSincroCidiInasistenciasImplementacion()`.
+
 Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
 
 ```php

@@ -1647,6 +1647,19 @@ if (! function_exists('tenantSecretariaInformeInasistenciasHabilitada')) {
     }
 }
 
+if (! function_exists('tenantSincroCidiInasistenciasImplementacion')) {
+    /**
+     * Variante del importer de sincronización CIDI de inasistencias: `detalle` | `diario`.
+     * Config: `tenant.sincro_cidi_inasistencias.implementacion`.
+     */
+    function tenantSincroCidiInasistenciasImplementacion(): string
+    {
+        $impl = config('tenant.sincro_cidi_inasistencias.implementacion');
+
+        return filled($impl) ? (string) $impl : 'detalle';
+    }
+}
+
 if (! function_exists('tenantRegistroAsistenciaImplementacion')) {
     /**
      * Variante del Registro de Asistencia PDF para un nivel: `con_datos` | `sin_datos`.

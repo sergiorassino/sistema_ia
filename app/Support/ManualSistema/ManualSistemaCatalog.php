@@ -518,16 +518,18 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Sincronización CIDI inasistencias',
                         'Menú Asistencia estudiantes → Descargar inasistencias desde CIDI',
-                        'Importa el CSV InasistenciasDetalle exportado desde GE/CIDI; omite presentes y registra ausencias, llegadas tarde y retiros.',
+                        'Importa el CSV InasistenciasDetalle exportado desde GE/CIDI; omite presentes y registra ausencias, llegadas tarde y retiros. Hay dos variantes: «detalle» (match exacto) y «diario» (just automática desde el CSV, match flexible).',
                         [
                             'Exporte desde CIDI el listado InasistenciasDetalle (CSV con punto y coma).',
-                            'En la pantalla de sincronización, cargue en cada tipo el «texto CIDI» (valor exacto de la columna Tipo del CSV) y guarde.',
+                            'En la pantalla de sincronización, cargue en cada tipo el «texto CIDI» y guarde. Variante «detalle»: texto exacto del CSV (ej. AUSENTE JUSTIFICADO). Variante «diario»: texto base sin justificación (ej. AUSENTE).',
                             'Suba el archivo con el ciclo lectivo y nivel correctos en sesión.',
                             'Revise el resumen: filas registradas, presentes omitidos y detalle de errores (alumno no matriculado, tipo no mapeado, etc.).',
                             'Habilite el permiso IA orden 24 para el personal que deba importar.',
+                            'La variante activa se configura con sincro_cidi_inasistencias.implementacion en config/tenants/{slug}.php (default: detalle).',
                         ],
                         [
-                            'Cada fila debe tener texto_cidi igual al Tipo del CSV. Llegada tarde/retiro anticipado: just J; AUSENTE JUSTIFICADO/INJUSTIFICADO: cantidad 1 y J/I (tipos separados).',
+                            'Variante «detalle»: requiere filas distintas para AUSENTE JUSTIFICADO e INJUSTIFICADO en el catálogo; just por heurísticas del tipo.',
+                            'Variante «diario»: just se extrae siempre de la columna Tipo del CSV (contiene INJUSTIFICADO → I; resto → J). Un solo concepto AUSENTE es suficiente.',
                         ],
                         'Permiso IA orden 24',
                     ),
