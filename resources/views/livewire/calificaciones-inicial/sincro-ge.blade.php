@@ -36,7 +36,8 @@
             <p>Suba el archivo <strong>CSV</strong> exportado desde <strong>GE</strong> para inicial (separador punto y coma).</p>
             <ul class="list-disc space-y-1 pl-5">
                 <li>Etapa 2 del archivo CIDI → 1ª etapa del sistema (<code class="text-xs">ic05</code>–<code class="text-xs">ic10</code>, <code class="text-xs">ic01</code>). Etapa 3 CIDI → 2ª etapa (<code class="text-xs">ic11</code>–<code class="text-xs">ic16</code>, <code class="text-xs">ic02</code>). Apreciación final → <code class="text-xs">ic03</code>. La etapa 1 del archivo no se importa.</li>
-                <li>Cada columna del CSV actualiza solo su campo; si la celda está vacía, se <strong>borra</strong> la nota en el sistema. No se copian parciales a finales de etapa.</li>
+                <li>Columnas N y O del CSV (<em>Observaciones</em> / <em>Observaciones 2</em>) → <code class="text-xs">obs01</code> / <code class="text-xs">obs02</code> (textos del informe de progreso por materia). Vacío en el archivo borra el texto en el sistema.</li>
+                <li>Cada columna del CSV actualiza solo su campo; si la celda está vacía, se <strong>borra</strong> la nota o el texto en el sistema. No se copian parciales a finales de etapa.</li>
                 <li>La sala se reconoce como <em>SALA DE 3/4/5 AÑOS</em> (o equivalentes). La materia se identifica por la columna M (<em>Cód. Esp. Curricular</em>), cruzada con <code class="text-xs">matplan.codGE</code> en el curso y división del alumno.</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel inicial</strong> de su sesión actual.</li>
                 <li>Debe existir <strong>exactamente un</strong> registro en calificaciones por matrícula del alumno y materia Si no existe o hay duplicados, la fila se informa y no se graba.</li>
