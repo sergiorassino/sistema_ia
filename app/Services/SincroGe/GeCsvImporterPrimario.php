@@ -3,6 +3,7 @@
 namespace App\Services\SincroGe;
 
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioNotasPermitidas;
+use App\Support\NivelSistema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
@@ -15,6 +16,9 @@ use Throwable;
  * del sistema (ic05–ic10, ic01); etapa 3 CIDI → 2ª etapa (ic11–ic16, ic02); apreciación final → ic03.
  * Cada celda del CSV va solo a su campo; celda vacía borra el valor en BD. No se copian parciales
  * a finales de etapa ni se inventan notas.
+ *
+ * Solo nivel inicial: columnas N/O («Observaciones» / «Observaciones 2») → `calificaciones.obs01` /
+ * `obs02` (textos del informe de progreso). Primario no importa esas columnas.
  *
  * Por fila: curso (PRIMER GRADO… / SALA DE 3 AÑOS…), división, DNI, columna M «Cód. Esp. Curricular»
  * cruzada solo con `matplan.codGE` en el curso del ciclo activo.
@@ -41,6 +45,12 @@ final class GeCsvImporterPrimario
     private const COL_ESPACIO_CURRICULAR = 11;
 
     private const COL_COD_MATERIA = 12;
+
+    /** Excel N — Observaciones (solo nivel inicial → obs01). */
+    private const COL_OBS_1 = 13;
+
+    /** Excel O — Observaciones 2 (solo nivel inicial → obs02). */
+    private const COL_OBS_2 = 14;
 
     /** CIDI etapa 2 → sistema 1ª etapa (parciales). */
     private const COL_CIDI_E2_N1 = 29;
@@ -113,6 +123,12 @@ final class GeCsvImporterPrimario
     /** @var array<int, list<string>> */
     private array $notasPermitidasPorEscala = [];
 
+    /** Solo true cuando `import()` corre con nivel inicial (N/O → obs01/obs02). */
+    private bool $importarObservacionesInicial = false;
+
+    /** @var array{obs01: bool, obs02: bool} */
+    private array $columnasObsDisponibles = ['obs01' => false, 'obs02' => false];
+
     public function import(string $absolutePath, int $idTerlec, int $idNivel): GeCsvImportResult
     {
         if (! is_readable($absolutePath)) {
@@ -128,6 +144,11 @@ final class GeCsvImporterPrimario
         $this->cursoCache = [];
         $this->matriculaCache = [];
         $this->legajoCache = [];
+        $this->importarObservacionesInicial = NivelSistema::esInicial($idNivel);
+        $this->columnasObsDisponibles = [
+            'obs01' => $this->importarObservacionesInicial && Schema::hasColumn('calificaciones', 'obs01'),
+            'obs02' => $this->importarObservacionesInicial && Schema::hasColumn('calificaciones', 'obs02'),
+        ];
         $this->notasPermitidasPorEscala = CalificacionesPrimarioNotasPermitidas::listasPorEscala($idNivel);
         $this->notasPermitidas = array_values(array_unique(array_merge(
             $this->notasPermitidasPorEscala[CalificacionesPrimarioNotasPermitidas::ESCALA_CONCEPTOS] ?? [],
@@ -260,6 +281,21 @@ final class GeCsvImporterPrimario
                 $context = $this->formatIssueContext($row, $materia['matPlanMateria']);
 
                 $payload = $this->buildGradePayload($row);
+
+                $obsSinColumna = $this->observacionesSinColumna($payload);
+                if ($obsSinColumna !== []) {
+                    $skippedRows++;
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'columnas_inexistentes',
+                        'Hay textos de observación CIDI pero faltan columnas en calificaciones: '.implode(', ', $obsSinColumna).'.',
+                        $context
+                    );
+
+                    continue;
+                }
+
+                $payload = $this->filtrarObservacionesSegunEsquema($payload);
 
                 $invalidNotes = $this->findInvalidNotes($payload, (int) ($materia['escala'] ?? 1));
                 if ($invalidNotes !== []) {
@@ -726,14 +762,14 @@ final class GeCsvImporterPrimario
 
     /**
      * CIDI etapa 2 → 1ª etapa del sistema; CIDI etapa 3 → 2ª etapa; apreciación final → ic03.
-     * Mapeo 1:1 por columna; vacío en CSV → cadena vacía en BD (borra el campo).
+     * Nivel inicial: N → obs01, O → obs02. Mapeo 1:1; vacío en CSV → cadena vacía en BD.
      *
      * @param  list<string>  $row
      * @return array<string, string>
      */
     private function buildGradePayload(array $row): array
     {
-        return [
+        $payload = [
             'ic01' => $this->celda($row, self::COL_CIDI_E2_FINAL),
             'ic02' => $this->celda($row, self::COL_CIDI_E3_FINAL),
             'ic03' => $this->celda($row, self::COL_CIDI_AF),
@@ -750,6 +786,13 @@ final class GeCsvImporterPrimario
             'ic15' => $this->celda($row, self::COL_CIDI_E3_N5),
             'ic16' => $this->celda($row, self::COL_CIDI_E3_N6),
         ];
+
+        if ($this->importarObservacionesInicial) {
+            $payload['obs01'] = $this->celda($row, self::COL_OBS_1);
+            $payload['obs02'] = $this->celda($row, self::COL_OBS_2);
+        }
+
+        return $payload;
     }
 
     /**
@@ -758,6 +801,50 @@ final class GeCsvImporterPrimario
     private function celda(array $row, int $columna): string
     {
         return trim((string) ($row[$columna] ?? ''));
+    }
+
+    /**
+     * Campos de observación con valor en CSV cuya columna no existe en este tenant.
+     *
+     * @param  array<string, string>  $payload
+     * @return list<string>
+     */
+    private function observacionesSinColumna(array $payload): array
+    {
+        if (! $this->importarObservacionesInicial) {
+            return [];
+        }
+
+        $faltantes = [];
+        foreach (['obs01', 'obs02'] as $campo) {
+            $valor = trim((string) ($payload[$campo] ?? ''));
+            if ($valor !== '' && ! ($this->columnasObsDisponibles[$campo] ?? false)) {
+                $faltantes[] = $campo;
+            }
+        }
+
+        return $faltantes;
+    }
+
+    /**
+     * Quita obs01/obs02 del payload si la columna no existe (solo cuando el valor está vacío).
+     *
+     * @param  array<string, string>  $payload
+     * @return array<string, string>
+     */
+    private function filtrarObservacionesSegunEsquema(array $payload): array
+    {
+        if (! $this->importarObservacionesInicial) {
+            return $payload;
+        }
+
+        foreach (['obs01', 'obs02'] as $campo) {
+            if (! ($this->columnasObsDisponibles[$campo] ?? false)) {
+                unset($payload[$campo]);
+            }
+        }
+
+        return $payload;
     }
 
     /**
@@ -777,7 +864,7 @@ final class GeCsvImporterPrimario
 
         $invalid = [];
         foreach ($payload as $field => $value) {
-            if ($value === '') {
+            if ($value === '' || str_starts_with($field, 'obs')) {
                 continue;
             }
             if (! in_array($value, $permitidas, true)) {
