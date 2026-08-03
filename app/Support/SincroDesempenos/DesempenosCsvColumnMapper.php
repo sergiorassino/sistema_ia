@@ -45,7 +45,7 @@ final class DesempenosCsvColumnMapper
             if ($h === '') {
                 continue;
             }
-            if (str_contains($h, 'grado') || str_contains($h, 'año') || str_contains($h, 'ano')) {
+            if (str_contains($h, 'grado') || str_contains($h, 'año') || str_contains($h, 'ano') || str_contains($h, 'sala')) {
                 $this->map['grado'] = $i;
             } elseif (str_contains($h, 'divis')) {
                 $this->map['division'] = $i;

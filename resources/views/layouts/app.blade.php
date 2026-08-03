@@ -40,13 +40,13 @@
         viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf', 'viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf') ? 'true' : 'false' }},
         materialDidactico: {{ request()->routeIs('material-didactico.*') ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
-        calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') ? 'true' : 'false' }},
-        calificacionesInicialSfq: {{ str_starts_with($route ?? '', 'calificacionesInicialSfq.') ? 'true' : 'false' }},
+        calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicial() ? 'true' : 'false' }},
+        calificacionesInicialSfq: {{ str_starts_with($route ?? '', 'calificacionesInicialSfq.') || (in_array($route ?? '', ['calificacionesInicial.sincroGe', 'calificacionesInicial.sincroDesempenos'], true) && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicialSfq()) ? 'true' : 'false' }},
         calificacionesPrimario: {{ str_starts_with($route ?? '', 'calificacionesPrimario.') ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.') || str_starts_with($route ?? '', 'calificacionesSecundarioEpq.')) ? 'true' : 'false' }},
         estadisticas: {{ str_starts_with($route ?? '', 'estadistica.rendimiento') ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
-        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
+        inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || str_starts_with($route ?? '', 'seguimiento.registro-asistencia') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias') || str_starts_with($route ?? '', 'docentes.certificacion-servicios') || request()->routeIs('listados.docentes', 'listados.docentes.pdf', 'listados.docentes.excel')) ? 'true' : 'false' }},
         examenes: {{ str_starts_with($route ?? '', 'examenes.') || str_starts_with($route ?? '', 'doc-pp.') ? 'true' : 'false' }},
         matrizAnaliticos: {{ str_starts_with($route ?? '', 'matrizAnaliticos.') ? 'true' : 'false' }},
@@ -201,7 +201,9 @@
                 if (parsed && typeof parsed === 'object') this.groups = { ...this.groups, ...parsed };
             } catch (e) {}
         }
-        @if (str_starts_with($route ?? '', 'calificacionesInicialSfq.'))
+        @if (str_starts_with($route ?? '', 'calificacionesInicialSfq.')
+            || (in_array($route ?? '', ['calificacionesInicial.sincroGe', 'calificacionesInicial.sincroDesempenos'], true)
+                && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicialSfq()))
         this.groups.calificacionesInicialSfq = true;
         @endif
         this.loadSidebarNavScroll();
@@ -812,6 +814,20 @@
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="truncate">Parte diario del preceptor</span>
+                </a>
+                @endif
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::REGISTRO_ASISTENCIA))
+                <a href="{{ route('seguimiento.registro-asistencia') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'seguimiento.registro-asistencia'),
+                   ])
+                   title="{{ seSidebarTooltip('Registro de asistencia mensual (PDF) y feriados', \App\Support\PermisosIaCatalog::REGISTRO_ASISTENCIA) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="truncate">Registro de Asistencia</span>
                 </a>
                 @endif
                 @if (tenantSecretariaInformeInasistenciasHabilitada())

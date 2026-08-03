@@ -557,6 +557,20 @@ return [
         ],
     ],
 
+    /**
+     * Registro de asistencia (Menú de Secretaría → ASISTENCIA ESTUDIANTES).
+     * `por_nivel`: clave = `niveles.id`, valor = `con_datos` | `sin_datos`.
+     * Default implícito si falta la clave: `con_datos` en todos los niveles.
+     * Excepción típica: Montecristo (inicial/primario → `sin_datos`) en `config/tenants/montecristo.php`.
+     */
+    'registro_asistencia' => [
+        'por_nivel' => [
+            // 1 => 'sin_datos',
+            // 2 => 'sin_datos',
+            // 3 => 'con_datos',
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | ARCA — consultas al padrón tributario

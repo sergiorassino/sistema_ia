@@ -81,6 +81,25 @@ return [
 
 Consumir con `tenantExamenesActaVolantePreviosModalidad()`.
 
+Registro de asistencia (PDF mensual) — modelo por nivel:
+
+- Default implícito: **`con_datos`** en todos los niveles.
+- Override en `config/tenants/{slug}.php` solo si difiere. Ejemplo (Montecristo):
+
+```php
+return [
+    'registro_asistencia' => [
+        'por_nivel' => [
+            1 => 'sin_datos', // inicial
+            2 => 'sin_datos', // primario
+            // 3 queda en con_datos por default
+        ],
+    ],
+];
+```
+
+Consumir con `tenantRegistroAsistenciaImplementacion()`. Detalle: [modulos/registro-asistencia.md](modulos/registro-asistencia.md).
+
 Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
 
 ```php

@@ -10,7 +10,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Importa desempeños e inasistencias de etapa desde CSV (primario).
+ * Importa desempeños e inasistencias de etapa desde CSV (primario e inicial).
  *
  * Actualiza en `matricula`:
  * - Etapa 1: obs1, just1, inju1
@@ -251,6 +251,24 @@ final class DesempenosCsvImporter
             $n = (int) $t;
 
             return $n >= 1 && $n <= 6 ? $n : null;
+        }
+
+        if (preg_match('/SALA\s+DE\s+(\d)/u', $t, $coincidencias) === 1) {
+            $n = (int) $coincidencias[1];
+
+            return ($n >= 1 && $n <= 5) ? $n : null;
+        }
+
+        if (str_contains($t, 'SALA')) {
+            if (str_contains($t, 'TRES')) {
+                return 3;
+            }
+            if (str_contains($t, 'CUATRO')) {
+                return 4;
+            }
+            if (str_contains($t, 'CINCO')) {
+                return 5;
+            }
         }
 
         if (str_contains($t, 'PRIMER')) {

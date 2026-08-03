@@ -1647,6 +1647,28 @@ if (! function_exists('tenantSecretariaInformeInasistenciasHabilitada')) {
     }
 }
 
+if (! function_exists('tenantRegistroAsistenciaImplementacion')) {
+    /**
+     * Variante del Registro de Asistencia PDF para un nivel: `con_datos` | `sin_datos`.
+     * Config: `tenant.registro_asistencia.por_nivel.{idNivel}`. Sin clave: `con_datos` (todos los niveles).
+     */
+    function tenantRegistroAsistenciaImplementacion(?int $idNivel = null): string
+    {
+        $idNivel = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
+        $mapa = config('tenant.registro_asistencia.por_nivel', []);
+        if (! is_array($mapa)) {
+            $mapa = [];
+        }
+
+        $raw = $mapa[$idNivel] ?? $mapa[(string) $idNivel] ?? null;
+        if (is_string($raw) && $raw !== '') {
+            return \App\Support\RegistroAsistencia\RegistroAsistenciaCatalog::normalize($raw);
+        }
+
+        return \App\Support\RegistroAsistencia\RegistroAsistenciaCatalog::defaultParaNivel($idNivel);
+    }
+}
+
 if (! function_exists('tenantTeaRegistroImplementacion')) {
     /**
      * Implementación TCPDF de impresos TEA del tenant (`montecristo` o `caixalsf` por defecto).

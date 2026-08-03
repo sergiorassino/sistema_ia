@@ -9,15 +9,15 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Importa calificaciones de primario desde CSV GE/CIDI (formato grados 1°–6°).
+ * Importa calificaciones desde CSV GE/CIDI (primario: grados 1°–6°; inicial: salas 3–5).
  *
  * Formato CIDI (59 columnas): la etapa 1 del archivo no se importa. Etapa 2 CIDI → 1ª etapa
  * del sistema (ic05–ic10, ic01); etapa 3 CIDI → 2ª etapa (ic11–ic16, ic02); apreciación final → ic03.
  * Cada celda del CSV va solo a su campo; celda vacía borra el valor en BD. No se copian parciales
  * a finales de etapa ni se inventan notas.
  *
- * Por fila: curso (PRIMER GRADO…), división, DNI, columna M «Cód. Esp. Curricular» cruzada solo
- * con `matplan.codGE` en el curso del ciclo activo.
+ * Por fila: curso (PRIMER GRADO… / SALA DE 3 AÑOS…), división, DNI, columna M «Cód. Esp. Curricular»
+ * cruzada solo con `matplan.codGE` en el curso del ciclo activo.
  *
  * Criterio de actualización: la misma fila que usa la carga por estudiante
  * (`idMatricula` + `idMaterias`, con fallback legacy por `ord`).
@@ -84,6 +84,15 @@ final class GeCsvImporterPrimario
         'CUARTO GRADO' => 4,
         'QUINTO GRADO' => 5,
         'SEXTO GRADO' => 6,
+        'SALA DE 3 AÑOS' => 3,
+        'SALA DE 4 AÑOS' => 4,
+        'SALA DE 5 AÑOS' => 5,
+        'SALA DE TRES AÑOS' => 3,
+        'SALA DE CUATRO AÑOS' => 4,
+        'SALA DE CINCO AÑOS' => 5,
+        'SALA DE 3' => 3,
+        'SALA DE 4' => 4,
+        'SALA DE 5' => 5,
     ];
 
     /** @var array<string, array{status: string, materia: array{idMatPlan: int, idCursos: int, idMaterias: int, matPlanMateria: string, escala: int}|null}> */
@@ -157,7 +166,12 @@ final class GeCsvImporterPrimario
 
                 if ($cursoNum === null) {
                     $skippedRows++;
-                    $issues[] = $this->issue($lineNumber, 'curso_invalido', 'Curso/grado no reconocido en el archivo (espere PRIMER GRADO … SEXTO GRADO).', $this->formatIssueContext($row));
+                    $issues[] = $this->issue(
+                        $lineNumber,
+                        'curso_invalido',
+                        'Curso no reconocido en el archivo (espere PRIMER GRADO … SEXTO GRADO, o SALA DE 3/4/5 AÑOS).',
+                        $this->formatIssueContext($row)
+                    );
 
                     continue;
                 }
@@ -395,8 +409,31 @@ final class GeCsvImporterPrimario
     private function mapCurso(string $texto): ?int
     {
         $key = mb_strtoupper(trim($texto), 'UTF-8');
+        $key = preg_replace('/\s+/u', ' ', $key) ?? $key;
 
-        return self::CURSO_TEXTO[$key] ?? null;
+        if (isset(self::CURSO_TEXTO[$key])) {
+            return self::CURSO_TEXTO[$key];
+        }
+
+        if (preg_match('/SALA\s+DE\s+(\d)/u', $key, $coincidencias) === 1) {
+            $n = (int) $coincidencias[1];
+
+            return ($n >= 1 && $n <= 5) ? $n : null;
+        }
+
+        if (str_contains($key, 'SALA')) {
+            if (str_contains($key, 'TRES')) {
+                return 3;
+            }
+            if (str_contains($key, 'CUATRO')) {
+                return 4;
+            }
+            if (str_contains($key, 'CINCO')) {
+                return 5;
+            }
+        }
+
+        return null;
     }
 
     private function normalizeCodGe(string $codigo): string
