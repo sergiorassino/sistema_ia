@@ -19,11 +19,13 @@ class Sancion extends Model
         'motivo',
         'solipor',
         'publicada',
+        'comunicadaPadres',
     ];
 
     protected $casts = [
         'fecha' => 'date',
         'publicada' => 'boolean',
+        'comunicadaPadres' => 'boolean',
     ];
 
     public function tipo()

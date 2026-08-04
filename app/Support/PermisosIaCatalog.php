@@ -208,6 +208,9 @@ final class PermisosIaCatalog
     /** Registro de asistencia mensual (PDF por curso(s) y mes) y ABM de feriados del nivel. */
     public const REGISTRO_ASISTENCIA = 90;
 
+    /** ABM de tipos de sanción disciplinaria (texto de notificación a padres, remitente y refuerzo mail). */
+    public const SANCION_TIPOS_CONFIG = 91;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -300,6 +303,7 @@ final class PermisosIaCatalog
             ['id' => 86, 'orden' => self::PLANIFICACIONES_PROGRAMAS, 'tema' => 'EXÁMENES', 'descripcion' => 'Planificaciones y programas: subida de PDF, aprobación para estudiantes y observaciones (tabla doc_pp).'],
             ['id' => 87, 'orden' => self::CERTIFICACION_SERVICIOS, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Certificación de servicios: carga de períodos de servicio y licencias, e impresión del certificado PDF.'],
             ['id' => 90, 'orden' => self::REGISTRO_ASISTENCIA, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Registro de asistencia: impresión PDF mensual por curso(s) (con o sin datos) y administración de feriados del nivel.'],
+            ['id' => 91, 'orden' => self::SANCION_TIPOS_CONFIG, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Tipos de sanción disciplinaria: alta, edición y baja de tipos; configurar texto de notificación a padres, remitente y refuerzo por correo.'],
         ];
     }
 
