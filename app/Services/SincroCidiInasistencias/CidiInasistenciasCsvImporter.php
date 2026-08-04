@@ -3,6 +3,7 @@
 namespace App\Services\SincroCidiInasistencias;
 
 use App\Models\Inasistencia;
+use App\Models\InasistenciaValor;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -10,10 +11,26 @@ use Throwable;
 /**
  * Importa inasistencias desde el CSV «InasistenciasDetalle» exportado por CIDI/GE.
  *
+ * Layout del CSV (separador «;»):
+ *   Grado/Año ; División ; Turno ; Nro. Documento ; Apellido ; Nombre ; Tipo ; Fecha
+ *   (col 0)     (col 1)   (col 2)    (col 3)        (col 4)   (col 5) (col 6)(col 7)
+ *
  * Estrategia: dentro de una única transacción, primero elimina todos los registros con
- * obs = 'CIDI' del ciclo lectivo y nivel activos, luego inserta las filas del archivo
- * (omitiendo PRESENTE). Así los registros borrados en CIDI desaparecen automáticamente.
+ * obs = 'CIDI' del ciclo lectivo y nivel activos, luego inserta las filas del archivo.
  * Los registros cargados manualmente (obs distinto) no se tocan.
+ *
+ * El alumno se identifica solo por DNI: las novedades se graban en la matrícula vigente
+ * del ciclo lectivo y nivel de sesión, aunque el curso/división del CSV CIDI no coincida
+ * (p. ej. cambio de división a mitad de año).
+ *
+ * - `just` se determina siempre desde la columna Tipo:
+ *     · contiene «INJUSTIFICADO» → 'I'
+ *     · resto (llegada tarde, retiro, justificado) → 'J'
+ * - `tipo` se resuelve vía `texto_cidi` con búsqueda en cascada:
+ *     1) match exacto normalizado
+ *     2) quitar «JUSTIFICADO» / «INJUSTIFICADO» + reintentar
+ *     3) quitar fracción (1/4, 1/2, 3/4) + reintentar
+ * - Permite un único concepto «AUSENTE» en el catálogo para ambas justificaciones.
  */
 final class CidiInasistenciasCsvImporter
 {
@@ -36,12 +53,12 @@ final class CidiInasistenciasCsvImporter
     private const COL_FECHA = 7;
 
     private const CURSO_TEXTO = [
-        'PRIMER AÑO' => 1,
-        'SEGUNDO AÑO' => 2,
-        'TERCER AÑO' => 3,
-        'CUARTO AÑO' => 4,
-        'QUINTO AÑO' => 5,
-        'SEXTO AÑO' => 6,
+        'PRIMER AÑO'   => 1,
+        'SEGUNDO AÑO'  => 2,
+        'TERCER AÑO'   => 3,
+        'CUARTO AÑO'   => 4,
+        'QUINTO AÑO'   => 5,
+        'SEXTO AÑO'    => 6,
     ];
 
     /** @var array<string, int|null> */
@@ -52,6 +69,13 @@ final class CidiInasistenciasCsvImporter
 
     /** @var array<string, int|null> */
     private array $matriculaCache = [];
+
+    /**
+     * Índice: texto CIDI normalizado → InasistenciaValor.
+     *
+     * @var array<string, InasistenciaValor>
+     */
+    private array $porTextoCidi = [];
 
     public function import(string $absolutePath, int $idTerlec, int $idNivel): CidiInasistenciasCsvImportResult
     {
@@ -64,32 +88,27 @@ final class CidiInasistenciasCsvImporter
             throw new RuntimeException('No se pudo abrir el archivo CSV.');
         }
 
-        $mapper = new CidiInasistenciaTipoMapper();
-        if ($mapper->catalogoVacio()) {
-            fclose($handle);
+        $this->cargarCatalogo();
 
-            throw new RuntimeException('No hay tipos de inasistencia configurados en inasistencias_valores.');
-        }
-
-        if (! $mapper->tieneTextosCidiConfigurados()) {
+        if ($this->porTextoCidi === []) {
             fclose($handle);
 
             throw new RuntimeException(
-                'Ningún tipo en inasistencias_valores tiene «texto CIDI» configurado. Complete la vinculación en esta pantalla antes de importar.'
+                'Ningún tipo en inasistencias_valores tiene «texto CIDI» configurado. Complete la vinculación antes de importar.'
             );
         }
 
-        $this->cursoCache = [];
-        $this->legajoCache = [];
+        $this->cursoCache    = [];
+        $this->legajoCache   = [];
         $this->matriculaCache = [];
 
-        $issues             = [];
-        $totalDataRows      = 0;
-        $insertedRows       = 0;
-        $skippedRows        = 0;
+        $issues              = [];
+        $totalDataRows       = 0;
+        $insertedRows        = 0;
+        $skippedRows         = 0;
         $skippedPresenteRows = 0;
-        $lineNumber         = 0;
-        $deletedRows        = 0;
+        $lineNumber          = 0;
+        $deletedRows         = 0;
 
         try {
             $header = fgetcsv($handle, 0, self::DELIMITER);
@@ -110,10 +129,10 @@ final class CidiInasistenciasCsvImporter
                     continue;
                 }
 
-                $row = $this->normalizeRow($rawRow);
+                $row      = $this->normalizeRow($rawRow);
                 $tipoCidi = trim((string) ($row[self::COL_TIPO] ?? ''));
 
-                if ($mapper->esPresente($tipoCidi)) {
+                if ($this->esPresente($tipoCidi)) {
                     $skippedPresenteRows++;
 
                     continue;
@@ -127,13 +146,6 @@ final class CidiInasistenciasCsvImporter
                 $fechaRaw = trim((string) ($row[self::COL_FECHA] ?? ''));
 
                 $context = $this->formatIssueContext($row);
-
-                if ($cursoNum === null) {
-                    $skippedRows++;
-                    $issues[] = $this->issue($lineNumber, 'curso_invalido', 'Curso no reconocido en el archivo.', $context);
-
-                    continue;
-                }
 
                 if ($dniRaw === '' || ! ctype_digit($dniRaw)) {
                     $skippedRows++;
@@ -150,8 +162,8 @@ final class CidiInasistenciasCsvImporter
                     continue;
                 }
 
-                $resolvedTipo = $mapper->resolve($tipoCidi);
-                if ($resolvedTipo === null) {
+                $tipoResuelto = $this->resolverTipo($tipoCidi);
+                if ($tipoResuelto === null) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
@@ -163,19 +175,9 @@ final class CidiInasistenciasCsvImporter
                     continue;
                 }
 
-                $dni = (int) $dniRaw;
-                $idCursos = $this->resolveCursoId($cursoNum, $seccion, $idTerlec, $idNivel);
-                if ($idCursos === null) {
-                    $skippedRows++;
-                    $issues[] = $this->issue(
-                        $lineNumber,
-                        'curso_no_encontrado',
-                        "No existe el curso {$cursoNum}° división «{$seccion}» en el ciclo y nivel activos.",
-                        $context
-                    );
-
-                    continue;
-                }
+                [$idTipo, $cantidad] = $tipoResuelto;
+                $just = $this->resolverJust($tipoCidi);
+                $dni  = (int) $dniRaw;
 
                 $idLegajos = $this->resolveLegajoId($dni);
                 if ($idLegajos === null) {
@@ -185,21 +187,32 @@ final class CidiInasistenciasCsvImporter
                     continue;
                 }
 
-                $idMatricula = $this->resolveMatriculaId($idTerlec, $idNivel, $idCursos, $idLegajos);
+                // Preferir el curso del CSV si existe matrícula ahí; si no, cualquier matrícula del ciclo/nivel.
+                $idCursosPreferido = ($cursoNum !== null)
+                    ? $this->resolveCursoId($cursoNum, $seccion, $idTerlec, $idNivel)
+                    : null;
+
+                $idMatricula = $this->resolveMatriculaId($idTerlec, $idNivel, $idLegajos, $idCursosPreferido);
                 if ($idMatricula === null) {
                     $skippedRows++;
                     $issues[] = $this->issue(
                         $lineNumber,
                         'matricula_no_encontrada',
-                        'El alumno no está matriculado en el curso/división del archivo para el ciclo lectivo activo.',
-                        $context.' · '.$this->matriculaMismatchDebug($idLegajos, $idTerlec, $idNivel, $idCursos)
+                        'El alumno no está matriculado en el ciclo lectivo y nivel activos.',
+                        $context
                     );
 
                     continue;
                 }
 
-                $payload = $this->buildPayload($idMatricula, $fecha, $resolvedTipo);
-                Inasistencia::create($payload);
+                Inasistencia::create([
+                    'idMatricula' => $idMatricula,
+                    'fecha'       => $fecha,
+                    'tipo'        => (string) $idTipo,
+                    'cantidad'    => round($cantidad, 2),
+                    'just'        => $just,
+                    'obs'         => 'CIDI',
+                ]);
                 $insertedRows++;
             }
 
@@ -211,16 +224,16 @@ final class CidiInasistenciasCsvImporter
             }
 
             return new CidiInasistenciasCsvImportResult(
-                totalDataRows:       $totalDataRows,
-                insertedRows:        $insertedRows,
-                updatedRows:         0,
-                skippedRows:         $skippedRows,
-                skippedPresenteRows: $skippedPresenteRows,
+                totalDataRows:        $totalDataRows,
+                insertedRows:         $insertedRows,
+                updatedRows:          0,
+                skippedRows:          $skippedRows,
+                skippedPresenteRows:  $skippedPresenteRows,
                 skippedSinCambioRows: 0,
-                committed:           true,
-                issues:              $issues,
-                issuesTruncated:     $issuesTruncated,
-                deletedRows:         $deletedRows,
+                committed:            true,
+                issues:               $issues,
+                issuesTruncated:      $issuesTruncated,
+                deletedRows:          $deletedRows,
             );
         } catch (Throwable $e) {
             if (DB::transactionLevel() > 0) {
@@ -233,9 +246,160 @@ final class CidiInasistenciasCsvImporter
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Catálogo texto_cidi
+    // -------------------------------------------------------------------------
+
+    private function cargarCatalogo(): void
+    {
+        $valores = InasistenciaValor::query()
+            ->orderBy('concepto')
+            ->get(['id', 'concepto', 'texto_cidi', 'cantidad']);
+
+        $this->porTextoCidi = [];
+
+        foreach ($valores as $valor) {
+            $texto = trim((string) ($valor->texto_cidi ?? ''));
+            if ($texto === '') {
+                continue;
+            }
+
+            $key = InasistenciaValor::normalizarTexto($texto);
+            if ($key !== '') {
+                $this->porTextoCidi[$key] = $valor;
+            }
+        }
+    }
+
+    /**
+     * Resuelve el InasistenciaValor a partir del texto del Tipo del CSV usando búsqueda en cascada:
+     *   1. Match exacto normalizado
+     *   2. Sin «JUSTIFICADO» / «INJUSTIFICADO»
+     *   3. Sin fracción (1/4, 1/2, 3/4)
+     *   4. Sin justificación Y sin fracción
+     *
+     * @return array{0: int, 1: float}|null  [idTipo, cantidad]
+     */
+    private function resolverTipo(string $tipoCidi): ?array
+    {
+        // 1. Exacto
+        $valor = $this->buscarEnCatalogo($tipoCidi);
+        if ($valor !== null) {
+            return [$valor->id, $this->resolverCantidad($tipoCidi, $valor)];
+        }
+
+        // 2. Sin justificación
+        $sinJust = $this->quitarJustificacion($tipoCidi);
+        if ($sinJust !== $tipoCidi) {
+            $valor = $this->buscarEnCatalogo($sinJust);
+            if ($valor !== null) {
+                return [$valor->id, $this->resolverCantidad($tipoCidi, $valor)];
+            }
+        }
+
+        // 3. Sin fracción
+        $sinFrac = $this->quitarFraccion($tipoCidi);
+        if ($sinFrac !== $tipoCidi) {
+            $valor = $this->buscarEnCatalogo($sinFrac);
+            if ($valor !== null) {
+                return [$valor->id, $this->resolverCantidad($tipoCidi, $valor)];
+            }
+        }
+
+        // 4. Sin justificación ni fracción
+        $sinJustFrac = $this->quitarFraccion($sinJust);
+        if ($sinJustFrac !== $tipoCidi) {
+            $valor = $this->buscarEnCatalogo($sinJustFrac);
+            if ($valor !== null) {
+                return [$valor->id, $this->resolverCantidad($tipoCidi, $valor)];
+            }
+        }
+
+        return null;
+    }
+
+    private function buscarEnCatalogo(string $texto): ?InasistenciaValor
+    {
+        $key = InasistenciaValor::normalizarTexto($texto);
+
+        return $key !== '' ? ($this->porTextoCidi[$key] ?? null) : null;
+    }
+
+    /**
+     * Extrae la fracción del texto original (ej. «LLEGADA TARDE 1/2» → 0.5);
+     * si no hay fracción, devuelve `cantidad` del catálogo o 1.0.
+     */
+    private function resolverCantidad(string $tipoCidi, InasistenciaValor $valor): float
+    {
+        $norm = InasistenciaValor::normalizarTexto($tipoCidi);
+
+        if (str_contains($norm, '1/4') || preg_match('/\b1\s*\/\s*4\b/', $tipoCidi)) {
+            return 0.25;
+        }
+        if (str_contains($norm, '1/2') || preg_match('/\b1\s*\/\s*2\b/', $tipoCidi)) {
+            return 0.5;
+        }
+        if (str_contains($norm, '3/4') || preg_match('/\b3\s*\/\s*4\b/', $tipoCidi)) {
+            return 0.75;
+        }
+
+        return $valor->cantidad !== null ? (float) $valor->cantidad : 1.0;
+    }
+
+    /**
+     * Quita «JUSTIFICADO» e «INJUSTIFICADO» del texto (normalizado) y retorna la cadena limpia.
+     */
+    private function quitarJustificacion(string $texto): string
+    {
+        $s = trim(preg_replace('/\bINJUSTIFICADO\b/i', '', $texto) ?? $texto);
+        $s = trim(preg_replace('/\bJUSTIFICADO\b/i', '', $s) ?? $s);
+
+        return preg_replace('/\s{2,}/', ' ', $s) ?? $s;
+    }
+
+    /**
+     * Quita fracciones literales «1/4», «1/2», «3/4» del texto.
+     */
+    private function quitarFraccion(string $texto): string
+    {
+        $s = preg_replace('/\b[13]\/[24]\b/', '', $texto) ?? $texto;
+
+        return trim(preg_replace('/\s{2,}/', ' ', $s) ?? $s);
+    }
+
+    /**
+     * Determina la justificación a partir del texto de la columna Tipo:
+     *   - contiene «INJUSTIFICADO» → 'I'
+     *   - contiene «JUSTIFICADO» (sin injustificado) → 'J'
+     *   - resto (llegada tarde, retiro, etc.) → 'J'
+     *
+     * @return 'J'|'I'
+     */
+    private function resolverJust(string $tipoCidi): string
+    {
+        $norm = InasistenciaValor::normalizarTexto($tipoCidi);
+
+        if (str_contains($norm, 'injustificad')) {
+            return 'I';
+        }
+
+        return 'J';
+    }
+
+    private function esPresente(string $tipoCidi): bool
+    {
+        $norm = InasistenciaValor::normalizarTexto($tipoCidi);
+
+        return $norm === 'presente' || str_starts_with($norm, 'presente ');
+    }
+
+    // -------------------------------------------------------------------------
+    // Persistencia
+    // -------------------------------------------------------------------------
+
     /**
      * Elimina todos los registros con obs='CIDI' del ciclo lectivo y nivel indicados.
-     * Solo toca registros marcados por importaciones anteriores; los manuales (obs distinto) se preservan.
+     * Los registros manuales (obs distinto, p. ej. ed. física) no se tocan.
      */
     private function eliminarRegistrosCidi(int $idTerlec, int $idNivel): int
     {
@@ -250,133 +414,9 @@ final class CidiInasistenciasCsvImporter
             ->delete();
     }
 
-    /**
-     * @return array{idMatricula: int, fecha: string, tipo: string, cantidad: float, just: string|null, obs: string}
-     */
-    private function buildPayload(int $idMatricula, string $fecha, ResolvedCidiInasistenciaTipo $tipo): array
-    {
-        return [
-            'idMatricula' => $idMatricula,
-            'fecha' => $fecha,
-            'tipo' => (string) $tipo->idTipo,
-            'cantidad' => round($tipo->cantidad, 2),
-            'just' => $tipo->just,
-            'obs' => 'CIDI',
-        ];
-    }
-
-    /**
-     * @param  array{idMatricula: int, fecha: string, tipo: string, cantidad: float, just: string|null, obs: string}  $payload
-     * @return 'inserted'|'updated'|'unchanged'|'ambiguous'
-     */
-    private function sincronizarRegistro(array $payload): string
-    {
-        $existentes = Inasistencia::query()
-            ->where('idMatricula', $payload['idMatricula'])
-            ->whereDate('fecha', $payload['fecha'])
-            ->where('tipo', $payload['tipo'])
-            ->orderBy('id')
-            ->get();
-
-        if ($existentes->isEmpty()) {
-            Inasistencia::create($payload);
-
-            return 'inserted';
-        }
-
-        if ($existentes->count() > 1) {
-            return 'ambiguous';
-        }
-
-        /** @var Inasistencia $existente */
-        $existente = $existentes->first();
-
-        if ($this->payloadCoincideConRegistro($payload, $existente)) {
-            return 'unchanged';
-        }
-
-        $existente->update([
-            'cantidad' => $payload['cantidad'],
-            'just' => $payload['just'],
-            'obs' => $payload['obs'],
-        ]);
-
-        return 'updated';
-    }
-
-    /**
-     * @param  array{idMatricula: int, fecha: string, tipo: string, cantidad: float, just: string|null, obs: string}  $payload
-     */
-    private function payloadCoincideConRegistro(array $payload, Inasistencia $existente): bool
-    {
-        $cantExistente = $existente->cantidad !== null ? round((float) $existente->cantidad, 2) : null;
-        $cantPayload = round((float) $payload['cantidad'], 2);
-
-        if ($cantExistente === null && $cantPayload !== 0.0) {
-            return false;
-        }
-
-        if ($cantExistente !== null && abs($cantExistente - $cantPayload) > 0.009) {
-            return false;
-        }
-
-        if (! $this->justificacionCoincide($payload['just'] ?? null, $existente->just)) {
-            return false;
-        }
-
-        return trim((string) ($existente->obs ?? '')) === trim($payload['obs']);
-    }
-
-    private function justificacionCoincide(?string $payloadJust, mixed $existenteJust): bool
-    {
-        return $this->valorJustParaComparar($payloadJust) === $this->valorJustParaComparar(
-            is_scalar($existenteJust) ? (string) $existenteJust : null
-        );
-    }
-
-    /** @return 'J'|'I'|null */
-    private function valorJustParaComparar(?string $just): ?string
-    {
-        if ($just === null) {
-            return null;
-        }
-
-        $j = strtoupper(trim($just));
-        if ($j === '') {
-            return null;
-        }
-
-        if ($j === 'J') {
-            return 'J';
-        }
-
-        if ($j === 'I' || $j === 'N') {
-            return 'I';
-        }
-
-        return $j;
-    }
-
-    private function parseFecha(string $raw): ?string
-    {
-        if ($raw === '') {
-            return null;
-        }
-
-        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $m)) {
-            return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? $raw : null;
-        }
-
-        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $raw, $m)) {
-            $y = (int) $m[3];
-            $mo = (int) $m[2];
-            $d = (int) $m[1];
-
-            return checkdate($mo, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $mo, $d) : null;
-        }
-
-        return null;
-    }
+    // -------------------------------------------------------------------------
+    // Helpers de resolución
+    // -------------------------------------------------------------------------
 
     private function resolveCursoId(int $cursoNum, string $seccion, int $idTerlec, int $idNivel): ?int
     {
@@ -412,25 +452,74 @@ final class CidiInasistenciasCsvImporter
         return $resolved;
     }
 
-    private function resolveMatriculaId(int $idTerlec, int $idNivel, int $idCursos, int $idLegajos): ?int
+    /**
+     * Matrícula vigente del alumno en el ciclo/nivel de sesión.
+     * Si CIDI indica un curso y hay matrícula ahí, se usa; si no, la más reciente del ciclo/nivel
+     * (cubre cambios de división a mitad de año).
+     */
+    private function resolveMatriculaId(int $idTerlec, int $idNivel, int $idLegajos, ?int $idCursosPreferido = null): ?int
     {
-        $cacheKey = "{$idTerlec}|{$idNivel}|{$idCursos}|{$idLegajos}";
+        $cacheKey = "{$idTerlec}|{$idNivel}|{$idLegajos}|".($idCursosPreferido ?? 0);
         if (array_key_exists($cacheKey, $this->matriculaCache)) {
             return $this->matriculaCache[$cacheKey];
+        }
+
+        if ($idCursosPreferido !== null) {
+            $idPreferido = DB::table('matricula')
+                ->where('idTerlec', $idTerlec)
+                ->where('idNivel', $idNivel)
+                ->where('idLegajos', $idLegajos)
+                ->where('idCursos', $idCursosPreferido)
+                ->orderBy('id')
+                ->value('id');
+
+            if ($idPreferido !== null) {
+                $resolved = (int) $idPreferido;
+                $this->matriculaCache[$cacheKey] = $resolved;
+
+                return $resolved;
+            }
         }
 
         $id = DB::table('matricula')
             ->where('idTerlec', $idTerlec)
             ->where('idNivel', $idNivel)
-            ->where('idCursos', $idCursos)
             ->where('idLegajos', $idLegajos)
-            ->orderBy('id')
+            ->orderByDesc('id')
             ->value('id');
 
         $resolved = $id !== null ? (int) $id : null;
         $this->matriculaCache[$cacheKey] = $resolved;
 
         return $resolved;
+    }
+
+    private function parseFecha(string $raw): ?string
+    {
+        if ($raw === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $m)) {
+            return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? $raw : null;
+        }
+
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $raw, $m)) {
+            $y  = (int) $m[3];
+            $mo = (int) $m[2];
+            $d  = (int) $m[1];
+
+            return checkdate($mo, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $mo, $d) : null;
+        }
+
+        return null;
+    }
+
+    private function mapCurso(string $texto): ?int
+    {
+        $key = mb_strtoupper(trim($texto), 'UTF-8');
+
+        return self::CURSO_TEXTO[$key] ?? null;
     }
 
     /**
@@ -459,39 +548,6 @@ final class CidiInasistenciasCsvImporter
     }
 
     /**
-     * @param  list<string>  $row
-     */
-    private function formatIssueContext(array $row): string
-    {
-        $parts = [];
-
-        $dni = trim((string) ($row[self::COL_DNI] ?? ''));
-        if ($dni !== '') {
-            $parts[] = 'DNI '.$dni;
-        }
-
-        $apellido = trim((string) ($row[self::COL_APELLIDO] ?? ''));
-        $nombre = trim((string) ($row[self::COL_NOMBRE] ?? ''));
-        $alumno = trim("{$apellido} {$nombre}");
-        if ($alumno !== '') {
-            $parts[] = $alumno;
-        }
-
-        $curso = trim(trim((string) ($row[self::COL_CURSO] ?? '')).' '.trim((string) ($row[self::COL_SECCION] ?? '')));
-        if ($curso !== '') {
-            $parts[] = $curso;
-        }
-
-        $tipo = trim((string) ($row[self::COL_TIPO] ?? ''));
-        $fecha = trim((string) ($row[self::COL_FECHA] ?? ''));
-        if ($tipo !== '' || $fecha !== '') {
-            $parts[] = trim("{$tipo} · {$fecha}", ' ·');
-        }
-
-        return implode(' · ', $parts);
-    }
-
-    /**
      * @param  list<string|null>  $row
      */
     private function isEmptyRow(array $row): bool
@@ -505,58 +561,37 @@ final class CidiInasistenciasCsvImporter
         return true;
     }
 
-    private function mapCurso(string $texto): ?int
+    /**
+     * @param  list<string>  $row
+     */
+    private function formatIssueContext(array $row): string
     {
-        $key = mb_strtoupper(trim($texto), 'UTF-8');
+        $parts = [];
 
-        return self::CURSO_TEXTO[$key] ?? null;
-    }
-
-    private function matriculaMismatchDebug(int $idLegajos, int $idTerlec, int $idNivel, int $idCursosEsperado): string
-    {
-        $esperado = DB::table('cursos')
-            ->where('Id', $idCursosEsperado)
-            ->select(['Id', 'c', 's', 'cursec'])
-            ->first();
-
-        $esperadoTxt = $esperado
-            ? sprintf('Curso esperado: idCursos=%d (%s)', $idCursosEsperado, $this->cursoEtiqueta($esperado))
-            : sprintf('Curso esperado: idCursos=%d', $idCursosEsperado);
-
-        $filas = DB::table('matricula as m')
-            ->leftJoin('cursos as c', 'c.Id', '=', 'm.idCursos')
-            ->where('m.idLegajos', $idLegajos)
-            ->where('m.idTerlec', $idTerlec)
-            ->where('m.idNivel', $idNivel)
-            ->orderBy('m.id')
-            ->get(['m.idCursos', 'c.c', 'c.s', 'c.cursec']);
-
-        if ($filas->isEmpty()) {
-            return $esperadoTxt.'. Sin matrícula en este ciclo/nivel.';
+        $dni = trim((string) ($row[self::COL_DNI] ?? ''));
+        if ($dni !== '') {
+            $parts[] = 'DNI '.$dni;
         }
 
-        $partes = [];
-        foreach ($filas as $f) {
-            $partes[] = sprintf('idCursos=%d (%s)', (int) ($f->idCursos ?? 0), $this->cursoEtiqueta($f));
+        $apellido = trim((string) ($row[self::COL_APELLIDO] ?? ''));
+        $nombre   = trim((string) ($row[self::COL_NOMBRE] ?? ''));
+        $alumno   = trim("{$apellido} {$nombre}");
+        if ($alumno !== '') {
+            $parts[] = $alumno;
         }
 
-        return $esperadoTxt.'. Matrícula del alumno: '.implode('; ', $partes).'.';
-    }
-
-    private function cursoEtiqueta(object $row): string
-    {
-        $cursec = trim((string) ($row->cursec ?? ''));
-        if ($cursec !== '') {
-            return $cursec;
+        $curso = trim(trim((string) ($row[self::COL_CURSO] ?? '')).' '.trim((string) ($row[self::COL_SECCION] ?? '')));
+        if ($curso !== '') {
+            $parts[] = $curso;
         }
 
-        $c = $row->c ?? null;
-        $s = $row->s ?? null;
-        if ($c !== null && $c !== '' && $s !== null && trim((string) $s) !== '') {
-            return trim((string) $c).'° '.trim((string) $s);
+        $tipo  = trim((string) ($row[self::COL_TIPO] ?? ''));
+        $fecha = trim((string) ($row[self::COL_FECHA] ?? ''));
+        if ($tipo !== '' || $fecha !== '') {
+            $parts[] = trim("{$tipo} · {$fecha}", ' ·');
         }
 
-        return 'sin cursec';
+        return implode(' · ', $parts);
     }
 
     /**
@@ -564,11 +599,7 @@ final class CidiInasistenciasCsvImporter
      */
     private function issue(int $line, string $code, string $message, string $detail = ''): array
     {
-        $item = [
-            'line' => $line + 1,
-            'code' => $code,
-            'message' => $message,
-        ];
+        $item = ['line' => $line, 'code' => $code, 'message' => $message];
         if ($detail !== '') {
             $item['detail'] = $detail;
         }
