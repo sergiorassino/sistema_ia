@@ -44,7 +44,9 @@ final class InformeProgresoInicialDatos
      *     departamento?: string,
      *     escudoProvincia?: ?string,
      *     alumno?: array<string, mixed>,
-     *     materias?: list<array<string, mixed>>
+     *     materias?: list<array<string, mixed>>,
+     *     justificadas?: string,
+     *     injustificadas?: string
      * }
      */
     public static function buildForMatriculaEnContextoEscolar(int $idMatricula, int $etapa): array
@@ -91,7 +93,9 @@ final class InformeProgresoInicialDatos
      *     departamento?: string,
      *     escudoProvincia?: ?string,
      *     alumno?: array<string, mixed>,
-     *     materias?: list<array<string, mixed>>
+     *     materias?: list<array<string, mixed>>,
+     *     justificadas?: string,
+     *     injustificadas?: string
      * }
      */
     public static function buildDatosParaAlumno(int $etapa = 1): array
@@ -131,7 +135,9 @@ final class InformeProgresoInicialDatos
      *     departamento: string,
      *     escudoProvincia: ?string,
      *     alumno: array<string, mixed>,
-     *     materias: list<array<string, mixed>>
+     *     materias: list<array<string, mixed>>,
+     *     justificadas: string,
+     *     injustificadas: string
      * }
      */
     public static function buildDesdeMatricula(Matricula $matricula, int $etapa): array
@@ -263,6 +269,8 @@ final class InformeProgresoInicialDatos
             ];
         }
 
+        $inasistencias = self::inasistenciasDeEtapa($matricula, $etapa);
+
         return [
             'ok' => true,
             'etapa' => $etapa,
@@ -275,7 +283,48 @@ final class InformeProgresoInicialDatos
             'escudoProvincia' => PlanillaCalificacionesPrimarioDatos::rutaEscudoProvincia(),
             'alumno' => $alumno,
             'materias' => $materiasPdf,
+            'justificadas' => $inasistencias['justificadas'],
+            'injustificadas' => $inasistencias['injustificadas'],
         ];
+    }
+
+    /**
+     * Inasistencias de la etapa desde `matricula` (just1/inju1 o just2/inju2).
+     *
+     * @return array{justificadas: string, injustificadas: string}
+     */
+    private static function inasistenciasDeEtapa(Matricula $matricula, int $etapa): array
+    {
+        $campoJust = $etapa === 2 ? 'just2' : 'just1';
+        $campoInju = $etapa === 2 ? 'inju2' : 'inju1';
+
+        return [
+            'justificadas' => Schema::hasColumn('matricula', $campoJust)
+                ? self::formatoInasistencia($matricula->{$campoJust} ?? null)
+                : '',
+            'injustificadas' => Schema::hasColumn('matricula', $campoInju)
+                ? self::formatoInasistencia($matricula->{$campoInju} ?? null)
+                : '',
+        ];
+    }
+
+    private static function formatoInasistencia(mixed $valor): string
+    {
+        if ($valor === null) {
+            return '';
+        }
+
+        $texto = trim((string) $valor);
+        if ($texto === '') {
+            return '';
+        }
+
+        // Evitar "0.0" / "0.00" cuando el legacy guarda cero numérico.
+        if (is_numeric($texto) && (float) $texto == 0.0) {
+            return '0';
+        }
+
+        return $texto;
     }
 
     /**

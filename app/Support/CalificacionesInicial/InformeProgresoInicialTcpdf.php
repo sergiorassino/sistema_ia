@@ -120,7 +120,11 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         }
 
         if (! $this->esImplementacionMontecristo()) {
-            $this->paginaCierre($nombreEtapa);
+            $this->paginaCierre(
+                $nombreEtapa,
+                (string) ($datos['justificadas'] ?? ''),
+                (string) ($datos['injustificadas'] ?? ''),
+            );
         }
     }
 
@@ -391,14 +395,17 @@ final class InformeProgresoInicialTcpdf extends TCPDF
         $this->SetTextColor(0, 0, 0);
     }
 
-    private function paginaCierre(string $nombreEtapa): void
+    private function paginaCierre(string $nombreEtapa, string $justificadas, string $injustificadas): void
     {
         $this->AddPage('P', 'A4');
         $this->Ln(30);
 
         TcpdfFuenteArial::aplicar($this, '', 13);
         $this->Cell(170, 7, $nombreEtapa, 0, 2, 'C');
-        $this->Ln(20);
+        $this->Ln(12);
+
+        $this->dibujarCeldasInasistencias($justificadas, $injustificadas);
+        $this->Ln(12);
 
         TcpdfFuenteArial::aplicar($this, '', 9);
         $this->Cell(60, 5, 'LUGAR Y FECHA:', 0, 2, 'C');
@@ -436,6 +443,19 @@ final class InformeProgresoInicialTcpdf extends TCPDF
             $this->Cell(40, 20, '', 1, 0, 'C');
             $this->Cell(40, 20, '', 1, 1, 'C');
         }
+    }
+
+    private function dibujarCeldasInasistencias(string $justificadas, string $injustificadas): void
+    {
+        $anchoEtiqueta = 55.0;
+        $anchoValor = 25.0;
+        $alto = 10.0;
+
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell($anchoEtiqueta, $alto, 'Inasistencias Justificadas', 1, 0, 'C');
+        $this->Cell($anchoValor, $alto, $justificadas, 1, 0, 'C');
+        $this->Cell($anchoEtiqueta, $alto, 'Inasistencias Injustificadas', 1, 0, 'C');
+        $this->Cell($anchoValor, $alto, $injustificadas, 1, 1, 'C');
     }
 
     private function esImplementacionMontecristo(): bool
