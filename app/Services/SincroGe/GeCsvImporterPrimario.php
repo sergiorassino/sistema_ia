@@ -12,16 +12,19 @@ use Throwable;
 /**
  * Importa calificaciones desde CSV GE/CIDI (primario: grados 1°–6°; inicial: salas 3–5).
  *
- * Formato CIDI (59 columnas): la etapa 1 del archivo no se importa. Etapa 2 CIDI → 1ª etapa
- * del sistema (ic05–ic10, ic01); etapa 3 CIDI → 2ª etapa (ic11–ic16, ic02); apreciación final → ic03.
- * Cada celda del CSV va solo a su campo; celda vacía borra el valor en BD. No se copian parciales
- * a finales de etapa ni se inventan notas.
+ * Formato CIDI (59 columnas).
  *
- * Solo nivel inicial: columnas N/O («Observaciones» / «Observaciones 2») → `calificaciones.obs01` /
- * `obs02` (textos del informe de progreso). Primario no importa esas columnas.
+ * Primario: etapa 1 del archivo no se importa. Etapa 2 CIDI → 1ª etapa del sistema
+ * (ic05–ic10, ic01); etapa 3 CIDI → 2ª etapa (ic11–ic16, ic02); apreciación final → ic03.
  *
- * Por fila: curso (PRIMER GRADO… / SALA DE 3 AÑOS…), división, DNI, columna M «Cód. Esp. Curricular»
- * cruzada solo con `matplan.codGE` en el curso del ciclo activo.
+ * Nivel inicial: solo se importan textos del informe de progreso (no se tocan notas `ic*`).
+ * Cada fila se vincula a la materia por la columna M «Cód. Esp. Curricular» → `matplan.codGE`.
+ * Textos por espacio curricular:
+ * - «Nota Final Etapa 1» (col. AB / índice 27) → `obs01`
+ * - «Nota Final Etapa 2» (col. AP / índice 41) → `obs02` (si es párrafo; si no, columna O)
+ * Las columnas N/O «Observaciones» en el export GE suelen repetir el mismo texto de sala en
+ * todas las materias; no alcanzan para el IPE por espacio. Si el texto trae «;» sin comillas,
+ * se repara la fila (mismo criterio que desempeños / `DesempenosCsvColumnMapper`).
  *
  * Criterio de actualización: la misma fila que usa la carga por estudiante
  * (`idMatricula` + `idMaterias`, con fallback legacy por `ord`).
@@ -31,6 +34,9 @@ final class GeCsvImporterPrimario
     private const DELIMITER = ';';
 
     private const MAX_ISSUES = 250;
+
+    /** Layout GE/CIDI primario-inicial vigente. */
+    public const EXPECTED_COLUMN_COUNT = 59;
 
     private const COL_CURSO = 0;
 
@@ -44,13 +50,26 @@ final class GeCsvImporterPrimario
 
     private const COL_ESPACIO_CURRICULAR = 11;
 
+    /** Excel M — Cód. Esp. Curricular → matplan.codGE. */
     private const COL_COD_MATERIA = 12;
 
-    /** Excel N — Observaciones (solo nivel inicial → obs01). */
-    private const COL_OBS_1 = 13;
+    /** Excel N — Observaciones Etapa 1 (texto de sala; fallback si falta Nota Final). */
+    public const COL_OBS_SALA_1 = 13;
 
-    /** Excel O — Observaciones 2 (solo nivel inicial → obs02). */
-    private const COL_OBS_2 = 14;
+    /** Excel O — Observaciones Etapa 2 (fallback de obs02). */
+    public const COL_OBS_SALA_2 = 14;
+
+    /**
+     * Excel AB — Nota Final Etapa 1.
+     * En inicial GE guarda aquí el texto del IPE por espacio curricular → obs01.
+     */
+    public const COL_TEXTO_ETAPA_1 = 27;
+
+    /**
+     * Excel AP — Nota Final Etapa 2.
+     * Texto del IPE 2ª etapa por espacio → obs02 (si es párrafo).
+     */
+    public const COL_TEXTO_ETAPA_2 = 41;
 
     /** CIDI etapa 2 → sistema 1ª etapa (parciales). */
     private const COL_CIDI_E2_N1 = 29;
@@ -394,6 +413,173 @@ final class GeCsvImporterPrimario
         }
 
         return $out;
+    }
+
+    /**
+     * Extrae obs01/obs02 del CSV inicial.
+     *
+     * Fuente principal: Nota Final Etapa 1/2 (texto por espacio curricular, columna M).
+     * Fallback: columnas N/O si la nota final viene vacía.
+     * Si hay columnas de más por «;» en el texto, repara como en desempeños.
+     *
+     * @param  list<string>  $cols
+     * @return array{obs01: string, obs02: string}
+     */
+    public function extraerObservacionesInicial(array $cols): array
+    {
+        $row = $cols;
+
+        // Reparar de izquierda a derecha: un «;» temprano desplaza todo lo posterior.
+        // 1) Observaciones N
+        if (count($row) > self::EXPECTED_COLUMN_COUNT
+            && $this->pareceContinuacionTexto(
+                (string) ($row[self::COL_OBS_SALA_1] ?? ''),
+                (string) ($row[self::COL_OBS_SALA_2] ?? '')
+            )
+        ) {
+            $row = $this->repararFilaPorTextoLibre($row, self::COL_OBS_SALA_1);
+        }
+
+        // 2) Nota Final Etapa 1 (texto por espacio curricular)
+        if (count($row) > self::EXPECTED_COLUMN_COUNT
+            && $this->pareceContinuacionTexto(
+                (string) ($row[self::COL_TEXTO_ETAPA_1] ?? ''),
+                (string) ($row[self::COL_TEXTO_ETAPA_1 + 1] ?? '')
+            )
+        ) {
+            $row = $this->repararFilaPorTextoLibre($row, self::COL_TEXTO_ETAPA_1);
+        }
+
+        // 3) Nota Final Etapa 2
+        if (count($row) > self::EXPECTED_COLUMN_COUNT
+            && $this->pareceContinuacionTexto(
+                (string) ($row[self::COL_TEXTO_ETAPA_2] ?? ''),
+                (string) ($row[self::COL_TEXTO_ETAPA_2 + 1] ?? '')
+            )
+        ) {
+            $row = $this->repararFilaPorTextoLibre($row, self::COL_TEXTO_ETAPA_2);
+        }
+
+        $nf1 = trim((string) ($row[self::COL_TEXTO_ETAPA_1] ?? ''));
+        $nf2 = trim((string) ($row[self::COL_TEXTO_ETAPA_2] ?? ''));
+        $sala1 = trim((string) ($row[self::COL_OBS_SALA_1] ?? ''));
+        $sala2 = trim((string) ($row[self::COL_OBS_SALA_2] ?? ''));
+
+        $obs01 = $this->pareceTextoObservacion($nf1) ? $nf1 : $sala1;
+
+        if ($this->pareceTextoObservacion($nf2)) {
+            $obs02 = $nf2;
+        } elseif ($sala2 !== '' && ! $this->pareceContinuacionTexto($sala1, $sala2)) {
+            $obs02 = $sala2;
+        } else {
+            $obs02 = '';
+        }
+
+        return [
+            'obs01' => $obs01,
+            'obs02' => $obs02,
+        ];
+    }
+
+    /**
+     * Repara filas con más columnas de las esperadas cuando un texto libre contiene «;»
+     * sin comillas. Criterio de desempeños: unir fragmentos desde `$textoLibreIdx` hasta
+     * dejar el número correcto de columnas fijas al final.
+     *
+     * @param  list<string>  $cols
+     * @return list<string>
+     */
+    public function repararFilaPorTextoLibre(array $cols, int $textoLibreIdx): array
+    {
+        $expected = self::EXPECTED_COLUMN_COUNT;
+        $total = count($cols);
+
+        if ($total === $expected) {
+            return $cols;
+        }
+
+        if ($total < $expected) {
+            while (count($cols) < $expected) {
+                $cols[] = '';
+            }
+
+            return array_slice($cols, 0, $expected);
+        }
+
+        if ($textoLibreIdx < 0 || $textoLibreIdx >= $expected) {
+            return array_slice($cols, 0, $expected);
+        }
+
+        $finalCount = $expected - ($textoLibreIdx + 1);
+        if ($finalCount < 0) {
+            $finalCount = 0;
+        }
+
+        $startFinales = $total - $finalCount;
+        if ($startFinales <= $textoLibreIdx) {
+            return array_slice($cols, 0, $expected);
+        }
+
+        $partesTexto = array_slice($cols, $textoLibreIdx, $startFinales - $textoLibreIdx);
+        $textoReconstruido = trim(implode(';', array_map(
+            static fn ($v) => (string) ($v ?? ''),
+            $partesTexto
+        )));
+
+        $nuevo = array_merge(
+            array_slice($cols, 0, $textoLibreIdx),
+            [$textoReconstruido],
+            array_slice($cols, $startFinales)
+        );
+
+        while (count($nuevo) < $expected) {
+            $nuevo[] = '';
+        }
+
+        return array_slice($nuevo, 0, $expected);
+    }
+
+    /**
+     * Detecta si `$despues` es la continuación de un texto partido por «;».
+     */
+    public function pareceContinuacionTexto(string $antes, string $despues): bool
+    {
+        $antes = rtrim($antes);
+        $despuesTrim = trim($despues);
+
+        if ($antes === '' || $despuesTrim === '') {
+            return false;
+        }
+
+        if (str_starts_with($despues, ' ') || str_starts_with($despues, "\t")) {
+            return true;
+        }
+
+        $primera = mb_substr($despuesTrim, 0, 1);
+        if ($primera !== '' && $primera !== mb_strtoupper($primera, 'UTF-8') && ! ctype_digit($primera)) {
+            return true;
+        }
+
+        if (! preg_match('/[.!?…»"\'”]$/u', $antes) && mb_strlen($despuesTrim) > 40) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /** Nota corta (E, MB, …) vs párrafo de observación del IPE. */
+    public function pareceTextoObservacion(string $valor): bool
+    {
+        $valor = trim($valor);
+        if ($valor === '') {
+            return false;
+        }
+
+        if (mb_strlen($valor) > 20) {
+            return true;
+        }
+
+        return str_contains($valor, ' ');
     }
 
     /**
@@ -761,15 +947,24 @@ final class GeCsvImporterPrimario
     }
 
     /**
-     * CIDI etapa 2 → 1ª etapa del sistema; CIDI etapa 3 → 2ª etapa; apreciación final → ic03.
-     * Nivel inicial: N → obs01, O → obs02. Mapeo 1:1; vacío en CSV → cadena vacía en BD.
+     * Primario: CIDI etapa 2 → 1ª etapa; etapa 3 → 2ª; apreciación final → ic03.
+     * Inicial: solo N/O → obs01/obs02 (con reparación si el texto trae «;»).
      *
      * @param  list<string>  $row
      * @return array<string, string>
      */
     private function buildGradePayload(array $row): array
     {
-        $payload = [
+        if ($this->importarObservacionesInicial) {
+            $obs = $this->extraerObservacionesInicial($row);
+
+            return [
+                'obs01' => $obs['obs01'],
+                'obs02' => $obs['obs02'],
+            ];
+        }
+
+        return [
             'ic01' => $this->celda($row, self::COL_CIDI_E2_FINAL),
             'ic02' => $this->celda($row, self::COL_CIDI_E3_FINAL),
             'ic03' => $this->celda($row, self::COL_CIDI_AF),
@@ -786,13 +981,6 @@ final class GeCsvImporterPrimario
             'ic15' => $this->celda($row, self::COL_CIDI_E3_N5),
             'ic16' => $this->celda($row, self::COL_CIDI_E3_N6),
         ];
-
-        if ($this->importarObservacionesInicial) {
-            $payload['obs01'] = $this->celda($row, self::COL_OBS_1);
-            $payload['obs02'] = $this->celda($row, self::COL_OBS_2);
-        }
-
-        return $payload;
     }
 
     /**
