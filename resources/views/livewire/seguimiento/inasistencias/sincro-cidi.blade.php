@@ -33,26 +33,15 @@
     <div class="se-card overflow-hidden">
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="se-section-title">Vinculación tipos CIDI → catálogo</p>
-            @if ($implementacion === 'diario')
-                <p class="mt-1 text-sm text-neutral-600">
-                    Cargue en cada fila el texto <strong>base</strong> del tipo (sin incluir «JUSTIFICADO» ni «INJUSTIFICADO»).
-                    La justificación (<strong>just</strong>) se obtiene automáticamente de la columna Tipo del CSV.
-                </p>
-                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-600">
-                    <li><strong>AUSENTE</strong>: un solo concepto cubre <em>AUSENTE JUSTIFICADO</em> e <em>AUSENTE INJUSTIFICADO</em>; just = J o I según el CSV.</li>
-                    <li><strong>LLEGADA TARDE</strong> / <strong>RETIRO</strong>: cantidad extraída de la fracción del texto (1/4, 1/2, 3/4) o del catálogo; just = J.</li>
-                    <li>Si el texto exacto del CSV no coincide, el sistema intenta quitar la justificación y/o la fracción antes de fallar.</li>
-                </ul>
-            @else
-                <p class="mt-1 text-sm text-neutral-600">
-                    En cada fila cargue el texto exacto de la columna <strong>Tipo</strong> del CSV CIDI (copie un valor del archivo).
-                    La importación identifica el tipo solo por esta coincidencia.
-                </p>
-                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-600">
-                    <li><strong>Llegada tarde</strong> y <strong>retiro anticipado</strong>: cantidad según fracción del texto o catálogo; <strong>just</strong> = J (justificadas).</li>
-                    <li><strong>AUSENTE JUSTIFICADO</strong> / <strong>AUSENTE INJUSTIFICADO</strong>: cantidad <strong>1</strong>; <strong>just</strong> = J o I (filas distintas en el catálogo).</li>
-                </ul>
-            @endif
+            <p class="mt-1 text-sm text-neutral-600">
+                Cargue en cada fila el texto <strong>base</strong> del tipo (sin incluir «JUSTIFICADO» ni «INJUSTIFICADO»).
+                La justificación (<strong>just</strong>) se obtiene automáticamente de la columna Tipo del CSV.
+            </p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-600">
+                <li><strong>AUSENTE</strong>: un solo concepto cubre <em>AUSENTE JUSTIFICADO</em> e <em>AUSENTE INJUSTIFICADO</em>; just = J o I según el CSV.</li>
+                <li><strong>LLEGADA TARDE</strong> / <strong>RETIRO</strong>: cantidad extraída de la fracción del texto (1/4, 1/2, 3/4) o del catálogo; just = J.</li>
+                <li>Si el texto exacto del CSV no coincide, el sistema intenta quitar la justificación y/o la fracción antes de fallar.</li>
+            </ul>
             @unless ($textosCidiConfigurados)
                 <p class="mt-2 text-sm font-medium text-amber-800">
                     Configure al menos un texto CIDI antes de importar.
@@ -80,7 +69,7 @@
                                     <input type="text"
                                            wire:model="textosCidi.{{ $tipo->id }}"
                                            maxlength="120"
-                                           placeholder="{{ $implementacion === 'diario' ? 'Ej. AUSENTE' : 'Ej. AUSENTE INJUSTIFICADO' }}"
+                                           placeholder="Ej. AUSENTE"
                                            class="form-input w-full min-w-[14rem] text-sm"
                                            autocomplete="off">
                                 </td>
@@ -122,15 +111,11 @@
             <p>Suba el archivo <strong>CSV</strong> <code class="text-xs">InasistenciasDetalle_EE….csv</code> exportado desde CIDI/GE (separador punto y coma).</p>
             <ul class="list-disc space-y-1 pl-5">
                 <li>Se <strong>ignoran</strong> las filas con tipo <strong>PRESENTE</strong>; solo se importan ausencias, llegadas tarde, retiros anticipados, etc.</li>
-                @if ($implementacion === 'diario')
-                    <li>El <strong>Tipo</strong> del CSV se busca en el catálogo quitando «JUSTIFICADO»/«INJUSTIFICADO» y fracciones si el match exacto no existe.</li>
-                    <li>La <strong>justificación</strong> (J/I) se determina automáticamente desde la columna Tipo: si contiene «INJUSTIFICADO» → I; resto → J.</li>
-                @else
-                    <li>El <strong>Tipo</strong> del CSV se compara con la columna <strong>texto CIDI</strong> del catálogo (sin distinguir mayúsculas ni acentos).</li>
-                @endif
-                <li>Busca por <strong>matrícula + fecha + tipo</strong>: si ya existe y coincide con CIDI, no hace nada; si cambió cantidad, justificación u observaciones, <strong>actualiza</strong>; si no existe, <strong>agrega</strong>.</li>
+                <li>El <strong>Tipo</strong> del CSV se busca en el catálogo quitando «JUSTIFICADO»/«INJUSTIFICADO» y fracciones si el match exacto no existe.</li>
+                <li>La <strong>justificación</strong> (J/I) se determina automáticamente desde la columna Tipo: si contiene «INJUSTIFICADO» → I; resto → J.</li>
+                <li>Antes de insertar, se <strong>eliminan</strong> las inasistencias previas importadas desde CIDI (<code class="text-xs">obs = CIDI</code>) del ciclo y nivel activos; las cargadas a mano no se tocan.</li>
                 <li>El proceso usa el <strong>ciclo lectivo y nivel</strong> de su sesión actual.</li>
-                <li>El alumno se identifica por DNI y debe estar matriculado en el curso/división que indica el archivo.</li>
+                <li>El alumno se identifica por <strong>DNI</strong>: las novedades se graban en su matrícula del ciclo y nivel actuales, aunque el curso/división del CSV no coincida.</li>
             </ul>
         </div>
 

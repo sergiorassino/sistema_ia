@@ -5,7 +5,6 @@ namespace App\Livewire\Seguimiento\Inasistencias;
 use App\Models\InasistenciaValor;
 use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImportResult;
 use App\Services\SincroCidiInasistencias\CidiInasistenciasCsvImporter;
-use App\Services\SincroCidiInasistencias\CidiInasistenciasDiarioCsvImporter;
 use App\Support\PermisosIaCatalog;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -186,7 +185,7 @@ class SincroCidiInasistencias extends Component
 
         try {
             $path = $this->resolveCsvAbsolutePath($this->archivoCsv);
-            $result = $this->resolverImporter()->import($path, $idTerlec, $idNivel);
+            $result = (new CidiInasistenciasCsvImporter())->import($path, $idTerlec, $idNivel);
             $this->ultimoResultado = $this->serializeResult($result);
 
             if ($result->committed && $result->filasModificadas() > 0) {
@@ -329,18 +328,6 @@ class SincroCidiInasistencias extends Component
         ];
     }
 
-    /**
-     * Devuelve la instancia del importer según la variante configurada para el tenant.
-     */
-    private function resolverImporter(): CidiInasistenciasCsvImporter|CidiInasistenciasDiarioCsvImporter
-    {
-        if (tenantSincroCidiInasistenciasImplementacion() === 'diario') {
-            return new CidiInasistenciasDiarioCsvImporter();
-        }
-
-        return new CidiInasistenciasCsvImporter();
-    }
-
     public function render()
     {
         $tiposInasistencia = InasistenciaValor::query()
@@ -354,7 +341,6 @@ class SincroCidiInasistencias extends Component
         return view('livewire.seguimiento.inasistencias.sincro-cidi', [
             'tiposInasistencia'      => $tiposInasistencia,
             'textosCidiConfigurados' => $textosCidiConfigurados,
-            'implementacion'         => tenantSincroCidiInasistenciasImplementacion(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Descargar inasistencias desde CIDI']);
     }
 }
