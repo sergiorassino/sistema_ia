@@ -8,6 +8,7 @@ use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
 use App\Models\Terlec;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -28,6 +29,13 @@ class ParametrosSistemaForm extends Component
     use WithFileUploads;
 
     public string $activeTab = 'institucion';
+
+    // Tab correo Gmail institucional
+    public string $mailGmailUser     = '';
+    public string $mailGmailPassword = '';
+    public string $mailGmailFromName = '';
+    /** true si ya hay credenciales guardadas en .env */
+    public bool $mailConfigurado = false;
 
     public string $insti = '';
     public string $cue = '';
@@ -84,7 +92,7 @@ class ParametrosSistemaForm extends Component
 
     public function setTab(string $tab): void
     {
-        if (in_array($tab, ['institucion', 'parametros'], true)) {
+        if (in_array($tab, ['institucion', 'parametros', 'correo'], true)) {
             $this->activeTab = $tab;
         }
     }
@@ -137,6 +145,7 @@ class ParametrosSistemaForm extends Component
         $this->currentLogoUrl = schoolLogoUrl();
 
         $this->cargarParametrosOperativosDesdeEnto($ento);
+        $this->cargarMailConfigDesdeEnv();
     }
 
     protected function rules(): array
@@ -499,6 +508,122 @@ class ParametrosSistemaForm extends Component
         }
 
         return $newPath;
+    }
+
+    public function saveMailConfig(): void
+    {
+        $key = 'parametros-mail:save:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $this->validateOnly('mailGmailUser', [
+            'mailGmailUser' => ['required', 'email:rfc', 'max:120', 'regex:/.*@gmail\.com$/i'],
+        ], [
+            'mailGmailUser.required'   => 'La cuenta de Gmail es obligatoria.',
+            'mailGmailUser.email'      => 'Ingresá una dirección de correo válida.',
+            'mailGmailUser.regex'      => 'Debe ser una cuenta de Gmail (@gmail.com).',
+        ]);
+
+        $this->validateOnly('mailGmailFromName', [
+            'mailGmailFromName' => ['required', 'string', 'max:100'],
+        ], [
+            'mailGmailFromName.required' => 'El nombre del remitente es obligatorio.',
+        ]);
+
+        // Contraseña: obligatoria solo si aún no está configurada
+        $pwdActual = trim((string) env('MAIL_PASSWORD', ''));
+        $pwdNueva  = trim($this->mailGmailPassword);
+
+        if ($pwdActual === '' && $pwdNueva === '') {
+            $this->addError('mailGmailPassword', 'Ingresá la contraseña de aplicación de Gmail.');
+            return;
+        }
+
+        if ($pwdNueva !== '' && strlen(str_replace(' ', '', $pwdNueva)) < 8) {
+            $this->addError('mailGmailPassword', 'La contraseña de aplicación debe tener al menos 8 caracteres.');
+            return;
+        }
+
+        $user      = trim($this->mailGmailUser);
+        $fromName  = trim($this->mailGmailFromName);
+        $password  = $pwdNueva !== '' ? $pwdNueva : $pwdActual;
+
+        $envPath = base_path('.env');
+        if (! file_exists($envPath) || ! is_writable($envPath)) {
+            $this->dispatch('se-swal-error', mensaje: 'No se puede escribir el archivo .env. Verificá los permisos del servidor.');
+            return;
+        }
+
+        try {
+            $content = (string) file_get_contents($envPath);
+            $content = $this->envReplaceLine($content, 'MAIL_MAILER',       'smtp');
+            $content = $this->envReplaceLine($content, 'MAIL_HOST',         'smtp.gmail.com');
+            $content = $this->envReplaceLine($content, 'MAIL_PORT',         '587');
+            $content = $this->envReplaceLine($content, 'MAIL_ENCRYPTION',   'tls');
+            $content = $this->envReplaceLine($content, 'MAIL_USERNAME',     $user);
+            $content = $this->envReplaceLine($content, 'MAIL_FROM_ADDRESS', $user);
+            // Contraseña y nombre van entre comillas por si tienen espacios/caracteres especiales
+            $content = $this->envReplaceLine($content, 'MAIL_PASSWORD',     '"'.addslashes($password).'"');
+            $content = $this->envReplaceLine($content, 'MAIL_FROM_NAME',    '"'.addslashes($fromName).'"');
+            file_put_contents($envPath, $content);
+        } catch (\Throwable $e) {
+            Log::warning('parametros-mail: error al escribir .env', ['message' => $e->getMessage()]);
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar la configuración: '.$e->getMessage());
+            return;
+        }
+
+        // Limpiar config cache para que el cambio en .env tome efecto
+        try {
+            Artisan::call('config:clear');
+        } catch (\Throwable) {
+            // No crítico: el cambio ya quedó en .env
+        }
+
+        $this->mailGmailPassword = '';
+        $this->mailConfigurado   = true;
+        $this->cargarMailConfigDesdeEnv();
+
+        $this->dispatch('se-swal-exito', mensaje: 'Configuración de correo guardada. Probá enviar un comunicado para verificarla.');
+    }
+
+    /**
+     * Reemplaza (o agrega) una clave KEY= en el contenido del .env.
+     * Maneja líneas activas y comentadas.
+     */
+    private function envReplaceLine(string $content, string $key, string $value): string
+    {
+        $replaced = preg_replace(
+            '/^#?'.preg_quote($key, '/').'=.*/m',
+            "{$key}={$value}",
+            $content,
+            -1,
+            $count
+        );
+
+        if ($replaced === null) {
+            return $content;
+        }
+
+        if ($count === 0) {
+            $replaced .= "\n{$key}={$value}";
+        }
+
+        return $replaced;
+    }
+
+    private function cargarMailConfigDesdeEnv(): void
+    {
+        $user = trim((string) env('MAIL_USERNAME', ''));
+        $pwd  = trim((string) env('MAIL_PASSWORD', ''));
+        $name = trim((string) env('MAIL_FROM_NAME', ''));
+
+        $this->mailGmailUser     = $user;
+        $this->mailGmailFromName = $name !== '' ? trim($name, '"\'') : '';
+        $this->mailGmailPassword = ''; // nunca pre-rellenar la contraseña
+        $this->mailConfigurado   = $user !== '' && $pwd !== '';
     }
 
     public function render()

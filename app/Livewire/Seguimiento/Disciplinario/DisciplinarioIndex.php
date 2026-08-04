@@ -7,6 +7,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Support\Navegacion\ContextoEstudianteSesion;
+use App\Support\Seguimiento\NotificarFamiliaSancion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -153,6 +154,47 @@ class DisciplinarioIndex extends Component
 
         $this->showDeleteConfirm = false;
         $this->reset('deleteId', 'deleteInfo');
+    }
+
+    public function notificarPadres(int $id): void
+    {
+        $m = $this->matriculaSeleccionada();
+        if (! $m) {
+            $this->dispatch('se-swal-error', mensaje: 'Sin matrícula seleccionada.');
+            return;
+        }
+
+        $key = 'sanciones:notif:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $s = Sancion::query()
+            ->with(['tipo.profesorNotif', 'profesor', 'matricula'])
+            ->where('idMatricula', (int) $m->id)
+            ->findOrFail($id);
+
+        $tipo = $s->tipo;
+
+        if (! $tipo || ! $tipo->idProfesorNotif) {
+            $this->dispatch('se-swal-error', mensaje: 'Este tipo de sanción no tiene remitente configurado. Configuralo en Parametrización → Tipos de sanción.');
+            return;
+        }
+
+        $ok = NotificarFamiliaSancion::despachar($s, $m);
+
+        if (! $ok) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo enviar la notificación. Verificá que el canal escuela→familia esté activo en Parametrización → Canales de Comunicación.');
+            return;
+        }
+
+        // Marcar la sanción como comunicada
+        $s->comunicadaPadres = true;
+        $s->save();
+
+        $this->dispatch('se-swal-exito', mensaje: 'Notificación enviada a la familia.');
     }
 
     public function render()

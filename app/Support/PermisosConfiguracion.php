@@ -46,6 +46,9 @@ final class PermisosConfiguracion
     /** Configuración de canales escuela–familia (menú Comunicación institucional). */
     public const COM_CANALES = PermisosIaCatalog::COM_CANALES;
 
+    /** ABM de tipos de sanción disciplinaria (notificación a padres). */
+    public const SANCION_TIPOS_CONFIG = PermisosIaCatalog::SANCION_TIPOS_CONFIG;
+
     /**
      * @return list<int>
      */
@@ -64,6 +67,7 @@ final class PermisosConfiguracion
             self::CURSOS_ANIO,
             self::MATERIAS_ANIO,
             self::ASPIRANTES_CAMPOS,
+            self::SANCION_TIPOS_CONFIG,
         ];
     }
 

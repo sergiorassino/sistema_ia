@@ -88,7 +88,7 @@
                                 <th class="table-header w-28">Cantidad</th>
                                 <th class="table-header">Motivo</th>
                                 <th class="table-header w-48">Solicitada por</th>
-                                <th class="table-header w-44 text-right">Acciones</th>
+                                <th class="table-header w-56 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-accent-200 bg-white">
@@ -115,6 +115,27 @@
                                                           d="M6 14H5a3 3 0 01-3-3V9a3 3 0 013-3h14a3 3 0 013 3v2a3 3 0 01-3 3h-1"/>
                                                 </svg>
                                             </a>
+                                            {{-- Notif. Padres: solo si el tipo lo permite --}}
+                                            @if ($s->tipo?->permiteNotifPadres ?? true)
+                                            @if ($s->comunicadaPadres)
+                                                <button type="button"
+                                                        title="Ya notificada — clic para reenviar"
+                                                        x-on:click="seSwalConfirmar('Esta sanción ya fue notificada a la familia. ¿Deseás reenviar la notificación?', 'Reenviar notificación').then(ok => ok && $wire.notificarPadres({{ $s->id }}))"
+                                                        class="btn-sm inline-flex items-center gap-1 rounded-lg border border-primary-300 bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700 hover:bg-primary-100">
+                                                    <svg class="h-3.5 w-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    Notif. Padres
+                                                </button>
+                                            @else
+                                                <button type="button"
+                                                        title="Notificar a los padres"
+                                                        x-on:click="seSwalConfirmar('¿Enviar notificación a la familia sobre esta sanción?', 'Notificar padres').then(ok => ok && $wire.notificarPadres({{ $s->id }}))"
+                                                        class="btn-secondary btn-sm">
+                                                    Notif. Padres
+                                                </button>
+                                            @endif
+                                            @endif {{-- permiteNotifPadres --}}
                                             <a class="btn-secondary btn-sm" href="{{ route('seguimiento.disciplinario.edit', ['id' => $s->id]) }}">
                                                 Editar
                                             </a>
@@ -144,31 +165,45 @@
         </div>
     @endif
 
-    @if ($showDeleteConfirm)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 p-4 backdrop-blur-sm">
-            <div class="w-full max-w-sm rounded-2xl border border-accent-200 bg-white shadow-xl" @click.stop>
-                <div class="border-b border-accent-200 px-6 py-5">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
-                            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="mb-1 text-base font-semibold text-neutral-900">Confirmar borrado</h3>
-                            <p class="text-sm text-neutral-600">{{ $deleteInfo }}</p>
+@teleport('body')
+    <div>
+        @if ($showDeleteConfirm)
+            <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                 role="dialog" aria-modal="true">
+                <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+                     wire:click="$set('showDeleteConfirm', false)"></div>
+                <div class="relative z-10 my-auto w-full max-w-sm rounded-2xl border border-accent-200 bg-white shadow-xl">
+                    <div class="border-b border-accent-200 px-6 py-5">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                                <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="mb-1 text-base font-semibold text-neutral-900">Confirmar borrado</h3>
+                                <p class="text-sm text-neutral-600">{{ $deleteInfo }}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/60 px-6 py-4">
-                    <button type="button" wire:click="$set('showDeleteConfirm', false)" class="btn-secondary">Cancelar</button>
-                    <button type="button" wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
-                        <span wire:loading.remove wire:target="delete">Borrar</span>
-                        <span wire:loading wire:target="delete">Borrando…</span>
-                    </button>
+                    <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/60 px-6 py-4">
+                        <button type="button" wire:click="$set('showDeleteConfirm', false)" class="btn-secondary">Cancelar</button>
+                        <button type="button" wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
+                            <span wire:loading.remove wire:target="delete">Borrar</span>
+                            <span wire:loading wire:target="delete">Borrando…</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
+    </div>
+@endteleport
 </div>
+
+@script
+<script>
+    $wire.on('se-swal-exito', (e) => { window.seSwalExito?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+    $wire.on('se-swal-error', (e) => { window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+</script>
+@endscript

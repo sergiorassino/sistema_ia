@@ -47,6 +47,11 @@
                         @class(['se-form-tab', 'se-form-tab-active' => $activeTab === 'parametros', 'se-form-tab-idle' => $activeTab !== 'parametros'])>
                     PARÁMETROS
                 </button>
+                <button type="button"
+                        wire:click="setTab('correo')"
+                        @class(['se-form-tab', 'se-form-tab-active' => $activeTab === 'correo', 'se-form-tab-idle' => $activeTab !== 'correo'])>
+                    CORREO INSTITUCIONAL
+                </button>
             </nav>
         </div>
 
@@ -367,7 +372,7 @@
             </div>
         </div>
         </div>
-        @else
+        @elseif ($activeTab === 'parametros')
         <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros">
             <div>
                 <p class="se-section-title mb-1">Ciclos lectivos</p>
@@ -450,6 +455,94 @@
                 </div>
             </div>
         </div>
+        @elseif ($activeTab === 'correo')
+        <div class="space-y-6 p-6 sm:p-7" wire:key="param-tab-correo">
+
+            {{-- Estado actual --}}
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex-1">
+                    <p class="se-section-title mb-0.5">Correo institucional (Gmail)</p>
+                    <p class="text-xs text-neutral-500">
+                        Cuenta Gmail desde la que se envían los comunicados del cuaderno y notificaciones a familias.
+                        Usá una <strong>contraseña de aplicación</strong> de Google (no la contraseña principal).
+                    </p>
+                </div>
+                @if ($mailConfigurado)
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 ring-1 ring-green-200">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Configurado
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                        Sin configurar
+                    </span>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+                <div class="md:col-span-2">
+                    <label class="form-label">Cuenta Gmail *</label>
+                    <input wire:model="mailGmailUser" type="email" maxlength="120"
+                           class="form-input mt-1.5 @error('mailGmailUser') border-red-400 @enderror"
+                           placeholder="secretaria@mischool.gmail.com">
+                    @error('mailGmailUser') <p class="form-error">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-neutral-500">Se usa como remitente y como nombre de usuario SMTP.</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="form-label">Nombre del remitente *</label>
+                    <input wire:model="mailGmailFromName" type="text" maxlength="100"
+                           class="form-input mt-1.5 @error('mailGmailFromName') border-red-400 @enderror"
+                           placeholder="Instituto San José">
+                    @error('mailGmailFromName') <p class="form-error">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-neutral-500">Nombre que ve la familia en «De:» al recibir el correo.</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="form-label">
+                        Contraseña de aplicación Google
+                        @if ($mailConfigurado) <span class="ml-1 font-normal normal-case text-neutral-400">(dejar vacío para mantener la actual)</span> @endif
+                    </label>
+                    <input wire:model="mailGmailPassword" type="password" maxlength="40" autocomplete="new-password"
+                           class="form-input mt-1.5 font-mono tracking-widest @error('mailGmailPassword') border-red-400 @enderror"
+                           placeholder="{{ $mailConfigurado ? '••••••••••••••••' : 'xxxx xxxx xxxx xxxx' }}">
+                    @error('mailGmailPassword') <p class="form-error">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-neutral-500">
+                        Generala en
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer"
+                           class="font-medium text-primary-700 underline hover:text-primary-900">
+                            myaccount.google.com → Contraseñas de aplicación
+                        </a>
+                        (requiere verificación en dos pasos activa). Son 16 caracteres, con o sin espacios.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Datos fijos de Gmail (informativos) --}}
+            <div class="rounded-2xl border border-accent-100 bg-accent-50/50 px-4 py-3">
+                <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Configuración SMTP fija (Gmail)</p>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-neutral-600 sm:grid-cols-4">
+                    <div><span class="font-semibold">Host:</span> smtp.gmail.com</div>
+                    <div><span class="font-semibold">Puerto:</span> 587</div>
+                    <div><span class="font-semibold">Cifrado:</span> TLS</div>
+                    <div><span class="font-semibold">Mailer:</span> SMTP</div>
+                </div>
+            </div>
+
+            <div class="flex justify-end border-t border-accent-200 pt-4">
+                <button type="button" wire:click="saveMailConfig" wire:loading.attr="disabled" wire:target="saveMailConfig"
+                        class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60">
+                    <span wire:loading.remove wire:target="saveMailConfig">Guardar configuración de correo</span>
+                    <span wire:loading wire:target="saveMailConfig">Guardando…</span>
+                </button>
+            </div>
+        </div>
         @endif
     </div>
 </div>
@@ -464,6 +557,12 @@
         $wire.on('se-swal-error', (event) => {
             if (typeof window.seSwalError === 'function') {
                 window.seSwalError(mensajeDeEvento(event, 'No se pudo guardar.'), 'Parámetros del sistema');
+            }
+        });
+
+        $wire.on('se-swal-exito', (event) => {
+            if (typeof window.seSwalExito === 'function') {
+                window.seSwalExito(mensajeDeEvento(event, 'Guardado.'));
             }
         });
     })();

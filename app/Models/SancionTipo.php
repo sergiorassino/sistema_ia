@@ -12,6 +12,20 @@ class SancionTipo extends Model
 
     protected $fillable = [
         'tipo',
+        'textoNotifPadres',
+        'idProfesorNotif',
+        'refuerzoMail',
+        'permiteNotifPadres',
     ];
+
+    protected $casts = [
+        'refuerzoMail'       => 'boolean',
+        'permiteNotifPadres' => 'boolean',
+    ];
+
+    public function profesorNotif()
+    {
+        return $this->belongsTo(Profesor::class, 'idProfesorNotif');
+    }
 }
 

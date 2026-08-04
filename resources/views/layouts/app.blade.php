@@ -1452,21 +1452,6 @@
                 </a>
                 @endif
 
-                @if (tienePermisoConfig(31))
-                <a href="{{ route('param.parametros-sistema') }}"
-                   @class([
-                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
-                   ])
-                   title="{{ seSidebarTooltip('Parámetros del sistema v1.0', 31) }}">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
-                    </svg>
-                    <span class="truncate">Parámetros del sistema</span>
-                </a>
-                @endif
-
                 @if (tienePermisoConfig(\App\Support\PermisosConfiguracion::ASPIRANTES_CAMPOS))
                 <a href="{{ route('param.campos-aspirantes') }}"
                    @class([
@@ -1479,6 +1464,36 @@
                               d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
                     <span class="truncate">Campos activos (Aspirantes)</span>
+                </a>
+                @endif
+
+                @if (tienePermisoConfig(\App\Support\PermisosConfiguracion::SANCION_TIPOS_CONFIG))
+                <a href="{{ route('param.sancion-tipos') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.sancion-tipos'),
+                   ])
+                   title="{{ seSidebarTooltip('Tipos de sanción disciplinaria — texto notif. padres, remitente y refuerzo mail', 91) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="truncate">Tipos de sanción</span>
+                </a>
+                @endif
+
+                @if (tienePermisoConfig(31))
+                <a href="{{ route('param.parametros-sistema') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'param.parametros-sistema'),
+                   ])
+                   title="{{ seSidebarTooltip('Parámetros del sistema v1.0', 31) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 16v-2m8-6h-2M6 12H4m14.364 6.364l-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414"/>
+                    </svg>
+                    <span class="truncate">Parámetros del sistema</span>
                 </a>
                 @endif
 
