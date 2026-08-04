@@ -288,10 +288,21 @@ final class InformeProgresoInicialDatos
         if (Schema::hasTable('calificaciones')
             && Schema::hasColumn('calificaciones', 'obs01')
             && Schema::hasColumn('calificaciones', 'obs02')) {
-            $fila = DB::table('calificaciones')
-                ->where('idMatricula', $idMatricula)
-                ->where('ord', $ord)
-                ->first(['obs01', 'obs02']);
+            // Preferir idMaterias (mismo criterio que la sincronización GE / carga por estudiante).
+            $fila = null;
+            if ($idMateria > 0) {
+                $fila = DB::table('calificaciones')
+                    ->where('idMatricula', $idMatricula)
+                    ->where('idMaterias', $idMateria)
+                    ->first(['obs01', 'obs02']);
+            }
+
+            if ($fila === null && $ord > 0) {
+                $fila = DB::table('calificaciones')
+                    ->where('idMatricula', $idMatricula)
+                    ->where('ord', $ord)
+                    ->first(['obs01', 'obs02']);
+            }
 
             if ($fila !== null) {
                 return [
