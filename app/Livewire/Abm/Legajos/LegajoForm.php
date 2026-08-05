@@ -397,7 +397,7 @@ class LegajoForm extends Component
     {
         $this->addError(
             'fotoCarnetUpload',
-            'No se pudo subir la foto. Compruebe tamaño (máx. 2 MB), formato JPG/PNG y que la sesión siga activa.'
+            'No se pudo subir la foto. Compruebe tamaño (máx. 2 MB al subir), formato JPG/PNG y que la sesión siga activa.'
         );
     }
 
@@ -443,6 +443,7 @@ class LegajoForm extends Component
                 'La subida de la foto no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
             );
             $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+            $this->dispatch('se-swal-aviso', mensaje: 'La foto todavía se está subiendo. Espere y vuelva a guardar.');
 
             return null;
         }

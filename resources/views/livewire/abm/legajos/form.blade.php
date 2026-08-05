@@ -1,4 +1,32 @@
-<div class="se-page se-legajo-form">
+<div class="se-page se-legajo-form"
+     x-data="{
+         localFotoPreview: null,
+         fotoSubiendo: false,
+         revokeLocalFotoPreview() {
+             if (this.localFotoPreview) {
+                 URL.revokeObjectURL(this.localFotoPreview);
+                 this.localFotoPreview = null;
+             }
+         },
+         esUploadFotoCarnet(detail) {
+             const prop = detail?.property ?? detail?.name ?? '';
+             return prop === 'fotoCarnetUpload';
+         },
+         guardarLegajo() {
+             if (this.fotoSubiendo) {
+                 window.seSwalAviso?.(
+                     'La foto todavía se está subiendo. Espere a que termine y luego pulse Guardar.',
+                     'Subida en curso'
+                 );
+                 return;
+             }
+             $wire.save();
+         }
+     }"
+     x-on:livewire-upload-start.window="if (esUploadFotoCarnet($event.detail)) fotoSubiendo = true"
+     x-on:livewire-upload-finish.window="if (esUploadFotoCarnet($event.detail)) fotoSubiendo = false"
+     x-on:livewire-upload-cancel.window="if (esUploadFotoCarnet($event.detail)) { fotoSubiendo = false; revokeLocalFotoPreview(); }"
+     x-on:livewire-upload-error.window="if (esUploadFotoCarnet($event.detail)) { fotoSubiendo = false; revokeLocalFotoPreview(); $wire.onFotoCarnetUploadFailed(); }">
     {{-- Flash --}}
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
@@ -75,8 +103,16 @@
             <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
 
             @if ($puedeEditar)
-                <button wire:click="save" wire:loading.attr="disabled" class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
-                    <span wire:loading.remove wire:target="save">Guardar legajo</span>
+                <button type="button"
+                        x-on:click="guardarLegajo()"
+                        wire:loading.attr="disabled"
+                        wire:target="save,fotoCarnetUpload"
+                        :disabled="fotoSubiendo"
+                        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:cursor-not-allowed disabled:opacity-60">
+                    <span wire:loading.remove wire:target="save">
+                        <span x-show="! fotoSubiendo">Guardar legajo</span>
+                        <span x-show="fotoSubiendo" x-cloak>Espere la foto…</span>
+                    </span>
                     <span wire:loading wire:target="save">Guardando...</span>
                 </button>
             @endif
@@ -84,16 +120,7 @@
         </div>
     </section>
 
-    <div class="se-card overflow-hidden"
-         x-data="{
-             localFotoPreview: null,
-             revokeLocalFotoPreview() {
-                 if (this.localFotoPreview) {
-                     URL.revokeObjectURL(this.localFotoPreview);
-                     this.localFotoPreview = null;
-                 }
-             }
-         }">
+    <div class="se-card overflow-hidden">
         {{-- Tabs (fuera del fieldset: en modo consulta deben poder cambiar de solapa) --}}
         <div class="border-b border-accent-200 bg-white">
             <nav class="se-form-tabs">
@@ -972,6 +999,9 @@
         });
         $wire.on('se-swal-error', (e) => {
             window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? '');
+        });
+        $wire.on('se-swal-aviso', (e) => {
+            window.seSwalAviso?.(e.mensaje ?? e[0]?.mensaje ?? '');
         });
     </script>
     @endscript

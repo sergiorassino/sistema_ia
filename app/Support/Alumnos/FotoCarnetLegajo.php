@@ -10,7 +10,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 /**
  * Foto carnet del estudiante (`legajos.fotoCarnet`).
  *
- * Disco `privado` → ento/foto-carnet/{tenantSlug}/{dni}.{ext}
+ * Disco `privado` → ento/foto-carnet/{tenantSlug}/{dni}.jpg
+ * Al guardar se redimensiona y comprime (el tamaño en pantalla lo define el CSS).
  */
 final class FotoCarnetLegajo
 {
@@ -21,7 +22,17 @@ final class FotoCarnetLegajo
     /** @var list<string> */
     public const EXTENSIONES = ['jpg', 'jpeg', 'png'];
 
-    public const MAX_KB = 2048;
+    /** Tope del archivo original subido (antes de comprimir). */
+    public const MAX_KB_UPLOAD = 2048;
+
+    /** Ancho máximo en píxeles del archivo guardado. */
+    public const MAX_ANCHO_PX = 600;
+
+    /** Alto máximo en píxeles del archivo guardado (proporción carnet ~3:4). */
+    public const MAX_ALTO_PX = 800;
+
+    /** Calidad JPEG 0–100. */
+    public const JPEG_CALIDAD = 75;
 
     public static function columnaDisponible(): bool
     {
@@ -59,7 +70,6 @@ final class FotoCarnetLegajo
             return null;
         }
 
-        // Relativa al host actual; ID numérico (ABM secretaría con auth).
         $url = route('abm.legajos.foto-carnet', ['id' => $idLegajo], false);
         $mtime = @filemtime(self::rutaAbsoluta($pathRelativo) ?? '') ?: time();
 
@@ -118,21 +128,35 @@ final class FotoCarnetLegajo
             return ['ok' => false, 'error' => $error];
         }
 
-        $dir = 'ento/foto-carnet/'.tenantSlug();
-        $ext = strtolower((string) $file->getClientOriginalExtension());
-        if (! in_array($ext, self::EXTENSIONES, true)) {
-            $ext = 'jpg';
+        $origen = self::rutaTemporalUpload($file);
+        if ($origen === null) {
+            return [
+                'ok' => false,
+                'error' => 'No se pudo leer el archivo en el servidor. Verifique permisos en storage/app/livewire-tmp.',
+            ];
         }
-        if ($ext === 'jpeg') {
-            $ext = 'jpg';
-        }
-        $filename = $dniArchivo.'.'.$ext;
 
+        $comprimido = self::comprimirAJpeg($origen);
+        if ($comprimido === null) {
+            return [
+                'ok' => false,
+                'error' => 'No se pudo procesar la imagen. Use JPG o PNG y compruebe que la extensión GD de PHP esté habilitada.',
+            ];
+        }
+
+        $dir = 'ento/foto-carnet/'.tenantSlug();
+        $filename = $dniArchivo.'.jpg';
+        $newPath = $dir.'/'.$filename;
         $disk = Storage::disk(self::DISK);
 
         try {
             $disk->makeDirectory($dir);
-            $newPath = $file->storeAs($dir, $filename, self::DISK);
+            if (! $disk->put($newPath, $comprimido)) {
+                return [
+                    'ok' => false,
+                    'error' => 'No se pudo guardar la foto. Verifique permisos en storage/app/private.',
+                ];
+            }
         } catch (\Throwable $e) {
             Log::warning('foto-carnet-legajo: error al guardar', [
                 'idLegajo' => $idLegajo,
@@ -146,7 +170,7 @@ final class FotoCarnetLegajo
             ];
         }
 
-        if (! is_string($newPath) || $newPath === '' || ! $disk->exists($newPath)) {
+        if (! $disk->exists($newPath)) {
             return [
                 'ok' => false,
                 'error' => 'No se pudo guardar la foto. Verifique permisos en storage/app/private.',
@@ -186,8 +210,8 @@ final class FotoCarnetLegajo
         }
 
         $size = (int) $file->getSize();
-        if ($size <= 0 || $size > self::MAX_KB * 1024) {
-            return 'La foto no puede superar los 2 MB.';
+        if ($size <= 0 || $size > self::MAX_KB_UPLOAD * 1024) {
+            return 'La foto no puede superar los 2 MB (se comprime al guardar).';
         }
 
         $ext = strtolower((string) $file->getClientOriginalExtension());
@@ -195,6 +219,133 @@ final class FotoCarnetLegajo
             return 'La foto debe ser JPG o PNG.';
         }
 
+        $origen = self::rutaTemporalUpload($file);
+        if ($origen === null) {
+            return 'No se pudo leer el archivo en el servidor. Espere a que termine la subida e intente de nuevo.';
+        }
+
+        if (@getimagesize($origen) === false) {
+            return 'El archivo seleccionado no es una imagen válida (JPG/PNG).';
+        }
+
         return null;
+    }
+
+    private static function rutaTemporalUpload(TemporaryUploadedFile $file): ?string
+    {
+        $path = $file->getRealPath();
+        if (! is_string($path) || $path === '' || ! is_readable($path)) {
+            $path = method_exists($file, 'path') ? $file->path() : null;
+        }
+
+        if (! is_string($path) || $path === '' || ! is_readable($path)) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Redimensiona (máx. MAX_ANCHO × MAX_ALTO) y comprime a JPEG.
+     */
+    private static function comprimirAJpeg(string $rutaOrigen): ?string
+    {
+        if (! extension_loaded('gd')) {
+            Log::warning('foto-carnet-legajo: extensión GD no disponible');
+
+            return null;
+        }
+
+        $info = @getimagesize($rutaOrigen);
+        if ($info === false) {
+            return null;
+        }
+
+        $mime = strtolower((string) ($info['mime'] ?? ''));
+        $origen = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($rutaOrigen),
+            'image/png' => @imagecreatefrompng($rutaOrigen),
+            default => false,
+        };
+
+        if ($origen === false) {
+            return null;
+        }
+
+        $origen = self::aplicarOrientacionExif($origen, $rutaOrigen, $mime);
+
+        $anchoOrig = imagesx($origen);
+        $altoOrig = imagesy($origen);
+        if ($anchoOrig < 1 || $altoOrig < 1) {
+            imagedestroy($origen);
+
+            return null;
+        }
+
+        $escala = min(
+            self::MAX_ANCHO_PX / $anchoOrig,
+            self::MAX_ALTO_PX / $altoOrig,
+            1.0
+        );
+        $ancho = max(1, (int) round($anchoOrig * $escala));
+        $alto = max(1, (int) round($altoOrig * $escala));
+
+        $destino = imagecreatetruecolor($ancho, $alto);
+        if ($destino === false) {
+            imagedestroy($origen);
+
+            return null;
+        }
+
+        $blanco = imagecolorallocate($destino, 255, 255, 255);
+        if ($blanco !== false) {
+            imagefilledrectangle($destino, 0, 0, $ancho, $alto, $blanco);
+        }
+
+        imagecopyresampled($destino, $origen, 0, 0, 0, 0, $ancho, $alto, $anchoOrig, $altoOrig);
+        imagedestroy($origen);
+
+        ob_start();
+        $ok = imagejpeg($destino, null, self::JPEG_CALIDAD);
+        $bin = ob_get_clean();
+        imagedestroy($destino);
+
+        if (! $ok || ! is_string($bin) || $bin === '') {
+            return null;
+        }
+
+        return $bin;
+    }
+
+    /**
+     * @param  \GdImage  $imagen
+     * @return \GdImage
+     */
+    private static function aplicarOrientacionExif($imagen, string $ruta, string $mime)
+    {
+        if ($mime !== 'image/jpeg' || ! function_exists('exif_read_data')) {
+            return $imagen;
+        }
+
+        $exif = @exif_read_data($ruta);
+        $orientacion = (int) ($exif['Orientation'] ?? 1);
+        if ($orientacion <= 1) {
+            return $imagen;
+        }
+
+        $rotado = match ($orientacion) {
+            3 => imagerotate($imagen, 180, 0),
+            6 => imagerotate($imagen, -90, 0),
+            8 => imagerotate($imagen, 90, 0),
+            default => false,
+        };
+
+        if ($rotado === false) {
+            return $imagen;
+        }
+
+        imagedestroy($imagen);
+
+        return $rotado;
     }
 }
