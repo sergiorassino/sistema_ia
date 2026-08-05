@@ -6,7 +6,9 @@ use App\Models\Ento;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Terlec;
+use App\Support\Alumnos\SinMatriculaAutogestionException;
 use App\Support\DniInput;
+use App\Support\InformeInasistencias;
 use App\Support\StudentContext;
 use App\Support\Auth\RecuperacionContrasenaOrigen;
 use App\Livewire\Concerns\RecuperaContrasenaOlvidada;
@@ -131,6 +133,21 @@ class Login extends Component
                 idNivel: $idNivel,
                 idTerlec: $idTerlec,
             );
+
+            if (! InformeInasistencias::tieneMatriculaCursoAutogestion()) {
+                Auth::guard('alumno')->logout();
+                StudentContext::clear();
+                RateLimiter::clear($throttleKey);
+                $this->pwrd = '';
+                $this->dispatch(
+                    'se-swal-error',
+                    mensaje: SinMatriculaAutogestionException::MENSAJE,
+                    titulo: 'Acceso no disponible',
+                    confirmButtonText: 'Volver al inicio de sesión',
+                );
+
+                return;
+            }
 
             RateLimiter::clear($throttleKey);
 

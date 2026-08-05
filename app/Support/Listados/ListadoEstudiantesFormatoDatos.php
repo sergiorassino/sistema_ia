@@ -51,6 +51,8 @@ final class ListadoEstudiantesFormatoDatos
                 'matricula.idCursos as __id_curso',
                 'legajos.apellido',
                 'legajos.nombre',
+                'legajos.nombremad',
+                'legajos.nombrepad',
             ]);
 
         $porCurso = $filas->groupBy(fn ($r) => (int) $r->__id_curso);

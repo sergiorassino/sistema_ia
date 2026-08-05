@@ -7,6 +7,7 @@ use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
 use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
+use App\Support\InformeInasistencias;
 
 /**
  * Escritorio del portal familia — accesos rápidos y datos para widgets.
@@ -205,19 +206,12 @@ final class PortalFamiliaDashboard
 
     /**
      * DNI y curso/sección del ciclo activo (idTerlecVerNotas) para el escritorio.
+     * El curso sale solo de la matrícula de autogestión (sin fallback a cuotas).
      *
      * @return array{dni: string, curso: string}
      */
     public static function datosSesion(): array
     {
-        $encabezado = ArancelesEscolares::encabezadoAutogestion();
-        if ($encabezado !== null) {
-            return [
-                'dni' => $encabezado['dni'] !== '' ? $encabezado['dni'] : '—',
-                'curso' => $encabezado['curso'],
-            ];
-        }
-
         $legajo = studentCtx()->alumno();
         $dni = $legajo !== null
             ? ArancelesEscolares::formatearDni($legajo->dni ?? '')
@@ -225,7 +219,7 @@ final class PortalFamiliaDashboard
 
         return [
             'dni' => $dni !== '' ? $dni : '—',
-            'curso' => '',
+            'curso' => mb_strtoupper(InformeInasistencias::cursoNombreAutogestion()),
         ];
     }
 }

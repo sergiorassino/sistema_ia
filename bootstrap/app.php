@@ -6,6 +6,8 @@ use App\Http\Middleware\EnsureStudentContext;
 use App\Http\Middleware\ForceHttpsBehindProxy;
 use App\Http\Middleware\NoStoreResponse;
 use App\Http\Middleware\RegenerarSesionPostLogin;
+use App\Support\Alumnos\SinMatriculaAutogestionException;
+use App\Support\Auth\CerrarSesionAplicacion;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -60,5 +62,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (SinMatriculaAutogestionException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+
+            CerrarSesionAplicacion::ejecutar($request);
+
+            return redirect()
+                ->route('alumnos.login')
+                ->with('se_swal_error', $e->getMessage())
+                ->with('se_swal_error_titulo', 'Acceso no disponible');
+        });
     })->create();

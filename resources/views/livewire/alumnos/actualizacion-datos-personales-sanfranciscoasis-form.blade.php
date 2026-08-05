@@ -46,6 +46,8 @@
         </div>
     </section>
 
+    @include('livewire.alumnos.partials.foto-carnet-actualizacion')
+
     @if (session('error'))
         <div class="se-soft-card mb-4 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {{ session('error') }}
@@ -393,14 +395,15 @@
         <div class="sticky bottom-0 z-10 -mx-2 border-t border-accent-200 bg-[#F4F8F9]/95 px-2 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0">
             <button type="submit"
                     wire:loading.attr="disabled"
+                    wire:target="guardar,fotoCarnetUpload"
                     @disabled($bloqueado)
                     class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50">
-                <svg wire:loading.remove wire:target="guardar" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg wire:loading.remove wire:target="guardar,fotoCarnetUpload" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                 </svg>
-                <span wire:loading.remove wire:target="guardar">Guardar</span>
-                <span wire:loading wire:target="guardar">Guardando…</span>
+                <span wire:loading.remove wire:target="guardar,fotoCarnetUpload">Guardar</span>
+                <span wire:loading wire:target="guardar,fotoCarnetUpload">Guardando…</span>
             </button>
         </div>
     </form>

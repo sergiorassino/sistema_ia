@@ -13,6 +13,8 @@ final class ListadoEstudiantesFormatoCatalog
 
     public const MODELO_CALENDARIO = 'calendario';
 
+    public const MODELO_REGISTRO_FIRMAS = 'registro_firmas';
+
     /** @return list<string> */
     public static function keys(): array
     {
@@ -20,6 +22,7 @@ final class ListadoEstudiantesFormatoCatalog
             self::MODELO_CUADRICULADO,
             self::MODELO_RENGLON,
             self::MODELO_CALENDARIO,
+            self::MODELO_REGISTRO_FIRMAS,
         ];
     }
 
@@ -38,6 +41,7 @@ final class ListadoEstudiantesFormatoCatalog
             self::MODELO_CUADRICULADO => 'Listado con Cuadriculado',
             self::MODELO_RENGLON => 'Listado con Renglón',
             self::MODELO_CALENDARIO => 'Listado con Calendario',
+            self::MODELO_REGISTRO_FIRMAS => 'Listado para Registro de Firmas',
             default => 'Listado con Cuadriculado',
         };
     }
@@ -67,6 +71,11 @@ final class ListadoEstudiantesFormatoCatalog
                 'key' => self::MODELO_CALENDARIO,
                 'label' => self::etiqueta(self::MODELO_CALENDARIO),
                 'descripcion' => 'Apellido y nombre con grilla mensual de días (sábados y domingos en gris).',
+            ],
+            [
+                'key' => self::MODELO_REGISTRO_FIRMAS,
+                'label' => self::etiqueta(self::MODELO_REGISTRO_FIRMAS),
+                'descripcion' => 'Espacio para firma y aclaración por estudiante, con nombres de madre y padre.',
             ],
         ];
     }

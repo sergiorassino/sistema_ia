@@ -45,6 +45,8 @@
             </div>
         </section>
 
+        @include('livewire.alumnos.partials.foto-carnet-actualizacion')
+
         @if (session('error'))
             <div class="se-soft-card mb-4 border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 {{ session('error') }}
@@ -70,14 +72,15 @@
                 <div class="border-b border-accent-200 bg-accent-50 px-4 py-3 sm:px-5">
                     <button type="submit"
                             wire:loading.attr="disabled"
+                            wire:target="guardar,fotoCarnetUpload"
                             @disabled($bloqueado)
                             class="mx-auto flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50">
-                        <svg wire:loading.remove wire:target="guardar" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg wire:loading.remove wire:target="guardar,fotoCarnetUpload" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                         </svg>
-                        <span wire:loading.remove wire:target="guardar">Guardar</span>
-                        <span wire:loading wire:target="guardar">Guardando…</span>
+                        <span wire:loading.remove wire:target="guardar,fotoCarnetUpload">Guardar</span>
+                        <span wire:loading wire:target="guardar,fotoCarnetUpload">Guardando…</span>
                     </button>
                 </div>
             </div>
@@ -88,6 +91,7 @@
             </p>
             <p class="mb-6 text-center text-xs font-semibold uppercase tracking-wide text-neutral-600">
                 Si algún dato no corresponde, escriba un guión (-).
+                En fechas de nacimiento, déjelas en blanco.
             </p>
 
             <div class="space-y-6">
@@ -106,8 +110,9 @@
                                 @error('dnipad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="form-label" for="campo-fechnacpad">Fecha de nacimiento *</label>
+                                <label class="form-label" for="campo-fechnacpad">Fecha de nacimiento</label>
                                 <input id="campo-fechnacpad" wire:model="fechnacpad" type="date" class="form-input mt-1" @disabled($bloqueado)>
+                                <p class="mt-1 text-[11px] text-neutral-500">Si no corresponde, déjela en blanco.</p>
                                 @error('fechnacpad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -163,8 +168,9 @@
                                 @error('dnimad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="form-label" for="campo-fechnacmad">Fecha de nacimiento *</label>
+                                <label class="form-label" for="campo-fechnacmad">Fecha de nacimiento</label>
                                 <input id="campo-fechnacmad" wire:model="fechnacmad" type="date" class="form-input mt-1" @disabled($bloqueado)>
+                                <p class="mt-1 text-[11px] text-neutral-500">Si no corresponde, déjela en blanco.</p>
                                 @error('fechnacmad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>

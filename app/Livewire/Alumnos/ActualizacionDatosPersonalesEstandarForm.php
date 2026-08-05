@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Alumnos;
 
+use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesEstandar;
 use App\Support\Alumnos\DocumentosEstudianteAutogestion;
@@ -16,6 +17,7 @@ use Livewire\Features\SupportFileUploads\WithFileUploads;
  */
 class ActualizacionDatosPersonalesEstandarForm extends Component
 {
+    use ConFotoCarnetActualizacionDatos;
     use WithFileUploads;
 
     public string $apellido = '';
@@ -131,6 +133,7 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
             }
         }
 
+        $this->montarFotoCarnetDesdeLegajo($legajo);
         $this->refrescarEstadoDocumentos();
     }
 
@@ -320,6 +323,10 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
             return;
         }
 
+        if (! $this->validarFotoCarnetAntesDeGuardar()) {
+            return;
+        }
+
         RateLimiter::hit($key, 120);
 
         $state = $this->only($keys);
@@ -334,6 +341,11 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         }
 
         $legajo = Legajo::query()->findOrFail((int) $ctx['legajo']->id);
+
+        if (! $this->persistirFotoCarnetTrasGuardar($legajo)) {
+            return;
+        }
+
         foreach (ActualizacionDatosPersonalesEstandar::atributosParaFormulario($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
                 $this->{$k} = $v;
@@ -424,9 +436,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
 
     public function render()
     {
-        return view('livewire.alumnos.actualizacion-datos-personales-estandar-form', [
+        return view('livewire.alumnos.actualizacion-datos-personales-estandar-form', array_merge([
             'documentosEstudianteHabilitados' => DocumentosEstudianteAutogestion::habilitadoConTipos(),
             'tiposDocumentoEstudiante' => DocumentosEstudianteAutogestion::tiposConfigurados(),
-        ])->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
+        ], $this->datosVistaFotoCarnet()))->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
     }
 }

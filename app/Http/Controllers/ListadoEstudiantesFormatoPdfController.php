@@ -9,6 +9,7 @@ use App\Support\Listados\ListadoEstudiantesFormatoCatalog;
 use App\Support\Listados\ListadoEstudiantesFormatoCuadriculadoTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoDatos;
 use App\Support\Listados\ListadoEstudiantesFormatoMes;
+use App\Support\Listados\ListadoEstudiantesFormatoRegistroFirmasTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoRenglonTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -78,6 +79,7 @@ class ListadoEstudiantesFormatoPdfController extends Controller
         $pdf = match ($modelo) {
             ListadoEstudiantesFormatoCatalog::MODELO_CALENDARIO => ListadoEstudiantesFormatoCalendarioTcpdf::generar($datosPdf),
             ListadoEstudiantesFormatoCatalog::MODELO_RENGLON => ListadoEstudiantesFormatoRenglonTcpdf::generar($datosPdf),
+            ListadoEstudiantesFormatoCatalog::MODELO_REGISTRO_FIRMAS => ListadoEstudiantesFormatoRegistroFirmasTcpdf::generar($datosPdf),
             default => ListadoEstudiantesFormatoCuadriculadoTcpdf::generar($datosPdf),
         };
 
@@ -97,6 +99,7 @@ class ListadoEstudiantesFormatoPdfController extends Controller
         $clasePdf = match ($modelo) {
             ListadoEstudiantesFormatoCatalog::MODELO_CALENDARIO => ListadoEstudiantesFormatoCalendarioTcpdf::class,
             ListadoEstudiantesFormatoCatalog::MODELO_RENGLON => ListadoEstudiantesFormatoRenglonTcpdf::class,
+            ListadoEstudiantesFormatoCatalog::MODELO_REGISTRO_FIRMAS => ListadoEstudiantesFormatoRegistroFirmasTcpdf::class,
             default => ListadoEstudiantesFormatoCuadriculadoTcpdf::class,
         };
 

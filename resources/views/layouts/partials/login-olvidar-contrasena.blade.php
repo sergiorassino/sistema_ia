@@ -39,7 +39,11 @@
 @script
 <script>
     $wire.on('se-swal-exito', ({ mensaje, titulo }) => window.seSwalExito(mensaje, titulo ?? 'Listo'));
-    $wire.on('se-swal-error', ({ mensaje, titulo }) => window.seSwalError(mensaje, titulo ?? 'Error'));
+    $wire.on('se-swal-error', ({ mensaje, titulo, confirmButtonText }) => window.seSwalError(
+        mensaje,
+        titulo ?? 'Error',
+        confirmButtonText ? { confirmButtonText } : {}
+    ));
     $wire.on('se-swal-aviso', ({ mensaje, titulo }) => window.seSwalAviso(mensaje, titulo ?? 'Atención'));
 </script>
 @endscript
