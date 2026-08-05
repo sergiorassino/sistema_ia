@@ -268,13 +268,16 @@ final class InformeInasistenciasTcpdf extends TCPDF
         $items = [
             ['Inasistencias justificadas:', $resumen->formatear($resumen->justificadas)],
             ['Inasistencias injustificadas:', $resumen->formatear($resumen->injustificadas)],
+            ['Llegadas tarde 1/4:', $resumen->formatear($resumen->llegadasTardeCuarto)],
+            ['Llegadas tarde 1/2:', $resumen->formatear($resumen->llegadasTardeMedio)],
+            ['Retiro anticipado:', $resumen->formatear($resumen->retirosAnticipados)],
             ['Total de inasistencias:', $resumen->formatear($resumen->totalClase())],
-            ['Inasistencias a educación física:', (string) $resumen->educacionFisicaRegistros],
+            ['Inasistencias a educación física:', $resumen->formatear($resumen->educacionFisica)],
         ];
 
         foreach ($items as [$etiqueta, $valor]) {
             TcpdfFuenteArial::aplicar($this, 'B', 7);
-            $this->Cell(62, 3.2, $etiqueta, 0, 0, 'L');
+            $this->Cell(70, 3.2, $etiqueta, 0, 0, 'L');
             TcpdfFuenteArial::aplicar($this, '', 7);
             $this->Cell(0, 3.2, $valor, 0, 1, 'L');
         }
