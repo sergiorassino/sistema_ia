@@ -121,7 +121,8 @@ final class ActualizacionDatosPersonalesEstandar
         return [
             'nombrepad' => $req,
             'dnipad' => $req,
-            'fechnacpad' => ['required', 'date'],
+            // type="date" no admite guión (-); vacío = no corresponde (parseFecha → null).
+            'fechnacpad' => self::reglaFechaOpcional(),
             'nacionpad' => $req,
             'domipad' => $req,
             'telepad' => $req,
@@ -130,7 +131,7 @@ final class ActualizacionDatosPersonalesEstandar
             'telltp' => $opc,
             'nombremad' => $req,
             'dnimad' => $req,
-            'fechnacmad' => ['required', 'date'],
+            'fechnacmad' => self::reglaFechaOpcional(),
             'nacionmad' => $req,
             'domimad' => $req,
             'telemad' => $req,
@@ -222,6 +223,38 @@ final class ActualizacionDatosPersonalesEstandar
             static function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! ActualizacionDatosPersonalesComun::emailInputAceptado($value, false)) {
                     $fail('Debe ingresar un e-mail válido o un guión (-) si no corresponde.');
+                }
+            },
+        ];
+    }
+
+    /**
+     * Fecha opcional: vacío o guión = no corresponde (el input type="date" no permite escribir "-").
+     *
+     * @return list<mixed>
+     */
+    private static function reglaFechaOpcional(): array
+    {
+        return [
+            'nullable',
+            static function (string $attribute, mixed $value, \Closure $fail): void {
+                $texto = trim((string) ($value ?? ''));
+                if ($texto === '' || $texto === '-') {
+                    return;
+                }
+
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $texto)) {
+                    [$y, $m, $d] = array_map('intval', explode('-', $texto));
+                    if (! checkdate($m, $d, $y)) {
+                        $fail('La fecha de nacimiento no es válida.');
+                    }
+
+                    return;
+                }
+
+                $dt = Carbon::createFromFormat('d/m/Y', $texto);
+                if ($dt === false || $dt->format('d/m/Y') !== $texto) {
+                    $fail('La fecha de nacimiento no es válida.');
                 }
             },
         ];

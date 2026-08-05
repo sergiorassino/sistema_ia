@@ -2,18 +2,23 @@
 
 namespace App\Livewire\Alumnos;
 
+use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 /**
  * Actualización de datos personales — variante San Francisco de Asís (completo con documentos).
  */
 class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 {
+    use ConFotoCarnetActualizacionDatos;
+    use WithFileUploads;
+
     public string $apellido = '';
 
     public string $nombre = '';
@@ -150,6 +155,7 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
             }
         }
 
+        $this->montarFotoCarnetDesdeLegajo($legajo);
         $this->aceptaciones = ActualizacionDatosPersonalesSanFranciscoAsis::aceptacionesDesdeMatricula($matricula);
     }
 
@@ -240,6 +246,10 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
             return;
         }
 
+        if (! $this->validarFotoCarnetAntesDeGuardar()) {
+            return;
+        }
+
         RateLimiter::hit($key, 120);
 
         $state = $this->only($keys);
@@ -259,6 +269,11 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         }
 
         $legajo = Legajo::query()->findOrFail((int) $ctx['legajo']->id);
+
+        if (! $this->persistirFotoCarnetTrasGuardar($legajo)) {
+            return;
+        }
+
         foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosParaFormulario($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
                 $this->{$k} = $v;
@@ -285,10 +300,10 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
             ];
         }
 
-        return view('livewire.alumnos.actualizacion-datos-personales-sanfranciscoasis-form', [
+        return view('livewire.alumnos.actualizacion-datos-personales-sanfranciscoasis-form', array_merge([
             'documentos' => $documentos,
             'esSecundario' => studentEsNivelSecundario(),
             'textoCompromiso' => ActualizacionDatosPersonalesSanFranciscoAsis::TEXTO_COMPROMISO_PARENTAL,
-        ])->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
+        ], $this->datosVistaFotoCarnet()))->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
     }
 }

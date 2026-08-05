@@ -74,28 +74,7 @@ final class ArancelesEscolares
             return null;
         }
 
-        $curso = '';
-        $matricula = InformeInasistencias::matriculaAutogestion();
-        if ($matricula?->curso !== null) {
-            $matricula->curso->loadMissing(['curplan', 'turnoClase']);
-            $curso = trim((string) $matricula->curso->nombreParaListado());
-        }
-
-        if ($curso === '') {
-            $primeraCuota = CuotaGenerada::query()
-                ->with([
-                    'curso:Id,cursec,c,s,idCurPlan,idTurnoClase',
-                    'curso.curplan:id,curPlanCurso',
-                    'curso.turnoClase:id,nombre',
-                ])
-                ->where('idLegajos', (int) $ctx->idLegajo)
-                ->where('faltapa', '>', 0)
-                ->orderBy('venc1')
-                ->orderBy('id')
-                ->first();
-
-            $curso = trim((string) ($primeraCuota?->curso?->nombreParaListado() ?? ''));
-        }
+        $curso = InformeInasistencias::cursoNombreAutogestion();
 
         $idLegajo = (int) $ctx->idLegajo;
         $idNivel = (int) $ctx->idNivel;

@@ -2,6 +2,10 @@
 
 namespace App\Support\Alumnos;
 
+use App\Models\CampoLegajo;
+use App\Models\Legajo;
+use App\Support\Database\PersistenciaColumnas;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -37,6 +41,128 @@ final class FotoCarnetLegajo
     public static function columnaDisponible(): bool
     {
         return Schema::hasTable('legajos') && Schema::hasColumn('legajos', self::COLUMNA);
+    }
+
+    /**
+     * True si la columna existe y `fotoCarnet` está asignada a alguna solapa del legajo
+     * (parametrización secretaría: `campos_legajo.solapa_legajo_id`).
+     */
+    public static function habilitadaEnSolapasLegajo(): bool
+    {
+        if (! self::columnaDisponible()) {
+            return false;
+        }
+
+        if (! Schema::hasTable('campos_legajo')) {
+            return false;
+        }
+
+        return CampoLegajo::query()
+            ->where('columna', self::COLUMNA)
+            ->whereNotNull('solapa_legajo_id')
+            ->exists();
+    }
+
+    /** Etiqueta configurada en solapas, o «Foto carnet». */
+    public static function etiquetaDesdeSolapas(): string
+    {
+        if (! Schema::hasTable('campos_legajo')) {
+            return 'Foto carnet';
+        }
+
+        $etiqueta = CampoLegajo::query()
+            ->where('columna', self::COLUMNA)
+            ->whereNotNull('solapa_legajo_id')
+            ->whereNotNull('etiqueta')
+            ->where('etiqueta', '!=', '')
+            ->orderBy('orden_en_solapa')
+            ->orderBy('id')
+            ->value('etiqueta');
+
+        $etiqueta = trim((string) ($etiqueta ?? ''));
+
+        return $etiqueta !== '' ? $etiqueta : 'Foto carnet';
+    }
+
+    /**
+     * Persiste subida o quitar foto (con PersistenciaColumnas).
+     *
+     * @return array{ok: true, path: string}|array{ok: false, error: string}
+     */
+    public static function persistirCambio(
+        int $idLegajo,
+        string|int|null $dni,
+        ?string $pathAnterior,
+        ?TemporaryUploadedFile $upload,
+        bool $remove,
+    ): array {
+        $pathAnterior = trim((string) $pathAnterior);
+
+        if ($remove && ! ($upload instanceof TemporaryUploadedFile)) {
+            if (! self::columnaDisponible()) {
+                return [
+                    'ok' => false,
+                    'error' => PersistenciaColumnas::mensajeColumnasInexistentes('legajos', [self::COLUMNA]),
+                ];
+            }
+
+            try {
+                Legajo::query()->where('id', $idLegajo)->update([self::COLUMNA => null]);
+            } catch (QueryException $e) {
+                return ['ok' => false, 'error' => PersistenciaColumnas::mensajeDesdeQueryException($e)];
+            }
+
+            self::eliminarArchivo($pathAnterior);
+
+            return ['ok' => true, 'path' => ''];
+        }
+
+        if (! ($upload instanceof TemporaryUploadedFile)) {
+            return ['ok' => true, 'path' => $pathAnterior];
+        }
+
+        $resultado = self::guardarDesdeUpload($idLegajo, $dni, $upload, $pathAnterior);
+        if (! $resultado['ok']) {
+            return $resultado;
+        }
+
+        $payload = [self::COLUMNA => $resultado['path']];
+        $preparado = PersistenciaColumnas::prepararPayload('legajos', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            self::eliminarArchivo($resultado['path']);
+
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'legajos',
+                    $preparado['columnas_con_valor_sin_columna']
+                ),
+            ];
+        }
+
+        try {
+            Legajo::query()->where('id', $idLegajo)->update($preparado['payload']);
+        } catch (QueryException $e) {
+            self::eliminarArchivo($resultado['path']);
+
+            return ['ok' => false, 'error' => PersistenciaColumnas::mensajeDesdeQueryException($e)];
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'legajos',
+            ['id' => $idLegajo],
+            $preparado['payload']
+        );
+        if ($noPersistidas !== []) {
+            self::eliminarArchivo($resultado['path']);
+
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasNoPersistidas('legajos', $noPersistidas),
+            ];
+        }
+
+        return ['ok' => true, 'path' => $resultado['path']];
     }
 
     /** Solo dígitos, para nombre de archivo seguro. */

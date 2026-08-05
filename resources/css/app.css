@@ -3211,6 +3211,14 @@
         color: rgba(51, 51, 51, 0.5);
     }
 
+    /* Variante embebida (actualización de datos / portal familia): sin sticky ni banda lateral. */
+    .se-legajo-foto-sticky--inline {
+        width: auto;
+        border: 0;
+        background: transparent;
+        padding: 0;
+    }
+
     /* Con sidebar el contenido útil suele ser < 1024px: foto a la derecha desde ~720px de card. */
     @media (min-width: 720px) {
         .se-legajo-form-body--con-foto {
@@ -3227,13 +3235,26 @@
             border-left: 1px solid #C1D7DA;
             padding: 1.25rem 1rem;
         }
+        .se-legajo-foto-sticky--inline {
+            position: static;
+            width: auto;
+            flex: 0 0 auto;
+            border: 0;
+            padding: 0;
+        }
         .se-legajo-foto-sticky__frame {
             width: 100%;
+        }
+        .se-legajo-foto-sticky--inline .se-legajo-foto-sticky__frame {
+            width: 9rem;
         }
         .se-legajo-foto-sticky__actions {
             max-width: none;
             margin-left: 0;
             margin-right: 0;
+        }
+        .se-legajo-foto-sticky--inline .se-legajo-foto-sticky__actions {
+            max-width: 9rem;
         }
     }
 

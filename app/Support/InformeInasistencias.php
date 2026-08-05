@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Inasistencia;
 use App\Models\InasistenciaValor;
 use App\Models\Matricula;
+use App\Support\Alumnos\SinMatriculaAutogestionException;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -40,6 +41,43 @@ final class InformeInasistencias
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->orderByDesc('id')
             ->first();
+    }
+
+    /**
+     * ¿Hay matrícula con curso usable en el ciclo de autogestión?
+     */
+    public static function tieneMatriculaCursoAutogestion(): bool
+    {
+        $matricula = self::matriculaAutogestion();
+        if ($matricula === null || (int) ($matricula->idCursos ?? 0) <= 0 || $matricula->curso === null) {
+            return false;
+        }
+
+        $matricula->curso->loadMissing(['curplan', 'turnoClase']);
+
+        return trim((string) $matricula->curso->nombreParaListado()) !== '';
+    }
+
+    /**
+     * Nombre de curso del alumno en el ciclo de autogestión (solo vía matrícula).
+     * Sin matrícula o curso usable: excepción — no hay fallback a otras tablas.
+     *
+     * @throws SinMatriculaAutogestionException
+     */
+    public static function cursoNombreAutogestion(): string
+    {
+        $matricula = self::matriculaAutogestion();
+        if ($matricula === null || (int) ($matricula->idCursos ?? 0) <= 0 || $matricula->curso === null) {
+            throw new SinMatriculaAutogestionException;
+        }
+
+        $matricula->curso->loadMissing(['curplan', 'turnoClase']);
+        $curso = trim((string) $matricula->curso->nombreParaListado());
+        if ($curso === '') {
+            throw new SinMatriculaAutogestionException;
+        }
+
+        return $curso;
     }
 
     /**

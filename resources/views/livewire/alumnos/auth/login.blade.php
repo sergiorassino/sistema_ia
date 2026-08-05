@@ -8,6 +8,20 @@
             </div>
         @endif
 
+        @if (session('se_swal_error'))
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (typeof window.seSwalError === 'function') {
+                        window.seSwalError(
+                            @js(session('se_swal_error')),
+                            @js(session('se_swal_error_titulo', 'Acceso no disponible')),
+                            { confirmButtonText: 'Volver al inicio de sesión' }
+                        );
+                    }
+                });
+            </script>
+        @endif
+
         <noscript>
             <p class="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
                 Se requiere JavaScript activo para iniciar sesión de forma segura.

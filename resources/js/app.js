@@ -81,7 +81,7 @@ window.seSwalPdfDemasiadoGrande = function (maxMb = 1) {
 };
 
 /** SweetAlert2 — error / operación rechazada. */
-window.seSwalError = function (mensaje, titulo = 'No se pudo completar') {
+window.seSwalError = function (mensaje, titulo = 'No se pudo completar', opciones = {}) {
     if (typeof Swal === 'undefined') {
         window.alert(mensaje);
         return;
@@ -90,8 +90,9 @@ window.seSwalError = function (mensaje, titulo = 'No se pudo completar') {
         icon: 'error',
         title: titulo,
         text: mensaje,
-        confirmButtonText: 'Aceptar',
+        confirmButtonText: opciones.confirmButtonText ?? 'Aceptar',
         confirmButtonColor: '#40848D',
+        ...opciones,
     });
 };
 
