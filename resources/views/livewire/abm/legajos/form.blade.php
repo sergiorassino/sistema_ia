@@ -112,9 +112,10 @@
         </div>
 
         <div @class([
-            'lg:flex lg:items-start' => $mostrarFotoSticky ?? false,
+            'se-legajo-form-body',
+            'se-legajo-form-body--con-foto' => $mostrarFotoSticky ?? false,
         ])>
-        <div class="min-w-0 flex-1">
+        <div class="se-legajo-form-campos min-w-0 flex-1">
         <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
         {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
         @if($modoParametrizadoLegajo)
@@ -585,12 +586,12 @@
         </div>
         @endif
         </fieldset>
-        </div>{{-- /flex-1 --}}
+        </div>{{-- /se-legajo-form-campos --}}
 
         @if ($mostrarFotoSticky ?? false)
             @include('livewire.abm.legajos.partials.foto-carnet-sticky')
         @endif
-        </div>{{-- /lg:flex --}}
+        </div>{{-- /se-legajo-form-body --}}
 
         {{-- Footer --}}
         <div class="border-t border-accent-200 bg-accent-50/70 px-5 py-3 sm:px-6">
