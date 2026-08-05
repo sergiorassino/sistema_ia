@@ -62,7 +62,7 @@ final class CamposLegajoSync
                     CampoLegajo::create([
                         'columna'          => $nombre,
                         'etiqueta'         => null,
-                        'visible_listado'  => true,
+                        'visible_listado'  => $nombre !== 'fotoCarnet',
                         'orden'            => $orden,
                         'solapa_legajo_id' => null,
                         'orden_en_solapa'  => 0,

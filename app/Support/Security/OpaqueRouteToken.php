@@ -58,6 +58,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_DOC_PP_ARCHIVO = 'doc-pp.archivo';
 
+    public const PURPOSE_LEGAJO_FOTO_CARNET = 'abm.legajos.foto-carnet';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -196,6 +198,11 @@ final class OpaqueRouteToken
         return self::encodePayload(self::PURPOSE_DOC_PP_ARCHIVO, [
             'd' => $idDocPp,
         ]);
+    }
+
+    public static function forLegajoFotoCarnet(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_LEGAJO_FOTO_CARNET, $idLegajo, $idLegajo);
     }
 
     /**

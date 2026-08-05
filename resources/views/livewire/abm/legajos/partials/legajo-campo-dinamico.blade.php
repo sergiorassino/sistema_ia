@@ -61,6 +61,9 @@
             @endif
         </div>
         @break
+    @case('fotoCarnet')
+        @include('livewire.abm.legajos.partials.foto-carnet-campo', ['label' => $label])
+        @break
     @case('callenum')
         <div class="sm:col-span-2"><label class="form-label">{{ $label }}</label>
             <input wire:model="callenum" type="text" maxlength="50" class="form-input"></div>

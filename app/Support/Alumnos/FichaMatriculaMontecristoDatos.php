@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Nivel;
 use App\Models\Terlec;
+use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\InformeInasistencias;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -33,6 +34,7 @@ final class FichaMatriculaMontecristoDatos
     private const COLUMNAS_LEGAJO_OPCIONALES = [
         'obso_sn', 'obso_nombre', 'obso_nro', 'religion', 'sacramentos',
         'locapad', 'locamad', 'telealte1_nom', 'telealte1_tel', 'telealte2_nom', 'telealte2_tel',
+        'fotoCarnet',
     ];
 
     /**
@@ -188,6 +190,11 @@ final class FichaMatriculaMontecristoDatos
             'telealte1_tel' => trim((string) ($row->telealte1_tel ?? '')),
             'telealte2_nom' => trim((string) ($row->telealte2_nom ?? '')),
             'telealte2_tel' => trim((string) ($row->telealte2_tel ?? '')),
+            'fotoCarnet' => FotoCarnetLegajo::rutaAbsoluta(
+                Schema::hasColumn('legajos', 'fotoCarnet')
+                    ? trim((string) ($row->fotoCarnet ?? ''))
+                    : null
+            ),
         ];
     }
 

@@ -58,6 +58,10 @@
 </div>
 @endif
 
+@if($showFieldEnTab('fotoCarnet'))
+    @include('livewire.abm.legajos.partials.foto-carnet-campo', ['label' => $etiquetaFotoCarnet ?? 'Foto carnet'])
+@endif
+
 @if($showFieldEnTab('legajo') || $showFieldEnTab('libro') || $showFieldEnTab('folio'))
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:col-span-2">
     @if($showFieldEnTab('legajo'))

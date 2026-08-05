@@ -85,6 +85,7 @@ use App\Livewire\Abm\Legajos\LegajoBuscarFamilias;
 use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Http\Controllers\Abm\FotoCarnetLegajoController;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
 use App\Livewire\Abm\LegajosProfesor\LegajosProfesorIndex;
 use App\Http\Controllers\Docentes\InformeInasistenciasDocentePdfController;
@@ -1417,6 +1418,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/abm/legajos/carga-por-curso', LegajoCargaPorCurso::class)->middleware('permiso:2')->name('abm.legajos.carga-por-curso');
     Route::get('/abm/legajos/nuevo', LegajoForm::class)->middleware('permiso:2')->name('abm.legajos.create');
     Route::get('/abm/legajos/editar', LegajoForm::class)->name('abm.legajos.edit');
+    Route::get('/abm/legajos/{id}/foto-carnet', FotoCarnetLegajoController::class)
+        ->whereNumber('id')
+        ->name('abm.legajos.foto-carnet');
     Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
     Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
 
