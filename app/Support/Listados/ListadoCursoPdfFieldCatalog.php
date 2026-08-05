@@ -48,6 +48,7 @@ final class ListadoCursoPdfFieldCatalog
         'legajos.libro' => ['label' => 'Libro', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'libro'],
         'legajos.folio' => ['label' => 'Folio', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'folio'],
         'legajos.pwrd' => ['label' => 'Contraseña (autogestión)', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'pwrd'],
+        'legajos.fotoCarnet' => ['label' => 'Foto carnet', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'fotoCarnet'],
         'legajos.codigo' => ['label' => 'Código', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'codigo'],
         'legajos.identif' => ['label' => 'Identificación', 'group' => 'Alumno', 'table' => 'legajos', 'column' => 'identif'],
         // — Domicilio y contacto —

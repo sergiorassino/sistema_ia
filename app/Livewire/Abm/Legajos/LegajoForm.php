@@ -12,14 +12,22 @@ use App\Models\Nivel;
 use App\Models\Sexo;
 use App\Models\SolapaLegajo;
 use App\Models\Terlec;
+use App\Support\Alumnos\FotoCarnetLegajo;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\PermisosIaCatalog;
+use App\Support\SchoolAlcancePedagogico;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 class LegajoForm extends Component
 {
+    use WithFileUploads;
+
     /** Columnas siempre visibles y persistidas (no pueden desactivarse). */
     private const CORE_COLUMNS = ['apellido', 'nombre', 'dni'];
 
@@ -27,7 +35,7 @@ class LegajoForm extends Component
     private const PANEL_SLUGS = ['alumno', 'domicilio', 'madre', 'padre', 'tutor', 'escolar'];
 
     /** Columnas opcionales de la solapa «Alumno» en el Blade (el trío core va aparte). */
-    private const ALUMNO_TAB_COLUMNS = ['cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio', 'pwrd'];
+    private const ALUMNO_TAB_COLUMNS = ['cuil', 'fechnaci', 'sexo', 'nacion', 'idFamilias', 'tipoalumno', 'legajo', 'libro', 'folio', 'pwrd', 'fotoCarnet'];
 
     /** Columnas que pertenecen a cada plantilla de pestaña del formulario. */
     private const TAB_COLUMNS = [
@@ -68,6 +76,14 @@ class LegajoForm extends Component
     public string $folio = '';
 
     public string $pwrd = '';
+
+    /** Path relativo guardado en `legajos.fotoCarnet` (disco privado). */
+    public string $fotoCarnetPath = '';
+
+    /** @var TemporaryUploadedFile|null */
+    public $fotoCarnetUpload = null;
+
+    public bool $removeFotoCarnet = false;
 
     // ─── Domicilio ────────────────────────────────────────────────────────────
     public string $callenum = '';
@@ -230,6 +246,24 @@ class LegajoForm extends Component
 
     public bool $m_bloqadmi = false;
 
+    // ─── Cambio de curso (matrícula del año activo) ───────────────────────────
+    public bool $showCambioCursoModal = false;
+
+    public ?int $cambioCursoMatriculaId = null;
+
+    public int $cambioCursoOrigenId = 0;
+
+    public string $cambioCursoOrigenLabel = '';
+
+    public int|string $cambioCursoDestinoId = '';
+
+    public bool $showCambioCursoPlanConfirm = false;
+
+    public string $cambioCursoPlanConfirmInfo = '';
+
+    /** Curso destino ya aceptado en el modal de cambio de plan (flujo cambio de curso). */
+    public ?int $cambioCursoPlanConfirmadoParaCurso = null;
+
     /**
      * Columnas de `legajos` con control dedicado en el formulario (no van en extras).
      *
@@ -242,12 +276,12 @@ class LegajoForm extends Component
         'nombrepad', 'dnipad', 'fechnacpad', 'nacionpad', 'estacivipad', 'domipad', 'ocupacpad', 'telepad', 'telecelpad', 'emailpad', 'vivepad',
         'nombretut', 'dnitut', 'teletut', 'emailtut', 'respAdmiNom', 'respAdmiDni',
         'escori', 'destino', 'obs', 'identif', 'vivecon', 'hermanos', 'ec_padres', 'parroquia',
-        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'pwrd',
+        'needes', 'needes_detalle', 'certDisc', 'emeravis', 'retira', 'pwrd', 'fotoCarnet',
     ];
 
     /** No cargar ni persistir vía extras (sistema / seguridad). */
     private const COLUMNAS_SISTEMA_NO_EXTRAS = [
-        'id', 'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi',
+        'id', 'pwrd', 'fechhora', 'fechActDatos', 'bloqmatr', 'bloqadmi', 'fotoCarnet',
     ];
 
     /** Columnas extra de `legajos` (p. ej. telealte1_nom) sin control dedicado en el Blade. */
@@ -338,6 +372,57 @@ class LegajoForm extends Component
         $this->activeTab = $tab;
     }
 
+    public function updatedFotoCarnetUpload(): void
+    {
+        $this->resetValidation('fotoCarnetUpload');
+
+        if ($this->fotoCarnetUpload === null) {
+            return;
+        }
+
+        if (! $this->fotoCarnetUpload instanceof TemporaryUploadedFile) {
+            return;
+        }
+
+        $this->removeFotoCarnet = false;
+
+        $error = FotoCarnetLegajo::validarUpload($this->fotoCarnetUpload);
+        if ($error !== null) {
+            $this->addError('fotoCarnetUpload', $error);
+            $this->fotoCarnetUpload = null;
+        }
+    }
+
+    public function onFotoCarnetUploadFailed(): void
+    {
+        $this->addError(
+            'fotoCarnetUpload',
+            'No se pudo subir la foto. Compruebe tamaño (máx. 2 MB), formato JPG/PNG y que la sesión siga activa.'
+        );
+    }
+
+    /** Marca la foto para borrarla al guardar (o descarta una selección pendiente). */
+    public function marcarQuitarFotoCarnet(): void
+    {
+        $this->requireModificarLegajo();
+        $this->fotoCarnetUpload = null;
+        $this->resetValidation('fotoCarnetUpload');
+
+        if (trim($this->fotoCarnetPath) !== '') {
+            $this->removeFotoCarnet = true;
+        } else {
+            $this->removeFotoCarnet = false;
+        }
+
+        $this->dispatch('legajo-foto-carnet-cleared');
+    }
+
+    public function deshacerQuitarFotoCarnet(): void
+    {
+        $this->requireModificarLegajo();
+        $this->removeFotoCarnet = false;
+    }
+
     public function save(): mixed
     {
         $this->requireModificarLegajo();
@@ -349,8 +434,50 @@ class LegajoForm extends Component
             throw $e;
         }
 
-        $allData = $this->formData();
         $set = $this->camposActivosSet();
+        $fotoActiva = $set === null || isset($set['fotoCarnet']);
+
+        if ($fotoActiva && $this->fotoCarnetUpload !== null && ! ($this->fotoCarnetUpload instanceof TemporaryUploadedFile)) {
+            $this->addError(
+                'fotoCarnetUpload',
+                'La subida de la foto no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
+            );
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return null;
+        }
+
+        if ($fotoActiva && $this->fotoCarnetUpload instanceof TemporaryUploadedFile) {
+            $errorFoto = FotoCarnetLegajo::validarUpload($this->fotoCarnetUpload);
+            if ($errorFoto !== null) {
+                $this->addError('fotoCarnetUpload', $errorFoto);
+                $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+                return null;
+            }
+
+            if (! FotoCarnetLegajo::columnaDisponible()) {
+                $this->addError(
+                    'fotoCarnetUpload',
+                    'La columna legajos.fotoCarnet no existe en esta base. Ejecute la migración o el SQL idempotente antes de subir fotos.'
+                );
+                $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+                return null;
+            }
+        }
+
+        if ($fotoActiva && $this->removeFotoCarnet && ! FotoCarnetLegajo::columnaDisponible() && trim($this->fotoCarnetPath) !== '') {
+            $this->addError(
+                'fotoCarnetUpload',
+                'La columna legajos.fotoCarnet no existe en esta base. No se puede quitar la foto.'
+            );
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return null;
+        }
+
+        $allData = $this->formData();
 
         // Restrict payload to active columns; core trio always included.
         if ($set !== null) {
@@ -363,7 +490,10 @@ class LegajoForm extends Component
             unset($data['idFamilias']);
         }
 
+        unset($data['fotoCarnet']);
+
         $persistPwrd = $set === null || isset($set['pwrd']);
+        $esAlta = $this->id === null;
 
         if ($this->id) {
             // update() only touches the given keys, preserving hidden-column values in the DB.
@@ -376,7 +506,6 @@ class LegajoForm extends Component
                     $legajo->save();
                 }
             }
-            session()->flash('success', "Legajo de {$data['apellido']}, {$data['nombre']} actualizado.");
         } else {
             $data['fechhora'] = now();
             $legajo = Legajo::create($data);
@@ -385,8 +514,20 @@ class LegajoForm extends Component
                 $legajo->save();
             }
             $this->id = (int) $legajo->id;
-            session()->flash('success', "Legajo de {$data['apellido']}, {$data['nombre']} creado.");
         }
+
+        if ($fotoActiva && ! $this->persistirFotoCarnet((int) $this->id)) {
+            return null;
+        }
+
+        $apellidoFlash = (string) ($data['apellido'] ?? $this->apellido);
+        $nombreFlash = (string) ($data['nombre'] ?? $this->nombre);
+        session()->flash(
+            'success',
+            $esAlta
+                ? "Legajo de {$apellidoFlash}, {$nombreFlash} creado."
+                : "Legajo de {$apellidoFlash}, {$nombreFlash} actualizado."
+        );
 
         $focusId = (int) $this->id;
         $page = $this->pageForLegajo($focusId, 25);
@@ -396,6 +537,109 @@ class LegajoForm extends Component
         return redirect()->route('abm.legajos', [
             'page' => $page,
         ]);
+    }
+
+    /**
+     * Persiste o elimina la foto carnet tras guardar el legajo.
+     */
+    private function persistirFotoCarnet(int $idLegajo): bool
+    {
+        $pathAnterior = trim($this->fotoCarnetPath);
+
+        if ($this->removeFotoCarnet && ! ($this->fotoCarnetUpload instanceof TemporaryUploadedFile)) {
+            $payload = [FotoCarnetLegajo::COLUMNA => null];
+            $preparado = PersistenciaColumnas::prepararPayload('legajos', $payload);
+            if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+                // null no cuenta como valor con columna faltante en prepararPayload normalmente;
+                // si la columna no existe, columnasInexistentes lo detecta vía update fallido.
+            }
+
+            if (! FotoCarnetLegajo::columnaDisponible()) {
+                $this->addError(
+                    'fotoCarnetUpload',
+                    PersistenciaColumnas::mensajeColumnasInexistentes('legajos', [FotoCarnetLegajo::COLUMNA])
+                );
+                $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+                return false;
+            }
+
+            try {
+                Legajo::where('id', $idLegajo)->update([FotoCarnetLegajo::COLUMNA => null]);
+            } catch (QueryException $e) {
+                $this->addError('fotoCarnetUpload', PersistenciaColumnas::mensajeDesdeQueryException($e));
+                $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+                return false;
+            }
+
+            FotoCarnetLegajo::eliminarArchivo($pathAnterior);
+            $this->fotoCarnetPath = '';
+
+            return true;
+        }
+
+        if (! ($this->fotoCarnetUpload instanceof TemporaryUploadedFile)) {
+            return true;
+        }
+
+        $resultado = FotoCarnetLegajo::guardarDesdeUpload(
+            $idLegajo,
+            $this->dni,
+            $this->fotoCarnetUpload,
+            $pathAnterior,
+        );
+        if (! $resultado['ok']) {
+            $this->addError('fotoCarnetUpload', $resultado['error']);
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return false;
+        }
+
+        $payload = [FotoCarnetLegajo::COLUMNA => $resultado['path']];
+        $preparado = PersistenciaColumnas::prepararPayload('legajos', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            FotoCarnetLegajo::eliminarArchivo($resultado['path']);
+            $this->addError(
+                'fotoCarnetUpload',
+                PersistenciaColumnas::mensajeColumnasInexistentes('legajos', $preparado['columnas_con_valor_sin_columna'])
+            );
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return false;
+        }
+
+        try {
+            Legajo::where('id', $idLegajo)->update($preparado['payload']);
+        } catch (QueryException $e) {
+            FotoCarnetLegajo::eliminarArchivo($resultado['path']);
+            $this->addError('fotoCarnetUpload', PersistenciaColumnas::mensajeDesdeQueryException($e));
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return false;
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'legajos',
+            ['id' => $idLegajo],
+            $preparado['payload']
+        );
+        if ($noPersistidas !== []) {
+            FotoCarnetLegajo::eliminarArchivo($resultado['path']);
+            $this->addError(
+                'fotoCarnetUpload',
+                PersistenciaColumnas::mensajeColumnasNoPersistidas('legajos', $noPersistidas)
+            );
+            $this->focusTabForValidationErrors(['fotoCarnetUpload']);
+
+            return false;
+        }
+
+        $this->fotoCarnetPath = $resultado['path'];
+        $this->fotoCarnetUpload = null;
+        $this->removeFotoCarnet = false;
+
+        return true;
     }
 
     public function cancel(): mixed
@@ -424,6 +668,7 @@ class LegajoForm extends Component
         $this->showMatriculasModal = false;
         $this->showMatriculaForm = false;
         $this->resetMatriculaForm();
+        $this->resetCambioCursoState();
 
         if ($this->matriculasDesdeListado && $this->id) {
             $focusId = (int) $this->id;
@@ -582,6 +827,280 @@ class LegajoForm extends Component
     {
         $this->m_idCursos = (int) $this->m_idCursosAlEditar;
         $this->resetMatriculaPlanConfirmState();
+    }
+
+    public function openCambioCurso(int $idMatricula): void
+    {
+        $this->requireModificarLegajo();
+
+        if (! $this->id) {
+            return;
+        }
+
+        $matricula = Matricula::where('idLegajos', $this->id)
+            ->with('curso')
+            ->findOrFail($idMatricula);
+
+        $error = $this->validarMatriculaParaCambioCurso($matricula);
+        if ($error !== null) {
+            $this->dispatch('se-swal-error', mensaje: $error);
+
+            return;
+        }
+
+        $this->cambioCursoMatriculaId = (int) $matricula->id;
+        $this->cambioCursoOrigenId = (int) ($matricula->idCursos ?? 0);
+        $this->cambioCursoOrigenLabel = trim((string) ($matricula->curso?->cursec ?? '')) ?: '—';
+        $this->cambioCursoDestinoId = '';
+        $this->resetCambioCursoPlanConfirmState();
+        $this->resetValidation();
+        $this->showCambioCursoModal = true;
+    }
+
+    public function closeCambioCurso(): void
+    {
+        $this->resetCambioCursoState();
+        $this->resetValidation();
+    }
+
+    public function confirmCambioCurso(): void
+    {
+        $this->requireModificarLegajo();
+
+        $destino = (int) $this->cambioCursoDestinoId;
+        $this->validate([
+            'cambioCursoDestinoId' => ['required', 'integer', 'min:1'],
+        ], [
+            'cambioCursoDestinoId.required' => 'Debe especificar un curso de destino.',
+            'cambioCursoDestinoId.min' => 'Debe especificar un curso de destino.',
+        ]);
+
+        $this->ejecutarCambioCurso($destino, false);
+    }
+
+    public function confirmCambioCursoPlan(): void
+    {
+        $this->requireModificarLegajo();
+
+        $destino = (int) ($this->cambioCursoDestinoId ?: 0);
+        if ($destino < 1) {
+            $this->showCambioCursoPlanConfirm = false;
+
+            return;
+        }
+
+        $this->cambioCursoPlanConfirmadoParaCurso = $destino;
+        $this->showCambioCursoPlanConfirm = false;
+        $this->ejecutarCambioCurso($destino, true);
+    }
+
+    public function cancelCambioCursoPlan(): void
+    {
+        $this->resetCambioCursoPlanConfirmState();
+    }
+
+    /**
+     * Cambio de curso del año activo: actualiza la matrícula in-place,
+     * reasigna cuotasgeneradas y calificaciones. Inasistencias/sanciones
+     * quedan vinculadas por idMatricula (mismo efecto que el legacy sin recrear filas).
+     */
+    private function ejecutarCambioCurso(int $idCursoDestino, bool $planYaConfirmado): void
+    {
+        if (! $this->id || ! $this->cambioCursoMatriculaId) {
+            return;
+        }
+
+        $matricula = Matricula::where('idLegajos', $this->id)
+            ->findOrFail($this->cambioCursoMatriculaId);
+
+        $error = $this->validarMatriculaParaCambioCurso($matricula);
+        if ($error !== null) {
+            $this->dispatch('se-swal-error', mensaje: $error);
+
+            return;
+        }
+
+        $idCursosOrigen = (int) ($matricula->idCursos ?? 0);
+        if ($idCursoDestino < 1) {
+            $this->addError('cambioCursoDestinoId', 'Debe especificar un curso de destino.');
+
+            return;
+        }
+
+        if ($idCursoDestino === $idCursosOrigen) {
+            $this->addError('cambioCursoDestinoId', 'El curso de origen y destino es el mismo.');
+
+            return;
+        }
+
+        $cursoDestino = $this->cursoDestinoPermitido($idCursoDestino);
+        if ($cursoDestino === null) {
+            $this->addError('cambioCursoDestinoId', 'El curso de destino no es válido para el ciclo y nivel actuales.');
+
+            return;
+        }
+
+        $nuevoNivel = (int) ($cursoDestino->idNivel ?? 0);
+        if ($nuevoNivel < 1) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo determinar el nivel del curso de destino.');
+
+            return;
+        }
+
+        $planDistinto = $this->matriculaCambioDePlanDistinto($idCursosOrigen, $idCursoDestino);
+        if ($planDistinto
+            && ! $planYaConfirmado
+            && (int) $this->cambioCursoPlanConfirmadoParaCurso !== $idCursoDestino
+        ) {
+            $this->cambioCursoPlanConfirmInfo = $this->buildMatriculaPlanConfirmMessage(
+                $idCursosOrigen,
+                $idCursoDestino,
+            );
+            $this->cambioCursoPlanConfirmadoParaCurso = null;
+            $this->showCambioCursoPlanConfirm = true;
+
+            return;
+        }
+
+        $idLegajos = (int) $this->id;
+        $idMatricula = (int) $matricula->id;
+        $idTerlec = (int) ($matricula->idTerlec ?? 0);
+
+        try {
+            DB::transaction(function () use (
+                $matricula,
+                $idCursoDestino,
+                $nuevoNivel,
+                $planDistinto,
+                $idLegajos,
+                $idMatricula,
+                $idTerlec,
+            ) {
+                $matricula->update([
+                    'idCursos' => $idCursoDestino,
+                    'idNivel' => $nuevoNivel,
+                ]);
+
+                $this->reasignarCuotasGeneradasAlCambioCurso(
+                    $idTerlec,
+                    $idLegajos,
+                    $idMatricula,
+                    $idCursoDestino,
+                );
+
+                // Inasistencias y sanciones: solo idMatricula → siguen al curso nuevo.
+
+                if ($planDistinto) {
+                    if (Schema::hasTable('calificaciones')) {
+                        DB::table('calificaciones')
+                            ->where('idLegajos', $idLegajos)
+                            ->where('idMatricula', $idMatricula)
+                            ->delete();
+                    }
+
+                    $this->seedCalificacionesForMatricula(
+                        $idLegajos,
+                        $idMatricula,
+                        $nuevoNivel,
+                        $idTerlec,
+                        $idCursoDestino,
+                    );
+                } else {
+                    $this->relocateCalificacionesMismoPlan(
+                        $idLegajos,
+                        $idMatricula,
+                        $nuevoNivel,
+                        $idTerlec,
+                        $idCursoDestino,
+                    );
+                }
+            });
+        } catch (QueryException $e) {
+            report($e);
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: 'No se pudo completar el cambio de curso. Intente nuevamente o consulte con el administrador.',
+            );
+
+            return;
+        }
+
+        $mensaje = $planDistinto
+            ? 'Curso actualizado. Se regeneraron las calificaciones según el nuevo plan; cuotas del año reasignadas.'
+            : 'Curso actualizado. Calificaciones y cuotas del año reasignadas al nuevo curso.';
+
+        $this->resetCambioCursoState();
+        $this->dispatch('se-swal-exito', mensaje: $mensaje);
+    }
+
+    private function validarMatriculaParaCambioCurso(Matricula $matricula): ?string
+    {
+        $idTerlecActivo = (int) (schoolCtx()->idTerlec ?? 0);
+        $idTerlecMatricula = (int) ($matricula->idTerlec ?? 0);
+
+        if ($idTerlecActivo < 1 || $idTerlecMatricula !== $idTerlecActivo) {
+            return 'Solo se puede cambiar el curso de la matrícula del año lectivo activo.';
+        }
+
+        $idNivelFiltro = SchoolAlcancePedagogico::idNivelFiltroUnico();
+        if ($idNivelFiltro !== null && (int) ($matricula->idNivel ?? 0) !== $idNivelFiltro) {
+            return 'No puede cambiar de curso a un estudiante que no pertenece a su nivel.';
+        }
+
+        return null;
+    }
+
+    private function cursoDestinoPermitido(int $idCursoDestino): ?Curso
+    {
+        $idTerlec = (int) (schoolCtx()->idTerlec ?? 0);
+        if ($idCursoDestino < 1 || $idTerlec < 1) {
+            return null;
+        }
+
+        $query = Curso::query()
+            ->whereKey($idCursoDestino)
+            ->where('idTerlec', $idTerlec);
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        return $query->first(['Id', 'cursec', 'idNivel', 'idCurPlan']);
+    }
+
+    private function reasignarCuotasGeneradasAlCambioCurso(
+        int $idTerlec,
+        int $idLegajos,
+        int $idMatricula,
+        int $idCursoDestino,
+    ): void {
+        if (! Schema::hasTable('cuotasgeneradas') || $idTerlec < 1 || $idLegajos < 1) {
+            return;
+        }
+
+        $payload = ['idCursos' => $idCursoDestino];
+        if (Schema::hasColumn('cuotasgeneradas', 'idMatricula')) {
+            $payload['idMatricula'] = $idMatricula;
+        }
+
+        DB::table('cuotasgeneradas')
+            ->where('idTerlec', $idTerlec)
+            ->where('idLegajos', $idLegajos)
+            ->update($payload);
+    }
+
+    private function resetCambioCursoPlanConfirmState(): void
+    {
+        $this->showCambioCursoPlanConfirm = false;
+        $this->cambioCursoPlanConfirmInfo = '';
+        $this->cambioCursoPlanConfirmadoParaCurso = null;
+    }
+
+    private function resetCambioCursoState(): void
+    {
+        $this->showCambioCursoModal = false;
+        $this->cambioCursoMatriculaId = null;
+        $this->cambioCursoOrigenId = 0;
+        $this->cambioCursoOrigenLabel = '';
+        $this->cambioCursoDestinoId = '';
+        $this->resetCambioCursoPlanConfirmState();
     }
 
     public function saveMatricula(): void
@@ -994,6 +1513,11 @@ class LegajoForm extends Component
         $this->libro = $l->libro ?? '';
         $this->folio = $l->folio ?? '';
         $this->pwrd = (string) ($l->pwrd ?? '');
+        $this->fotoCarnetPath = Schema::hasColumn('legajos', FotoCarnetLegajo::COLUMNA)
+            ? trim((string) ($l->fotoCarnet ?? ''))
+            : '';
+        $this->fotoCarnetUpload = null;
+        $this->removeFotoCarnet = false;
 
         $this->callenum = $l->callenum ?? '';
         $this->barrio = $l->barrio ?? '';
@@ -1146,7 +1670,7 @@ class LegajoForm extends Component
 
         $managedFlip = array_flip(self::COLUMNAS_FORMULARIO_GESTIONADAS);
         foreach ($this->legajoExtras as $k => $v) {
-            if (isset($managedFlip[$k])) {
+            if (isset($managedFlip[$k]) || $k === FotoCarnetLegajo::COLUMNA) {
                 continue;
             }
             $data[$k] = is_string($v) ? trim($v) : $v;
@@ -1364,6 +1888,10 @@ class LegajoForm extends Component
             ? substr($firstKey, strlen('legajoExtras.'))
             : $firstKey;
 
+        if ($columna === 'fotoCarnetUpload') {
+            $columna = 'fotoCarnet';
+        }
+
         $this->activeTab = $this->slugForColumn($columna);
     }
 
@@ -1435,6 +1963,11 @@ class LegajoForm extends Component
                 ->get();
         }
 
+        $idTerlecActivo = (int) ($idTerlec ?? 0);
+        $matriculaAnioActivo = $matriculasAlumno->first(
+            fn ($m) => (int) ($m->idTerlec ?? 0) === $idTerlecActivo
+        );
+
         // null = sin restricción (mostrar todo, comportamiento original).
         // array = set de columnas activas (array_flip de nombres de columna).
         $camposActivos = $this->camposActivosSet();
@@ -1494,11 +2027,41 @@ class LegajoForm extends Component
             ? $this->matriculaCursoEtiquetaLectura()
             : null;
 
+        $fotoColumnaOk = FotoCarnetLegajo::columnaDisponible();
+        $fotoCarnetActivo = $fotoColumnaOk && $showField('fotoCarnet');
+        $fotoCarnetUrl = FotoCarnetLegajo::dataUrlPreview(
+            $this->fotoCarnetPath !== '' ? $this->fotoCarnetPath : null
+        );
+        if ($fotoCarnetUrl === null) {
+            $fotoCarnetUrl = FotoCarnetLegajo::urlVer(
+                $this->id ? (int) $this->id : null,
+                $this->fotoCarnetPath !== '' ? $this->fotoCarnetPath : null
+            );
+        }
+        $mostrarFotoSticky = $fotoCarnetUrl !== null
+            || $fotoCarnetActivo
+            || ($fotoColumnaOk && $this->fotoCarnetUpload instanceof TemporaryUploadedFile)
+            || ($this->removeFotoCarnet && trim($this->fotoCarnetPath) !== '');
+
+        $etiquetaFotoCarnet = 'Foto carnet';
+        if ($modoParametrizadoLegajo) {
+            foreach ($columnasPorSolapaSlug as $camposSolapa) {
+                foreach ($camposSolapa as $campoSolapa) {
+                    if (($campoSolapa['columna'] ?? '') === 'fotoCarnet' && ! empty($campoSolapa['etiqueta'])) {
+                        $etiquetaFotoCarnet = (string) $campoSolapa['etiqueta'];
+                        break 2;
+                    }
+                }
+            }
+        }
+
         return view('livewire.abm.legajos.form', compact(
             'familias', 'cursos', 'condiciones', 'sexosOpciones', 'matriculasAlumno',
+            'matriculaAnioActivo',
             'camposActivos', 'showField', 'showFieldEnTab', 'tabsVisibles', 'tabSlugToPanel',
             'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeGestionarFamilias',
             'matriculaEditFueraDeAnioActivo', 'matriculaCursoEtiqueta',
+            'fotoCarnetActivo', 'fotoCarnetUrl', 'mostrarFotoSticky', 'etiquetaFotoCarnet',
         ))->layout(layoutMenuStaff(), ['pageTitle' => $pageTitle]);
     }
 }

@@ -54,15 +54,21 @@
         <div class="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
             @if ($id)
                 <div class="mr-2 w-full sm:mr-6 sm:w-auto sm:border-r sm:border-white/20 sm:pr-6">
-                    <x-nav-contexto-estudiante
-                        destino="abm.legajos.familia"
-                        :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
-                        :id-legajos="$id"
-                        tag="a">
-                        <span class="inline-flex w-full items-center justify-center rounded-xl border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-bold tracking-wide text-white shadow-sm transition hover:bg-white/15 sm:w-auto">
-                            FAMILIA
-                        </span>
-                    </x-nav-contexto-estudiante>
+                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <button type="button" wire:click="openMatriculas"
+                                class="inline-flex w-full items-center justify-center rounded-xl border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-bold tracking-wide text-white shadow-sm transition hover:bg-white/15 sm:w-auto">
+                            MATRÍCULAS
+                        </button>
+                        <x-nav-contexto-estudiante
+                            destino="abm.legajos.familia"
+                            :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                            :id-legajos="$id"
+                            tag="a">
+                            <span class="inline-flex w-full items-center justify-center rounded-xl border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-bold tracking-wide text-white shadow-sm transition hover:bg-white/15 sm:w-auto">
+                                FAMILIA
+                            </span>
+                        </x-nav-contexto-estudiante>
+                    </div>
                 </div>
             @endif
 
@@ -78,7 +84,16 @@
         </div>
     </section>
 
-    <div class="se-card overflow-hidden" x-data>
+    <div class="se-card overflow-hidden"
+         x-data="{
+             localFotoPreview: null,
+             revokeLocalFotoPreview() {
+                 if (this.localFotoPreview) {
+                     URL.revokeObjectURL(this.localFotoPreview);
+                     this.localFotoPreview = null;
+                 }
+             }
+         }">
         {{-- Tabs (fuera del fieldset: en modo consulta deben poder cambiar de solapa) --}}
         <div class="border-b border-accent-200 bg-white">
             <nav class="se-form-tabs">
@@ -96,6 +111,10 @@
             </nav>
         </div>
 
+        <div @class([
+            'lg:flex lg:items-start' => $mostrarFotoSticky ?? false,
+        ])>
+        <div class="min-w-0 flex-1">
         <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
         {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
         @if($modoParametrizadoLegajo)
@@ -566,6 +585,12 @@
         </div>
         @endif
         </fieldset>
+        </div>{{-- /flex-1 --}}
+
+        @if ($mostrarFotoSticky ?? false)
+            @include('livewire.abm.legajos.partials.foto-carnet-sticky')
+        @endif
+        </div>{{-- /lg:flex --}}
 
         {{-- Footer --}}
         <div class="border-t border-accent-200 bg-accent-50/70 px-5 py-3 sm:px-6">
@@ -605,10 +630,21 @@
                 </div>
 
                 @unless ($showMatriculaForm)
-                    <div class="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
+                    <div class="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 py-4">
                         <div class="se-pill">{{ $matriculasAlumno->count() }} registro(s)</div>
                         @if ($puedeEditar)
-                            <button wire:click="openNuevaMatricula" type="button" class="btn-primary btn-sm">Nueva matrícula</button>
+                            <div class="flex flex-wrap items-center justify-end gap-2">
+                                @if ($matriculaAnioActivo)
+                                    <button
+                                        wire:click="openCambioCurso({{ $matriculaAnioActivo->id }})"
+                                        type="button"
+                                        class="btn-primary btn-sm"
+                                    >
+                                        Cambio de curso
+                                    </button>
+                                @endif
+                                <button wire:click="openNuevaMatricula" type="button" class="btn-secondary btn-sm">Nueva matrícula</button>
+                            </div>
                         @endif
                     </div>
 
@@ -795,6 +831,93 @@
         @endteleport
     @endif
 
+    {{-- ═══════════════════ CAMBIO DE CURSO ═══════════════════ --}}
+    @if ($showCambioCursoModal)
+        @teleport('body')
+        <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog" aria-modal="true" aria-labelledby="legajo-modal-cambio-curso-titulo">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="closeCambioCurso"></div>
+            <div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5"
+                 @click.stop>
+                <div class="flex shrink-0 items-center justify-between border-b border-accent-200 px-6 py-4">
+                    <div>
+                        <h3 id="legajo-modal-cambio-curso-titulo" class="text-base font-bold text-neutral-900">Cambio de curso</h3>
+                        <p class="mt-0.5 text-xs font-medium text-neutral-500">
+                            Matrícula del año activo · {{ schoolCtx()->terlecAno() }}
+                        </p>
+                    </div>
+                    <button wire:click="closeCambioCurso" type="button" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                    <div>
+                        <label class="form-label">Curso actual</label>
+                        <input type="text" class="form-input bg-gray-100" readonly value="{{ $cambioCursoOrigenLabel }}">
+                    </div>
+                    <div>
+                        <label class="form-label">Curso de destino *</label>
+                        <select wire:model="cambioCursoDestinoId" class="form-select @error('cambioCursoDestinoId') border-red-400 @enderror">
+                            <option value="">— Seleccione —</option>
+                            @foreach ($cursos as $c)
+                                @if ((int) $c->Id !== (int) $cambioCursoOrigenId)
+                                    <option value="{{ $c->Id }}">{{ trim($c->cursec) }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        @error('cambioCursoDestinoId') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <p class="text-xs leading-relaxed text-neutral-500">
+                        Se actualiza la matrícula del año, las cuotas generadas del ciclo y las calificaciones.
+                        Inasistencias y seguimiento disciplinario permanecen vinculados a la misma matrícula.
+                    </p>
+                </div>
+
+                <div class="flex shrink-0 justify-end gap-3 border-t border-accent-200 bg-accent-50 px-6 py-4">
+                    <button type="button" wire:click="closeCambioCurso" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="confirmCambioCurso" wire:loading.attr="disabled" class="btn-primary">
+                        <span wire:loading.remove wire:target="confirmCambioCurso">Confirmar cambio</span>
+                        <span wire:loading wire:target="confirmCambioCurso">Procesando…</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
+
+    {{-- ═══════════════════ CONFIRM CAMBIO DE PLAN (CAMBIO DE CURSO) ═══════════════════ --}}
+    @if ($showCambioCursoPlanConfirm)
+        @teleport('body')
+        <div class="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog" aria-modal="true">
+            <div class="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm" wire:click="cancelCambioCursoPlan"></div>
+            <div class="relative z-10 my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5" @click.stop>
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                            <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="mb-1 text-base font-semibold text-gray-800">Cambio de plan de estudio</h3>
+                            <p class="text-sm leading-relaxed text-gray-600">{{ $cambioCursoPlanConfirmInfo }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 bg-accent-50 px-6 pb-5">
+                    <button type="button" wire:click="cancelCambioCursoPlan" class="btn-secondary">Cancelar</button>
+                    <button type="button" wire:click="confirmCambioCursoPlan" class="btn-danger">Continuar</button>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
+
     {{-- ═══════════════════ CONFIRM DELETE MATRICULA ═══════════════════ --}}
     @if ($showMatriculaConfirm)
         @teleport('body')
@@ -840,4 +963,15 @@
         </div>
         @endteleport
     @endif
+
+    @script
+    <script>
+        $wire.on('se-swal-exito', (e) => {
+            window.seSwalExito?.(e.mensaje ?? e[0]?.mensaje ?? '');
+        });
+        $wire.on('se-swal-error', (e) => {
+            window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? '');
+        });
+    </script>
+    @endscript
 </div>
