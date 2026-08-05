@@ -3108,6 +3108,135 @@
         background:
             linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,248,249,.58));
     }
+
+    /* Cuerpo del legajo + foto carnet a la derecha (no depende de Tailwind lg: del viewport total). */
+    .se-legajo-form-body {
+        display: block;
+    }
+    .se-legajo-form-body--con-foto {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .se-legajo-form-campos {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .se-legajo-foto-sticky {
+        flex: 0 0 auto;
+        width: 100%;
+        border-top: 1px solid #C1D7DA;
+        background: rgba(244, 248, 249, 0.55);
+        padding: 1.25rem 1.25rem;
+    }
+    .se-legajo-foto-sticky__label {
+        margin: 0 0 0.75rem;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(51, 51, 51, 0.55);
+    }
+    .se-legajo-foto-sticky__frame {
+        margin: 0 auto;
+        display: flex;
+        aspect-ratio: 3 / 4;
+        width: 9rem;
+        max-width: 100%;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 1rem;
+        border: 1px solid #C1D7DA;
+        background: #fff;
+        box-shadow: 0 8px 24px -20px rgba(51, 51, 51, 0.35);
+    }
+    .se-legajo-foto-sticky__img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    .se-legajo-foto-sticky__empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: rgba(51, 51, 51, 0.45);
+    }
+    .se-legajo-foto-sticky__empty--warn {
+        color: #b45309;
+    }
+    .se-legajo-foto-sticky__actions {
+        margin-top: 0.75rem;
+        display: grid;
+        gap: 0.5rem;
+        max-width: 13rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .se-legajo-foto-sticky__btn {
+        display: inline-flex;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        border: 1px solid #C1D7DA;
+        background: #fff;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(51, 51, 51, 0.06);
+        transition: background-color 0.15s ease;
+    }
+    .se-legajo-foto-sticky__btn--keep {
+        color: #40848D;
+    }
+    .se-legajo-foto-sticky__btn--keep:hover {
+        background: rgba(244, 248, 249, 0.9);
+    }
+    .se-legajo-foto-sticky__btn--remove {
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+    .se-legajo-foto-sticky__btn--remove:hover {
+        background: #fef2f2;
+    }
+    .se-legajo-foto-sticky__hint {
+        margin: 0;
+        text-align: center;
+        font-size: 11px;
+        color: rgba(51, 51, 51, 0.5);
+    }
+
+    /* Con sidebar el contenido útil suele ser < 1024px: foto a la derecha desde ~720px de card. */
+    @media (min-width: 720px) {
+        .se-legajo-form-body--con-foto {
+            flex-direction: row;
+            align-items: flex-start;
+        }
+        .se-legajo-foto-sticky {
+            position: sticky;
+            top: 1rem;
+            align-self: flex-start;
+            width: 13rem;
+            flex: 0 0 13rem;
+            border-top: 0;
+            border-left: 1px solid #C1D7DA;
+            padding: 1.25rem 1rem;
+        }
+        .se-legajo-foto-sticky__frame {
+            width: 100%;
+        }
+        .se-legajo-foto-sticky__actions {
+            max-width: none;
+            margin-left: 0;
+            margin-right: 0;
+        }
+    }
+
     .se-legajo-form .se-card .space-y-5 > .grid {
         @apply gap-3 sm:gap-4;
     }
