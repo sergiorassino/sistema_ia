@@ -15,6 +15,7 @@ final class SiroDescargaRendicionResumen
     public function __construct(
         public int $procesados = 0,
         public int $omitidos = 0,
+        public int $rechazos = 0,
         public int $impactados = 0,
         public int $noImpactados = 0,
         public float $montoPagado = 0.0,
@@ -55,6 +56,7 @@ final class SiroDescargaRendicionResumen
         return $this->errores !== []
             || $this->advertencias !== []
             || $this->omitidos > 0
+            || $this->rechazos > 0
             || $this->noImpactados > 0;
     }
 
@@ -75,6 +77,9 @@ final class SiroDescargaRendicionResumen
         }
         if ($this->montoImpactado > 0) {
             $lineas[] = 'Monto impactado: $'.number_format($this->montoImpactado, 2, ',', '.').'.';
+        }
+        if ($this->rechazos > 0) {
+            $lineas[] = 'Rechazos SIRO: '.$this->rechazos.'.';
         }
         if ($this->omitidos > 0) {
             $lineas[] = 'Omitidos: '.$this->omitidos.'.';

@@ -83,14 +83,4 @@ return [
     | Máximo de destinatarios por mensaje BCC (fragmentación si el servidor limita destinatarios).
     */
     'mail_bcc_chunk_destinatarios' => (int) env('COM_MAIL_BCC_CHUNK', 50),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Autogestión alumno: checkboxes push / email / WhatsApp en preferencias
-    |--------------------------------------------------------------------------
-    | false: en la pantalla de preferencias solo se muestra la elección de
-    | responsables; los medios del legajo no se editan ahí (siguen los valores en BD).
-    | true o COM_ALUMNO_UI_MEDIOS_PREFERENCIA=true: se muestra el bloque completo.
-    */
-    'alumno_ui_medios_preferencia' => (bool) env('COM_ALUMNO_UI_MEDIOS_PREFERENCIA', false),
 ];

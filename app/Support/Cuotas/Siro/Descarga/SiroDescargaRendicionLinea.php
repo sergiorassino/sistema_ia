@@ -25,6 +25,7 @@ final class SiroDescargaRendicionLinea
      *     codigoBarras: string,
      *     idComprobante: string,
      *     canalAbrev: string,
+     *     textoTrasCanal: string,
      *     idPagoSiro: string,
      *     idClienteExtendido: string,
      *     cadenaPago: string
@@ -39,6 +40,8 @@ final class SiroDescargaRendicionLinea
 
         $idComprobante = trim(substr($linea, 103, 20));
         $canal = trim(substr($linea, 123, 3));
+        // Tras el canal (pos. 127+): código/descripción de rechazo en canales tipo BPR/DDR/MCR/VSR.
+        $textoTrasCanal = strlen($linea) > 126 ? trim(substr($linea, 126)) : '';
 
         $parsed = [
             'fechaPago' => substr($linea, 0, 8),
@@ -50,6 +53,7 @@ final class SiroDescargaRendicionLinea
             'codigoBarras' => self::extraerCodigoBarras($linea),
             'idComprobante' => $idComprobante,
             'canalAbrev' => $canal,
+            'textoTrasCanal' => $textoTrasCanal,
             'idPagoSiro' => strlen($linea) >= 236 ? trim(substr($linea, 226, 10)) : '',
             'cadenaPago' => $linea,
         ];

@@ -63,33 +63,4 @@ class ComPreferencia extends Model
 
         return $medios;
     }
-
-    /**
-     * Responsables de contacto para email/WhatsApp: null = sin preferencia (comportamiento legacy).
-     *
-     * @return list<string>|null listado de claves entre madre, padre, tutor (orden de preferencia en UI)
-     */
-    public function vinculosContactoResolucion(): ?array
-    {
-        $permitidos = ['padre', 'madre', 'tutor'];
-        $raw        = $this->vinculos_contacto;
-        if (is_array($raw) && $raw !== []) {
-            $out = [];
-            foreach ($raw as $v) {
-                $v = (string) $v;
-                if (in_array($v, $permitidos, true) && ! in_array($v, $out, true)) {
-                    $out[] = $v;
-                }
-            }
-
-            return $out === [] ? null : $out;
-        }
-
-        $single = (string) ($this->vinculo_contacto ?? '');
-        if ($single !== '' && in_array($single, $permitidos, true)) {
-            return [$single];
-        }
-
-        return null;
-    }
 }

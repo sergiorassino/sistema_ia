@@ -7,7 +7,6 @@ use App\Mail\ComunicadoMail;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
 use App\Models\ComMensajeEnvio;
-use App\Models\ComPreferencia;
 use App\Models\Legajo;
 use App\Models\Profesor;
 use Illuminate\Support\Facades\Mail;
@@ -260,8 +259,8 @@ class MailAdapter
     /**
      * Determina el email de contacto según el tipo de destinatario.
      *
-     * Para familias: usa los responsables elegidos en preferencias (uno o varios) para armar la lista de emails.
-     * Para profesores: usa profesores.email.
+     * Para familias: madre → padre → tutor (primer mail válido del legajo).
+     * Para profesores: profesores.email / emailInsti.
      */
     private static function resolverEmail(ComMensajeDestinatario $destinatario): ?string
     {
@@ -276,28 +275,11 @@ class MailAdapter
                 return null;
             }
 
-            $pref     = ComPreferencia::paraLegajo($destinatario->id_legajo);
-            $vinculos = $pref->exists ? $pref->vinculosContactoResolucion() : null;
-
-            $candidatos = [];
-
-            if ($vinculos === null) {
-                $candidatos[] = $legajo->emailmad ?? null;
-                $candidatos[] = $legajo->emailpad ?? null;
-            } else {
-                foreach ($vinculos as $v) {
-                    if ($v === 'madre') {
-                        $candidatos[] = $legajo->emailmad ?? null;
-                    } elseif ($v === 'padre') {
-                        $candidatos[] = $legajo->emailpad ?? null;
-                    } elseif ($v === 'tutor') {
-                        $candidatos[] = $legajo->emailtut ?? null;
-                    }
-                }
-            }
-            $candidatos[] = $legajo->email ?? null;
-
-            return static::primerEmail($candidatos);
+            return static::primerEmail([
+                $legajo->emailmad ?? null,
+                $legajo->emailpad ?? null,
+                $legajo->emailtut ?? null,
+            ]);
         }
 
         return null;

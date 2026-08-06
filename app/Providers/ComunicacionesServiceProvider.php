@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
-use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
@@ -34,7 +33,6 @@ class ComunicacionesServiceProvider extends ServiceProvider
         Livewire::component('alumnos.comunicaciones.bandeja-familia', BandejaFamilia::class);
         Livewire::component('alumnos.comunicaciones.hilo-show-familia', HiloShowFamilia::class);
         Livewire::component('alumnos.comunicaciones.nuevo-comunicado-familia', NuevoComunicadoFamilia::class);
-        Livewire::component('alumnos.comunicaciones.preferencias-medios', PreferenciasMedios::class);
         Livewire::component('parametrizacion.com-canales-index', ComCanalesIndex::class);
     }
 }

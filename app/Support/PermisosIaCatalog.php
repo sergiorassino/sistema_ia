@@ -64,6 +64,9 @@ final class PermisosIaCatalog
     /** Legajos docentes: ver contraseña de acceso del docente en el listado ABM. */
     public const LEGAJOS_DOCENTES_VER_CONTRASEÑA = 80;
 
+    /** Legajos estudiantes: ver contraseña de acceso del estudiante en el listado ABM. */
+    public const LEGAJOS_ESTUDIANTES_VER_CONTRASEÑA = 92;
+
     public const MATRIZ_ANALITICO = 16;
 
     public const CERT_ALUMNO_REGULAR = 17;
@@ -297,6 +300,7 @@ final class PermisosIaCatalog
             ['id' => 78, 'orden' => self::EMAILS_MASIVOS_ESTUDIANTES, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Enviar Correo Masivo a Estudiantes: redacción HTML, selección por alumno o curso y auditoría de envíos.'],
             ['id' => 79, 'orden' => self::EMAILS_MASIVOS_BORRAR, 'tema' => 'COMUNICACIONES', 'descripcion' => 'Borrar Correo Masivo a Estudiantes: eliminar mensajes escritos y envíos registrados en el historial.'],
             ['id' => 80, 'orden' => self::LEGAJOS_DOCENTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Ver contraseña de acceso del docente en el listado de legajos (botón Ver Pwrd).'],
+            ['id' => 92, 'orden' => self::LEGAJOS_ESTUDIANTES_VER_CONTRASEÑA, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Ver contraseña de acceso del estudiante en el listado de legajos (botón Ver Pwrd).'],
             ['id' => 84, 'orden' => self::ADMIN_ARCA_CONSULTA_CUIT_DNI, 'tema' => 'ARCA', 'descripcion' => 'Consultar CUIT/CUIL asociado a un DNI en ARCA (Padrón Alcance 13).'],
             ['id' => 89, 'orden' => self::ADMIN_ARCA_OBS_FACTURA, 'tema' => 'ARCA', 'descripcion' => 'Editar la observación que aparece en el impreso de factura AFIP.'],
             ['id' => 85, 'orden' => self::TEA_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de TEA por inasistencias: registros por estudiante, alta, edición, baja e impresión PDF por situación.'],

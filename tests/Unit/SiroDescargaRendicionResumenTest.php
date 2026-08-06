@@ -55,4 +55,15 @@ class SiroDescargaRendicionResumenTest extends TestCase
         $this->assertFalse($resumen->debeMostrarModal());
         $this->assertSame('Registros procesados: 5. Cuotas impactadas: 5.', $resumen->mensajeExitoBreve());
     }
+
+    public function test_encabezado_incluye_rechazos_siro(): void
+    {
+        $resumen = new SiroDescargaRendicionResumen(procesados: 9, rechazos: 2);
+
+        $this->assertSame([
+            'Registros procesados: 9.',
+            'Rechazos SIRO: 2.',
+        ], $resumen->lineasEncabezado());
+        $this->assertTrue($resumen->debeMostrarModal());
+    }
 }

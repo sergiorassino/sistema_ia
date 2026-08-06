@@ -71,6 +71,9 @@ class Ento extends Model
         'verBimesOff',
         'bimesOffMensaje',
         'imprBoleOff',
+
+        // Menú de Alumnos — Actualización de Datos + Ficha de Matrícula (mismo flag)
+        'verDatosFicha',
     ];
 
     protected $casts = [

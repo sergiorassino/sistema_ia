@@ -6,7 +6,12 @@ Formulario del Menú de Alumnos para que la familia actualice datos del legajo (
 
 ## Modalidades / variantes
 
-Config: `config/tenant.php` / `config/tenants/{slug}.php` → `autogestion.actualizacion_datos`.
+Config: `config/tenant.php` / `config/tenants/{slug}.php` → `autogestion.actualizacion_datos`
+(`habilitado`, `implementacion`).
+
+**Visibilidad por nivel (Menú de Alumnos):** Parametrización del sistema → solapa **Parámetros** →
+flag `ento.verDatosFicha` (mismo control que Imprimir Ficha de Matrícula). Helper:
+`entoAutogestionVerDatosYFichaHabilitada()` / `tenantAutogestionActualizacionDatosHabilitada()`.
 
 | `implementacion` | Componente Livewire |
 |------------------|---------------------|

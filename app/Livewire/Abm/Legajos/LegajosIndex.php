@@ -3,6 +3,8 @@
 namespace App\Livewire\Abm\Legajos;
 
 use App\Models\Legajo;
+use App\Support\Auth\LegajoPasswordLectura;
+use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,6 +24,15 @@ class LegajosIndex extends Component
     public bool   $showConfirm  = false;
     public ?int   $deleteId     = null;
     public string $deleteInfo   = '';
+
+    public bool $showPasswordModal = false;
+
+    public string $passwordModalEstudiante = '';
+
+    public string $passwordModalTexto = '';
+
+    public bool $passwordModalEncriptada = false;
+
     public function mount(): void
     {
         $focus = (int) session()->pull('legajo_listado_focus', 0);
@@ -48,6 +59,33 @@ class LegajosIndex extends Component
     public function updatedSoloMiNivel(): void
     {
         $this->resetPage();
+    }
+
+    public function verPassword(int $id): void
+    {
+        abort_unless(tienePermiso(PermisosIaCatalog::LEGAJOS_ESTUDIANTES_VER_CONTRASEÑA), 403, 'Sin permiso para ver contraseñas de estudiantes.');
+
+        $key = 'legajos:ver-pwrd:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $l = $this->scopedLegajoOrFail($id);
+        $lectura = LegajoPasswordLectura::paraMostrar($l);
+
+        $this->passwordModalEstudiante = "{$l->apellido}, {$l->nombre}";
+        $this->passwordModalTexto = $lectura['texto'];
+        $this->passwordModalEncriptada = $lectura['encriptada'];
+        $this->showPasswordModal = true;
+    }
+
+    public function cerrarPasswordModal(): void
+    {
+        $this->showPasswordModal = false;
+        $this->reset('passwordModalEstudiante', 'passwordModalTexto', 'passwordModalEncriptada');
     }
 
     public function confirmDelete(int $id): void

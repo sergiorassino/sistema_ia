@@ -132,12 +132,10 @@ return [
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2],
         ],
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2],
         ],
         'aranceles_escolares' => [
             'habilitado' => true,

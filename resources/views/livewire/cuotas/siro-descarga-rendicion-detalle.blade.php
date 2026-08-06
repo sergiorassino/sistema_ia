@@ -193,12 +193,14 @@
                                                         'encontrado' => 'Encontrado',
                                                         'no_encontrado' => 'No encontrado',
                                                         'omitido' => 'Omitido',
+                                                        'rechazo' => 'Rechazo',
                                                         default => ucfirst($estado),
                                                     };
                                                     $estadoClase = match ($estado) {
                                                         'encontrado' => 'text-primary-700 font-semibold',
                                                         'no_encontrado' => 'text-red-700 font-semibold',
                                                         'omitido' => 'text-amber-800 font-semibold',
+                                                        'rechazo' => 'text-red-800 font-semibold',
                                                         default => 'text-neutral-700',
                                                     };
                                                 @endphp
@@ -271,6 +273,7 @@
                 const estado = reg.estado === 'encontrado' ? 'Encontrado'
                     : reg.estado === 'no_encontrado' ? 'No encontrado'
                     : reg.estado === 'omitido' ? 'Omitido'
+                    : reg.estado === 'rechazo' ? 'Rechazo'
                     : esc(reg.estado);
                 return `<tr>
                     <td>${esc(reg.linea)}</td>

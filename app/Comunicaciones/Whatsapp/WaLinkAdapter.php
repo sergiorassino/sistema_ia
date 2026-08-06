@@ -5,7 +5,6 @@ namespace App\Comunicaciones\Whatsapp;
 use App\Models\Legajo;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
-use App\Models\ComPreferencia;
 
 class WaLinkAdapter
 {
@@ -52,24 +51,12 @@ class WaLinkAdapter
             return null;
         }
 
-        $pref     = ComPreferencia::paraLegajo($destinatario->id_legajo);
-        $vinculos = $pref->exists ? $pref->vinculosContactoResolucion() : null;
-
-        $candidatos = [];
-        if ($vinculos === null) {
-            $candidatos[] = $legajo->telemad ?? null;
-            $candidatos[] = $legajo->telepad ?? null;
-        } else {
-            foreach ($vinculos as $v) {
-                if ($v === 'madre') {
-                    $candidatos[] = $legajo->telemad ?? null;
-                } elseif ($v === 'padre') {
-                    $candidatos[] = $legajo->telepad ?? null;
-                } elseif ($v === 'tutor') {
-                    $candidatos[] = $legajo->teletut ?? null;
-                }
-            }
-        }
+        // Orden fijo: madre → padre → tutor (mismo criterio que el mail de refuerzo).
+        $candidatos = [
+            $legajo->telemad ?? null,
+            $legajo->telepad ?? null,
+            $legajo->teletut ?? null,
+        ];
 
         foreach ($candidatos as $tel) {
             $t = static::limpiarTelefono((string) ($tel ?? ''));

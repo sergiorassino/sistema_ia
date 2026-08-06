@@ -34,7 +34,7 @@ return [
         ],
         // Nivel inicial: sin comunicación institucional ni informe de inasistencias.
         'comunicaciones' => [
-            'niveles_deshabilitados' => [1,2,3],
+            'niveles_deshabilitados' => [1,2],
         ],
         'informe_inasistencias' => [
             'niveles_deshabilitados' => [1,2],

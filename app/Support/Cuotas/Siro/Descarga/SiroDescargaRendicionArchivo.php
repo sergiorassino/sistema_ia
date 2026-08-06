@@ -69,6 +69,27 @@ final class SiroDescargaRendicionArchivo
                 $canal = trim((string) ($linea['canalAbrev'] ?? ''));
                 $canalEtiqueta = $canal !== '' ? $canal : '—';
 
+                // Canales no presentes en cuotastipopago.abrev = rechazo SIRO (BPR, DDR, MCR, VSR, …).
+                // Se informan en el modal de carga y no se persisten en rendicionesroela.
+                if (! SiroDescargaRendicionCanal::esMedioPagoConocido($canal)) {
+                    $detalleRechazo = SiroDescargaRendicionCanal::detalleRechazoCanal(
+                        $canal,
+                        (string) ($linea['textoTrasCanal'] ?? ''),
+                    );
+                    $resumen->rechazos++;
+                    $resumen->agregarAdvertencia('Línea '.($indice + 1).': '.$detalleRechazo);
+                    $resumen->agregarRegistroArchivo([
+                        'linea' => $indice + 1,
+                        'canal' => $canalEtiqueta,
+                        'idFacturaBuscado' => $idFacturaBuscado,
+                        'modalidadIdentificacion' => $modalidadIdentificacion,
+                        'estado' => 'rechazo',
+                        'detalle' => $detalleRechazo,
+                    ]);
+
+                    continue;
+                }
+
                 $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
                 if ($motivoDuplicadoPlanilla !== null) {
                     $resumen->omitidos++;
