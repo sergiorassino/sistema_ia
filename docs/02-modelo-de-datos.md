@@ -57,6 +57,7 @@ La tabla `ento` almacena la configuración institucional, con **un registro por 
 | `idNivel`          | int (FK) | Nivel al que pertenece este registro de entorno          |
 | (institucionales)  | varios   | Nombre del colegio, dirección, CUIT, etc.                |
 | `idTerlecVerNotas` | int (FK) | **Campo crítico**: ciclo lectivo activo para autogestión  |
+| `verDatosFicha`    | tinyint  | Menú de Alumnos: mostrar Actualización de Datos + Ficha de Matrícula (1/0) |
 
 ### Comportamiento de `idTerlecVerNotas`
 

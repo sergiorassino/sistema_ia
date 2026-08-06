@@ -61,4 +61,29 @@ class SiroDescargaRendicionLineaTest extends TestCase
         $this->assertStringStartsWith('0448103284086000000', $parsed['codigoBarras']);
         $this->assertSame(59, strlen($parsed['codigoBarras']));
     }
+
+    public function test_parsea_texto_tras_canal_en_rechazo_bpr(): void
+    {
+        $archivo = 'd:/_enviar/_08- Agosto/sfq/CobranzasSiro_33609754309_20260806_08_24_27.txt';
+        if (! is_readable($archivo)) {
+            $this->markTestSkipped('Archivo de rendición SFQ con BPR no disponible.');
+        }
+
+        $lineas = file($archivo, FILE_IGNORE_NEW_LINES);
+        $this->assertIsArray($lineas);
+        $lineaBpr = null;
+        foreach ($lineas as $linea) {
+            if (str_contains($linea, 'BPR')) {
+                $lineaBpr = $linea;
+                break;
+            }
+        }
+        $this->assertNotNull($lineaBpr);
+
+        $parsed = SiroDescargaRendicionLinea::parsear($lineaBpr);
+        $this->assertNotNull($parsed);
+        $this->assertSame('BPR', $parsed['canalAbrev']);
+        $this->assertStringContainsString('402', $parsed['textoTrasCanal']);
+        $this->assertStringContainsString('SERVICIO INVALIDO', $parsed['textoTrasCanal']);
+    }
 }

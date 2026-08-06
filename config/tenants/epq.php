@@ -131,20 +131,17 @@ return [
     'autogestion' => [
         /*
          | Menú de Alumnos — primario (nivel 2): boletín EPQ (portada + calificaciones),
-         | Gestión de Aranceles e Inicio (escritorio). Sin inasistencias, datos, ficha ni comunicados.
-         | Secundario (nivel 3): consulta de calificaciones EPQ, aranceles e inasistencias;
-         | sin datos personales, ficha ni comunicados.
+         | Gestión de Aranceles e Inicio (escritorio). Datos personales / ficha: `ento.verDatosFicha`.
+         | Secundario (nivel 3): consulta de calificaciones EPQ, aranceles e inasistencias.
          | Gestión de Aranceles (`gestion_aranceles`): todos los niveles con acceso al Menú de Alumnos.
          */
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2, 3],
         ],
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'niveles_deshabilitados' => [2, 3],
         ],
         'aranceles_escolares' => [
             'habilitado' => true,

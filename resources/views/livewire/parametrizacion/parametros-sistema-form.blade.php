@@ -454,6 +454,21 @@
                     @error('imprBoleOff') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             </div>
+
+            <div class="border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-1">Menú de Alumnos — datos y ficha</p>
+                <p class="mb-4 text-xs text-neutral-500">
+                    Un solo parámetro por nivel: muestra u oculta ambas opciones en autogestión.
+                </p>
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                    <input type="checkbox" wire:model.live="verDatosFicha" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                    <span>
+                        <span class="block text-sm font-semibold text-neutral-800">Mostrar Actualización de Datos Personales e Imprimir Ficha de Matrícula</span>
+                        <span class="mt-0.5 block text-xs text-neutral-500">Corresponde a <span class="font-mono">verDatosFicha</span>. La ficha solo aparece si el colegio tiene la variante PDF configurada.</span>
+                    </span>
+                </label>
+                @error('verDatosFicha') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
         </div>
         @elseif ($activeTab === 'correo')
         <div class="space-y-6 p-6 sm:p-7" wire:key="param-tab-correo">
@@ -463,7 +478,7 @@
                 <div class="flex-1">
                     <p class="se-section-title mb-0.5">Correo institucional (Gmail)</p>
                     <p class="text-xs text-neutral-500">
-                        Cuenta Gmail desde la que se envían los comunicados del cuaderno y notificaciones a familias.
+                        Cuenta Gmail o Google Workspace (.edu.ar) desde la que se envían los comunicados del cuaderno y notificaciones a familias.
                         Usá una <strong>contraseña de aplicación</strong> de Google (no la contraseña principal).
                     </p>
                 </div>
@@ -490,9 +505,9 @@
                     <label class="form-label">Cuenta Gmail *</label>
                     <input wire:model="mailGmailUser" type="email" maxlength="120"
                            class="form-input mt-1.5 @error('mailGmailUser') border-red-400 @enderror"
-                           placeholder="secretaria@mischool.gmail.com">
+                           placeholder="secretaria@colegio.edu.ar">
                     @error('mailGmailUser') <p class="form-error">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-neutral-500">Se usa como remitente y como nombre de usuario SMTP.</p>
+                    <p class="mt-1 text-xs text-neutral-500">@gmail.com o dominio institucional .edu.ar (Google Workspace). Se usa como remitente y usuario SMTP.</p>
                 </div>
 
                 <div class="md:col-span-2">

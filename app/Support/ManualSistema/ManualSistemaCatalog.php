@@ -908,11 +908,10 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Comunicaciones (familia)',
                         'Portal → Comunicaciones',
-                        'Bandeja, respuesta a la escuela y preferencias de contacto.',
+                        'Bandeja y respuesta a la escuela.',
                         [
                             'Lea mensajes de la escuela en la bandeja.',
                             'Responda si el comunicado lo permite.',
-                            'En Preferencias, elija cómo desea recibir avisos (correo, etc.).',
                             'Puede iniciar un nuevo mensaje hacia la institución si está habilitado.',
                         ],
                         [],

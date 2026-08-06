@@ -59,23 +59,21 @@ return [
          * Default habilitado para todos los colegios con variante `estandar`.
          * Desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `implementacion`: clave de variante en código (`estandar` | `sanfranciscoasis`).
+         * Visibilidad por nivel: `ento.verDatosFicha` (Parametrización → Parámetros; mismo flag que ficha).
          */
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'estandar',
-            /** IDs de `niveles` sin el ítem (p. ej. `[2]` solo primario). */
-            'niveles_deshabilitados' => [],
         ],
 
         /**
          * Impresión de ficha de matrícula en PDF (portal familia).
          * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
+         * Visibilidad por nivel: `ento.verDatosFicha` (Parametrización → Parámetros).
          */
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
-            /** IDs de `niveles` sin el ítem (p. ej. `[2]` solo primario). */
-            'niveles_deshabilitados' => [],
         ],
 
         /**
@@ -124,7 +122,7 @@ return [
 
         /**
          * Cuaderno de comunicados institucional (portal familia).
-         * Incluye bandeja, nuevo comunicado, push y preferencias de contacto.
+         * Incluye bandeja, nuevo comunicado y notificaciones push.
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `niveles_deshabilitados`: IDs de `niveles` sin módulo (p. ej. `[2]` solo primario).
          */

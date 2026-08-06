@@ -116,7 +116,6 @@ use App\Http\Controllers\Comunicaciones\AbrirHiloComunicacionGestionController;
 use App\Http\Controllers\Comunicaciones\ComunicacionHiloPdfController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
-use App\Livewire\Alumnos\Comunicaciones\PreferenciasMedios;
 use App\Livewire\Alumnos\AceptacionDocumentoFamilia;
 use App\Livewire\Auth\Login;
 use App\Http\Controllers\Cuotas\ComprobanteAfipPdfController;
@@ -419,7 +418,6 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
 
         Route::get('/comunicaciones', BandejaFamilia::class)->name('alumnos.comunicaciones.index');
         Route::get('/comunicaciones/nuevo', NuevoComunicadoFamilia::class)->name('alumnos.comunicaciones.nuevo');
-        Route::get('/comunicaciones/preferencias', PreferenciasMedios::class)->name('alumnos.comunicaciones.preferencias');
         Route::get('/comunicaciones/hilo', HiloShowFamilia::class)->name('alumnos.comunicaciones.hilo');
         Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionFamiliaController::class)
             ->whereNumber('id')

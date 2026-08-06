@@ -19,6 +19,7 @@ use App\Support\ProfesorMenuPortal;
 use App\Support\SchoolAlcancePedagogico;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
@@ -1451,6 +1452,34 @@ if (! function_exists('tenantDocPpHabilitado')) {
     }
 }
 
+if (! function_exists('entoAutogestionVerDatosYFichaHabilitada')) {
+    /**
+     * Si el nivel muestra en Menú de Alumnos Actualización de Datos y Ficha de Matrícula.
+     * Flag único `ento.verDatosFicha` (Parametrización → Parámetros). Default visible si falta columna/fila.
+     */
+    function entoAutogestionVerDatosYFichaHabilitada(?int $idNivel = null): bool
+    {
+        $idNivel ??= (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        if (! Schema::hasTable('ento') || ! Schema::hasColumn('ento', 'verDatosFicha')) {
+            return true;
+        }
+
+        $valor = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->value('verDatosFicha');
+
+        if ($valor === null) {
+            return true;
+        }
+
+        return (int) $valor === 1;
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosImplementacion')) {
     /**
      * Variante de formulario de actualización de datos (`estandar`, `sanfranciscoasis`, …).
@@ -1466,7 +1495,7 @@ if (! function_exists('tenantAutogestionActualizacionDatosImplementacion')) {
 if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
     /**
      * Si el portal familia incluye actualización de datos personales del legajo.
-     * Default habilitado (`config/tenant.php`); desactivar en `config/tenants/{slug}.php`.
+     * Requiere módulo tenant + `ento.verDatosFicha` del nivel del alumno.
      */
     function tenantAutogestionActualizacionDatosHabilitada(): bool
     {
@@ -1474,15 +1503,7 @@ if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
             return false;
         }
 
-        $nivelesDeshabilitados = config('tenant.autogestion.actualizacion_datos.niveles_deshabilitados', []);
-        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
-            $idNivel = (int) (studentCtx()->idNivel ?? 0);
-            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
-                return false;
-            }
-        }
-
-        return true;
+        return entoAutogestionVerDatosYFichaHabilitada();
     }
 }
 
@@ -1514,7 +1535,7 @@ if (! function_exists('tenantAutogestionActualizacionDatosLivewireComponent')) {
 if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
     /**
      * Si el portal familia incluye impresión de ficha de matrícula en PDF.
-     * Default false; activar en `config/tenants/{slug}.php` con `implementacion` definida.
+     * Requiere módulo tenant + implementación + `ento.verDatosFicha` del nivel del alumno.
      */
     function tenantAutogestionFichaMatriculaHabilitada(): bool
     {
@@ -1526,15 +1547,7 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
             return false;
         }
 
-        $nivelesDeshabilitados = config('tenant.autogestion.ficha_matricula.niveles_deshabilitados', []);
-        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== []) {
-            $idNivel = (int) (studentCtx()->idNivel ?? 0);
-            if ($idNivel > 0 && in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
-                return false;
-            }
-        }
-
-        return true;
+        return entoAutogestionVerDatosYFichaHabilitada();
     }
 }
 
@@ -1789,7 +1802,7 @@ if (! function_exists('tenantAutogestionHorarioClaseHabilitada')) {
 if (! function_exists('tenantAutogestionComunicacionesHabilitada')) {
     /**
      * Si el portal familia incluye el módulo de comunicación institucional
-     * (cuaderno de comunicados, push y preferencias de contacto).
+     * (cuaderno de comunicados y notificaciones push).
      * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`
      * o `niveles_deshabilitados` (IDs de `niveles`, p. ej. primario = 2).
      */

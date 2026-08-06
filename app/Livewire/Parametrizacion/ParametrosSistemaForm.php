@@ -4,11 +4,11 @@ namespace App\Livewire\Parametrizacion;
 
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\Mail\MailInstitucionalConfig;
 use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
 use App\Models\Terlec;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -89,6 +89,8 @@ class ParametrosSistemaForm extends Component
     public string $bimesOffMensaje = '';
 
     public bool $imprBoleOff = false;
+
+    public bool $verDatosFicha = true;
 
     public function setTab(string $tab): void
     {
@@ -185,6 +187,7 @@ class ParametrosSistemaForm extends Component
             'verBimesOff' => ['boolean'],
             'bimesOffMensaje' => ['nullable', 'string', 'max:500'],
             'imprBoleOff' => ['boolean'],
+            'verDatosFicha' => ['boolean'],
         ];
 
         if ($this->puedeEditarCamposSiro()) {
@@ -520,11 +523,11 @@ class ParametrosSistemaForm extends Component
         RateLimiter::hit($key, 60);
 
         $this->validateOnly('mailGmailUser', [
-            'mailGmailUser' => ['required', 'email:rfc', 'max:120', 'regex:/.*@gmail\.com$/i'],
+            'mailGmailUser' => ['required', 'email:rfc', 'max:120', 'regex:/^.+@(gmail\.com|[a-z0-9.-]+\.edu\.ar)$/i'],
         ], [
             'mailGmailUser.required'   => 'La cuenta de Gmail es obligatoria.',
             'mailGmailUser.email'      => 'Ingresá una dirección de correo válida.',
-            'mailGmailUser.regex'      => 'Debe ser una cuenta de Gmail (@gmail.com).',
+            'mailGmailUser.regex'      => 'Debe ser una cuenta de Gmail (@gmail.com) o institucional Google Workspace (.edu.ar).',
         ]);
 
         $this->validateOnly('mailGmailFromName', [
@@ -534,7 +537,7 @@ class ParametrosSistemaForm extends Component
         ]);
 
         // Contraseña: obligatoria solo si aún no está configurada
-        $pwdActual = trim((string) env('MAIL_PASSWORD', ''));
+        $pwdActual = trim(MailInstitucionalConfig::leer()['password']);
         $pwdNueva  = trim($this->mailGmailPassword);
 
         if ($pwdActual === '' && $pwdNueva === '') {
@@ -551,35 +554,13 @@ class ParametrosSistemaForm extends Component
         $fromName  = trim($this->mailGmailFromName);
         $password  = $pwdNueva !== '' ? $pwdNueva : $pwdActual;
 
-        $envPath = base_path('.env');
-        if (! file_exists($envPath) || ! is_writable($envPath)) {
-            $this->dispatch('se-swal-error', mensaje: 'No se puede escribir el archivo .env. Verificá los permisos del servidor.');
-            return;
-        }
-
         try {
-            $content = (string) file_get_contents($envPath);
-            $content = $this->envReplaceLine($content, 'MAIL_MAILER',       'smtp');
-            $content = $this->envReplaceLine($content, 'MAIL_HOST',         'smtp.gmail.com');
-            $content = $this->envReplaceLine($content, 'MAIL_PORT',         '587');
-            $content = $this->envReplaceLine($content, 'MAIL_ENCRYPTION',   'tls');
-            $content = $this->envReplaceLine($content, 'MAIL_USERNAME',     $user);
-            $content = $this->envReplaceLine($content, 'MAIL_FROM_ADDRESS', $user);
-            // Contraseña y nombre van entre comillas por si tienen espacios/caracteres especiales
-            $content = $this->envReplaceLine($content, 'MAIL_PASSWORD',     '"'.addslashes($password).'"');
-            $content = $this->envReplaceLine($content, 'MAIL_FROM_NAME',    '"'.addslashes($fromName).'"');
-            file_put_contents($envPath, $content);
+            // Persistencia en storage (no .env): evita reinicio de Vite / FOUC al guardar.
+            MailInstitucionalConfig::guardar($user, $password, $fromName);
         } catch (\Throwable $e) {
-            Log::warning('parametros-mail: error al escribir .env', ['message' => $e->getMessage()]);
+            Log::warning('parametros-mail: error al guardar', ['message' => $e->getMessage()]);
             $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar la configuración: '.$e->getMessage());
             return;
-        }
-
-        // Limpiar config cache para que el cambio en .env tome efecto
-        try {
-            Artisan::call('config:clear');
-        } catch (\Throwable) {
-            // No crítico: el cambio ya quedó en .env
         }
 
         $this->mailGmailPassword = '';
@@ -589,41 +570,14 @@ class ParametrosSistemaForm extends Component
         $this->dispatch('se-swal-exito', mensaje: 'Configuración de correo guardada. Probá enviar un comunicado para verificarla.');
     }
 
-    /**
-     * Reemplaza (o agrega) una clave KEY= en el contenido del .env.
-     * Maneja líneas activas y comentadas.
-     */
-    private function envReplaceLine(string $content, string $key, string $value): string
-    {
-        $replaced = preg_replace(
-            '/^#?'.preg_quote($key, '/').'=.*/m',
-            "{$key}={$value}",
-            $content,
-            -1,
-            $count
-        );
-
-        if ($replaced === null) {
-            return $content;
-        }
-
-        if ($count === 0) {
-            $replaced .= "\n{$key}={$value}";
-        }
-
-        return $replaced;
-    }
-
     private function cargarMailConfigDesdeEnv(): void
     {
-        $user = trim((string) env('MAIL_USERNAME', ''));
-        $pwd  = trim((string) env('MAIL_PASSWORD', ''));
-        $name = trim((string) env('MAIL_FROM_NAME', ''));
+        $c = MailInstitucionalConfig::leer();
 
-        $this->mailGmailUser     = $user;
-        $this->mailGmailFromName = $name !== '' ? trim($name, '"\'') : '';
+        $this->mailGmailUser     = $c['username'];
+        $this->mailGmailFromName = $c['from_name'];
         $this->mailGmailPassword = ''; // nunca pre-rellenar la contraseña
-        $this->mailConfigurado   = $user !== '' && $pwd !== '';
+        $this->mailConfigurado   = MailInstitucionalConfig::estaConfigurado();
     }
 
     public function render()
@@ -684,6 +638,9 @@ class ParametrosSistemaForm extends Component
         $this->verBimesOff = self::entoFlagActivo($attrs['verBimesOff'] ?? null);
         $this->bimesOffMensaje = (string) ($attrs['bimesOffMensaje'] ?? '');
         $this->imprBoleOff = self::entoFlagActivo($attrs['imprBoleOff'] ?? null);
+        $this->verDatosFicha = Schema::hasColumn('ento', 'verDatosFicha')
+            ? self::entoFlagActivo($attrs['verDatosFicha'] ?? 1)
+            : true;
     }
 
     /**
@@ -702,6 +659,7 @@ class ParametrosSistemaForm extends Component
         $this->asignarFlagPayload($payload, 'verBimesOff', $this->verBimesOff);
         $this->asignarTextoPayload($payload, 'bimesOffMensaje', $this->bimesOffMensaje);
         $this->asignarFlagPayload($payload, 'imprBoleOff', $this->imprBoleOff);
+        $this->asignarFlagPayload($payload, 'verDatosFicha', $this->verDatosFicha);
 
         return $payload;
     }

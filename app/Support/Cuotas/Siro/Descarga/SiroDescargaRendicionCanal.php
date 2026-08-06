@@ -25,6 +25,39 @@ final class SiroDescargaRendicionCanal
     }
 
     /**
+     * True si la abreviatura del canal SIRO existe en {@see CuotaTipoPago} (medios de pago válidos).
+     * Canales de rechazo (BPR, DDR, MCR, VSR, etc.) no están en la tabla y deben descartarse.
+     */
+    public static function esMedioPagoConocido(string $canalAbrev): bool
+    {
+        $canalAbrev = strtoupper(trim($canalAbrev));
+        if ($canalAbrev === '') {
+            return false;
+        }
+
+        self::cargarMapa();
+
+        return isset(self::$porAbrev[$canalAbrev]);
+    }
+
+    /**
+     * Mensaje de detalle cuando el canal no es un medio de pago configurado.
+     */
+    public static function detalleRechazoCanal(string $canalAbrev, string $textoTrasCanal = ''): string
+    {
+        $canalAbrev = strtoupper(trim($canalAbrev));
+        $canalEtiqueta = $canalAbrev !== '' ? $canalAbrev : '(vacío)';
+        $detalle = 'Canal '.$canalEtiqueta.' no está en medios de pago (rechazo SIRO).';
+
+        $textoTrasCanal = trim(preg_replace('/\s+/', ' ', $textoTrasCanal) ?? '');
+        if ($textoTrasCanal !== '') {
+            $detalle .= ' '.$textoTrasCanal;
+        }
+
+        return $detalle;
+    }
+
+    /**
      * @return list<array{id: int, label: string, abrev: string, tipoPago: string}>
      */
     public static function opcionesPlanilla(): array
