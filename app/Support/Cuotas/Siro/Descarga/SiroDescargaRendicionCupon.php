@@ -16,7 +16,9 @@ final class SiroDescargaRendicionCupon
      *     cupon: ?CuponAPagar,
      *     cuotaGenerada: ?CuotaGenerada,
      *     advertencias: list<string>,
-     *     modalidadIdentificacion: string
+     *     modalidadIdentificacion: string,
+     *     matchTipo: string,
+     *     detalleMatch: string
      * }
      */
     public static function resolver(array $linea, int $idTerlec): array
@@ -25,9 +27,12 @@ final class SiroDescargaRendicionCupon
         $resolucion = SiroDescargaRendicionIdFactura::resolucionDesdeLinea($linea, $idTerlec);
         $modalidadIdentificacion = $resolucion['modalidadEtiqueta'];
         $candidatos = $resolucion['idFactura'] !== null ? [$resolucion['idFactura']] : [];
+        $importeArchivo = isset($linea['importePagadoCentavos'])
+            ? SiroDescargaRendicionLinea::importeDesdeCentavos((int) $linea['importePagadoCentavos'])
+            : null;
 
         foreach ($candidatos as $idFactura) {
-            $resultado = self::resolverPorIdFactura($idFactura, $idTerlec);
+            $resultado = self::resolverPorIdFactura($idFactura, $idTerlec, $importeArchivo);
             if ($resultado['cupon'] !== null) {
                 $respuesta = self::respuestaDesdeResultado($resultado, $advertencias);
                 $respuesta['modalidadIdentificacion'] = $modalidadIdentificacion;
@@ -47,6 +52,8 @@ final class SiroDescargaRendicionCupon
                     'No se encontró cupón en cupones_a_pagar con id_factura '.$principal.$via.'.',
                 ],
                 'modalidadIdentificacion' => $modalidadIdentificacion,
+                'matchTipo' => '',
+                'detalleMatch' => '',
             ];
         }
 
@@ -59,6 +66,8 @@ final class SiroDescargaRendicionCupon
                     'No se pudo armar id_factura desde el pago 0448 (revisar ID cliente extendido o barcode anterior).',
                 ],
                 'modalidadIdentificacion' => $modalidadIdentificacion,
+                'matchTipo' => '',
+                'detalleMatch' => '',
             ];
         }
 
@@ -69,13 +78,29 @@ final class SiroDescargaRendicionCupon
                 'No se pudo determinar el cupón del pago (revisar idComprobante 0449 o barcode 0448).',
             ],
             'modalidadIdentificacion' => $modalidadIdentificacion,
+            'matchTipo' => '',
+            'detalleMatch' => '',
         ];
     }
 
     /**
-     * @param  array{cupon: ?CuponAPagar, cuotaGenerada: ?CuotaGenerada, mensaje: string}  $resultado
+     * @param  array{
+     *     cupon: ?CuponAPagar,
+     *     cuotaGenerada: ?CuotaGenerada,
+     *     mensaje: string,
+     *     matchTipo: string,
+     *     advertenciasExtra: list<string>,
+     *     detalleMatch: string
+     * }  $resultado
      * @param  list<string>  $advertencias
-     * @return array{cupon: ?CuponAPagar, cuotaGenerada: ?CuotaGenerada, advertencias: list<string>, modalidadIdentificacion: string}
+     * @return array{
+     *     cupon: ?CuponAPagar,
+     *     cuotaGenerada: ?CuotaGenerada,
+     *     advertencias: list<string>,
+     *     modalidadIdentificacion: string,
+     *     matchTipo: string,
+     *     detalleMatch: string
+     * }
      */
     private static function respuestaDesdeResultado(array $resultado, array $advertencias): array
     {
@@ -85,32 +110,65 @@ final class SiroDescargaRendicionCupon
             $advertencias[] = 'El cupón encontrado no pertenece al ciclo lectivo activo.';
         }
 
+        foreach ($resultado['advertenciasExtra'] as $extra) {
+            if ($extra !== '' && ! in_array($extra, $advertencias, true)) {
+                $advertencias[] = $extra;
+            }
+        }
+
         return [
             'cupon' => $resultado['cupon'],
             'cuotaGenerada' => $resultado['cuotaGenerada'],
             'advertencias' => $advertencias,
             'modalidadIdentificacion' => '',
+            'matchTipo' => $resultado['matchTipo'],
+            'detalleMatch' => $resultado['detalleMatch'],
         ];
     }
 
     /**
-     * @return array{cupon: ?CuponAPagar, cuotaGenerada: ?CuotaGenerada, mensaje: string}
+     * @return array{
+     *     cupon: ?CuponAPagar,
+     *     cuotaGenerada: ?CuotaGenerada,
+     *     mensaje: string,
+     *     matchTipo: string,
+     *     advertenciasExtra: list<string>,
+     *     detalleMatch: string
+     * }
      */
-    private static function resolverPorIdFactura(string $idFactura, int $idTerlec): array
+    private static function resolverPorIdFactura(string $idFactura, int $idTerlec, ?float $importeArchivo): array
     {
         $cupon = CuponAPagar::query()->where('id_factura', $idFactura)->first();
-        if ($cupon === null) {
+        if ($cupon !== null) {
             return [
-                'cupon' => null,
-                'cuotaGenerada' => null,
-                'mensaje' => 'No se encontró cupón en cupones_a_pagar con id_factura '.$idFactura.'.',
+                'cupon' => $cupon,
+                'cuotaGenerada' => self::cuotaGeneradaDelCupon($cupon, $idTerlec),
+                'mensaje' => '',
+                'matchTipo' => 'exacto',
+                'advertenciasExtra' => [],
+                'detalleMatch' => '',
+            ];
+        }
+
+        $provisorio = SiroDescargaRendicionMatchUploadCercano::buscar($idFactura, $importeArchivo);
+        if ($provisorio['cupon'] !== null) {
+            return [
+                'cupon' => $provisorio['cupon'],
+                'cuotaGenerada' => self::cuotaGeneradaDelCupon($provisorio['cupon'], $idTerlec),
+                'mensaje' => '',
+                'matchTipo' => 'upload_cercano',
+                'advertenciasExtra' => $provisorio['advertencias'],
+                'detalleMatch' => $provisorio['detalle'],
             ];
         }
 
         return [
-            'cupon' => $cupon,
-            'cuotaGenerada' => self::cuotaGeneradaDelCupon($cupon, $idTerlec),
-            'mensaje' => '',
+            'cupon' => null,
+            'cuotaGenerada' => null,
+            'mensaje' => 'No se encontró cupón en cupones_a_pagar con id_factura '.$idFactura.'.',
+            'matchTipo' => '',
+            'advertenciasExtra' => [],
+            'detalleMatch' => '',
         ];
     }
 

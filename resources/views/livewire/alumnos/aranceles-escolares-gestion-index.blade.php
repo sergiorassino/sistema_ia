@@ -235,6 +235,12 @@
                 window.seSwalAviso(@js(session('aranceles_cuota_vencida')), 'Cuota vencida');
             }
         @endif
+
+        @if (session('aranceles_siro_config'))
+            if (typeof window.seSwalError === 'function') {
+                window.seSwalError(@js(session('aranceles_siro_config')), 'SIRO');
+            }
+        @endif
     })();
 </script>
 @endscript

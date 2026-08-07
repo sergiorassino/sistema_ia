@@ -23,4 +23,15 @@ class SiroIdFacturaTest extends TestCase
         $this->assertSame('04810313000109801098', $id);
         $this->assertSame('01098', substr($id, 15, 5));
     }
+
+    public function test_partes_cadena_separa_upload(): void
+    {
+        $id = SiroIdFactura::generar(2530, 86, 5);
+        $partes = SiroIdFactura::partesCadena($id);
+
+        $this->assertNotNull($partes);
+        $this->assertSame('000025300000086', $partes['prefijoSinUpload']);
+        $this->assertSame(5, $partes['ultUpload']);
+        $this->assertSame('086', $partes['sufijoCuota']);
+    }
 }

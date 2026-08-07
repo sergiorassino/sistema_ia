@@ -128,6 +128,13 @@ class SiroCuponesVencidosIndex extends Component
         $this->paso = 2;
         $this->resetErrorBag();
 
+        $avisoSiro = collect($filas)
+            ->pluck('motivoExclusion')
+            ->first(fn ($motivo) => is_string($motivo) && str_contains($motivo, 'Configuración SIRO incompleta'));
+        if (is_string($avisoSiro) && $avisoSiro !== '') {
+            $this->dispatch('se-swal-error', mensaje: $avisoSiro);
+        }
+
         session([
             'siro_cupones_vencidos_filtros' => $filtros,
             'siro_cupones_vencidos_fecha' => $fechaActualizarAl,

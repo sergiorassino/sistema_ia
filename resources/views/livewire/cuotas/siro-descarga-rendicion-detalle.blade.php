@@ -23,6 +23,16 @@
     </section>
 
     <section class="se-card mb-4 overflow-hidden">
+        @if (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::HABILITADO)
+            <div class="border-b border-amber-200 bg-amber-50/90 px-4 py-3 sm:px-5" role="status">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                    Excepción provisorio — puesta en marcha
+                </p>
+                <p class="mt-1 text-sm leading-relaxed text-amber-950/90">
+                    {{ \App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::mensajeAvisoFormulario() }}
+                </p>
+            </div>
+        @endif
         <div class="se-toolbar flex flex-col gap-3 border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-end sm:px-5">
             <div class="min-w-0 flex-1 sm:max-w-md">
                 <label class="form-label">Añadir Archivo</label>

@@ -20,11 +20,35 @@
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="text-sm text-neutral-700">
                 Materias con adeudo registrado en calificaciones (<code class="text-xs">apro = 1</code>).
-                Podés filtrar por condición e inscripción, agrupar la vista y generar el mismo listado en PDF.
+                Podés filtrar por alumnos, condición e inscripción, agrupar la vista y generar el mismo listado en PDF.
             </p>
         </div>
 
         <div class="bg-white px-5 py-5 space-y-6">
+            <div>
+                <p class="se-section-title">Alumnos</p>
+                <div class="mt-3 flex flex-wrap gap-4">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium">
+                        <input type="radio"
+                               wire:model.live="filtroAlumnos"
+                               value="{{ $alumnosRegulares }}"
+                               class="text-primary-600 focus:ring-primary-500">
+                        Regulares del ciclo actual
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm font-medium">
+                        <input type="radio"
+                               wire:model.live="filtroAlumnos"
+                               value="{{ $alumnosTodos }}"
+                               class="text-primary-600 focus:ring-primary-500">
+                        Todos (historial)
+                    </label>
+                </div>
+                <p class="mt-2 text-xs text-neutral-500">
+                    Ciclo lectivo del contexto: {{ schoolCtx()->terlecAno() ?? '—' }}.
+                    «Regulares» incluye solo quienes tienen matrícula regular en ese ciclo.
+                </p>
+            </div>
+
             <div>
                 <p class="se-section-title">Agrupación del listado</p>
                 <div class="mt-3 flex flex-wrap gap-4">
@@ -100,7 +124,9 @@
                 return $n === 1 ? 'materia' : 'materias';
             };
         @endphp
-        <div class="mt-6 space-y-4">
+        <div class="mt-6 space-y-4"
+             wire:loading.class="opacity-40 pointer-events-none"
+             wire:target="agrupar,filtroAlumnos,filtroCondicion,filtroInscri">
             @foreach ($bloques as $bloque)
                 @php $cantidadGrupo = count($bloque['filas']); @endphp
                 <div class="se-card overflow-hidden">
@@ -144,5 +170,22 @@
             @endforeach
         </div>
     @endif
+
+    <div wire:loading.flex
+         wire:target="agrupar,filtroAlumnos,filtroCondicion,filtroInscri"
+         class="fixed inset-0 z-[100] items-center justify-center bg-neutral-900/45 px-4 backdrop-blur-sm"
+         role="alertdialog"
+         aria-busy="true"
+         aria-labelledby="ma-listado-procesando-titulo">
+        <div class="max-w-sm rounded-2xl bg-white px-6 py-5 text-center shadow-xl ring-1 ring-black/5">
+            <div class="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" aria-hidden="true"></div>
+            <p id="ma-listado-procesando-titulo" class="text-sm font-bold uppercase tracking-wide text-neutral-800">
+                Procesando…
+            </p>
+            <p class="mt-2 text-sm text-neutral-600">
+                Actualizando el listado con los filtros seleccionados. Esperá un momento.
+            </p>
+        </div>
+    </div>
     @endif
 </div>

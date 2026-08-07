@@ -191,9 +191,11 @@ class ParametrosSistemaForm extends Component
         ];
 
         if ($this->puedeEditarCamposSiro()) {
+            // Opcionales al guardar: no todos los colegios usan cuotas/SIRO.
+            // Si se informan, deben ser válidos; SIRO exige que estén cargados al operar.
             $rules['siroPrefijoCPE'] = ['nullable', 'string', 'regex:/^\d{2}$/'];
             $rules['siroMje'] = ['nullable', 'string', 'max:40'];
-            $rules['siroIdentCuenta'] = ['nullable', 'string', 'max:20', 'regex:/^\d+$/'];
+            $rules['siroIdentCuenta'] = ['nullable', 'string', 'max:20', 'regex:/^\d+$/', 'not_regex:/^0+$/'];
         }
 
         return $rules;
@@ -208,6 +210,7 @@ class ParametrosSistemaForm extends Component
             'afipCertCrt.regex' => 'El nombre del archivo .crt no es válido.',
             'siroPrefijoCPE.regex' => 'El prefijo CPE SIRO debe ser exactamente 2 dígitos (ej. 00, 09).',
             'siroIdentCuenta.regex' => 'La cuenta SIRO solo puede contener dígitos.',
+            'siroIdentCuenta.not_regex' => 'La cuenta recaudadora SIRO no puede ser solo ceros.',
         ];
     }
 

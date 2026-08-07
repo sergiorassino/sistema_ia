@@ -24,14 +24,14 @@ final class SiroIdFactura
      */
     public static function decodificar(string $idFactura): ?array
     {
-        $digits = preg_replace('/\D+/', '', $idFactura) ?? '';
-        if (strlen($digits) < 20) {
+        $partes = self::partesCadena($idFactura);
+        if ($partes === null) {
             return null;
         }
 
-        $idLegajos = (int) substr($digits, 0, 8);
-        $idCuotas = (int) substr($digits, 8, 7);
-        $ultUpload = (int) substr($digits, 15, 2);
+        $idLegajos = (int) substr($partes['digits'], 0, 8);
+        $idCuotas = (int) substr($partes['digits'], 8, 7);
+        $ultUpload = $partes['ultUpload'];
 
         if ($idLegajos <= 0 || $idCuotas <= 0 || $ultUpload <= 0) {
             return null;
@@ -41,6 +41,28 @@ final class SiroIdFactura
             'idLegajos' => $idLegajos,
             'idCuotas' => $idCuotas,
             'ultUpload' => $ultUpload,
+        ];
+    }
+
+    /**
+     * Partes de la cadena de 20 dígitos (sin validar que ultUpload > 0).
+     *
+     * @return array{digits: string, prefijoSinUpload: string, ultUpload: int, sufijoCuota: string}|null
+     */
+    public static function partesCadena(string $idFactura): ?array
+    {
+        $digits = preg_replace('/\D+/', '', $idFactura) ?? '';
+        if (strlen($digits) < 20) {
+            return null;
+        }
+
+        $digits = substr($digits, 0, 20);
+
+        return [
+            'digits' => $digits,
+            'prefijoSinUpload' => substr($digits, 0, 15),
+            'ultUpload' => (int) substr($digits, 15, 2),
+            'sufijoCuota' => substr($digits, 17, 3),
         ];
     }
 }

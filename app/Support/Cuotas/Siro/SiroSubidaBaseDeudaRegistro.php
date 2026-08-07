@@ -92,7 +92,11 @@ final class SiroSubidaBaseDeudaRegistro
             return self::rechazado($motivoLegacy);
         }
 
-        $cupon = ComprobantePagoPdf::calcular($registro);
+        try {
+            $cupon = ComprobantePagoPdf::calcular($registro);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
+        }
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }
@@ -102,14 +106,15 @@ final class SiroSubidaBaseDeudaRegistro
             return self::rechazado('Sin nivel de curso para el CPE SIRO.');
         }
 
-        $cpe = SiroCodigoPagoElectronico::generar((int) $registro->idLegajos, $idNivel);
-        if (strlen($cpe) !== 19) {
-            return self::rechazado('Código de pago electrónico inválido.');
+        try {
+            SiroCodigoPagoElectronico::exigirParaOperacion($idNivel);
+            $cpe = SiroCodigoPagoElectronico::generar((int) $registro->idLegajos, $idNivel);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
         }
 
-        $cuentaSiro = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
-        if (preg_match('/^0+$/', $cuentaSiro)) {
-            return self::rechazado('Cuenta SIRO no configurada para este nivel.');
+        if (strlen($cpe) !== 19) {
+            return self::rechazado('Código de pago electrónico inválido.');
         }
 
         $importe1 = (float) ($cupon['importeVenc1'] ?? 0);
@@ -149,7 +154,11 @@ final class SiroSubidaBaseDeudaRegistro
             return self::rechazado('CUIT no configurado para este nivel.');
         }
 
-        $detalle = self::armarDetalleArchivo($registro, $cupon, $cpe, $idNivel);
+        try {
+            $detalle = self::armarDetalleArchivo($registro, $cupon, $cpe, $idNivel);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
+        }
 
         return [
             'subeSiro' => true,

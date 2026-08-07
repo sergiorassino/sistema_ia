@@ -274,11 +274,9 @@ trait PreparaMateriasAdeudadasExamenes
         );
         MateriasAdeudadasPreparacion::marcarVisitaConfirmada($modulo);
 
-        if (MateriasAdeudadasPreparacion::recalculoEjecutadoEnVisita($modulo)) {
-            $this->recalculoCondicionesEjecutado = true;
-        } else {
-            $this->recalculoCondicionesEjecutado = false;
-        }
+        // Cada confirmación vuelve a recalcular (gestión permite cambiar turno/año y repetir).
+        MateriasAdeudadasPreparacion::olvidarRecalculoEnVisita($modulo);
+        $this->recalculoCondicionesEjecutado = false;
 
         try {
             $this->recalcularCondicionesAlIniciarModulo();

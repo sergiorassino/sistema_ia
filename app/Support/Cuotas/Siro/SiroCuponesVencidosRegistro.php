@@ -140,7 +140,11 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Sin saldo adeudado.');
         }
 
-        $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
+        try {
+            $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
+        }
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }
@@ -150,14 +154,15 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Sin nivel de curso para el CPE SIRO.');
         }
 
-        $cpe = SiroCodigoPagoElectronico::generar((int) $registro->idLegajos, $idNivel);
-        if (strlen($cpe) !== 19) {
-            return self::rechazado('Código de pago electrónico inválido.');
+        try {
+            SiroCodigoPagoElectronico::exigirParaOperacion($idNivel);
+            $cpe = SiroCodigoPagoElectronico::generar((int) $registro->idLegajos, $idNivel);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
         }
 
-        $cuentaSiro = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
-        if (preg_match('/^0+$/', $cuentaSiro)) {
-            return self::rechazado('Cuenta SIRO no configurada para este nivel.');
+        if (strlen($cpe) !== 19) {
+            return self::rechazado('Código de pago electrónico inválido.');
         }
 
         $nueVenc = self::carbon($registro->nueVenc);
@@ -214,7 +219,11 @@ final class SiroCuponesVencidosRegistro
             return self::rechazado('Sin vencimiento vigente (indique «Actualizar al»).');
         }
 
-        $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
+        try {
+            $cupon = \App\Support\Alumnos\ComprobantePagoPdf::calcular($registro);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return self::rechazado($e->getMessage());
+        }
         if ($cupon === null) {
             return self::rechazado('No se pudo calcular el cupón de pago.');
         }

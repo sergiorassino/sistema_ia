@@ -34,6 +34,7 @@ class MateriasAdeudadasPdfController extends Controller
 
         $data = $validated->validated();
         $agrupar = MateriasAdeudadasFiltros::normalizeAgrupar($data['agrupar'] ?? null);
+        $alumnos = MateriasAdeudadasFiltros::normalizeAlumnos($data['alumnos'] ?? null);
         $condicion = isset($data['condicion']) ? (string) $data['condicion'] : null;
         $inscri = isset($data['inscri']) ? (string) $data['inscri'] : null;
 
@@ -44,14 +45,22 @@ class MateriasAdeudadasPdfController extends Controller
                 ->with('status', 'Seleccioná el turno y el año lectivo antes de generar el PDF.');
         }
 
-        $filas = MateriasAdeudadasExporter::filas((int) $ctx->idNivel, $condicion, $inscri);
+        $filas = MateriasAdeudadasExporter::filas(
+            (int) $ctx->idNivel,
+            $condicion,
+            $inscri,
+            $alumnos,
+            (int) $ctx->idTerlec,
+        );
         $bloques = MateriasAdeudadasExporter::agrupar($filas, $agrupar);
 
         $tituloAgrupacion = $agrupar === MateriasAdeudadasFiltros::AGRUPAR_MATERIA_CURSO
             ? 'Por materia y curso'
             : 'Por estudiante';
 
-        $filtrosActivos = [];
+        $filtrosActivos = [
+            MateriasAdeudadasFiltros::etiquetaAlumnos($alumnos),
+        ];
         if ($condicion !== null && $condicion !== '') {
             $filtrosActivos[] = 'Condición: '.$condicion;
         }

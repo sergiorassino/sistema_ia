@@ -32,7 +32,7 @@ final class ComprobantePagoPdf
     public static function codigoPagoElectronico(int $idLegajos, int $idNivel): string
     {
         return match (self::implementacion()) {
-            'epq' => ComprobantePagoEpqCalculo::codigoPagoElectronico($idLegajos),
+            'epq' => ComprobantePagoEpqCalculo::codigoPagoElectronico($idLegajos, $idNivel),
             default => ComprobantePagoCalculo::codigoPagoElectronico($idLegajos, $idNivel),
         };
     }

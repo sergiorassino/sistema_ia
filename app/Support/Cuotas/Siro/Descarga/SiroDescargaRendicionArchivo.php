@@ -166,9 +166,14 @@ final class SiroDescargaRendicionArchivo
                 }
 
                 $idEncontrado = (string) ($match['cupon']?->id_factura ?? '');
-                $detalleEncontrado = $idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado
-                    ? 'Encontrado con id_factura '.$idEncontrado
-                    : null;
+                $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
+                if ($detalleMatch !== '') {
+                    $detalleEncontrado = $detalleMatch;
+                } elseif ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
+                    $detalleEncontrado = 'Encontrado con id_factura '.$idEncontrado;
+                } else {
+                    $detalleEncontrado = null;
+                }
 
                 $cuotaGenerada->loadMissing(['cuota', 'legajo', 'curso', 'beca']);
 

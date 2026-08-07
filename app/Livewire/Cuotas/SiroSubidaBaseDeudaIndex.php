@@ -125,6 +125,13 @@ class SiroSubidaBaseDeudaIndex extends Component
         $this->paso = 2;
         $this->resetErrorBag();
 
+        $avisoSiro = collect($filas)
+            ->pluck('motivoExclusion')
+            ->first(fn ($motivo) => is_string($motivo) && str_contains($motivo, 'Configuración SIRO incompleta'));
+        if (is_string($avisoSiro) && $avisoSiro !== '') {
+            $this->dispatch('se-swal-error', mensaje: $avisoSiro);
+        }
+
         session([
             'siro_subida_filtros' => $filtros,
             'siro_subida_ids' => collect($filas)->where('subeSiro', true)->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),

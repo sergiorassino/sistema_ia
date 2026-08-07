@@ -10,6 +10,12 @@ final class MateriasAdeudadasFiltros
 
     public const AGRUPAR_MATERIA_CURSO = 'materia_curso';
 
+    /** Solo alumnos con matrícula regular en el ciclo lectivo del contexto. */
+    public const ALUMNOS_REGULARES_CICLO = 'regulares';
+
+    /** Todos los legajos con adeudos (incluye egresados / años anteriores). */
+    public const ALUMNOS_TODOS = 'todos';
+
     /** @var list<string> */
     public const CONDICIONES = ['PR', 'EQ', 'TM'];
 
@@ -22,6 +28,13 @@ final class MateriasAdeudadasFiltros
         return $value === self::AGRUPAR_MATERIA_CURSO
             ? self::AGRUPAR_MATERIA_CURSO
             : self::AGRUPAR_ESTUDIANTE;
+    }
+
+    public static function normalizeAlumnos(?string $value): string
+    {
+        return $value === self::ALUMNOS_TODOS
+            ? self::ALUMNOS_TODOS
+            : self::ALUMNOS_REGULARES_CICLO;
     }
 
     public static function normalizeCondicion(?string $value): ?string
@@ -45,9 +58,17 @@ final class MateriasAdeudadasFiltros
     {
         return [
             'agrupar' => ['required', 'string', Rule::in([self::AGRUPAR_ESTUDIANTE, self::AGRUPAR_MATERIA_CURSO])],
+            'alumnos' => ['nullable', 'string', Rule::in([self::ALUMNOS_REGULARES_CICLO, self::ALUMNOS_TODOS])],
             'condicion' => ['nullable', 'string', Rule::in(self::CONDICIONES)],
             'inscri' => ['nullable', 'string', Rule::in([self::INSCRI_SI, self::INSCRI_NO])],
         ];
+    }
+
+    public static function etiquetaAlumnos(string $alumnos): string
+    {
+        return self::normalizeAlumnos($alumnos) === self::ALUMNOS_TODOS
+            ? 'Todos los alumnos (historial)'
+            : 'Regulares del ciclo actual';
     }
 
     public static function etiquetaInscri(int $inscri): string

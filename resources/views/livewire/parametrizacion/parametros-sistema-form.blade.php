@@ -87,6 +87,124 @@
                 <input wire:model="categoria" type="text" maxlength="80" class="form-input mt-1.5 @error('categoria') border-red-400 @enderror">
                 @error('categoria') <p class="form-error">{{ $message }}</p> @enderror
             </div>
+
+            <div class="md:col-span-2">
+                <label class="form-label">Dirección</label>
+                <input wire:model="direccion" type="text" maxlength="150" class="form-input mt-1.5 @error('direccion') border-red-400 @enderror">
+                @error('direccion') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Localidad</label>
+                <input wire:model="localidad" type="text" maxlength="80" class="form-input mt-1.5 @error('localidad') border-red-400 @enderror">
+                @error('localidad') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Departamento</label>
+                <input wire:model="departamento" type="text" maxlength="80" class="form-input mt-1.5 @error('departamento') border-red-400 @enderror">
+                @error('departamento') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Provincia</label>
+                <input wire:model="provincia" type="text" maxlength="80" class="form-input mt-1.5 @error('provincia') border-red-400 @enderror">
+                @error('provincia') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Teléfono</label>
+                <input wire:model="telefono" type="text" maxlength="50" class="form-input mt-1.5 @error('telefono') border-red-400 @enderror">
+                @error('telefono') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Mail</label>
+                <input wire:model="mail" type="email" maxlength="120" class="form-input mt-1.5 @error('mail') border-red-400 @enderror">
+                @error('mail') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="form-label">Rep. legal</label>
+                <input wire:model="replegal" type="text" maxlength="120" class="form-input mt-1.5 @error('replegal') border-red-400 @enderror">
+                @error('replegal') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
+        <div class="mt-8 border-t border-accent-200 pt-6">
+            <p class="se-section-title mb-4">Logo (JPG/JPEG/PNG por nivel)</p>
+
+            <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
+                 wire:key="logo-upload-section"
+                 x-data="{
+                     localPreview: null,
+                     revokeLocalPreview() {
+                         if (this.localPreview) {
+                             URL.revokeObjectURL(this.localPreview);
+                             this.localPreview = null;
+                         }
+                     },
+                     onLogoFileChange(event) {
+                         this.revokeLocalPreview();
+                         const file = event.target.files?.[0];
+                         if (file && /^image\/(jpe?g|png)$/i.test(file.type)) {
+                             this.localPreview = URL.createObjectURL(file);
+                         }
+                     }
+                 }"
+                 x-on:parametros-logo-guardado.window="revokeLocalPreview()">
+                <div class="space-y-3">
+                    <div>
+                        <label class="form-label">Subir logo</label>
+                        <input wire:model="logo" type="file" accept="image/jpeg,image/png"
+                               class="form-input mt-1.5 @error('logo') border-red-400 @enderror"
+                               x-on:change="onLogoFileChange($event)"
+                               x-on:livewire-upload-error.window="
+                                   if ($event.detail?.property === 'logo') {
+                                       revokeLocalPreview();
+                                       $wire.onLogoUploadFailed();
+                                   }
+                               ">
+                        <p wire:loading wire:target="logo" class="mt-1 text-xs font-medium text-primary-700">
+                            Subiendo archivo… espere a que termine antes de pulsar Guardar.
+                        </p>
+                        @error('logo') <p class="form-error">{{ $message }}</p> @enderror
+                        <p class="mt-1 text-xs text-neutral-500">JPG/JPEG/PNG · máx. 2&nbsp;MB · se guarda para el nivel activo ({{ $nivelNombre !== '' ? $nivelNombre : '—' }}).</p>
+                    </div>
+
+                    <label class="inline-flex cursor-pointer items-center gap-2">
+                        <input type="checkbox" wire:model.live="removeLogo"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                               x-on:change="if ($event.target.checked) revokeLocalPreview()">
+                        <span class="text-xs text-neutral-600">Quitar logo actual</span>
+                    </label>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
+                    <div @class([
+                        'flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4',
+                        'se-logo-preview--emblema' => schoolLogoEsEmblema(),
+                    ])>
+                        <img x-show="localPreview" x-bind:src="localPreview" alt="Logo"
+                             @class([
+                                 'object-contain',
+                                 'h-28 w-28' => schoolLogoEsEmblema(),
+                                 'max-h-28' => ! schoolLogoEsEmblema(),
+                             ])>
+                        @if ($logoPreviewUrl)
+                            <img x-show="! localPreview && ! $wire.removeLogo" src="{{ $logoPreviewUrl }}" alt="Logo"
+                                 @class([
+                                     'object-contain',
+                                     'h-28 w-28' => schoolLogoEsEmblema(),
+                                     'max-h-28' => ! schoolLogoEsEmblema(),
+                                 ])>
+                        @endif
+                        <span x-show="! localPreview && ($wire.removeLogo || @js(! $logoPreviewUrl))"
+                              class="text-xs text-neutral-400">Sin logo</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="mt-8 border-t border-accent-200 pt-6">
@@ -219,7 +337,8 @@
                 <p class="mb-4 text-xs text-neutral-500">
                     Parámetros del nivel activo ({{ $nivelNombre !== '' ? $nivelNombre : '—' }}):
                     prefijo CPE, cuenta recaudadora y mensaje en cupón / subida de base de deuda.
-                    Cada nivel puede tener valores distintos.
+                    Cada nivel puede tener valores distintos. No son obligatorios al guardar, pero deben estar
+                    cargados para emitir cupones o subir a SIRO.
                 </p>
 
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -249,128 +368,6 @@
                 </div>
             </div>
         @endif
-
-        <div class="mt-8 border-t border-accent-200 pt-6">
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div class="md:col-span-2">
-                <label class="form-label">Dirección</label>
-                <input wire:model="direccion" type="text" maxlength="150" class="form-input mt-1.5 @error('direccion') border-red-400 @enderror">
-                @error('direccion') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Localidad</label>
-                <input wire:model="localidad" type="text" maxlength="80" class="form-input mt-1.5 @error('localidad') border-red-400 @enderror">
-                @error('localidad') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Departamento</label>
-                <input wire:model="departamento" type="text" maxlength="80" class="form-input mt-1.5 @error('departamento') border-red-400 @enderror">
-                @error('departamento') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Provincia</label>
-                <input wire:model="provincia" type="text" maxlength="80" class="form-input mt-1.5 @error('provincia') border-red-400 @enderror">
-                @error('provincia') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Teléfono</label>
-                <input wire:model="telefono" type="text" maxlength="50" class="form-input mt-1.5 @error('telefono') border-red-400 @enderror">
-                @error('telefono') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Mail</label>
-                <input wire:model="mail" type="email" maxlength="120" class="form-input mt-1.5 @error('mail') border-red-400 @enderror">
-                @error('mail') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="form-label">Rep. legal</label>
-                <input wire:model="replegal" type="text" maxlength="120" class="form-input mt-1.5 @error('replegal') border-red-400 @enderror">
-                @error('replegal') <p class="form-error">{{ $message }}</p> @enderror
-            </div>
-            </div>
-        </div>
-
-        <div class="mt-8 border-t border-accent-200 pt-6">
-            <p class="se-section-title mb-4">Logo (JPG/JPEG/PNG por nivel)</p>
-
-            <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
-                 wire:key="logo-upload-section"
-                 x-data="{
-                     localPreview: null,
-                     revokeLocalPreview() {
-                         if (this.localPreview) {
-                             URL.revokeObjectURL(this.localPreview);
-                             this.localPreview = null;
-                         }
-                     },
-                     onLogoFileChange(event) {
-                         this.revokeLocalPreview();
-                         const file = event.target.files?.[0];
-                         if (file && /^image\/(jpe?g|png)$/i.test(file.type)) {
-                             this.localPreview = URL.createObjectURL(file);
-                         }
-                     }
-                 }"
-                 x-on:parametros-logo-guardado.window="revokeLocalPreview()">
-                <div class="space-y-3">
-                    <div>
-                        <label class="form-label">Subir logo</label>
-                        <input wire:model="logo" type="file" accept="image/jpeg,image/png"
-                               class="form-input mt-1.5 @error('logo') border-red-400 @enderror"
-                               x-on:change="onLogoFileChange($event)"
-                               x-on:livewire-upload-error.window="
-                                   if ($event.detail?.property === 'logo') {
-                                       revokeLocalPreview();
-                                       $wire.onLogoUploadFailed();
-                                   }
-                               ">
-                        <p wire:loading wire:target="logo" class="mt-1 text-xs font-medium text-primary-700">
-                            Subiendo archivo… espere a que termine antes de pulsar Guardar.
-                        </p>
-                        @error('logo') <p class="form-error">{{ $message }}</p> @enderror
-                        <p class="mt-1 text-xs text-neutral-500">JPG/JPEG/PNG · máx. 2&nbsp;MB · se guarda para el nivel activo ({{ $nivelNombre !== '' ? $nivelNombre : '—' }}).</p>
-                    </div>
-
-                    <label class="inline-flex cursor-pointer items-center gap-2">
-                        <input type="checkbox" wire:model.live="removeLogo"
-                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
-                               x-on:change="if ($event.target.checked) revokeLocalPreview()">
-                        <span class="text-xs text-neutral-600">Quitar logo actual</span>
-                    </label>
-                </div>
-
-                <div class="space-y-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
-                    <div @class([
-                        'flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4',
-                        'se-logo-preview--emblema' => schoolLogoEsEmblema(),
-                    ])>
-                        <img x-show="localPreview" x-bind:src="localPreview" alt="Logo"
-                             @class([
-                                 'object-contain',
-                                 'h-28 w-28' => schoolLogoEsEmblema(),
-                                 'max-h-28' => ! schoolLogoEsEmblema(),
-                             ])>
-                        @if ($logoPreviewUrl)
-                            <img x-show="! localPreview && ! $wire.removeLogo" src="{{ $logoPreviewUrl }}" alt="Logo"
-                                 @class([
-                                     'object-contain',
-                                     'h-28 w-28' => schoolLogoEsEmblema(),
-                                     'max-h-28' => ! schoolLogoEsEmblema(),
-                                 ])>
-                        @endif
-                        <span x-show="! localPreview && ($wire.removeLogo || @js(! $logoPreviewUrl))"
-                              class="text-xs text-neutral-400">Sin logo</span>
-                    </div>
-                </div>
-            </div>
-        </div>
         </div>
         @elseif ($activeTab === 'parametros')
         <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros">

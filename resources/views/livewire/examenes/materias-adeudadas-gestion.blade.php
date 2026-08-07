@@ -25,6 +25,15 @@
         </div>
     @elseif ($preparacionLista ?? false)
         <div class="se-toolbar mt-6 flex-col !items-stretch gap-4 sm:flex-row sm:items-end">
+            <div class="min-w-0 w-full sm:w-56">
+                <label for="ma-filtro-alumnos" class="form-label">Alumnos</label>
+                <select id="ma-filtro-alumnos"
+                        wire:model.live="filtroAlumnos"
+                        class="form-select mt-1.5 w-full">
+                    <option value="{{ $ambitoRegulares }}">Regulares del ciclo actual</option>
+                    <option value="{{ $ambitoHistorial }}">Historial completo</option>
+                </select>
+            </div>
             <div class="min-w-0 flex-1">
                 <label for="ma-buscar" class="form-label">Buscar alumno</label>
                 <div class="relative mt-1.5 max-w-md">
@@ -34,10 +43,12 @@
                            x-on:focus="$event.target.select()"
                            x-on:click="$event.target.select()"
                            class="form-input w-full pr-10"
-                           placeholder="Apellido, nombre o DNI (mín. {{ $minCharsBusqueda }} caracteres)"
+                           placeholder="{{ $esAmbitoRegulares
+                               ? 'Apellido, nombre o DNI (opcional)'
+                               : 'Apellido, nombre o DNI (mín. '.$minCharsBusqueda.' caracteres)' }}"
                            autocomplete="off"
                            title="Al volver del detalle se mantiene la búsqueda. Hacé clic o escribí para reemplazarla.">
-                    <div wire:loading.delay.shortest wire:target="buscar"
+                    <div wire:loading.delay.shortest wire:target="buscar,filtroAlumnos"
                          class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                         <svg class="h-4 w-4 animate-spin text-primary-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -55,20 +66,34 @@
             <div class="border-b border-accent-200 bg-accent-50 px-5 py-3">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Alumnos del legajo</p>
                 <p class="text-sm text-neutral-600">
-                    Busque entre todos los alumnos que cursaron secundario en la institución. Use el icono de carga manual para registrar adeudos por alumno.
+                    @if ($esAmbitoRegulares)
+                        Listado de alumnos regulares del ciclo lectivo {{ schoolCtx()->terlecAno() ?? 'actual' }}.
+                        Use la búsqueda para acotar, o el filtro «Historial completo» para egresados y años anteriores.
+                    @else
+                        Busque entre todos los alumnos que cursaron secundario en la institución.
+                        Use el icono de carga manual para registrar adeudos por alumno.
+                    @endif
                 </p>
             </div>
 
             @if ($alumnos === null)
                 <div class="px-6 py-12 text-center">
                     <p class="text-sm text-neutral-600">
-                        Ingrese al menos {{ $minCharsBusqueda }} caracteres (apellido, nombre o DNI) para buscar en el historial de secundario.
+                        @if ($esAmbitoRegulares)
+                            No hay ciclo lectivo activo en el contexto para listar regulares.
+                        @else
+                            Ingrese al menos {{ $minCharsBusqueda }} caracteres (apellido, nombre o DNI) para buscar en el historial de secundario.
+                        @endif
                     </p>
                 </div>
             @elseif ($totalAlumnos === 0)
                 <div class="px-6 py-12 text-center">
                     <p class="text-sm text-neutral-600">
-                        No hay alumnos que coincidan con la búsqueda.
+                        @if ($esAmbitoRegulares && trim($buscar) === '')
+                            No hay alumnos regulares en el ciclo lectivo actual.
+                        @else
+                            No hay alumnos que coincidan con la búsqueda.
+                        @endif
                     </p>
                 </div>
             @else
@@ -139,8 +164,8 @@
                     </table>
                 </div>
                 @if ($alumnos->hasPages())
-                    <div class="border-t border-accent-200 bg-white px-4 py-3">
-                        {{ $alumnos->links() }}
+                    <div class="se-matriz-list-footer">
+                        {{ $alumnos->links('vendor.pagination.se-compact') }}
                     </div>
                 @endif
             @endif

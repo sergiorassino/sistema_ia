@@ -47,6 +47,39 @@ class CuponAPagarSnapshotTest extends TestCase
         );
     }
 
+    public function test_mensaje_ticket_sin_siro_mje_lanza_excepcion(): void
+    {
+        $registro = new \App\Models\CuotaGenerada([
+            'id' => 1,
+            'idLegajos' => 2530,
+            'idCuotas' => 86,
+            'idCursos' => 1,
+            'faltapa' => 4995,
+            'venc1' => '2026-06-12',
+            'venc2' => '2026-06-26',
+            'venc3' => '2026-06-26',
+            'ultUpload' => 5,
+        ]);
+
+        $cupon = [
+            'entoNivel' => [
+                'siroMje' => '',
+                'insti' => 'COLEGIO PARROQUIAL LARGO',
+            ],
+            'entoAdmin' => [
+                'insti' => 'COLEGIO PARROQUIAL LARGO',
+            ],
+            'cuotaNombre' => 'JUNIO 2026',
+            'importeVenc1' => 4995.0,
+            'importeVenc2' => 5550.0,
+            'importeVenc3' => 5705.4,
+        ];
+
+        $this->expectException(\App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException::class);
+
+        CuponAPagarSnapshot::armar($registro, $cupon, '0000025305150011052', 3);
+    }
+
     public function test_armar_para_cupones_vencidos_siro_tres_tramos_con_importe_con_intereses_y_fecha_nue_venc(): void
     {
         $registro = new \App\Models\CuotaGenerada([

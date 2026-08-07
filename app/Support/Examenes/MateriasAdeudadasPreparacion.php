@@ -67,6 +67,11 @@ final class MateriasAdeudadasPreparacion
         session([self::recalculoOkKey($modulo) => true]);
     }
 
+    public static function olvidarRecalculoEnVisita(string $modulo): void
+    {
+        session()->forget(self::recalculoOkKey($modulo));
+    }
+
     public static function recalculoEjecutadoEnVisita(string $modulo): bool
     {
         return session(self::recalculoOkKey($modulo)) === true;
