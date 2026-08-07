@@ -178,16 +178,9 @@
         <div class="disc">
             @foreach ($itemsBoletin as $it)
                 @php
-                    $t = (float) ($it->total ?? 0);
-                    $fuente = (string) ($it->fuente ?? '');
-                    $esInas = ($fuente === 'inasistencias');
-                    $itemTight = in_array($fuente, ['inasistencias', 'sanciones'], true);
-                    $mostrar = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
-                    $txt = $esInas
-                        ? number_format($t, 2, ',', '')
-                        : (string) (int) round($t);
+                    $pres = \App\Support\ConsultaCalificacionesAlumno::presentacionItemBoletin($it);
                 @endphp
-                <p @class(['disc-item-tight' => $itemTight])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrar){{ $txt }}@else{{ $blank }}@endif</p>
+                <p @class(['disc-item-tight' => $pres['tight']])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($pres['mostrar']){{ $pres['texto'] }}@else{{ $blank }}@endif</p>
             @endforeach
         </div>
     @endif
@@ -215,16 +208,9 @@
                             <div class="disc disc--con-firmas">
                                 @foreach ($itemsBoletin as $it)
                                     @php
-                                        $t = (float) ($it->total ?? 0);
-                                        $fuente = (string) ($it->fuente ?? '');
-                                        $esInas = ($fuente === 'inasistencias');
-                                        $itemTight = in_array($fuente, ['inasistencias', 'sanciones'], true);
-                                        $mostrarItem = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
-                                        $txt = $esInas
-                                            ? number_format($t, 2, ',', '')
-                                            : (string) (int) round($t);
+                                        $pres = \App\Support\ConsultaCalificacionesAlumno::presentacionItemBoletin($it);
                                     @endphp
-                                    <p @class(['disc-item-tight' => $itemTight])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($mostrarItem){{ $txt }}@else{{ $blank }}@endif</p>
+                                    <p @class(['disc-item-tight' => $pres['tight']])><span class="disc-lbl">{{ $it->etiqueta }}:</span> @if ($pres['mostrar']){{ $pres['texto'] }}@else{{ $blank }}@endif</p>
                                 @endforeach
                             </div>
                         @endif

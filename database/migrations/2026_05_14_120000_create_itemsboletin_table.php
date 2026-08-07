@@ -16,11 +16,12 @@ return new class extends Migration
             $table->id();
             $table->unsignedSmallInteger('orden')->default(0);
             $table->string('etiqueta', 160);
-            /** Origen de filas: `inasistencias` o `sanciones` (nombres de tabla legacy). */
+            /** Origen: `inasistencias`, `sanciones`, `conducta1` o `conducta2`. */
             $table->string('fuente', 32);
             /**
              * Fragmento SQL AND-adicional (sin `WHERE` inicial). Solo columnas de la tabla `fuente`.
              * Ej.: `tipo <> 5 AND just = 'J'` o `idTipoSancion = 1 AND publicada = 1`
+             * Para `conducta1` / `conducta2` no se usa (el valor sale de `matricula`).
              */
             $table->string('condicion_where', 500);
             /** Si es null, el ítem aplica a todos los ciclos lectivos de la base. */
