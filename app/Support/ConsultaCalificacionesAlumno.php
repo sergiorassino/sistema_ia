@@ -29,7 +29,7 @@ final class ConsultaCalificacionesAlumno
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
-     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>,
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float, texto?: string}>,
      *     proximas_evaluaciones: list<object{fecha: string, materia: string, temas: string, obs: string, linea: string}>
      * }
      */
@@ -146,7 +146,7 @@ final class ConsultaCalificacionesAlumno
      *     rows: list<object>,
      *     materias_adeudadas: list<object{materia: string, curso: string, linea: string}>,
      *     tercer_materia: list<array{materia: string, curso: string, ano_lectivo: int|string, nombre_boletin: string, linea: string, tm1: string, tm2: string, tm3: string, tm4: string, tm5: string, tm6: string, tmNota: string}>,
-     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float}>,
+     *     items_boletin: list<object{etiqueta: string, fuente: string, total: float, texto?: string}>,
      *     proximas_evaluaciones: list<object{fecha: string, materia: string, temas: string, obs: string, linea: string}>
      * }
      */
@@ -300,7 +300,7 @@ final class ConsultaCalificacionesAlumno
     }
 
     /**
-     * @return list<object{etiqueta: string, fuente: string, total: float}>
+     * @return list<object{etiqueta: string, fuente: string, total: float, texto?: string}>
      */
     public static function itemsBoletinParaMatriculaPublic(int $idMatricula, int $idTerlec): array
     {
@@ -308,10 +308,44 @@ final class ConsultaCalificacionesAlumno
     }
 
     /**
+     * Presentación uniforme del valor de un ítem de pie (PDF / Blade).
+     *
+     * @return array{mostrar: bool, texto: string, tight: bool}
+     */
+    public static function presentacionItemBoletin(object $it): array
+    {
+        $fuente = (string) ($it->fuente ?? '');
+        if (self::esFuenteConducta($fuente)) {
+            $texto = trim((string) ($it->texto ?? ''));
+
+            return [
+                'mostrar' => $texto !== '',
+                'texto' => $texto,
+                'tight' => false,
+            ];
+        }
+
+        $t = (float) ($it->total ?? 0);
+        $esInas = $fuente === 'inasistencias';
+
+        return [
+            'mostrar' => $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0),
+            'texto' => $esInas
+                ? number_format($t, 2, ',', '')
+                : (string) (int) round($t),
+            'tight' => in_array($fuente, ['inasistencias', 'sanciones'], true),
+        ];
+    }
+
+    /**
      * Ítems de boletín para muchas matrículas (unas pocas consultas GROUP BY, no una por alumno).
      *
+     * Fuentes numéricas: `inasistencias` / `sanciones` (SUM cantidad).
+     * Fuentes de texto: `conducta1` / `conducta2` → columnas homónimas de `matricula`.
+     * Si el tenant no tiene filas activas en `itemsboletin` para esas fuentes, no se emite nada.
+     *
      * @param  list<int>  $idMatriculas
-     * @return array<int, list<object{etiqueta: string, fuente: string, total: float}>>
+     * @return array<int, list<object{etiqueta: string, fuente: string, total: float, texto?: string}>>
      */
     public static function itemsBoletinPorMatriculas(array $idMatriculas, int $idTerlec): array
     {
@@ -329,7 +363,10 @@ final class ConsultaCalificacionesAlumno
             $etiqueta = trim((string) ($def->etiqueta ?? ''));
             $fuente = trim((string) ($def->fuente ?? ''));
             $cond = trim((string) ($def->condicion_where ?? ''));
-            if ($etiqueta === '' || ! in_array($fuente, self::ITEMS_BOLETIN_FUENTES, true) || ! self::condicionWhereItemsBoletinSegura($cond)) {
+            if ($etiqueta === '' || ! in_array($fuente, self::ITEMS_BOLETIN_FUENTES, true)) {
+                continue;
+            }
+            if (! self::esFuenteConducta($fuente) && ! self::condicionWhereItemsBoletinSegura($cond)) {
                 continue;
             }
             $defsValidas[] = (object) [
@@ -339,7 +376,7 @@ final class ConsultaCalificacionesAlumno
             ];
         }
 
-        /** @var array<int, list<object{etiqueta: string, fuente: string, total: float}>> $out */
+        /** @var array<int, list<object{etiqueta: string, fuente: string, total: float, texto?: string}>> $out */
         $out = [];
         foreach ($ids as $idMat) {
             $out[$idMat] = [];
@@ -349,7 +386,22 @@ final class ConsultaCalificacionesAlumno
             return $out;
         }
 
+        $conductasPorMatricula = self::conductasMatriculaPorIds($ids, $defsValidas);
+
         foreach ($defsValidas as $def) {
+            if (self::esFuenteConducta($def->fuente)) {
+                foreach ($ids as $idMat) {
+                    $out[$idMat][] = (object) [
+                        'etiqueta' => $def->etiqueta,
+                        'fuente' => $def->fuente,
+                        'total' => 0.0,
+                        'texto' => $conductasPorMatricula[$idMat][$def->fuente] ?? '',
+                    ];
+                }
+
+                continue;
+            }
+
             $totales = self::sumarCantidadItemsBoletinPorMatriculas(
                 $def->fuente,
                 $def->condicion_where,
@@ -488,7 +540,14 @@ final class ConsultaCalificacionesAlumno
         return implode(' ', $out);
     }
 
-    private const ITEMS_BOLETIN_FUENTES = ['inasistencias', 'sanciones'];
+    private const ITEMS_BOLETIN_FUENTES = ['inasistencias', 'sanciones', 'conducta1', 'conducta2'];
+
+    private const ITEMS_BOLETIN_FUENTES_CONDUCTA = ['conducta1', 'conducta2'];
+
+    private static function esFuenteConducta(string $fuente): bool
+    {
+        return in_array($fuente, self::ITEMS_BOLETIN_FUENTES_CONDUCTA, true);
+    }
 
     /**
      * @return list<object{etiqueta: string, fuente: string, condicion_where: string}>
@@ -520,9 +579,9 @@ final class ConsultaCalificacionesAlumno
     }
 
     /**
-     * Filas para el pie del PDF (inasistencias / sanciones) según {@see ItemBoletin}.
+     * Filas para el pie del PDF (inasistencias / sanciones / conducta) según {@see ItemBoletin}.
      *
-     * @return list<object{etiqueta: string, fuente: string, total: float}>
+     * @return list<object{etiqueta: string, fuente: string, total: float, texto?: string}>
      */
     private static function itemsBoletinParaMatricula(int $idMatricula, int $idTerlec): array
     {
@@ -531,6 +590,44 @@ final class ConsultaCalificacionesAlumno
         }
 
         return self::itemsBoletinPorMatriculas([$idMatricula], $idTerlec)[$idMatricula] ?? [];
+    }
+
+    /**
+     * @param  list<int>  $idMatriculas
+     * @param  list<object{fuente: string}>  $defsValidas
+     * @return array<int, array{conducta1?: string, conducta2?: string}>
+     */
+    private static function conductasMatriculaPorIds(array $idMatriculas, array $defsValidas): array
+    {
+        $columnas = [];
+        foreach ($defsValidas as $def) {
+            $fuente = (string) ($def->fuente ?? '');
+            if (self::esFuenteConducta($fuente) && Schema::hasColumn('matricula', $fuente)) {
+                $columnas[$fuente] = true;
+            }
+        }
+        if ($columnas === [] || $idMatriculas === []) {
+            return [];
+        }
+
+        $select = array_merge(['id'], array_keys($columnas));
+        $out = [];
+        foreach (array_chunk($idMatriculas, 200) as $chunk) {
+            $rows = DB::table('matricula')
+                ->whereIn('id', $chunk)
+                ->get($select);
+
+            foreach ($rows as $row) {
+                $idMat = (int) $row->id;
+                $vals = [];
+                foreach (array_keys($columnas) as $col) {
+                    $vals[$col] = trim((string) ($row->{$col} ?? ''));
+                }
+                $out[$idMat] = $vals;
+            }
+        }
+
+        return $out;
     }
 
     /**

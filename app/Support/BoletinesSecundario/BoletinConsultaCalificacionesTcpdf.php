@@ -2,6 +2,7 @@
 
 namespace App\Support\BoletinesSecundario;
 
+use App\Support\ConsultaCalificacionesAlumno;
 use App\Support\Examenes\TercerMateriaGestor;
 use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
@@ -641,17 +642,12 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
     {
         $this->SetFont(self::FUENTE, '', 7);
         foreach ($items as $it) {
-            $t = (float) ($it->total ?? 0);
-            $fuente = (string) ($it->fuente ?? '');
-            $esInas = $fuente === 'inasistencias';
-            $mostrar = $esInas ? (abs($t) >= 0.005) : ((int) round($t) !== 0);
-            $txt = $mostrar
-                ? ($esInas ? number_format($t, 2, ',', '') : (string) (int) round($t))
-                : self::BLANK;
+            $pres = ConsultaCalificacionesAlumno::presentacionItemBoletin($it);
+            $txt = $pres['mostrar'] ? $pres['texto'] : self::BLANK;
             $etiqueta = trim((string) ($it->etiqueta ?? ''));
             $this->SetXY($x, $y);
             $this->Cell($w, 3.2, $etiqueta.': '.$txt, 0, 1, 'L');
-            $y = $this->GetY() + ($esInas || $fuente === 'sanciones' ? 0.2 : 0.5);
+            $y = $this->GetY() + ($pres['tight'] ? 0.2 : 0.5);
         }
 
         return $y;

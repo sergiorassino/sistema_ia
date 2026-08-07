@@ -2,6 +2,7 @@
 
 namespace App\Support\CalificacionesSecundario\Epq;
 
+use App\Support\ConsultaCalificacionesAlumno;
 use App\Support\Pdf\TcpdfFuenteArial;
 use Illuminate\Http\Response;
 use TCPDF;
@@ -339,10 +340,13 @@ final class BoletinEpqSecundarioTcpdf extends TCPDF
             }
 
             $fuente = (string) ($item->fuente ?? '');
-            $total = (float) ($item->total ?? 0);
-            $valor = $fuente === 'inasistencias'
-                ? self::fmtNum($total)
-                : (string) (int) round($total);
+            $pres = ConsultaCalificacionesAlumno::presentacionItemBoletin($item);
+            // EPQ siempre muestra el valor numérico (incluye 0); conducta solo el texto cargado.
+            $valor = in_array($fuente, ['conducta1', 'conducta2'], true)
+                ? $pres['texto']
+                : ($fuente === 'inasistencias'
+                    ? self::fmtNum((float) ($item->total ?? 0))
+                    : (string) (int) round((float) ($item->total ?? 0)));
 
             $this->SetX($x);
             $this->Cell(
