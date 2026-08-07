@@ -89,6 +89,18 @@
                     <strong class="tabular-nums">{{ $resumen['educacion_fisica'] }}/{{ $this->totalAlumnos }}</strong>
                 </span>
             </div>
+            @if (($resumen['contraturno'] ?? 0) > 0 || $tiposClase->contains(fn ($t) => \App\Models\InasistenciaValor::conceptoEsContraturno((string) ($t->concepto ?? ''))))
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="se-pill inline-flex items-baseline gap-[2mm] border-green-200 bg-green-50 text-green-900">
+                        <span>Presentes a contraturno:</span>
+                        <strong class="tabular-nums">{{ $resumen['presentes_contraturno'] }}/{{ $this->totalAlumnos }}</strong>
+                    </span>
+                    <span class="se-pill inline-flex items-baseline gap-[2mm] border-sky-200 bg-sky-50 text-sky-900">
+                        <span>Ausentes a contraturno:</span>
+                        <strong class="tabular-nums">{{ $resumen['contraturno'] }}/{{ $this->totalAlumnos }}</strong>
+                    </span>
+                </div>
+            @endif
         </div>
 
         <p class="mb-3 text-xs text-neutral-600">
