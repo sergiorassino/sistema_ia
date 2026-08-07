@@ -152,7 +152,7 @@ class TomaAsistenciaClaseIndex extends Component
         }
     }
 
-    /** @return array{presentes_clase: int, presentes_ed_fis: int, ausentes: int, llegadas_tarde: int, retiros: int, educacion_fisica: int} */
+    /** @return array{presentes_clase: int, presentes_ed_fis: int, presentes_contraturno: int, ausentes: int, llegadas_tarde: int, retiros: int, contraturno: int, educacion_fisica: int} */
     public function getResumenTotalesProperty(): array
     {
         return TomaAsistenciaClase::contarResumen($this->asistencia);

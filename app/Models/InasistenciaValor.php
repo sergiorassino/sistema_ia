@@ -66,6 +66,16 @@ class InasistenciaValor extends Model
         return str_contains($n, 'retiro');
     }
 
+    /**
+     * Contraturno: no es ausencia a clase (puede haber asistido al turno y faltar al contraturno).
+     */
+    public static function conceptoEsContraturno(string $concepto): bool
+    {
+        $n = static::normalizarConcepto($concepto);
+
+        return str_contains($n, 'contraturno');
+    }
+
     public static function conceptoEsEducacionFisica(string $concepto): bool
     {
         $n = static::normalizarConcepto($concepto);

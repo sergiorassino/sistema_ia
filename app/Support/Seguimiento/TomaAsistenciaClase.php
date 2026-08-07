@@ -419,9 +419,11 @@ final class TomaAsistenciaClase
      * @return array{
      *     presentes_clase: int,
      *     presentes_ed_fis: int,
+     *     presentes_contraturno: int,
      *     ausentes: int,
      *     llegadas_tarde: int,
      *     retiros: int,
+     *     contraturno: int,
      *     educacion_fisica: int
      * }
      */
@@ -432,9 +434,11 @@ final class TomaAsistenciaClase
         $resumen = [
             'presentes_clase' => $total,
             'presentes_ed_fis' => $total,
+            'presentes_contraturno' => $total,
             'ausentes' => 0,
             'llegadas_tarde' => 0,
             'retiros' => 0,
+            'contraturno' => 0,
             'educacion_fisica' => 0,
         ];
 
@@ -455,14 +459,17 @@ final class TomaAsistenciaClase
                 $resumen['llegadas_tarde']++;
             } elseif (InasistenciaValor::conceptoEsRetiro($concepto)) {
                 $resumen['retiros']++;
+            } elseif (InasistenciaValor::conceptoEsContraturno($concepto)) {
+                $resumen['contraturno']++;
             } else {
                 $resumen['ausentes']++;
             }
         }
 
-        // Presentes a clase: incluye llegadas tarde; excluye ausentes y retiros anticipados.
+        // Presentes a clase: incluye llegadas tarde y contraturno; excluye ausentes y retiros anticipados.
         $resumen['presentes_clase'] = max(0, $total - $resumen['ausentes'] - $resumen['retiros']);
         $resumen['presentes_ed_fis'] = max(0, $total - $resumen['educacion_fisica']);
+        $resumen['presentes_contraturno'] = max(0, $total - $resumen['contraturno']);
 
         return $resumen;
     }
