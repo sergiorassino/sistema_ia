@@ -45,4 +45,22 @@ final class SalidaViajeHtmlSanitizer
 
         return trim($html);
     }
+
+    /**
+     * Vista previa legible para listados: sin etiquetas ni entidades HTML (&nbsp;, &aacute;, etc.).
+     */
+    public static function aTextoPlano(?string $html): string
+    {
+        $html = trim((string) $html);
+        if ($html === '') {
+            return '';
+        }
+
+        $texto = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Espacios no separables y saltos de bloque → espacio simple
+        $texto = preg_replace('/\x{00A0}/u', ' ', $texto) ?? $texto;
+        $texto = preg_replace('/\s+/u', ' ', $texto) ?? $texto;
+
+        return trim($texto);
+    }
 }

@@ -18,16 +18,24 @@ final class SalidaViajeTcpdf extends TCPDF
 
     private const MARGEN_R = 20.0;
 
-    private const MARGEN_B = 25.0;
+    /**
+     * A4 = 297 mm; el pie institucional empieza en Y_PIE_IMAGEN.
+     * El margen inferior debe llegar justo encima del pie (no reservar de más).
+     */
+    private const Y_PIE_IMAGEN = 280.0;
+
+    private const ALTO_PIE_IMAGEN = 14.0;
+
+    /** Límite inferior del contenido/firmas (mm desde el tope), sin pisar el pie. */
+    private const Y_LIMITE_CONTENIDO = 278.0;
+
+    /** 297 − 278: auto page-break alineado al pie. */
+    private const MARGEN_B = 19.0;
 
     private const Y_INICIO_CONTENIDO = 45.0;
 
-    private const Y_PIE_IMAGEN = 280.0;
-
-    /** Altura aproximada del bloque de firmas (mm). */
-    private const ALTO_BLOQUE_FIRMAS = 22.0;
-
-    private const ALTO_PIE_IMAGEN = 14.0;
+    /** Altura del bloque de firmas (5 líneas + espacio lugar/fecha→firma), mm. */
+    private const ALTO_BLOQUE_FIRMAS = 31.0;
 
     private function __construct()
     {
@@ -43,6 +51,17 @@ final class SalidaViajeTcpdf extends TCPDF
         $this->SetAutoPageBreak(true, self::MARGEN_B);
         // Margen superior uniforme: el membrete de salidas solo va en la 1.ª hoja del alumno.
         $this->SetMargins(self::MARGEN_L, self::Y_INICIO_CONTENIDO, self::MARGEN_R);
+        // Menos aire entre <p>: TCPDF suma ~1 línea al cerrar cada párrafo y eso puede forzar hoja vacía.
+        $this->setHtmlVSpace([
+            'p' => [
+                0 => ['h' => 0, 'n' => 0],
+                1 => ['h' => 0.5, 'n' => 1],
+            ],
+            'div' => [
+                0 => ['h' => 0, 'n' => 0],
+                1 => ['h' => 0, 'n' => 0],
+            ],
+        ]);
     }
 
     /** Membrete institucional del gobierno — todas las páginas. */
@@ -194,40 +213,59 @@ final class SalidaViajeTcpdf extends TCPDF
         $this->Ln(2);
 
         if ($htmlCuerpo !== '') {
-            TcpdfFuenteArial::aplicar($this, '', 9);
-            $y = $this->GetY();
-            $this->writeHTMLCell(
-                $ancho,
-                0,
-                self::MARGEN_L,
-                $y,
-                $htmlCuerpo,
-                0,
-                1,
-                false,
-                true,
-                'J',
-                true
-            );
+            $this->escribirCuerpoHtml($htmlCuerpo);
         }
 
-        $this->Ln(4);
+        $this->dibujarBloqueFirmas($ancho);
+    }
 
-        $limiteInferior = $this->getPageHeight() - self::MARGEN_B;
-        if ($this->GetY() + self::ALTO_BLOQUE_FIRMAS > $limiteInferior) {
-            $this->AddPage();
-        }
+    /**
+     * Escribe el HTML del viaje sin writeHTMLCell: ese camino (MultiCell+ln) puede
+     * abrir una hoja vacía al calcular el alto del bloque o al hacer Ln final.
+     */
+    private function escribirCuerpoHtml(string $htmlCuerpo): void
+    {
+        TcpdfFuenteArial::aplicar($this, '', 9);
 
+        $this->SetAutoPageBreak(true, self::MARGEN_B);
         $this->SetX(self::MARGEN_L);
+        $this->writeHTML($htmlCuerpo, false, false, true, false, 'L');
+    }
+
+    private function dibujarBloqueFirmas(float $ancho): void
+    {
+        $y = $this->GetY();
+        $necesita = 2 + self::ALTO_BLOQUE_FIRMAS;
+
+        if ($y + $necesita > self::Y_LIMITE_CONTENIDO) {
+            // Si aún no pisa el pie institucional, compactar en la misma hoja.
+            if ($y + self::ALTO_BLOQUE_FIRMAS <= self::Y_PIE_IMAGEN - 1) {
+                // sin Ln extra
+            } else {
+                $this->AddPage();
+                $this->SetY(max(self::MARGEN_T + 18, 28));
+            }
+        } else {
+            $this->Ln(2);
+        }
+
+        $this->SetAutoPageBreak(false);
 
         TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell($ancho, 6, 'Lugar y fecha:  Córdoba, ........ de  .............................................. de ........................', 0, 1, 'L');
+        $this->SetX(self::MARGEN_L);
+        $this->Cell($ancho, 5, 'Lugar y fecha:  Córdoba, ........ de  .............................................. de ........................', 0, 1, 'L');
 
         TcpdfFuenteArial::aplicar($this, 'B', 7);
-        $this->Ln(1);
+        $this->Ln(4);
         $this->SetX(self::MARGEN_L);
-        $this->Cell($ancho, 5, 'FIRMA: ..........................................................................................       D.N.I.: .............................................', 0, 1, 'C');
+        $this->Cell($ancho, 5, 'Firma: ..........................................................................................................................', 0, 1, 'L');
         $this->SetX(self::MARGEN_L);
-        $this->Cell($ancho, 5, 'DOMICILIO: ..........................................................................................................................       TELÉFONO: ..........................................................................................', 0, 1, 'C');
+        $this->Cell($ancho, 5, 'D.N.I.: .........................................................................................................................', 0, 1, 'L');
+        $this->SetX(self::MARGEN_L);
+        $this->Cell($ancho, 5, 'Domicilio: .....................................................................................................................', 0, 1, 'L');
+        $this->SetX(self::MARGEN_L);
+        $this->Cell($ancho, 5, 'Teléfono: ......................................................................................................................', 0, 1, 'L');
+
+        $this->SetAutoPageBreak(true, self::MARGEN_B);
     }
 }
