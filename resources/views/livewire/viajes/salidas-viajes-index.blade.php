@@ -62,7 +62,7 @@
                                     {{ $viaje->hasta?->format('d/m/Y') ?? '—' }}
                                 </div>
                                 <div class="gf-td flex-1 min-w-[10rem] text-neutral-600">
-                                    <span class="line-clamp-2 text-xs">{{ strip_tags((string) $viaje->texto) }}</span>
+                                    <span class="line-clamp-2 text-xs">{{ \App\Support\Viajes\SalidaViajeHtmlSanitizer::aTextoPlano($viaje->texto) }}</span>
                                 </div>
                                 <div class="gf-td-actions w-56">
                                     <a href="{{ route('viajes.salidas.imprimir', $viaje->id) }}"
