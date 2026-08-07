@@ -350,6 +350,12 @@
             }
         @endif
 
+        @if (session('cuotas_siro_config'))
+            if (typeof window.seSwalError === 'function') {
+                window.seSwalError(@js(session('cuotas_siro_config')), 'SIRO');
+            }
+        @endif
+
         @if (session('afip_swal_mensaje'))
             const afipMensaje = @js(session('afip_swal_mensaje'));
             const afipTipo = @js(session('afip_swal_tipo', 'exito'));

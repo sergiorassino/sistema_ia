@@ -14,15 +14,32 @@ final class MateriasAdeudadasAlumnosListado
 
     public const POR_PAGINA = 50;
 
+    /** Solo matrícula regular (`idCondiciones` = 1) del ciclo lectivo del contexto. */
+    public const AMBITO_REGULARES_CICLO = 'regulares';
+
+    /** Cualquier alumno con historial de matrícula en el nivel (años anteriores incluidos). */
+    public const AMBITO_HISTORIAL = 'historial';
+
     private const SESSION_BUSCAR_LISTADO = 'materias_adeudadas_gestion_buscar';
+
+    private const SESSION_AMBITO_LISTADO = 'materias_adeudadas_gestion_ambito';
 
     public static function esNivelSecundario(SchoolContext $ctx): bool
     {
         return str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari');
     }
 
+    public static function normalizeAmbito(?string $value): string
+    {
+        return $value === self::AMBITO_HISTORIAL
+            ? self::AMBITO_HISTORIAL
+            : self::AMBITO_REGULARES_CICLO;
+    }
+
     /**
-     * Búsqueda paginada de alumnos con historial en secundario. Sin término válido no consulta la BD.
+     * Búsqueda paginada de alumnos.
+     * En ámbito regulares: lista del ciclo actual (búsqueda opcional).
+     * En ámbito historial: requiere término válido; sin él no consulta la BD.
      *
      * @return LengthAwarePaginator<int, array{
      *     idLegajos: int,
@@ -38,19 +55,38 @@ final class MateriasAdeudadasAlumnosListado
         int $idTerlec,
         ?string $buscar,
         int $porPagina = self::POR_PAGINA,
+        string $ambito = self::AMBITO_REGULARES_CICLO,
     ): ?LengthAwarePaginator {
         if ($idNivel < 1) {
             return null;
         }
 
+        $ambito = self::normalizeAmbito($ambito);
         $termino = self::normalizarBusqueda($buscar);
-        if ($termino === '') {
+        $esRegulares = $ambito === self::AMBITO_REGULARES_CICLO;
+
+        if ($esRegulares) {
+            if ($idTerlec < 1) {
+                return null;
+            }
+        } elseif ($termino === '') {
             return null;
         }
 
-        $paginator = Legajo::query()
-            ->whereHas('matriculas', fn ($q) => $q->where('idNivel', $idNivel))
-            ->buscar($termino)
+        $query = Legajo::query()
+            ->whereHas('matriculas', function ($q) use ($idNivel, $idTerlec, $esRegulares) {
+                $q->where('idNivel', $idNivel);
+                if ($esRegulares) {
+                    $q->where('idTerlec', $idTerlec)
+                        ->where('idCondiciones', 1);
+                }
+            });
+
+        if ($termino !== '') {
+            $query->buscar($termino);
+        }
+
+        $paginator = $query
             ->orderBy('apellido')
             ->orderBy('nombre')
             ->orderBy('id')
@@ -207,13 +243,37 @@ final class MateriasAdeudadasAlumnosListado
         return trim((string) session(self::SESSION_BUSCAR_LISTADO, ''));
     }
 
-    public static function urlListadoGestion(?string $buscar = null): string
+    public static function persistirAmbitoListado(?string $ambito): void
     {
-        $t = trim((string) ($buscar ?? ''));
+        session([self::SESSION_AMBITO_LISTADO => self::normalizeAmbito($ambito)]);
+    }
 
-        return $t !== ''
-            ? route('examenes.materias-adeudadas.gestion', ['buscar' => $t])
-            : route('examenes.materias-adeudadas.gestion');
+    public static function ambitoRetornoListado(): string
+    {
+        $desdeRequest = trim((string) request()->query('ambito', ''));
+        if ($desdeRequest !== '') {
+            return self::normalizeAmbito($desdeRequest);
+        }
+
+        return self::normalizeAmbito((string) session(self::SESSION_AMBITO_LISTADO, self::AMBITO_REGULARES_CICLO));
+    }
+
+    public static function urlListadoGestion(?string $buscar = null, ?string $ambito = null): string
+    {
+        $params = [];
+        $t = trim((string) ($buscar ?? ''));
+        if ($t !== '') {
+            $params['buscar'] = $t;
+        }
+
+        $a = self::normalizeAmbito($ambito ?? self::ambitoRetornoListado());
+        if ($a !== self::AMBITO_REGULARES_CICLO) {
+            $params['ambito'] = $a;
+        }
+
+        return $params === []
+            ? route('examenes.materias-adeudadas.gestion')
+            : route('examenes.materias-adeudadas.gestion', $params);
     }
 
     private static function normalizarBusqueda(?string $buscar): string

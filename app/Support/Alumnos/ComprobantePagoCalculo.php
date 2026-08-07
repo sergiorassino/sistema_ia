@@ -59,7 +59,11 @@ final class ComprobantePagoCalculo
         $attrsEnto = $entoAdmin?->getAttributes() ?? [];
         $attrsEntoNivel = $entoNivel?->getAttributes() ?? [];
         $siroHabilitado = tenantCuotasSiroHabilitado();
-        $cuentaSiroNivel = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
+        $cuentaSiroNivel = '';
+        if ($siroHabilitado) {
+            SiroCodigoPagoElectronico::exigirParaOperacion($idNivel);
+            $cuentaSiroNivel = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
+        }
 
         $importes = CuotasImporte::query()
             ->where('idCuotas', $idCuotas)
@@ -168,19 +172,20 @@ final class ComprobantePagoCalculo
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT);
 
         $qrConcepto = ($venc1 !== null && $fechaDeHoy->lte($venc1)) ? 3 : 1;
-        $nroCliente = SiroCodigoPagoElectronico::bloqueLegajoNueveDigitos($idLegajos, $idNivel);
         $nroComprobanteQr = str_pad((string) $idCuotas, 11, '0', STR_PAD_LEFT)
             .$qrConcepto
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT)
             .str_pad((string) $ultUpload, 2, '0', STR_PAD_LEFT)
             .str_pad((string) $idCuotas, 3, '0', STR_PAD_LEFT);
 
-        $cadenaQr = $siroHabilitado
-            ? ComprobantePagoSiroQr::obtenerCadena(
+        $cadenaQr = '';
+        if ($siroHabilitado) {
+            $nroCliente = SiroCodigoPagoElectronico::bloqueLegajoNueveDigitos($idLegajos, $idNivel);
+            $cadenaQr = ComprobantePagoSiroQr::obtenerCadena(
                 $nroCliente.$numeroCuenta,
                 $nroComprobanteQr,
-            )
-            : '';
+            );
+        }
 
         $cuit = self::formatearCuit(trim((string) ($attrsEnto['cuit'] ?? '')));
 

@@ -60,7 +60,8 @@ return [
         'siro' => [
             'habilitado' => true,
             'qr_url' => null,
-            // Prefijo CPE SIRO (2 dígitos): confirmar con el colegio al desplegar.
+            // Prefijo CPE SIRO (2 dígitos): obligatorio en Parámetros del sistema (ento.siroPrefijoCPE).
+            // No se usa como fallback en generación de CPE.
             'cpe_prefijo' => null,
             'descarga_rendicion' => [
                 'canales_planilla' => ['Roela'],

@@ -85,10 +85,21 @@ final class ArancelesEscolares
             'dni' => self::formatearDni($legajo->dni ?? ''),
             'curso' => mb_strtoupper($curso),
             'nivel' => mb_strtoupper(trim((string) $ctx->nivelNombre())),
-            'codigoPagoElectronico' => tenantCuotasSiroHabilitado()
-                ? ComprobantePagoPdf::codigoPagoElectronico($idLegajo, $idNivel)
-                : '',
+            'codigoPagoElectronico' => self::codigoPagoElectronicoSeguro($idLegajo, $idNivel),
         ];
+    }
+
+    private static function codigoPagoElectronicoSeguro(int $idLegajo, int $idNivel): string
+    {
+        if (! tenantCuotasSiroHabilitado()) {
+            return '';
+        }
+
+        try {
+            return ComprobantePagoPdf::codigoPagoElectronico($idLegajo, $idNivel);
+        } catch (\App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException) {
+            return '';
+        }
     }
 
     public static function cuotaPendienteParaAutogestion(int $idCuotaGenerada): ?CuotaGenerada

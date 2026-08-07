@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
 use App\Support\Alumnos\ComprobantePagoPdf;
+use App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -51,7 +52,13 @@ class ComprobantePagoPdfController extends Controller
                 ->with('aranceles_cuota_vencida', ArancelesEscolares::mensajeCuotaVencidaReimpresion());
         }
 
-        $datos = ComprobantePagoDatos::paraAutogestion($id);
+        try {
+            $datos = ComprobantePagoDatos::paraAutogestion($id);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            return redirect()
+                ->route('alumnos.aranceles-escolares')
+                ->with('aranceles_siro_config', $e->getMessage());
+        }
         if ($datos === null) {
             return response()->view('errors.alumno-pdf', [
                 'mensaje' => 'No se encontró la cuota pendiente solicitada o ya no tiene saldo a abonar.',

@@ -6,6 +6,7 @@ use App\Models\CuponAPagar;
 use App\Models\CuotaGenerada;
 use App\Support\Alumnos\ComprobantePagoPdf;
 use App\Support\Cuotas\Siro\SiroCodigoPagoElectronico;
+use App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -78,15 +79,14 @@ final class CuponAPagarEmision
 
             $idNivel = (int) ($locked->curso?->idNivel ?? 0);
             if ($idNivel <= 0) {
-                return $locked;
+                throw new SiroConfiguracionIncompletaException(
+                    ['Prefijo CPE', 'Cuenta recaudadora SIRO', 'Mensaje en ticket / pantalla SIRO'],
+                    $idNivel > 0 ? $idNivel : null,
+                );
             }
 
+            SiroCodigoPagoElectronico::exigirParaOperacion($idNivel);
             $cpe = SiroCodigoPagoElectronico::generar((int) $locked->idLegajos, $idNivel);
-            $cuentaSiro = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
-            if (preg_match('/^0+$/', $cuentaSiro)) {
-                return $locked;
-            }
-
             $detalle = CuponAPagarSnapshot::armar($locked, $cupon, $cpe, $idNivel);
 
             $locked->ultUpload = (int) ($locked->ultUpload ?? 0) + 1;

@@ -4,27 +4,15 @@ namespace App\Support\Alumnos;
 
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionBarcodeComprobante448;
+use App\Support\Cuotas\Siro\SiroCodigoPagoElectronico;
 use Carbon\CarbonInterface;
 
 /**
- * Cupón EPQ (Escuelas Pías) — cálculo legacy: barcode 0448 modalidad anterior y CPE fijo.
+ * Cupón EPQ / SFQ — barcode 0448 modalidad anterior; CPE y cuenta desde parámetros SIRO del nivel.
  */
 final class ComprobantePagoEpqCalculo
 {
     private const EMPRESA_SERVICIO = '0448';
-
-    /** Tipo + moneda + sucursal + cuenta + DV (10 dígitos en el barcode). */
-    private const BARCODE_NUMERO_CUENTA = '5120281108';
-
-    private const CPE_TIPO_OPERACION = '5';
-
-    private const CPE_MONEDA = '1';
-
-    private const CPE_SUCURSAL = '2';
-
-    private const CPE_NUMERO_CUENTA = '028110';
-
-    private const CPE_DIGITO_VERIFICADOR = '8';
 
     /**
      * @return array<string, mixed>|null
@@ -44,7 +32,13 @@ final class ComprobantePagoEpqCalculo
 
         $idLegajos = (int) $registro->idLegajos;
         $idCuotas = (int) $registro->idCuotas;
+        $idNivel = (int) ($registro->curso?->idNivel ?? 0);
         $ultUpload = max(1, (int) ($registro->ultUpload ?? 0));
+
+        // CPE y cuenta: solo desde ento del nivel (sin constantes hardcodeadas).
+        SiroCodigoPagoElectronico::exigirParaOperacion($idNivel);
+        $cuentaSiroNivel = SiroCodigoPagoElectronico::cuentaRecaudadoraPorNivel($idNivel);
+        $datos['codigoPagoElectronico'] = SiroCodigoPagoElectronico::generar($idLegajos, $idNivel);
 
         $identConcepto = ! empty($datos['cuponVencido'])
             ? '4'
@@ -67,7 +61,7 @@ final class ComprobantePagoEpqCalculo
                 'importe1erVenc' => ComprobantePagoCodigoBarras::importeCodigo($nuevoImporte),
                 'dias2doVenc' => '00',
                 'importe2doVenc' => ComprobantePagoCodigoBarras::importeCodigo($nuevoImporte),
-                'numeroCuenta' => self::BARCODE_NUMERO_CUENTA,
+                'numeroCuenta' => $cuentaSiroNivel,
             ];
         } else {
             $venc1 = self::carbon($registro->venc1);
@@ -82,12 +76,11 @@ final class ComprobantePagoEpqCalculo
                 'importe1erVenc' => ComprobantePagoCodigoBarras::importeCodigo($importeVenc1),
                 'dias2doVenc' => str_pad((string) self::diasEntre($venc2, $venc1), 2, '0', STR_PAD_LEFT),
                 'importe2doVenc' => ComprobantePagoCodigoBarras::importeCodigo($importeVenc2),
-                'numeroCuenta' => self::BARCODE_NUMERO_CUENTA,
+                'numeroCuenta' => $cuentaSiroNivel,
             ];
         }
 
         $datos['barra'] = ComprobantePagoCodigoBarras::armar($partes);
-        $datos['codigoPagoElectronico'] = self::codigoPagoElectronico($idLegajos);
         $datos['cadenaQr'] = '';
 
         return $datos;
@@ -116,18 +109,13 @@ final class ComprobantePagoEpqCalculo
         return $datos;
     }
 
-    public static function codigoPagoElectronico(int $idLegajos): string
+    public static function codigoPagoElectronico(int $idLegajos, int $idNivel): string
     {
         if (! tenantCuotasSiroHabilitado()) {
             return '';
         }
 
-        return str_pad((string) $idLegajos, 9, '0', STR_PAD_LEFT)
-            .self::CPE_TIPO_OPERACION
-            .self::CPE_MONEDA
-            .self::CPE_SUCURSAL
-            .self::CPE_NUMERO_CUENTA
-            .self::CPE_DIGITO_VERIFICADOR;
+        return SiroCodigoPagoElectronico::generar($idLegajos, $idNivel);
     }
 
     private static function diasEntre(?CarbonInterface $fechaMayor, ?CarbonInterface $fechaMenor): int

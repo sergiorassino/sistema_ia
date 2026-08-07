@@ -3,6 +3,7 @@
 
     $urlVolverListado = MateriasAdeudadasAlumnosListado::urlListadoGestion(
         MateriasAdeudadasAlumnosListado::buscarRetornoListado(),
+        MateriasAdeudadasAlumnosListado::ambitoRetornoListado(),
     );
 @endphp
 <a href="{{ $urlVolverListado }}"

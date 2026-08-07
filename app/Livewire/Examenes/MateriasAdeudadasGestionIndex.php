@@ -14,7 +14,12 @@ class MateriasAdeudadasGestionIndex extends Component
     use RequiresPermisoExamenes;
     use WithPagination;
 
+    public const POR_PAGINA = MateriasAdeudadasAlumnosListado::POR_PAGINA;
+
     public string $buscar = '';
+
+    /** regulares | historial — ver MateriasAdeudadasAlumnosListado::AMBITO_* */
+    public string $filtroAlumnos = MateriasAdeudadasAlumnosListado::AMBITO_REGULARES_CICLO;
 
     /** Incrementa al confirmar el panel hijo para refrescar el listado de alumnos. */
     public int $prepTick = 0;
@@ -22,6 +27,7 @@ class MateriasAdeudadasGestionIndex extends Component
     /** @var array<string, array{except?: mixed, as?: string}> */
     protected $queryString = [
         'buscar' => ['except' => ''],
+        'filtroAlumnos' => ['except' => MateriasAdeudadasAlumnosListado::AMBITO_REGULARES_CICLO, 'as' => 'ambito'],
     ];
 
     public function mount(): void
@@ -30,13 +36,27 @@ class MateriasAdeudadasGestionIndex extends Component
             $this->buscar = MateriasAdeudadasAlumnosListado::buscarRetornoListado();
         }
 
+        $this->filtroAlumnos = MateriasAdeudadasAlumnosListado::normalizeAmbito(
+            $this->filtroAlumnos !== MateriasAdeudadasAlumnosListado::AMBITO_REGULARES_CICLO
+                ? $this->filtroAlumnos
+                : MateriasAdeudadasAlumnosListado::ambitoRetornoListado()
+        );
+
         MateriasAdeudadasAlumnosListado::persistirBuscarListado($this->buscar);
+        MateriasAdeudadasAlumnosListado::persistirAmbitoListado($this->filtroAlumnos);
     }
 
     public function updatedBuscar(): void
     {
         $this->resetPage();
         MateriasAdeudadasAlumnosListado::persistirBuscarListado($this->buscar);
+    }
+
+    public function updatedFiltroAlumnos(string $value): void
+    {
+        $this->filtroAlumnos = MateriasAdeudadasAlumnosListado::normalizeAmbito($value);
+        $this->resetPage();
+        MateriasAdeudadasAlumnosListado::persistirAmbitoListado($this->filtroAlumnos);
     }
 
     public function render()
@@ -46,12 +66,15 @@ class MateriasAdeudadasGestionIndex extends Component
         $preparacionLista = $ctx->isValid()
             && MateriasAdeudadasPreparacion::visitaConfirmadaEnSesion(MateriasAdeudadasPreparacion::MODULO_GESTION);
 
+        $ambito = MateriasAdeudadasAlumnosListado::normalizeAmbito($this->filtroAlumnos);
         $alumnos = null;
         if ($esSecundario && $preparacionLista) {
             $alumnos = MateriasAdeudadasAlumnosListado::paginarAlumnos(
                 (int) $ctx->idNivel,
                 (int) $ctx->idTerlec,
                 $this->buscar !== '' ? $this->buscar : null,
+                self::POR_PAGINA,
+                $ambito,
             );
         }
 
@@ -63,6 +86,9 @@ class MateriasAdeudadasGestionIndex extends Component
             'esSecundario' => $esSecundario,
             'preparacionLista' => $preparacionLista,
             'minCharsBusqueda' => MateriasAdeudadasAlumnosListado::MIN_CHARS_BUSQUEDA,
+            'ambitoRegulares' => MateriasAdeudadasAlumnosListado::AMBITO_REGULARES_CICLO,
+            'ambitoHistorial' => MateriasAdeudadasAlumnosListado::AMBITO_HISTORIAL,
+            'esAmbitoRegulares' => $ambito === MateriasAdeudadasAlumnosListado::AMBITO_REGULARES_CICLO,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de materias adeudadas']);
     }
 

@@ -4,6 +4,7 @@ namespace App\Support\Cuotas;
 
 use App\Models\CuotaGenerada;
 use App\Models\CuotasImporte;
+use App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException;
 use App\Support\Cuotas\Siro\SiroIdFactura;
 use App\Support\Cuotas\Siro\SiroSubidaBaseDeudaArchivo;
 use Carbon\Carbon;
@@ -129,8 +130,11 @@ final class CuponAPagarSnapshot
         float $importe2,
         float $importe3,
     ): array {
-        $entoInsti = mb_strtoupper(trim((string) ($cupon['entoNivel']['insti'] ?? $cupon['entoAdmin']['insti'] ?? config('tenant.nombre', ''))));
         $siroMje = mb_strtoupper(trim((string) ($cupon['entoNivel']['siroMje'] ?? '')));
+        if ($siroMje === '') {
+            throw new SiroConfiguracionIncompletaException(['Mensaje en ticket / pantalla SIRO'], $idNivel);
+        }
+
         $cuotaNombre = mb_strtoupper(trim((string) ($cupon['cuotaNombre'] ?? '')));
 
         $ultUploadNuevo = (int) ($registro->ultUpload ?? 0) + 1;
@@ -138,8 +142,7 @@ final class CuponAPagarSnapshot
         $idCuotas = (int) $registro->idCuotas;
         $idFactura = SiroIdFactura::generar($idLegajos, $idCuotas, $ultUploadNuevo);
 
-        $textoTicket1 = $siroMje !== '' ? $siroMje : $entoInsti;
-        $mensajeTicket1 = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($textoTicket1, 15);
+        $mensajeTicket1 = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($siroMje, 15);
         $mensajeTicket2 = SiroSubidaBaseDeudaArchivo::recortarAlfanumerico($cuotaNombre, 25);
 
         return [

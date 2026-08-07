@@ -34,8 +34,16 @@ final class MateriasAdeudadasExporter
      *     curso_cursec:string
      * }>
      */
-    public static function filas(int $idNivel, ?string $condicion = null, ?string $inscri = null): array
-    {
+    /**
+     * @param  string  $alumnos  MateriasAdeudadasFiltros::ALUMNOS_*
+     */
+    public static function filas(
+        int $idNivel,
+        ?string $condicion = null,
+        ?string $inscri = null,
+        string $alumnos = MateriasAdeudadasFiltros::ALUMNOS_REGULARES_CICLO,
+        ?int $idTerlecCiclo = null,
+    ): array {
         $q = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
             ->join('materias as m', function ($join) {
@@ -88,6 +96,23 @@ final class MateriasAdeudadasExporter
                 'c.idCursos',
                 'c.idMaterias',
             ]);
+
+        $ambitoAlumnos = MateriasAdeudadasFiltros::normalizeAlumnos($alumnos);
+        $idTerlec = $idTerlecCiclo !== null ? (int) $idTerlecCiclo : 0;
+        if ($ambitoAlumnos === MateriasAdeudadasFiltros::ALUMNOS_REGULARES_CICLO) {
+            if ($idTerlec < 1) {
+                return [];
+            }
+
+            $q->whereExists(function ($sub) use ($idTerlec, $idNivel) {
+                $sub->select(DB::raw(1))
+                    ->from('matricula as mat')
+                    ->whereColumn('mat.idLegajos', 'c.idLegajos')
+                    ->where('mat.idTerlec', $idTerlec)
+                    ->where('mat.idNivel', $idNivel)
+                    ->where('mat.idCondiciones', 1);
+            });
+        }
 
         $condNorm = MateriasAdeudadasFiltros::normalizeCondicion($condicion);
         if ($condNorm !== null) {

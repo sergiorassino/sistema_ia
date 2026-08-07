@@ -7,6 +7,7 @@ use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
 use App\Support\Alumnos\ComprobantePagoPdf;
 use App\Support\Cuotas\GestionAranceles;
+use App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
 use App\Support\Security\OpaqueRouteToken;
@@ -56,7 +57,18 @@ class ComprobantePagoCuotasPdfController extends Controller
                 ->with('cuotas_cuota_vencida', ArancelesEscolares::mensajeCuotaVencidaReimpresion());
         }
 
-        $datos = ComprobantePagoDatos::paraAdministracion($id, $idLegajo);
+        try {
+            $datos = ComprobantePagoDatos::paraAdministracion($id, $idLegajo);
+        } catch (SiroConfiguracionIncompletaException $e) {
+            ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
+                'idLegajos' => $idLegajo,
+                'idCuotaGenerada' => 0,
+            ]);
+
+            return redirect()
+                ->route('cuotas.estudiante')
+                ->with('cuotas_siro_config', $e->getMessage());
+        }
         if ($datos === null) {
             abort(404);
         }

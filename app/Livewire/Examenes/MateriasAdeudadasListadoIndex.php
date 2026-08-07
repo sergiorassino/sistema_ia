@@ -18,6 +18,9 @@ class MateriasAdeudadasListadoIndex extends Component
     /** @see MateriasAdeudadasFiltros */
     public string $agrupar = MateriasAdeudadasFiltros::AGRUPAR_ESTUDIANTE;
 
+    /** regulares|todos — por defecto solo regulares del ciclo del contexto */
+    public string $filtroAlumnos = MateriasAdeudadasFiltros::ALUMNOS_REGULARES_CICLO;
+
     /** PR|EQ|TM|'' */
     public string $filtroCondicion = '';
 
@@ -27,6 +30,11 @@ class MateriasAdeudadasListadoIndex extends Component
     public function updatedAgrupar(mixed $value): void
     {
         $this->agrupar = MateriasAdeudadasFiltros::normalizeAgrupar(is_string($value) ? $value : null);
+    }
+
+    public function updatedFiltroAlumnos(mixed $value): void
+    {
+        $this->filtroAlumnos = MateriasAdeudadasFiltros::normalizeAlumnos(is_string($value) ? $value : null);
     }
 
     public function updatedFiltroCondicion(mixed $value): void
@@ -49,18 +57,22 @@ class MateriasAdeudadasListadoIndex extends Component
 
         $filas = [];
         $bloques = [];
+        $ambitoAlumnos = MateriasAdeudadasFiltros::normalizeAlumnos($this->filtroAlumnos);
 
         if ($preparacionLista) {
             $filas = MateriasAdeudadasExporter::filas(
                 (int) $ctx->idNivel,
                 $this->filtroCondicion !== '' ? $this->filtroCondicion : null,
                 $this->filtroInscri !== '' ? $this->filtroInscri : null,
+                $ambitoAlumnos,
+                (int) $ctx->idTerlec,
             );
             $bloques = MateriasAdeudadasExporter::agrupar($filas, $this->agrupar);
         }
 
         $pdfParams = array_filter([
             'agrupar' => $this->agrupar,
+            'alumnos' => $ambitoAlumnos,
             'condicion' => $this->filtroCondicion !== '' ? $this->filtroCondicion : null,
             'inscri' => $this->filtroInscri !== '' ? $this->filtroInscri : null,
         ], fn ($v) => $v !== null && $v !== '');
@@ -70,6 +82,8 @@ class MateriasAdeudadasListadoIndex extends Component
             'totalFilas' => count($filas),
             'pdfUrl' => route('examenes.materias-adeudadas.pdf', $pdfParams),
             'preparacionLista' => $preparacionLista,
+            'alumnosRegulares' => MateriasAdeudadasFiltros::ALUMNOS_REGULARES_CICLO,
+            'alumnosTodos' => MateriasAdeudadasFiltros::ALUMNOS_TODOS,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Listado de materias adeudadas']);
     }
 

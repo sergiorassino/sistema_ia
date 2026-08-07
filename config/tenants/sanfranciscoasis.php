@@ -14,7 +14,7 @@ return [
         'siro' => [
             'habilitado' => true,
             'qr_url' => null,
-            // Prefijo de 2 dígitos del CPE (legacy Scriptcase / SIRO). San Fra usa 09.
+            // Prefijo CPE: cargar en Parámetros del sistema (ento.siroPrefijoCPE). Este valor ya no se usa como fallback.
             'cpe_prefijo' => '09',
             'descarga_rendicion' => [
                 // Solo Roela al crear planilla de rendición (cuotastipopago).
