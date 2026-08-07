@@ -28,13 +28,25 @@ return new class extends Migration
             });
         }
 
-        // 2. Nueva columna en sanciones
+        // 2. Columnas en sanciones (publicada es legacy; no todos los tenants la tienen)
         if (Schema::hasTable('sanciones')) {
-            Schema::table('sanciones', function (Blueprint $table) {
-                if (! Schema::hasColumn('sanciones', 'comunicadaPadres')) {
+            if (! Schema::hasColumn('sanciones', 'publicada')) {
+                Schema::table('sanciones', function (Blueprint $table) {
+                    $column = $table->tinyInteger('publicada')->default(1);
+                    if (Schema::hasColumn('sanciones', 'solipor')) {
+                        $column->after('solipor');
+                    } elseif (Schema::hasColumn('sanciones', 'motivo')) {
+                        $column->after('motivo');
+                    }
+                });
+            }
+
+            if (! Schema::hasColumn('sanciones', 'comunicadaPadres')) {
+                Schema::table('sanciones', function (Blueprint $table) {
+                    // publicada ya está garantizada arriba (o existía en el tenant).
                     $table->tinyInteger('comunicadaPadres')->default(0)->after('publicada');
-                }
-            });
+                });
+            }
         }
 
         // 3. Permiso para ABM de tipos de sanción
