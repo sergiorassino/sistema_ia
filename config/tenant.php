@@ -571,6 +571,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Parte diario del preceptor — modelo de PDF
+    |--------------------------------------------------------------------------
+    |
+    | `implementacion`:
+    |   - `estandar` — DomPDF A4 / media hoja (default).
+    |   - `sanfranciscoasis` — TCPDF Legal: listado de alumnos regulares + firmas por hora.
+    | Override solo en `config/tenants/{slug}.php` cuando difiere.
+    */
+    'parte_diario' => [
+        'implementacion' => 'estandar',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ARCA — consultas al padrón tributario
     |--------------------------------------------------------------------------
     */

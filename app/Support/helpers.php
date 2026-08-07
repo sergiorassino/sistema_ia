@@ -1680,6 +1680,22 @@ if (! function_exists('tenantRegistroAsistenciaImplementacion')) {
     }
 }
 
+if (! function_exists('tenantParteDiarioImplementacion')) {
+    /**
+     * Modelo de PDF del Parte diario del preceptor: `estandar` | `sanfranciscoasis`.
+     * Config: `tenant.parte_diario.implementacion`.
+     */
+    function tenantParteDiarioImplementacion(): string
+    {
+        $raw = strtolower(trim((string) config('tenant.parte_diario.implementacion', 'estandar')));
+
+        return match ($raw) {
+            'sanfranciscoasis' => 'sanfranciscoasis',
+            default => 'estandar',
+        };
+    }
+}
+
 if (! function_exists('tenantTeaRegistroImplementacion')) {
     /**
      * Implementación TCPDF de impresos TEA del tenant (`montecristo` o `caixalsf` por defecto).

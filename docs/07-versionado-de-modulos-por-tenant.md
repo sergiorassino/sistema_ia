@@ -100,6 +100,22 @@ return [
 
 Consumir con `tenantRegistroAsistenciaImplementacion()`. Detalle: [modulos/registro-asistencia.md](modulos/registro-asistencia.md).
 
+Parte diario del preceptor — modelo de PDF:
+
+- Default: **`estandar`** (DomPDF A4 / media hoja).
+- Alternativa **`sanfranciscoasis`**: TCPDF Legal con listado de regulares y firmas por hora.
+
+```php
+// config/tenants/sanfranciscoasis.php
+return [
+    'parte_diario' => [
+        'implementacion' => 'sanfranciscoasis',
+    ],
+];
+```
+
+Consumir con `tenantParteDiarioImplementacion()`. Detalle: [modulos/parte-diario-preceptor.md](modulos/parte-diario-preceptor.md).
+
 Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
 
 ```php

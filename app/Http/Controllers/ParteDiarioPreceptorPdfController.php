@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Curso;
 use App\Support\HorariosProfesores;
 use App\Support\Listados\ListadoCursoExportParams;
+use App\Support\ParteDiario\ParteDiarioSanfranciscoasisDatos;
+use App\Support\ParteDiario\ParteDiarioSanfranciscoasisTcpdf;
 use App\Support\PermisosIaCatalog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -77,8 +79,45 @@ class ParteDiarioPreceptorPdfController extends Controller
         if ($fechaReferencia === null) {
             $fechaReferencia = Carbon::now()->startOfDay();
         }
-        $fechaTexto = $fechaReferencia->format('d/m/Y');
 
+        $turnoElegido = (int) $request->query('turnoElegido', 0);
+        $turnoElegido = $turnoElegido > 0 ? $turnoElegido : null;
+
+        if (tenantParteDiarioImplementacion() === 'sanfranciscoasis') {
+            return $this->pdfSanfranciscoasis($ordenados, $fechaReferencia, $turnoElegido);
+        }
+
+        return $this->pdfEstandar($ordenados, $fechaReferencia, $turnoElegido);
+    }
+
+    /**
+     * @param  list<Curso>  $ordenados
+     */
+    private function pdfSanfranciscoasis(array $ordenados, Carbon $fechaReferencia, ?int $turnoElegido)
+    {
+        $paginas = ParteDiarioSanfranciscoasisDatos::paginas($ordenados, $fechaReferencia, $turnoElegido);
+        if ($paginas === []) {
+            abort(404);
+        }
+
+        $nombreDia = HorariosProfesores::DIAS[(int) $fechaReferencia->dayOfWeekIso] ?? '';
+        if (count($paginas) === 1) {
+            $slug = Str::slug('parte-diario-'.$paginas[0]['cursoLabel'].'-'.$nombreDia, '_') ?: 'parte_diario_preceptor';
+        } else {
+            $slug = Str::slug('partes-diarios-'.count($paginas).'-cursos-'.$fechaReferencia->format('Y-m-d'), '_') ?: 'partes_diarios_preceptor';
+        }
+
+        $pdf = ParteDiarioSanfranciscoasisTcpdf::generar($paginas, schoolPdfHeaderData());
+
+        return ParteDiarioSanfranciscoasisTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+    }
+
+    /**
+     * @param  list<Curso>  $ordenados
+     */
+    private function pdfEstandar(array $ordenados, Carbon $fechaReferencia, ?int $turnoElegido)
+    {
+        $fechaTexto = $fechaReferencia->format('d/m/Y');
         $dia = (int) $fechaReferencia->dayOfWeekIso;
         if ($dia < 1 || $dia > 7) {
             $dia = 1;
@@ -86,14 +125,13 @@ class ParteDiarioPreceptorPdfController extends Controller
         $nombreDia = HorariosProfesores::DIAS[$dia] ?? '';
         $lineaDia = $nombreDia !== '' ? 'Día: '.$nombreDia : '';
 
-        $turnoElegido = (int) $request->query('turnoElegido', 0);
         $unSoloCurso = count($ordenados) === 1;
 
         $paginas = [];
         foreach ($ordenados as $curso) {
             $cursoId = (int) $curso->Id;
             $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
-            if ($unSoloCurso && $turnoElegido > 0 && in_array($turnoElegido, $turnos, true)) {
+            if ($unSoloCurso && $turnoElegido !== null && $turnoElegido > 0 && in_array($turnoElegido, $turnos, true)) {
                 $idTurnoClase = $turnoElegido;
             } else {
                 $idTurnoClase = (int) ($turnos[0] ?? 1);

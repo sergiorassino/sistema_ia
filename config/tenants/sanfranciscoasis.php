@@ -80,4 +80,8 @@ return [
             ],
         ],
     ],
+
+    'parte_diario' => [
+        'implementacion' => 'sanfranciscoasis',
+    ],
 ];
