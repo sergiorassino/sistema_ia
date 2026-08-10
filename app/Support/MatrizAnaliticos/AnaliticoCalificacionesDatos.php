@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\DB;
 final class AnaliticoCalificacionesDatos
 {
     /**
+     * Etiqueta en `condiciones.condicion` de matrículas cuyas materias
+     * no deben figurar en el PDF del analítico / pase (sí en el form de carga).
+     */
+    public const CONDICION_DESCARTADA_PARA_PASE = 'Descartado para el Pase';
+
+    /**
      * @param  array<int, string>  $cursosTitulos  clave = cursos.c, valor = título del bloque
      * @return list<array{titulo: string, filas: list<array{
      *     materia: string,
@@ -106,6 +112,10 @@ final class AnaliticoCalificacionesDatos
      * Renglones de un año pedagógico (`cursos.c`): materias de las matrículas históricas
      * de ese año, con calificación si hay fila en `calificaciones`.
      *
+     * Omite matrículas cuya condición (`condiciones.condicion`) es
+     * {@see self::CONDICION_DESCARTADA_PARA_PASE} — solo para el impreso PDF;
+     * el form de carga (`LibroMatrizAnalitico::lineasEdicion`) no usa este método.
+     *
      * @param  array<int, string>  $nombresMaterias
      * @return list<array{
      *     materia: string,
@@ -127,10 +137,15 @@ final class AnaliticoCalificacionesDatos
         $matriculas = DB::table('matricula as m')
             ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
             ->join('terlec as t', 't.id', '=', 'm.idTerlec')
+            ->leftJoin('condiciones as co', 'co.id', '=', 'm.idCondiciones')
             ->where('m.idLegajos', $idLegajos)
             ->where('m.idNivel', $idNivel)
             ->where('cu.c', $c)
             ->where('cu.idNivel', $idNivel)
+            ->where(function ($q) {
+                $q->whereNull('co.condicion')
+                    ->orWhereRaw('TRIM(co.condicion) <> ?', [self::CONDICION_DESCARTADA_PARA_PASE]);
+            })
             ->orderBy('t.ano')
             ->orderBy('m.id')
             ->get([

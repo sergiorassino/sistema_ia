@@ -8,8 +8,8 @@ namespace App\Support\Cuotas\Siro\Descarga;
 final class SiroDescargaRendicionResumen
 {
     /**
-     * @param  list<string>  $advertencias
-     * @param  list<string>  $errores
+     * @param  list<array{linea: ?int, mensaje: string}>  $advertencias
+     * @param  list<array{linea: ?int, mensaje: string}>  $errores
      * @param  list<array{linea: int, canal: string, idFacturaBuscado: string, modalidadIdentificacion: string, estado: string, detalle: ?string}>  $registrosArchivo
      */
     public function __construct(
@@ -33,18 +33,14 @@ final class SiroDescargaRendicionResumen
         $this->registrosArchivo[] = $registro;
     }
 
-    public function agregarAdvertencia(string $mensaje): void
+    public function agregarAdvertencia(string $mensaje, ?int $linea = null): void
     {
-        if ($mensaje !== '' && ! in_array($mensaje, $this->advertencias, true)) {
-            $this->advertencias[] = $mensaje;
-        }
+        $this->agregarProblema($this->advertencias, $mensaje, $linea);
     }
 
-    public function agregarError(string $mensaje): void
+    public function agregarError(string $mensaje, ?int $linea = null): void
     {
-        if ($mensaje !== '' && ! in_array($mensaje, $this->errores, true)) {
-            $this->errores[] = $mensaje;
-        }
+        $this->agregarProblema($this->errores, $mensaje, $linea);
     }
 
     public function debeMostrarModal(string $contexto = ''): bool
@@ -92,7 +88,7 @@ final class SiroDescargaRendicionResumen
     }
 
     /**
-     * @return list<string>
+     * @return list<array{linea: ?int, mensaje: string}>
      */
     public function lineasProblemas(): array
     {
@@ -104,7 +100,7 @@ final class SiroDescargaRendicionResumen
      *     titulo: string,
      *     contexto: string,
      *     encabezado: list<string>,
-     *     problemas: list<string>,
+     *     problemas: list<array{linea: ?int, mensaje: string}>,
      *     registrosArchivo: list<array{linea: int, canal: string, idFacturaBuscado: string, estado: string, detalle: ?string}>
      * }
      */
@@ -131,10 +127,10 @@ final class SiroDescargaRendicionResumen
         $lineas = $this->lineasEncabezado();
 
         foreach (array_slice($this->advertencias, 0, 8) as $adv) {
-            $lineas[] = '• '.$adv;
+            $lineas[] = '• '.$this->textoProblema($adv);
         }
         foreach (array_slice($this->errores, 0, 5) as $err) {
-            $lineas[] = '• '.$err;
+            $lineas[] = '• '.$this->textoProblema($err);
         }
 
         if (count($this->advertencias) > 8) {
@@ -142,5 +138,40 @@ final class SiroDescargaRendicionResumen
         }
 
         return $lineas !== [] ? implode("\n", $lineas) : 'Operación finalizada.';
+    }
+
+    /**
+     * @param  list<array{linea: ?int, mensaje: string}>  $destino
+     */
+    private function agregarProblema(array &$destino, string $mensaje, ?int $linea): void
+    {
+        $mensaje = trim($mensaje);
+        if ($mensaje === '') {
+            return;
+        }
+
+        foreach ($destino as $existente) {
+            if ($existente['mensaje'] === $mensaje && $existente['linea'] === $linea) {
+                return;
+            }
+        }
+
+        $destino[] = [
+            'linea' => $linea,
+            'mensaje' => $mensaje,
+        ];
+    }
+
+    /**
+     * @param  array{linea: ?int, mensaje: string}  $problema
+     */
+    private function textoProblema(array $problema): string
+    {
+        $linea = $problema['linea'] ?? null;
+        if ($linea !== null) {
+            return 'Registro '.$linea.': '.$problema['mensaje'];
+        }
+
+        return $problema['mensaje'];
     }
 }

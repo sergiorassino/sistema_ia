@@ -45,12 +45,16 @@ final class SiroDescargaRendicionArchivo
                     continue;
                 }
 
+                $nroRegistro = $indice + 1;
                 $linea = SiroDescargaRendicionLinea::parsear($lineaCruda);
                 if ($linea === null) {
                     $resumen->omitidos++;
-                    $resumen->agregarAdvertencia('Línea '.($indice + 1).': formato inválido (menos de '.SiroDescargaRendicionLinea::LARGO_MINIMO.' caracteres).');
+                    $resumen->agregarAdvertencia(
+                        'Formato inválido (menos de '.SiroDescargaRendicionLinea::LARGO_MINIMO.' caracteres).',
+                        $nroRegistro,
+                    );
                     $resumen->agregarRegistroArchivo([
-                        'linea' => $indice + 1,
+                        'linea' => $nroRegistro,
                         'canal' => '—',
                         'idFacturaBuscado' => '—',
                         'modalidadIdentificacion' => '—',
@@ -77,9 +81,9 @@ final class SiroDescargaRendicionArchivo
                         (string) ($linea['textoTrasCanal'] ?? ''),
                     );
                     $resumen->rechazos++;
-                    $resumen->agregarAdvertencia('Línea '.($indice + 1).': '.$detalleRechazo);
+                    $resumen->agregarAdvertencia($detalleRechazo, $nroRegistro);
                     $resumen->agregarRegistroArchivo([
-                        'linea' => $indice + 1,
+                        'linea' => $nroRegistro,
                         'canal' => $canalEtiqueta,
                         'idFacturaBuscado' => $idFacturaBuscado,
                         'modalidadIdentificacion' => $modalidadIdentificacion,
@@ -93,9 +97,9 @@ final class SiroDescargaRendicionArchivo
                 $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
                 if ($motivoDuplicadoPlanilla !== null) {
                     $resumen->omitidos++;
-                    $resumen->agregarAdvertencia($motivoDuplicadoPlanilla);
+                    $resumen->agregarAdvertencia($motivoDuplicadoPlanilla, $nroRegistro);
                     $resumen->agregarRegistroArchivo([
-                        'linea' => $indice + 1,
+                        'linea' => $nroRegistro,
                         'canal' => $canalEtiqueta,
                         'idFacturaBuscado' => $idFacturaBuscado,
                         'modalidadIdentificacion' => $modalidadIdentificacion,
@@ -110,9 +114,9 @@ final class SiroDescargaRendicionArchivo
                 if ($idPago !== '' && $idPago !== '0000000000') {
                     if (isset($idsPagoVistos[$idPago])) {
                         $resumen->omitidos++;
-                        $resumen->agregarAdvertencia('Id de pago SIRO duplicado en el archivo: '.$idPago.'.');
+                        $resumen->agregarAdvertencia('Id de pago SIRO duplicado en el archivo: '.$idPago.'.', $nroRegistro);
                         $resumen->agregarRegistroArchivo([
-                            'linea' => $indice + 1,
+                            'linea' => $nroRegistro,
                             'canal' => $canalEtiqueta,
                             'idFacturaBuscado' => $idFacturaBuscado,
                             'modalidadIdentificacion' => $modalidadIdentificacion,
@@ -130,9 +134,12 @@ final class SiroDescargaRendicionArchivo
                         ->exists();
                     if ($yaExiste) {
                         $resumen->omitidos++;
-                        $resumen->agregarAdvertencia('El pago SIRO '.$idPago.' ya fue impactado anteriormente.');
+                        $resumen->agregarAdvertencia(
+                            'El pago SIRO '.$idPago.' ya fue impactado anteriormente.',
+                            $nroRegistro,
+                        );
                         $resumen->agregarRegistroArchivo([
-                            'linea' => $indice + 1,
+                            'linea' => $nroRegistro,
                             'canal' => $canalEtiqueta,
                             'idFacturaBuscado' => $idFacturaBuscado,
                             'modalidadIdentificacion' => $modalidadIdentificacion,
@@ -149,10 +156,10 @@ final class SiroDescargaRendicionArchivo
                 if ($cuotaGenerada === null) {
                     $resumen->omitidos++;
                     foreach ($match['advertencias'] as $adv) {
-                        $resumen->agregarAdvertencia('Línea '.($indice + 1).': '.$adv);
+                        $resumen->agregarAdvertencia($adv, $nroRegistro);
                     }
                     $resumen->agregarRegistroArchivo([
-                        'linea' => $indice + 1,
+                        'linea' => $nroRegistro,
                         'canal' => $canalEtiqueta,
                         'idFacturaBuscado' => $idFacturaBuscado,
                         'modalidadIdentificacion' => $match['modalidadIdentificacion'] !== ''
@@ -216,7 +223,7 @@ final class SiroDescargaRendicionArchivo
                 $resumen->procesados++;
                 $resumen->montoPagado = round($resumen->montoPagado + $montos['pagado'], 2);
                 $resumen->agregarRegistroArchivo([
-                    'linea' => $indice + 1,
+                    'linea' => $nroRegistro,
                     'canal' => $canalEtiqueta,
                     'idFacturaBuscado' => $idFacturaBuscado,
                     'modalidadIdentificacion' => $match['modalidadIdentificacion'] !== ''
@@ -227,7 +234,7 @@ final class SiroDescargaRendicionArchivo
                 ]);
 
                 foreach ($advertencias as $adv) {
-                    $resumen->agregarAdvertencia($adv);
+                    $resumen->agregarAdvertencia($adv, $nroRegistro);
                 }
             }
 

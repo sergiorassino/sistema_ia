@@ -10,7 +10,7 @@ class SiroDescargaRendicionResumenTest extends TestCase
     public function test_debe_mostrar_modal_con_advertencias(): void
     {
         $resumen = new SiroDescargaRendicionResumen(procesados: 3, omitidos: 1);
-        $resumen->agregarAdvertencia('Línea 2: cupón no encontrado.');
+        $resumen->agregarAdvertencia('Cupón no encontrado.', 2);
 
         $this->assertTrue($resumen->debeMostrarModal());
     }
@@ -30,21 +30,23 @@ class SiroDescargaRendicionResumenTest extends TestCase
         $this->assertFalse($resumen->debeMostrarModal('impacto'));
     }
 
-    public function test_para_modal_incluye_todas_las_lineas_en_orden(): void
+    public function test_para_modal_incluye_problemas_con_numero_de_registro(): void
     {
         $resumen = new SiroDescargaRendicionResumen(procesados: 1, omitidos: 2);
         $resumen->agregarError('La planilla no tiene pagos descargados para impactar.');
-        $resumen->agregarAdvertencia('Línea 4: formato inválido.');
-        $resumen->agregarAdvertencia('Línea 9: cupón no encontrado.');
+        $resumen->agregarAdvertencia('Formato inválido.', 4);
+        $resumen->agregarAdvertencia('Cupón no encontrado.', 9);
+        $resumen->agregarAdvertencia('Importes NO coinciden.', 9);
 
         $modal = $resumen->paraModal('Resultado', 'descarga');
 
         $this->assertSame('Resultado', $modal['titulo']);
         $this->assertSame('descarga', $modal['contexto']);
         $this->assertSame([
-            'La planilla no tiene pagos descargados para impactar.',
-            'Línea 4: formato inválido.',
-            'Línea 9: cupón no encontrado.',
+            ['linea' => null, 'mensaje' => 'La planilla no tiene pagos descargados para impactar.'],
+            ['linea' => 4, 'mensaje' => 'Formato inválido.'],
+            ['linea' => 9, 'mensaje' => 'Cupón no encontrado.'],
+            ['linea' => 9, 'mensaje' => 'Importes NO coinciden.'],
         ], $modal['problemas']);
     }
 
@@ -65,5 +67,13 @@ class SiroDescargaRendicionResumenTest extends TestCase
             'Rechazos SIRO: 2.',
         ], $resumen->lineasEncabezado());
         $this->assertTrue($resumen->debeMostrarModal());
+    }
+
+    public function test_mensaje_swal_incluye_numero_de_registro(): void
+    {
+        $resumen = new SiroDescargaRendicionResumen(procesados: 1, omitidos: 1);
+        $resumen->agregarAdvertencia('Cupón no encontrado.', 57);
+
+        $this->assertStringContainsString('• Registro 57: Cupón no encontrado.', $resumen->mensajeSwal());
     }
 }

@@ -58,10 +58,7 @@ final class AnaliticoFrenteDatos
             return null;
         }
 
-        $analitico = AnaliticoDato::query()
-            ->where('idLegajos', $idLegajos)
-            ->orderByDesc('id')
-            ->first(['serie', 'numero', 'analLibroFolio']);
+        $analitico = AnaliticoDato::paraLegajo($idLegajos);
 
         $ento = Ento::query()
             ->where('idNivel', $idNivel)

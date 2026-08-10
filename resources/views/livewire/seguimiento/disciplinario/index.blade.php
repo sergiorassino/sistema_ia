@@ -205,5 +205,6 @@
 <script>
     $wire.on('se-swal-exito', (e) => { window.seSwalExito?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
     $wire.on('se-swal-error', (e) => { window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+    $wire.on('se-swal-aviso', (e) => { window.seSwalAviso?.(e.mensaje ?? e[0]?.mensaje ?? '', e.titulo ?? e[0]?.titulo ?? 'Atención'); });
 </script>
 @endscript

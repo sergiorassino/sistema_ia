@@ -46,13 +46,27 @@ class SiroDescargaRendicionMatchUploadCercanoTest extends TestCase
     public function test_importe_coincide_con_vencimientos_o_saldo(): void
     {
         $cupon = $this->cupon(SiroIdFactura::generar(10, 86, 1), 0.0, 1);
-        $cupon->importe2v = 1500.55;
+        $cupon->importe2venc = 1500.55;
 
         $this->assertTrue(
             SiroDescargaRendicionMatchUploadCercano::importeCoincideConCupon(1500.55, $cupon),
         );
         $this->assertFalse(
             SiroDescargaRendicionMatchUploadCercano::importeCoincideConCupon(1500.00, $cupon),
+        );
+    }
+
+    public function test_importe_con_bonificacion_usa_importe1venc_no_saldo(): void
+    {
+        $cupon = $this->cupon(SiroIdFactura::generar(10, 86, 1), 111000.0, 1);
+        $cupon->importe1venc = 99900.0;
+
+        $this->assertTrue(
+            SiroDescargaRendicionMatchUploadCercano::importeCoincideConCupon(99900.0, $cupon),
+        );
+        $this->assertSame(
+            99900.0,
+            SiroDescargaRendicionMatchUploadCercano::importeReferenciaCupon($cupon, 99900.0),
         );
     }
 
@@ -69,9 +83,9 @@ class SiroDescargaRendicionMatchUploadCercanoTest extends TestCase
         $cupon = new CuponAPagar([
             'id_factura' => $idFactura,
             'saldo_pagar' => $saldo,
-            'importe1v' => $saldo,
-            'importe2v' => 0,
-            'importe3v' => 0,
+            'importe1venc' => $saldo,
+            'importe2venc' => 0,
+            'importe3venc' => 0,
             'ult_upload' => (int) substr($idFactura, 15, 2),
         ]);
         $cupon->id = $id;

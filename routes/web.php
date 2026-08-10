@@ -124,6 +124,7 @@ use App\Http\Controllers\Cuotas\ComprobantePagoImputacionPdfController;
 use App\Http\Controllers\Cuotas\LibroArancelesPdfController;
 use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
 use App\Http\Controllers\Cuotas\SiroCuponesVencidosArchivoController;
+use App\Http\Controllers\Cuotas\SiroDescargaRendicionPlanillaPdfController;
 use App\Http\Controllers\Cuotas\SiroSubidaBaseDeudaArchivoController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
@@ -674,6 +675,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/siro-descarga', \App\Livewire\Cuotas\SiroDescargaRendicionPlanillasIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.siro-descarga');
+        Route::get('/siro-descarga/pdf/{ref}', SiroDescargaRendicionPlanillaPdfController::class)
+            ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('cuotas.siro-descarga.pdf');
         Route::get('/siro-descarga/{nroPlanilla}', \App\Livewire\Cuotas\SiroDescargaRendicionDetalle::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->where('nroPlanilla', '[0-9]+')

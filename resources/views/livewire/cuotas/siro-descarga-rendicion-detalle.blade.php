@@ -58,6 +58,27 @@
                     class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">
                 Impactar los pagos en las cuotas de los alumnos
             </button>
+            @if ($rendiciones->isNotEmpty())
+                <a href="{{ $pdfUrl }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:border-primary-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimir PDF
+                </a>
+            @else
+                <span class="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 opacity-50"
+                      title="No hay pagos para imprimir">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimir PDF
+                </span>
+            @endif
             <button type="button"
                     x-on:click="window.seSwalConfirmar('¿Eliminar todos los pagos descargados de esta planilla?', 'Borrar todos', { icon: 'warning' }).then(ok => ok && $wire.borrarTodos())"
                     wire:loading.attr="disabled"
@@ -234,11 +255,22 @@
                                 <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
                                     Errores y advertencias ({{ count($modalResumenProblemas) }})
                                 </p>
-                                <ol class="list-decimal space-y-2 border border-amber-200/80 bg-amber-50/60 px-4 py-3 pl-8 text-sm leading-relaxed text-neutral-800">
+                                <ul class="space-y-2 border border-amber-200/80 bg-amber-50/60 px-4 py-3 text-sm leading-relaxed text-neutral-800">
                                     @foreach ($modalResumenProblemas as $problema)
-                                        <li>{{ $problema }}</li>
+                                        @php
+                                            $mensajeProblema = is_array($problema)
+                                                ? (string) ($problema['mensaje'] ?? '')
+                                                : (string) $problema;
+                                            $nroProblema = is_array($problema) && isset($problema['linea']) && $problema['linea'] !== null
+                                                ? (int) $problema['linea']
+                                                : $loop->iteration;
+                                        @endphp
+                                        <li class="flex gap-2">
+                                            <span class="shrink-0 tabular-nums font-semibold text-amber-900">{{ $nroProblema }}.</span>
+                                            <span>{{ $mensajeProblema }}</span>
+                                        </li>
                                     @endforeach
-                                </ol>
+                                </ul>
                             </div>
                         @endif
                     </div>
@@ -278,7 +310,15 @@
                 .replace(/"/g, '&quot;');
 
             const encabezadoHtml = (encabezado ?? []).map((linea) => `<li>${esc(linea)}</li>`).join('');
-            const problemasHtml = (problemas ?? []).map((linea) => `<li>${esc(linea)}</li>`).join('');
+            const problemasHtml = (problemas ?? []).map((problema, idx) => {
+                const mensaje = (problema && typeof problema === 'object')
+                    ? (problema.mensaje ?? '')
+                    : problema;
+                const nro = (problema && typeof problema === 'object' && problema.linea != null)
+                    ? problema.linea
+                    : (idx + 1);
+                return `<li><strong>${esc(nro)}.</strong> ${esc(mensaje)}</li>`;
+            }).join('');
             const registrosHtml = (registros ?? []).map((reg) => {
                 const estado = reg.estado === 'encontrado' ? 'Encontrado'
                     : reg.estado === 'no_encontrado' ? 'No encontrado'
@@ -320,7 +360,7 @@
     <p class="meta">${esc(operacion)} · Planilla Nº ${esc(nroPlanilla)} · Archivo: ${esc(nombreArchivo)} · ${esc(fecha)}</p>
     ${encabezadoHtml ? `<h2>Resumen</h2><ul>${encabezadoHtml}</ul>` : ''}
     ${registrosHtml ? `<h2>Registros del archivo</h2><table><thead><tr><th>#</th><th>Canal</th><th>id_factura buscado</th><th>Modalidad</th><th>Resultado</th><th>Detalle</th></tr></thead><tbody>${registrosHtml}</tbody></table>` : ''}
-    ${problemasHtml ? `<h2>Errores y advertencias</h2><ol>${problemasHtml}</ol>` : ''}
+    ${problemasHtml ? `<h2>Errores y advertencias</h2><ul>${problemasHtml}</ul>` : ''}
 </body>
 </html>`;
 
