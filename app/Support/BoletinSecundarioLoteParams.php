@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 
 /**
@@ -45,12 +46,17 @@ final class BoletinSecundarioLoteParams
             return [];
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         /** @var Collection<int, Matricula> $matriculas */
         $matriculas = Matricula::query()
             ->with('legajo')
             ->where('idCursos', $cursoId)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->whereIn('id', $parsed->all())
             ->get();
 

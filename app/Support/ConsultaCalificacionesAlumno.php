@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Matricula;
 use App\Support\Examenes\TercerMateriaGestor;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\SolicitudEvaluacion\SolicitudEvaluacionConsulta;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -77,12 +78,17 @@ final class ConsultaCalificacionesAlumno
             return self::respuestaError('Solicitud inválida.', $ctx->terlecAno());
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         /** @var Matricula|null $matricula */
         $matricula = Matricula::query()
             ->with(['legajo', 'curso.curplan', 'terlec'])
             ->where('id', $idMatricula)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->first();
 
         if (! $matricula) {

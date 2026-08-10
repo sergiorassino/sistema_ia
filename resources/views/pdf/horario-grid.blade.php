@@ -21,6 +21,12 @@
             margin: 0 0 2px 0;
             font-size: 11pt;
         }
+        .titulo .horas-total {
+            font-weight: normal;
+            font-size: 8pt;
+            text-transform: none;
+            margin-left: 6px;
+        }
         .subtitulo { text-align: center; margin: 0 0 2px 0; font-size: 8pt; }
         .turno { text-align: center; margin: 0 0 5px 0; font-size: 9pt; font-weight: 700; }
         table.horario {
@@ -62,7 +68,12 @@
     @endphp
     <div class="pagina">
         @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
-        <p class="titulo">{{ $pagina['titulo'] ?? $titulo }}</p>
+        <p class="titulo">
+            {{ $pagina['titulo'] ?? $titulo }}
+            @if (isset($pagina['horasTotal']))
+                <span class="horas-total">Horas total: {{ (int) $pagina['horasTotal'] }}</span>
+            @endif
+        </p>
         <p class="subtitulo">{{ $pagina['subtitulo'] ?? $subtitulo }}</p>
         <p class="turno">Turno {{ $pagina['tituloTurno'] ?? '' }}</p>
 

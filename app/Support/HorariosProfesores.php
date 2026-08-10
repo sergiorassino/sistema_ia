@@ -1335,6 +1335,28 @@ final class HorariosProfesores
     }
 
     /**
+     * Total de horas cátedra cargadas del docente en `horarios26`
+     * (cada fila = 1 módulo), acotado a materias con asignación PPC del ciclo activo.
+     */
+    public static function contarHorasCatedraProfesor(int $idProfesor): int
+    {
+        if ($idProfesor <= 0 || ! Schema::hasTable('horarios26')) {
+            return 0;
+        }
+
+        $idsMat = self::idsMateriasPermitidasImpresionProfesor($idProfesor);
+        if ($idsMat === []) {
+            return 0;
+        }
+
+        $q = DB::table('horarios26 as h')
+            ->where('h.idProfesores', $idProfesor);
+        self::aplicarFiltroHorarios26ProfesorSoloMateriasAsignadas($q, $idsMat);
+
+        return (int) $q->count();
+    }
+
+    /**
      * Módulos/obligaciones del docente en un día de semana (1 = lunes … 7 = domingo),
      * según horarios26 y asignaciones PPC del ciclo activo.
      */
