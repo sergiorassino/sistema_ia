@@ -156,11 +156,21 @@ class DisciplinarioIndex extends Component
             return;
         }
 
-        $mensajeExito = ($resultado['email_incluido'] ?? false)
-            ? 'Notificación enviada a la familia (incluye correo).'
-            : 'Notificación enviada a la familia (cuaderno / push). Para incluir correo, activá «Refuerzo por correo» en el tipo de sanción.';
+        if ($resultado['email_incluido'] ?? false) {
+            $this->dispatch(
+                'se-swal-exito',
+                mensaje: 'Notificación enviada a la familia e incluye correo de refuerzo.',
+                titulo: 'Correo enviado'
+            );
 
-        $this->dispatch('se-swal-exito', mensaje: $mensajeExito);
+            return;
+        }
+
+        $this->dispatch(
+            'se-swal-exito',
+            mensaje: 'Notificación enviada a la familia (cuaderno / push). Para incluir correo, activá «Refuerzo por correo» en el tipo de sanción.',
+            titulo: 'Notificación enviada'
+        );
     }
 
     public function render()
