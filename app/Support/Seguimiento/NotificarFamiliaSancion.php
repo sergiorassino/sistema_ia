@@ -4,11 +4,13 @@ namespace App\Support\Seguimiento;
 
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
+use App\Models\ComHilo;
+use App\Models\ComMensajeDestinatario;
+use App\Models\ComMensajeEnvio;
 use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Models\Sancion;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
-use App\Support\Seguimiento\SancionActaHtmlSanitizer;
 
 /**
  * Envía un comunicado institucional a la familia del alumno
@@ -25,6 +27,10 @@ final class NotificarFamiliaSancion
      *     ok: bool,
      *     medios: list<string>,
      *     email_incluido: bool,
+     *     email_estado: ?string,
+     *     email_motivo: ?string,
+     *     email_mailer: ?string,
+     *     email_smtp_user: ?string,
      *     refuerzo_mail_pedido: bool,
      *     motivo_fallo: ?string
      * }
@@ -35,6 +41,10 @@ final class NotificarFamiliaSancion
             'ok'                   => false,
             'medios'               => [],
             'email_incluido'       => false,
+            'email_estado'         => null,
+            'email_motivo'         => null,
+            'email_mailer'         => null,
+            'email_smtp_user'      => null,
             'refuerzo_mail_pedido' => false,
             'motivo_fallo'         => $motivo,
         ];
@@ -154,7 +164,7 @@ final class NotificarFamiliaSancion
 
         $asunto = 'Sanción disciplinaria — '.$alumno;
 
-        ComunicacionesRepository::crearHiloConMensaje([
+        $hilo = ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $asunto,
             'contenido'                => implode("\n", $lineas),
             'scope'                    => 'alumno',
@@ -174,12 +184,56 @@ final class NotificarFamiliaSancion
             'familia_puede_responder'  => false,
         ], $mediosEfectivos);
 
+        $emailIncluido = in_array('email', $mediosEfectivos, true);
+        $resumenEmail = $emailIncluido
+            ? self::resumenEnvioEmail($hilo)
+            : ['estado' => null, 'motivo' => null];
+
         return [
             'ok'                   => true,
             'medios'               => $mediosEfectivos,
-            'email_incluido'       => in_array('email', $mediosEfectivos, true),
+            'email_incluido'       => $emailIncluido,
+            'email_estado'         => $resumenEmail['estado'],
+            'email_motivo'         => $resumenEmail['motivo'],
+            'email_mailer'         => (string) config('mail.default'),
+            'email_smtp_user'      => trim((string) config('mail.mailers.smtp.username', '')),
             'refuerzo_mail_pedido' => $refuerzoMailPedido,
             'motivo_fallo'         => null,
+        ];
+    }
+
+    /**
+     * @return array{estado: ?string, motivo: ?string}
+     */
+    private static function resumenEnvioEmail(ComHilo $hilo): array
+    {
+        $idMensaje = (int) ($hilo->cuerpo_inicial_id ?? 0);
+        if ($idMensaje < 1) {
+            return ['estado' => null, 'motivo' => 'Sin mensaje inicial del hilo.'];
+        }
+
+        $idsDest = ComMensajeDestinatario::query()
+            ->where('id_mensaje', $idMensaje)
+            ->pluck('id')
+            ->all();
+
+        if ($idsDest === []) {
+            return ['estado' => null, 'motivo' => 'Sin destinatarios del mensaje.'];
+        }
+
+        $envio = ComMensajeEnvio::query()
+            ->where('medio', 'email')
+            ->whereIn('id_mensaje_destinatario', $idsDest)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($envio === null) {
+            return ['estado' => null, 'motivo' => 'No se registró intento de correo.'];
+        }
+
+        return [
+            'estado' => (string) ($envio->estado ?? ''),
+            'motivo' => ($m = trim((string) ($envio->motivo ?? ''))) !== '' ? $m : null,
         ];
     }
 }
