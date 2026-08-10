@@ -17,6 +17,7 @@ class Sancion extends Model
         'fecha',
         'cantidad',
         'motivo',
+        'acta',
         'solipor',
         'publicada',
         'comunicadaPadres',

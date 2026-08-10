@@ -24,6 +24,11 @@
         .hr { border-top: 1px solid #111; margin: 16px 0; }
         .muted { color: #333; }
         .mt-3mm { margin-top: 3mm; }
+        .acta-pagina { page-break-before: always; }
+        .acta-titulo { font-weight: 700; font-size: 10.5pt; text-transform: uppercase; text-align: center; margin: 2px 0 10px 0; }
+        .acta-cuerpo { font-size: 10pt; line-height: 1.35; text-align: justify; }
+        .acta-cuerpo p { margin: 0 0 6px 0; }
+        .acta-cuerpo ul, .acta-cuerpo ol { margin: 0 0 6px 18px; padding: 0; }
     </style>
 </head>
 <body>
@@ -108,6 +113,16 @@
             </td>
         </tr>
     </table>
+
+    @if (! empty($actaHtml))
+        <div class="acta-pagina">
+            @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
+            <p class="acta-titulo">Acta</p>
+            <div class="acta-cuerpo">
+                {!! $actaHtml !!}
+            </div>
+        </div>
+    @endif
 </div>
 </body>
 </html>

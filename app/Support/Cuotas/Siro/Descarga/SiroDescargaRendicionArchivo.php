@@ -23,6 +23,8 @@ final class SiroDescargaRendicionArchivo
         $resumen = new SiroDescargaRendicionResumen;
         $lineas = preg_split('/\R/', $contenido) ?: [];
         $idsPagoVistos = [];
+        /** @var array<int, int> idCuotasgeneradas => nro de registro en el archivo */
+        $cuotasVistasEnArchivo = [];
         $fechasAcred = [];
         $nroPlanilla = (int) $planilla->nroPlanilla;
         $nombreArchivo = self::resolverNombreArchivo($planilla, $nombreArchivoOrigen);
@@ -36,6 +38,7 @@ final class SiroDescargaRendicionArchivo
             $nombreArchivo,
             &$resumen,
             &$idsPagoVistos,
+            &$cuotasVistasEnArchivo,
             &$fechasAcred,
             &$indicePlanilla,
         ): void {
@@ -110,44 +113,19 @@ final class SiroDescargaRendicionArchivo
                     continue;
                 }
 
+                $avisosPagoRepetido = [];
                 $idPago = (string) ($linea['idPagoSiro'] ?? '');
                 if ($idPago !== '' && $idPago !== '0000000000') {
                     if (isset($idsPagoVistos[$idPago])) {
-                        $resumen->omitidos++;
-                        $resumen->agregarAdvertencia('Id de pago SIRO duplicado en el archivo: '.$idPago.'.', $nroRegistro);
-                        $resumen->agregarRegistroArchivo([
-                            'linea' => $nroRegistro,
-                            'canal' => $canalEtiqueta,
-                            'idFacturaBuscado' => $idFacturaBuscado,
-                            'modalidadIdentificacion' => $modalidadIdentificacion,
-                            'estado' => 'omitido',
-                            'detalle' => 'Id de pago SIRO duplicado.',
-                        ]);
-
-                        continue;
+                        $avisosPagoRepetido[] = 'Id de pago SIRO duplicado en el archivo: '.$idPago.'; se registra igual (posible pago doble).';
+                    } else {
+                        $idsPagoVistos[$idPago] = true;
                     }
-                    $idsPagoVistos[$idPago] = true;
 
-                    $yaExiste = RendicionRoela::query()
-                        ->where('cadenaPago', 'like', '%'.$idPago.'%')
-                        ->where('impactado', 1)
-                        ->exists();
-                    if ($yaExiste) {
-                        $resumen->omitidos++;
-                        $resumen->agregarAdvertencia(
-                            'El pago SIRO '.$idPago.' ya fue impactado anteriormente.',
-                            $nroRegistro,
-                        );
-                        $resumen->agregarRegistroArchivo([
-                            'linea' => $nroRegistro,
-                            'canal' => $canalEtiqueta,
-                            'idFacturaBuscado' => $idFacturaBuscado,
-                            'modalidadIdentificacion' => $modalidadIdentificacion,
-                            'estado' => 'omitido',
-                            'detalle' => 'Pago ya impactado anteriormente.',
-                        ]);
-
-                        continue;
+                    $nroPlanillaPrevia = self::nroPlanillaImpactadoPorIdPagoSiro($idPago);
+                    if ($nroPlanillaPrevia !== null) {
+                        $avisosPagoRepetido[] = 'El pago SIRO '.$idPago.' ya fue impactado en la planilla '
+                            .$nroPlanillaPrevia.'; se registra igual (posible pago doble).';
                     }
                 }
 
@@ -157,6 +135,9 @@ final class SiroDescargaRendicionArchivo
                     $resumen->omitidos++;
                     foreach ($match['advertencias'] as $adv) {
                         $resumen->agregarAdvertencia($adv, $nroRegistro);
+                    }
+                    foreach ($avisosPagoRepetido as $aviso) {
+                        $resumen->agregarAdvertencia($aviso, $nroRegistro);
                     }
                     $resumen->agregarRegistroArchivo([
                         'linea' => $nroRegistro,
@@ -172,9 +153,18 @@ final class SiroDescargaRendicionArchivo
                     continue;
                 }
 
+                $idCuotaGen = (int) $cuotaGenerada->id;
+                if (isset($cuotasVistasEnArchivo[$idCuotaGen])) {
+                    $avisosPagoRepetido[] = 'La cuota ya tiene otro pago en este archivo (registro '
+                        .$cuotasVistasEnArchivo[$idCuotaGen].'); posible pago doble.';
+                }
+                $cuotasVistasEnArchivo[$idCuotaGen] = $nroRegistro;
+
                 $idEncontrado = (string) ($match['cupon']?->id_factura ?? '');
                 $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
-                if ($detalleMatch !== '') {
+                if ($avisosPagoRepetido !== []) {
+                    $detalleEncontrado = $avisosPagoRepetido[0];
+                } elseif ($detalleMatch !== '') {
                     $detalleEncontrado = $detalleMatch;
                 } elseif ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
                     $detalleEncontrado = 'Encontrado con id_factura '.$idEncontrado;
@@ -185,7 +175,7 @@ final class SiroDescargaRendicionArchivo
                 $cuotaGenerada->loadMissing(['cuota', 'legajo', 'curso', 'beca']);
 
                 $montos = SiroDescargaRendicionCalculo::calcular($linea, $cuotaGenerada, $match['cupon']);
-                $advertencias = array_merge($match['advertencias'], $montos['advertencias']);
+                $advertencias = array_merge($match['advertencias'], $montos['advertencias'], $avisosPagoRepetido);
 
                 $fechaPago = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaPago']);
                 $fechaAcred = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaAcreditacion']);
@@ -212,7 +202,7 @@ final class SiroDescargaRendicionArchivo
                     'nombreArchivo' => $nombreArchivo,
                     'cadenaPago' => (string) $linea['cadenaPago'],
                     'idCuotasbecas' => (int) ($cuotaGenerada->idCuotasbecas ?? 0),
-                    'idCuotasgeneradas' => (int) $cuotaGenerada->id,
+                    'idCuotasgeneradas' => $idCuotaGen,
                     'impactado' => 0,
                     'idCursos' => (int) ($cuotaGenerada->idCursos ?? 0),
                     'obs' => $obs,
@@ -318,6 +308,34 @@ final class SiroDescargaRendicionArchivo
         }
 
         return $indice;
+    }
+
+    /**
+     * Busca un id de pago SIRO ya impactado, anclado a las posiciones 227–236 de la cadena
+     * (no un LIKE libre que pueda coincidir con el código de barras).
+     */
+    public static function nroPlanillaImpactadoPorIdPagoSiro(string $idPago): ?int
+    {
+        $idPago = trim($idPago);
+        if ($idPago === '' || $idPago === '0000000000') {
+            return null;
+        }
+
+        $nro = RendicionRoela::query()
+            ->where('impactado', 1)
+            ->where('cadenaPago', 'like', self::patronLikeIdPagoSiro($idPago))
+            ->orderByDesc('id')
+            ->value('nroPlanilla');
+
+        return $nro !== null ? (int) $nro : null;
+    }
+
+    /**
+     * Patrón LIKE que exige el id de pago SIRO exactamente en la posición 227 (1-based).
+     */
+    public static function patronLikeIdPagoSiro(string $idPago): string
+    {
+        return str_repeat('_', 226).$idPago.'%';
     }
 
     /**

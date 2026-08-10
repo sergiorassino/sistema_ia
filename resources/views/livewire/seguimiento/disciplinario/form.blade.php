@@ -17,6 +17,16 @@
                 <p class="text-sm text-white/75">Los campos marcados con * son obligatorios</p>
             </div>
             <div class="flex shrink-0 flex-wrap gap-2">
+                @if ($this->id)
+                    <button type="button"
+                            x-on:click="seSwalConfirmar('¿Confirma borrar esta sanción? Esta acción no se puede deshacer.', 'Confirmar borrado').then(ok => ok && $wire.delete())"
+                            wire:loading.attr="disabled"
+                            wire:target="delete"
+                            class="inline-flex items-center justify-center rounded-xl border border-red-300/80 bg-red-500/90 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="delete">Borrar</span>
+                        <span wire:loading wire:target="delete">Borrando…</span>
+                    </button>
+                @endif
                 @if ($m)
                     <x-nav-contexto-estudiante
                         destino="seguimiento.disciplinario"
@@ -99,3 +109,9 @@
         </div>
     </div>
 </div>
+
+@script
+<script>
+    $wire.on('se-swal-error', (e) => { window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+</script>
+@endscript

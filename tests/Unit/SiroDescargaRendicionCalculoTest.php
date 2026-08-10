@@ -112,6 +112,33 @@ class SiroDescargaRendicionCalculoTest extends TestCase
         $this->assertSame(40000.0, $resultado['pagado']);
     }
 
+    public function test_cuota_ya_saldada_imputa_capital_completo_como_pago_doble(): void
+    {
+        $cuota = new CuotaGenerada([
+            'id' => 4,
+            'idCuotas' => 13,
+            'idCursos' => 23,
+            'faltapa' => 0.0,
+            'venc1' => '2026-06-30',
+        ]);
+
+        $linea = [
+            'importePagadoCentavos' => 10980000,
+            'fechaPago' => '20260806',
+        ];
+
+        $resultado = SiroDescargaRendicionCalculo::calcular($linea, $cuota, null);
+
+        $this->assertSame(109800.0, $resultado['importe']);
+        $this->assertSame(109800.0, $resultado['pagado']);
+        $this->assertSame(0.0, $resultado['interes']);
+        $this->assertSame(0.0, $resultado['bonificacion']);
+        $this->assertContains(
+            'La cuota ya estaba saldada al descargar; posible pago doble.',
+            $resultado['advertencias'],
+        );
+    }
+
     /**
      * @param  array<string, mixed>  $formula
      */

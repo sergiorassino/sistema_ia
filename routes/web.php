@@ -302,6 +302,7 @@ use App\Livewire\Parametrizacion\SolapaLegajoIndex;
 use App\Livewire\Parametrizacion\SolapaLegajoProfesorIndex;
 use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
+use App\Livewire\Seguimiento\Disciplinario\SancionActaForm;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
 use App\Livewire\Horarios\HorariosCargaIndex;
@@ -1345,6 +1346,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/seguimiento/disciplinario/{id}/editar', SancionForm::class)
             ->whereNumber('id')
             ->name('seguimiento.disciplinario.edit');
+
+        Route::get('/seguimiento/disciplinario/{id}/acta', SancionActaForm::class)
+            ->whereNumber('id')
+            ->name('seguimiento.disciplinario.acta');
 
         Route::get('/seguimiento/disciplinario/{id}/imprimir', SancionComunicadoPdfController::class)
             ->whereNumber('id')

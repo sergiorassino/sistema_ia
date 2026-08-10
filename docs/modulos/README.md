@@ -15,6 +15,7 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 | Registro de Asistencia | [registro-asistencia.md](registro-asistencia.md) |
 | Parte diario del preceptor | [parte-diario-preceptor.md](parte-diario-preceptor.md) |
 | Actualización de datos personales (familia) | [actualizacion-datos-personales.md](actualizacion-datos-personales.md) |
+| Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
 
 ## Plantilla
 
