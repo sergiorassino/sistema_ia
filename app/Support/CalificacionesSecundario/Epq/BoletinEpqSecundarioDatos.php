@@ -6,6 +6,7 @@ use App\Models\Matricula;
 use App\Models\Terlec;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use App\Support\ConsultaCalificacionesAlumno;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\SolicitudEvaluacion\SolicitudEvaluacionConsulta;
 use Illuminate\Support\Facades\DB;
 
@@ -28,12 +29,17 @@ final class BoletinEpqSecundarioDatos
             return ['ok' => false, 'error' => 'Solicitud inválida.'];
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         /** @var Matricula|null $matricula */
         $matricula = Matricula::query()
             ->with(['legajo', 'curso'])
             ->where('id', $idMatricula)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->first();
 
         if (! $matricula) {

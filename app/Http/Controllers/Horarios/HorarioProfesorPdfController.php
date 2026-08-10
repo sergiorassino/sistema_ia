@@ -74,6 +74,7 @@ class HorarioProfesorPdfController extends Controller
 
                 $nombre = trim(((string) $prof->apellido).', '.((string) $prof->nombre));
                 $tituloProf = 'Horario docente — '.$nombre;
+                $horasTotal = HorariosProfesores::contarHorasCatedraProfesor($profesorId);
                 $turnos = self::turnosParaProfesor($profesorId, $forzado, $activos);
 
                 foreach ($turnos as $idTurnoClase) {
@@ -81,6 +82,7 @@ class HorarioProfesorPdfController extends Controller
                         'titulo' => $tituloProf,
                         'subtitulo' => $subtitulo,
                         'tituloTurno' => HorariosProfesores::nombreTurnoClase($idTurnoClase),
+                        'horasTotal' => $horasTotal,
                         'grilla' => HorariosProfesores::grillaProfesorParaImpresion($profesorId, $idTurnoClase),
                     ];
                 }

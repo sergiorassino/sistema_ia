@@ -16,6 +16,9 @@ final class CertificadoEstudiosTramiteTcpdf extends TCPDF
 
     private const FUENTE = 'dejavusans';
 
+    /** Separación entre el último párrafo y el bloque de firmas (mm). */
+    private const ESPACIO_TEXTO_FIRMAS_MM = 30.0;
+
     /** @var array<string, mixed> */
     private array $datos;
 
@@ -45,6 +48,7 @@ final class CertificadoEstudiosTramiteTcpdf extends TCPDF
         $pdf->AddPage();
         $pdf->dibujarEncabezado();
         $pdf->dibujarCuerpo();
+        $pdf->dibujarFirmas();
 
         return $pdf;
     }
@@ -128,6 +132,25 @@ final class CertificadoEstudiosTramiteTcpdf extends TCPDF
         $this->SetFont(self::FUENTE, 'B', 7);
         $nota = 'NOTA: LA PRESENTE CONSTANCIA TENDRÁ UNA VIGENCIA DE 60 (SESENTA) DÍAS CORRIDOS CONTADOS A PARTIR DE LA FECHA DE EMISIÓN.';
         $this->writeHTMLCell(self::ANCHO_UTIL, 0, self::MARGEN_IZQ, $this->GetY(), $nota, 0, 1, false, true, 'J', true);
+    }
+
+    private function dibujarFirmas(): void
+    {
+        $y = $this->GetY() + self::ESPACIO_TEXTO_FIRMAS_MM;
+        $wFirma = 50.0;
+        $renglon = '..........................................................';
+
+        $this->SetFont(self::FUENTE, '', 8);
+
+        $this->SetXY(40, $y);
+        $this->Cell($wFirma, 5, $renglon, 0, 0, 'C');
+        $this->SetXY(40, $y + 3);
+        $this->Cell($wFirma, 5, 'Secretario/a', 0, 0, 'C');
+
+        $this->SetXY(120, $y);
+        $this->Cell($wFirma, 5, $renglon, 0, 0, 'C');
+        $this->SetXY(120, $y + 3);
+        $this->Cell($wFirma, 5, 'Director/a', 0, 0, 'C');
     }
 
     private function escapeHtml(string $texto): string

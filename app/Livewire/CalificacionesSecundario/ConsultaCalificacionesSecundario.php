@@ -4,6 +4,7 @@ namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -47,11 +48,16 @@ class ConsultaCalificacionesSecundario extends Component
             return collect();
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         return Matricula::query()
             ->with('legajo')
             ->where('idCursos', (int) $this->cursoId)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->get()
             ->sortBy(function (Matricula $m) {
                 $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));

@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\NivelSistema;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -138,11 +139,16 @@ class BoletinEpqSecundarioIndex extends Component
             return collect();
         }
 
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
         return Matricula::query()
             ->with('legajo')
             ->where('idCursos', (int) $this->cursoId)
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
+            ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->get()
             ->sortBy(function (Matricula $m) {
                 $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
