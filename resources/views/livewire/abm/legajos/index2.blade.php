@@ -59,15 +59,18 @@
             </div>
         </section>
 
-        <div class="se-toolbar">
+        <div class="se-toolbar" @if (! $focusId) x-data x-init="$nextTick(() => $refs.legajosBuscar?.focus())" @endif>
             <div class="relative flex-1">
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                 </svg>
                 <input wire:model.live.debounce.400ms="search"
                        type="search"
+                       x-ref="legajosBuscar"
+                       @if (! $focusId) autofocus @endif
                        placeholder="Buscar por apellido, nombre o DNI..."
-                       class="form-input pl-9">
+                       class="form-input pl-9"
+                       autocomplete="off">
             </div>
             <label class="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-3 py-2 text-sm font-medium text-neutral-700">
                 <input wire:model.live="soloMatricula" type="checkbox" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
@@ -105,7 +108,7 @@
                         @forelse ($legajos as $l)
                             <tr id="legajo-{{ $l->id }}"
                                 x-data="{ focus: {{ (int) $focusId === (int) $l->id ? 'true' : 'false' }} }"
-                                x-init="if (focus) { $nextTick(() => { const el = document.getElementById('legajo-{{ $l->id }}'); el?.scrollIntoView({ block: 'center' }); el?.classList.add('ring-2','ring-primary-400','bg-primary-50/60'); el?.querySelector('a[data-focus-target]')?.focus(); }); }"
+                                x-init="if (focus) { $nextTick(() => { const el = document.getElementById('legajo-{{ $l->id }}'); el?.scrollIntoView({ block: 'center' }); el?.classList.add('ring-2','ring-primary-400','bg-primary-50/60'); const target = el?.querySelector('[data-focus-target]'); (target?.closest('a') ?? target)?.focus(); }); }"
                                 class="align-top transition-colors hover:bg-accent-50/60">
                                 <td class="table-cell">
                                     <div class="flex items-center gap-3">

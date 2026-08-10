@@ -3,10 +3,11 @@
 namespace App\Livewire\Abm\Legajos;
 
 use App\Models\Legajo;
+use App\Support\Abm\LegajoDependenciasEliminacion;
 use App\Support\Auth\LegajoPasswordLectura;
 use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -14,6 +15,12 @@ use Livewire\WithPagination;
 class LegajosIndex extends Component
 {
     use WithPagination;
+
+    public const SESSION_SEARCH = 'legajos_index_search';
+
+    public const SESSION_SOLO_MATRICULA = 'legajos_index_solo_matricula';
+
+    public const SESSION_SOLO_MI_NIVEL = 'legajos_index_solo_mi_nivel';
 
     // List state
     public string $search        = '';
@@ -33,10 +40,64 @@ class LegajosIndex extends Component
 
     public bool $passwordModalEncriptada = false;
 
+    /** @var array<string, array{except?: mixed, as?: string}> */
+    protected $queryString = [
+        'search' => ['except' => '', 'as' => 'buscar'],
+        'soloMatricula' => ['except' => false],
+        'soloMiNivel' => ['except' => false],
+    ];
+
     public function mount(): void
     {
         $focus = (int) session()->pull('legajo_listado_focus', 0);
+        if ($focus <= 0) {
+            $focus = request()->integer('focus');
+        }
         $this->focusId = $focus > 0 ? $focus : null;
+        $this->persistirFiltrosEnSesion();
+    }
+
+    /**
+     * URL del listado con los filtros guardados en sesión (p. ej. al volver del formulario).
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    public static function urlIndiceConFiltrosGuardados(array $extra = []): string
+    {
+        return route('abm.legajos', array_merge(self::parametrosFiltrosGuardados(), $extra));
+    }
+
+    /**
+     * @return array{search: string, soloMatricula: bool, soloMiNivel: bool}
+     */
+    public static function sessionFiltros(): array
+    {
+        return [
+            'search' => trim((string) session(self::SESSION_SEARCH, '')),
+            'soloMatricula' => (bool) session(self::SESSION_SOLO_MATRICULA, false),
+            'soloMiNivel' => (bool) session(self::SESSION_SOLO_MI_NIVEL, false),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function parametrosFiltrosGuardados(): array
+    {
+        $f = self::sessionFiltros();
+        $params = [];
+
+        if ($f['search'] !== '') {
+            $params['buscar'] = $f['search'];
+        }
+        if ($f['soloMatricula']) {
+            $params['soloMatricula'] = 1;
+        }
+        if ($f['soloMiNivel']) {
+            $params['soloMiNivel'] = 1;
+        }
+
+        return $params;
     }
 
     protected function scopedLegajoOrFail(int $id): Legajo
@@ -49,16 +110,28 @@ class LegajosIndex extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+        $this->persistirFiltrosEnSesion();
     }
 
     public function updatedSoloMatricula(): void
     {
         $this->resetPage();
+        $this->persistirFiltrosEnSesion();
     }
 
     public function updatedSoloMiNivel(): void
     {
         $this->resetPage();
+        $this->persistirFiltrosEnSesion();
+    }
+
+    private function persistirFiltrosEnSesion(): void
+    {
+        session([
+            self::SESSION_SEARCH => $this->search,
+            self::SESSION_SOLO_MATRICULA => $this->soloMatricula,
+            self::SESSION_SOLO_MI_NIVEL => $this->soloMiNivel,
+        ]);
     }
 
     public function verPassword(int $id): void
@@ -93,28 +166,14 @@ class LegajosIndex extends Component
         abort_unless(puedeModificarLegajosEstudiantes(), 403, 'Sin permiso para eliminar legajos de estudiantes.');
 
         $l = $this->scopedLegajoOrFail($id);
+        $deps = LegajoDependenciasEliminacion::paraLegajo($id);
 
-        $countMatricula      = DB::table('matricula')->where('idLegajos', $id)->count();
-        $countCalificaciones = DB::table('calificaciones')->where('idLegajos', $id)->count();
-        $countIef            = DB::table('ief')->where('idLegajos', $id)->count();
-        $countApf            = DB::table('apf')->where('idLegajos', $id)->count();
-        $countVarios         = DB::table('variosalumnos')->where('idLegajos', $id)->count();
-
-        $total = $countMatricula + $countCalificaciones + $countIef + $countApf + $countVarios;
-
-        if ($total > 0) {
-            $detail = collect([
-                $countMatricula      ? "{$countMatricula} matrículas"          : null,
-                $countCalificaciones ? "{$countCalificaciones} calificaciones"  : null,
-                $countIef            ? "{$countIef} registros IEF"             : null,
-                $countApf            ? "{$countApf} vínculos familiares"        : null,
-                $countVarios         ? "{$countVarios} datos varios"            : null,
-            ])->filter()->implode(', ');
-
+        if ($deps !== []) {
+            $detail = LegajoDependenciasEliminacion::resumen($deps);
             $this->deleteInfo = "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}.";
-            $this->deleteId   = null;
+            $this->deleteId = null;
         } else {
-            $this->deleteId   = $id;
+            $this->deleteId = $id;
             $this->deleteInfo = "¿Confirma eliminar el legajo de {$l->apellido}, {$l->nombre}?";
         }
 
@@ -135,9 +194,35 @@ class LegajosIndex extends Component
         RateLimiter::hit($key, 60);
 
         if ($this->deleteId) {
+            $deps = LegajoDependenciasEliminacion::paraLegajo((int) $this->deleteId);
+            if ($deps !== []) {
+                $l = $this->scopedLegajoOrFail((int) $this->deleteId);
+                $detail = LegajoDependenciasEliminacion::resumen($deps);
+                $this->deleteId = null;
+                $this->deleteInfo = "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}.";
+                $this->showConfirm = true;
+                $this->dispatch('se-swal-error', mensaje: $this->deleteInfo);
+
+                return;
+            }
+
             $l = $this->scopedLegajoOrFail($this->deleteId);
             $nombre = "{$l->apellido}, {$l->nombre}";
-            $l->delete();
+
+            try {
+                $l->delete();
+            } catch (QueryException $e) {
+                report($e);
+                $msg = LegajoDependenciasEliminacion::mensajeDesdeQueryException($e, "el legajo de {$nombre}")
+                    ?? "No se puede eliminar el legajo de {$nombre} porque tiene registros relacionados en otros módulos.";
+                $this->deleteId = null;
+                $this->deleteInfo = $msg;
+                $this->showConfirm = true;
+                $this->dispatch('se-swal-error', mensaje: $msg);
+
+                return;
+            }
+
             session()->flash('success', "Legajo de {$nombre} eliminado.");
         }
 

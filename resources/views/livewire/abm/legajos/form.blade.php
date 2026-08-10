@@ -100,7 +100,7 @@
                 </div>
             @endif
 
-            <a href="{{ route('abm.legajos', ['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
+            <a href="{{ \App\Livewire\Abm\Legajos\LegajosIndex::urlIndiceConFiltrosGuardados(['focus' => $id]) }}" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15">{{ $puedeEditar ? 'Cancelar' : 'Volver al listado' }}</a>
 
             @if ($puedeEditar)
                 <button type="button"
