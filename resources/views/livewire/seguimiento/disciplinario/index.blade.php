@@ -142,7 +142,7 @@
                                             @if ($s->comunicadaPadres)
                                                 <button type="button"
                                                         title="Ya notificada — clic para reenviar"
-                                                        x-on:click="seSwalConfirmar('Esta sanción ya fue notificada a la familia. ¿Deseás reenviar la notificación?', 'Reenviar notificación').then(ok => ok && $wire.notificarPadres({{ $s->id }}))"
+                                                        x-on:click="window.__seNotificarSancionPadres?.({{ (int) $s->id }}, true)"
                                                         class="btn-sm inline-flex shrink-0 items-center gap-1 rounded-lg border border-primary-300 bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700 hover:bg-primary-100">
                                                     <svg class="h-3.5 w-3.5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -152,7 +152,7 @@
                                             @else
                                                 <button type="button"
                                                         title="Notificar a los padres"
-                                                        x-on:click="seSwalConfirmar('¿Enviar notificación a la familia sobre esta sanción?', 'Notificar padres').then(ok => ok && $wire.notificarPadres({{ $s->id }}))"
+                                                        x-on:click="window.__seNotificarSancionPadres?.({{ (int) $s->id }}, false)"
                                                         class="btn-secondary btn-sm shrink-0">
                                                     Notif. Padres
                                                 </button>
@@ -188,8 +188,78 @@
 
 @script
 <script>
-    $wire.on('se-swal-exito', (e) => { window.seSwalExito?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
-    $wire.on('se-swal-error', (e) => { window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
-    $wire.on('se-swal-aviso', (e) => { window.seSwalAviso?.(e.mensaje ?? e[0]?.mensaje ?? '', e.titulo ?? e[0]?.titulo ?? 'Atención'); });
+    (function () {
+        function payloadDeEvento(event) {
+            if (event && typeof event === 'object' && ! Array.isArray(event) && (event.mensaje != null || event.titulo != null)) {
+                return event;
+            }
+            if (Array.isArray(event) && event[0] && typeof event[0] === 'object') {
+                return event[0];
+            }
+
+            return event?.detail && typeof event.detail === 'object' ? event.detail : {};
+        }
+
+        function mensajeDeEvento(event, fallback) {
+            return payloadDeEvento(event)?.mensaje ?? fallback;
+        }
+
+        function tituloDeEvento(event, fallback) {
+            return payloadDeEvento(event)?.titulo ?? fallback;
+        }
+
+        window.__seNotificarSancionPadres = async function (id, yaComunicada) {
+            const ok = await window.seSwalConfirmar?.(
+                yaComunicada
+                    ? 'Esta sanción ya fue notificada a la familia. ¿Deseás reenviar la notificación?'
+                    : '¿Enviar notificación a la familia sobre esta sanción?',
+                yaComunicada ? 'Reenviar notificación' : 'Notificar padres'
+            );
+            if (! ok) {
+                return;
+            }
+
+            if (typeof window.Swal !== 'undefined') {
+                window.Swal.fire({
+                    title: 'Enviando notificación…',
+                    text: 'Si incluye correo, puede demorar unos segundos.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => window.Swal.showLoading(),
+                });
+            }
+
+            try {
+                await $wire.notificarPadres(id);
+            } catch (e) {
+                if (typeof window.seSwalError === 'function') {
+                    window.seSwalError(
+                        'No se pudo completar la notificación (tiempo de espera o error de red). Si el correo no llegó, revisá el SMTP del servidor y volvé a intentar.',
+                        'Notificación incompleta'
+                    );
+                }
+            }
+        };
+
+        $wire.on('se-swal-exito', (event) => {
+            window.seSwalExito?.(
+                mensajeDeEvento(event, 'Notificación enviada.'),
+                tituloDeEvento(event, 'Listo')
+            );
+        });
+        $wire.on('se-swal-error', (event) => {
+            window.seSwalError?.(
+                mensajeDeEvento(event, 'No se pudo enviar la notificación.'),
+                tituloDeEvento(event, 'No se pudo completar')
+            );
+        });
+        $wire.on('se-swal-aviso', (event) => {
+            window.seSwalAviso?.(
+                mensajeDeEvento(event, 'Atención.'),
+                tituloDeEvento(event, 'Atención')
+            );
+        });
+    })();
 </script>
 @endscript
