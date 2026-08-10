@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Auth\AlumnoUserProvider;
 use App\Auth\ProfesorUserProvider;
-use App\Support\Mail\MailInstitucionalConfig;
 use App\Support\SchoolContext;
 use App\Support\StudentContext;
 use Illuminate\Pagination\Paginator;
@@ -67,9 +66,7 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::defaultView('vendor.pagination.se');
 
-        // Solo si ya se guardó desde Parámetros (archivo en storage).
-        if (is_file(MailInstitucionalConfig::path())) {
-            MailInstitucionalConfig::aplicar();
-        }
+        // SMTP institucional: se aplica al enviar (MailAdapter) según id_nivel del hilo.
+        // No resolver schoolCtx() aquí: el singleton quedaría vacío y rompería el login.
     }
 }

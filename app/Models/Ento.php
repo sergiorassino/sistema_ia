@@ -45,6 +45,8 @@ class Ento extends Model
         'provincia',
         'telefono',
         'mail',
+        'ctaEnvioMail',
+        'passEnvioMail',
         'replegal',
         'siroIniPrim',
         'siroSecu',

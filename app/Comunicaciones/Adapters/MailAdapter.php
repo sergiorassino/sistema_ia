@@ -9,6 +9,7 @@ use App\Models\ComMensajeDestinatario;
 use App\Models\ComMensajeEnvio;
 use App\Models\Legajo;
 use App\Models\Profesor;
+use App\Support\Mail\MailInstitucionalConfig;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -26,6 +27,7 @@ class MailAdapter
         string $nombreColegio = ''
     ): void {
         $mensaje->loadMissing('hilo');
+        MailInstitucionalConfig::aplicarParaNivel((int) ($mensaje->hilo?->id_nivel ?? 0) ?: null);
 
         $pairs = [];
         foreach ($destinatarios as $d) {
@@ -134,6 +136,7 @@ class MailAdapter
             return;
         }
         $mensaje->load('hilo');
+        MailInstitucionalConfig::aplicarParaNivel((int) ($mensaje->hilo?->id_nivel ?? 0) ?: null);
 
         $pairs = [];
         foreach ($envios as $envio) {
