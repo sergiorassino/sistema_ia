@@ -161,7 +161,7 @@ class DisciplinarioIndex extends Component
             if ($mailer !== '' && $mailer !== 'smtp') {
                 $this->dispatch(
                     'se-swal-aviso',
-                    mensaje: 'El comunicado se creó en el cuaderno, pero el correo no salió por SMTP real (MAIL_MAILER='.$mailer.'). En el .env de producción debe ser MAIL_MAILER=smtp y la cuenta/contraseña se configuran en Parametrización → Correo institucional Gmail (no el campo «Mail» de datos del colegio / ento).',
+                    mensaje: 'El comunicado se creó en el cuaderno, pero el correo no salió por SMTP real (MAIL_MAILER='.$mailer.'). En el .env de producción debe ser MAIL_MAILER=smtp y la cuenta/contraseña se configuran en Parametrización → Correo institucional (ento del nivel).',
                     titulo: 'Correo no enviado'
                 );
 
@@ -172,7 +172,7 @@ class DisciplinarioIndex extends Component
             if ($smtpUser === '') {
                 $this->dispatch(
                     'se-swal-aviso',
-                    mensaje: 'El comunicado se creó, pero no hay cuenta SMTP configurada. Cargá usuario y contraseña de aplicación en Parametrización → Correo institucional Gmail (se guarda en storage, no en la tabla ento).',
+                    mensaje: 'El comunicado se creó, pero no hay cuenta SMTP configurada. Cargá usuario y contraseña de aplicación en Parametrización → Correo institucional Gmail (se guarda en ento.ctaEnvioMail / passEnvioMail del nivel).',
                     titulo: 'Correo no configurado'
                 );
 

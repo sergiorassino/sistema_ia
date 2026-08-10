@@ -34,7 +34,7 @@ class ParametrosSistemaForm extends Component
     public string $mailGmailUser     = '';
     public string $mailGmailPassword = '';
     public string $mailGmailFromName = '';
-    /** true si ya hay credenciales guardadas en .env */
+    /** true si ya hay credenciales en ento (ctaEnvioMail + passEnvioMail) del nivel */
     public bool $mailConfigurado = false;
 
     public string $insti = '';
@@ -147,7 +147,7 @@ class ParametrosSistemaForm extends Component
         $this->currentLogoUrl = schoolLogoUrl();
 
         $this->cargarParametrosOperativosDesdeEnto($ento);
-        $this->cargarMailConfigDesdeEnv();
+        $this->cargarMailConfigDesdeEnto();
     }
 
     protected function rules(): array
@@ -525,6 +525,20 @@ class ParametrosSistemaForm extends Component
         }
         RateLimiter::hit($key, 60);
 
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        if ($idNivel < 1) {
+            $this->dispatch('se-swal-error', mensaje: 'Sin nivel activo en el contexto.');
+            return;
+        }
+
+        if (! MailInstitucionalConfig::columnasEntoDisponibles()) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: 'Faltan columnas ento.ctaEnvioMail / ento.passEnvioMail. Aplicá la migración (php artisan migrate) o el SQL idempotente.'
+            );
+            return;
+        }
+
         $this->validateOnly('mailGmailUser', [
             'mailGmailUser' => ['required', 'email:rfc', 'max:120', 'regex:/^.+@(gmail\.com|[a-z0-9.-]+\.edu\.ar)$/i'],
         ], [
@@ -533,14 +547,12 @@ class ParametrosSistemaForm extends Component
             'mailGmailUser.regex'      => 'Debe ser una cuenta de Gmail (@gmail.com) o institucional Google Workspace (.edu.ar).',
         ]);
 
-        $this->validateOnly('mailGmailFromName', [
-            'mailGmailFromName' => ['required', 'string', 'max:100'],
-        ], [
-            'mailGmailFromName.required' => 'El nombre del remitente es obligatorio.',
-        ]);
+        $this->mailGmailFromName = trim($this->insti) !== ''
+            ? trim($this->insti)
+            : trim($this->mailGmailFromName);
 
-        // Contraseña: obligatoria solo si aún no está configurada
-        $pwdActual = trim(MailInstitucionalConfig::leer()['password']);
+        // Contraseña: obligatoria solo si aún no está configurada en ento
+        $pwdActual = trim(MailInstitucionalConfig::leer($idNivel)['password']);
         $pwdNueva  = trim($this->mailGmailPassword);
 
         if ($pwdActual === '' && $pwdNueva === '') {
@@ -553,13 +565,11 @@ class ParametrosSistemaForm extends Component
             return;
         }
 
-        $user      = trim($this->mailGmailUser);
-        $fromName  = trim($this->mailGmailFromName);
-        $password  = $pwdNueva !== '' ? $pwdNueva : $pwdActual;
+        $user     = trim($this->mailGmailUser);
+        $password = $pwdNueva !== '' ? $pwdNueva : $pwdActual;
 
         try {
-            // Persistencia en storage (no .env): evita reinicio de Vite / FOUC al guardar.
-            MailInstitucionalConfig::guardar($user, $password, $fromName);
+            MailInstitucionalConfig::guardar($user, $password, $this->mailGmailFromName, $idNivel);
         } catch (\Throwable $e) {
             Log::warning('parametros-mail: error al guardar', ['message' => $e->getMessage()]);
             $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar la configuración: '.$e->getMessage());
@@ -568,19 +578,20 @@ class ParametrosSistemaForm extends Component
 
         $this->mailGmailPassword = '';
         $this->mailConfigurado   = true;
-        $this->cargarMailConfigDesdeEnv();
+        $this->cargarMailConfigDesdeEnto();
 
-        $this->dispatch('se-swal-exito', mensaje: 'Configuración de correo guardada. Probá enviar un comunicado para verificarla.');
+        $this->dispatch('se-swal-exito', mensaje: 'Configuración de correo guardada en el nivel activo (ento). Probá enviar un comunicado para verificarla.');
     }
 
-    private function cargarMailConfigDesdeEnv(): void
+    private function cargarMailConfigDesdeEnto(): void
     {
-        $c = MailInstitucionalConfig::leer();
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+        $c = MailInstitucionalConfig::leer($idNivel > 0 ? $idNivel : null);
 
         $this->mailGmailUser     = $c['username'];
-        $this->mailGmailFromName = $c['from_name'];
+        $this->mailGmailFromName = $c['from_name'] !== '' ? $c['from_name'] : trim($this->insti);
         $this->mailGmailPassword = ''; // nunca pre-rellenar la contraseña
-        $this->mailConfigurado   = MailInstitucionalConfig::estaConfigurado();
+        $this->mailConfigurado   = MailInstitucionalConfig::estaConfigurado($idNivel > 0 ? $idNivel : null);
     }
 
     public function render()

@@ -475,7 +475,9 @@
                 <div class="flex-1">
                     <p class="se-section-title mb-0.5">Correo institucional (Gmail)</p>
                     <p class="text-xs text-neutral-500">
-                        Cuenta Gmail o Google Workspace (.edu.ar) desde la que se envían los comunicados del cuaderno y notificaciones a familias.
+                        Cuenta Gmail o Google Workspace (.edu.ar) del <strong>nivel activo</strong>
+                        (<span class="font-mono">ento.ctaEnvioMail</span> / <span class="font-mono">passEnvioMail</span>).
+                        Se usa para comunicados del cuaderno y notificaciones a familias.
                         Usá una <strong>contraseña de aplicación</strong> de Google (no la contraseña principal).
                     </p>
                 </div>
@@ -508,12 +510,11 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="form-label">Nombre del remitente *</label>
-                    <input wire:model="mailGmailFromName" type="text" maxlength="100"
-                           class="form-input mt-1.5 @error('mailGmailFromName') border-red-400 @enderror"
+                    <label class="form-label">Nombre del remitente</label>
+                    <input wire:model="mailGmailFromName" type="text" maxlength="100" readonly
+                           class="form-input mt-1.5 bg-accent-50/60 text-neutral-700"
                            placeholder="Instituto San José">
-                    @error('mailGmailFromName') <p class="form-error">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-neutral-500">Nombre que ve la familia en «De:» al recibir el correo.</p>
+                    <p class="mt-1 text-xs text-neutral-500">Se toma del nombre de la institución del nivel (<span class="font-mono">ento.insti</span>). Editálo en la solapa Institución si hace falta.</p>
                 </div>
 
                 <div class="md:col-span-2">
