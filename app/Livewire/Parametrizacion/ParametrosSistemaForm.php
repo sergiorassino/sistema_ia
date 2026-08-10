@@ -33,7 +33,6 @@ class ParametrosSistemaForm extends Component
     // Tab correo Gmail institucional
     public string $mailGmailUser     = '';
     public string $mailGmailPassword = '';
-    public string $mailGmailFromName = '';
     /** true si ya hay credenciales en ento (ctaEnvioMail + passEnvioMail) del nivel */
     public bool $mailConfigurado = false;
 
@@ -547,10 +546,6 @@ class ParametrosSistemaForm extends Component
             'mailGmailUser.regex'      => 'Debe ser una cuenta de Gmail (@gmail.com) o institucional Google Workspace (.edu.ar).',
         ]);
 
-        $this->mailGmailFromName = trim($this->insti) !== ''
-            ? trim($this->insti)
-            : trim($this->mailGmailFromName);
-
         // Contraseña: obligatoria solo si aún no está configurada en ento
         $pwdActual = trim(MailInstitucionalConfig::leer($idNivel)['password']);
         $pwdNueva  = trim($this->mailGmailPassword);
@@ -569,7 +564,7 @@ class ParametrosSistemaForm extends Component
         $password = $pwdNueva !== '' ? $pwdNueva : $pwdActual;
 
         try {
-            MailInstitucionalConfig::guardar($user, $password, $this->mailGmailFromName, $idNivel);
+            MailInstitucionalConfig::guardar($user, $password, $idNivel);
         } catch (\Throwable $e) {
             Log::warning('parametros-mail: error al guardar', ['message' => $e->getMessage()]);
             $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar la configuración: '.$e->getMessage());
@@ -589,7 +584,6 @@ class ParametrosSistemaForm extends Component
         $c = MailInstitucionalConfig::leer($idNivel > 0 ? $idNivel : null);
 
         $this->mailGmailUser     = $c['username'];
-        $this->mailGmailFromName = $c['from_name'] !== '' ? $c['from_name'] : trim($this->insti);
         $this->mailGmailPassword = ''; // nunca pre-rellenar la contraseña
         $this->mailConfigurado   = MailInstitucionalConfig::estaConfigurado($idNivel > 0 ? $idNivel : null);
     }

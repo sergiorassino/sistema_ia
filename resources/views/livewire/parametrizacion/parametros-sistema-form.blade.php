@@ -506,15 +506,7 @@
                            class="form-input mt-1.5 @error('mailGmailUser') border-red-400 @enderror"
                            placeholder="secretaria@colegio.edu.ar">
                     @error('mailGmailUser') <p class="form-error">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-neutral-500">@gmail.com o dominio institucional .edu.ar (Google Workspace). Se usa como remitente y usuario SMTP.</p>
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="form-label">Nombre del remitente</label>
-                    <input wire:model="mailGmailFromName" type="text" maxlength="100" readonly
-                           class="form-input mt-1.5 bg-accent-50/60 text-neutral-700"
-                           placeholder="Instituto San José">
-                    <p class="mt-1 text-xs text-neutral-500">Se toma del nombre de la institución del nivel (<span class="font-mono">ento.insti</span>). Editálo en la solapa Institución si hace falta.</p>
+                    <p class="mt-1 text-xs text-neutral-500">@gmail.com o dominio institucional .edu.ar (Google Workspace). Se usa como remitente y usuario SMTP. El nombre visible es el de la institución del nivel.</p>
                 </div>
 
                 <div class="md:col-span-2">

@@ -2,6 +2,7 @@
 
 namespace App\Support\Seguimiento;
 
+use App\Comunicaciones\Adapters\MailAdapter;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\ComHilo;
@@ -29,6 +30,7 @@ final class NotificarFamiliaSancion
      *     email_incluido: bool,
      *     email_estado: ?string,
      *     email_motivo: ?string,
+     *     email_destino: ?string,
      *     email_mailer: ?string,
      *     email_smtp_user: ?string,
      *     refuerzo_mail_pedido: bool,
@@ -43,6 +45,7 @@ final class NotificarFamiliaSancion
             'email_incluido'       => false,
             'email_estado'         => null,
             'email_motivo'         => null,
+            'email_destino'        => null,
             'email_mailer'         => null,
             'email_smtp_user'      => null,
             'refuerzo_mail_pedido' => false,
@@ -187,7 +190,7 @@ final class NotificarFamiliaSancion
         $emailIncluido = in_array('email', $mediosEfectivos, true);
         $resumenEmail = $emailIncluido
             ? self::resumenEnvioEmail($hilo)
-            : ['estado' => null, 'motivo' => null];
+            : ['estado' => null, 'motivo' => null, 'destino' => null];
 
         return [
             'ok'                   => true,
@@ -195,6 +198,7 @@ final class NotificarFamiliaSancion
             'email_incluido'       => $emailIncluido,
             'email_estado'         => $resumenEmail['estado'],
             'email_motivo'         => $resumenEmail['motivo'],
+            'email_destino'        => $resumenEmail['destino'],
             'email_mailer'         => (string) config('mail.default'),
             'email_smtp_user'      => trim((string) config('mail.mailers.smtp.username', '')),
             'refuerzo_mail_pedido' => $refuerzoMailPedido,
@@ -203,23 +207,24 @@ final class NotificarFamiliaSancion
     }
 
     /**
-     * @return array{estado: ?string, motivo: ?string}
+     * @return array{estado: ?string, motivo: ?string, destino: ?string}
      */
     private static function resumenEnvioEmail(ComHilo $hilo): array
     {
         $idMensaje = (int) ($hilo->cuerpo_inicial_id ?? 0);
         if ($idMensaje < 1) {
-            return ['estado' => null, 'motivo' => 'Sin mensaje inicial del hilo.'];
+            return ['estado' => null, 'motivo' => 'Sin mensaje inicial del hilo.', 'destino' => null];
         }
 
-        $idsDest = ComMensajeDestinatario::query()
+        $destinatarios = ComMensajeDestinatario::query()
             ->where('id_mensaje', $idMensaje)
-            ->pluck('id')
-            ->all();
+            ->get();
 
-        if ($idsDest === []) {
-            return ['estado' => null, 'motivo' => 'Sin destinatarios del mensaje.'];
+        if ($destinatarios->isEmpty()) {
+            return ['estado' => null, 'motivo' => 'Sin destinatarios del mensaje.', 'destino' => null];
         }
+
+        $idsDest = $destinatarios->pluck('id')->all();
 
         $envio = ComMensajeEnvio::query()
             ->where('medio', 'email')
@@ -228,12 +233,25 @@ final class NotificarFamiliaSancion
             ->first();
 
         if ($envio === null) {
-            return ['estado' => null, 'motivo' => 'No se registró intento de correo.'];
+            return ['estado' => null, 'motivo' => 'No se registró intento de correo.', 'destino' => null];
+        }
+
+        $dest = $destinatarios->firstWhere('id', (int) $envio->id_mensaje_destinatario)
+            ?? $destinatarios->first();
+
+        $destino = null;
+        if ($dest instanceof ComMensajeDestinatario) {
+            $destino = MailAdapter::resolverDireccionCorreo($dest);
+            $destino = $destino !== null ? mb_strtolower(trim($destino)) : null;
+            if ($destino === '') {
+                $destino = null;
+            }
         }
 
         return [
-            'estado' => (string) ($envio->estado ?? ''),
-            'motivo' => ($m = trim((string) ($envio->motivo ?? ''))) !== '' ? $m : null,
+            'estado'  => (string) ($envio->estado ?? ''),
+            'motivo'  => ($m = trim((string) ($envio->motivo ?? ''))) !== '' ? $m : null,
+            'destino' => $destino,
         ];
     }
 }
