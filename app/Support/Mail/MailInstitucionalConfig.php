@@ -62,11 +62,12 @@ final class MailInstitucionalConfig
 
     /**
      * Persiste cuenta/contraseña en `ento` del nivel y aplica SMTP en runtime.
+     * El nombre visible del remitente es siempre `ento.insti`.
      *
      * @throws QueryException
      * @throws \RuntimeException si faltan columnas o el nivel
      */
-    public static function guardar(string $username, string $password, ?string $fromName = null, ?int $idNivel = null): void
+    public static function guardar(string $username, string $password, ?int $idNivel = null): void
     {
         $idNivel = self::resolverIdNivel($idNivel);
         if ($idNivel < 1) {
@@ -127,15 +128,11 @@ final class MailInstitucionalConfig
         }
 
         $ento->refresh();
-        $from = trim((string) ($fromName ?? ''));
-        if ($from === '') {
-            $from = self::nombreRemitenteDesdeEnto($ento);
-        }
 
         self::aplicar([
             'username' => $user,
             'password' => $pass,
-            'from_name' => $from,
+            'from_name' => self::nombreRemitenteDesdeEnto($ento),
         ]);
     }
 

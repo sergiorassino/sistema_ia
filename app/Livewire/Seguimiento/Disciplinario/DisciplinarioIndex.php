@@ -181,11 +181,15 @@ class DisciplinarioIndex extends Component
 
             $estadoEmail = (string) ($resultado['email_estado'] ?? '');
             $motivoEmail = trim((string) ($resultado['email_motivo'] ?? ''));
+            $emailDestino = trim((string) ($resultado['email_destino'] ?? ''));
 
             if ($estadoEmail === 'enviado') {
+                $detalleDestino = $emailDestino !== ''
+                    ? ' Destinatario: '.$emailDestino.'.'
+                    : '';
                 $this->dispatch(
                     'se-swal-exito',
-                    mensaje: 'Notificación enviada a la familia. Correo de refuerzo aceptado por SMTP ('.$smtpUser.').',
+                    mensaje: 'Notificación enviada a la familia. Correo de refuerzo enviado.'.$detalleDestino,
                     titulo: 'Correo enviado'
                 );
 
