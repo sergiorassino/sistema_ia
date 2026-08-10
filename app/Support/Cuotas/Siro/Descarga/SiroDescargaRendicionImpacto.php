@@ -82,7 +82,9 @@ final class SiroDescargaRendicionImpacto
 
                 $advertencias = [];
                 $totalRendicion = round($saldo + $interes - $bonificacion, 2);
-                if ($saldo > $faltapaAntes + 0.02 && $faltapaAntes >= 0) {
+                if ($faltapaAntes <= 0.02 && $saldo > 0.02) {
+                    $advertencias[] = 'Pago doble: la cuota ya estaba saldada; el saldo quedará negativo.';
+                } elseif ($saldo > $faltapaAntes + 0.02 && $faltapaAntes >= 0) {
                     $advertencias[] = 'Capital imputado superior al saldo adeudado.';
                 }
                 if ($pagado > $totalRendicion + 0.02 && $faltapaAntes > 0) {
@@ -94,11 +96,13 @@ final class SiroDescargaRendicionImpacto
                     ->where('nombreArchivo', (string) $rendicion->nombreArchivo)
                     ->where('importe', $saldo)
                     ->whereDate('fechhora', $rendicion->fechaPago?->format('Y-m-d') ?? '')
+                    ->where('cadenaPago', (string) ($rendicion->cadenaPago ?? ''))
                     ->exists();
                 if ($duplicado) {
-                    self::marcarNoImpactado($rendicion, 'Posible pago duplicado (ya existe en cuotaspagos).');
+                    // Misma cadena ya impactada en cuotaspagos: no reimputar.
+                    self::marcarNoImpactado($rendicion, 'Pago ya registrado en cuotaspagos (misma cadena).');
                     $resumen->noImpactados++;
-                    $resumen->agregarAdvertencia('Rendición #'.$rendicion->id.': posible pago duplicado.');
+                    $resumen->agregarAdvertencia('Rendición #'.$rendicion->id.': pago ya registrado en cuotaspagos.');
 
                     continue;
                 }

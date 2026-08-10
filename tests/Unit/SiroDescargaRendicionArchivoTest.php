@@ -71,6 +71,44 @@ class SiroDescargaRendicionArchivoTest extends TestCase
         $this->assertNull($motivo);
     }
 
+    public function test_patron_like_id_pago_siro_ancla_en_posicion_227(): void
+    {
+        $patron = SiroDescargaRendicionArchivo::patronLikeIdPagoSiro('0110570000');
+
+        $this->assertSame(226, substr_count($patron, '_'));
+        $this->assertStringEndsWith('0110570000%', $patron);
+
+        // Cadena con el id solo en el código de barras (pos ~51) NO debe matchear.
+        $cadenaFalsa = str_repeat('0', 51).'0110570000'.str_repeat('0', 215);
+        $this->assertFalse($this->likeSqlSimple($cadenaFalsa, $patron));
+
+        // Cadena con el id en posiciones 227–236 (0-based 226) SÍ debe matchear.
+        $cadenaReal = str_repeat('0', 226).'0110570000'.str_repeat('0', 40);
+        $this->assertTrue($this->likeSqlSimple($cadenaReal, $patron));
+    }
+
+    /**
+     * Emula LIKE de SQL con `_` = un carácter y `%` = cualquier cola (ASCII).
+     */
+    private function likeSqlSimple(string $valor, string $patron): bool
+    {
+        $regex = '/^';
+        $len = strlen($patron);
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $patron[$i];
+            if ($ch === '_') {
+                $regex .= '.';
+            } elseif ($ch === '%') {
+                $regex .= '.*';
+            } else {
+                $regex .= preg_quote($ch, '/');
+            }
+        }
+        $regex .= '$/';
+
+        return preg_match($regex, $valor) === 1;
+    }
+
     /**
      * @param  array{idPagoSiro: string, cadenaPago: string}  $linea
      * @param  array{cadenas: array<string, true>, idsPago: array<string, true>}  $indice

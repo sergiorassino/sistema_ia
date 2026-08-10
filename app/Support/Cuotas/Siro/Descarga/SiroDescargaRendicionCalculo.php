@@ -50,10 +50,11 @@ final class SiroDescargaRendicionCalculo
         }
 
         if ($capitalMax <= 0) {
+            // Pago doble: imputar el total como capital para dejar faltapa negativa.
             $advertencias[] = 'La cuota ya estaba saldada al descargar; posible pago doble.';
 
             return [
-                'importe' => 0.0,
+                'importe' => $pagado,
                 'pagado' => $pagado,
                 'interes' => 0.0,
                 'bonificacion' => 0.0,

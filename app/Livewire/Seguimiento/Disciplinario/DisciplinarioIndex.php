@@ -19,10 +19,6 @@ class DisciplinarioIndex extends Component
     public int|string $idCurso = '';
     public int|string $idMatricula = '';
 
-    public bool $showDeleteConfirm = false;
-    public ?int $deleteId = null;
-    public string $deleteInfo = '';
-
     public function mount(): void
     {
         $ctx = ContextoEstudianteSesion::leer(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO);
@@ -105,55 +101,6 @@ class DisciplinarioIndex extends Component
             ->orderByDesc('fecha')
             ->orderByDesc('id')
             ->get();
-    }
-
-    public function confirmDelete(int $id): void
-    {
-        $m = $this->matriculaSeleccionada();
-        if (! $m) {
-            abort(404);
-        }
-
-        $s = Sancion::query()
-            ->where('idMatricula', (int) $m->id)
-            ->with('tipo')
-            ->findOrFail($id);
-
-        $fecha = $s->fecha ? $s->fecha->format('d/m/Y') : '—';
-        $tipo = $s->tipo?->tipo ?? ('#'.$s->idTipoSancion);
-
-        $this->deleteId = (int) $s->id;
-        $this->deleteInfo = "¿Confirma borrar el evento \"{$tipo}\" ({$fecha})?";
-        $this->showDeleteConfirm = true;
-    }
-
-    public function delete(): void
-    {
-        $m = $this->matriculaSeleccionada();
-        if (! $m) {
-            abort(404);
-        }
-
-        $key = 'sanciones:delete:' . (auth()->id() ?? 'guest');
-        if (RateLimiter::tooManyAttempts($key, 10)) {
-            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
-            $this->showDeleteConfirm = false;
-            $this->reset('deleteId', 'deleteInfo');
-            return;
-        }
-        RateLimiter::hit($key, 60);
-
-        if ($this->deleteId) {
-            Sancion::query()
-                ->where('idMatricula', (int) $m->id)
-                ->findOrFail((int) $this->deleteId)
-                ->delete();
-
-            session()->flash('success', 'Evento borrado.');
-        }
-
-        $this->showDeleteConfirm = false;
-        $this->reset('deleteId', 'deleteInfo');
     }
 
     public function notificarPadres(int $id): void

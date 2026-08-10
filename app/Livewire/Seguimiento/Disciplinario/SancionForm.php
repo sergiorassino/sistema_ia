@@ -142,6 +142,44 @@ class SancionForm extends Component
         return redirect()->route('seguimiento.disciplinario');
     }
 
+    public function delete(): mixed
+    {
+        if (! $this->id) {
+            return null;
+        }
+
+        $key = 'sanciones:delete:' . (auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
+            return null;
+        }
+        RateLimiter::hit($key, 60);
+
+        $m = $this->matriculaDelContexto((int) $this->idMatricula);
+
+        $s = Sancion::query()
+            ->with('matricula')
+            ->where('idMatricula', (int) $m->id)
+            ->findOrFail((int) $this->id);
+
+        if ((int) ($s->matricula?->idNivel ?? 0) !== (int) schoolCtx()->idNivel
+            || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec) {
+            abort(404);
+        }
+
+        $s->delete();
+
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO, [
+            'curso' => (int) $m->idCursos,
+            'matricula' => (int) $m->id,
+        ]);
+
+        session()->flash('success', 'Evento borrado.');
+
+        return redirect()->route('seguimiento.disciplinario');
+    }
+
     public function render()
     {
         $m = null;

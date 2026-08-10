@@ -8,6 +8,7 @@ use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Models\Sancion;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
+use App\Support\Seguimiento\SancionActaHtmlSanitizer;
 
 /**
  * Envía un comunicado institucional a la familia del alumno
@@ -143,6 +144,13 @@ final class NotificarFamiliaSancion
             $lineas[] = 'Motivo: '.$motivo;
         }
         $lineas[] = 'Solicitada por: '.$solipor;
+
+        $actaTexto = SancionActaHtmlSanitizer::aTextoPlanoMultilinea($sancion->acta ?? null);
+        if ($actaTexto !== '') {
+            $lineas[] = '';
+            $lineas[] = 'Acta:';
+            $lineas[] = $actaTexto;
+        }
 
         $asunto = 'Sanción disciplinaria — '.$alumno;
 

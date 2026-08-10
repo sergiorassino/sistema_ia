@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\PermisosIaCatalog;
 use App\Models\Sancion;
+use App\Support\Seguimiento\SancionActaHtmlSanitizer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +105,8 @@ class SancionComunicadoPdfController extends Controller
             $slug = 'comunicado_seguimiento';
         }
 
+        $actaHtml = SancionActaHtmlSanitizer::paraPdf($sancion->acta ?? null);
+
         $pdf = Pdf::loadView('pdf.sancion-comunicado', [
             'nombreInstitucion' => $nombreInstitucion,
             'alumnoNombre' => $alumnoNombre,
@@ -115,6 +118,7 @@ class SancionComunicadoPdfController extends Controller
             'tipoSancion' => $tipoSancion,
             'totalApercib' => $totalApercib,
             'totalAmonest' => $totalAmonest,
+            'actaHtml' => $actaHtml,
             'pdfHeader' => schoolPdfHeaderData(),
         ])->setPaper('a4', 'portrait');
 
