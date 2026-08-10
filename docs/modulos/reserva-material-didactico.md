@@ -67,6 +67,7 @@ Tablas **nuevas** (migraciones `2026_06_11_*` / aditivas posteriores). No son le
 3. **Listado:** reservas agrupadas por pedido; filtros fecha (día / todas), grupo, recurso, estado, curso, texto.
 4. **Entrega / devolución (solo admin Secretaría):** modal por pedido; nombres quedan fijos (no se editan ni se revierten desde UI).
 5. **Edición / cancelación:** solo con ítems pendientes; profesor solo sobre pedidos propios.
+   - Al **editar** (`editarPedido`): valida antelación/ventanas **antes** de modificar la BD; el reemplazo de ítems va en **una sola** transacción. Si la validación falla, el pedido no se altera.
 
 ## Fuente de verdad
 
@@ -97,12 +98,13 @@ Tablas **nuevas** (migraciones `2026_06_11_*` / aditivas posteriores). No son le
 1. **No filtrar el catálogo por `id_nivel` del contexto.** Los recursos son del colegio entero; filtrar otra vez por nivel vuelve a ocultar el material en primario/inicial si se cargó en secundario.
 2. **No calcular solapes solo del nivel activo:** las reservas activas del mismo ciclo bloquean el recurso para todos los niveles.
 3. **No omitir antelación** salvo préstamo espontáneo admin (`entregado_directo`).
-4. **Recurso sin `siempre_disponible` y sin ventanas:** no es reservable.
-5. **No revertir ni editar** nombres de entrega/devolución desde el listado (métodos deprecated en el service lanzan excepción).
-6. **No cancelar** pedido/ítem ya entregado; primero devolución.
-7. Portal Docentes: **no** exigir bits 68–70; respetar flags tenant. **No** exponer ABM ni entrega ahí.
-8. Diálogos: SweetAlert SE (`se-swal-*`), no `wire:confirm` / `alert`.
-9. Tablas `rrd_*` son del módulo: migraciones aditivas sí; no mezclar con tablas legacy de cuotas “reserva”.
+4. **No borrar reservas del pedido antes de validar** al editar: si falla antelación/ventana/solape, el pedido debe quedar intacto (una sola transacción).
+5. **Recurso sin `siempre_disponible` y sin ventanas:** no es reservable.
+6. **No revertir ni editar** nombres de entrega/devolución desde el listado (métodos deprecated en el service lanzan excepción).
+7. **No cancelar** pedido/ítem ya entregado; primero devolución.
+8. Portal Docentes: **no** exigir bits 68–70; respetar flags tenant. **No** exponer ABM ni entrega ahí.
+9. Diálogos: SweetAlert SE (`se-swal-*`), no `wire:confirm` / `alert`.
+10. Tablas `rrd_*` son del módulo: migraciones aditivas sí; no mezclar con tablas legacy de cuotas “reserva”.
 
 ## Checklist al modificar
 

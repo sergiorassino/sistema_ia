@@ -135,6 +135,9 @@ class RrdReservaService
     /**
      * Actualizar datos de un pedido pendiente (todos los ítems deben estar pendientes).
      *
+     * Valida primero y solo entonces reemplaza reservas en una sola transacción:
+     * si falla la antelación u otra regla, no se borran los registros existentes.
+     *
      * @throws RrdReservaException
      */
     public static function editarPedido(
@@ -152,16 +155,6 @@ class RrdReservaService
             throw new RrdReservaException('No se puede editar un pedido que ya tiene recursos entregados o devueltos.');
         }
 
-        // Cancelar las reservas actuales y crear las nuevas dentro de una transacción
-        DB::transaction(function () use ($pedido, $datos, $idsRecursos, $esAdmin) {
-            $pedido->reservas()->update(['estado' => RrdReserva::ESTADO_CANCELADO]);
-
-            // Eliminar las reservas canceladas del mismo pedido para permitir re-reservar los mismos recursos
-            $pedido->reservas()->where('estado', RrdReserva::ESTADO_CANCELADO)->delete();
-        });
-
-        // Re-crear usando crearPedido (reutiliza todas las validaciones)
-        // pero actualizando el pedido existente en vez de crear uno nuevo
         $ctx = schoolCtx();
         $fecha      = $datos['fecha'];
         $horaInicio = $datos['hora_inicio'];
@@ -188,6 +181,7 @@ class RrdReservaService
 
         $omitirAntelacion = self::omitirAntelacion($esAdmin, $datos);
 
+        // Validar ANTES de tocar la BD: si falla, el pedido queda intacto.
         foreach ($recursos as $recurso) {
             if (! $omitirAntelacion) {
                 self::validarAntelacion($recurso, $inicioCarbon);
@@ -195,7 +189,11 @@ class RrdReservaService
             self::validarVentanaDisponibilidad($recurso, $inicioCarbon, $finCarbon);
         }
 
+        // Borrado + recreación atómicos: si falla el solape (u otro error), se revierte todo.
         DB::transaction(function () use ($pedido, $datos, $recursos, $fecha, $horaInicio, $horaFin, $ctx) {
+            $pedido->reservas()->update(['estado' => RrdReserva::ESTADO_CANCELADO]);
+            $pedido->reservas()->where('estado', RrdReserva::ESTADO_CANCELADO)->delete();
+
             foreach ($recursos as $recurso) {
                 self::validarSolapamientoConLock($recurso->id, $fecha, $horaInicio, $horaFin);
             }

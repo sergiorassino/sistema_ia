@@ -12,6 +12,7 @@ use App\Models\Nivel;
 use App\Models\Sexo;
 use App\Models\SolapaLegajo;
 use App\Models\Terlec;
+use App\Support\Abm\LegajoDependenciasEliminacion;
 use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\PermisosIaCatalog;
@@ -535,9 +536,10 @@ class LegajoForm extends Component
 
         session()->flash('legajo_listado_focus', $focusId);
 
-        return redirect()->route('abm.legajos', [
+        return redirect()->to(LegajosIndex::urlIndiceConFiltrosGuardados([
             'page' => $page,
-        ]);
+            'focus' => $focusId,
+        ]));
     }
 
     /**
@@ -645,11 +647,14 @@ class LegajoForm extends Component
 
     public function cancel(): mixed
     {
+        $extra = [];
         if ($this->id) {
-            session()->flash('legajo_listado_focus', (int) $this->id);
+            $focusId = (int) $this->id;
+            session()->flash('legajo_listado_focus', $focusId);
+            $extra['focus'] = $focusId;
         }
 
-        return redirect()->route('abm.legajos');
+        return redirect()->to(LegajosIndex::urlIndiceConFiltrosGuardados($extra));
     }
 
     // ─── Matrículas ───────────────────────────────────────────────────────────
@@ -677,9 +682,10 @@ class LegajoForm extends Component
 
             session()->flash('legajo_listado_focus', $focusId);
 
-            return redirect()->route('abm.legajos', [
+            return redirect()->to(LegajosIndex::urlIndiceConFiltrosGuardados([
                 'page' => $page,
-            ]);
+                'focus' => $focusId,
+            ]));
         }
 
         return null;
@@ -1245,11 +1251,9 @@ class LegajoForm extends Component
         $descAno = $m->terlec?->ano ?? '—';
         $descCurso = $m->curso?->cursec ? trim($m->curso->cursec) : '—';
 
-        $dependencias = $this->dependenciasMatriculaParaBorrar($id);
+        $dependencias = LegajoDependenciasEliminacion::paraMatricula($id);
         if ($dependencias !== []) {
-            $modulos = collect($dependencias)
-                ->map(fn (int $cant, string $modulo) => "{$modulo} ({$cant})")
-                ->implode(', ');
+            $modulos = LegajoDependenciasEliminacion::resumen($dependencias);
 
             $this->matriculaPuedeEliminar = false;
             $this->matriculaDeleteInfo = "La matrícula que intenta borrar ({$descAno} · {$descCurso}) tiene registros relacionados en: {$modulos}.";
@@ -1266,11 +1270,9 @@ class LegajoForm extends Component
         $this->requireModificarLegajo();
 
         if ($this->matriculaDeleteId && $this->id && $this->matriculaPuedeEliminar) {
-            $dependencias = $this->dependenciasMatriculaParaBorrar($this->matriculaDeleteId);
+            $dependencias = LegajoDependenciasEliminacion::paraMatricula((int) $this->matriculaDeleteId);
             if ($dependencias !== []) {
-                $modulos = collect($dependencias)
-                    ->map(fn (int $cant, string $modulo) => "{$modulo} ({$cant})")
-                    ->implode(', ');
+                $modulos = LegajoDependenciasEliminacion::resumen($dependencias);
                 $this->matriculaPuedeEliminar = false;
                 $this->matriculaDeleteInfo = "La matrícula que intenta borrar tiene registros relacionados en: {$modulos}.";
                 $this->showMatriculaConfirm = true;
@@ -1281,17 +1283,29 @@ class LegajoForm extends Component
             $idMatricula = (int) $this->matriculaDeleteId;
             $idLegajos = (int) $this->id;
 
-            DB::transaction(function () use ($idMatricula, $idLegajos) {
-                // Garantiza limpieza aunque el tenant no tenga FK ON DELETE CASCADE.
-                if (Schema::hasTable('calificaciones')) {
-                    DB::table('calificaciones')
-                        ->where('idLegajos', $idLegajos)
-                        ->where('idMatricula', $idMatricula)
-                        ->delete();
-                }
+            try {
+                DB::transaction(function () use ($idMatricula, $idLegajos) {
+                    // Garantiza limpieza aunque el tenant no tenga FK ON DELETE CASCADE.
+                    if (Schema::hasTable('calificaciones')) {
+                        DB::table('calificaciones')
+                            ->where('idLegajos', $idLegajos)
+                            ->where('idMatricula', $idMatricula)
+                            ->delete();
+                    }
 
-                Matricula::where('idLegajos', $idLegajos)->findOrFail($idMatricula)->delete();
-            });
+                    Matricula::where('idLegajos', $idLegajos)->findOrFail($idMatricula)->delete();
+                });
+            } catch (QueryException $e) {
+                report($e);
+                $msg = LegajoDependenciasEliminacion::mensajeDesdeQueryException($e, 'la matrícula')
+                    ?? 'No se puede eliminar la matrícula porque tiene registros relacionados en otros módulos.';
+                $this->matriculaPuedeEliminar = false;
+                $this->matriculaDeleteInfo = $msg;
+                $this->showMatriculaConfirm = true;
+                $this->dispatch('se-swal-error', mensaje: $msg);
+
+                return;
+            }
 
             session()->flash('success', 'Matrícula eliminada.');
         }
@@ -1299,32 +1313,6 @@ class LegajoForm extends Component
         $this->showMatriculaConfirm = false;
         $this->reset('matriculaDeleteId', 'matriculaDeleteInfo', 'matriculaPuedeEliminar');
         $this->matriculaPuedeEliminar = true;
-    }
-
-    /**
-     * Módulos con registros que impiden borrar la matrícula (tabla => etiqueta en UI).
-     *
-     * @return array<string, int> etiqueta => cantidad
-     */
-    private function dependenciasMatriculaParaBorrar(int $idMatricula): array
-    {
-        $checks = [
-            'inasistencias' => 'Inasistencias',
-            'sanciones' => 'Seguimiento disciplinario',
-        ];
-
-        $deps = [];
-        foreach ($checks as $tabla => $etiqueta) {
-            if (! Schema::hasTable($tabla)) {
-                continue;
-            }
-            $cant = (int) DB::table($tabla)->where('idMatricula', $idMatricula)->count();
-            if ($cant > 0) {
-                $deps[$etiqueta] = $cant;
-            }
-        }
-
-        return $deps;
     }
 
     /**
@@ -1923,7 +1911,27 @@ class LegajoForm extends Component
             return 1;
         }
 
-        $countBefore = Legajo::where(function ($q) use ($l) {
+        $filtros = LegajosIndex::sessionFiltros();
+        $idTerlec = schoolCtx()->idTerlec;
+
+        $query = Legajo::query();
+
+        if ($filtros['search'] !== '') {
+            $query->buscar($filtros['search']);
+        }
+
+        if ($filtros['soloMatricula']) {
+            $query->whereHas('matriculas', fn ($q) => $q->where('idTerlec', $idTerlec));
+        }
+
+        if ($filtros['soloMiNivel']) {
+            $query->whereHas('matriculas', function ($q) use ($idTerlec) {
+                $q->where('idTerlec', $idTerlec);
+                SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'idNivel');
+            });
+        }
+
+        $countBefore = $query->where(function ($q) use ($l) {
             $q->where('apellido', '<', $l->apellido)
                 ->orWhere(function ($q2) use ($l) {
                     $q2->where('apellido', $l->apellido)
