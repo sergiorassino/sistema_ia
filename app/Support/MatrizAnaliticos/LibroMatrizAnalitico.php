@@ -514,10 +514,7 @@ final class LibroMatrizAnalitico
             return $vacios;
         }
 
-        $row = AnaliticoDato::query()
-            ->where('idLegajos', $idLegajos)
-            ->orderByDesc('id')
-            ->first();
+        $row = AnaliticoDato::paraLegajo($idLegajos);
 
         if ($row === null) {
             return $vacios;
@@ -589,10 +586,7 @@ final class LibroMatrizAnalitico
             'analParaPre' => self::truncar((string) ($datos['analParaPre'] ?? ''), 200),
         ];
 
-        $existente = AnaliticoDato::query()
-            ->where('idLegajos', $idLegajos)
-            ->orderByDesc('id')
-            ->first();
+        $existente = AnaliticoDato::paraLegajo($idLegajos);
 
         if ($existente !== null) {
             $existente->update($payload);

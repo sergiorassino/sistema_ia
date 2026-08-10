@@ -89,28 +89,25 @@ final class SiroDescargaRendicionMatchUploadCercano
         $cupon = $elegido['cupon'];
         $uploadCupon = $elegido['ultUpload'];
         $idEncontrado = (string) $cupon->id_factura;
-        $importeCupon = self::importeReferenciaCupon($cupon);
         $importesOk = $importeArchivo !== null
             && self::importeCoincideConCupon($importeArchivo, $cupon);
+        $importeCupon = self::importeReferenciaCupon($cupon, $importeArchivo);
 
         $avisoEleccion = 'Match provisorio (puesta en marcha): se eligió cupones_a_pagar.id_factura '
             .$idEncontrado.' (upload '.$uploadCupon.', buscado '.$partes['ultUpload']
             .') en lugar de '.$idFacturaBuscado.'.';
 
+        $advertencias = [$avisoEleccion];
+
         if ($importeArchivo === null) {
-            $avisoImporte = 'No se pudo verificar el importe del archivo de descarga contra el cupón.';
-        } elseif ($importesOk) {
-            $avisoImporte = 'Importes coinciden: archivo $'
+            $advertencias[] = 'No se pudo verificar el importe del archivo de descarga contra el cupón.';
+        } elseif (! $importesOk) {
+            $advertencias[] = 'Importes NO coinciden: archivo $'
                 .number_format($importeArchivo, 2, ',', '.')
                 .' / cupón $'
                 .number_format($importeCupon, 2, ',', '.')
-                .'.';
-        } else {
-            $avisoImporte = 'Importes NO coinciden: archivo $'
-                .number_format($importeArchivo, 2, ',', '.')
-                .' / cupón $'
-                .number_format($importeCupon, 2, ',', '.')
-                .' (revisar cupones_a_pagar.id_factura '.$idEncontrado.').';
+                .' (revisar cupones_a_pagar.id_factura '.$idEncontrado
+                .'; vencimientos importe1venc/2venc/3venc o saldo_pagar).';
         }
 
         $detalle = 'Provisorio upload cercano → '.$idEncontrado
@@ -118,7 +115,7 @@ final class SiroDescargaRendicionMatchUploadCercano
 
         return [
             'cupon' => $cupon,
-            'advertencias' => [$avisoEleccion, $avisoImporte],
+            'advertencias' => $advertencias,
             'detalle' => $detalle,
         ];
     }
@@ -190,10 +187,24 @@ final class SiroDescargaRendicionMatchUploadCercano
         return false;
     }
 
-    public static function importeReferenciaCupon(CuponAPagar $cupon): float
+    /**
+     * Importe de referencia para el aviso.
+     * Si hay importe de archivo, prioriza el vencimiento/saldo que coincida
+     * (p. ej. importe1venc con bonificación). Si no, prioriza vencimientos sobre saldo_pagar
+     * (saldo suele ser capital sin bonificar).
+     */
+    public static function importeReferenciaCupon(CuponAPagar $cupon, ?float $importeArchivo = null): float
     {
-        $importes = self::importesCupon($cupon);
-        foreach ($importes as $importe) {
+        if ($importeArchivo !== null) {
+            $importeArchivo = round($importeArchivo, 2);
+            foreach (self::importesCupon($cupon) as $importe) {
+                if ($importe > 0 && abs($importe - $importeArchivo) <= self::TOLERANCIA_IMPORTE) {
+                    return $importe;
+                }
+            }
+        }
+
+        foreach (self::importesCupon($cupon) as $importe) {
             if ($importe > 0) {
                 return $importe;
             }
@@ -203,15 +214,18 @@ final class SiroDescargaRendicionMatchUploadCercano
     }
 
     /**
+     * Importes válidos del cupón para cruzar con el archivo SIRO.
+     * Primero vencimientos (con bonificación si aplica), luego saldo_pagar (capital / faltapa).
+     *
      * @return list<float>
      */
     private static function importesCupon(CuponAPagar $cupon): array
     {
         return [
+            round((float) ($cupon->importe1venc ?? 0), 2),
+            round((float) ($cupon->importe2venc ?? 0), 2),
+            round((float) ($cupon->importe3venc ?? 0), 2),
             round((float) ($cupon->saldo_pagar ?? 0), 2),
-            round((float) ($cupon->importe1v ?? 0), 2),
-            round((float) ($cupon->importe2v ?? 0), 2),
-            round((float) ($cupon->importe3v ?? 0), 2),
         ];
     }
 

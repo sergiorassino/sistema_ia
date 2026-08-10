@@ -11,6 +11,7 @@ use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionConsulta;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionImpacto;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionResumen;
 use App\Support\PermisosCuotas;
+use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,7 +34,7 @@ class SiroDescargaRendicionDetalle extends Component
     /** @var list<string> */
     public array $modalResumenEncabezado = [];
 
-    /** @var list<string> */
+    /** @var list<array{linea: ?int, mensaje: string}> */
     public array $modalResumenProblemas = [];
 
     /** @var list<array{linea: int, canal: string, idFacturaBuscado: string, estado: string, detalle: ?string}> */
@@ -218,12 +219,17 @@ class SiroDescargaRendicionDetalle extends Component
             fn (RendicionRoela $r): bool => trim((string) ($r->obs ?? '')) !== ''
         );
 
+        $pdfUrl = se_route_url('cuotas.siro-descarga.pdf', [
+            'ref' => OpaqueRouteToken::forSiroDescargaPlanilla($this->nroPlanilla),
+        ]);
+
         return view('livewire.cuotas.siro-descarga-rendicion-detalle', [
             'planilla' => $planilla,
             'rendiciones' => $rendiciones,
             'totalCobrado' => $consulta->totalCobradoPlanilla($this->nroPlanilla),
             'etiquetaCanal' => $canal['label'] ?? (string) ($planilla->canalPago ?? ''),
             'hayObsEnPlanilla' => $hayObsEnPlanilla,
+            'pdfUrl' => $pdfUrl,
             'fmtImporte' => fn (float $v) => CuotasFormato::formatearImporte($v),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Planilla SIRO '.$this->nroPlanilla]);
     }

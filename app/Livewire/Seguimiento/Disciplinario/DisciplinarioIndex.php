@@ -183,10 +183,15 @@ class DisciplinarioIndex extends Component
             return;
         }
 
-        $ok = NotificarFamiliaSancion::despachar($s, $m);
+        $resultado = NotificarFamiliaSancion::despachar($s, $m);
 
-        if (! $ok) {
-            $this->dispatch('se-swal-error', mensaje: 'No se pudo enviar la notificación. Verificá que el canal escuela→familia esté activo en Parametrización → Canales de Comunicación.');
+        if (! ($resultado['ok'] ?? false)) {
+            $detalle = trim((string) ($resultado['motivo_fallo'] ?? ''));
+            $mensaje = 'No se pudo enviar la notificación. Verificá que el canal del remitente → familia esté activo en Parametrización → Canales de Comunicación.';
+            if ($detalle !== '') {
+                $mensaje .= ' '.$detalle;
+            }
+            $this->dispatch('se-swal-error', mensaje: $mensaje);
             return;
         }
 
@@ -194,7 +199,21 @@ class DisciplinarioIndex extends Component
         $s->comunicadaPadres = true;
         $s->save();
 
-        $this->dispatch('se-swal-exito', mensaje: 'Notificación enviada a la familia.');
+        if (($resultado['refuerzo_mail_pedido'] ?? false) && ! ($resultado['email_incluido'] ?? false)) {
+            $this->dispatch(
+                'se-swal-aviso',
+                mensaje: 'El comunicado se creó en el cuaderno, pero no se envió correo: el canal del remitente hacia Familia no tiene el medio «email» habilitado. Activá correo en Parametrización → Canales de Comunicación (rol del remitente → Estudiantes/Familias) y volvé a notificar.',
+                titulo: 'Sin correo'
+            );
+
+            return;
+        }
+
+        $mensajeExito = ($resultado['email_incluido'] ?? false)
+            ? 'Notificación enviada a la familia (incluye correo).'
+            : 'Notificación enviada a la familia (cuaderno / push). Para incluir correo, activá «Refuerzo por correo» en el tipo de sanción.';
+
+        $this->dispatch('se-swal-exito', mensaje: $mensajeExito);
     }
 
     public function render()

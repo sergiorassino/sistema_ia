@@ -38,6 +38,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR = 'cuotas.solicitud-ayuda-familiar';
 
+    public const PURPOSE_ADMIN_SIRO_DESCARGA_PLANILLA = 'cuotas.siro-descarga-planilla';
+
     public const PURPOSE_MORA_ESTADO_DEUDA = 'mora.estado-deuda-familiar';
 
     public const PURPOSE_MORA_LISTADO_DEUDA = 'mora.listado-deuda';
@@ -142,6 +144,13 @@ final class OpaqueRouteToken
     public static function forSolicitudAyudaFamiliar(int $nroSolicitud, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_ADMIN_SOLICITUD_AYUDA_FAMILIAR, $nroSolicitud, $idLegajo);
+    }
+
+    public static function forSiroDescargaPlanilla(int $nroPlanilla): string
+    {
+        return self::encodePayload(self::PURPOSE_ADMIN_SIRO_DESCARGA_PLANILLA, [
+            'n' => $nroPlanilla,
+        ]);
     }
 
     public static function forEstadoDeudaFamiliar(int $idFamilia): string

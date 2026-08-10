@@ -20,56 +20,72 @@ use App\Support\Comunicaciones\ComCanalRolCatalog;
 final class NotificarFamiliaSancion
 {
     /**
-     * @return bool true si se creó el hilo de comunicación correctamente.
+     * @return array{
+     *     ok: bool,
+     *     medios: list<string>,
+     *     email_incluido: bool,
+     *     refuerzo_mail_pedido: bool,
+     *     motivo_fallo: ?string
+     * }
      */
-    public static function despachar(Sancion $sancion, Matricula $matricula): bool
+    public static function despachar(Sancion $sancion, Matricula $matricula): array
     {
+        $fallo = static fn (?string $motivo = null): array => [
+            'ok'                   => false,
+            'medios'               => [],
+            'email_incluido'       => false,
+            'refuerzo_mail_pedido' => false,
+            'motivo_fallo'         => $motivo,
+        ];
+
         $ctx = schoolCtx();
         $idNivel  = (int) ($ctx->idNivel  ?? 0);
         $idTerlec = (int) ($ctx->idTerlec ?? 0);
 
         if ($idNivel < 1 || $idTerlec < 1) {
-            return false;
+            return $fallo('Sin contexto de nivel o ciclo lectivo.');
         }
 
         // La sanción debe pertenecer al contexto actual
         if ((int) ($matricula->idNivel ?? 0)  !== $idNivel
             || (int) ($matricula->idTerlec ?? 0) !== $idTerlec) {
-            return false;
+            return $fallo('La matrícula no pertenece al contexto actual.');
         }
 
         $sancion->loadMissing(['tipo.profesorNotif', 'profesor']);
         $tipo = $sancion->tipo;
 
         if (! $tipo) {
-            return false;
+            return $fallo('La sanción no tiene tipo asociado.');
         }
+
+        $refuerzoMailPedido = (bool) ($tipo->refuerzoMail ?? false);
 
         // Verificar que este tipo permite notificar a padres
         if (isset($tipo->permiteNotifPadres) && ! $tipo->permiteNotifPadres) {
-            return false;
+            return $fallo('Este tipo de sanción no permite notificar a padres.');
         }
 
         // Remitente fijo configurado en el tipo
         $idProfesorNotif = (int) ($tipo->idProfesorNotif ?? 0);
         if ($idProfesorNotif < 1) {
-            return false;
+            return $fallo('Este tipo de sanción no tiene remitente configurado.');
         }
 
         $profesorNotif = Profesor::query()->find($idProfesorNotif);
         if ($profesorNotif === null) {
-            return false;
+            return $fallo('El remitente configurado no existe.');
         }
 
         $rolEmisor = CanalesPolicy::claveRolDeProfesor($profesorNotif);
 
         if (! CanalesPolicy::puedeIniciar($rolEmisor, ComCanalRolCatalog::CLAVE_FAMILIA, $idNivel)) {
-            return false;
+            return $fallo('El canal del remitente hacia familia no está activo.');
         }
 
         $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, ComCanalRolCatalog::CLAVE_FAMILIA, $idNivel);
         if ($mediosCanal === []) {
-            return false;
+            return $fallo('El canal del remitente hacia familia no tiene medios habilitados.');
         }
 
         // Filtrar medios: push siempre incluido si el canal lo permite;
@@ -86,12 +102,12 @@ final class NotificarFamiliaSancion
         }));
 
         if ($mediosEfectivos === []) {
-            return false;
+            return $fallo('No hay medios efectivos para notificar (revisá el canal y el refuerzo por correo).');
         }
 
         $idLegajo = (int) ($matricula->idLegajos ?? 0);
         if ($idLegajo < 1) {
-            return false;
+            return $fallo('La matrícula no tiene legajo asociado.');
         }
 
         $matricula->loadMissing(['legajo', 'curso']);
@@ -150,6 +166,12 @@ final class NotificarFamiliaSancion
             'familia_puede_responder'  => false,
         ], $mediosEfectivos);
 
-        return true;
+        return [
+            'ok'                   => true,
+            'medios'               => $mediosEfectivos,
+            'email_incluido'       => in_array('email', $mediosEfectivos, true),
+            'refuerzo_mail_pedido' => $refuerzoMailPedido,
+            'motivo_fallo'         => null,
+        ];
     }
 }

@@ -141,6 +141,7 @@
                             </div>
                             <p class="-mt-1 text-xs text-neutral-500">
                                 La notificación siempre incluye push (si la familia tiene dispositivos vinculados). Activá esta opción para agregar también el envío por mail.
+                                Además, el canal del remitente → Familia debe tener el medio «email» habilitado en Parametrización → Canales de Comunicación.
                             </p>
                         </div>
                     </div>

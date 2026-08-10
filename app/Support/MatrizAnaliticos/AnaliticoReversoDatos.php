@@ -46,19 +46,7 @@ final class AnaliticoReversoDatos
             return null;
         }
 
-        $analitico = AnaliticoDato::query()
-            ->where('idLegajos', $idLegajos)
-            ->orderByDesc('id')
-            ->first([
-                'analCohorte',
-                'analObservaciones',
-                'analParaCompletar',
-                'analValidez',
-                'analLibroFolio',
-                'analFechaEmision',
-                'analParaPre',
-                'serie',
-            ]);
+        $analitico = AnaliticoDato::paraLegajo($idLegajos);
 
         $ento = Ento::query()
             ->where('idNivel', $idNivel)
