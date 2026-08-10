@@ -157,10 +157,81 @@ class DisciplinarioIndex extends Component
         }
 
         if ($resultado['email_incluido'] ?? false) {
+            $mailer = strtolower(trim((string) ($resultado['email_mailer'] ?? '')));
+            if ($mailer !== '' && $mailer !== 'smtp') {
+                $this->dispatch(
+                    'se-swal-aviso',
+                    mensaje: 'El comunicado se creó en el cuaderno, pero el correo no salió por SMTP real (MAIL_MAILER='.$mailer.'). En el .env de producción debe ser MAIL_MAILER=smtp y la cuenta/contraseña se configuran en Parametrización → Correo institucional Gmail (no el campo «Mail» de datos del colegio / ento).',
+                    titulo: 'Correo no enviado'
+                );
+
+                return;
+            }
+
+            $smtpUser = trim((string) ($resultado['email_smtp_user'] ?? ''));
+            if ($smtpUser === '') {
+                $this->dispatch(
+                    'se-swal-aviso',
+                    mensaje: 'El comunicado se creó, pero no hay cuenta SMTP configurada. Cargá usuario y contraseña de aplicación en Parametrización → Correo institucional Gmail (se guarda en storage, no en la tabla ento).',
+                    titulo: 'Correo no configurado'
+                );
+
+                return;
+            }
+
+            $estadoEmail = (string) ($resultado['email_estado'] ?? '');
+            $motivoEmail = trim((string) ($resultado['email_motivo'] ?? ''));
+
+            if ($estadoEmail === 'enviado') {
+                $this->dispatch(
+                    'se-swal-exito',
+                    mensaje: 'Notificación enviada a la familia. Correo de refuerzo aceptado por SMTP ('.$smtpUser.').',
+                    titulo: 'Correo enviado'
+                );
+
+                return;
+            }
+
+            if ($estadoEmail === 'fallido') {
+                $this->dispatch(
+                    'se-swal-aviso',
+                    mensaje: 'El comunicado se creó en el cuaderno, pero el correo falló'
+                        .($motivoEmail !== '' ? ': '.$motivoEmail : '.')
+                        .' Revisá SMTP del servidor / contraseña de aplicación Gmail.',
+                    titulo: 'Correo fallido'
+                );
+
+                return;
+            }
+
+            if ($estadoEmail === 'no_aplicable') {
+                $this->dispatch(
+                    'se-swal-aviso',
+                    mensaje: 'El comunicado se creó, pero no hay correo de familia usable'
+                        .($motivoEmail !== '' ? ' ('.$motivoEmail.')' : '.')
+                        .' Completá emailmad / emailpad / emailtut en el legajo.',
+                    titulo: 'Sin dirección de correo'
+                );
+
+                return;
+            }
+
+            if ($estadoEmail === 'pendiente') {
+                $this->dispatch(
+                    'se-swal-aviso',
+                    mensaje: 'El correo quedó pendiente en cola. Verificá que el worker de colas esté corriendo en el servidor.',
+                    titulo: 'Correo pendiente'
+                );
+
+                return;
+            }
+
             $this->dispatch(
-                'se-swal-exito',
-                mensaje: 'Notificación enviada a la familia e incluye correo de refuerzo.',
-                titulo: 'Correo enviado'
+                'se-swal-aviso',
+                mensaje: 'El comunicado se creó, pero no se pudo confirmar el envío de correo'
+                    .($motivoEmail !== '' ? ': '.$motivoEmail : '.')
+                    .' Revisá MAIL_MAILER=smtp y la configuración de Correo institucional.',
+                titulo: 'Correo no confirmado'
             );
 
             return;
