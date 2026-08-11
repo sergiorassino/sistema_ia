@@ -159,6 +159,10 @@
         $wire.on('se-swal-exito', ({ mensaje }) => window.seSwalExito(mensaje));
         $wire.on('se-swal-aviso', ({ mensaje }) => window.seSwalAviso(mensaje));
         $wire.on('se-swal-error', ({ mensaje }) => window.seSwalError(mensaje));
+
+        @if (session('se_swal_exito'))
+            window.seSwalExito(@js(session('se_swal_exito')));
+        @endif
     </script>
     @endscript
 </div>

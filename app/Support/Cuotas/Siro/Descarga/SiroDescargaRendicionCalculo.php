@@ -4,11 +4,13 @@ namespace App\Support\Cuotas\Siro\Descarga;
 
 use App\Models\CuponAPagar;
 use App\Models\CuotaGenerada;
-use App\Support\Cuotas\ImputacionPagoCalculo;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 /**
- * Calcula importe (capital), interés y bonificación para una línea de rendición.
+ * Desglosa capital, interés y bonificación de una línea SIRO según el cupón
+ * emitido en {@see CuponAPagar} (snapshot al generarse), no según el estado
+ * actual de {@see CuotaGenerada}.
  */
 final class SiroDescargaRendicionCalculo
 {
@@ -21,7 +23,8 @@ final class SiroDescargaRendicionCalculo
      *     pagado: float,
      *     interes: float,
      *     bonificacion: float,
-     *     advertencias: list<string>
+     *     advertencias: list<string>,
+     *     descargable: bool
      * }
      */
     public static function calcular(
@@ -29,52 +32,50 @@ final class SiroDescargaRendicionCalculo
         CuotaGenerada $cuotaGenerada,
         ?CuponAPagar $cupon,
     ): array {
-        $advertencias = [];
         $pagado = SiroDescargaRendicionLinea::importeDesdeCentavos((int) ($linea['importePagadoCentavos'] ?? 0));
-
         $fechaPagoRaw = SiroDescargaRendicionLinea::fechaDesdeSiro((string) ($linea['fechaPago'] ?? ''));
         $fechaPago = $fechaPagoRaw !== null
             ? Carbon::parse($fechaPagoRaw)->startOfDay()
             : Carbon::today()->startOfDay();
 
-        $capitalMax = self::capitalMaximo($cuotaGenerada, $cupon);
+        if ($cupon === null) {
+            return self::noDescargable(
+                $pagado,
+                'Sin cupón en cupones_a_pagar: no se descarga el pago hasta resolver la referencia.',
+            );
+        }
 
         if ($pagado <= 0) {
-            return [
-                'importe' => 0.0,
-                'pagado' => 0.0,
-                'interes' => 0.0,
-                'bonificacion' => 0.0,
-                'advertencias' => ['Importe pagado inválido o cero.'],
-            ];
+            return self::noDescargable($pagado, 'Importe pagado inválido o cero.');
         }
 
-        if ($capitalMax <= 0) {
-            // Pago doble: imputar el total como capital para dejar faltapa negativa.
-            $advertencias[] = 'La cuota ya estaba saldada al descargar; posible pago doble.';
-
-            return [
-                'importe' => $pagado,
-                'pagado' => $pagado,
-                'interes' => 0.0,
-                'bonificacion' => 0.0,
-                'advertencias' => $advertencias,
-            ];
+        $capital = round((float) ($cupon->saldo_pagar ?? 0), 2);
+        if ($capital <= 0) {
+            return self::noDescargable(
+                $pagado,
+                'El cupón '.$cupon->id_factura.' tiene saldo_pagar inválido; no se descarga el pago.',
+            );
         }
 
-        $desglose = self::desgloseDesdePagado($cuotaGenerada, $pagado, $fechaPago, $capitalMax);
+        $tramo = self::tramoCuponParaPago($cupon, $fechaPago, $pagado);
+        if ($tramo === null) {
+            return self::noDescargable(
+                $pagado,
+                'El importe cobrado por SIRO ($'.number_format($pagado, 2, ',', '.')
+                .') no coincide con importe1/2/3venc del cupón '
+                .(string) $cupon->id_factura
+                .' (fecha pago '.$fechaPago->format('d/m/Y').'). No se descarga hasta revisar el cupón.',
+            );
+        }
 
-        if ($desglose === null) {
-            $advertencias[] = 'No se pudo descomponer el importe rendido por SIRO ($'
-                .number_format($pagado, 2, ',', '.').') en capital, interés y bonificación.';
+        $desglose = self::desgloseDesdeCapitalYPagado($capital, $pagado);
+        $advertencias = [];
 
-            return [
-                'importe' => min($pagado, $capitalMax),
-                'pagado' => $pagado,
-                'interes' => 0.0,
-                'bonificacion' => 0.0,
-                'advertencias' => $advertencias,
-            ];
+        $faltapa = round((float) ($cuotaGenerada->faltapa ?? 0), 2);
+        if ($faltapa <= self::TOLERANCIA) {
+            $advertencias[] = 'La cuota ya estaba saldada al descargar; posible pago doble.'
+                .' Desglose tomado del cupón '.(string) $cupon->id_factura
+                .' (tramo '.$tramo['tramo'].').';
         }
 
         return [
@@ -83,141 +84,151 @@ final class SiroDescargaRendicionCalculo
             'interes' => $desglose['interes'],
             'bonificacion' => $desglose['bonificacion'],
             'advertencias' => $advertencias,
+            'descargable' => true,
         ];
     }
 
-    private static function capitalMaximo(CuotaGenerada $cuotaGenerada, ?CuponAPagar $cupon): float
-    {
-        $faltapa = round((float) ($cuotaGenerada->faltapa ?? 0), 2);
-        if ($faltapa <= 0) {
-            return 0.0;
-        }
-
-        if ($cupon === null) {
-            return $faltapa;
-        }
-
-        $saldoCupon = round((float) $cupon->saldo_pagar, 2);
-
-        return $saldoCupon > 0 ? min($faltapa, $saldoCupon) : $faltapa;
-    }
-
     /**
-     * @return array{importe: float, interes: float, bonificacion: float, total: float}|null
-     */
-    private static function desgloseDesdePagado(
-        CuotaGenerada $registro,
-        float $pagado,
-        Carbon $fechaPago,
-        float $capitalMax,
-    ): ?array {
-        $pagado = round($pagado, 2);
-        $capitalMax = round($capitalMax, 2);
-
-        $desgloseCompleto = self::desgloseParaCapital($registro, $capitalMax, $fechaPago);
-        if (abs($desgloseCompleto['total'] - $pagado) <= self::TOLERANCIA) {
-            return $desgloseCompleto;
-        }
-
-        if ($pagado + self::TOLERANCIA >= $capitalMax) {
-            return self::desglosePagoCapitalCompleto($registro, $pagado, $fechaPago, $capitalMax);
-        }
-
-        $capital = self::capitalDesdePagado($registro, $pagado, $fechaPago, $capitalMax);
-        if ($capital === null) {
-            return null;
-        }
-
-        return self::desgloseParaCapital($registro, $capital, $fechaPago);
-    }
-
-    /**
-     * Pago que cubre todo el capital: bonificación según fórmula; interés = pagado − capital + bonificación.
+     * Elige el tramo del cupón por fecha de pago; si el importe no cierra,
+     * acepta el vencimiento cuyo importe coincida con lo cobrado (sin pagos parciales).
      *
-     * @return array{importe: float, interes: float, bonificacion: float, total: float}
+     * @return array{tramo: string, importe: float}|null
      */
-    private static function desglosePagoCapitalCompleto(
-        CuotaGenerada $registro,
-        float $pagado,
-        Carbon $fechaPago,
-        float $capital,
-    ): array {
+    public static function tramoCuponParaPago(CuponAPagar $cupon, CarbonInterface $fechaPago, float $pagado): ?array
+    {
+        $pagado = round($pagado, 2);
+        $fecha = $fechaPago->copy()->startOfDay();
+        $tramos = self::tramosCupon($cupon);
+
+        foreach ($tramos as $tramo) {
+            $hasta = $tramo['fecha'];
+            if ($hasta !== null && $fecha->lte($hasta) && self::importesIguales($pagado, $tramo['importe'])) {
+                return [
+                    'tramo' => $tramo['tramo'],
+                    'importe' => $tramo['importe'],
+                ];
+            }
+        }
+
+        // Fecha posterior al último vencimiento publicado: usar 3.er importe si coincide.
+        $ultimo = $tramos !== [] ? $tramos[array_key_last($tramos)] : null;
+        if ($ultimo !== null && self::importesIguales($pagado, $ultimo['importe'])) {
+            $ultimaFecha = $ultimo['fecha'];
+            if ($ultimaFecha === null || $fecha->gt($ultimaFecha)) {
+                return [
+                    'tramo' => $ultimo['tramo'],
+                    'importe' => $ultimo['importe'],
+                ];
+            }
+        }
+
+        foreach ($tramos as $tramo) {
+            if (self::importesIguales($pagado, $tramo['importe'])) {
+                return [
+                    'tramo' => $tramo['tramo'],
+                    'importe' => $tramo['importe'],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{importe: float, interes: float, bonificacion: float}
+     */
+    public static function desgloseDesdeCapitalYPagado(float $capital, float $pagado): array
+    {
         $capital = round($capital, 2);
-        $calc = ImputacionPagoCalculo::calcular($registro, $capital, $fechaPago, null);
-        $bonificacion = round((float) $calc['bonificacion'], 2);
-        $interes = round(max(0, $pagado - $capital + $bonificacion), 2);
+        $pagado = round($pagado, 2);
+        $diff = round($pagado - $capital, 2);
+
+        if (abs($diff) <= self::TOLERANCIA) {
+            return [
+                'importe' => $capital,
+                'interes' => 0.0,
+                'bonificacion' => 0.0,
+            ];
+        }
+
+        if ($diff < 0) {
+            return [
+                'importe' => $capital,
+                'interes' => 0.0,
+                'bonificacion' => round(-$diff, 2),
+            ];
+        }
 
         return [
             'importe' => $capital,
-            'interes' => $interes,
-            'bonificacion' => $bonificacion,
-            'total' => round($capital + $interes - $bonificacion, 2),
+            'interes' => $diff,
+            'bonificacion' => 0.0,
         ];
     }
 
     /**
-     * @return array{importe: float, interes: float, bonificacion: float, total: float}
+     * @return list<array{tramo: string, fecha: ?CarbonInterface, importe: float}>
      */
-    private static function desgloseParaCapital(
-        CuotaGenerada $registro,
-        float $capital,
-        Carbon $fechaPago,
-    ): array {
-        $capital = round(max(0, $capital), 2);
-        $calc = ImputacionPagoCalculo::calcular($registro, $capital, $fechaPago, null);
-        $interes = round((float) $calc['interes'], 2);
-        $bonificacion = round((float) $calc['bonificacion'], 2);
-        $total = round($capital + $interes - $bonificacion, 2);
+    private static function tramosCupon(CuponAPagar $cupon): array
+    {
+        $out = [];
+        foreach ([1, 2, 3] as $n) {
+            $importe = round((float) ($cupon->{'importe'.$n.'venc'} ?? 0), 2);
+            if ($importe <= 0) {
+                continue;
+            }
+            $out[] = [
+                'tramo' => (string) $n,
+                'fecha' => self::fechaCupon($cupon->{'fecha'.$n.'venc'} ?? null),
+                'importe' => $importe,
+            ];
+        }
 
-        return [
-            'importe' => $capital,
-            'interes' => $interes,
-            'bonificacion' => $bonificacion,
-            'total' => $total,
-        ];
+        return $out;
     }
 
-    private static function capitalDesdePagado(
-        CuotaGenerada $registro,
-        float $pagado,
-        Carbon $fechaPago,
-        float $capitalMax,
-    ): ?float {
-        $pagado = round($pagado, 2);
-        $capitalMax = round($capitalMax, 2);
+    private static function fechaCupon(mixed $valor): ?CarbonInterface
+    {
+        if ($valor instanceof CarbonInterface) {
+            return $valor->copy()->startOfDay();
+        }
 
-        if ($pagado <= 0 || $capitalMax <= 0) {
+        $texto = trim((string) $valor);
+        if ($texto === '') {
             return null;
         }
 
-        $limiteSuperior = min($capitalMax, $pagado);
-        $mejorCapital = null;
-        $mejorDiff = PHP_FLOAT_MAX;
-
-        $bajo = 0.01;
-        $alto = $limiteSuperior;
-
-        for ($i = 0; $i < 64 && $bajo <= $alto; $i++) {
-            $medio = round(($bajo + $alto) / 2, 2);
-            $desglose = self::desgloseParaCapital($registro, $medio, $fechaPago);
-            $diff = round($desglose['total'] - $pagado, 2);
-
-            if (abs($diff) < $mejorDiff) {
-                $mejorDiff = abs($diff);
-                $mejorCapital = $medio;
-            }
-
-            if (abs($diff) <= self::TOLERANCIA) {
-                return $medio;
-            }
-
-            if ($diff > 0) {
-                $alto = round($medio - 0.01, 2);
-            } else {
-                $bajo = round($medio + 0.01, 2);
-            }
+        try {
+            return Carbon::parse($texto)->startOfDay();
+        } catch (\Throwable) {
+            return null;
         }
+    }
 
-        return $mejorDiff <= self::TOLERANCIA ? $mejorCapital : null;
+    private static function importesIguales(float $a, float $b): bool
+    {
+        return abs(round($a, 2) - round($b, 2)) <= self::TOLERANCIA;
+    }
+
+    /**
+     * @return array{
+     *     importe: float,
+     *     pagado: float,
+     *     interes: float,
+     *     bonificacion: float,
+     *     advertencias: list<string>,
+     *     descargable: bool
+     * }
+     */
+    private static function noDescargable(float $pagado, string $mensaje): array
+    {
+        return [
+            'importe' => 0.0,
+            'pagado' => round($pagado, 2),
+            'interes' => 0.0,
+            'bonificacion' => 0.0,
+            'advertencias' => [$mensaje],
+            'descargable' => false,
+        ];
     }
 }

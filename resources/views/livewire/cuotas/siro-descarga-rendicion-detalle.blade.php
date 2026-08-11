@@ -79,19 +79,29 @@
                     Imprimir PDF
                 </span>
             @endif
-            <button type="button"
-                    x-on:click="window.seSwalConfirmar('¿Eliminar todos los pagos descargados de esta planilla?', 'Borrar todos', { icon: 'warning' }).then(ok => ok && $wire.borrarTodos())"
-                    wire:loading.attr="disabled"
-                    wire:target="borrarTodos"
-                    @disabled($rendiciones->isEmpty() || (int) ($planilla->impactado ?? 0) === 1)
-                    class="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">
-                Borrar todos
-            </button>
+            @if ($rendiciones->isEmpty() && (int) ($planilla->impactado ?? 0) !== 1)
+                <button type="button"
+                        x-on:click="window.seSwalConfirmar('¿Eliminar esta planilla? Solo se puede borrar si no tiene pagos descargados.', 'Borrar planilla', { icon: 'warning', confirmButtonText: 'Sí, eliminar' }).then(ok => ok && $wire.borrarPlanilla())"
+                        wire:loading.attr="disabled"
+                        wire:target="borrarPlanilla"
+                        class="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
+                    Borrar planilla
+                </button>
+            @else
+                <button type="button"
+                        x-on:click="window.seSwalConfirmar('¿Eliminar todos los pagos descargados de esta planilla?', 'Borrar todos', { icon: 'warning' }).then(ok => ok && $wire.borrarTodos())"
+                        wire:loading.attr="disabled"
+                        wire:target="borrarTodos"
+                        @disabled($rendiciones->isEmpty() || (int) ($planilla->impactado ?? 0) === 1)
+                        class="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">
+                    Borrar todos
+                </button>
+            @endif
         </div>
 
         @if ($rendiciones->isEmpty())
             <div class="py-14 text-center text-sm text-neutral-600">
-                No hay pagos descargados. Cargue el archivo de rendición SIRO.
+                No hay pagos descargados. Cargue el archivo de rendición SIRO o borre la planilla si la creó por error.
             </div>
         @else
             <div class="w-full overflow-x-auto">

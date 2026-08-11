@@ -49,7 +49,8 @@ final class SiroDescargaRendicionCupon
                 'cupon' => null,
                 'cuotaGenerada' => null,
                 'advertencias' => [
-                    'No se encontró cupón en cupones_a_pagar con id_factura '.$principal.$via.'.',
+                    'No se encontró cupón en cupones_a_pagar con id_factura '.$principal.$via
+                    .'. No se descarga el pago hasta resolver esa referencia.',
                 ],
                 'modalidadIdentificacion' => $modalidadIdentificacion,
                 'matchTipo' => '',

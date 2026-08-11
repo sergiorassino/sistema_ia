@@ -71,6 +71,46 @@ class SiroDescargaRendicionArchivoTest extends TestCase
         $this->assertNull($motivo);
     }
 
+    public function test_obs_para_formulario_prioriza_pago_repetido_y_omite_match_provisorio(): void
+    {
+        $obs = SiroDescargaRendicionArchivo::obsParaFormularioPlanilla(
+            [SiroDescargaRendicionArchivo::mensajePagoRepetidoPlanilla('0110709841', 1151)],
+            [
+                'Match provisorio (puesta en marcha): se eligió cupones_a_pagar.id_factura 00000999000008802088.',
+                'La cuota ya estaba saldada al descargar; posible pago doble.',
+            ],
+        );
+
+        $this->assertSame(
+            'Pago repetido: pagado por primera vez en planilla 1151 (SIRO 0110709841).'
+            .' | La cuota ya estaba saldada al descargar; posible pago doble.',
+            $obs,
+        );
+    }
+
+    public function test_obs_para_formulario_sin_avisos_relevantes_retorna_null(): void
+    {
+        $obs = SiroDescargaRendicionArchivo::obsParaFormularioPlanilla(
+            [],
+            ['Match provisorio (puesta en marcha): se eligió cupones_a_pagar.id_factura X.'],
+        );
+
+        $this->assertNull($obs);
+    }
+
+    public function test_es_advertencia_match_provisorio(): void
+    {
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
+            'Match provisorio (puesta en marcha): texto',
+        ));
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
+            'Provisorio upload cercano → 0000091900008802088 · importes OK',
+        ));
+        $this->assertFalse(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
+            'Pago repetido: pagado por primera vez en planilla 1151.',
+        ));
+    }
+
     public function test_patron_like_id_pago_siro_ancla_en_posicion_227(): void
     {
         $patron = SiroDescargaRendicionArchivo::patronLikeIdPagoSiro('0110570000');
