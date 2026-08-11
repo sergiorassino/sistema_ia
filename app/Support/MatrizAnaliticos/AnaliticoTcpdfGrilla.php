@@ -15,7 +15,8 @@ trait AnaliticoTcpdfGrilla
 
     private const GRILLA_W_NUM = 10.0;
 
-    private const GRILLA_W_LETRAS = 25.0;
+    /** Ancho suficiente para frases tipo «NUEVE CON SETENTA Y CINCO». */
+    private const GRILLA_W_LETRAS = 34.0;
 
     private const GRILLA_W_COND = 15.0;
 
@@ -23,7 +24,7 @@ trait AnaliticoTcpdfGrilla
 
     private const GRILLA_W_ANO = 10.0;
 
-    private const GRILLA_W_ESCUELA = 60.0;
+    private const GRILLA_W_ESCUELA = 51.0;
 
     protected function grillaConfigurarFill(): void
     {
