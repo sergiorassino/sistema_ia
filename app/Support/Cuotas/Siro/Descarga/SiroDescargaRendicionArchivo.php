@@ -30,171 +30,255 @@ final class SiroDescargaRendicionArchivo
         $nombreArchivo = self::resolverNombreArchivo($planilla, $nombreArchivoOrigen);
         $indicePlanilla = self::indiceRegistrosPlanilla($nroPlanilla);
 
+        /** @var list<array<string, mixed>> $pendientes */
+        $pendientes = [];
+        $bloqueosCupon = 0;
+
+        foreach ($lineas as $indice => $lineaCruda) {
+            $lineaCruda = rtrim((string) $lineaCruda, "\r\n");
+            if ($lineaCruda === '') {
+                continue;
+            }
+
+            $nroRegistro = $indice + 1;
+            $linea = SiroDescargaRendicionLinea::parsear($lineaCruda);
+            if ($linea === null) {
+                $resumen->omitidos++;
+                $resumen->agregarAdvertencia(
+                    'Formato inválido (menos de '.SiroDescargaRendicionLinea::LARGO_MINIMO.' caracteres).',
+                    $nroRegistro,
+                );
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $nroRegistro,
+                    'canal' => '—',
+                    'idFacturaBuscado' => '—',
+                    'modalidadIdentificacion' => '—',
+                    'estado' => 'omitido',
+                    'detalle' => 'Formato inválido.',
+                ]);
+
+                continue;
+            }
+
+            $resolucion = SiroDescargaRendicionIdFactura::resolucionDesdeLinea($linea, $idTerlec);
+            $idFacturaBuscado = $resolucion['idFactura'] ?? '—';
+            $modalidadIdentificacion = $resolucion['modalidadEtiqueta'] !== ''
+                ? $resolucion['modalidadEtiqueta']
+                : '—';
+            $canal = trim((string) ($linea['canalAbrev'] ?? ''));
+            $canalEtiqueta = $canal !== '' ? $canal : '—';
+
+            // Canales no presentes en cuotastipopago.abrev = rechazo SIRO (BPR, DDR, MCR, VSR, …).
+            // Se informan en el modal de carga y no se persisten en rendicionesroela.
+            if (! SiroDescargaRendicionCanal::esMedioPagoConocido($canal)) {
+                $detalleRechazo = SiroDescargaRendicionCanal::detalleRechazoCanal(
+                    $canal,
+                    (string) ($linea['textoTrasCanal'] ?? ''),
+                );
+                $resumen->rechazos++;
+                $resumen->agregarAdvertencia($detalleRechazo, $nroRegistro);
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $nroRegistro,
+                    'canal' => $canalEtiqueta,
+                    'idFacturaBuscado' => $idFacturaBuscado,
+                    'modalidadIdentificacion' => $modalidadIdentificacion,
+                    'estado' => 'rechazo',
+                    'detalle' => $detalleRechazo,
+                ]);
+
+                continue;
+            }
+
+            $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
+            if ($motivoDuplicadoPlanilla !== null) {
+                $resumen->omitidos++;
+                $resumen->agregarAdvertencia($motivoDuplicadoPlanilla, $nroRegistro);
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $nroRegistro,
+                    'canal' => $canalEtiqueta,
+                    'idFacturaBuscado' => $idFacturaBuscado,
+                    'modalidadIdentificacion' => $modalidadIdentificacion,
+                    'estado' => 'omitido',
+                    'detalle' => 'Registro ya cargado en esta planilla.',
+                ]);
+
+                continue;
+            }
+
+            $avisosPagoRepetido = [];
+            $idPago = (string) ($linea['idPagoSiro'] ?? '');
+            if ($idPago !== '' && $idPago !== '0000000000') {
+                if (isset($idsPagoVistos[$idPago])) {
+                    $avisosPagoRepetido[] = 'Id de pago SIRO duplicado en el archivo: '.$idPago.'; se registra igual (posible pago doble).';
+                } else {
+                    $idsPagoVistos[$idPago] = true;
+                }
+
+                $nroPlanillaPrevia = self::nroPlanillaImpactadoPorIdPagoSiro($idPago);
+                if ($nroPlanillaPrevia !== null && $nroPlanillaPrevia !== $nroPlanilla) {
+                    $avisosPagoRepetido[] = self::mensajePagoRepetidoPlanilla($idPago, $nroPlanillaPrevia);
+                }
+            }
+
+            $match = SiroDescargaRendicionCupon::resolver($linea, $idTerlec);
+            $cupon = $match['cupon'];
+            $cuotaGenerada = $match['cuotaGenerada'];
+            $modalidadMatch = $match['modalidadIdentificacion'] !== ''
+                ? $match['modalidadIdentificacion']
+                : $modalidadIdentificacion;
+
+            if ($cupon === null || $cuotaGenerada === null) {
+                $bloqueosCupon++;
+                $detalle = $match['advertencias'][0]
+                    ?? 'Sin cupón en cupones_a_pagar: no se descarga hasta resolver la referencia.';
+                $mensaje = 'No se descarga el pago: '.$detalle
+                    .' Resolvá la referencia en cupones_a_pagar y vuelva a cargar el archivo.';
+                $resumen->omitidos++;
+                $resumen->agregarError($mensaje, $nroRegistro);
+                foreach ($avisosPagoRepetido as $aviso) {
+                    $resumen->agregarAdvertencia($aviso, $nroRegistro);
+                }
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $nroRegistro,
+                    'canal' => $canalEtiqueta,
+                    'idFacturaBuscado' => $idFacturaBuscado,
+                    'modalidadIdentificacion' => $modalidadMatch,
+                    'estado' => 'no_encontrado',
+                    'detalle' => $detalle,
+                ]);
+
+                continue;
+            }
+
+            $idCuotaGen = (int) $cuotaGenerada->id;
+            if (isset($cuotasVistasEnArchivo[$idCuotaGen])) {
+                $avisosPagoRepetido[] = 'La cuota ya tiene otro pago en este archivo (registro '
+                    .$cuotasVistasEnArchivo[$idCuotaGen].'); posible pago doble.';
+            }
+            $cuotasVistasEnArchivo[$idCuotaGen] = $nroRegistro;
+
+            $idEncontrado = (string) ($cupon->id_factura ?? '');
+            $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
+            if ($avisosPagoRepetido !== []) {
+                $detalleEncontrado = $avisosPagoRepetido[0];
+            } elseif ($detalleMatch !== '') {
+                $detalleEncontrado = $detalleMatch;
+            } elseif ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
+                $detalleEncontrado = 'Encontrado con id_factura '.$idEncontrado;
+            } else {
+                $detalleEncontrado = null;
+            }
+
+            $cuotaGenerada->loadMissing(['cuota', 'legajo', 'curso', 'beca']);
+
+            $montos = SiroDescargaRendicionCalculo::calcular($linea, $cuotaGenerada, $cupon);
+            if (! ($montos['descargable'] ?? false)) {
+                $bloqueosCupon++;
+                $detalle = $montos['advertencias'][0] ?? 'No se pudo desglosar el pago desde el cupón.';
+                $resumen->omitidos++;
+                $resumen->agregarError($detalle, $nroRegistro);
+                foreach ($avisosPagoRepetido as $aviso) {
+                    $resumen->agregarAdvertencia($aviso, $nroRegistro);
+                }
+                foreach ($match['advertencias'] as $adv) {
+                    $resumen->agregarAdvertencia($adv, $nroRegistro);
+                }
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $nroRegistro,
+                    'canal' => $canalEtiqueta,
+                    'idFacturaBuscado' => $idFacturaBuscado,
+                    'modalidadIdentificacion' => $modalidadMatch,
+                    'estado' => 'no_encontrado',
+                    'detalle' => $detalle,
+                ]);
+
+                continue;
+            }
+
+            $advertencias = array_merge($avisosPagoRepetido, $montos['advertencias'], $match['advertencias']);
+            $fechaPago = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaPago']);
+            $fechaAcred = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaAcreditacion']);
+            $fechVenc1 = $cupon->fecha1venc?->format('Y-m-d')
+                ?? SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechVenc1'])
+                ?? $cuotaGenerada->venc1?->format('Y-m-d');
+
+            $pendientes[] = [
+                'nroRegistro' => $nroRegistro,
+                'linea' => $linea,
+                'cuotaGenerada' => $cuotaGenerada,
+                'cupon' => $cupon,
+                'montos' => $montos,
+                'avisosPagoRepetido' => $avisosPagoRepetido,
+                'advertencias' => $advertencias,
+                'fechaPago' => $fechaPago,
+                'fechaAcred' => $fechaAcred,
+                'fechVenc1' => $fechVenc1,
+                'idFacturaBuscado' => $idFacturaBuscado,
+                'modalidadIdentificacion' => $modalidadMatch,
+                'canalEtiqueta' => $canalEtiqueta,
+                'detalleEncontrado' => $detalleEncontrado,
+            ];
+
+            // Índice en memoria: evita duplicar la misma cadena/id dentro del mismo archivo.
+            self::registrarEnIndicePlanilla($linea, $indicePlanilla);
+        }
+
+        if ($bloqueosCupon > 0) {
+            $resumen->agregarError(
+                'No se descargó ningún pago de este archivo: hay '.$bloqueosCupon
+                .' registro(s) sin cupón resoluble en cupones_a_pagar (o desglose inválido).'
+                .' Corrija esas referencias y vuelva a cargar.',
+            );
+            foreach ($pendientes as $pendiente) {
+                $resumen->omitidos++;
+                $resumen->agregarRegistroArchivo([
+                    'linea' => $pendiente['nroRegistro'],
+                    'canal' => $pendiente['canalEtiqueta'],
+                    'idFacturaBuscado' => $pendiente['idFacturaBuscado'],
+                    'modalidadIdentificacion' => $pendiente['modalidadIdentificacion'],
+                    'estado' => 'omitido',
+                    'detalle' => 'No descargado: hay cupones sin resolver en el archivo.',
+                ]);
+            }
+
+            return [
+                'resumen' => $resumen,
+                'planilla' => $planilla->refresh(),
+            ];
+        }
+
         DB::transaction(function () use (
-            $lineas,
+            $pendientes,
             $planilla,
-            $idTerlec,
             $nroPlanilla,
             $nombreArchivo,
             &$resumen,
-            &$idsPagoVistos,
-            &$cuotasVistasEnArchivo,
             &$fechasAcred,
             &$indicePlanilla,
         ): void {
-            foreach ($lineas as $indice => $lineaCruda) {
-                $lineaCruda = rtrim((string) $lineaCruda, "\r\n");
-                if ($lineaCruda === '') {
-                    continue;
-                }
-
-                $nroRegistro = $indice + 1;
-                $linea = SiroDescargaRendicionLinea::parsear($lineaCruda);
-                if ($linea === null) {
-                    $resumen->omitidos++;
-                    $resumen->agregarAdvertencia(
-                        'Formato inválido (menos de '.SiroDescargaRendicionLinea::LARGO_MINIMO.' caracteres).',
-                        $nroRegistro,
-                    );
-                    $resumen->agregarRegistroArchivo([
-                        'linea' => $nroRegistro,
-                        'canal' => '—',
-                        'idFacturaBuscado' => '—',
-                        'modalidadIdentificacion' => '—',
-                        'estado' => 'omitido',
-                        'detalle' => 'Formato inválido.',
-                    ]);
-
-                    continue;
-                }
-
-                $resolucion = SiroDescargaRendicionIdFactura::resolucionDesdeLinea($linea, $idTerlec);
-                $idFacturaBuscado = $resolucion['idFactura'] ?? '—';
-                $modalidadIdentificacion = $resolucion['modalidadEtiqueta'] !== ''
-                    ? $resolucion['modalidadEtiqueta']
-                    : '—';
-                $canal = trim((string) ($linea['canalAbrev'] ?? ''));
-                $canalEtiqueta = $canal !== '' ? $canal : '—';
-
-                // Canales no presentes en cuotastipopago.abrev = rechazo SIRO (BPR, DDR, MCR, VSR, …).
-                // Se informan en el modal de carga y no se persisten en rendicionesroela.
-                if (! SiroDescargaRendicionCanal::esMedioPagoConocido($canal)) {
-                    $detalleRechazo = SiroDescargaRendicionCanal::detalleRechazoCanal(
-                        $canal,
-                        (string) ($linea['textoTrasCanal'] ?? ''),
-                    );
-                    $resumen->rechazos++;
-                    $resumen->agregarAdvertencia($detalleRechazo, $nroRegistro);
-                    $resumen->agregarRegistroArchivo([
-                        'linea' => $nroRegistro,
-                        'canal' => $canalEtiqueta,
-                        'idFacturaBuscado' => $idFacturaBuscado,
-                        'modalidadIdentificacion' => $modalidadIdentificacion,
-                        'estado' => 'rechazo',
-                        'detalle' => $detalleRechazo,
-                    ]);
-
-                    continue;
-                }
-
-                $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
-                if ($motivoDuplicadoPlanilla !== null) {
-                    $resumen->omitidos++;
-                    $resumen->agregarAdvertencia($motivoDuplicadoPlanilla, $nroRegistro);
-                    $resumen->agregarRegistroArchivo([
-                        'linea' => $nroRegistro,
-                        'canal' => $canalEtiqueta,
-                        'idFacturaBuscado' => $idFacturaBuscado,
-                        'modalidadIdentificacion' => $modalidadIdentificacion,
-                        'estado' => 'omitido',
-                        'detalle' => 'Registro ya cargado en esta planilla.',
-                    ]);
-
-                    continue;
-                }
-
-                $avisosPagoRepetido = [];
-                $idPago = (string) ($linea['idPagoSiro'] ?? '');
-                if ($idPago !== '' && $idPago !== '0000000000') {
-                    if (isset($idsPagoVistos[$idPago])) {
-                        $avisosPagoRepetido[] = 'Id de pago SIRO duplicado en el archivo: '.$idPago.'; se registra igual (posible pago doble).';
-                    } else {
-                        $idsPagoVistos[$idPago] = true;
-                    }
-
-                    $nroPlanillaPrevia = self::nroPlanillaImpactadoPorIdPagoSiro($idPago);
-                    if ($nroPlanillaPrevia !== null) {
-                        $avisosPagoRepetido[] = 'El pago SIRO '.$idPago.' ya fue impactado en la planilla '
-                            .$nroPlanillaPrevia.'; se registra igual (posible pago doble).';
-                    }
-                }
-
-                $match = SiroDescargaRendicionCupon::resolver($linea, $idTerlec);
-                $cuotaGenerada = $match['cuotaGenerada'];
-                if ($cuotaGenerada === null) {
-                    $resumen->omitidos++;
-                    foreach ($match['advertencias'] as $adv) {
-                        $resumen->agregarAdvertencia($adv, $nroRegistro);
-                    }
-                    foreach ($avisosPagoRepetido as $aviso) {
-                        $resumen->agregarAdvertencia($aviso, $nroRegistro);
-                    }
-                    $resumen->agregarRegistroArchivo([
-                        'linea' => $nroRegistro,
-                        'canal' => $canalEtiqueta,
-                        'idFacturaBuscado' => $idFacturaBuscado,
-                        'modalidadIdentificacion' => $match['modalidadIdentificacion'] !== ''
-                            ? $match['modalidadIdentificacion']
-                            : $modalidadIdentificacion,
-                        'estado' => 'no_encontrado',
-                        'detalle' => $match['advertencias'][0] ?? 'Cupón no encontrado.',
-                    ]);
-
-                    continue;
-                }
-
-                $idCuotaGen = (int) $cuotaGenerada->id;
-                if (isset($cuotasVistasEnArchivo[$idCuotaGen])) {
-                    $avisosPagoRepetido[] = 'La cuota ya tiene otro pago en este archivo (registro '
-                        .$cuotasVistasEnArchivo[$idCuotaGen].'); posible pago doble.';
-                }
-                $cuotasVistasEnArchivo[$idCuotaGen] = $nroRegistro;
-
-                $idEncontrado = (string) ($match['cupon']?->id_factura ?? '');
-                $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
-                if ($avisosPagoRepetido !== []) {
-                    $detalleEncontrado = $avisosPagoRepetido[0];
-                } elseif ($detalleMatch !== '') {
-                    $detalleEncontrado = $detalleMatch;
-                } elseif ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
-                    $detalleEncontrado = 'Encontrado con id_factura '.$idEncontrado;
-                } else {
-                    $detalleEncontrado = null;
-                }
-
-                $cuotaGenerada->loadMissing(['cuota', 'legajo', 'curso', 'beca']);
-
-                $montos = SiroDescargaRendicionCalculo::calcular($linea, $cuotaGenerada, $match['cupon']);
-                $advertencias = array_merge($match['advertencias'], $montos['advertencias'], $avisosPagoRepetido);
-
-                $fechaPago = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaPago']);
-                $fechaAcred = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaAcreditacion']);
-                $fechVenc1 = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechVenc1']);
+            foreach ($pendientes as $pendiente) {
+                $linea = $pendiente['linea'];
+                $cuotaGenerada = $pendiente['cuotaGenerada'];
+                $montos = $pendiente['montos'];
+                $fechaAcred = $pendiente['fechaAcred'];
 
                 if ($fechaAcred !== null) {
                     $fechasAcred[] = $fechaAcred;
                 }
 
-                $obs = self::obsDesdeAdvertencias($advertencias);
+                $obs = self::obsParaFormularioPlanilla(
+                    $pendiente['avisosPagoRepetido'],
+                    $montos['advertencias'],
+                );
 
                 RendicionRoela::query()->create([
-                    'fechaPago' => $fechaPago,
+                    'fechaPago' => $pendiente['fechaPago'],
                     'fechaAcreditacion' => $fechaAcred,
                     'idCuotastipopago' => SiroDescargaRendicionCanal::idCuotastipopago((string) $linea['canalAbrev']),
                     'idLegajos' => (int) $cuotaGenerada->idLegajos,
                     'nroPlanilla' => $nroPlanilla,
                     'idCuotas' => (int) $cuotaGenerada->idCuotas,
-                    'fechVenc1' => $fechVenc1 ?? $cuotaGenerada->venc1?->format('Y-m-d'),
+                    'fechVenc1' => $pendiente['fechVenc1'],
                     'importe' => $montos['importe'],
                     'pagado' => $montos['pagado'],
                     'interes' => $montos['interes'],
@@ -202,7 +286,7 @@ final class SiroDescargaRendicionArchivo
                     'nombreArchivo' => $nombreArchivo,
                     'cadenaPago' => (string) $linea['cadenaPago'],
                     'idCuotasbecas' => (int) ($cuotaGenerada->idCuotasbecas ?? 0),
-                    'idCuotasgeneradas' => $idCuotaGen,
+                    'idCuotasgeneradas' => (int) $cuotaGenerada->id,
                     'impactado' => 0,
                     'idCursos' => (int) ($cuotaGenerada->idCursos ?? 0),
                     'obs' => $obs,
@@ -213,18 +297,16 @@ final class SiroDescargaRendicionArchivo
                 $resumen->procesados++;
                 $resumen->montoPagado = round($resumen->montoPagado + $montos['pagado'], 2);
                 $resumen->agregarRegistroArchivo([
-                    'linea' => $nroRegistro,
-                    'canal' => $canalEtiqueta,
-                    'idFacturaBuscado' => $idFacturaBuscado,
-                    'modalidadIdentificacion' => $match['modalidadIdentificacion'] !== ''
-                        ? $match['modalidadIdentificacion']
-                        : $modalidadIdentificacion,
+                    'linea' => $pendiente['nroRegistro'],
+                    'canal' => $pendiente['canalEtiqueta'],
+                    'idFacturaBuscado' => $pendiente['idFacturaBuscado'],
+                    'modalidadIdentificacion' => $pendiente['modalidadIdentificacion'],
                     'estado' => 'encontrado',
-                    'detalle' => $detalleEncontrado,
+                    'detalle' => $pendiente['detalleEncontrado'],
                 ]);
 
-                foreach ($advertencias as $adv) {
-                    $resumen->agregarAdvertencia($adv, $nroRegistro);
+                foreach ($pendiente['advertencias'] as $adv) {
+                    $resumen->agregarAdvertencia($adv, $pendiente['nroRegistro']);
                 }
             }
 
@@ -248,13 +330,42 @@ final class SiroDescargaRendicionArchivo
     }
 
     /**
-     * @param  list<string>  $advertencias
+     * Observaciones del form de planilla: pago repetido y avisos de monto.
+     * No incluye el match provisorio de puesta en marcha (sigue en el modal de carga).
+     *
+     * @param  list<string>  $avisosPagoRepetido
+     * @param  list<string>  $advertenciasMontos
      */
-    private static function obsDesdeAdvertencias(array $advertencias): ?string
+    public static function obsParaFormularioPlanilla(array $avisosPagoRepetido, array $advertenciasMontos = []): ?string
     {
-        $texto = implode(' | ', array_slice($advertencias, 0, 3));
+        $partes = [];
+        foreach (array_merge($avisosPagoRepetido, $advertenciasMontos) as $texto) {
+            $texto = trim((string) $texto);
+            if ($texto === '' || self::esAdvertenciaMatchProvisorio($texto)) {
+                continue;
+            }
+            if (! in_array($texto, $partes, true)) {
+                $partes[] = $texto;
+            }
+        }
+
+        $texto = implode(' | ', array_slice($partes, 0, 3));
 
         return $texto !== '' ? mb_substr($texto, 0, 500) : null;
+    }
+
+    public static function mensajePagoRepetidoPlanilla(string $idPago, int $nroPlanillaPrevia): string
+    {
+        $idPago = trim($idPago);
+
+        return 'Pago repetido: pagado por primera vez en planilla '.$nroPlanillaPrevia
+            .($idPago !== '' ? ' (SIRO '.$idPago.').' : '.');
+    }
+
+    public static function esAdvertenciaMatchProvisorio(string $texto): bool
+    {
+        return str_contains($texto, 'Match provisorio')
+            || str_contains($texto, 'Provisorio upload cercano');
     }
 
     public static function normalizarNombreArchivo(string $nombre): string

@@ -152,6 +152,35 @@ class SiroDescargaRendicionDetalle extends Component
         $this->dispatch('se-swal-exito', mensaje: 'Se eliminaron todos los pagos descargados de la planilla.');
     }
 
+    /**
+     * Elimina la cabecera de planilla solo si no tiene pagos en rendicionesroela.
+     */
+    public function borrarPlanilla(): void
+    {
+        abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
+
+        $planilla = $this->planilla();
+        abort_if($planilla === null, 404);
+
+        if (RendicionRoela::query()->where('nroPlanilla', $this->nroPlanilla)->exists()) {
+            $this->dispatch('se-swal-error', mensaje: 'No se puede borrar la planilla: tiene pagos descargados. Primero elimine los registros.');
+
+            return;
+        }
+
+        if ((int) ($planilla->impactado ?? 0) === 1) {
+            $this->dispatch('se-swal-error', mensaje: 'No se puede borrar una planilla ya impactada.');
+
+            return;
+        }
+
+        $nro = (int) $planilla->nroPlanilla;
+        $planilla->delete();
+
+        session()->flash('se_swal_exito', 'Planilla Nº '.$nro.' eliminada.');
+        $this->redirectRoute('cuotas.siro-descarga', navigate: true);
+    }
+
     public function borrarRendicion(int $id): void
     {
         abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);

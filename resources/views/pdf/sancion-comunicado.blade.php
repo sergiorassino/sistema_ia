@@ -13,6 +13,9 @@
         .alumno-curso { font-weight: 400; text-transform: none; }
         .lugar-fecha { text-align: right; margin: 0 0 8px 0; font-size: 8pt; }
         p { margin: 0 0 5px 0; }
+        /* Zona narrativa (motivo / solicitada por): letra más chica, negrita intacta */
+        .zona-motivo { font-size: 8pt; line-height: 1.25; }
+        .zona-motivo p { margin: 0 0 4px 0; }
         .label { font-weight: 700; }
         .totales { margin-top: 6px; font-size: 8pt; line-height: 1.25; }
         .totales .label { font-weight: 700; }
@@ -43,11 +46,13 @@
             <span class="alumno-curso"> de {{ $cursoLabel }}</span>
         @endif
     </p>
-    <p class="lugar-fecha">{{ $lineaLugarFecha }}</p>
+    <div class="zona-motivo">
+        <p class="lugar-fecha">{{ $lineaLugarFecha }}</p>
 
-    <p>Solicito que al/a la mencionado/a estudiante se le aplique una medida disciplinaria por:</p>
-    <p><strong>{{ $motivo }}</strong></p>
-    <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+        <p>Solicito que al/a la mencionado/a estudiante se le aplique una medida disciplinaria por:</p>
+        <p><strong>{{ $motivo }}</strong></p>
+        <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+    </div>
 
     <div class="totales">
         <p>Hasta la fecha registra un total de:</p>
@@ -79,15 +84,17 @@
     <div class="hr"></div>
 
     {{-- BLOQUE 2 --}}
-    <p class="lugar-fecha">{{ $lineaLugarFecha }}</p>
+    <div class="zona-motivo">
+        <p class="lugar-fecha">{{ $lineaLugarFecha }}</p>
 
-    <p>
-        Me dirijo a Uds. para comunicarles que el/la estudiante
-        <span class="alumno-nombre">{{ $alumnoNombre }}</span>@if(trim($cursoLabel) !== '')<span class="alumno-curso"> de {{ $cursoLabel }}</span>@endif,
-        ha sido sancionado/a con <strong>{{ (int) $cantidad }} {{ $tipoSancion }}</strong> por el siguiente motivo:
-    </p>
-    <p><strong>{{ $motivo }}</strong></p>
-    <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+        <p>
+            Me dirijo a Uds. para comunicarles que el/la estudiante
+            <span class="alumno-nombre">{{ $alumnoNombre }}</span>@if(trim($cursoLabel) !== '')<span class="alumno-curso"> de {{ $cursoLabel }}</span>@endif,
+            ha sido sancionado/a con <strong>{{ (int) $cantidad }} {{ $tipoSancion }}</strong> por el siguiente motivo:
+        </p>
+        <p><strong>{{ $motivo }}</strong></p>
+        <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+    </div>
 
     <div class="totales">
         <p>Hasta la fecha registra un total de:</p>

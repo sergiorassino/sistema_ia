@@ -78,9 +78,8 @@ class SancionComunicadoPdfController extends Controller
         if ($solicitadaPor === '') {
             $solicitadaPor = $sancion->profesor?->nombre_completo ?? '';
         }
-        if ($solicitadaPor !== '' && ! Str::startsWith(Str::lower($solicitadaPor), 'prof')) {
-            $solicitadaPor = 'Prof. '.$solicitadaPor;
-        }
+        // Quitar prefijo "Prof." / "Prof," / "Prof " (no tocar "Profesor/a…").
+        $solicitadaPor = trim((string) preg_replace('/^prof[.,]?\s+/iu', '', $solicitadaPor));
 
         // Totales "hasta la fecha" (del año/matrícula actual)
         $totales = Sancion::query()
