@@ -9,7 +9,7 @@ Si el tenant activa el boletín EPQ (`CalificacionesSecundarioModulos::BOLETIN`)
 ## Modalidades / variantes
 
 - Layout único: `BoletinConsultaCalificacionesTcpdf` (A4 apaisado).
-- Opción de impresión: **Mostrar promedios** / **No mostrar promedios** — solo oculta o muestra la columna «Prom. Final» en el PDF; **no calcula ni borra** `calificaciones.calif`.
+- Opción de impresión: **Mostrar promedios** / **No mostrar promedios** (`mostrarPromedios` = 1|0 en Livewire; no usar `bool` con `<select value="0">`) — solo oculta o muestra la columna «Prom. Final» en el PDF; **no calcula ni borra** `calificaciones.calif`.
 
 La misma clase TCPDF sirve a la **consulta de calificaciones** (marca de agua, sin firmas) y al portal familia; ahí el promedio se muestra siempre (default `mostrarPromedios = true`).
 
