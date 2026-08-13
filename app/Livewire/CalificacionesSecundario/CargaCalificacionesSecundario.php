@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Js;
 use Livewire\Component;
 
 /**
@@ -22,12 +23,11 @@ use Livewire\Component;
  * 1) El usuario elige curso y materia (IDs reales de `materias.id`).
  * 2) Se listan filas de `calificaciones` para ese curso/materia/ciclo lectivo
  *    con matrícula regular (`matricula.idCondiciones = 1`).
- * 3) Cada celda editable guarda con `saveCell()` (disparado desde Blade con `wire:blur` / `wire:change`).
- *    Las notas ingresadas en módulos (ic**) y coloquios (Dic/Feb) deben existir en `notaspermitidas`
- *    para el `idNivel` del contexto (si hay al menos una fila configurada para ese nivel).
- *    Tras guardar: se relee solo la fila tocada desde `calificaciones` (sin JOIN).
- *    Las notas no permitidas se filtran en el navegador (lista en la vista) para no disparar el servidor;
- *    el servidor igual valida por seguridad (lectura mínima de la celda si llegara un valor inválido).
+ * 3) Cada celda editable guarda con `saveCell()` (focusout / `wire:change` TEA).
+ *    Las notas de módulos (ic**) y coloquios (Dic/Feb) deben existir en `notaspermitidas`
+ *    para el `idNivel` del contexto (si hay filas para ese nivel).
+ *    `saveCell` es renderless: no remorph de la grilla ni reenvío del snapshot de filas (~800 KB).
+ *    El promedio `calif` se actualiza en el DOM vía `seCalifApplyCellResult`.
  *
  * Seguridad:
  * - Todas las consultas/mutaciones se filtran por `schoolCtx()` (nivel + año lectivo) y por curso/materia elegidos.
@@ -44,21 +44,19 @@ class CargaCalificacionesSecundario extends Component
     public ?int $materiaId = null;
 
     /**
-     * Filas renderizadas en la grilla.
+     * Filas de la grilla (solo request actual; no van en el snapshot Livewire).
      *
-     * Clave: `calificaciones.id` (int). Esto permite updates O(1) y `wire:key` estable por fila.
+     * Clave: `calificaciones.id`. Se recargan desde BD en cada render completo (curso/materia/modal).
      *
      * @var array<int, array<string, mixed>>
      */
-    public array $rows = [];
+    protected array $rows = [];
 
     /**
      * Lista de notas permitidas para `schoolCtx()->idNivel` (cargada con la grilla).
      *
-     * Es un array **secuencial de strings** (no mapa por clave): en PHP, claves numéricas como `"10"`
-     * se convierten a entero y rompen el JSON hacia el navegador (`10` vs `"10"` en `Set.has`).
-     *
-     * Debe ser `public` para que Livewire lo conserve entre requests al guardar por celda.
+     * Array secuencial de strings (no mapa): claves `"10"` en PHP se convierten a int y rompen el JSON.
+     * `public` y chico: hace falta entre requests de `saveCell` (renderless) para validar en servidor.
      *
      * @var list<string>
      */
@@ -193,7 +191,7 @@ class CargaCalificacionesSecundario extends Component
     }
 
     /**
-     * Columnas de `calificaciones` necesarias para sincronizar la grilla sin JOIN a `legajos`.
+     * Columnas de `calificaciones` usadas al armar la grilla (referencia / selects puntuales).
      *
      * @return list<string>
      */
@@ -209,48 +207,15 @@ class CargaCalificacionesSecundario extends Component
     }
 
     /**
-     * Copia desde un registro `calificaciones` a `$this->rows[$id]` (mantiene `alumno` / `id` ya cargados en `loadGrid`).
+     * @return array<int, array<string, mixed>>
      */
-    protected function mergeCalificacionDbAFila(int $id, object $r): void
+    protected function rowsParaVista(): array
     {
-        if (! isset($this->rows[$id])) {
-            return;
+        if ($this->cursoId && $this->materiaId && $this->rows === []) {
+            $this->loadGrid();
         }
 
-        // `ord` en UI es correlativo 1..n (asignado en fetchRowsSnapshot); no pisar con BD.
-        foreach ([
-            'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
-            'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
-            'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
-        ] as $c) {
-            $this->rows[$id][$c] = (string) ($r->{$c} ?? '');
-        }
-        $this->rows[$id]['dic'] = (string) ($r->dic ?? '');
-        $this->rows[$id]['feb'] = (string) ($r->feb ?? '');
-        $this->rows[$id]['calif'] = (string) ($r->calif ?? '');
-        $this->rows[$id]['tea'] = ((int) ($r->tea ?? 0)) === 1;
-    }
-
-    /**
-     * Una sola lectura por PK tras guardado válido o TEA (sin JOIN).
-     */
-    protected function refreshCalificacionRowFromDatabase(int $id): void
-    {
-        if (! $this->cursoId || ! $this->materiaId) {
-            return;
-        }
-
-        $ctx = schoolCtx();
-        $r = DB::table('calificaciones')
-            ->where('id', $id)
-            ->where('idTerlec', (int) $ctx->idTerlec)
-            ->where('idCursos', (int) $this->cursoId)
-            ->where('idMaterias', (int) $this->materiaId)
-            ->first($this->columnasCalificacionSoloTabla());
-
-        if ($r) {
-            $this->mergeCalificacionDbAFila($id, $r);
-        }
+        return $this->rows;
     }
 
     /**
@@ -440,13 +405,16 @@ class CargaCalificacionesSecundario extends Component
     }
 
     /**
-     * Guarda una celda puntual en `calificaciones`.
+     * Guarda una celda puntual en `calificaciones` sin remorph de la grilla.
      *
-     * - Se ejecuta desde la vista en `blur` para inputs (sale del campo) y en `change` para checkbox.
-     * - Luego de guardar notas de módulos (`ic01..ic28`), recalcula/persiste `calif` vía `syncPromedioAnual()`.
+     * - `skipRender`: el snapshot no trae las filas; la UI ya tiene el valor en el input.
+     * - Si cambia un módulo, recalcula `calif` y lo empuja al DOM con `seCalifApplyCellResult`.
      */
     public function saveCell(int $id, string $field, mixed $value): void
     {
+        // Evita remorph (~800 KB) y pérdida de foco al navegar con flechas/Enter.
+        $this->skipRender();
+
         if ($this->modoPortalDocente) {
             if ($this->cargaNotasOffBloqueaEdicion()) {
                 return;
@@ -455,7 +423,6 @@ class CargaCalificacionesSecundario extends Component
             PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
         }
 
-        // Rate limit suave: evita bursts si el usuario navega rápido con teclado.
         $key = 'calificacionesSecundario:carga:cell:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 240)) {
             return;
@@ -471,7 +438,6 @@ class CargaCalificacionesSecundario extends Component
 
         $ctx = schoolCtx();
 
-        // Revalidación de alcance: el `id` debe pertenecer al curso/materia/ciclo actual.
         $exists = DB::table('calificaciones')
             ->where('id', $id)
             ->where('idTerlec', (int) $ctx->idTerlec)
@@ -486,15 +452,11 @@ class CargaCalificacionesSecundario extends Component
         $value = is_string($value) ? trim($value) : $value;
 
         if ($field === 'tea') {
-            // TEA: booleano persistido como 0/1 (coherente con checkbox).
-            $payload = ['tea' => $value ? 1 : 0];
-            DB::table('calificaciones')->where('id', $id)->update($payload);
-            $this->refreshCalificacionRowFromDatabase($id);
+            DB::table('calificaciones')->where('id', $id)->update(['tea' => $value ? 1 : 0]);
 
             return;
         }
 
-        // Validación por tipo de columna (límites coherentes con columnas VARCHAR legacy).
         $rules = [
             'value' => match ($field) {
                 'dic', 'feb' => ['nullable', 'string', 'max:10'],
@@ -511,31 +473,47 @@ class CargaCalificacionesSecundario extends Component
         $strVal = (string) ($value ?? '');
         if ($this->notasPermitidasActiva() && $this->campoSujetoANotasPermitidas($field)) {
             if ($strVal !== '' && ! $this->notaPermitidaParaCatalogoActual($strVal)) {
-                // No persistir (caso raro: bypass del chequeo en el navegador). Solo alinear la celda desde BD.
                 $guardado = (string) (DB::table('calificaciones')
                     ->where('id', $id)
                     ->where('idTerlec', (int) $ctx->idTerlec)
                     ->where('idCursos', (int) $this->cursoId)
                     ->where('idMaterias', (int) $this->materiaId)
                     ->value($field) ?? '');
-                if (isset($this->rows[$id])) {
-                    $this->rows[$id][$field] = $guardado;
-                }
+
+                $this->emitirResultadoCelda([
+                    'ok' => false,
+                    'id' => $id,
+                    'field' => $field,
+                    'value' => $guardado,
+                    'calif' => null,
+                ]);
 
                 return;
             }
         }
 
-        // Persistencia del campo editado (string); luego una lectura por PK (sin JOIN) para devolver estado real.
         DB::table('calificaciones')->where('id', $id)->update([$field => $strVal]);
 
-        // Promedio anual: solo depende de módulos (Eval/JIS). No recalculamos al editar Dic/Feb/TEA.
+        $calif = null;
         if ($this->debeRecalcularPromedioAnual($field)) {
-            $this->syncPromedioAnual($id);
+            $calif = $this->syncPromedioAnual($id);
         }
 
-        $this->refreshCalificacionRowFromDatabase($id);
-        $this->resetErrorBag('cell.'.$id.'.'.$field);
+        $this->emitirResultadoCelda([
+            'ok' => true,
+            'id' => $id,
+            'field' => $field,
+            'value' => $strVal,
+            'calif' => $calif,
+        ]);
+    }
+
+    /**
+     * @param  array{ok: bool, id: int, field: string, value: string|int|null, calif: string|null}  $payload
+     */
+    protected function emitirResultadoCelda(array $payload): void
+    {
+        $this->js('window.seCalifApplyCellResult && window.seCalifApplyCellResult('.Js::from($payload).')');
     }
 
     /**
@@ -543,21 +521,18 @@ class CargaCalificacionesSecundario extends Component
      */
     protected function debeRecalcularPromedioAnual(string $field): bool
     {
-        // Solo módulos (Eval/JIS). No recalcula por TEA ni por campos finales (Dic/Feb/Pr.Final).
         return preg_match('/^ic(0[1-9]|1[0-9]|2[0-8])$/', $field) === 1;
     }
 
     /**
      * Recalcula y persiste `calif` en función de `ic01..ic28` ya guardados en BD.
      *
-     * Único punto del sistema que invoca `PromedioAnualCalificacionesSecundario::calcular()` (docs/05 §7).
-     * Importante: relee desde DB para evitar inconsistencias si hubiera más de un update encadenado.
+     * @return string Promedio persistido (puede ser vacío)
      */
-    protected function syncPromedioAnual(int $id): void
+    protected function syncPromedioAnual(int $id): string
     {
         $ctx = schoolCtx();
 
-        // Tomamos solo los campos necesarios para el cálculo (menos ruido y menos datos movidos).
         $row = DB::table('calificaciones')
             ->where('id', $id)
             ->where('idTerlec', (int) $ctx->idTerlec)
@@ -570,7 +545,7 @@ class CargaCalificacionesSecundario extends Component
             ]);
 
         if (! $row) {
-            return;
+            return '';
         }
 
         $arr = [];
@@ -587,9 +562,7 @@ class CargaCalificacionesSecundario extends Component
 
         DB::table('calificaciones')->where('id', $id)->update(['calif' => $calif]);
 
-        if (isset($this->rows[$id])) {
-            $this->rows[$id]['calif'] = $calif;
-        }
+        return $calif;
     }
 
     /**
@@ -647,6 +620,7 @@ class CargaCalificacionesSecundario extends Component
 
         $notasPermitidasLista = $this->notasPermitidasLista;
         $notasPermitidasActiva = $this->notasPermitidasActiva();
+        $rows = $this->rowsParaVista();
 
         $modoPortalDocente = $this->modoPortalDocente;
         $pdfUrl = null;
@@ -671,6 +645,7 @@ class CargaCalificacionesSecundario extends Component
                 'modoPortalDocente',
                 'pdfUrl',
                 'urlLista',
+                'rows',
             ),
             $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente),
         );
