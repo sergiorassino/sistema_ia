@@ -11,14 +11,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * Consultas y almacenamiento de certificados PDF del módulo Capacitación Docente.
  *
- * Disco `privado` → ento/capacitacion-docente/{tenantSlug}/{id_nivel}/{uuid}.pdf
- * (mismo criterio que foto-carnet y doc-estudiante).
+ * Disco `privado` → ento/capacitacion-docente/{tenantSlug}/{id_nivel}/{dni}_{id}.pdf
+ * (mismo criterio de disco que foto-carnet y doc-estudiante).
  */
 final class CapacitacionDocenteService
 {
@@ -186,10 +185,32 @@ final class CapacitacionDocenteService
         return null;
     }
 
-    public static function guardarCertificado(int $idNivel, TemporaryUploadedFile $archivo): string
+    /** Solo dígitos del DNI; si vacío, usa "sin-dni". */
+    public static function dniParaArchivo(mixed $dni): string
     {
-        $nombre = Str::uuid()->toString().'.pdf';
-        $dir = self::CARPETA.'/'.tenantSlug().'/'.$idNivel;
+        $solo = preg_replace('/\D+/', '', (string) $dni) ?? '';
+
+        return $solo !== '' ? $solo : 'sin-dni';
+    }
+
+    public static function nombreArchivoCertificado(mixed $dni, int $idCapacitacion): string
+    {
+        return self::dniParaArchivo($dni).'_'.$idCapacitacion.'.pdf';
+    }
+
+    public static function directorioRelativo(int $idNivel): string
+    {
+        return self::CARPETA.'/'.tenantSlug().'/'.$idNivel;
+    }
+
+    public static function guardarCertificado(
+        int $idNivel,
+        mixed $dni,
+        int $idCapacitacion,
+        TemporaryUploadedFile $archivo,
+    ): string {
+        $nombre = self::nombreArchivoCertificado($dni, $idCapacitacion);
+        $dir = self::directorioRelativo($idNivel);
         $disk = Storage::disk(self::DISK);
         $disk->makeDirectory($dir);
         $path = $archivo->storeAs($dir, $nombre, self::DISK);
