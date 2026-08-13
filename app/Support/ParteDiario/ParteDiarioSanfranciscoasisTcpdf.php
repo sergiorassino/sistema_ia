@@ -49,7 +49,8 @@ final class ParteDiarioSanfranciscoasisTcpdf extends TCPDF
 
     private const LOGO_ALTO = 22.0;
 
-    private const GAP_POST_ENCABEZADO = 3.0;
+    /** Hueco compacto para que ~38 regulares entren en una hoja Legal con el bloque de firmas. */
+    private const GAP_POST_ENCABEZADO = 1.0;
 
     private const FIRMA_LINEA_ALTO = 2.2;
 
