@@ -16,11 +16,18 @@ class AceptacionDocumentoFamilia extends Component
         abort_unless(tenantAutogestionActualizacionDatosRequiereDocumentos(), 404);
         abort_unless(MatriculaWebDocumentos::claveValida($tipo), 404);
 
-        $this->tipo = $tipo;
-
-        if (ActualizacionDatosPersonalesSanFranciscoAsis::contexto() === null) {
+        $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
+        if ($ctx === null) {
             abort(404);
         }
+
+        if (ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($ctx['matricula'])) {
+            $this->redirectRoute('alumnos.actualizacion-datos', navigate: true);
+
+            return;
+        }
+
+        $this->tipo = $tipo;
 
         if (! ActualizacionDatosPersonalesSanFranciscoAsis::documentoDisponible($tipo)) {
             session()->flash('error', 'El documento no está disponible para su nivel. Contacte a la institución.');
@@ -36,8 +43,6 @@ class AceptacionDocumentoFamilia extends Component
         }
 
         if (ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($ctx['matricula'])) {
-            session()->flash('error', 'La actualización no está habilitada.');
-
             $this->redirectRoute('alumnos.actualizacion-datos', navigate: true);
 
             return;

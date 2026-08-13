@@ -67,6 +67,27 @@ final class BloqueosMatriculaConsulta
             });
     }
 
+    /**
+     * IDs de matrícula del listado actual (mismo filtro de curso que la grilla).
+     *
+     * @return Collection<int, int>
+     */
+    public static function idsDelListado(int $idCurso = 0): Collection
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+        if ($idTerlec < 1) {
+            return collect();
+        }
+
+        $idCurso = self::validarIdCurso($idCurso);
+
+        return self::queryBase($idTerlec, $idCurso)
+            ->pluck('idMatricula')
+            ->map(fn ($id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->values();
+    }
+
     public static function matriculaEnAlcance(int $idMatricula): ?object
     {
         if ($idMatricula < 1) {

@@ -114,6 +114,8 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public bool $bloqueado = false;
 
+    public string $mensajeBloqueo = '';
+
     public bool $mostrarAvisoDocumentosPendientes = false;
 
     public bool $mostrarAvisoCamposIncompletos = false;
@@ -147,7 +149,9 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
-        $this->bloqueado = ActualizacionDatosPersonalesSanFranciscoAsis::estaBloqueado($matricula);
+        $estadoBloqueo = ActualizacionDatosPersonalesSanFranciscoAsis::estadoBloqueo($matricula);
+        $this->bloqueado = $estadoBloqueo['bloqueado'];
+        $this->mensajeBloqueo = $estadoBloqueo['mensaje'];
 
         foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
@@ -202,7 +206,9 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
     public function guardar(): void
     {
         if ($this->bloqueado) {
-            $this->addError('reglamApenom', 'La actualización de datos no está habilitada. Contacte a secretaría.');
+            $this->addError('reglamApenom', $this->mensajeBloqueo !== ''
+                ? $this->mensajeBloqueo
+                : 'La actualización de datos no está habilitada. Contacte a secretaría.');
 
             return;
         }

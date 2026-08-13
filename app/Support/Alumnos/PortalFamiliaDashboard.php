@@ -8,6 +8,7 @@ use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
 use App\Support\InformeInasistencias;
+use App\Support\MatriculaBloqueos;
 
 /**
  * Escritorio del portal familia — accesos rápidos y datos para widgets.
@@ -22,7 +23,9 @@ final class PortalFamiliaDashboard
      *   descripcion: string,
      *   url: string,
      *   externo: bool,
-     *   icono: string
+     *   icono: string,
+     *   aviso?: string,
+     *   aviso_titulo?: string
      * }>
      */
     public static function accesosRapidos(): array
@@ -82,8 +85,10 @@ final class PortalFamiliaDashboard
             ];
         }
 
+        $restriccionFichaYDatos = MatriculaBloqueos::paraEstudianteActual();
+
         if (tenantAutogestionActualizacionDatosHabilitada()) {
-            $accesos[] = [
+            $accesoDatos = [
                 'id' => 'actualizacion-datos',
                 'titulo' => 'Actualización de datos personales',
                 'descripcion' => 'Revise y actualice los datos del legajo.',
@@ -91,10 +96,15 @@ final class PortalFamiliaDashboard
                 'externo' => false,
                 'icono' => 'datos',
             ];
+            if ($restriccionFichaYDatos['bloqueada']) {
+                $accesoDatos['aviso'] = $restriccionFichaYDatos['mensaje'];
+                $accesoDatos['aviso_titulo'] = 'Actualización de datos';
+            }
+            $accesos[] = $accesoDatos;
         }
 
         if (tenantAutogestionFichaMatriculaHabilitada()) {
-            $accesos[] = [
+            $accesoFicha = [
                 'id' => 'ficha-matricula',
                 'titulo' => 'Imprimir ficha de matrícula',
                 'descripcion' => 'Descargue la ficha en PDF.',
@@ -102,6 +112,12 @@ final class PortalFamiliaDashboard
                 'externo' => true,
                 'icono' => 'ficha',
             ];
+            if ($restriccionFichaYDatos['bloqueada']) {
+                $accesoFicha['aviso'] = $restriccionFichaYDatos['mensaje'];
+                $accesoFicha['aviso_titulo'] = 'Ficha de matrícula';
+                $accesoFicha['externo'] = false;
+            }
+            $accesos[] = $accesoFicha;
         }
 
         if (tenantAutogestionArancelesEscolaresHabilitada()) {

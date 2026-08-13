@@ -91,6 +91,10 @@ class ParametrosSistemaForm extends Component
 
     public bool $verDatosFicha = true;
 
+    public string $mensajeBloqPeda = '';
+
+    public string $mensajeBloqAdmi = '';
+
     public function setTab(string $tab): void
     {
         if (in_array($tab, ['institucion', 'parametros', 'correo'], true)) {
@@ -187,6 +191,8 @@ class ParametrosSistemaForm extends Component
             'bimesOffMensaje' => ['nullable', 'string', 'max:500'],
             'imprBoleOff' => ['boolean'],
             'verDatosFicha' => ['boolean'],
+            'mensajeBloqPeda' => ['nullable', 'string', 'max:500'],
+            'mensajeBloqAdmi' => ['nullable', 'string', 'max:500'],
         ];
 
         if ($this->puedeEditarCamposSiro()) {
@@ -649,6 +655,8 @@ class ParametrosSistemaForm extends Component
         $this->verDatosFicha = Schema::hasColumn('ento', 'verDatosFicha')
             ? self::entoFlagActivo($attrs['verDatosFicha'] ?? 1)
             : true;
+        $this->mensajeBloqPeda = (string) ($attrs['mensajeBloqPeda'] ?? '');
+        $this->mensajeBloqAdmi = (string) ($attrs['mensajeBloqAdmi'] ?? '');
     }
 
     /**
@@ -668,6 +676,8 @@ class ParametrosSistemaForm extends Component
         $this->asignarTextoPayload($payload, 'bimesOffMensaje', $this->bimesOffMensaje);
         $this->asignarFlagPayload($payload, 'imprBoleOff', $this->imprBoleOff);
         $this->asignarFlagPayload($payload, 'verDatosFicha', $this->verDatosFicha);
+        $this->asignarTextoPayload($payload, 'mensajeBloqPeda', $this->mensajeBloqPeda);
+        $this->asignarTextoPayload($payload, 'mensajeBloqAdmi', $this->mensajeBloqAdmi);
 
         return $payload;
     }

@@ -11,19 +11,79 @@
         </div>
     </section>
 
-    <div class="se-toolbar mt-6 flex-col !items-stretch gap-4 sm:flex-row sm:items-end">
-        <div class="min-w-0 flex-1 max-w-xl">
-            <label for="bloqueos-curso" class="form-label">Mostrar alumnos</label>
-            <select id="bloqueos-curso"
-                    wire:model.live="idCurso"
-                    class="form-select mt-1.5">
-                <option value="0">Todos los cursos (orden alfabético)</option>
-                @foreach ($opcionesCurso as $opcion)
-                    <option value="{{ $opcion['id'] }}">{{ $opcion['etiqueta'] }}</option>
-                @endforeach
-            </select>
+    @php
+        $cursoFiltro = $idCurso > 0 ? $opcionesCurso->firstWhere('id', $idCurso) : null;
+        $etiquetaCursoFiltro = is_array($cursoFiltro)
+            ? (string) ($cursoFiltro['etiqueta'] ?? 'el curso seleccionado')
+            : ($idCurso > 0 ? 'el curso seleccionado' : 'el nivel activo');
+        $sujetoMasivo = $totalAlumnos === 1
+            ? '1 alumno regular'
+            : $totalAlumnos.' alumnos regulares';
+        $alcanceMasivo = $sujetoMasivo.' de '.$etiquetaCursoFiltro.' (listado actual, todas las páginas)';
+        $msgBloquearPed = '¿Aplicar bloqueo pedagógico a '.$alcanceMasivo.'?';
+        $msgDesbloquearPed = '¿Quitar el bloqueo pedagógico a '.$alcanceMasivo.'?';
+        $msgBloquearAdm = '¿Aplicar bloqueo administrativo a '.$alcanceMasivo.'?';
+        $msgDesbloquearAdm = '¿Quitar el bloqueo administrativo a '.$alcanceMasivo.'?';
+    @endphp
+
+    <div class="se-toolbar mt-6 flex-col !items-stretch gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div class="min-w-0 flex-1 max-w-xl">
+                <label for="bloqueos-curso" class="form-label">Mostrar alumnos</label>
+                <select id="bloqueos-curso"
+                        wire:model.live="idCurso"
+                        class="form-select mt-1.5">
+                    <option value="0">Todos los cursos (orden alfabético)</option>
+                    @foreach ($opcionesCurso as $opcion)
+                        <option value="{{ $opcion['id'] }}">{{ $opcion['etiqueta'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <span class="se-pill tabular-nums">{{ $totalAlumnos }} alumno{{ $totalAlumnos === 1 ? '' : 's' }} regular{{ $totalAlumnos === 1 ? '' : 'es' }}</span>
         </div>
-        <span class="se-pill tabular-nums">{{ $totalAlumnos }} alumno{{ $totalAlumnos === 1 ? '' : 's' }} regular{{ $totalAlumnos === 1 ? '' : 'es' }}</span>
+
+        @if ($totalAlumnos > 0)
+            <div class="flex flex-col gap-4 border-t border-accent-200 pt-4 sm:flex-row sm:flex-wrap sm:items-end">
+                <div>
+                    <p class="form-label">Bloqueo pedagógico (masivo)</p>
+                    <div class="mt-1.5 flex flex-wrap gap-2">
+                        <button type="button"
+                                x-on:click="window.seSwalConfirmar(@js($msgBloquearPed), 'Bloqueo pedagógico', { confirmButtonText: 'Sí, bloquear', icon: 'warning' }).then(ok => ok && $wire.aplicarBloqueoMasivo('bloqmatr', true))"
+                                wire:loading.attr="disabled"
+                                wire:target="aplicarBloqueoMasivo"
+                                class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:opacity-60">
+                            Bloquear todos
+                        </button>
+                        <button type="button"
+                                x-on:click="window.seSwalConfirmar(@js($msgDesbloquearPed), 'Desbloqueo pedagógico', { confirmButtonText: 'Sí, desbloquear' }).then(ok => ok && $wire.aplicarBloqueoMasivo('bloqmatr', false))"
+                                wire:loading.attr="disabled"
+                                wire:target="aplicarBloqueoMasivo"
+                                class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:opacity-60">
+                            Desbloquear todos
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <p class="form-label">Bloqueo administrativo (masivo)</p>
+                    <div class="mt-1.5 flex flex-wrap gap-2">
+                        <button type="button"
+                                x-on:click="window.seSwalConfirmar(@js($msgBloquearAdm), 'Bloqueo administrativo', { confirmButtonText: 'Sí, bloquear', icon: 'warning' }).then(ok => ok && $wire.aplicarBloqueoMasivo('bloqadmi', true))"
+                                wire:loading.attr="disabled"
+                                wire:target="aplicarBloqueoMasivo"
+                                class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:opacity-60">
+                            Bloquear todos
+                        </button>
+                        <button type="button"
+                                x-on:click="window.seSwalConfirmar(@js($msgDesbloquearAdm), 'Desbloqueo administrativo', { confirmButtonText: 'Sí, desbloquear' }).then(ok => ok && $wire.aplicarBloqueoMasivo('bloqadmi', false))"
+                                wire:loading.attr="disabled"
+                                wire:target="aplicarBloqueoMasivo"
+                                class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:opacity-60">
+                            Desbloquear todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="se-card mt-6 overflow-hidden p-0">
@@ -31,6 +91,7 @@
             <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Alumnos regulares del nivel</p>
             <p class="mt-1 text-sm text-neutral-600">
                 Haga clic en <strong>SÍ</strong> o <strong>NO</strong> para alternar cada bloqueo. Los cambios se guardan al instante.
+                Las acciones masivas aplican a todos los alumnos del filtro actual (todas las páginas).
             </p>
         </div>
 
@@ -108,4 +169,11 @@
             @endif
         @endif
     </div>
+
+    @script
+    <script>
+        $wire.on('se-swal-exito', (e) => { window.seSwalExito?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+        $wire.on('se-swal-error', (e) => { window.seSwalError?.(e.mensaje ?? e[0]?.mensaje ?? ''); });
+    </script>
+    @endscript
 </div>

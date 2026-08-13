@@ -8,7 +8,7 @@
         body { font-family: system-ui, sans-serif; background: #F4F8F9; color: #333; margin: 0; padding: 2rem; }
         .box { max-width: 28rem; margin: 2rem auto; background: #fff; border: 1px solid #C1D7DA; border-radius: 1rem; padding: 1.5rem; }
         h1 { font-size: 1.125rem; margin: 0 0 0.75rem; }
-        p { margin: 0 0 1rem; line-height: 1.5; font-size: 0.9375rem; }
+        p { margin: 0 0 1rem; line-height: 1.5; font-size: 0.9375rem; white-space: pre-line; }
         a { color: #40848D; font-weight: 600; }
     </style>
 </head>

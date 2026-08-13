@@ -38,7 +38,25 @@ final class ActualizacionDatosPersonalesComun
 
     public static function estaBloqueado(Matricula $matricula): bool
     {
-        return MatriculaBloqueos::estaBloqueado($matricula);
+        return self::estadoBloqueo($matricula)['bloqueado'];
+    }
+
+    public static function mensajeBloqueo(Matricula $matricula): string
+    {
+        return self::estadoBloqueo($matricula)['mensaje'];
+    }
+
+    /**
+     * @return array{bloqueado: bool, mensaje: string}
+     */
+    public static function estadoBloqueo(Matricula $matricula): array
+    {
+        $restriccion = MatriculaBloqueos::impideFichaYDatosAutogestion($matricula);
+
+        return [
+            'bloqueado' => $restriccion['bloqueada'],
+            'mensaje' => $restriccion['mensaje'],
+        ];
     }
 
     /**
