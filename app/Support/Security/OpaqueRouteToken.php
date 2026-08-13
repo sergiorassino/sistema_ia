@@ -60,6 +60,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_DOC_PP_ARCHIVO = 'doc-pp.archivo';
 
+    public const PURPOSE_CAPACITACION_DOCENTE_CERT = 'capacitacion-docente.certificado';
+
     public const PURPOSE_LEGAJO_FOTO_CARNET = 'abm.legajos.foto-carnet';
 
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
@@ -206,6 +208,13 @@ final class OpaqueRouteToken
     {
         return self::encodePayload(self::PURPOSE_DOC_PP_ARCHIVO, [
             'd' => $idDocPp,
+        ]);
+    }
+
+    public static function forCapacitacionDocenteCertificado(int $idCapacitacion): string
+    {
+        return self::encodePayload(self::PURPOSE_CAPACITACION_DOCENTE_CERT, [
+            'c' => $idCapacitacion,
         ]);
     }
 

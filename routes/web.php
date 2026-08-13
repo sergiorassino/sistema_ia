@@ -98,6 +98,8 @@ use App\Livewire\Docentes\Inasistencias\EnvioMasivoInasistenciasDocentes;
 use App\Livewire\Docentes\Inasistencias\InasistenciasDocentesIndex;
 use App\Livewire\Docentes\Inasistencias\RankingInasistenciasMateriasCursos;
 use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosIndex;
+use App\Livewire\Docentes\Capacitacion\CapacitacionDocenteIndex;
+use App\Http\Controllers\Docentes\CapacitacionDocenteCertificadoController;
 use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosForm;
 use App\Http\Controllers\Docentes\RankingInasistenciasMateriasCursosCsvController;
 use App\Support\InasistenciasDocentes;
@@ -1455,6 +1457,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/', CertificacionServiciosIndex::class)->name('docentes.certificacion-servicios');
         Route::post('/pdf', CertificacionServiciosPdfController::class)->name('docentes.certificacion-servicios.pdf');
         Route::get('/{idPersonal}', CertificacionServiciosForm::class)->whereNumber('idPersonal')->name('docentes.certificacion-servicios.form');
+    });
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::CAPACITACION_DOCENTE)->prefix('docentes/capacitacion')->group(function () {
+        Route::get('/', CapacitacionDocenteIndex::class)->name('docentes.capacitacion');
+        Route::get('/certificado/{ref}', CapacitacionDocenteCertificadoController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('docentes.capacitacion.certificado');
     });
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
