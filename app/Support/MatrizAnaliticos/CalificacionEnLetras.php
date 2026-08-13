@@ -6,35 +6,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Calificación en letras para analítico (tabla enletras + códigos especiales + numéricas).
+ * Calificación en letras para analítico (tabla enletras + numéricas).
  *
- * La tabla legacy `enletras` suele traer solo códigos cualitativos (adeud, aprob, A, S…).
- * Las notas numéricas (6, 6.00, 7.50…) se convierten a «seis c/00», «siete c/50», «diez» si no hay fila en la tabla.
+ * Códigos cualitativos (adeud, aprob, excep, A, S…) y notas numéricas se resuelven primero
+ * contra la tabla legacy `enletras`. Si no hay fila, las numéricas (0–10) pasan a «seis c/00»,
+ * «siete c/50», «diez»; el resto queda vacío (sin fallback a mayúsculas).
  */
 final class CalificacionEnLetras
 {
     /** @var array<string, string>|null */
     private static ?array $tabla = null;
 
+    /** @var list<array{nota: string, enLetras: string}>|null */
+    private static ?array $abreviaturas = null;
+
     public static function resolver(string $calif): string
     {
-        $c = mb_strtolower(trim($calif));
-        if ($c === '') {
+        if (trim($calif) === '') {
             return '';
-        }
-
-        $especial = match ($c) {
-            'aprob' => 'APROBADO',
-            'adeud' => 'ADEUDA',
-            'elimi' => 'ELIMINADO',
-            'excep' => 'EXCEPCIONAL',
-            'apequ' => 'APROB. POR EQUIV.',
-            'a-ams' => 'A-AMS',
-            'a-as' => 'A-AS',
-            default => null,
-        };
-        if ($especial !== null) {
-            return $especial;
         }
 
         $desdeTabla = self::buscarEnTabla($calif);
@@ -47,7 +36,7 @@ final class CalificacionEnLetras
             return $numerica;
         }
 
-        return mb_strtoupper($calif, 'UTF-8');
+        return '';
     }
 
     /**
@@ -91,10 +80,23 @@ final class CalificacionEnLetras
         return self::cardinal0a99($entero).' c/'.str_pad((string) $centesimas, 2, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Códigos no numéricos de `enletras` (adeud, aprob, A…) para la leyenda de carga.
+     *
+     * @return list<array{nota: string, enLetras: string}>
+     */
+    public static function abreviaturas(): array
+    {
+        self::cargarTabla();
+
+        return self::$abreviaturas ?? [];
+    }
+
     /** @internal tests */
     public static function olvidarCache(): void
     {
         self::$tabla = null;
+        self::$abreviaturas = null;
     }
 
     private static function buscarEnTabla(string $calif): ?string
@@ -144,32 +146,64 @@ final class CalificacionEnLetras
     /** @return array<string, string> */
     private static function tabla(): array
     {
+        self::cargarTabla();
+
+        return self::$tabla ?? [];
+    }
+
+    private static function cargarTabla(): void
+    {
         if (self::$tabla !== null) {
-            return self::$tabla;
+            return;
         }
 
         self::$tabla = [];
+        self::$abreviaturas = [];
+
         try {
             if (! Schema::hasTable('enletras')) {
-                return self::$tabla;
+                return;
             }
 
             $rows = DB::table('enletras')->select(['nota', 'enLetras'])->get();
         } catch (\Throwable) {
-            return self::$tabla;
+            return;
         }
 
+        $vistos = [];
         foreach ($rows as $row) {
             $nota = trim((string) ($row->nota ?? ''));
             $letras = trim((string) ($row->enLetras ?? ''));
             if ($nota === '' || $letras === '') {
                 continue;
             }
+
             self::$tabla[mb_strtolower($nota, 'UTF-8')] = $letras;
             self::$tabla[$nota] = $letras;
+
+            if (self::esClaveNumerica($nota)) {
+                continue;
+            }
+
+            $clave = mb_strtolower($nota, 'UTF-8');
+            if (isset($vistos[$clave])) {
+                continue;
+            }
+            $vistos[$clave] = true;
+            self::$abreviaturas[] = [
+                'nota' => $nota,
+                'enLetras' => $letras,
+            ];
         }
 
-        return self::$tabla;
+        usort(self::$abreviaturas, static function (array $a, array $b): int {
+            return strcasecmp($a['nota'], $b['nota']);
+        });
+    }
+
+    private static function esClaveNumerica(string $nota): bool
+    {
+        return is_numeric(str_replace(',', '.', $nota));
     }
 
     private static function cardinal0a99(int $n): string
