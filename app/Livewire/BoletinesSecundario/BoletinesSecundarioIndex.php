@@ -30,10 +30,10 @@ class BoletinesSecundarioIndex extends Component
     public ?int $cursoId = null;
 
     /**
-     * Si el PDF incluye la columna «Prom. Final» (solo visual; no calcula ni borra datos).
-     * Se envía a los POST de PDF individual y lote.
+     * Si el PDF incluye la columna «Prom. Final» (1 = sí, 0 = no).
+     * Entero (no bool): Livewire + `<select value="0">` pierde el false al re-renderizar.
      */
-    public bool $mostrarPromedios = true;
+    public int $mostrarPromedios = 1;
 
     /** IDs de matrícula marcados (`matriculas.id` como string). */
     public array $matriculasSeleccionadas = [];
@@ -44,9 +44,19 @@ class BoletinesSecundarioIndex extends Component
         $this->matriculasSeleccionadas = [];
     }
 
+    public function updatedMostrarPromedios(mixed $value): void
+    {
+        $this->mostrarPromedios = ((int) $value) === 1 ? 1 : 0;
+    }
+
     public function updatedMatriculasSeleccionadas(): void
     {
         $this->normalizarMatriculasSeleccionadas();
+    }
+
+    public function debeMostrarPromedios(): bool
+    {
+        return $this->mostrarPromedios === 1;
     }
 
     public function seleccionarTodasMatriculas(): void
