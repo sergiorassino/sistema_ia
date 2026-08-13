@@ -343,13 +343,35 @@ class CargaColoquiosSecundario extends Component
         return $this->notasPermitidasLista !== [];
     }
 
+    /**
+     * Comparar siempre como string: Livewire puede hidratar `"7"` del catálogo como int `7`,
+     * y `in_array(..., true)` rechazaba la nota en silencio.
+     */
     protected function notaPermitidaParaCatalogoActual(string $nota): bool
     {
         if ($nota === '') {
             return true;
         }
 
-        return in_array($nota, $this->notasPermitidasLista, true);
+        $nota = trim($nota);
+        foreach ($this->notasPermitidasLista as $permitida) {
+            if (trim((string) $permitida) === $nota) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hydrate(): void
+    {
+        $this->notasPermitidasLista = array_values(array_filter(
+            array_map(
+                static fn ($n) => trim((string) $n),
+                $this->notasPermitidasLista
+            ),
+            static fn (string $n) => $n !== ''
+        ));
     }
 
     public function saveCell(int $id, string $field, mixed $value): void

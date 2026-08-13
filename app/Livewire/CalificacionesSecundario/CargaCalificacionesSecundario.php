@@ -373,14 +373,39 @@ class CargaCalificacionesSecundario extends Component
         return $this->notasPermitidasLista !== [];
     }
 
-    /** Nota vacía se acepta (celda sin dato); el resto debe coincidir con el catálogo (comparación estricta de string). */
+    /**
+     * Nota vacía se acepta (celda sin dato); el resto debe coincidir con el catálogo.
+     *
+     * Comparar siempre como string: tras round-trip Livewire, valores numéricos del catálogo
+     * (`"7"`) pueden hidratarse como int (`7`) y `in_array(..., true)` rechazaba la nota
+     * en silencio (el JS del cliente sí normaliza con String() y no muestra toast).
+     */
     protected function notaPermitidaParaCatalogoActual(string $nota): bool
     {
         if ($nota === '') {
             return true;
         }
 
-        return in_array($nota, $this->notasPermitidasLista, true);
+        $nota = trim($nota);
+        foreach ($this->notasPermitidasLista as $permitida) {
+            if (trim((string) $permitida) === $nota) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Re-normaliza el catálogo tras cada hidratación Livewire (evita ints vs strings). */
+    public function hydrate(): void
+    {
+        $this->notasPermitidasLista = array_values(array_filter(
+            array_map(
+                static fn ($n) => trim((string) $n),
+                $this->notasPermitidasLista
+            ),
+            static fn (string $n) => $n !== ''
+        ));
     }
 
     /**
