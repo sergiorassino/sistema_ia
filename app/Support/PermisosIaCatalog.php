@@ -214,6 +214,9 @@ final class PermisosIaCatalog
     /** ABM de tipos de sanción disciplinaria (texto de notificación a padres, remitente y refuerzo mail). */
     public const SANCION_TIPOS_CONFIG = 91;
 
+    /** Capacitación docente: registro de cursos, certificado PDF y resumen por año. */
+    public const CAPACITACION_DOCENTE = 93;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -308,6 +311,7 @@ final class PermisosIaCatalog
             ['id' => 87, 'orden' => self::CERTIFICACION_SERVICIOS, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Certificación de servicios: carga de períodos de servicio y licencias, e impresión del certificado PDF.'],
             ['id' => 90, 'orden' => self::REGISTRO_ASISTENCIA, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Registro de asistencia: impresión PDF mensual por curso(s) (con o sin datos) y administración de feriados del nivel.'],
             ['id' => 91, 'orden' => self::SANCION_TIPOS_CONFIG, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Tipos de sanción disciplinaria: alta, edición y baja de tipos; configurar texto de notificación a padres, remitente y refuerzo por correo.'],
+            ['id' => 93, 'orden' => self::CAPACITACION_DOCENTE, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Capacitación docente: alta, edición y consulta de cursos realizados por docentes; certificado PDF y resumen por año.'],
         ];
     }
 

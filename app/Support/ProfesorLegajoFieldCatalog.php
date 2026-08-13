@@ -23,6 +23,8 @@ final class ProfesorLegajoFieldCatalog
         'numreg' => 'Nº registro',
         'apto' => 'Apto médico',
         'incapac' => 'Incapacidad',
+        'art28' => 'Art. 28',
+        'fichaIncompat' => 'Ficha incompatibilidad',
         'escalafonD' => 'Escalafón docente',
         'escalafonE' => 'Escalafón estatutario',
         'cargo' => 'Cargo',

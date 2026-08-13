@@ -282,6 +282,17 @@
     .gf.gf-cuotas-busqueda .gf-row {
         width: 100%;
     }
+
+    /* Capacitación docente — listado a todo el ancho del card */
+    .gf.gf-capacitacion-docente {
+        display: block;
+        width: 100%;
+        min-width: 56rem;
+    }
+    .gf.gf-capacitacion-docente .gf-head,
+    .gf.gf-capacitacion-docente .gf-row {
+        width: 100%;
+    }
     .gf.gf-cuotas-busqueda .gf-th.gf-th-nombre,
     .gf.gf-cuotas-busqueda .gf-td.gf-td-nombre {
         flex: 1 1 12rem;
@@ -2632,6 +2643,12 @@
         width: max-content;
         max-width: 100%;
         border-collapse: collapse;
+    }
+    /* Gana a .se-matriz-list-tabla (w-full) cuando ambas clases van juntas */
+    .se-matriz-list-tabla.se-grid-pocos-campos {
+        width: max-content;
+        max-width: 100%;
+        min-width: 0;
     }
     .se-grid-pocos-campos th:not(:last-child),
     .se-grid-pocos-campos td:not(:last-child) {

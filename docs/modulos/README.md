@@ -17,6 +17,7 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 | Actualización de datos personales (familia) | [actualizacion-datos-personales.md](actualizacion-datos-personales.md) |
 | Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
 | Bloqueos de matrícula | [bloqueos-matricula.md](bloqueos-matricula.md) |
+| Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |
 
 ## Plantilla
 
