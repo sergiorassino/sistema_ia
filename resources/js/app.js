@@ -243,6 +243,40 @@ function seCalifCallSaveCell(root, rowId, field, value) {
     return false;
 }
 
+/**
+ * Resultado renderless de `saveCell`: revierte nota inválida o actualiza Pr.Final sin remorph.
+ * @param {{ok?: boolean, id?: number, field?: string, value?: string|number|null, calif?: string|null}} payload
+ */
+window.seCalifApplyCellResult = function seCalifApplyCellResult(payload) {
+    if (!payload || payload.id == null || !payload.field) {
+        return;
+    }
+    const id = String(payload.id);
+    const field = String(payload.field);
+
+    if (payload.ok === false) {
+        const inp = document.getElementById(`se-calif-${id}-${field}`);
+        if (inp && inp.tagName === 'INPUT' && inp.type !== 'checkbox') {
+            inp.value = payload.value == null ? '' : String(payload.value);
+            inp.dataset.seCalifLast = inp.value;
+            window.seCalifToastInvalida?.(inp);
+        }
+        return;
+    }
+
+    if (payload.calif != null) {
+        const califInp = document.getElementById(`se-calif-${id}-calif`);
+        if (califInp) {
+            califInp.value = String(payload.calif);
+        }
+    }
+
+    const saved = document.getElementById(`se-calif-${id}-${field}`);
+    if (saved && saved.tagName === 'INPUT' && saved.type !== 'checkbox') {
+        saved.dataset.seCalifLast = saved.value ?? '';
+    }
+};
+
 /** Filas × columnas de inputs de nota (orden DOM = orden visual en la tabla). */
 function seCalifBuildNavMatrix(tbody) {
     const matrix = [];
@@ -1450,148 +1484,169 @@ function bindCalifInicialObsMateriaTablas() {
 }
 
 function bindCalifCargaTablas() {
-    document.querySelectorAll('[data-se-calif-tbody]').forEach((tbody) => {
-        if (tbody._seCalifBound) {
-            return;
-        }
-        tbody._seCalifBound = true;
+    // Delegación a document (una sola vez): sobrevive morph al elegir curso/materia
+    // y evita el “al principio no guarda” por tbody aún no bindeado.
+    if (window._seCalifDocBound) {
+        return;
+    }
+    window._seCalifDocBound = true;
 
-        tbody.addEventListener(
-            'focusin',
-            (e) => {
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                el.dataset.seCalifLast = el.value ?? '';
-            },
-            true,
-        );
+    document.addEventListener(
+        'focusin',
+        (e) => {
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            if (!el.closest('[data-se-calif-tbody]')) {
+                return;
+            }
+            if (!/^se-calif-\d+-.+$/.test(String(el.id || ''))) {
+                return;
+            }
+            el.dataset.seCalifLast = el.value ?? '';
+        },
+        true,
+    );
 
-        tbody.addEventListener(
-            'focusout',
-            (e) => {
-                if (tbody.getAttribute('data-se-calif-solo-lectura') === '1') {
-                    return;
-                }
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                if (el.readOnly || el.disabled) {
-                    return;
-                }
-                const m = el.id && String(el.id).match(/^se-calif-(\d+)-(.+)$/);
-                if (!m) {
-                    return;
-                }
-                const rowId = parseInt(m[1], 10);
-                const field = m[2];
-                if (field === 'calif') {
-                    return;
-                }
-                const val = (el.value || '').trim();
+    document.addEventListener(
+        'focusout',
+        (e) => {
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            const tbody = el.closest('[data-se-calif-tbody]');
+            if (!tbody) {
+                return;
+            }
+            if (tbody.getAttribute('data-se-calif-solo-lectura') === '1') {
+                return;
+            }
+            if (el.readOnly || el.disabled) {
+                return;
+            }
+            const m = el.id && String(el.id).match(/^se-calif-(\d+)-(.+)$/);
+            if (!m) {
+                return;
+            }
+            const rowId = parseInt(m[1], 10);
+            const field = m[2];
+            if (field === 'calif') {
+                return;
+            }
 
-                const activa = tbody.getAttribute('data-se-calif-activa') === '1';
-                let allowed = [];
-                try {
-                    allowed = JSON.parse(tbody.getAttribute('data-se-calif-allowed') || '[]');
-                } catch {
-                    allowed = [];
-                }
-                // Todo como string (por si el JSON trae números p. ej. 10 vs "10").
-                const set = new Set(allowed.map((x) => String(x).trim()));
+            const rawVal = el.value ?? '';
+            const val = String(rawVal).trim();
+            const last = el.dataset.seCalifLast ?? '';
 
-                if (activa && seCalifCampoConCatalogo(field) && val !== '' && !set.has(val)) {
-                    el.value = el.dataset.seCalifLast ?? '';
-                    window.seCalifToastInvalida(el);
-                    queueMicrotask(() => {
-                        el.focus();
-                        if (typeof el.select === 'function') {
-                            el.select();
-                        }
-                    });
-                    return;
-                }
+            // Navegación con flechas/Enter sin editar: no pegarle al servidor.
+            if (val === String(last).trim()) {
+                return;
+            }
 
-                const root = el.closest('[wire\\:id]');
-                if (!root) {
-                    return;
-                }
-                seCalifCallSaveCell(root, rowId, field, el.value);
-            },
-            true,
-        );
+            const activa = tbody.getAttribute('data-se-calif-activa') === '1';
+            let allowed = [];
+            try {
+                allowed = JSON.parse(tbody.getAttribute('data-se-calif-allowed') || '[]');
+            } catch {
+                allowed = [];
+            }
+            const set = new Set(allowed.map((x) => String(x).trim()));
 
-        tbody.addEventListener(
-            'keydown',
-            (e) => {
-                if (e.ctrlKey || e.metaKey || e.altKey) {
-                    return;
-                }
-                const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
-                    return;
-                }
-                if (!/^se-calif-\d+-.+$/.test(String(el.id || ''))) {
-                    return;
-                }
-                const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
-                if (!navKeys.includes(e.key)) {
-                    return;
-                }
-
-                const matrix = seCalifBuildNavMatrix(tbody);
-                const pos = seCalifFindNavPos(matrix, el);
-                if (!pos) {
-                    return;
-                }
-
-                const nrows = matrix.length;
-                const ncols = matrix[0] ? matrix[0].length : 0;
-                if (!nrows || !ncols) {
-                    return;
-                }
-
-                const { row, col } = pos;
-                let nr = row;
-                let nc = col;
-
-                if (e.key === 'ArrowLeft') {
-                    nc = col - 1;
-                } else if (e.key === 'ArrowRight') {
-                    nc = col + 1;
-                } else if (e.key === 'ArrowUp') {
-                    nr = row - 1;
-                } else if (e.key === 'ArrowDown') {
-                    nr = row + 1;
-                } else if (e.key === 'Enter') {
-                    if (row + 1 < nrows) {
-                        nr = row + 1;
-                        nc = col;
-                    } else if (col + 1 < ncols) {
-                        nr = 0;
-                        nc = col + 1;
-                    } else {
-                        return;
+            if (activa && seCalifCampoConCatalogo(field) && val !== '' && !set.has(val)) {
+                el.value = el.dataset.seCalifLast ?? '';
+                window.seCalifToastInvalida(el);
+                queueMicrotask(() => {
+                    el.focus();
+                    if (typeof el.select === 'function') {
+                        el.select();
                     }
-                }
+                });
+                return;
+            }
 
-                if (nr < 0 || nr >= nrows || nc < 0 || nc >= ncols) {
+            const root = el.closest('[wire\\:id]');
+            if (!root) {
+                return;
+            }
+            seCalifCallSaveCell(root, rowId, field, el.value);
+        },
+        true,
+    );
+
+    document.addEventListener(
+        'keydown',
+        (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            const tbody = el.closest('[data-se-calif-tbody]');
+            if (!tbody) {
+                return;
+            }
+            if (!/^se-calif-\d+-.+$/.test(String(el.id || ''))) {
+                return;
+            }
+            const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+            if (!navKeys.includes(e.key)) {
+                return;
+            }
+
+            const matrix = seCalifBuildNavMatrix(tbody);
+            const pos = seCalifFindNavPos(matrix, el);
+            if (!pos) {
+                return;
+            }
+
+            const nrows = matrix.length;
+            const ncols = matrix[0] ? matrix[0].length : 0;
+            if (!nrows || !ncols) {
+                return;
+            }
+
+            const { row, col } = pos;
+            let nr = row;
+            let nc = col;
+
+            if (e.key === 'ArrowLeft') {
+                nc = col - 1;
+            } else if (e.key === 'ArrowRight') {
+                nc = col + 1;
+            } else if (e.key === 'ArrowUp') {
+                nr = row - 1;
+            } else if (e.key === 'ArrowDown') {
+                nr = row + 1;
+            } else if (e.key === 'Enter') {
+                if (row + 1 < nrows) {
+                    nr = row + 1;
+                    nc = col;
+                } else if (col + 1 < ncols) {
+                    nr = 0;
+                    nc = col + 1;
+                } else {
                     return;
                 }
+            }
 
-                const next = matrix[nr][nc];
-                if (!next || next === el) {
-                    return;
-                }
+            if (nr < 0 || nr >= nrows || nc < 0 || nc >= ncols) {
+                return;
+            }
 
-                e.preventDefault();
-                seCalifFocusNavCell(next);
-            },
-            true,
-        );
-    });
+            const next = matrix[nr][nc];
+            if (!next || next === el) {
+                return;
+            }
+
+            e.preventDefault();
+            seCalifFocusNavCell(next);
+        },
+        true,
+    );
 }
 
 function seCiiCallCommitCell(root, key, field, value) {

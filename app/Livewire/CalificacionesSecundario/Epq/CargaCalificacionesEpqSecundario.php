@@ -105,9 +105,10 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
         return false;
     }
 
-    protected function syncPromedioAnual(int $id): void
+    protected function syncPromedioAnual(int $id): string
     {
         // EPQ: sin promedio automático.
+        return '';
     }
 
     public function saveCell(int $id, string $field, mixed $value): void
@@ -143,6 +144,7 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
 
         $notasPermitidasLista = $this->notasPermitidasLista;
         $notasPermitidasActiva = $this->notasPermitidasActiva();
+        $rows = $this->rowsParaVista();
 
         $modoPortalDocente = $this->modoPortalDocente;
         $pdfUrl = null;
@@ -174,6 +176,7 @@ class CargaCalificacionesEpqSecundario extends CargaCalificacionesSecundario
                 'modoPortalDocente',
                 'pdfUrl',
                 'urlLista',
+                'rows',
             ),
             $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente),
         );
