@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DocEstudianteTipo;
 use App\Models\Legajo;
 use App\Support\Alumnos\DocumentosEstudianteAutogestion;
+use App\Support\MatriculaBloqueos;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -20,6 +21,13 @@ class DocumentoEstudianteAutogestionPdfController extends Controller
     public function __invoke(Request $request, string $ref): Response
     {
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
+
+        $restriccion = MatriculaBloqueos::paraEstudianteActual();
+        if ($restriccion['bloqueada']) {
+            return response()->view('errors.alumno-pdf', [
+                'mensaje' => $restriccion['mensaje'],
+            ], 403);
+        }
 
         $decoded = OpaqueRouteToken::decode($ref, OpaqueRouteToken::PURPOSE_DOC_ESTUDIANTE_AUTOGESTION);
         if ($decoded === null) {

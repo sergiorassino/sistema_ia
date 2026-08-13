@@ -23,7 +23,11 @@ Helpers: `tenantAutogestionActualizacionDatosHabilitada()`, `…Implementacion()
 ## Actores y permisos
 
 - Auth guard `alumno`; matrícula del ciclo `ento.idTerlecVerNotas`.
-- Bloqueo: `MatriculaBloqueos` (misma lógica que otras pantallas de autogestión).
+- Bloqueo pedagógico (`matricula.bloqmatr`) y/o administrativo (`matricula.bloqadmi`):
+  impide **entrar** a este módulo y a Imprimir Ficha de Matrícula.
+  El mensaje es el de `ento.mensajeBloqPeda` / `ento.mensajeBloqAdmi` del nivel del alumno
+  (`MatriculaBloqueos::impideFichaYDatosAutogestion()`). Si hay ambos bloqueos, se muestran los dos textos.
+  En el menú: SweetAlert al clic (no navega). Si se abre la URL: solo el aviso, sin formulario.
 
 ## Foto carnet
 
@@ -38,6 +42,7 @@ Misma detección: `FotoCarnetLegajo::habilitadaEnSolapasLegajo()`. Persistencia 
 
 - `legajos` (datos editables según variante; `fechActDatos`; opcional `fotoCarnet`)
 - `matricula` (bloqueos / aceptaciones SFA)
+- `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
 - `campos_legajo` / `solapas_legajo` (visibilidad de foto carnet)
 - Documentos estudiante (estándar): tipos configurados por matrícula web
 
@@ -47,7 +52,7 @@ Misma detección: `FotoCarnetLegajo::habilitadaEnSolapasLegajo()`. Persistencia 
 - `app/Livewire/Alumnos/ActualizacionDatosPersonalesSanFranciscoAsisForm.php`
 - `app/Livewire/Alumnos/Concerns/ConFotoCarnetActualizacionDatos.php`
 - `app/Support/Alumnos/ActualizacionDatosPersonales*.php`
-- `app/Support/Alumnos/FotoCarnetLegajo.php`
+- `app/Support/MatriculaBloqueos.php`
 - `resources/views/livewire/alumnos/partials/foto-carnet-actualizacion.blade.php`
 
 ## Qué no hacer
@@ -55,3 +60,4 @@ Misma detección: `FotoCarnetLegajo::habilitadaEnSolapasLegajo()`. Persistencia 
 - No mostrar foto carnet si no está en solapas (aunque la columna exista).
 - No poner IDs de legajo en URLs del portal; la vista previa usa data-URL embebida.
 - No calcular promedios ni tocar calificaciones desde este módulo.
+- No dejar entrar al formulario si hay `bloqmatr` o `bloqadmi`; usar el mensaje de `ento` del nivel, no un texto genérico.

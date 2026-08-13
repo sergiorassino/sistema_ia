@@ -46,6 +46,9 @@
         </div>
     </section>
 
+    @if ($bloqueado)
+        @include('livewire.alumnos.partials.bloqueo-ficha-y-datos')
+    @else
     @include('livewire.alumnos.partials.foto-carnet-actualizacion')
 
     @if (session('error'))
@@ -62,17 +65,11 @@
         </style>
     @endif
 
-    @if ($bloqueado)
-        <div class="se-soft-card border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            La actualización de datos no está habilitada para este legajo. Comuníquese con secretaría.
-        </div>
-    @endif
-
     <p class="mb-4 text-center text-xs font-semibold uppercase tracking-wide text-red-700">
         (En aquellos casos donde no se deba consignar ningún dato, escribir un guión)
     </p>
 
-    <form wire:submit.prevent="guardar" novalidate class="space-y-4 @if($bloqueado) opacity-60 pointer-events-none @endif">
+    <form wire:submit.prevent="guardar" novalidate class="space-y-4">
         {{-- Aceptaciones --}}
         <section id="documentos-institucionales" class="se-card p-4 sm:p-5 space-y-4 scroll-mt-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">Documentos institucionales</p>
@@ -407,6 +404,7 @@
             </button>
         </div>
     </form>
+    @endif
     </div>
 
     @if ($mostrarAvisoCamposIncompletos && count($camposIncompletosAviso) > 0)

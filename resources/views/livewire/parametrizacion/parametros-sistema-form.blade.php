@@ -466,6 +466,32 @@
                 </label>
                 @error('verDatosFicha') <p class="form-error">{{ $message }}</p> @enderror
             </div>
+
+            <div class="border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-1">Bloqueos de matrícula — autogestión</p>
+                <p class="mb-4 text-xs text-neutral-500">
+                    Si el alumno tiene bloqueo pedagógico y/o administrativo, no puede entrar a Actualización de Datos Personales ni a Imprimir Ficha de Matrícula. Se muestra el mensaje del nivel correspondiente.
+                </p>
+                <div class="space-y-5">
+                    <div class="space-y-1.5 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <label class="form-label" for="param-mensajeBloqPeda">Mensaje de bloqueo pedagógico</label>
+                        <textarea id="param-mensajeBloqPeda" wire:model="mensajeBloqPeda" rows="3" maxlength="500"
+                                  class="form-input @error('mensajeBloqPeda') border-red-400 @enderror"
+                                  placeholder="Mensaje visible ante bloqueo pedagógico."></textarea>
+                        <p class="text-xs text-neutral-500">Corresponde a <span class="font-mono">mensajeBloqPeda</span>. Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                        @error('mensajeBloqPeda') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="space-y-1.5 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                        <label class="form-label" for="param-mensajeBloqAdmi">Mensaje de bloqueo administrativo</label>
+                        <textarea id="param-mensajeBloqAdmi" wire:model="mensajeBloqAdmi" rows="3" maxlength="500"
+                                  class="form-input @error('mensajeBloqAdmi') border-red-400 @enderror"
+                                  placeholder="Mensaje visible ante bloqueo administrativo."></textarea>
+                        <p class="text-xs text-neutral-500">Corresponde a <span class="font-mono">mensajeBloqAdmi</span>. Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                        @error('mensajeBloqAdmi') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
         </div>
         @elseif ($activeTab === 'correo')
         <div class="space-y-6 p-6 sm:p-7" wire:key="param-tab-correo">

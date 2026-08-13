@@ -68,6 +68,29 @@ class BloqueosMatriculaIndex extends Component
         }
     }
 
+    public function aplicarBloqueoMasivo(string $campo, bool $bloquear): void
+    {
+        abort_unless(PermisosMatriculaWeb::tiene(PermisosMatriculaWeb::BLOQUEOS_MATRICULA), 403);
+
+        $rateKey = 'matricula-web:bloqueos-masivo:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($rateKey, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados cambios masivos seguidos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        $resultado = BloqueosMatriculaService::aplicarMasivo($this->idCurso, $campo, $bloquear);
+
+        if (! $resultado['exito']) {
+            $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: $resultado['mensaje']);
+    }
+
     public function render()
     {
         $ctx = schoolCtx();

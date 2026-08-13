@@ -30,6 +30,19 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
         return ActualizacionDatosPersonalesComun::estaBloqueado($matricula);
     }
 
+    public static function mensajeBloqueo(Matricula $matricula): string
+    {
+        return ActualizacionDatosPersonalesComun::mensajeBloqueo($matricula);
+    }
+
+    /**
+     * @return array{bloqueado: bool, mensaje: string}
+     */
+    public static function estadoBloqueo(Matricula $matricula): array
+    {
+        return ActualizacionDatosPersonalesComun::estadoBloqueo($matricula);
+    }
+
     /**
      * @return array<string, bool>
      */

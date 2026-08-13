@@ -105,7 +105,11 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($accesos as $acceso)
                 <a href="{{ $acceso['url'] }}"
-                   @if ($acceso['externo']) target="_blank" rel="noopener noreferrer" @endif
+                   @if (! empty($acceso['aviso']))
+                       @click.prevent="window.seSwalAviso(@js($acceso['aviso']), @js($acceso['aviso_titulo'] ?? 'Atención'))"
+                   @elseif ($acceso['externo'])
+                       target="_blank" rel="noopener noreferrer"
+                   @endif
                    class="se-dash-access group">
                     <div class="se-dash-access-icon">
                         @include('alumnos.dashboard.partials.icono-acceso', ['icono' => $acceso['icono']])

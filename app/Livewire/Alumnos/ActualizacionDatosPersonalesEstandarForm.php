@@ -74,6 +74,8 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
 
     public bool $bloqueado = false;
 
+    public string $mensajeBloqueo = '';
+
     public bool $mostrarAvisoCamposIncompletos = false;
 
     /** @var list<array{campo: string, etiqueta: string}> */
@@ -125,7 +127,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
-        $this->bloqueado = ActualizacionDatosPersonalesEstandar::estaBloqueado($ctx['matricula']);
+        $estadoBloqueo = ActualizacionDatosPersonalesEstandar::estadoBloqueo($ctx['matricula']);
+        $this->bloqueado = $estadoBloqueo['bloqueado'];
+        $this->mensajeBloqueo = $estadoBloqueo['mensaje'];
 
         foreach (ActualizacionDatosPersonalesEstandar::atributosDesdeLegajo($legajo) as $k => $v) {
             if (property_exists($this, $k)) {
@@ -145,7 +149,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
     public function subirDocumento(string $clave): void
     {
         if ($this->bloqueado) {
-            $this->addError('archivosDocumento.'.$clave, 'La subida de documentos no está habilitada. Contacte a secretaría.');
+            $this->addError('archivosDocumento.'.$clave, $this->mensajeBloqueo !== ''
+                ? $this->mensajeBloqueo
+                : 'La subida de documentos no está habilitada. Contacte a secretaría.');
 
             return;
         }
@@ -211,7 +217,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
     public function eliminarDocumento(string $clave): void
     {
         if ($this->bloqueado) {
-            $this->addError('archivosDocumento.'.$clave, 'No puede eliminar documentos. Contacte a secretaría.');
+            $this->addError('archivosDocumento.'.$clave, $this->mensajeBloqueo !== ''
+                ? $this->mensajeBloqueo
+                : 'No puede eliminar documentos. Contacte a secretaría.');
 
             return;
         }
@@ -272,7 +280,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
     public function guardar(): void
     {
         if ($this->bloqueado) {
-            $this->addError('nombrepad', 'La actualización de datos no está habilitada. Contacte a secretaría.');
+            $this->addError('nombrepad', $this->mensajeBloqueo !== ''
+                ? $this->mensajeBloqueo
+                : 'La actualización de datos no está habilitada. Contacte a secretaría.');
 
             return;
         }

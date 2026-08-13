@@ -76,6 +76,10 @@ class Ento extends Model
 
         // Menú de Alumnos — Actualización de Datos + Ficha de Matrícula (mismo flag)
         'verDatosFicha',
+
+        // Bloqueos de matrícula — mensajes por nivel
+        'mensajeBloqPeda',
+        'mensajeBloqAdmi',
     ];
 
     protected $casts = [

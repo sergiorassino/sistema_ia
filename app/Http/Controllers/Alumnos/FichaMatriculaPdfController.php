@@ -8,6 +8,7 @@ use App\Support\Alumnos\FichaMatriculaDatos;
 use App\Support\Alumnos\FichaMatriculaMontecristoDatos;
 use App\Support\Alumnos\FichaMatriculaSanJoseTcpdf;
 use App\Support\Alumnos\FichaMatriculaSolicitudMontecristoTcpdf;
+use App\Support\MatriculaBloqueos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -20,6 +21,13 @@ class FichaMatriculaPdfController extends Controller
     public function __invoke(Request $request)
     {
         abort_unless(tenantAutogestionFichaMatriculaHabilitada(), 404);
+
+        $restriccion = MatriculaBloqueos::paraEstudianteActual();
+        if ($restriccion['bloqueada']) {
+            return response()->view('errors.alumno-pdf', [
+                'mensaje' => $restriccion['mensaje'],
+            ], 403);
+        }
 
         $key = 'alumnos-ficha-matricula-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 20)) {
