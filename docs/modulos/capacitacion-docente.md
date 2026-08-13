@@ -34,7 +34,7 @@ Tabla **nueva** (aditiva): `capacitacion_docente`.
 | `entidad_otorgante` | Institución que otorga |
 | `duracion` | Texto libre (ej. «8 horas») |
 | `modalidad` | `presencial` \| `virtual` \| `hibrida` |
-| `certificado_archivo` | Ruta relativa en disco `privado` (`storage/app/private/ento/capacitacion-docente/{tenant}/{nivel}/…`) |
+| `certificado_archivo` | Ruta relativa en disco `privado` (`storage/app/private/ento/capacitacion-docente/{tenant}/{nivel}/{dni}_{id}.pdf`) |
 
 SQL: `database/sql/create_capacitacion_docente.sql` · permiso: `database/sql/permiso_ia_orden_93_capacitacion_docente.sql`.
 
@@ -69,7 +69,7 @@ SQL: `database/sql/create_capacitacion_docente.sql` · permiso: `database/sql/pe
 1. No exponer el ID numérico del curso en la URL de descarga del PDF.
 2. No listar docentes ni cursos de otro `id_nivel` que el del contexto.
 3. No calcular el resumen por ciclo lectivo (`terlec`): el criterio es **año calendario** de `fecha`.
-4. No guardar certificados fuera del disco `privado` (`ento/capacitacion-docente/{tenant}/…`); acceso solo por controlador autenticado + token opaco.
+4. No guardar certificados fuera del disco `privado` (`ento/capacitacion-docente/{tenant}/{nivel}/{dni}_{id}.pdf`); acceso solo por controlador autenticado + token opaco.
 
 ## Checklist al modificar
 

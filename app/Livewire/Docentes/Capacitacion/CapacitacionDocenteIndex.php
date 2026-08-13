@@ -169,9 +169,8 @@ class CapacitacionDocenteIndex extends Component
             'modalidad.in' => 'Modalidad inválida.',
         ]);
 
-        CapacitacionDocenteService::scopedProfesorOrFail((int) $this->id_profesor);
+        $profesor = CapacitacionDocenteService::scopedProfesorOrFail((int) $this->id_profesor);
 
-        $rutaNueva = null;
         $rutaAnterior = null;
         $reg = null;
 
@@ -187,16 +186,6 @@ class CapacitacionDocenteIndex extends Component
 
                 return;
             }
-            try {
-                $rutaNueva = CapacitacionDocenteService::guardarCertificado($idNivel, $this->certificadoPdf);
-            } catch (\Throwable $e) {
-                $this->dispatch(
-                    'se-swal-error',
-                    mensaje: $e->getMessage() !== '' ? $e->getMessage() : 'No se pudo guardar el PDF.',
-                );
-
-                return;
-            }
         }
 
         $payload = [
@@ -209,9 +198,7 @@ class CapacitacionDocenteIndex extends Component
             'modalidad' => $this->modalidad,
         ];
 
-        if ($rutaNueva !== null) {
-            $payload['certificado_archivo'] = $rutaNueva;
-        } elseif ($this->quitarCertificado && $this->editId !== null) {
+        if ($this->quitarCertificado && $this->editId !== null && ! ($this->certificadoPdf instanceof TemporaryUploadedFile)) {
             $payload['certificado_archivo'] = null;
         }
 
@@ -220,15 +207,40 @@ class CapacitacionDocenteIndex extends Component
                 $reg->fill($payload);
                 $reg->save();
             } else {
-                CapacitacionDocente::query()->create($payload);
+                $reg = CapacitacionDocente::query()->create($payload);
             }
         } catch (QueryException $e) {
-            if ($rutaNueva !== null) {
-                CapacitacionDocenteService::eliminarCertificado($rutaNueva);
-            }
             $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar el registro en la base de datos.');
 
             return;
+        }
+
+        $rutaNueva = null;
+        if ($this->certificadoPdf instanceof TemporaryUploadedFile) {
+            try {
+                $rutaNueva = CapacitacionDocenteService::guardarCertificado(
+                    $idNivel,
+                    $profesor->dni,
+                    (int) $reg->id,
+                    $this->certificadoPdf,
+                );
+                $reg->certificado_archivo = $rutaNueva;
+                $reg->save();
+            } catch (QueryException $e) {
+                if ($rutaNueva !== null) {
+                    CapacitacionDocenteService::eliminarCertificado($rutaNueva);
+                }
+                $this->dispatch('se-swal-error', mensaje: 'No se pudo asociar el PDF al registro.');
+
+                return;
+            } catch (\Throwable $e) {
+                $this->dispatch(
+                    'se-swal-error',
+                    mensaje: $e->getMessage() !== '' ? $e->getMessage() : 'No se pudo guardar el PDF.',
+                );
+
+                return;
+            }
         }
 
         if ($rutaNueva !== null && $rutaAnterior !== null && $rutaAnterior !== '' && $rutaAnterior !== $rutaNueva) {

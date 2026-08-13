@@ -34,7 +34,10 @@ class CapacitacionDocenteCertificadoController extends Controller
             abort(404, 'El certificado no está disponible.');
         }
 
-        $nombreDescarga = 'certificado-capacitacion.pdf';
+        $nombreDescarga = basename($ruta);
+        if ($nombreDescarga === '' || $nombreDescarga === '.' || $nombreDescarga === '..') {
+            $nombreDescarga = 'certificado-capacitacion.pdf';
+        }
 
         return Storage::disk(CapacitacionDocenteService::DISK)->response($ruta, $nombreDescarga, [
             'Content-Type' => 'application/pdf',
