@@ -83,6 +83,10 @@ return [
                 'url' => 'https://sanfranciscoasis.edu.ar/administracion2/',
             ],
         ],
+        'comunicaciones' => [
+            'habilitado' => true,
+            'niveles_deshabilitados' => [1, 2],
+        ],
     ],
 
     'parte_diario' => [
