@@ -13,10 +13,15 @@ class CalificacionEnLetrasTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_codigos_especiales(): void
+    public function test_codigos_cualitativos_sin_fila_enletras_quedan_vacios(): void
     {
-        $this->assertSame('ADEUDA', CalificacionEnLetras::resolver('Adeud'));
-        $this->assertSame('APROBADO', CalificacionEnLetras::resolver('aprob'));
+        $this->assertSame('', CalificacionEnLetras::resolver('Adeud'));
+        $this->assertSame('', CalificacionEnLetras::resolver('aprob'));
+    }
+
+    public function test_abreviaturas_sin_bd_quedan_vacias(): void
+    {
+        $this->assertSame([], CalificacionEnLetras::abreviaturas());
     }
 
     public function test_notas_enteras(): void
@@ -49,6 +54,6 @@ class CalificacionEnLetrasTest extends TestCase
     {
         $this->assertNull(CalificacionEnLetras::numericaALetras('11'));
         $this->assertNull(CalificacionEnLetras::numericaALetras('abc'));
-        $this->assertSame('ABC', CalificacionEnLetras::resolver('abc'));
+        $this->assertSame('', CalificacionEnLetras::resolver('abc'));
     }
 }

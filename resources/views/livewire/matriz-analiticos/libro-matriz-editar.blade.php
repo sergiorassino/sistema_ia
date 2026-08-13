@@ -43,6 +43,15 @@
                 </div>
             @enderror
 
+            @if ($abreviaturasEnLetras !== [])
+                <p class="se-matriz-edit-hint shrink-0 px-0.5">
+                    Códigos en Calif:
+                    @foreach ($abreviaturasEnLetras as $item)
+                        <span class="whitespace-nowrap"><span class="font-semibold text-neutral-800">{{ $item['nota'] }}</span> = {{ $item['enLetras'] }}</span>@if (! $loop->last)<span aria-hidden="true"> · </span>@endif
+                    @endforeach
+                </p>
+            @endif
+
             <div class="se-matriz-edit-panel se-matriz-edit-panel--solo-grilla min-h-0 flex-1">
                 {{-- Cabecera fuera del scroll vertical (mismo patrón que cierre anual; evita bleed con sticky). --}}
                 <div class="se-cierre-anual-grilla se-matriz-excel-grilla se-matriz-excel-grilla--unified">

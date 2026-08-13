@@ -2,6 +2,7 @@
 
 namespace App\Livewire\MatrizAnaliticos;
 
+use App\Support\MatrizAnaliticos\CalificacionEnLetras;
 use App\Support\MatrizAnaliticos\LibroMatrizAnalitico;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -390,7 +391,8 @@ class LibroMatrizEditar extends Component
 
     public function render()
     {
-        return view('livewire.matriz-analiticos.libro-matriz-editar')
-            ->layout(layoutMenuStaff(), ['pageTitle' => 'Editar matriz · '.$this->alumno['apellido']]);
+        return view('livewire.matriz-analiticos.libro-matriz-editar', [
+            'abreviaturasEnLetras' => CalificacionEnLetras::abreviaturas(),
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Editar matriz · '.$this->alumno['apellido']]);
     }
 }
