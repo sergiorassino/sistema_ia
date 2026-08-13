@@ -19,8 +19,10 @@ class BoletinSecundarioPdfController extends Controller
     {
         $validated = $request->validate([
             'matricula' => ['required', 'integer', 'min:1'],
+            'mostrar_promedios' => ['sometimes', 'boolean'],
         ]);
         $idMatricula = (int) $validated['matricula'];
+        $mostrarPromedios = $request->boolean('mostrar_promedios', true);
         $uid = (string) (auth()->id() ?? '');
         $key = 'staff-boletin-secundario-pdf:'.$uid.':'.($request->ip() ?? '');
         if (RateLimiter::tooManyAttempts($key, 40)) {
@@ -45,6 +47,7 @@ class BoletinSecundarioPdfController extends Controller
             'Informe de Progreso Escolar',
             false,
             true,
+            $mostrarPromedios,
         );
 
         return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');

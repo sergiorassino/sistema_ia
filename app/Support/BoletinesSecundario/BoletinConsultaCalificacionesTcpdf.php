@@ -77,16 +77,25 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
     private bool $mostrarFirmas;
 
+    /** Si false, no se dibuja la columna «Prom. Final» (solo layout; no altera datos). */
+    private bool $mostrarPromedios;
+
     /**
      * @param  array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string}  $header
      */
-    public function __construct(array $header, string $tituloDocumento, bool $mostrarMarcaAgua, bool $mostrarFirmas)
-    {
+    public function __construct(
+        array $header,
+        string $tituloDocumento,
+        bool $mostrarMarcaAgua,
+        bool $mostrarFirmas,
+        bool $mostrarPromedios = true,
+    ) {
         parent::__construct('L', 'mm', 'A4', true, 'UTF-8', false);
         $this->header = $header;
         $this->tituloDocumento = $tituloDocumento;
         $this->mostrarMarcaAgua = $mostrarMarcaAgua;
         $this->mostrarFirmas = $mostrarFirmas;
+        $this->mostrarPromedios = $mostrarPromedios;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle($tituloDocumento);
@@ -106,8 +115,9 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         string $tituloDocumento,
         bool $mostrarMarcaAgua,
         bool $mostrarFirmas,
+        bool $mostrarPromedios = true,
     ): self {
-        $pdf = new self($header, $tituloDocumento, $mostrarMarcaAgua, $mostrarFirmas);
+        $pdf = new self($header, $tituloDocumento, $mostrarMarcaAgua, $mostrarFirmas, $mostrarPromedios);
         $pdf->AddPage();
         $pdf->dibujarHoja($consulta);
 
@@ -122,8 +132,9 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         array $consultas,
         array $header,
         string $tituloDocumento,
+        bool $mostrarPromedios = true,
     ): self {
-        $pdf = new self($header, $tituloDocumento, false, true);
+        $pdf = new self($header, $tituloDocumento, false, true, $mostrarPromedios);
         foreach ($consultas as $consulta) {
             $pdf->AddPage();
             $pdf->dibujarHoja($consulta);
@@ -284,7 +295,8 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
             $this->dibujarCeldaBay($xs[0], $y, self::ANCHOS_COL[0], self::ALTURA_FILA, 'D');
             $this->SetFont(self::FUENTE, '', 5.8);
             $this->SetXY($xs[0], $y + 0.8);
-            $wTotal = end($xs) + self::ANCHOS_COL[13] - $xs[0];
+            $idxUltima = $this->indiceUltimaColumna();
+            $wTotal = $xs[$idxUltima] + self::ANCHOS_COL[$idxUltima] - $xs[0];
             $this->Cell($wTotal, 2.5, 'Sin calificaciones registradas para esta matrícula.', 0, 0, 'C');
 
             return $y + self::ALTURA_FILA;
@@ -346,7 +358,10 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
             $this->Cell($tw, 2.5, 'R', 0, 1, 'C');
         }
 
-        $titulosCol = [11 => "Coloq.\nDic", 12 => "Coloq.\nFeb", 13 => "Prom.\nFinal"];
+        $titulosCol = [11 => "Coloq.\nDic", 12 => "Coloq.\nFeb"];
+        if ($this->mostrarPromedios) {
+            $titulosCol[13] = "Prom.\nFinal";
+        }
         foreach ($titulosCol as $idx => $txt) {
             $this->dibujarCeldaBay($xs[$idx], $y, self::ANCHOS_COL[$idx], self::ALTURA_ENC, 'D');
             $this->SetFont(self::FUENTE, 'B', 5.1);
@@ -388,15 +403,17 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
         $this->dibujarCeldaBay($xs[11], $y, self::ANCHOS_COL[11], self::ALTURA_FILA, 'D');
         $this->dibujarCeldaBay($xs[12], $y, self::ANCHOS_COL[12], self::ALTURA_FILA, 'D');
-        $this->dibujarCeldaBay($xs[13], $y, self::ANCHOS_COL[13], self::ALTURA_FILA, 'D');
         $this->SetFont(self::FUENTE, '', 5.5);
         $this->SetXY($xs[11], $y + 1);
         $this->Cell(self::ANCHOS_COL[11], 2.5, $this->valorIc($row, 'dic'), 0, 0, 'C');
         $this->SetXY($xs[12], $y + 1);
         $this->Cell(self::ANCHOS_COL[12], 2.5, $this->valorIc($row, 'feb'), 0, 0, 'C');
-        $this->SetFont(self::FUENTE, 'B', 5.5);
-        $this->SetXY($xs[13], $y + 1);
-        $this->Cell(self::ANCHOS_COL[13], 2.5, $this->valorPromedio($row), 0, 0, 'C');
+        if ($this->mostrarPromedios) {
+            $this->dibujarCeldaBay($xs[13], $y, self::ANCHOS_COL[13], self::ALTURA_FILA, 'D');
+            $this->SetFont(self::FUENTE, 'B', 5.5);
+            $this->SetXY($xs[13], $y + 1);
+            $this->Cell(self::ANCHOS_COL[13], 2.5, $this->valorPromedio($row), 0, 0, 'C');
+        }
     }
 
     /**
@@ -684,12 +701,22 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->SetDrawColor(51, 51, 51);
     }
 
+    /** Índice de la última columna dibujada (12 = Coloq. Feb, 13 = Prom. Final). */
+    private function indiceUltimaColumna(): int
+    {
+        return $this->mostrarPromedios ? 13 : 12;
+    }
+
     /** @return list<float> */
     private function posicionesXColumnas(): array
     {
         $xs = [];
         $x = self::MARGEN_IZQ;
-        foreach (self::ANCHOS_COL as $w) {
+        $ultimo = $this->indiceUltimaColumna();
+        foreach (self::ANCHOS_COL as $i => $w) {
+            if ($i > $ultimo) {
+                break;
+            }
             $xs[] = $x;
             $x += $w + self::GAP_COL;
         }

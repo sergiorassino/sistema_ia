@@ -29,6 +29,13 @@
                 @endforeach
             </select>
         </div>
+        <div class="min-w-0 flex-1 lg:max-w-xs">
+            <label for="se-boletines-mostrar-promedios" class="form-label">Promedios finales</label>
+            <select id="se-boletines-mostrar-promedios" wire:model.live="mostrarPromedios" class="form-select mt-1.5 w-full">
+                <option value="1">Mostrar promedios</option>
+                <option value="0">No mostrar promedios</option>
+            </select>
+        </div>
     </div>
 
     @if ($cursoId)
@@ -66,6 +73,7 @@
                               class="inline">
                             @csrf
                             <input type="hidden" name="curso" value="{{ (int) $cursoId }}">
+                            <input type="hidden" name="mostrar_promedios" value="{{ $mostrarPromedios ? 1 : 0 }}">
                             @foreach ($idsPdfLote as $idMat)
                                 <input type="hidden" name="matriculas[]" value="{{ (int) $idMat }}">
                             @endforeach
@@ -112,7 +120,10 @@
                                     {{ trim((string) ($mat->legajo?->nombre_completo ?? '')) === '' ? '—' : $mat->legajo->nombre_completo }}
                                 </td>
                                 <td class="py-3 pl-2 pr-5 text-right align-middle">
-                                    <x-pdf-post-matricula :action="route('boletinesSecundario.pdf')" :matricula="$mat->id">
+                                    <x-pdf-post-matricula
+                                        :action="route('boletinesSecundario.pdf')"
+                                        :matricula="$mat->id"
+                                        :fields="['mostrar_promedios' => $mostrarPromedios ? 1 : 0]">
                                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>

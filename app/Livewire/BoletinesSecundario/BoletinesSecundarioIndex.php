@@ -29,6 +29,12 @@ class BoletinesSecundarioIndex extends Component
     /** Curso seleccionado (`cursos.Id`) dentro del contexto de sesión. */
     public ?int $cursoId = null;
 
+    /**
+     * Si el PDF incluye la columna «Prom. Final» (solo visual; no calcula ni borra datos).
+     * Se envía a los POST de PDF individual y lote.
+     */
+    public bool $mostrarPromedios = true;
+
     /** IDs de matrícula marcados (`matriculas.id` como string). */
     public array $matriculasSeleccionadas = [];
 

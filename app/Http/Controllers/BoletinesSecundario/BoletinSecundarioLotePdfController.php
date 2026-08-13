@@ -31,9 +31,11 @@ class BoletinSecundarioLotePdfController extends Controller
             'curso' => ['required', 'integer', 'min:1'],
             'matriculas' => ['required', 'array', 'min:1', 'max:'.BoletinSecundarioLoteParams::MAX_MATRICULAS],
             'matriculas.*' => ['integer', 'min:1'],
+            'mostrar_promedios' => ['sometimes', 'boolean'],
         ]);
 
         $cursoId = (int) $validated['curso'];
+        $mostrarPromedios = $request->boolean('mostrar_promedios', true);
         $ids = BoletinSecundarioLoteParams::resolverIdsMatriculasDesdeLista(
             array_map('intval', $validated['matriculas']),
             $cursoId,
@@ -70,6 +72,7 @@ class BoletinSecundarioLotePdfController extends Controller
             $consultas,
             schoolPdfHeaderData(),
             'Informe de Progreso Escolar',
+            $mostrarPromedios,
         );
 
         return BoletinConsultaCalificacionesTcpdf::respuestaHttp($pdf, $slug.'.pdf');
