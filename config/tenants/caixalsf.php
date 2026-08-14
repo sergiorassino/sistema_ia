@@ -22,6 +22,10 @@ return [
     ],
 
     'autogestion' => [
+        'actualizacion_datos' => [
+            // Familia puede subir foto carnet (la solapa del ABM de legajos no alcanza sola).
+            'foto_carnet' => true,
+        ],
         'boletin_ipe_primario' => [
             'habilitado' => true,
         ],

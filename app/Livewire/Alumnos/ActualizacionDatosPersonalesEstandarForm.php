@@ -4,6 +4,7 @@ namespace App\Livewire\Alumnos;
 
 use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
+use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesEstandar;
 use App\Support\Alumnos\DocumentosEstudianteAutogestion;
 use Illuminate\Support\Facades\RateLimiter;
@@ -98,17 +99,27 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
      */
     public array $revisionInputsDocumento = [];
 
-    /** @var list<string> */
-    private const CAMPOS_EMAIL = ['emailpad', 'emailmad', 'emailtut'];
-
     public function updated(string $property): void
     {
-        if (in_array($property, self::CAMPOS_EMAIL, true)) {
-            $this->resetValidation($property);
-        }
-
         if (preg_match('/^archivosDocumento\.([^.]+)\.(\d+)$/', $property, $coincidencias) === 1) {
             $this->validarArchivoDocumentoSlotEnVivo($coincidencias[1], (int) $coincidencias[2]);
+
+            return;
+        }
+
+        $campos = array_keys(ActualizacionDatosPersonalesEstandar::etiquetasCampos());
+        if (! in_array($property, $campos, true) || ! property_exists($this, $property)) {
+            return;
+        }
+
+        if (is_string($this->{$property})) {
+            $this->{$property} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$property});
+        }
+
+        $this->resetValidation($property);
+        if ($this->getErrorBag()->isEmpty()) {
+            $this->mostrarAvisoCamposIncompletos = false;
+            $this->camposIncompletosAviso = [];
         }
     }
 
@@ -314,6 +325,7 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         }
 
         $keys = array_keys(ActualizacionDatosPersonalesEstandar::atributosDesdeLegajo($ctx['legajo']));
+        $this->normalizarCamposTexto($keys);
         $validator = Validator::make(
             $this->only($keys),
             ActualizacionDatosPersonalesEstandar::reglasValidacion(),
@@ -343,6 +355,10 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
 
         try {
             ActualizacionDatosPersonalesEstandar::guardar($ctx['legajo'], $state);
+        } catch (\RuntimeException $e) {
+            $this->addError('nombrepad', $e->getMessage());
+
+            return;
         } catch (\Throwable $e) {
             report($e);
             $this->addError('nombrepad', 'No se pudieron guardar los datos. Intente nuevamente o contacte a secretaría.');
@@ -367,6 +383,20 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         $this->camposIncompletosAviso = [];
 
         $this->dispatch('se-swal-exito', mensaje: 'Datos personales actualizados correctamente.');
+    }
+
+    /**
+     * @param  list<string>  $keys
+     */
+    private function normalizarCamposTexto(array $keys): void
+    {
+        foreach ($keys as $campo) {
+            if (! property_exists($this, $campo) || ! is_string($this->{$campo})) {
+                continue;
+            }
+
+            $this->{$campo} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$campo});
+        }
     }
 
     private function validarArchivoDocumentoSlotEnVivo(string $clave, int $indice): void

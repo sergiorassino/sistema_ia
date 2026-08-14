@@ -1,11 +1,16 @@
 -- =============================================================================
--- Habilitar upload de foto carnet (mismo criterio que Caixal SF)
+-- Habilitar upload de foto carnet en el ABM de legajos (Secretaría)
+-- (mismo criterio de solapa que Caixal SF).
 --
--- Requisitos para que el ABM de legajos y Actualización de datos personales
--- muestren el upload:
+-- Requisitos para el ABM de legajos:
 --   1. Columna legajos.fotoCarnet (VARCHAR 255)
 --   2. Solapa `foto_carnet` en solapas_legajo
 --   3. campos_legajo.fotoCarnet con solapa_legajo_id asignado
+--
+-- Autogestión (familia) es independiente: además de esta solapa, activar
+-- `autogestion.actualizacion_datos.foto_carnet => true` en
+-- `config/tenants/{slug}.php`. Sin esa llave el bloque no aparece en el
+-- Menú de Alumnos aunque la solapa exista.
 --
 -- Uso: ejecutar en la BD del tenant (ej. ia_sanjose) en phpMyAdmin / HeidiSQL.
 -- Equivalente de columna: database/sql/legajos_foto_carnet_idempotente.sql

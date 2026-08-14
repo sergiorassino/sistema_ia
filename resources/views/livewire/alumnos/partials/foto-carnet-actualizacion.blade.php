@@ -1,4 +1,4 @@
-{{-- Foto carnet en actualización de datos (solo si está en alguna solapa del legajo). --}}
+{{-- Foto carnet en actualización de datos (tenant foto_carnet + solapa del legajo). --}}
 @if ($fotoCarnetHabilitada ?? false)
     @php
         $etiqueta = $etiquetaFotoCarnet ?? 'Foto carnet';

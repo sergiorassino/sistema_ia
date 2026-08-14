@@ -13,7 +13,7 @@ Activación por tenant en `config/tenants/{slug}.php` → `secretaria.ficha_matr
 | `sanfranciscoasis` | `FichaMatriculaConAceptacionTcpdf` | `FichaMatriculaDatos` |
 | `iess` | `FichaMatriculaIessTcpdf` (layout legacy IESS: AEC en primario, autorización de imágenes en secundario, `grupsang` a la derecha del nombre) | `FichaMatriculaDatos` |
 | `montecristo` | `FichaMatriculaSolicitudMontecristoTcpdf` | `FichaMatriculaMontecristoDatos` |
-| `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos` (incluye foto carnet si hay archivo) |
+| `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos`. Misma ficha que autogestión: hueco 30×40 mm a la derecha; la foto entra ahí sin deformar y el marco negro rodea la imagen (no el hueco). |
 
 `niveles_deshabilitados`: oculta ítem y PDF en esos IDs de `niveles` (opcional). IESS: todos los niveles.
 
@@ -31,6 +31,7 @@ Menú de Secretaría (`layouts/app`). Rutas bajo `auth`; datos filtrados por `sc
 - `app/Livewire/Listados/FichaMatriculaSecretaria.php`
 - `app/Support/Alumnos/FichaMatriculaSecretariaPdf.php` / `…Zip.php`
 - `app/Support/Alumnos/FichaMatriculaIessTcpdf.php`
+- `app/Support/Alumnos/FichaMatriculaSanJoseTcpdf.php`
 - Helpers: `tenantSecretariaFichaMatriculaHabilitada()`, `…Implementacion()`, `…Etiqueta()`
 
 ## Qué no hacer

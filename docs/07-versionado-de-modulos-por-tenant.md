@@ -48,6 +48,20 @@ return [
 ];
 ```
 
+C.U.S. e I.S.A. en autogestión familia (default off; San José los activa):
+
+```php
+// config/tenants/sanjose.php
+return [
+    'autogestion' => [
+        'cus' => ['habilitado' => true],
+        'isa' => ['habilitado' => true],
+    ],
+];
+```
+
+Consumir con `tenantAutogestionCusHabilitada()` / `tenantAutogestionIsaHabilitada()`. Detalle: [modulos/cus-isa-autogestion.md](modulos/cus-isa-autogestion.md).
+
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
 
 Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.

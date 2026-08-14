@@ -64,7 +64,7 @@
             </style>
         @endif
 
-        <form wire:submit="guardar" novalidate>
+        <form wire:submit.prevent="guardar" novalidate>
             <div class="se-card mb-4 overflow-hidden p-0">
                 <div class="border-b border-accent-200 bg-accent-50 px-4 py-3 sm:px-5">
                     <button type="submit"
@@ -97,53 +97,53 @@
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="form-label" for="campo-nombrepad">Apellidos y nombres *</label>
-                            <input id="campo-nombrepad" wire:model="nombrepad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-nombrepad" wire:model.live.blur="nombrepad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('nombrepad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-dnipad">DNI *</label>
-                                <input id="campo-dnipad" wire:model="dnipad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-dnipad" wire:model.live.blur="dnipad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('dnipad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-fechnacpad">Fecha de nacimiento</label>
-                                <input id="campo-fechnacpad" wire:model="fechnacpad" type="date" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-fechnacpad" wire:model.live.blur="fechnacpad" type="date" class="form-input mt-1" @disabled($bloqueado)>
                                 <p class="mt-1 text-[11px] text-neutral-500">Si no corresponde, déjela en blanco.</p>
                                 @error('fechnacpad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div>
                             <label class="form-label" for="campo-nacionpad">Nacionalidad *</label>
-                            <input id="campo-nacionpad" wire:model="nacionpad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-nacionpad" wire:model.live.blur="nacionpad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('nacionpad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="form-label" for="campo-domipad">Domicilio (calle, nº y barrio) *</label>
-                            <input id="campo-domipad" wire:model="domipad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-domipad" wire:model.live.blur="domipad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('domipad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-telepad">Celular *</label>
-                                <input id="campo-telepad" wire:model="telepad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-telepad" wire:model.live.blur="telepad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('telepad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-emailpad">E-mail *</label>
-                                <input id="campo-emailpad" wire:model="emailpad" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-emailpad" wire:model.live.blur="emailpad" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('emailpad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-ocupacpad">Ocupación *</label>
-                                <input id="campo-ocupacpad" wire:model="ocupacpad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-ocupacpad" wire:model.live.blur="ocupacpad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('ocupacpad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-telltp">Teléfono laboral</label>
-                                <input id="campo-telltp" wire:model="telltp" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-telltp" wire:model.live.blur="telltp" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('telltp') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -155,53 +155,53 @@
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="form-label" for="campo-nombremad">Apellidos y nombres *</label>
-                            <input id="campo-nombremad" wire:model="nombremad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-nombremad" wire:model.live.blur="nombremad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('nombremad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-dnimad">DNI *</label>
-                                <input id="campo-dnimad" wire:model="dnimad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-dnimad" wire:model.live.blur="dnimad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('dnimad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-fechnacmad">Fecha de nacimiento</label>
-                                <input id="campo-fechnacmad" wire:model="fechnacmad" type="date" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-fechnacmad" wire:model.live.blur="fechnacmad" type="date" class="form-input mt-1" @disabled($bloqueado)>
                                 <p class="mt-1 text-[11px] text-neutral-500">Si no corresponde, déjela en blanco.</p>
                                 @error('fechnacmad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div>
                             <label class="form-label" for="campo-nacionmad">Nacionalidad *</label>
-                            <input id="campo-nacionmad" wire:model="nacionmad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-nacionmad" wire:model.live.blur="nacionmad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('nacionmad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="form-label" for="campo-domimad">Domicilio (calle, nº y barrio) *</label>
-                            <input id="campo-domimad" wire:model="domimad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-domimad" wire:model.live.blur="domimad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('domimad') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-telemad">Celular *</label>
-                                <input id="campo-telemad" wire:model="telemad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-telemad" wire:model.live.blur="telemad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('telemad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-emailmad">E-mail *</label>
-                                <input id="campo-emailmad" wire:model="emailmad" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-emailmad" wire:model.live.blur="emailmad" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('emailmad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-ocupacmad">Ocupación *</label>
-                                <input id="campo-ocupacmad" wire:model="ocupacmad" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-ocupacmad" wire:model.live.blur="ocupacmad" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('ocupacmad') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-telltm">Teléfono laboral</label>
-                                <input id="campo-telltm" wire:model="telltm" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-telltm" wire:model.live.blur="telltm" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('telltm') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -216,30 +216,30 @@
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="form-label" for="campo-nombretut">Apellidos y nombres *</label>
-                            <input id="campo-nombretut" wire:model="nombretut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                            <input id="campo-nombretut" wire:model.live.blur="nombretut" type="text" class="form-input mt-1" @disabled($bloqueado)>
                             @error('nombretut') <p class="form-error">{{ $message }}</p> @enderror
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-dnitut">DNI *</label>
-                                <input id="campo-dnitut" wire:model="dnitut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-dnitut" wire:model.live.blur="dnitut" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('dnitut') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-teletut">Celular *</label>
-                                <input id="campo-teletut" wire:model="teletut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-teletut" wire:model.live.blur="teletut" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('teletut') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="form-label" for="campo-emailtut">E-mail *</label>
-                                <input id="campo-emailtut" wire:model="emailtut" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-emailtut" wire:model.live.blur="emailtut" type="text" inputmode="email" autocomplete="email" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('emailtut') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="form-label" for="campo-ocupactut">Ocupación *</label>
-                                <input id="campo-ocupactut" wire:model="ocupactut" type="text" class="form-input mt-1" @disabled($bloqueado)>
+                                <input id="campo-ocupactut" wire:model.live.blur="ocupactut" type="text" class="form-input mt-1" @disabled($bloqueado)>
                                 @error('ocupactut') <p class="form-error">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -376,17 +376,19 @@
                 @endif
             </div>
 
-            <div class="sticky bottom-0 z-10 -mx-2 mt-6 border-t border-accent-200 bg-[#F4F8F9]/95 px-2 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0">
-                <button type="submit"
+            <div class="sticky bottom-0 z-20 -mx-2 mt-6 border-t border-accent-200 bg-[#F4F8F9]/95 px-2 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0">
+                <button type="button"
+                        wire:click="guardar"
                         wire:loading.attr="disabled"
+                        wire:target="guardar,fotoCarnetUpload"
                         @disabled($bloqueado)
                         class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50">
-                    <svg wire:loading.remove wire:target="guardar" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg wire:loading.remove wire:target="guardar,fotoCarnetUpload" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                     </svg>
-                    <span wire:loading.remove wire:target="guardar">Guardar</span>
-                    <span wire:loading wire:target="guardar">Guardando…</span>
+                    <span wire:loading.remove wire:target="guardar,fotoCarnetUpload">Guardar</span>
+                    <span wire:loading wire:target="guardar,fotoCarnetUpload">Guardando…</span>
                 </button>
             </div>
         </form>

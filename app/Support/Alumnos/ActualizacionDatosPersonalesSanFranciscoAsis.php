@@ -113,14 +113,14 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'needes' => self::needesParaFormulario($legajo),
             'needes_detalle' => self::needesDetalleParaFormulario($legajo),
             'nombrepad' => (string) ($legajo->nombrepad ?? ''),
-            'dnipad' => (string) ($legajo->dnipad ?? ''),
+            'dnipad' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnipad ?? ''),
             'telepad' => (string) ($legajo->telepad ?? ''),
             'emailpad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailpad ?? ''),
             'ocupacpad' => (string) ($legajo->ocupacpad ?? ''),
             'lugtrapad' => (string) ($legajo->lugtrapad ?? ''),
             'telltp' => (string) ($legajo->telltp ?? ''),
             'nombremad' => (string) ($legajo->nombremad ?? ''),
-            'dnimad' => (string) ($legajo->dnimad ?? ''),
+            'dnimad' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnimad ?? ''),
             'telemad' => (string) ($legajo->telemad ?? ''),
             'emailmad' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailmad ?? ''),
             'ocupacmad' => (string) ($legajo->ocupacmad ?? ''),
@@ -192,7 +192,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'contacto3' => self::trimCampo($state['contacto3'] ?? ''),
             'retira1' => self::trimCampo($state['retira1'] ?? ''),
             'obs_web' => self::trimCampo($state['obs_web'] ?? ''),
-            'fechActDatos' => now(),
+            'fechActDatos' => now()->format('Y-m-d H:i:s'),
         ];
 
         if ($tutorActivo) {
@@ -242,13 +242,13 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
      */
     public static function reglasValidacion(string $needes = ''): array
     {
-        $req = ['required', 'string', 'max:200'];
+        $req = ActualizacionDatosPersonalesComun::reglaTextoObligatorioOGuion();
         $reqEmail = self::reglaEmailObligatorio();
         $opc = ['nullable', 'string', 'max:200'];
 
         $rules = [
-            'reglamApenom' => ['required', 'string', 'max:100'],
-            'reglamDni' => ['required', 'string', 'max:20'],
+            'reglamApenom' => ActualizacionDatosPersonalesComun::reglaTextoObligatorioOGuion(100),
+            'reglamDni' => ActualizacionDatosPersonalesComun::reglaTextoObligatorioOGuion(20),
             'reglamEmail' => $reqEmail,
             'fechnaci' => ['required', 'date_format:d/m/Y'],
             'ln_depto' => $req,
@@ -482,7 +482,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
     private static function trimCampo(mixed $v): string
     {
-        return trim((string) $v);
+        return ActualizacionDatosPersonalesComun::normalizarTextoInput($v);
     }
 
     private static function soloDigitosDni(mixed $v): int

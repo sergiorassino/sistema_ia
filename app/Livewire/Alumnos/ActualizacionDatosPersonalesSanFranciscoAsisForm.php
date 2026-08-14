@@ -4,6 +4,7 @@ namespace App\Livewire\Alumnos;
 
 use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
+use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Illuminate\Support\Facades\RateLimiter;
@@ -123,13 +124,21 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
     /** @var list<array{campo: string, etiqueta: string}> */
     public array $camposIncompletosAviso = [];
 
-    /** @var list<string> */
-    private const CAMPOS_EMAIL = ['reglamEmail', 'email', 'emailpad', 'emailmad', 'emailtut'];
-
     public function updated(string $property): void
     {
-        if (in_array($property, self::CAMPOS_EMAIL, true)) {
-            $this->resetValidation($property);
+        $campos = array_keys(ActualizacionDatosPersonalesSanFranciscoAsis::etiquetasCampos());
+        if (! in_array($property, $campos, true) || ! property_exists($this, $property)) {
+            return;
+        }
+
+        if (is_string($this->{$property})) {
+            $this->{$property} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$property});
+        }
+
+        $this->resetValidation($property);
+        if ($this->getErrorBag()->isEmpty()) {
+            $this->mostrarAvisoCamposIncompletos = false;
+            $this->camposIncompletosAviso = [];
         }
     }
 
@@ -233,6 +242,11 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         }
 
         $keys = array_keys(ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($ctx['legajo']));
+        foreach ($keys as $campo) {
+            if (property_exists($this, $campo) && is_string($this->{$campo})) {
+                $this->{$campo} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$campo});
+            }
+        }
         $validator = Validator::make(
             $this->only($keys),
             ActualizacionDatosPersonalesSanFranciscoAsis::reglasValidacion($this->needes),
@@ -262,13 +276,17 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
         try {
             ActualizacionDatosPersonalesSanFranciscoAsis::guardar($ctx['legajo'], $matricula, $state);
-        } catch (\Throwable $e) {
-            report($e);
+        } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'documentos institucionales')) {
                 $this->mostrarAvisoDocumentosPendientes = true;
 
                 return;
             }
+            $this->addError('reglamApenom', $e->getMessage());
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
             $this->addError('reglamApenom', 'No se pudieron guardar los datos. Intente nuevamente o contacte a secretaría.');
 
             return;

@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Ento;
 use App\Models\Matricula;
 use App\Models\Terlec;
+use App\Support\InformeInasistencias;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -119,32 +120,12 @@ final class CusIsaVozImagenDatos
                 continue;
             }
 
-            $legajo = $matricula->legajo;
-            if ($legajo === null) {
+            $fila = self::filaDesdeMatricula($matricula);
+            if ($fila === null) {
                 continue;
             }
 
-            $filas[] = [
-                'matricula_id' => (int) $matricula->id,
-                'apellido' => trim((string) ($legajo->apellido ?? '')),
-                'nombre' => trim((string) ($legajo->nombre ?? '')),
-                'dni' => trim((string) ($legajo->dni ?? '')),
-                'cursec' => trim((string) ($matricula->curso?->cursec ?? '')),
-                'fechnaci' => self::formatearFecha($legajo->fechnaci),
-                'ln_ciudad' => trim((string) ($legajo->ln_ciudad ?? '')),
-                'ln_provincia' => trim((string) ($legajo->ln_provincia ?? '')),
-                'callenum' => trim((string) ($legajo->callenum ?? '')),
-                'barrio' => trim((string) ($legajo->barrio ?? '')),
-                'localidad' => trim((string) ($legajo->localidad ?? '')),
-                'telemad' => trim((string) ($legajo->telemad ?? '')),
-                'telepad' => trim((string) ($legajo->telepad ?? '')),
-                'sexo' => (int) ($legajo->sexo ?? 0),
-                'sexo_etiqueta' => self::etiquetaSexo((int) ($legajo->sexo ?? 0)),
-                'nombrepad' => trim((string) ($legajo->nombrepad ?? '')),
-                'dnipad' => trim((string) ($legajo->dnipad ?? '')),
-                'nombremad' => trim((string) ($legajo->nombremad ?? '')),
-                'dnimad' => trim((string) ($legajo->dnimad ?? '')),
-            ];
+            $filas[] = $fila;
         }
 
         usort($filas, function (array $a, array $b): int {
@@ -158,6 +139,28 @@ final class CusIsaVozImagenDatos
         });
 
         return $filas;
+    }
+
+    /**
+     * Fila de PDF para el alumno en sesión (ciclo de autogestión).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function alumnoParaAutogestion(): ?array
+    {
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        $matricula = InformeInasistencias::matriculaAutogestion();
+        if ($matricula === null) {
+            return null;
+        }
+
+        $matricula->loadMissing(['legajo', 'curso']);
+
+        return self::filaDesdeMatricula($matricula);
     }
 
     /**
@@ -238,6 +241,39 @@ final class CusIsaVozImagenDatos
         }
 
         return $texto;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function filaDesdeMatricula(Matricula $matricula): ?array
+    {
+        $legajo = $matricula->legajo;
+        if ($legajo === null) {
+            return null;
+        }
+
+        return [
+            'matricula_id' => (int) $matricula->id,
+            'apellido' => trim((string) ($legajo->apellido ?? '')),
+            'nombre' => trim((string) ($legajo->nombre ?? '')),
+            'dni' => trim((string) ($legajo->dni ?? '')),
+            'cursec' => trim((string) ($matricula->curso?->cursec ?? '')),
+            'fechnaci' => self::formatearFecha($legajo->fechnaci),
+            'ln_ciudad' => trim((string) ($legajo->ln_ciudad ?? '')),
+            'ln_provincia' => trim((string) ($legajo->ln_provincia ?? '')),
+            'callenum' => trim((string) ($legajo->callenum ?? '')),
+            'barrio' => trim((string) ($legajo->barrio ?? '')),
+            'localidad' => trim((string) ($legajo->localidad ?? '')),
+            'telemad' => trim((string) ($legajo->telemad ?? '')),
+            'telepad' => trim((string) ($legajo->telepad ?? '')),
+            'sexo' => (int) ($legajo->sexo ?? 0),
+            'sexo_etiqueta' => self::etiquetaSexo((int) ($legajo->sexo ?? 0)),
+            'nombrepad' => trim((string) ($legajo->nombrepad ?? '')),
+            'dnipad' => trim((string) ($legajo->dnipad ?? '')),
+            'nombremad' => trim((string) ($legajo->nombremad ?? '')),
+            'dnimad' => trim((string) ($legajo->dnimad ?? '')),
+        ];
     }
 
     /**

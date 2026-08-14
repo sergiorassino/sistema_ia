@@ -120,6 +120,28 @@ final class PortalFamiliaDashboard
             $accesos[] = $accesoFicha;
         }
 
+        if (tenantAutogestionCusHabilitada()) {
+            $accesos[] = [
+                'id' => 'cus',
+                'titulo' => 'Imprimir C.U.S.',
+                'descripcion' => 'Descargue el Certificado Único de Salud en PDF.',
+                'url' => se_route_url('alumnos.cus'),
+                'externo' => true,
+                'icono' => 'cus',
+            ];
+        }
+
+        if (tenantAutogestionIsaHabilitada()) {
+            $accesos[] = [
+                'id' => 'isa',
+                'titulo' => 'Imprimir I.S.A.',
+                'descripcion' => 'Descargue el Informe de Salud Anual en PDF.',
+                'url' => se_route_url('alumnos.isa'),
+                'externo' => true,
+                'icono' => 'isa',
+            ];
+        }
+
         if (tenantAutogestionArancelesEscolaresHabilitada()) {
             $accesos[] = [
                 'id' => 'aranceles-escolares',

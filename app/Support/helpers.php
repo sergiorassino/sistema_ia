@@ -1505,6 +1505,17 @@ if (! function_exists('tenantAutogestionActualizacionDatosHabilitada')) {
     }
 }
 
+if (! function_exists('tenantAutogestionActualizacionDatosFotoCarnetHabilitada')) {
+    /**
+     * Si el formulario de actualización de datos del portal familia incluye foto carnet.
+     * Independiente de la solapa del ABM de legajos (Secretaría).
+     */
+    function tenantAutogestionActualizacionDatosFotoCarnetHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.actualizacion_datos.foto_carnet', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosRequiereDocumentos')) {
     /**
      * Si el formulario exige aceptación de documentos institucionales antes de guardar.
@@ -1805,6 +1816,60 @@ if (! function_exists('tenantAutogestionHorarioClaseHabilitada')) {
         }
 
         $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        return in_array($idNivel, array_map('intval', $nivelesHabilitados), true);
+    }
+}
+
+if (! function_exists('tenantAutogestionCusHabilitada')) {
+    /**
+     * Si el portal familia incluye impresión del C.U.S. (Certificado Único de Salud).
+     * Default deshabilitado; activar en `config/tenants/{slug}.php` con `habilitado => true`.
+     */
+    function tenantAutogestionCusHabilitada(): bool
+    {
+        return tenantAutogestionFlagPorNivel('cus', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionIsaHabilitada')) {
+    /**
+     * Si el portal familia incluye impresión del I.S.A. (Informe de Salud Anual).
+     * Default deshabilitado; activar en `config/tenants/{slug}.php` con `habilitado => true`.
+     */
+    function tenantAutogestionIsaHabilitada(): bool
+    {
+        return tenantAutogestionFlagPorNivel('isa', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionFlagPorNivel')) {
+    /**
+     * Flag de módulo de autogestión: `habilitado` + filtros opcionales por nivel.
+     */
+    function tenantAutogestionFlagPorNivel(string $clave, bool $defaultHabilitado = false): bool
+    {
+        if (! (bool) config('tenant.autogestion.'.$clave.'.habilitado', $defaultHabilitado)) {
+            return false;
+        }
+
+        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+
+        $nivelesDeshabilitados = config('tenant.autogestion.'.$clave.'.niveles_deshabilitados', []);
+        if (is_array($nivelesDeshabilitados) && $nivelesDeshabilitados !== [] && $idNivel > 0) {
+            if (in_array($idNivel, array_map('intval', $nivelesDeshabilitados), true)) {
+                return false;
+            }
+        }
+
+        $nivelesHabilitados = config('tenant.autogestion.'.$clave.'.niveles_habilitados', []);
+        if (! is_array($nivelesHabilitados) || $nivelesHabilitados === []) {
+            return true;
+        }
+
         if ($idNivel <= 0) {
             return false;
         }
