@@ -38,6 +38,11 @@ Solo se muestra el upload de `legajos.fotoCarnet` si:
 
 Misma detección: `FotoCarnetLegajo::habilitadaEnSolapasLegajo()`. Persistencia y compresión: `FotoCarnetLegajo` (disco `privado`).
 
+Para habilitarlo como en Caixal SF (solapa propia **Foto Carnet**): ejecutar
+`database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql` en la BD del tenant
+(o crear la solapa y asignar el campo en Parametrización → Solapas del legajo /
+Campos del listado de alumnos). No hace falta flag en `config/tenants/{slug}.php`.
+
 ## Tablas y campos críticos
 
 - `legajos` (datos editables según variante; `fechActDatos`; opcional `fotoCarnet`)

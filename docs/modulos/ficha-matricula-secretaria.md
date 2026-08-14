@@ -13,7 +13,7 @@ Activación por tenant en `config/tenants/{slug}.php` → `secretaria.ficha_matr
 | `sanfranciscoasis` | `FichaMatriculaConAceptacionTcpdf` | `FichaMatriculaDatos` |
 | `iess` | `FichaMatriculaIessTcpdf` (layout legacy IESS: AEC en primario, autorización de imágenes en secundario, `grupsang` a la derecha del nombre) | `FichaMatriculaDatos` |
 | `montecristo` | `FichaMatriculaSolicitudMontecristoTcpdf` | `FichaMatriculaMontecristoDatos` |
-| `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos` |
+| `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos` (incluye foto carnet si hay archivo) |
 
 `niveles_deshabilitados`: oculta ítem y PDF en esos IDs de `niveles` (opcional). IESS: todos los niveles.
 
