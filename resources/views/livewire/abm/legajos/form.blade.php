@@ -142,6 +142,9 @@
             'se-legajo-form-body',
             'se-legajo-form-body--con-foto' => $mostrarFotoSticky ?? false,
         ])>
+        @if ($mostrarFotoSticky ?? false)
+            @include('livewire.abm.legajos.partials.foto-carnet-sticky')
+        @endif
         <div class="se-legajo-form-campos min-w-0 flex-1">
         <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
         {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
@@ -614,10 +617,6 @@
         @endif
         </fieldset>
         </div>{{-- /se-legajo-form-campos --}}
-
-        @if ($mostrarFotoSticky ?? false)
-            @include('livewire.abm.legajos.partials.foto-carnet-sticky')
-        @endif
         </div>{{-- /se-legajo-form-body --}}
 
         {{-- Footer --}}

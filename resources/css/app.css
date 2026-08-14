@@ -3142,7 +3142,7 @@
     .se-legajo-foto-sticky {
         flex: 0 0 auto;
         width: 100%;
-        border-top: 1px solid #C1D7DA;
+        border-bottom: 1px solid #C1D7DA;
         background: rgba(244, 248, 249, 0.55);
         padding: 1.25rem 1.25rem;
     }
@@ -3242,13 +3242,19 @@
             flex-direction: row;
             align-items: flex-start;
         }
+        .se-legajo-form-body--con-foto .se-legajo-form-campos {
+            order: 1;
+        }
+        .se-legajo-form-body--con-foto .se-legajo-foto-sticky {
+            order: 2;
+        }
         .se-legajo-foto-sticky {
             position: sticky;
             top: 1rem;
             align-self: flex-start;
             width: 13rem;
             flex: 0 0 13rem;
-            border-top: 0;
+            border-bottom: 0;
             border-left: 1px solid #C1D7DA;
             padding: 1.25rem 1rem;
         }
