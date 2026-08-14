@@ -26,8 +26,8 @@ final class FotoCarnetLegajo
     /** @var list<string> */
     public const EXTENSIONES = ['jpg', 'jpeg', 'png'];
 
-    /** Tope del archivo original subido (antes de comprimir). */
-    public const MAX_KB_UPLOAD = 2048;
+    /** Tope del archivo original subido (antes de comprimir). Cámara de celular suele superar 2 MB. */
+    public const MAX_KB_UPLOAD = 8192;
 
     /** Ancho máximo en píxeles del archivo guardado. */
     public const MAX_ANCHO_PX = 600;
@@ -370,11 +370,11 @@ final class FotoCarnetLegajo
 
         $size = (int) $file->getSize();
         if ($size <= 0 || $size > self::MAX_KB_UPLOAD * 1024) {
-            return 'La foto no puede superar los 2 MB (se comprime al guardar).';
+            return 'La foto no puede superar los 8 MB (se comprime al guardar).';
         }
 
         $ext = strtolower((string) $file->getClientOriginalExtension());
-        if (! in_array($ext, self::EXTENSIONES, true)) {
+        if ($ext !== '' && ! in_array($ext, self::EXTENSIONES, true)) {
             return 'La foto debe ser JPG o PNG.';
         }
 

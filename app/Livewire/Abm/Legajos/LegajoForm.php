@@ -398,7 +398,7 @@ class LegajoForm extends Component
     {
         $this->addError(
             'fotoCarnetUpload',
-            'No se pudo subir la foto. Compruebe tamaño (máx. 2 MB al subir), formato JPG/PNG y que la sesión siga activa.'
+            'No se pudo subir la foto. Compruebe tamaño (máx. 8 MB al subir), formato JPG/PNG y que la sesión siga activa.'
         );
     }
 
