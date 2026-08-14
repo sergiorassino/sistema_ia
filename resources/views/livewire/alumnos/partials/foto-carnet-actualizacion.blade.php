@@ -74,20 +74,16 @@
                     if (input && input.type === 'file') {
                         revokeLocalFotoPreview();
                         const file = input.files?.[0];
-                        if (file && /^image\/(jpe?g|png)$/i.test(file.type)) {
+                        if (file && (! file.type || /^image\//i.test(file.type))) {
                             localFotoPreview = URL.createObjectURL(file);
                             fotoSubiendo = true;
                             $wire.set('removeFotoCarnet', false);
                         }
                     }
                  ">
-                <label class="form-label" for="campo-fotoCarnetUpload">{{ $etiqueta }}</label>
+                <label class="form-label">{{ $etiqueta }}</label>
                 @unless ($bloqueado)
-                    <input id="campo-fotoCarnetUpload"
-                           wire:model="fotoCarnetUpload"
-                           type="file"
-                           accept="image/jpeg,image/png"
-                           class="form-input mt-1.5 @error('fotoCarnetUpload') border-red-400 @enderror">
+                    @include('livewire.abm.legajos.partials.foto-carnet-upload-controles', ['inputIdPrefix' => 'foto-carnet-autogestion'])
                     <p wire:loading wire:target="fotoCarnetUpload" class="mt-1 text-xs font-medium text-primary-700">
                         Subiendo archivo… espere a que termine antes de pulsar Guardar.
                     </p>
@@ -95,7 +91,7 @@
                         Subiendo archivo… el botón Guardar permanecerá bloqueado hasta que termine.
                     </p>
                     @error('fotoCarnetUpload') <p class="form-error">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-neutral-500">JPG/PNG · máx. 2&nbsp;MB al subir (se comprime al guardar).</p>
+                    <p class="mt-1 text-xs text-neutral-500">En el celular, <span class="font-semibold text-neutral-600">Tomar foto</span> abre la cámara. JPG/PNG · máx. 8&nbsp;MB al subir (se comprime al guardar).</p>
                 @else
                     <p class="mt-1 text-sm text-neutral-500">Solo consulta.</p>
                 @endunless

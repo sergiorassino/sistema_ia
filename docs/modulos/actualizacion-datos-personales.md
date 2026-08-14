@@ -42,6 +42,8 @@ Así se puede cargar la foto desde Secretaría sin mostrarla a la familia.
 
 Persistencia y compresión: `FotoCarnetLegajo` (disco `privado`). Helper: `tenantAutogestionActualizacionDatosFotoCarnetHabilitada()`.
 
+En celular, `accept="image/jpeg,image/png"` abre solo Fotos/Galería. El control usa dos acciones: **Tomar foto** (`capture` + `image/*`, cámara) y **Galería**. Máx. 8 MB al subir; se comprime al guardar. La foto no queda en el legajo hasta pulsar Guardar.
+
 Para la solapa (ABM), como en Caixal SF: ejecutar
 `database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql` en la BD del tenant
 (o crear la solapa y asignar el campo en Parametrización → Solapas del legajo /

@@ -68,7 +68,7 @@ trait ConFotoCarnetActualizacionDatos
     {
         $this->addError(
             'fotoCarnetUpload',
-            'No se pudo subir la foto. Verifique el tamaño (máx. 2 MB) e intente de nuevo.'
+            'No se pudo subir la foto. Verifique el tamaño (máx. 8 MB) e intente de nuevo.'
         );
         $this->fotoCarnetUpload = null;
     }
