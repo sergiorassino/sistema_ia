@@ -3,10 +3,15 @@
 namespace App\Support\Alumnos;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfImagenPng;
 use TCPDF;
 
 /**
  * Ficha de solicitud de matrícula San José (A4 vertical, legacy FPDF).
+ *
+ * Encabezado (antes de DATOS DEL ESTUDIANTE): textos a la izquierda y
+ * hueco 30×40 mm a la derecha. La foto se escala para no salir de ese hueco
+ * (sin deformar); el marco negro rodea la imagen, no el hueco.
  */
 final class FichaMatriculaSanJoseTcpdf extends TCPDF
 {
@@ -15,6 +20,13 @@ final class FichaMatriculaSanJoseTcpdf extends TCPDF
     private const ANCHO_BLOQUE = 160.0;
 
     private const ALTURA_FILA = 5.0;
+
+    /** Foto carnet 3×4 cm a la derecha del encabezado. */
+    private const FOTO_ANCHO = 30.0;
+
+    private const FOTO_ALTO = 40.0;
+
+    private const FOTO_GAP = 4.0;
 
     /** @var array<string, mixed> */
     private array $datos;
@@ -83,28 +95,7 @@ final class FichaMatriculaSanJoseTcpdf extends TCPDF
 
     private function dibujarDocumento(): void
     {
-        $d = $this->datos;
-        $insti = trim((string) ($d['insti'] ?? ''));
-        $ciclo = trim((string) ($d['cicloLectivo'] ?? ''));
-
-        $this->dibujarFotoOpcional();
-
-        $this->SetXY(self::MARGEN_IZQ, 10);
-        TcpdfFuenteArial::aplicar($this, 'B', 12);
-        $this->Cell(self::ANCHO_BLOQUE, 6, $insti !== '' ? $insti : 'Institución', 0, 1, 'C');
-
-        TcpdfFuenteArial::aplicar($this, 'B', 10);
-        $this->Cell(
-            self::ANCHO_BLOQUE,
-            6,
-            'FICHA DE SOLICITUD MATRÍCULA - CICLO LECTIVO '.$ciclo,
-            0,
-            1,
-            'C',
-        );
-        $this->Ln(2);
-
-        $this->dibujarEncabezadoSolicitud();
+        $this->dibujarEncabezadoConFoto();
         $this->dibujarSeccionEstudiante();
         $this->dibujarSeccionAdultosResponsables();
         $this->dibujarTelefonosAlternativos();
@@ -112,56 +103,168 @@ final class FichaMatriculaSanJoseTcpdf extends TCPDF
         $this->dibujarFirmas();
     }
 
-    private function dibujarFotoOpcional(): void
+    /**
+     * Título, fecha, matrícula y solicitud a la izquierda; foto carnet a la derecha.
+     */
+    private function dibujarEncabezadoConFoto(): void
     {
-        $ruta = trim((string) ($this->datos['fotoCarnet'] ?? ''));
-        if ($ruta === '' || ! is_readable($ruta)) {
-            return;
-        }
+        $d = $this->datos;
+        $y0 = 10.0;
+        $wTexto = self::ANCHO_BLOQUE - self::FOTO_ANCHO - self::FOTO_GAP;
+        $xFoto = self::MARGEN_IZQ + self::ANCHO_BLOQUE - self::FOTO_ANCHO;
 
-        try {
-            $this->Image($ruta, self::MARGEN_IZQ, 5, 20, 20);
-        } catch (\Throwable) {
-            // Sin foto si el archivo no es válido.
-        }
+        $this->dibujarMarcoFoto($xFoto, $y0);
+
+        $insti = trim((string) ($d['insti'] ?? ''));
+        $ciclo = trim((string) ($d['cicloLectivo'] ?? ''));
+
+        $this->SetXY(self::MARGEN_IZQ, $y0);
+        TcpdfFuenteArial::aplicar($this, 'B', 12);
+        $this->Cell($wTexto, 6, $insti !== '' ? $insti : 'Institución', 0, 1, 'C');
+
+        TcpdfFuenteArial::aplicar($this, 'B', 9);
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell($wTexto, 4.5, 'FICHA DE SOLICITUD MATRÍCULA', 0, 1, 'C');
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell($wTexto, 4.5, 'CICLO LECTIVO '.$ciclo, 0, 1, 'C');
+        $this->Ln(2);
+
+        $this->SetX(self::MARGEN_IZQ);
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(14, 4, 'Fecha:', 0, 0, 'L');
+        $this->celdaValorSubrayada(32, (string) ($d['fechaMatriculacion'] ?? ''));
+        $this->Cell(3, 4, '', 0, 0);
+        $this->Cell(24, 4, 'Nº de Orden:', 0, 0, 'L');
+        $this->celdaValorSubrayada(max(18.0, $wTexto - 73), '');
+        $this->Ln(6);
+
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell(38, 4, 'Número de Matrícula:', 0, 0, 'L');
+        $this->celdaValorSubrayada(max(28.0, $wTexto - 38), (string) ($d['nroMatricula'] ?? ''));
+        $this->Ln(5);
+        TcpdfFuenteArial::aplicar($this, '', 6.5);
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell($wTexto, 3.5, '(Nº del recibo de pago de la reserva de banco)', 0, 1, 'L');
+        $this->Ln(1.5);
+
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->SetX(self::MARGEN_IZQ);
+        $this->MultiCell(
+            $wTexto,
+            4,
+            'Autoridades del Establecimiento: Quien suscribe, solicita a Uds. la Matrícula de Inscripción',
+            0,
+            'L',
+        );
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell(8, 4, 'en', 0, 0, 'L');
+        $this->celdaValorSubrayada(48, '');
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell($wTexto - 56, 4, ' sala / grado / año,', 0, 1, 'L');
+        $this->SetX(self::MARGEN_IZQ);
+        $this->Cell($wTexto, 4, 'a cuyo fin proporciona los siguientes datos:', 0, 1, 'L');
+
+        $yFin = max($this->GetY(), $y0 + self::FOTO_ALTO) + 3.0;
+        $this->SetY($yFin);
     }
 
-    private function dibujarEncabezadoSolicitud(): void
+    private function dibujarMarcoFoto(float $x, float $y): void
     {
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->Cell(
-            self::ANCHO_BLOQUE,
-            self::ALTURA_FILA,
-            'Fecha: ..............................................................................                                   Nº de Orden: ................................................',
-            0,
-            1,
-            'L',
+        $xPrev = $this->GetX();
+        $yPrev = $this->GetY();
+
+        $ruta = FotoCarnetLegajo::rutaParaTcpdf(
+            isset($this->datos['fotoCarnet']) ? (string) $this->datos['fotoCarnet'] : null
         );
-        $this->Cell(
-            self::ANCHO_BLOQUE,
-            self::ALTURA_FILA,
-            'Número de Matrícula: ..............................................................................      (Nº del recibo de pago de la reserva de banco)',
-            0,
-            1,
-            'L',
-        );
-        $this->Cell(
-            self::ANCHO_BLOQUE,
-            self::ALTURA_FILA,
-            '                             Autoridades del Establecimiento:   Quien suscribe, solicita a Uds la Matrícula de Inscripción',
-            0,
-            1,
-            'L',
-        );
-        $this->Cell(
-            self::ANCHO_BLOQUE,
-            self::ALTURA_FILA,
-            '                             en  ...............................................  sala / grado / año, a cuyo fin proporciona los siguientes datos:',
-            0,
-            1,
-            'L',
-        );
-        $this->Ln(3);
+        $dibujada = $ruta !== null && $this->dibujarFotoProporcional($ruta, $x, $y);
+
+        if (! $dibujada) {
+            $this->SetLineWidth(0.2);
+            $this->SetDrawColor(193, 215, 218);
+            $this->Rect($x, $y, self::FOTO_ANCHO, self::FOTO_ALTO);
+            TcpdfFuenteArial::aplicar($this, '', 6);
+            $this->SetTextColor(115, 115, 115);
+            $this->SetXY($x, $y + (self::FOTO_ALTO / 2) - 3);
+            $this->Cell(self::FOTO_ANCHO, 6, 'Foto carnet', 0, 0, 'C');
+            $this->SetTextColor(51, 51, 51);
+        }
+
+        $this->SetDrawColor(51, 51, 51);
+        $this->SetLineWidth(0.2);
+        $this->SetXY($xPrev, $yPrev);
+    }
+
+    /**
+     * Escala la foto para que entre en el hueco 30×40 mm (sin deformar) y
+     * dibuja el marco negro alrededor de la imagen, no del hueco.
+     */
+    private function dibujarFotoProporcional(string $ruta, float $huecoX, float $huecoY): bool
+    {
+        $info = @getimagesize($ruta);
+        if ($info === false || ($info[0] ?? 0) < 1 || ($info[1] ?? 0) < 1) {
+            $bin = @file_get_contents($ruta);
+            $info = is_string($bin) && $bin !== '' ? @getimagesizefromstring($bin) : false;
+        } else {
+            $bin = null;
+        }
+
+        if ($info === false || ($info[0] ?? 0) < 1 || ($info[1] ?? 0) < 1) {
+            return false;
+        }
+
+        $cajaW = self::FOTO_ANCHO;
+        $cajaH = self::FOTO_ALTO;
+        $escala = min($cajaW / (float) $info[0], $cajaH / (float) $info[1]);
+        $drawW = (float) $info[0] * $escala;
+        $drawH = (float) $info[1] * $escala;
+        $drawX = $huecoX + (($cajaW - $drawW) / 2);
+        $drawY = $huecoY + (($cajaH - $drawH) / 2);
+
+        $src = TcpdfImagenPng::fuenteTcpdf($ruta);
+        $ok = $this->intentarImagenEnHueco($src, $huecoX, $huecoY, $drawX, $drawY, $drawW, $drawH);
+
+        if (! $ok) {
+            if (! is_string($bin) || $bin === '') {
+                $bin = @file_get_contents($ruta);
+            }
+            if (! is_string($bin) || $bin === '') {
+                return false;
+            }
+            $ok = $this->intentarImagenEnHueco('@'.$bin, $huecoX, $huecoY, $drawX, $drawY, $drawW, $drawH);
+        }
+
+        if (! $ok) {
+            return false;
+        }
+
+        $this->SetLineWidth(0.25);
+        $this->SetDrawColor(51, 51, 51);
+        $this->Rect($drawX, $drawY, $drawW, $drawH);
+
+        return true;
+    }
+
+    private function intentarImagenEnHueco(
+        string $src,
+        float $huecoX,
+        float $huecoY,
+        float $drawX,
+        float $drawY,
+        float $drawW,
+        float $drawH,
+    ): bool {
+        try {
+            $this->StartTransform();
+            $this->Rect($huecoX, $huecoY, self::FOTO_ANCHO, self::FOTO_ALTO, 'CNZ');
+            $this->Image($src, $drawX, $drawY, $drawW, $drawH, '', '', '', false, 300);
+            $this->StopTransform();
+
+            return true;
+        } catch (\Throwable) {
+            $this->StopTransform();
+
+            return false;
+        }
     }
 
     private function dibujarSeccionEstudiante(): void

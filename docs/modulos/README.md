@@ -16,6 +16,7 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 | Registro de Asistencia | [registro-asistencia.md](registro-asistencia.md) |
 | Parte diario del preceptor | [parte-diario-preceptor.md](parte-diario-preceptor.md) |
 | Actualización de datos personales (familia) | [actualizacion-datos-personales.md](actualizacion-datos-personales.md) |
+| C.U.S. e I.S.A. (autogestión familia) | [cus-isa-autogestion.md](cus-isa-autogestion.md) |
 | Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
 | Bloqueos de matrícula | [bloqueos-matricula.md](bloqueos-matricula.md) |
 | Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |

@@ -45,7 +45,7 @@ final class ActualizacionDatosPersonalesEstandar
     {
         return [
             'nombrepad' => (string) ($legajo->nombrepad ?? ''),
-            'dnipad' => (string) ($legajo->dnipad ?? ''),
+            'dnipad' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnipad ?? ''),
             'fechnacpad' => self::fechaInput($legajo->fechnacpad),
             'nacionpad' => (string) ($legajo->nacionpad ?? ''),
             'domipad' => (string) ($legajo->domipad ?? ''),
@@ -54,7 +54,7 @@ final class ActualizacionDatosPersonalesEstandar
             'ocupacpad' => (string) ($legajo->ocupacpad ?? ''),
             'telltp' => (string) ($legajo->telltp ?? ''),
             'nombremad' => (string) ($legajo->nombremad ?? ''),
-            'dnimad' => (string) ($legajo->dnimad ?? ''),
+            'dnimad' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnimad ?? ''),
             'fechnacmad' => self::fechaInput($legajo->fechnacmad),
             'nacionmad' => (string) ($legajo->nacionmad ?? ''),
             'domimad' => (string) ($legajo->domimad ?? ''),
@@ -63,7 +63,7 @@ final class ActualizacionDatosPersonalesEstandar
             'ocupacmad' => (string) ($legajo->ocupacmad ?? ''),
             'telltm' => (string) ($legajo->telltm ?? ''),
             'nombretut' => (string) ($legajo->nombretut ?? ''),
-            'dnitut' => (string) ($legajo->dnitut ?? ''),
+            'dnitut' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnitut ?? ''),
             'teletut' => (string) ($legajo->teletut ?? ''),
             'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailtut ?? ''),
             'ocupactut' => (string) ($legajo->ocupactut ?? ''),
@@ -100,7 +100,7 @@ final class ActualizacionDatosPersonalesEstandar
             'teletut' => self::trimCampo($state['teletut'] ?? ''),
             'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailtut'] ?? ''),
             'ocupactut' => self::trimCampo($state['ocupactut'] ?? ''),
-            'fechActDatos' => now(),
+            'fechActDatos' => now()->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -127,7 +127,7 @@ final class ActualizacionDatosPersonalesEstandar
      */
     public static function reglasValidacion(): array
     {
-        $req = ['required', 'string', 'max:200'];
+        $req = ActualizacionDatosPersonalesComun::reglaTextoObligatorioOGuion();
         $reqEmail = self::reglaEmailObligatorio();
         $opc = ['nullable', 'string', 'max:200'];
 
@@ -275,7 +275,7 @@ final class ActualizacionDatosPersonalesEstandar
 
     private static function trimCampo(mixed $v): string
     {
-        return trim((string) $v);
+        return ActualizacionDatosPersonalesComun::normalizarTextoInput($v);
     }
 
     private static function fechaInput(mixed $valor): string

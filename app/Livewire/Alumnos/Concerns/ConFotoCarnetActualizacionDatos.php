@@ -8,7 +8,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * Subida de foto carnet en actualización de datos (portal familia),
- * solo si el colegio tiene `fotoCarnet` en alguna solapa del legajo.
+ * solo si el tenant lo habilita y `fotoCarnet` está en alguna solapa del legajo.
  */
 trait ConFotoCarnetActualizacionDatos
 {
@@ -22,7 +22,7 @@ trait ConFotoCarnetActualizacionDatos
 
     protected function montarFotoCarnetDesdeLegajo(Legajo $legajo): void
     {
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo()) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion()) {
             $this->fotoCarnetPath = '';
             $this->fotoCarnetUpload = null;
             $this->removeFotoCarnet = false;
@@ -39,7 +39,7 @@ trait ConFotoCarnetActualizacionDatos
     {
         $this->resetValidation('fotoCarnetUpload');
 
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo()) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion()) {
             $this->fotoCarnetUpload = null;
 
             return;
@@ -75,7 +75,7 @@ trait ConFotoCarnetActualizacionDatos
 
     public function marcarQuitarFotoCarnet(): void
     {
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo() || $this->bloqueado) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion() || $this->bloqueado) {
             return;
         }
 
@@ -93,7 +93,7 @@ trait ConFotoCarnetActualizacionDatos
 
     public function deshacerQuitarFotoCarnet(): void
     {
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo()) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion()) {
             return;
         }
 
@@ -106,7 +106,7 @@ trait ConFotoCarnetActualizacionDatos
      */
     protected function validarFotoCarnetAntesDeGuardar(): bool
     {
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo()) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion()) {
             return true;
         }
 
@@ -137,7 +137,7 @@ trait ConFotoCarnetActualizacionDatos
      */
     protected function persistirFotoCarnetTrasGuardar(Legajo $legajo): bool
     {
-        if (! FotoCarnetLegajo::habilitadaEnSolapasLegajo()) {
+        if (! FotoCarnetLegajo::habilitadaEnAutogestion()) {
             return true;
         }
 
@@ -178,7 +178,7 @@ trait ConFotoCarnetActualizacionDatos
      */
     protected function datosVistaFotoCarnet(): array
     {
-        $habilitada = FotoCarnetLegajo::habilitadaEnSolapasLegajo();
+        $habilitada = FotoCarnetLegajo::habilitadaEnAutogestion();
         $url = null;
 
         if ($habilitada && ! $this->removeFotoCarnet) {

@@ -36,10 +36,14 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
 
     private ?string $plantilla;
 
-    private function __construct(?string $plantilla)
+    /** @var array{insti?: string, logo_file?: ?string}|null */
+    private ?array $header;
+
+    private function __construct(?string $plantilla, ?array $header = null)
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->plantilla = $plantilla;
+        $this->header = $header;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
         $this->SetTitle('Certificado Único de Salud');
@@ -52,10 +56,11 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
 
     /**
      * @param  list<array<string, mixed>>  $alumnos
+     * @param  array{insti?: string, logo_file?: ?string}|null  $header  Encabezado institucional (autogestión: studentPdfHeaderData).
      */
-    public static function generarLote(array $alumnos): self
+    public static function generarLote(array $alumnos, ?array $header = null): self
     {
-        $pdf = new self(CusIsaVozImagenDatos::rutaPlantilla('cus.jpg'));
+        $pdf = new self(CusIsaVozImagenDatos::rutaPlantilla('cus.jpg'), $header);
 
         foreach ($alumnos as $alumno) {
             $pdf->AddPage('P', 'A4');
@@ -146,7 +151,7 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
             'F',
         );
 
-        $logoFile = pdfHeaderLogoAbsolutePath(schoolPdfHeaderData());
+        $logoFile = pdfHeaderLogoAbsolutePath($this->header ?? schoolPdfHeaderData());
         TcpdfLogoInstitucional::dibujarAjustado(
             $this,
             self::LOGO_INST_X,

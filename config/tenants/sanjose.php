@@ -40,6 +40,12 @@ return [
             'habilitado' => true,
             'implementacion' => 'sanjose',
         ],
+        'cus' => [
+            'habilitado' => true,
+        ],
+        'isa' => [
+            'habilitado' => true,
+        ],
         // Nivel inicial: sin comunicación institucional ni informe de inasistencias.
         'comunicaciones' => [
             'niveles_deshabilitados' => [1],

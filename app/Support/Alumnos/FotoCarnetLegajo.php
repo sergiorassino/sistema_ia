@@ -46,6 +46,7 @@ final class FotoCarnetLegajo
     /**
      * True si la columna existe y `fotoCarnet` está asignada a alguna solapa del legajo
      * (parametrización secretaría: `campos_legajo.solapa_legajo_id`).
+     * Controla el upload en el ABM de legajos (Menú de Secretaría).
      */
     public static function habilitadaEnSolapasLegajo(): bool
     {
@@ -61,6 +62,19 @@ final class FotoCarnetLegajo
             ->where('columna', self::COLUMNA)
             ->whereNotNull('solapa_legajo_id')
             ->exists();
+    }
+
+    /**
+     * True si la familia puede subir foto carnet en Actualización de datos personales.
+     * Requiere solapa en el ABM y `autogestion.actualizacion_datos.foto_carnet` del tenant.
+     */
+    public static function habilitadaEnAutogestion(): bool
+    {
+        if (! tenantAutogestionActualizacionDatosFotoCarnetHabilitada()) {
+            return false;
+        }
+
+        return self::habilitadaEnSolapasLegajo();
     }
 
     /** Etiqueta configurada en solapas, o «Foto carnet». */
@@ -184,6 +198,25 @@ final class FotoCarnetLegajo
         }
 
         return $disk->path($path);
+    }
+
+    /**
+     * Ruta absoluta usable por TCPDF (barras /, archivo existente).
+     * Acepta path relativo de BD o absoluto ya resuelto.
+     */
+    public static function rutaParaTcpdf(?string $pathRelativoOAbsoluto): ?string
+    {
+        $path = trim((string) $pathRelativoOAbsoluto);
+        if ($path === '') {
+            return null;
+        }
+
+        $abs = is_file($path) ? $path : self::rutaAbsoluta($path);
+        if ($abs === null || ! is_file($abs) || ! is_readable($abs)) {
+            return null;
+        }
+
+        return str_replace('\\', '/', $abs);
     }
 
     public static function urlVer(?int $idLegajo, ?string $pathRelativo): ?string

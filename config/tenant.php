@@ -60,10 +60,14 @@ return [
          * Desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `implementacion`: clave de variante en código (`estandar` | `sanfranciscoasis`).
          * Visibilidad por nivel: `ento.verDatosFicha` (Parametrización → Parámetros; mismo flag que ficha).
+         * `foto_carnet`: si la familia puede subir foto carnet en este formulario.
+         * Independiente de la solapa del ABM de legajos (Secretaría). Default off;
+         * activar en `config/tenants/{slug}.php` (sigue haciendo falta la solapa).
          */
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'estandar',
+            'foto_carnet' => false,
         ],
 
         /**
@@ -199,6 +203,30 @@ return [
         'horario_clase' => [
             'habilitado' => false,
             'niveles_habilitados' => [],
+        ],
+
+        /**
+         * Certificado Único de Salud (C.U.S.) en PDF (portal familia).
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         * `niveles_habilitados`: IDs de `niveles` con el ítem. Vacío = todos los niveles.
+         * `niveles_deshabilitados`: IDs de `niveles` sin el módulo.
+         */
+        'cus' => [
+            'habilitado' => false,
+            'niveles_habilitados' => [],
+            'niveles_deshabilitados' => [],
+        ],
+
+        /**
+         * Informe de Salud Anual (I.S.A.) en PDF (portal familia).
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         * `niveles_habilitados`: IDs de `niveles` con el ítem. Vacío = todos los niveles.
+         * `niveles_deshabilitados`: IDs de `niveles` sin el módulo.
+         */
+        'isa' => [
+            'habilitado' => false,
+            'niveles_habilitados' => [],
+            'niveles_deshabilitados' => [],
         ],
     ],
 
