@@ -8,19 +8,22 @@ use Illuminate\Http\Response;
 
 class PwaManifestController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(?string $portal = null): Response
     {
-        $nombre = PwaIdentity::nombre();
+        $portal = PwaIdentity::normalizarPortal($portal);
+        $esFamilias = $portal === PwaIdentity::FAMILIAS;
 
         $payload = [
-            // Relativo al manifiesto: el navegador resuelve contra el host real (no APP_URL).
-            'id' => './',
-            'name' => $nombre,
-            'short_name' => PwaIdentity::nombreCorto(),
-            'description' => 'Gestión escolar: personal, familias y notificaciones.',
+            // id distinto = dos apps instalables en el mismo origen.
+            'id' => PwaIdentity::idRelativo($portal),
+            'name' => PwaIdentity::nombreApp($portal),
+            'short_name' => PwaIdentity::nombreCortoApp($portal),
+            'description' => $esFamilias
+                ? 'Portal de familias y estudiantes.'
+                : 'Portal del personal de la institución.',
             'lang' => 'es',
             'dir' => 'ltr',
-            'start_url' => './entrar',
+            'start_url' => PwaIdentity::startUrlRelativo($portal),
             'scope' => './',
             'display' => 'standalone',
             'display_override' => ['standalone', 'minimal-ui'],
@@ -53,18 +56,6 @@ class PwaManifestController extends Controller
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
-                ],
-            ],
-            'shortcuts' => [
-                [
-                    'name' => 'Personal de la institución',
-                    'short_name' => 'Personal',
-                    'url' => './loginUsuario',
-                ],
-                [
-                    'name' => 'Familias y estudiantes',
-                    'short_name' => 'Familias',
-                    'url' => './loginEstudiante',
                 ],
             ],
         ];

@@ -6,27 +6,52 @@ use Tests\TestCase;
 
 class PwaInstalableTest extends TestCase
 {
-    public function test_manifest_publico_es_instalable(): void
+    public function test_manifiesto_personal_es_distinto_del_de_familias(): void
     {
-        $response = $this->get(route('pwa.manifest'));
+        $personal = $this->get(route('pwa.manifest', ['portal' => 'personal']));
+        $familias = $this->get(route('pwa.manifest', ['portal' => 'familias']));
+
+        $personal->assertOk();
+        $familias->assertOk();
+
+        $p = $personal->json();
+        $f = $familias->json();
+
+        $this->assertSame('standalone', $p['display'] ?? null);
+        $this->assertSame('./', $p['start_url']);
+        $this->assertSame('./app-personal', $p['id']);
+        $this->assertSame('Personal', $p['short_name']);
+
+        $this->assertSame('./alumnos', $f['start_url']);
+        $this->assertSame('./app-familias', $f['id']);
+        $this->assertSame('Familias', $f['short_name']);
+        $this->assertNotSame($p['id'], $f['id']);
+        $this->assertStringContainsString('pwa-icon/192.png', (string) ($p['icons'][0]['src'] ?? ''));
+    }
+
+    public function test_login_personal_enlaza_manifiesto_personal(): void
+    {
+        $response = $this->get(route('login'));
 
         $response->assertOk();
-        $this->assertStringContainsString(
-            'application/manifest+json',
-            (string) $response->headers->get('content-type')
-        );
+        $response->assertSee('manifest-personal.webmanifest', false);
+        $response->assertDontSee('manifest-familias.webmanifest', false);
+        $response->assertSee('Instalar en este dispositivo', false);
+    }
 
-        $data = $response->json();
-        $this->assertIsArray($data);
-        $this->assertSame('standalone', $data['display'] ?? null);
-        $this->assertNotEmpty($data['name'] ?? null);
-        $this->assertNotEmpty($data['start_url'] ?? null);
-        $this->assertNotEmpty($data['scope'] ?? null);
-        $this->assertNotEmpty($data['icons'] ?? null);
-        $this->assertSame('./entrar', $data['start_url']);
-        $this->assertSame('./', $data['scope']);
-        $this->assertSame('./', $data['id']);
-        $this->assertStringContainsString('pwa-icon/192.png', (string) ($data['icons'][0]['src'] ?? ''));
+    public function test_login_familias_enlaza_manifiesto_familias(): void
+    {
+        $response = $this->get(route('alumnos.login'));
+
+        $response->assertOk();
+        $response->assertSee('manifest-familias.webmanifest', false);
+        $response->assertDontSee('manifest-personal.webmanifest', false);
+        $response->assertSee('Instalar en este dispositivo', false);
+    }
+
+    public function test_entrar_redirige_al_login_de_personal(): void
+    {
+        $this->get(route('pwa.inicio'))->assertRedirect(route('login'));
     }
 
     public function test_icono_pwa_png(): void
@@ -36,18 +61,6 @@ class PwaInstalableTest extends TestCase
         $response->assertOk();
         $response->assertHeader('content-type', 'image/png');
         $this->assertNotEmpty($response->getContent());
-    }
-
-    public function test_inicio_pwa_invitado_muestra_portales(): void
-    {
-        $response = $this->get(route('pwa.inicio'));
-
-        $response->assertOk();
-        $response->assertSee('Personal de la institución', false);
-        $response->assertSee('Familias y estudiantes', false);
-        $response->assertSee('Instalar en este dispositivo', false);
-        $response->assertSee(route('login'), false);
-        $response->assertSee(route('alumnos.login'), false);
     }
 
     public function test_service_worker_ruta_javascript(): void

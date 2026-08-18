@@ -3,10 +3,14 @@
 namespace App\Support\Pwa;
 
 /**
- * Nombre e URLs de la PWA (un ícono por instalación / subcarpeta de tenant).
+ * Dos PWA por tenant (personal / familias), mismas URLs relativas al host actual.
  */
 final class PwaIdentity
 {
+    public const PERSONAL = 'personal';
+
+    public const FAMILIAS = 'familias';
+
     public static function nombre(): string
     {
         try {
@@ -39,6 +43,65 @@ final class PwaIdentity
         }
 
         return 'SE';
+    }
+
+    public static function esPortal(string $portal): bool
+    {
+        return $portal === self::PERSONAL || $portal === self::FAMILIAS;
+    }
+
+    public static function normalizarPortal(?string $portal): string
+    {
+        $portal = strtolower(trim((string) $portal));
+
+        return self::esPortal($portal) ? $portal : self::PERSONAL;
+    }
+
+    /**
+     * Portal según la pantalla actual (login/layout de alumnos → familias).
+     */
+    public static function portalDesdeContexto(?string $guestPortal = null): string
+    {
+        if ($guestPortal === 'alumno') {
+            return self::FAMILIAS;
+        }
+
+        $route = (string) (request()->route()?->getName() ?? '');
+        if ($route === 'alumnos.login' || str_starts_with($route, 'alumnos.')) {
+            return self::FAMILIAS;
+        }
+
+        return self::PERSONAL;
+    }
+
+    public static function nombreApp(string $portal): string
+    {
+        $portal = self::normalizarPortal($portal);
+        $colegio = self::nombre();
+        $sufijo = $portal === self::FAMILIAS ? 'Familias' : 'Personal';
+
+        return $colegio === '' ? $sufijo : $colegio.' — '.$sufijo;
+    }
+
+    public static function nombreCortoApp(string $portal): string
+    {
+        return self::normalizarPortal($portal) === self::FAMILIAS ? 'Familias' : 'Personal';
+    }
+
+    /** start_url relativo al manifiesto (no el login: ese limpia sesión). */
+    public static function startUrlRelativo(string $portal): string
+    {
+        return self::normalizarPortal($portal) === self::FAMILIAS ? './alumnos' : './';
+    }
+
+    public static function idRelativo(string $portal): string
+    {
+        return './app-'.self::normalizarPortal($portal);
+    }
+
+    public static function archivoManifiesto(string $portal): string
+    {
+        return 'manifest-'.self::normalizarPortal($portal).'.webmanifest';
     }
 
     /** Base pública con barra final (`https://dominio/ia/colegio/`). */

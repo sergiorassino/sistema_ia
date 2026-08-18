@@ -214,7 +214,7 @@
 
     function pageWantsInstallHint() {
         var path = window.location.pathname || '';
-        return /loginUsuario|loginEstudiante|\/entrar\/?$|notificaciones/i.test(path);
+        return /loginUsuario|loginEstudiante|notificaciones/i.test(path);
     }
 
     function installDismissedRecently() {

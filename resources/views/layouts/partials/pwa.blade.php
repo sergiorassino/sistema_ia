@@ -1,9 +1,12 @@
-<link rel="manifest" href="{{ \App\Support\Pwa\PwaIdentity::rootPath('manifest.webmanifest') }}">
+@php
+    $pwaPortal = \App\Support\Pwa\PwaIdentity::portalDesdeContexto($guestPortal ?? null);
+@endphp
+<link rel="manifest" href="{{ \App\Support\Pwa\PwaIdentity::rootPath(\App\Support\Pwa\PwaIdentity::archivoManifiesto($pwaPortal)) }}">
 <meta name="theme-color" content="#40848D">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="{{ \App\Support\Pwa\PwaIdentity::nombreCorto() }}">
+<meta name="apple-mobile-web-app-title" content="{{ \App\Support\Pwa\PwaIdentity::nombreCortoApp($pwaPortal) }}">
 <link rel="apple-touch-icon" href="{{ \App\Support\Pwa\PwaIdentity::rootPath('pwa-icon/180.png') }}">
 <meta name="pwa-scope" content="{{ \App\Support\Pwa\PwaIdentity::rootPath('') }}">
 <meta name="pwa-sw-url" content="{{ \App\Support\Pwa\PwaIdentity::rootPath('sw.js') }}">
