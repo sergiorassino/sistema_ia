@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Favicon para /favicon.ico: `1.png` (tema claro), `2.png` (tema oscuro).
+ * Favicon para /favicon.ico e /icono-escuela.png: círculo SE (estilo SILAVET).
  */
 class InstitutionalIconController extends Controller
 {
-    public function __invoke(Request $request): Response|BinaryFileResponse
+    public function __invoke(): Response|BinaryFileResponse
     {
-        $preferDark = $request->header('Sec-CH-Prefers-Color-Scheme') === 'dark'
-            || (is_string($request->query('theme')) && $request->query('theme') === 'dark');
+        $path = public_path('img/favicon-32.png');
+        if (! is_file($path)) {
+            abort(404);
+        }
 
-        $filename = $preferDark ? '2.png' : '1.png';
-
-        return response()->file(public_path('img/'.$filename), [
+        return response()->file($path, [
             'Content-Type' => 'image/png',
             'Cache-Control' => 'public, max-age=3600, must-revalidate',
         ]);

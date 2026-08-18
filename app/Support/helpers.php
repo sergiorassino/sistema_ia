@@ -472,24 +472,25 @@ if (! function_exists('matriculaWebDocumentoUrl')) {
 
 if (! function_exists('seMonogramFaviconUrls')) {
     /**
-     * Favicon de pestaña: `1.png` (tema claro del navegador), `2.png` (tema oscuro).
+     * Favicon de pestaña: círculo blanco con letras SE (gris oscuro), mismo criterio que SILAVET.
      *
      * @return array{light: string, dark: string}
      */
     function seMonogramFaviconUrls(): array
     {
-        $version = '14';
+        $version = '15';
+        $url = asset('img/favicon-32.png').'?v='.$version;
 
         return [
-            'light' => asset('img/1.png').'?v='.$version,
-            'dark' => asset('img/2.png').'?v='.$version,
+            'light' => $url,
+            'dark' => $url,
         ];
     }
 }
 
 if (! function_exists('institutionalFaviconUrl')) {
     /**
-     * URL del favicon institucional (variante para tema claro del navegador).
+     * URL del favicon institucional (círculo SE).
      *
      * @deprecated Preferir seMonogramFaviconUrls() en vistas; se mantiene por compatibilidad.
      */
