@@ -88,15 +88,23 @@ final class PwaIdentity
         return self::normalizarPortal($portal) === self::FAMILIAS ? 'Familias' : 'Personal';
     }
 
-    /** start_url relativo al manifiesto. No usar `./` (en Apache la subcarpeta da 404). */
+    /** Login de cada portal (HTTP 200). Igual que SILAVET: no usar url('/') — en Apache es 403/404. */
+    public static function startUrlAbsoluto(string $portal): string
+    {
+        return self::normalizarPortal($portal) === self::FAMILIAS
+            ? url('/loginEstudiante')
+            : url('/loginUsuario');
+    }
+
+    /** @deprecated Usar startUrlAbsoluto() */
     public static function startUrlRelativo(string $portal): string
     {
-        return './app-'.self::normalizarPortal($portal);
+        return self::startUrlAbsoluto($portal);
     }
 
     public static function idRelativo(string $portal): string
     {
-        return './app-'.self::normalizarPortal($portal);
+        return self::startUrlAbsoluto($portal);
     }
 
     public static function archivoManifiesto(string $portal): string

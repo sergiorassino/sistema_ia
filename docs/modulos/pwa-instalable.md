@@ -2,71 +2,67 @@
 
 ## Propósito
 
-Permitir instalar el sistema como aplicación (icono en el dispositivo) **sin exigir instalación** para usar notificaciones push, salvo en iPhone/iPad (requisito de Apple).
+Permitir instalar el sistema como aplicación (icono en el dispositivo), con el **mismo criterio que SILAVET**.
 
-Hay **dos apps** por colegio (mismo origen, distinto `id` de manifiesto):
+Hay **dos apps** por colegio (mismo origen, distinto `id` = `start_url`):
 
-| App | Se instala desde | Al abrir el icono |
-|-----|------------------|-------------------|
-| **Personal** | `/loginUsuario` | `/app-personal` → home de personal, o login si no hay sesión |
-| **Familias** | `/loginEstudiante` | `/app-familias` → autogestión, o login de estudiantes |
+| App | Manifiesto | start_url (como SILAVET: login HTTP 200) |
+|-----|------------|------------------------------------------|
+| **Personal** | `manifest-personal.webmanifest` | `url('/loginUsuario')` |
+| **Familias** | `manifest-familias.webmanifest` | `url('/loginEstudiante')` |
 
-No hay pantalla para elegir portal. El `start_url` **no** es el login: esas rutas limpian la sesión (`login.limpiar-sesion`) y cerrarían al usuario cada vez que abre la app.
+Patrón SILAVET (`WebManifestController`): URLs **absolutas** (`url()` / `asset()`), iconos PNG estáticos (`img/icon-192.png`, `img/icon-512.png`), `display: standalone`. No usar `url('/')` ni `./` como `start_url`: en Apache con `Options -Indexes` la carpeta del proyecto da 403/404 y Chrome solo ofrece «Crear acceso directo».
+
+No interceptar `beforeinstallprompt` (`preventDefault`): Chrome oculta «Instalar» y deja solo el acceso directo.
 
 ## Modalidades / variantes
 
 | Superficie | Qué ocurre |
 |------------|------------|
-| Chrome / Edge | En cada login: **Instalar en este dispositivo**. Quedan dos iconos si se instala desde ambas URLs. |
-| iPhone / iPad | Compartir → Agregar a inicio **en cada login**. El push solo funciona al abrir desde ese icono. |
+| Chrome / Edge | Icono **Instalar** en la barra de direcciones / menú ⋮ → Instalar. |
+| iPhone / iPad | Compartir → Agregar a inicio en cada login. |
 | Quien no instala | Push igual que en el navegador (salvo iOS). |
 
 ## Actores y permisos
 
-Cualquier visitante. No hay permiso extra. Suscribir push sigue pidiendo login en `/notificaciones-push/api/*`.
+Cualquier visitante. Suscribir push sigue pidiendo login en `/notificaciones-push/api/*`.
 
 ## Tablas y campos críticos
 
-Ninguna tabla nueva. Las suscripciones push siguen en el esquema actual (`PushSubscriptionRepository`).
+Ninguna tabla nueva.
 
 ## Flujo principal
 
-1. `loginUsuario` y menús de personal enlazan `manifest-personal.webmanifest`.
-2. `loginEstudiante` y menú de alumnos enlazan `manifest-familias.webmanifest`.
-3. Mismo SW `/sw.js` (alcance de la subcarpeta del tenant).
-4. `/entrar` redirige (compatibilidad); ya no es el inicio de la PWA.
+1. Cada login enlaza su manifiesto vía `route('pwa.manifest', ['portal' => …])`.
+2. Iconos estáticos en `public/img/` (como SILAVET). Regenerar: `php tools/generate-pwa-icons.php`.
+3. SW `/sw.js` solo para push; SILAVET no necesita SW para instalar.
+4. Al abrir el icono se carga el login de ese portal (igual que SILAVET).
 
 ## Fuente de verdad
 
-| Dato | Quién escribe | Quién solo lee |
-|------|---------------|----------------|
-| Manifiesto | `PwaManifestController` + `PwaIdentity` | Navegador al instalar |
-| Service worker | `public/sw.js` | Navegador / push |
-| Suscripción push | Usuario en pantalla Notificaciones | FCM / `WebPushService` |
+| Dato | Quién escribe |
+|------|---------------|
+| Manifiesto | `PwaManifestController` (copia el enfoque de SILAVET `WebManifestController`) |
+| Iconos | `public/img/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` |
+| SW push | `public/sw.js` |
 
 ## Archivos clave
 
 | Pieza | Ruta |
 |-------|------|
-| Identidad / portal | `app/Support/Pwa/PwaIdentity.php` |
+| Identidad | `app/Support/Pwa/PwaIdentity.php` |
 | Manifiesto | `app/Http/Controllers/Pwa/PwaManifestController.php` |
-| Iconos 180/192/512 | `app/Http/Controllers/Pwa/PwaIconController.php` |
-| SW | `public/sw.js` + `PwaServiceWorkerController` |
-| Cliente | `resources/js/se-pwa.js` |
 | Head | `resources/views/layouts/partials/pwa.blade.php` |
-| Rutas | `pwa.manifest` `{portal}`, `pwa.icon`, `pwa.sw` |
+| Cliente | `resources/js/se-pwa.js` |
 
 ## Qué no hacer / reglas de negocio
 
-1. No cachear HTML autenticado ni Livewire en el SW.
-2. No ampliar el alcance del SW más allá de `APP_URL`.
-3. No usar el login como `start_url` (limpia sesión).
-4. No unificar las dos apps en un solo `id` de manifiesto.
-5. No exigir instalación para el push en Android/escritorio.
+1. No `start_url` / `scope` / iconos relativos (`./`).
+2. No `preventDefault` en `beforeinstallprompt`.
+3. No usar la carpeta raíz del tenant como `start_url`.
+4. No unificar las dos apps en un solo `id`.
 
 ## Checklist al modificar
 
-- [ ] `id` distinto (`./app-personal` vs `./app-familias`).
-- [ ] `start_url` = `./app-personal` / `./app-familias` (nunca `./`: en producción la subcarpeta da 404).
-- [ ] Cada login enlaza su manifiesto.
-- [ ] Tras tocar Vite: `npm run build`; subir `public/build/` y `public/sw.js`.
+- [ ] Manifiesto con `url()` / `asset()`, `start_url` = login, iconos `icon-192`/`icon-512`.
+- [ ] Tras tocar Vite: `npm run build`. Subir también `public/img/icon-*.png` y `apple-touch-icon.png`.

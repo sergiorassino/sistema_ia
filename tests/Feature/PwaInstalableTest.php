@@ -18,15 +18,16 @@ class PwaInstalableTest extends TestCase
         $f = $familias->json();
 
         $this->assertSame('standalone', $p['display'] ?? null);
-        $this->assertSame('./app-personal', $p['start_url']);
-        $this->assertSame('./app-personal', $p['id']);
+        $this->assertStringContainsString('loginUsuario', (string) ($p['start_url'] ?? ''));
+        $this->assertStringContainsString('loginUsuario', (string) ($p['id'] ?? ''));
         $this->assertSame('Personal', $p['short_name']);
 
-        $this->assertSame('./app-familias', $f['start_url']);
-        $this->assertSame('./app-familias', $f['id']);
+        $this->assertStringContainsString('loginEstudiante', (string) ($f['start_url'] ?? ''));
+        $this->assertStringContainsString('loginEstudiante', (string) ($f['id'] ?? ''));
         $this->assertSame('Familias', $f['short_name']);
         $this->assertNotSame($p['id'], $f['id']);
-        $this->assertStringContainsString('pwa-icon/192.png', (string) ($p['icons'][0]['src'] ?? ''));
+        $this->assertStringContainsString('icon-192.png', (string) ($p['icons'][0]['src'] ?? ''));
+        $this->assertStringContainsString('http', (string) ($p['icons'][0]['src'] ?? ''));
     }
 
     public function test_login_personal_enlaza_manifiesto_personal(): void
