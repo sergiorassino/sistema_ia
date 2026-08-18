@@ -356,6 +356,9 @@ Route::get('/sw.js', PwaServiceWorkerController::class)
         \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
     ])
     ->name('pwa.sw');
+Route::get('/app-{portal}', PwaInicioController::class)
+    ->where('portal', 'personal|familias')
+    ->name('pwa.lanzar');
 Route::get('/entrar', PwaInicioController::class)->name('pwa.inicio');
 
 // Registro público de aspirantes (sin auth, sin school.context).

@@ -18,11 +18,11 @@ class PwaInstalableTest extends TestCase
         $f = $familias->json();
 
         $this->assertSame('standalone', $p['display'] ?? null);
-        $this->assertSame('./', $p['start_url']);
+        $this->assertSame('./app-personal', $p['start_url']);
         $this->assertSame('./app-personal', $p['id']);
         $this->assertSame('Personal', $p['short_name']);
 
-        $this->assertSame('./alumnos', $f['start_url']);
+        $this->assertSame('./app-familias', $f['start_url']);
         $this->assertSame('./app-familias', $f['id']);
         $this->assertSame('Familias', $f['short_name']);
         $this->assertNotSame($p['id'], $f['id']);
@@ -52,6 +52,12 @@ class PwaInstalableTest extends TestCase
     public function test_entrar_redirige_al_login_de_personal(): void
     {
         $this->get(route('pwa.inicio'))->assertRedirect(route('login'));
+    }
+
+    public function test_lanzar_personal_y_familias_no_dan_404(): void
+    {
+        $this->get(route('pwa.lanzar', ['portal' => 'personal']))->assertRedirect(route('login'));
+        $this->get(route('pwa.lanzar', ['portal' => 'familias']))->assertRedirect(route('alumnos.login'));
     }
 
     public function test_icono_pwa_png(): void

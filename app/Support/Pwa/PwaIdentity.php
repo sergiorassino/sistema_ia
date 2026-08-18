@@ -88,10 +88,10 @@ final class PwaIdentity
         return self::normalizarPortal($portal) === self::FAMILIAS ? 'Familias' : 'Personal';
     }
 
-    /** start_url relativo al manifiesto (no el login: ese limpia sesión). */
+    /** start_url relativo al manifiesto. No usar `./` (en Apache la subcarpeta da 404). */
     public static function startUrlRelativo(string $portal): string
     {
-        return self::normalizarPortal($portal) === self::FAMILIAS ? './alumnos' : './';
+        return './app-'.self::normalizarPortal($portal);
     }
 
     public static function idRelativo(string $portal): string
