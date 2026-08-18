@@ -9,7 +9,7 @@ Hay **dos apps** por colegio. Chrome solo deja instalar la segunda si los `scope
 | App | Manifiesto | `id` / `scope` | `start_url` |
 |-----|------------|----------------|-------------|
 | **Personal** | `manifest-personal.webmanifest` | `…/pwa-personal/` | `…/pwa-personal/entrar` |
-| **Familias** | `manifest-familias.webmanifest` | `…/pwa-familias/` | `…/pwa-familias/entrar` |
+| **Estudiante** (portal familias) | `manifest-familias.webmanifest` | `…/pwa-familias/` | `…/pwa-familias/entrar` |
 
 `/entrar` redirige al home si hay sesión, o al login si no. No usar el login como `start_url`: el login limpia la sesión. No usar `url('/')` ni `./`: en Apache con `Options -Indexes` la carpeta del proyecto da 403/404 y Chrome solo ofrece «Crear acceso directo».
 

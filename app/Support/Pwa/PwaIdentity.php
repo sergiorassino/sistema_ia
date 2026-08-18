@@ -92,14 +92,14 @@ final class PwaIdentity
     {
         $portal = self::normalizarPortal($portal);
         $colegio = self::nombre();
-        $sufijo = $portal === self::FAMILIAS ? 'Familias' : 'Personal';
+        $sufijo = $portal === self::FAMILIAS ? 'Estudiante' : 'Personal';
 
         return $colegio === '' ? $sufijo : $colegio.' — '.$sufijo;
     }
 
     public static function nombreCortoApp(string $portal): string
     {
-        return self::normalizarPortal($portal) === self::FAMILIAS ? 'Familias' : 'Personal';
+        return self::normalizarPortal($portal) === self::FAMILIAS ? 'Estudiante' : 'Personal';
     }
 
     public static function scopeSegment(string $portal): string
