@@ -2,6 +2,8 @@
 
 namespace App\Support\Pwa;
 
+use Illuminate\Support\Facades\URL;
+
 /**
  * Dos PWA por tenant (personal / familias), mismas URLs relativas al host actual.
  */
@@ -10,6 +12,13 @@ final class PwaIdentity
     public const PERSONAL = 'personal';
 
     public const FAMILIAS = 'familias';
+
+    /** Segmento de URL que aísla el alcance de cada PWA (Chrome no instala dos apps con el mismo scope). */
+    public const SCOPE_SEGMENT_PERSONAL = 'pwa-personal';
+
+    public const SCOPE_SEGMENT_FAMILIAS = 'pwa-familias';
+
+    public const SESSION_KEY = 'se_pwa_portal';
 
     public static function nombre(): string
     {
@@ -62,6 +71,11 @@ final class PwaIdentity
      */
     public static function portalDesdeContexto(?string $guestPortal = null): string
     {
+        $desdePrefijo = request()->attributes->get('se_pwa_portal');
+        if (is_string($desdePrefijo) && self::esPortal($desdePrefijo)) {
+            return $desdePrefijo;
+        }
+
         if ($guestPortal === 'alumno') {
             return self::FAMILIAS;
         }
@@ -88,12 +102,111 @@ final class PwaIdentity
         return self::normalizarPortal($portal) === self::FAMILIAS ? 'Familias' : 'Personal';
     }
 
-    /** Login de cada portal (HTTP 200). Igual que SILAVET: no usar url('/') — en Apache es 403/404. */
-    public static function startUrlAbsoluto(string $portal): string
+    public static function scopeSegment(string $portal): string
     {
         return self::normalizarPortal($portal) === self::FAMILIAS
-            ? url('/loginEstudiante')
-            : url('/loginUsuario');
+            ? self::SCOPE_SEGMENT_FAMILIAS
+            : self::SCOPE_SEGMENT_PERSONAL;
+    }
+
+    /**
+     * Alcance del manifiesto: directorio exclusivo por portal, con barra final.
+     * Sin eso Chrome trata Personal y Familias como la misma app.
+     */
+    public static function scopeAbsoluto(string $portal): string
+    {
+        return rtrim(self::urlDentroDelPortal($portal, ''), '/').'/';
+    }
+
+    /**
+     * Arranque de la PWA: /entrar (si hay sesión va al home; el login limpia sesión).
+     */
+    public static function startUrlAbsoluto(string $portal): string
+    {
+        return self::urlDentroDelPortal($portal, 'entrar');
+    }
+
+    public static function urlLoginPrefijado(string $portal): string
+    {
+        $portal = self::normalizarPortal($portal);
+
+        return self::urlDentroDelPortal(
+            $portal,
+            $portal === self::FAMILIAS ? 'loginEstudiante' : 'loginUsuario'
+        );
+    }
+
+    public static function urlDentroDelPortal(string $portal, string $pathInterno): string
+    {
+        $segment = self::scopeSegment($portal);
+        $pathInterno = trim($pathInterno, '/');
+        $path = '/'.$segment.($pathInterno !== '' ? '/'.$pathInterno : '');
+
+        return url($path);
+    }
+
+    /**
+     * @return array{portal: string, resto: string}|null
+     */
+    public static function parsearPrefijoDePath(string $pathInfo): ?array
+    {
+        $path = '/'.trim($pathInfo, '/');
+        if ($path === '/') {
+            return null;
+        }
+
+        foreach ([self::PERSONAL => self::SCOPE_SEGMENT_PERSONAL, self::FAMILIAS => self::SCOPE_SEGMENT_FAMILIAS] as $portal => $segment) {
+            $prefix = '/'.$segment;
+            if ($path === $prefix) {
+                return ['portal' => $portal, 'resto' => '/entrar'];
+            }
+            if (str_starts_with($path, $prefix.'/')) {
+                $resto = substr($path, strlen($prefix));
+
+                return ['portal' => $portal, 'resto' => ($resto === '' || $resto === false) ? '/entrar' : $resto];
+            }
+        }
+
+        return null;
+    }
+
+    public static function aplicarPrefijoUrls(string $portal): void
+    {
+        $segment = self::scopeSegment($portal);
+
+        URL::formatPathUsing(function (string $path, $route = null) use ($segment): string {
+            $path = '/'.ltrim($path, '/');
+            if (self::pathSinPrefijoPwa($path, $segment)) {
+                return $path;
+            }
+
+            return '/'.$segment.$path;
+        });
+    }
+
+    public static function quitarPrefijoUrls(): void
+    {
+        URL::formatPathUsing(static fn (string $path, $route = null): string => $path);
+    }
+
+    public static function pathSinPrefijoPwa(string $path, string $segment): bool
+    {
+        $path = '/'.ltrim($path, '/');
+        $prefix = '/'.$segment;
+        if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
+            return true;
+        }
+
+        $sinBarra = ltrim($path, '/');
+
+        $prefijos = ['build/', 'img/', 'storage/', 'fonts/', 'vendor/', 'livewire-', 'pwa-icon/', 'manifest'];
+        foreach ($prefijos as $inicio) {
+            if (str_starts_with($sinBarra, $inicio)) {
+                return true;
+            }
+        }
+
+        return in_array($sinBarra, ['favicon.ico', 'icono-escuela.png', 'sw.js', 'up'], true);
     }
 
     /** @deprecated Usar startUrlAbsoluto() */
@@ -104,7 +217,7 @@ final class PwaIdentity
 
     public static function idRelativo(string $portal): string
     {
-        return self::startUrlAbsoluto($portal);
+        return self::scopeAbsoluto($portal);
     }
 
     public static function archivoManifiesto(string $portal): string

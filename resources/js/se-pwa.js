@@ -16,6 +16,7 @@
 
     var pushNotificationsRegistration = null;
     var deferredInstallPrompt = null;
+    var nativePromptOpened = false;
     var INSTALL_DISMISS_KEY = 'se-pwa-install-dismissed';
     var INSTALL_DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -237,6 +238,13 @@
         if (el) el.remove();
     }
 
+    function installBlockedMessage() {
+        if (isIos()) {
+            return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
+        }
+        return 'Puedes instalar el sistema como App para tenerlo más a mano en el escritorio. Si ya tenés instalada la otra app (o una instalación vieja), desinstalala primero: clic derecho en el icono → Desinstalar. Después recargá este login e instalá Personal y Familias por separado. En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
+    }
+
     function installInstructionsMessage() {
         if (isIos()) {
             return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
@@ -244,18 +252,74 @@
         return 'Puedes instalar el sistema como App para tenerlo más a mano en el escritorio. En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
     }
 
-    function tryNativeInstall() {
-        if (deferredInstallPrompt) {
+    function pageIsInManifestScope() {
+        var scopeMeta = document.querySelector('meta[name="pwa-manifest-scope"]');
+        var scopeUrl = scopeMeta ? scopeMeta.getAttribute('content') : '';
+        if (!scopeUrl) return false;
+        try {
+            var scopePath = new URL(scopeUrl, window.location.href).pathname;
+            if (!scopePath.endsWith('/')) {
+                scopePath += '/';
+            }
+            var here = window.location.pathname || '/';
+            return here === scopePath.slice(0, -1) || here.indexOf(scopePath) === 0;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function installLandingUrl() {
+        var meta = document.querySelector('meta[name="pwa-install-url"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function autoInstallRequested() {
+        return /(?:\?|&)se_pwa_install=1(?:&|$)/.test(window.location.search || '');
+    }
+
+    function clearAutoInstallQuery() {
+        try {
+            var u = new URL(window.location.href);
+            if (!u.searchParams.has('se_pwa_install')) return;
+            u.searchParams.delete('se_pwa_install');
+            var q = u.searchParams.toString();
+            window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+        } catch (e) {}
+    }
+
+    function promptNativeInstall() {
+        if (!deferredInstallPrompt || nativePromptOpened) return false;
+        nativePromptOpened = true;
+        try {
             deferredInstallPrompt.prompt();
-            return deferredInstallPrompt.userChoice.finally(function () {
-                deferredInstallPrompt = null;
-                dismissInstall();
-            });
+        } catch (e) {
+            nativePromptOpened = false;
+            return false;
         }
+        deferredInstallPrompt.userChoice.finally(function () {
+            deferredInstallPrompt = null;
+            nativePromptOpened = false;
+            dismissInstall();
+        });
+        clearAutoInstallQuery();
+        return true;
+    }
+
+    function tryNativeInstall() {
+        if (promptNativeInstall()) {
+            return Promise.resolve();
+        }
+        var landing = installLandingUrl();
+        if (landing && !pageIsInManifestScope()) {
+            var join = landing.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = landing + join + 'se_pwa_install=1';
+            return Promise.resolve();
+        }
+        var msg = pageIsInManifestScope() ? installBlockedMessage() : installInstructionsMessage();
         if (typeof window.seSwalAviso === 'function') {
-            return window.seSwalAviso(installInstructionsMessage(), 'Instalar');
+            return window.seSwalAviso(msg, 'Instalar');
         }
-        window.alert(installInstructionsMessage());
+        window.alert(msg);
         return Promise.resolve();
     }
 
@@ -345,6 +409,9 @@
             // Igual que SILAVET: no interceptar. Si se hace preventDefault(), Chrome
             // oculta «Instalar» y en el menú solo queda «Crear acceso directo».
             deferredInstallPrompt = e;
+            if (autoInstallRequested()) {
+                promptNativeInstall();
+            }
         });
 
         window.addEventListener('appinstalled', function () {
@@ -352,6 +419,18 @@
             dismissInstall();
             document.documentElement.classList.remove('se-pwa-can-install');
         });
+
+        if (autoInstallRequested()) {
+            window.setTimeout(function () {
+                if (nativePromptOpened || promptNativeInstall()) {
+                    return;
+                }
+                if (typeof window.seSwalAviso === 'function') {
+                    window.seSwalAviso(installBlockedMessage(), 'Instalar');
+                }
+                clearAutoInstallQuery();
+            }, 1200);
+        }
 
         if (isIos() && pageWantsInstallHint()) {
             showIosInstallBanner();

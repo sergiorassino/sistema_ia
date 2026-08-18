@@ -5,6 +5,8 @@ use App\Http\Middleware\EnsureSchoolContext;
 use App\Http\Middleware\EnsureStudentContext;
 use App\Http\Middleware\ForceHttpsBehindProxy;
 use App\Http\Middleware\NoStoreResponse;
+use App\Http\Middleware\PwaPortalPrefixRewrite;
+use App\Http\Middleware\PwaPortalPrefixSession;
 use App\Http\Middleware\RegenerarSesionPostLogin;
 use App\Support\Alumnos\SinMatriculaAutogestionException;
 use App\Support\Auth\CerrarSesionAplicacion;
@@ -29,7 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PREFIX,
         );
 
+        $middleware->prepend(PwaPortalPrefixRewrite::class);
         $middleware->prependToGroup('web', ForceHttpsBehindProxy::class);
+        $middleware->appendToGroup('web', PwaPortalPrefixSession::class);
         $middleware->appendToGroup('web', RegenerarSesionPostLogin::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {

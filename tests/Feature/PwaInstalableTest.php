@@ -18,14 +18,21 @@ class PwaInstalableTest extends TestCase
         $f = $familias->json();
 
         $this->assertSame('standalone', $p['display'] ?? null);
-        $this->assertStringContainsString('loginUsuario', (string) ($p['start_url'] ?? ''));
-        $this->assertStringContainsString('loginUsuario', (string) ($p['id'] ?? ''));
+        $this->assertStringContainsString('pwa-personal', (string) ($p['start_url'] ?? ''));
+        $this->assertStringContainsString('/entrar', (string) ($p['start_url'] ?? ''));
+        $this->assertStringContainsString('pwa-personal', (string) ($p['id'] ?? ''));
+        $this->assertStringContainsString('pwa-personal', (string) ($p['scope'] ?? ''));
         $this->assertSame('Personal', $p['short_name']);
 
-        $this->assertStringContainsString('loginEstudiante', (string) ($f['start_url'] ?? ''));
-        $this->assertStringContainsString('loginEstudiante', (string) ($f['id'] ?? ''));
+        $this->assertStringContainsString('pwa-familias', (string) ($f['start_url'] ?? ''));
+        $this->assertStringContainsString('/entrar', (string) ($f['start_url'] ?? ''));
+        $this->assertStringContainsString('pwa-familias', (string) ($f['id'] ?? ''));
+        $this->assertStringContainsString('pwa-familias', (string) ($f['scope'] ?? ''));
         $this->assertSame('Familias', $f['short_name']);
         $this->assertNotSame($p['id'], $f['id']);
+        $this->assertNotSame($p['scope'], $f['scope']);
+        $this->assertFalse(str_starts_with(rtrim((string) $f['scope'], '/').'/', rtrim((string) $p['scope'], '/').'/'));
+        $this->assertFalse(str_starts_with(rtrim((string) $p['scope'], '/').'/', rtrim((string) $f['scope'], '/').'/'));
         $this->assertStringContainsString('icon-se-192.png', (string) ($p['icons'][0]['src'] ?? ''));
         $this->assertStringContainsString('?v=', (string) ($p['icons'][0]['src'] ?? ''));
         $this->assertStringContainsString('http', (string) ($p['icons'][0]['src'] ?? ''));
@@ -60,6 +67,34 @@ class PwaInstalableTest extends TestCase
     {
         $this->get(route('pwa.lanzar', ['portal' => 'personal']))->assertRedirect(route('login'));
         $this->get(route('pwa.lanzar', ['portal' => 'familias']))->assertRedirect(route('alumnos.login'));
+    }
+
+    public function test_login_prefijado_personal_enlaza_manifiesto_personal(): void
+    {
+        $response = $this->get('/pwa-personal/loginUsuario');
+
+        $response->assertOk();
+        $response->assertSee('manifest-personal.webmanifest', false);
+        $response->assertSee('pwa-personal', false);
+    }
+
+    public function test_login_prefijado_familias_enlaza_manifiesto_familias(): void
+    {
+        $response = $this->get('/pwa-familias/loginEstudiante');
+
+        $response->assertOk();
+        $response->assertSee('manifest-familias.webmanifest', false);
+        $response->assertSee('pwa-familias', false);
+    }
+
+    public function test_entrar_prefijado_familias_va_al_login_de_estudiantes(): void
+    {
+        $response = $this->get('/pwa-familias/entrar');
+
+        $response->assertRedirect();
+        $location = (string) $response->headers->get('Location');
+        $this->assertStringContainsString('loginEstudiante', $location);
+        $this->assertStringContainsString('pwa-familias', $location);
     }
 
     public function test_icono_pwa_png(): void

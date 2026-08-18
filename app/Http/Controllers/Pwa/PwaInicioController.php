@@ -9,14 +9,19 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * start_url de cada PWA. No usar `/` ni el login: `/` da 404 en subcarpeta Apache
- * y el login limpia la sesión.
+ * start_url de cada PWA (bajo /pwa-personal o /pwa-familias). No usar `/` ni el login:
+ * `/` da 404 en subcarpeta Apache y el login limpia la sesión.
  */
 class PwaInicioController extends Controller
 {
     public function __invoke(?string $portal = null): RedirectResponse
     {
-        $portal = PwaIdentity::normalizarPortal($portal);
+        $desdePrefijo = request()->attributes->get('se_pwa_portal');
+        if (is_string($desdePrefijo) && PwaIdentity::esPortal($desdePrefijo)) {
+            $portal = $desdePrefijo;
+        } else {
+            $portal = PwaIdentity::normalizarPortal($portal);
+        }
 
         if ($portal === PwaIdentity::FAMILIAS) {
             if (Auth::guard('alumno')->check()) {
