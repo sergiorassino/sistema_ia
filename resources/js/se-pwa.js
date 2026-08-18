@@ -241,7 +241,7 @@
         if (isIos()) {
             return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
         }
-        return 'En el menú del navegador (⋮ o ⋯) elegí Instalar aplicación. En la computadora también puede aparecer un icono de instalar en la barra de direcciones.';
+        return 'En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
     }
 
     function tryNativeInstall() {
@@ -342,9 +342,9 @@
         revealInlineInstallButtons();
 
         window.addEventListener('beforeinstallprompt', function (e) {
-            e.preventDefault();
+            // Igual que SILAVET: no interceptar. Si se hace preventDefault(), Chrome
+            // oculta «Instalar» y en el menú solo queda «Crear acceso directo».
             deferredInstallPrompt = e;
-            showChromeInstallBanner();
         });
 
         window.addEventListener('appinstalled', function () {
