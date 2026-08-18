@@ -37,8 +37,8 @@ Ubicacion actual: `public/img/`.
 | --- | --- |
 | `1.png` | Icono compacto, sidebar colapsado |
 | `2.png` | Variante clara del icono |
-| `favicon-se-light.svg` | Favicon monograma **SE** (tema claro del navegador) |
-| `favicon-se-dark.svg` | Favicon monograma **SE** (tema oscuro del navegador) |
+| `favicon-32.png` | Favicon de pestaña: círculo blanco, letras **SE** en gris oscuro (estilo SILAVET) |
+| `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` | Iconos PWA del mismo diseño |
 | `3.png` | Logo principal/prominente para login, dashboard y fallback general |
 | `4.png` | Variante horizontal para headers amplios |
 | `5.png` | Variante compacta horizontal |
@@ -48,7 +48,7 @@ Regla de uso:
 - Preferir `schoolLogoUrl()` cuando exista logo institucional dinamico.
 - Usar `asset('img/3.png')` como fallback principal.
 - El logo debe tener presencia real en login, dashboard y pantallas institucionales.
-- **Pestañas del navegador:** favicon `1.png` (tema claro del navegador) y `2.png` (tema oscuro), vía `layouts/partials/favicon.blade.php` y `/favicon.ico`. Los SVG `favicon-se-*` quedan para notificaciones push u otros usos.
+- **Pestañas del navegador:** favicon circular (blanco, borde fino, letras **SE** en `#333333`), vía `layouts/partials/favicon.blade.php` y `/favicon.ico`. Regenerar: `php tools/generate-pwa-icons.php`.
 
 ---
 

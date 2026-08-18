@@ -1,9 +1,9 @@
 @php
     $pwaPortal = \App\Support\Pwa\PwaIdentity::portalDesdeContexto($guestPortal ?? null);
 @endphp
-<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('img/icon-192.png') }}">
-<link rel="icon" type="image/png" sizes="512x512" href="{{ asset('img/icon-512.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('img/icon-192.png') }}?v=15">
+<link rel="icon" type="image/png" sizes="512x512" href="{{ asset('img/icon-512.png') }}?v=15">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/apple-touch-icon.png') }}?v=15">
 <link rel="manifest" href="{{ route('pwa.manifest', ['portal' => $pwaPortal]) }}">
 <meta name="theme-color" content="#40848D">
 <meta name="msapplication-TileColor" content="#40848D">

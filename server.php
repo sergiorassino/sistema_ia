@@ -2,7 +2,7 @@
 
 /**
  * Router para `php artisan serve`.
- * /favicon.ico debe pasar por Laravel (1.png / 2.png según tema del navegador).
+ * /favicon.ico debe pasar por Laravel (círculo SE en public/img/favicon-32.png).
  */
 $publicPath = getcwd();
 

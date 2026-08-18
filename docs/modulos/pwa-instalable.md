@@ -34,7 +34,7 @@ Ninguna tabla nueva.
 ## Flujo principal
 
 1. Cada login enlaza su manifiesto vía `route('pwa.manifest', ['portal' => …])`.
-2. Iconos estáticos en `public/img/` (como SILAVET). Regenerar: `php tools/generate-pwa-icons.php`.
+2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`.
 3. SW `/sw.js` solo para push; SILAVET no necesita SW para instalar.
 4. Al abrir el icono se carga el login de ese portal (igual que SILAVET).
 
