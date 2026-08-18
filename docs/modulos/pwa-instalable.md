@@ -8,8 +8,8 @@ Hay **dos apps** por colegio (mismo origen, distinto `id` de manifiesto):
 
 | App | Se instala desde | Al abrir el icono |
 |-----|------------------|-------------------|
-| **Personal** | `/loginUsuario` | `/` (home de secretaría/docentes, o login de personal si no hay sesión) |
-| **Familias** | `/loginEstudiante` | `/alumnos` (autogestión, o login de estudiantes si no hay sesión) |
+| **Personal** | `/loginUsuario` | `/app-personal` → home de personal, o login si no hay sesión |
+| **Familias** | `/loginEstudiante` | `/app-familias` → autogestión, o login de estudiantes |
 
 No hay pantalla para elegir portal. El `start_url` **no** es el login: esas rutas limpian la sesión (`login.limpiar-sesion`) y cerrarían al usuario cada vez que abre la app.
 
@@ -67,6 +67,6 @@ Ninguna tabla nueva. Las suscripciones push siguen en el esquema actual (`PushSu
 ## Checklist al modificar
 
 - [ ] `id` distinto (`./app-personal` vs `./app-familias`).
-- [ ] `start_url` `./` (personal) y `./alumnos` (familias); iconos relativos.
+- [ ] `start_url` = `./app-personal` / `./app-familias` (nunca `./`: en producción la subcarpeta da 404).
 - [ ] Cada login enlaza su manifiesto.
 - [ ] Tras tocar Vite: `npm run build`; subir `public/build/` y `public/sw.js`.
