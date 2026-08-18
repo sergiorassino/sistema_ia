@@ -338,7 +338,10 @@ Route::get('/icono-escuela.png', InstitutionalIconController::class)->name('inst
 Route::get('/favicon.ico', InstitutionalIconController::class);
 
 Route::middleware('throttle:60,1')->group(function () {
-    Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
+    Route::get('/manifest-{portal}.webmanifest', PwaManifestController::class)
+        ->where('portal', 'personal|familias')
+        ->name('pwa.manifest');
+    Route::get('/manifest.webmanifest', PwaManifestController::class);
     Route::get('/manifest.json', PwaManifestController::class);
     Route::get('/pwa-icon/{size}.png', PwaIconController::class)
         ->where('size', '180|192|512')
