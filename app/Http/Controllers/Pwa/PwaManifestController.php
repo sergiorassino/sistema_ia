@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * Mismo patrón que SILAVET (WebManifestController):
- * URLs absolutas con url()/asset(); start_url = login (200, no la carpeta raíz 403/404).
+ * URLs absolutas con url()/asset(); start_url = /pwa-…/entrar (no login ni carpeta raíz).
  */
 class PwaManifestController extends Controller
 {
@@ -17,18 +17,19 @@ class PwaManifestController extends Controller
         $portal = PwaIdentity::normalizarPortal($portal);
         $esFamilias = $portal === PwaIdentity::FAMILIAS;
         $startUrl = PwaIdentity::startUrlAbsoluto($portal);
+        $scopeUrl = PwaIdentity::scopeAbsoluto($portal);
         $icon192 = PwaIdentity::iconAbsoluto('icon-se-192.png');
         $icon512 = PwaIdentity::iconAbsoluto('icon-se-512.png');
 
         return response()->json([
-            'id' => $startUrl,
+            'id' => $scopeUrl,
             'name' => PwaIdentity::nombreApp($portal),
             'short_name' => PwaIdentity::nombreCortoApp($portal),
             'description' => $esFamilias
                 ? 'Portal de familias y estudiantes.'
                 : 'Portal del personal de la institución.',
             'start_url' => $startUrl,
-            'scope' => url('/'),
+            'scope' => $scopeUrl,
             'display' => 'standalone',
             'background_color' => '#FFFFFF',
             'theme_color' => '#40848D',
