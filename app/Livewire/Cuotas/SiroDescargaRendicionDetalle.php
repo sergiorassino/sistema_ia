@@ -240,13 +240,12 @@ class SiroDescargaRendicionDetalle extends Component
         $planilla = $consulta->planillaPorNro($this->nroPlanilla);
         abort_if($planilla === null, 404);
 
-        $rendiciones = $consulta->rendicionesDePlanilla($this->nroPlanilla);
+        $rendiciones = SiroDescargaRendicionArchivo::completarLeyendaDuplicados(
+            $consulta->rendicionesDePlanilla($this->nroPlanilla),
+            $this->nroPlanilla,
+        );
         $canal = collect(SiroDescargaRendicionCanal::opcionesPlanilla())
             ->firstWhere('id', (int) ($planilla->canalPago ?? 0));
-
-        $hayObsEnPlanilla = $rendiciones->contains(
-            fn (RendicionRoela $r): bool => trim((string) ($r->obs ?? '')) !== ''
-        );
 
         $pdfUrl = se_route_url('cuotas.siro-descarga.pdf', [
             'ref' => OpaqueRouteToken::forSiroDescargaPlanilla($this->nroPlanilla),
@@ -257,7 +256,6 @@ class SiroDescargaRendicionDetalle extends Component
             'rendiciones' => $rendiciones,
             'totalCobrado' => $consulta->totalCobradoPlanilla($this->nroPlanilla),
             'etiquetaCanal' => $canal['label'] ?? (string) ($planilla->canalPago ?? ''),
-            'hayObsEnPlanilla' => $hayObsEnPlanilla,
             'pdfUrl' => $pdfUrl,
             'fmtImporte' => fn (float $v) => CuotasFormato::formatearImporte($v),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Planilla SIRO '.$this->nroPlanilla]);

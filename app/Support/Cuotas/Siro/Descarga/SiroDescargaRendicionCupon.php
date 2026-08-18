@@ -32,13 +32,25 @@ final class SiroDescargaRendicionCupon
             : null;
 
         foreach ($candidatos as $idFactura) {
-            $resultado = self::resolverPorIdFactura($idFactura, $idTerlec, $importeArchivo);
+            $resultado = self::resolverPorIdFactura($idFactura, $idTerlec, $importeArchivo, $linea);
             if ($resultado['cupon'] !== null) {
                 $respuesta = self::respuestaDesdeResultado($resultado, $advertencias);
                 $respuesta['modalidadIdentificacion'] = $modalidadIdentificacion;
 
                 return $respuesta;
             }
+        }
+
+        $sinCupon448 = SiroDescargaRendicionMatchCuotaSinCupon448::buscar($linea, $idTerlec);
+        if ($sinCupon448['cuotaGenerada'] !== null) {
+            return [
+                'cupon' => null,
+                'cuotaGenerada' => $sinCupon448['cuotaGenerada'],
+                'advertencias' => $sinCupon448['advertencias'],
+                'modalidadIdentificacion' => $modalidadIdentificacion,
+                'matchTipo' => SiroDescargaRendicionMatchCuotaSinCupon448::MATCH_TIPO,
+                'detalleMatch' => $sinCupon448['detalle'],
+            ];
         }
 
         if ($candidatos !== []) {
@@ -128,6 +140,7 @@ final class SiroDescargaRendicionCupon
     }
 
     /**
+     * @param  array<string, mixed>  $linea
      * @return array{
      *     cupon: ?CuponAPagar,
      *     cuotaGenerada: ?CuotaGenerada,
@@ -137,7 +150,7 @@ final class SiroDescargaRendicionCupon
      *     detalleMatch: string
      * }
      */
-    private static function resolverPorIdFactura(string $idFactura, int $idTerlec, ?float $importeArchivo): array
+    private static function resolverPorIdFactura(string $idFactura, int $idTerlec, ?float $importeArchivo, array $linea): array
     {
         $cupon = CuponAPagar::query()->where('id_factura', $idFactura)->first();
         if ($cupon !== null) {
@@ -151,16 +164,18 @@ final class SiroDescargaRendicionCupon
             ];
         }
 
-        $provisorio = SiroDescargaRendicionMatchUploadCercano::buscar($idFactura, $importeArchivo);
-        if ($provisorio['cupon'] !== null) {
-            return [
-                'cupon' => $provisorio['cupon'],
-                'cuotaGenerada' => self::cuotaGeneradaDelCupon($provisorio['cupon'], $idTerlec),
-                'mensaje' => '',
-                'matchTipo' => 'upload_cercano',
-                'advertenciasExtra' => $provisorio['advertencias'],
-                'detalleMatch' => $provisorio['detalle'],
-            ];
+        if (SiroDescargaRendicionMatchUploadCercano::aplicaALinea($linea)) {
+            $provisorio = SiroDescargaRendicionMatchUploadCercano::buscar($idFactura, $importeArchivo);
+            if ($provisorio['cupon'] !== null) {
+                return [
+                    'cupon' => $provisorio['cupon'],
+                    'cuotaGenerada' => self::cuotaGeneradaDelCupon($provisorio['cupon'], $idTerlec),
+                    'mensaje' => '',
+                    'matchTipo' => 'upload_cercano',
+                    'advertenciasExtra' => $provisorio['advertencias'],
+                    'detalleMatch' => $provisorio['detalle'],
+                ];
+            }
         }
 
         return [

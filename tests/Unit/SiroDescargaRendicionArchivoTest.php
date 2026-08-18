@@ -82,7 +82,7 @@ class SiroDescargaRendicionArchivoTest extends TestCase
         );
 
         $this->assertSame(
-            'Pago repetido: pagado por primera vez en planilla 1151 (SIRO 0110709841).'
+            'PAGO DUPLICADO: Pago repetido: pagado por primera vez en planilla 1151 (SIRO 0110709841).'
             .' | La cuota ya estaba saldada al descargar; posible pago doble.',
             $obs,
         );
@@ -106,8 +106,110 @@ class SiroDescargaRendicionArchivoTest extends TestCase
         $this->assertTrue(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
             'Provisorio upload cercano → 0000091900008802088 · importes OK',
         ));
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
+            'PROVISORIO 1 (upload cercano) · Importe rendición: $1.000,00',
+        ));
         $this->assertFalse(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
             'Pago repetido: pagado por primera vez en planilla 1151.',
+        ));
+        $this->assertFalse(SiroDescargaRendicionArchivo::esAdvertenciaMatchProvisorio(
+            'PAGO DUPLICADO: Pago repetido: pagado por primera vez en planilla 1151.',
+        ));
+    }
+
+    public function test_detalle_pago_duplicado_antepone_prefijo_y_junta_avisos(): void
+    {
+        $detalle = SiroDescargaRendicionArchivo::detallePagoDuplicado(
+            [SiroDescargaRendicionArchivo::mensajePagoRepetidoPlanilla('0110709841', 1151)],
+            [
+                'Match provisorio (puesta en marcha): se eligió cupones_a_pagar.id_factura X.',
+                'La cuota ya estaba saldada al descargar; posible pago doble.',
+            ],
+        );
+
+        $this->assertSame(
+            'PAGO DUPLICADO: Pago repetido: pagado por primera vez en planilla 1151 (SIRO 0110709841).'
+            .' | La cuota ya estaba saldada al descargar; posible pago doble.',
+            $detalle,
+        );
+    }
+
+    public function test_detalle_pago_duplicado_sin_avisos_retorna_null(): void
+    {
+        $this->assertNull(SiroDescargaRendicionArchivo::detallePagoDuplicado(
+            [],
+            ['Match provisorio (puesta en marcha): texto'],
+        ));
+    }
+
+    public function test_componer_detalle_pone_duplicado_antes_que_provisorio(): void
+    {
+        $detalle = SiroDescargaRendicionArchivo::componerDetalleEncontrado(
+            'PAGO DUPLICADO: La cuota ya tiene otro pago en este archivo (registro 12); posible pago doble.',
+            'PROVISORIO: id_factura archivo: 000009990000088308801088 - Importe archivo: $999,00 - id_factura cupones_a_pagar: 000009990000088308801088 - importes cupones_a_pagar: 1v $999,00  2v $999,00  3v $999,00. RESOLVIENDO POR: provisorio 1 — upload cercano (449)',
+        );
+
+        $this->assertStringStartsWith('PAGO DUPLICADO:', $detalle);
+        $this->assertStringContainsString(' | PROVISORIO:', $detalle);
+    }
+
+    public function test_es_aviso_pago_duplicado(): void
+    {
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAvisoPagoDuplicado(
+            'La cuota ya estaba saldada al descargar; posible pago doble.',
+        ));
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAvisoPagoDuplicado(
+            SiroDescargaRendicionArchivo::mensajePagoRepetidoPlanilla('0110709841', 1151),
+        ));
+        $this->assertFalse(SiroDescargaRendicionArchivo::esAvisoPagoDuplicado(
+            'PROVISORIO: id_factura archivo: X.',
+        ));
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAvisoPagoDuplicado(
+            SiroDescargaRendicionArchivo::mensajePagoDuplicadoCuotaPlanilla(1148),
+        ));
+        $this->assertTrue(SiroDescargaRendicionArchivo::esAvisoPagoDuplicado(
+            SiroDescargaRendicionArchivo::mensajePagoDuplicadoMismoArchivo(6),
+        ));
+    }
+
+    public function test_pago_repetido_en_el_mismo_archivo_se_registra_con_aviso(): void
+    {
+        $aviso = SiroDescargaRendicionArchivo::mensajePagoDuplicadoMismoArchivo(6);
+        $detalle = SiroDescargaRendicionArchivo::detallePagoDuplicado([$aviso]);
+
+        $this->assertSame(
+            'PAGO DUPLICADO: La cuota ya tiene otro pago en este archivo (registro 6); se registra igual (posible pago doble).',
+            $detalle,
+        );
+        $this->assertSame(
+            'PAGO DUPLICADO: '.$aviso,
+            SiroDescargaRendicionArchivo::obsParaFormularioPlanilla([$aviso]),
+        );
+
+        $avisoSiro = SiroDescargaRendicionArchivo::mensajePagoDuplicadoIdSiroMismoArchivo('0111221833', 6);
+        $this->assertStringContainsString('0111221833', $avisoSiro);
+        $this->assertStringContainsString('registro 6', $avisoSiro);
+        $this->assertStringStartsWith(
+            'PAGO DUPLICADO:',
+            (string) SiroDescargaRendicionArchivo::detallePagoDuplicado([$avisoSiro, $aviso]),
+        );
+
+        $linea = [
+            'cadenaPago' => str_repeat('A', 272),
+            'idPagoSiro' => '0111221833',
+        ];
+        $indiceVacio = ['cadenas' => [], 'idsPago' => []];
+        $this->assertNull($this->invocarMotivoDuplicadoEnPlanilla($linea, $indiceVacio));
+    }
+
+    public function test_leyenda_corta_obs_de_pago_duplicado(): void
+    {
+        $this->assertSame('', SiroDescargaRendicionArchivo::leyendaCortaObs(null));
+        $this->assertSame('PAGO DUPLICADO', SiroDescargaRendicionArchivo::leyendaCortaObs(
+            'PAGO DUPLICADO: Pago repetido: pagado por primera vez en planilla 1148 (SIRO 0110709841).',
+        ));
+        $this->assertSame('PAGO DUPLICADO', SiroDescargaRendicionArchivo::leyendaCortaObs(
+            SiroDescargaRendicionArchivo::mensajePagoDuplicadoCuotaPlanilla(1148),
         ));
     }
 

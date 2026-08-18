@@ -1,8 +1,3 @@
-<meta name="pwa-base" content="{{ url('/notificaciones-push') }}/">
-<meta name="pwa-scope" content="{{ url('/notificaciones-push') }}/">
-<meta name="pwa-sw-url" content="{{ url('/notificaciones-push/sw.js') }}">
-<meta name="vapid-public-key" content="{{ config('push.vapid.public_key') }}">
-
 <div class="max-w-2xl space-y-4">
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <h1 class="text-lg font-semibold text-gray-900">Notificaciones push</h1>
@@ -29,7 +24,7 @@
         </div>
 
         <p class="text-xs text-gray-500 mt-4">
-            Requiere HTTPS. En iPhone/iPad funciona al abrir desde “Agregar a Inicio”.
+            Requiere HTTPS. En Android y computadora funcionan sin instalar la app. En iPhone/iPad hay que abrir desde el icono de inicio (Compartir → Agregar a inicio).
         </p>
     </div>
 </div>
@@ -137,6 +132,10 @@
             // Si no hay SW/Push, dejamos el UI por defecto.
         }
     });
-</script>
 
-<script src="{{ url('/notificaciones-push/js/pwa-register.js') }}"></script>
+    resolvePushServiceWorkerRegistration().then(async (reg) => {
+        if (!reg?.pushManager) return;
+        const sub = await reg.pushManager.getSubscription();
+        setUiSubscribed(!!sub);
+    }).catch(() => {});
+</script>

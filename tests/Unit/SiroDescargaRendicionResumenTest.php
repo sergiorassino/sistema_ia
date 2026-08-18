@@ -69,6 +69,32 @@ class SiroDescargaRendicionResumenTest extends TestCase
         $this->assertTrue($resumen->debeMostrarModal());
     }
 
+    public function test_encabezado_incluye_pagos_duplicados(): void
+    {
+        $resumen = new SiroDescargaRendicionResumen(procesados: 3);
+        $resumen->agregarRegistroArchivo([
+            'linea' => 1,
+            'canal' => 'BPD',
+            'idFacturaBuscado' => 'A',
+            'modalidadIdentificacion' => '—',
+            'estado' => 'encontrado',
+            'detalle' => null,
+        ]);
+        $resumen->agregarRegistroArchivo([
+            'linea' => 101,
+            'canal' => 'BPD',
+            'idFacturaBuscado' => 'B',
+            'modalidadIdentificacion' => '—',
+            'estado' => 'encontrado_duplicado',
+            'detalle' => 'PAGO DUPLICADO: Pago repetido: pagado por primera vez en planilla 1151 (SIRO 0110709841).',
+        ]);
+
+        $this->assertSame([
+            'Registros procesados: 3.',
+            'Pagos duplicados (se registran igual): 1.',
+        ], $resumen->lineasEncabezado());
+    }
+
     public function test_mensaje_swal_incluye_numero_de_registro(): void
     {
         $resumen = new SiroDescargaRendicionResumen(procesados: 1, omitidos: 1);

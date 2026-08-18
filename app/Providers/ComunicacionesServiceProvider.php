@@ -9,6 +9,7 @@ use App\Livewire\Comunicaciones\BandejaGestion;
 use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
+use App\Livewire\Comunicaciones\MisGruposIndex;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\Parametrizacion\ComCanalesIndex;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +30,7 @@ class ComunicacionesServiceProvider extends ServiceProvider
         Livewire::component('comunicaciones.bandeja-revision', BandejaRevision::class);
         Livewire::component('comunicaciones.hilo-show', HiloShow::class);
         Livewire::component('comunicaciones.nuevo-comunicado', NuevoComunicado::class);
+        Livewire::component('comunicaciones.mis-grupos-index', MisGruposIndex::class);
         Livewire::component('comunicaciones.informe-envio-comunicado', InformeEnvioComunicado::class);
         Livewire::component('alumnos.comunicaciones.bandeja-familia', BandejaFamilia::class);
         Livewire::component('alumnos.comunicaciones.hilo-show-familia', HiloShowFamilia::class);

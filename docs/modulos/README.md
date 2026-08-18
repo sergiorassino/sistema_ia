@@ -3,6 +3,8 @@
 Docs cortos (1–2 páginas) que fijan **cómo debe funcionar** cada módulo: actores, tablas, flujos y trampas.
 Sirven para cambios futuros sin reexplicar el diseño oralmente.
 
+La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo de ancho fijo, match 448/449, provisorios e impacto de duplicados).
+
 ## Índice
 
 | Módulo | Archivo |
@@ -20,6 +22,9 @@ Sirven para cambios futuros sin reexplicar el diseño oralmente.
 | Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
 | Bloqueos de matrícula | [bloqueos-matricula.md](bloqueos-matricula.md) |
 | Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |
+| Comunicación institucional | [comunicacion-institucional.md](comunicacion-institucional.md) |
+| PWA instalable | [pwa-instalable.md](pwa-instalable.md) |
+| Descarga de rendición SIRO | [siro-descarga-rendicion.md](siro-descarga-rendicion.md) |
 
 ## Plantilla
 

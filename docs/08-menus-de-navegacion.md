@@ -197,3 +197,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-06-04:** Tres grupos CALIFICACIONES por nivel (Inicial / Primario / Secundario) en el Menú de Secretaría; el bloque secundario renombrado y acotado a `niveles.id = 3`.
 - **2026-07-23:** Certificación de servicios en grupo DOCENTES / USUARIOS (permiso IA orden 87): carga de `certificacion`/`licencias` e impresión PDF.
 - **2026-07-31:** Menú de Docentes: el ítem `listado_estudiantes` pasa de «Listados por curso» a **Listados de Estudiantes con Formato** (`portalDocente.listados.estudiantesFormato`, mismo Livewire/PDF que secretaría).
+- **2026-08-18:** Comunicación institucional: **Mis grupos** de destinatarios por usuario y nivel (`com_grupos` / `com_grupos_miembros`; rutas `comunicaciones.grupos` y `portalDocente.comunicaciones.grupos`).

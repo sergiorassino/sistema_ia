@@ -91,20 +91,10 @@ final class SiroDescargaRendicionImpacto
                     $advertencias[] = 'Pago superior al total calculado para la rendición.';
                 }
 
-                $duplicado = CuotaPago::query()
-                    ->where('idCuotasGeneradas', (int) $registro->id)
-                    ->where('nombreArchivo', (string) $rendicion->nombreArchivo)
-                    ->where('importe', $saldo)
-                    ->whereDate('fechhora', $rendicion->fechaPago?->format('Y-m-d') ?? '')
-                    ->where('cadenaPago', (string) ($rendicion->cadenaPago ?? ''))
-                    ->exists();
-                if ($duplicado) {
-                    // Misma cadena ya impactada en cuotaspagos: no reimputar.
-                    self::marcarNoImpactado($rendicion, 'Pago ya registrado en cuotaspagos (misma cadena).');
-                    $resumen->noImpactados++;
-                    $resumen->agregarAdvertencia('Rendición #'.$rendicion->id.': pago ya registrado en cuotaspagos.');
-
-                    continue;
+                $cadenaYaImputada = self::cadenaYaImputadaEnCuotaspagos($registro, $rendicion);
+                $avisoCadena = self::avisoCadenaYaEnCuotaspagos($cadenaYaImputada);
+                if ($avisoCadena !== null) {
+                    $advertencias[] = $avisoCadena;
                 }
 
                 $fechaPago = $rendicion->fechaPago instanceof Carbon
@@ -140,7 +130,10 @@ final class SiroDescargaRendicionImpacto
                 $registro->avisoPago = 0;
                 $registro->save();
 
-                $obs = self::combinarObs((string) ($rendicion->obs ?? ''), $advertencias);
+                $obs = self::combinarObs(
+                    self::limpiarObsTrasImpacto((string) ($rendicion->obs ?? '')),
+                    $advertencias,
+                );
                 $rendicion->impactado = 1;
                 $rendicion->obs = $obs !== '' ? $obs : null;
                 $rendicion->save();
@@ -163,6 +156,48 @@ final class SiroDescargaRendicionImpacto
         });
 
         return $resumen;
+    }
+
+    public static function avisoCadenaYaEnCuotaspagos(bool $cadenaYaImputada): ?string
+    {
+        if (! $cadenaYaImputada) {
+            return null;
+        }
+
+        return 'Pago duplicado: misma cadena SIRO ya imputada; se impacta igual y el saldo puede quedar negativo.';
+    }
+
+    /**
+     * Quita avisos de un impacto anterior que omitía el duplicado.
+     */
+    public static function limpiarObsTrasImpacto(string $obs): string
+    {
+        $partes = [];
+        foreach ($obs === '' ? [] : explode(' | ', $obs) as $parte) {
+            $parte = trim($parte);
+            if ($parte === '' || $parte === 'Pago ya registrado en cuotaspagos (misma cadena).') {
+                continue;
+            }
+            $partes[] = $parte;
+        }
+
+        return implode(' | ', $partes);
+    }
+
+    private static function cadenaYaImputadaEnCuotaspagos(CuotaGenerada $registro, RendicionRoela $rendicion): bool
+    {
+        $cadena = (string) ($rendicion->cadenaPago ?? '');
+        if ($cadena === '') {
+            return false;
+        }
+
+        return CuotaPago::query()
+            ->where('idCuotasGeneradas', (int) $registro->id)
+            ->where('nombreArchivo', (string) $rendicion->nombreArchivo)
+            ->where('importe', round((float) ($rendicion->importe ?? 0), 2))
+            ->whereDate('fechhora', $rendicion->fechaPago?->format('Y-m-d') ?? '')
+            ->where('cadenaPago', $cadena)
+            ->exists();
     }
 
     private static function marcarNoImpactado(RendicionRoela $rendicion, string $motivo): void

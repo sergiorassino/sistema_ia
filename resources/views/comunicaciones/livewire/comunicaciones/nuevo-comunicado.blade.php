@@ -154,6 +154,43 @@
                         </div>
                     @endif
                 </div>
+            @elseif ($destinatarioTipo === 'grupos')
+                <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Mis grupos</p>
+                    <p class="mt-1 text-sm text-neutral-600">
+                        El envío llega a estudiantes y personal de los grupos elegidos (según canales y matrícula vigente).
+                        <a href="{{ ComunicacionesRutasGestion::route('grupos') }}" class="font-semibold text-primary-700 hover:underline">Administrar grupos</a>
+                    </p>
+                    <div class="mt-5">
+                        <span class="form-label">Grupos</span>
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <button type="button"
+                                    wire:click="abrirModalGrupos"
+                                    class="inline-flex items-center justify-center rounded-xl border border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                                Elegir grupos…
+                            </button>
+                            @if (! empty($gruposSeleccionados))
+                                <span class="text-xs font-medium text-neutral-600">{{ count($gruposSeleccionados) }} grupo(s)</span>
+                            @endif
+                        </div>
+                        @if (! empty($gruposSeleccionados))
+                            <div class="mt-2 rounded-lg border border-accent-200 bg-white px-2 py-1.5">
+                                <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Control destinatarios</p>
+                                <div class="mt-1 max-h-24 overflow-y-auto text-[10px] leading-snug text-neutral-800">
+                                    @foreach ($gruposSeleccionados as $g)
+                                        <span class="mr-2 inline-flex max-w-full items-baseline gap-0.5 align-top">
+                                            <span class="break-words">{{ $g['label'] }}@if (! empty($g['miembros'])) ({{ $g['miembros'] }})@endif</span>
+                                            <button type="button"
+                                                    wire:click="removeGrupo({{ $g['id'] }})"
+                                                    class="shrink-0 text-neutral-400 hover:text-red-600"
+                                                    title="Quitar">×</button>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             @elseif (str_starts_with($destinatarioTipo, 'tipo:'))
                 <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm sm:p-5">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">{{ $this->etiquetaDestinatarioSeleccionado() }}</p>
@@ -231,6 +268,35 @@
                                 </span>
                             </span>
                         </label>
+                    </div>
+                @elseif ($destinatarioTipo === 'grupos')
+                    <div class="space-y-3">
+                        <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
+                            <label class="flex cursor-pointer select-none items-start gap-3">
+                                <input type="checkbox"
+                                       wire:model="familiaPuedeResponder"
+                                       class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                                <span class="text-sm text-neutral-800">
+                                    <span class="font-semibold text-neutral-900">Permitir que la familia responda</span>
+                                    <span class="mt-1 block text-xs leading-relaxed text-neutral-500">
+                                        Aplica a los estudiantes del grupo. Si lo desactivás, el comunicado queda informativo para las familias.
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
+                            <label class="flex cursor-pointer select-none items-start gap-3">
+                                <input type="checkbox"
+                                       wire:model="docentesDestinatariosPuedenResponder"
+                                       class="mt-0.5 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                                <span class="text-sm text-neutral-800">
+                                    <span class="font-semibold text-neutral-900">Permitir que el personal destinatario responda</span>
+                                    <span class="mt-1 block text-xs leading-relaxed text-neutral-500">
+                                        Aplica a directivos, preceptores, profesores u otro personal incluido en el grupo.
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 @elseif (str_starts_with($destinatarioTipo, 'tipo:'))
                     <div class="rounded-2xl border border-accent-200 bg-white p-4 shadow-sm">
@@ -464,6 +530,75 @@
                     </button>
                     <button type="button"
                             wire:click="aplicarModalDocentes"
+                            class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
+                        Aplicar selección
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($modalGruposAbierto)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4" role="dialog" aria-modal="true"
+             aria-labelledby="com-modal-grupos-titulo">
+            <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalGrupos"></div>
+
+            <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),30rem)]">
+                <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
+                    <p id="com-modal-grupos-titulo" class="text-sm font-bold text-neutral-900">Elegir grupos</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Solo se listan los grupos que usted creó en este nivel. Pueden incluir estudiantes y personal juntos.</p>
+                </div>
+
+                <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
+                    <label for="com-modal-grupos-filtro" class="form-label">Filtrar por nombre</label>
+                    <input id="com-modal-grupos-filtro"
+                           type="text"
+                           wire:model.live.debounce.300ms="modalGruposFiltro"
+                           placeholder="Nombre del grupo…"
+                           class="form-input mt-1.5" />
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button type="button"
+                                wire:click="modalGruposSeleccionarTodosVisibles"
+                                class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-accent-50">
+                            Marcar visibles
+                        </button>
+                        <button type="button"
+                                wire:click="modalGruposQuitarVisibles"
+                                class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-accent-50">
+                            Desmarcar visibles
+                        </button>
+                    </div>
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-1 sm:px-5">
+                    @forelse ($modalGruposLista as $g)
+                        <label wire:key="modal-grupo-{{ $g['id'] }}"
+                               class="flex cursor-pointer items-center gap-2 border-b border-accent-100 py-1 last:border-b-0 hover:bg-accent-50/60">
+                            <input type="checkbox"
+                                   wire:model="modalGruposMarcados"
+                                   value="{{ $g['id'] }}"
+                                   class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                            <span class="text-sm font-semibold leading-tight text-neutral-900">
+                                {{ $g['label'] }}
+                                <span class="ml-1 text-[11px] font-normal text-neutral-500">{{ (int) ($g['miembros'] ?? 0) }} integrante(s)</span>
+                            </span>
+                        </label>
+                    @empty
+                        <p class="py-8 text-center text-sm text-neutral-500">
+                            No hay grupos de este tipo en este nivel.
+                            <a href="{{ ComunicacionesRutasGestion::route('grupos') }}" class="font-semibold text-primary-700 hover:underline">Crear un grupo</a>
+                        </p>
+                    @endforelse
+                </div>
+
+                <div class="flex flex-col gap-2 border-t border-accent-200 bg-accent-50/40 px-4 py-2.5 sm:flex-row sm:justify-end sm:px-5 sm:py-3">
+                    <button type="button"
+                            wire:click="cerrarModalGrupos"
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm transition hover:bg-accent-50 sm:w-auto">
+                        Cancelar
+                    </button>
+                    <button type="button"
+                            wire:click="aplicarModalGrupos"
                             class="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto">
                         Aplicar selección
                     </button>

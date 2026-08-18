@@ -3,6 +3,7 @@
 namespace App\Livewire\Comunicaciones;
 
 use App\Comunicaciones\CanalesPolicy;
+use App\Comunicaciones\ComGruposRepository;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Push\DestinatariosRepository;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
@@ -24,7 +25,7 @@ class NuevoComunicado extends Component
      */
     public array $opcionesDestinatarios = [];
 
-    /** alumnos: uno o varios · cursos: uno o varios · colegio */
+    /** alumnos: uno o varios · cursos: uno o varios · colegio · grupos */
     public string $tipoDestino = 'alumnos';
 
     public string $asunto    = '';
@@ -41,6 +42,8 @@ class NuevoComunicado extends Component
     public array $cursosSeleccionados = []; // [{id, label}]
 
     public array $docentesSeleccionados = []; // [{id, label}]
+
+    public array $gruposSeleccionados = []; // [{id, label, miembros}]
 
     /** Nivel del docente prefijado (p. ej. desde reserva de material didáctico cross-nivel). */
     public ?int $idNivelDestinatarioDocente = null;
@@ -78,6 +81,17 @@ class NuevoComunicado extends Component
     /** @var list<int|string> */
     public array $modalDocentesMarcados = [];
 
+    // —— Modal grupos ——
+    public bool $modalGruposAbierto = false;
+
+    public string $modalGruposFiltro = '';
+
+    /** @var list<array{id:int,label:string,miembros:int}> */
+    public array $modalGruposLista = [];
+
+    /** @var list<int|string> */
+    public array $modalGruposMarcados = [];
+
     public function mount(): void
     {
         abort_unless(ComunicacionesRutasGestion::accesoNuevoComunicado(), 403, 'Sin permiso para iniciar comunicados.');
@@ -90,6 +104,12 @@ class NuevoComunicado extends Component
                 (int) $ctx->idNivel
             );
         }
+        array_unshift($this->opcionesDestinatarios, [
+            'value'        => 'grupos',
+            'label'        => 'Mis grupos',
+            'es_familia'   => false,
+            'id_tipo_prof' => null,
+        ]);
 
         $idDestinatario = (int) request()->query('destinatario', 0);
         if ($idDestinatario > 0) {
@@ -152,6 +172,13 @@ class NuevoComunicado extends Component
     {
         if ($this->modalDocentesAbierto) {
             $this->recargarModalDocentesLista();
+        }
+    }
+
+    public function updatedModalGruposFiltro(): void
+    {
+        if ($this->modalGruposAbierto) {
+            $this->recargarModalGruposLista();
         }
     }
 
@@ -320,6 +347,69 @@ class NuevoComunicado extends Component
         ));
     }
 
+    public function abrirModalGrupos(): void
+    {
+        $this->modalGruposAbierto  = true;
+        $this->modalGruposFiltro   = '';
+        $this->modalGruposMarcados = array_map(fn ($g) => (int) $g['id'], $this->gruposSeleccionados);
+        $this->recargarModalGruposLista();
+    }
+
+    public function cerrarModalGrupos(): void
+    {
+        $this->modalGruposAbierto = false;
+    }
+
+    public function aplicarModalGrupos(): void
+    {
+        $labelsPorId = collect($this->modalGruposLista)->keyBy('id');
+        $prev        = collect($this->gruposSeleccionados)->keyBy('id');
+        $out         = [];
+        foreach (array_unique(array_map('intval', $this->modalGruposMarcados)) as $id) {
+            if ($id <= 0) {
+                continue;
+            }
+            $fromLista = $labelsPorId->get($id);
+            if ($fromLista !== null) {
+                $out[] = [
+                    'id'       => $id,
+                    'label'    => (string) $fromLista['label'],
+                    'miembros' => (int) ($fromLista['miembros'] ?? 0),
+                ];
+
+                continue;
+            }
+            $fromPrev = $prev->get($id);
+            if ($fromPrev !== null) {
+                $out[] = [
+                    'id'       => $id,
+                    'label'    => (string) $fromPrev['label'],
+                    'miembros' => (int) ($fromPrev['miembros'] ?? 0),
+                ];
+            }
+        }
+        $this->gruposSeleccionados = $out;
+        $this->modalGruposAbierto  = false;
+    }
+
+    public function modalGruposSeleccionarTodosVisibles(): void
+    {
+        $ids = array_map(fn ($r) => (int) $r['id'], $this->modalGruposLista);
+        $this->modalGruposMarcados = array_values(array_unique(array_merge(
+            array_map('intval', $this->modalGruposMarcados),
+            $ids
+        )));
+    }
+
+    public function modalGruposQuitarVisibles(): void
+    {
+        $vis = array_flip(array_map(fn ($r) => (int) $r['id'], $this->modalGruposLista));
+        $this->modalGruposMarcados = array_values(array_filter(
+            array_map('intval', $this->modalGruposMarcados),
+            fn (int $id) => ! isset($vis[$id])
+        ));
+    }
+
     public function removeAlumno(int $id): void
     {
         $this->alumnosSeleccionados = array_values(
@@ -341,11 +431,27 @@ class NuevoComunicado extends Component
         );
     }
 
+    public function removeGrupo(int $id): void
+    {
+        $this->gruposSeleccionados = array_values(
+            array_filter($this->gruposSeleccionados, fn ($g) => (int) $g['id'] !== $id)
+        );
+    }
+
     public function updatedDestinatarioTipo(): void
     {
         if ($this->esDestinatarioFamilia()) {
             $this->docentesSeleccionados = [];
             $this->idNivelDestinatarioDocente = null;
+            $this->cerrarModalDocentes();
+        } elseif ($this->esDestinatarioGrupos()) {
+            $this->alumnosSeleccionados = [];
+            $this->cursosSeleccionados = [];
+            $this->docentesSeleccionados = [];
+            $this->idNivelDestinatarioDocente = null;
+            $this->tipoDestino = 'alumnos';
+            $this->cerrarModalAlumnos();
+            $this->cerrarModalCursos();
             $this->cerrarModalDocentes();
         } else {
             $this->alumnosSeleccionados = [];
@@ -357,14 +463,18 @@ class NuevoComunicado extends Component
             $this->idNivelDestinatarioDocente = null;
             $this->cerrarModalDocentes();
         }
+        $this->gruposSeleccionados = [];
+        $this->cerrarModalGrupos();
     }
 
     public function updatedTipoDestino(): void
     {
         $this->alumnosSeleccionados = [];
         $this->cursosSeleccionados  = [];
+        $this->gruposSeleccionados  = [];
         $this->cerrarModalAlumnos();
         $this->cerrarModalCursos();
+        $this->cerrarModalGrupos();
     }
 
     public function enviar(): void
@@ -383,6 +493,7 @@ class NuevoComunicado extends Component
         $profesor = $ctx->profesor();
         $rolEmisor = $profesor !== null ? CanalesPolicy::claveRolDeProfesor($profesor) : '';
         $valoresDest = CanalesPolicy::valoresDestinatarioNuevoComunicado($rolEmisor, (int) $ctx->idNivel);
+        $valoresDest[] = 'grupos';
         if ($this->idNivelDestinatarioDocente !== null && $this->idNivelDestinatarioDocente !== (int) $ctx->idNivel) {
             $valoresDest = array_values(array_unique(array_merge(
                 $valoresDest,
@@ -398,6 +509,9 @@ class NuevoComunicado extends Component
         if ($this->esDestinatarioFamilia()) {
             $rules['tipoDestino']           = 'required|in:alumnos,cursos,colegio';
             $rules['familiaPuedeResponder'] = 'boolean';
+        } elseif ($this->esDestinatarioGrupos()) {
+            $rules['familiaPuedeResponder'] = 'boolean';
+            $rules['docentesDestinatariosPuedenResponder'] = 'boolean';
         } else {
             $rules['docentesDestinatariosPuedenResponder'] = 'boolean';
         }
@@ -414,6 +528,19 @@ class NuevoComunicado extends Component
         }
 
         $nombreProfesor = trim("{$profesor->apellido}, {$profesor->nombre}");
+
+        if ($this->esDestinatarioGrupos()) {
+            $this->enviarDesdeGrupos(
+                $rolEmisor,
+                $nombreProfesor,
+                (string) ($profesor->dni ?? ''),
+                $idNivel,
+                $idTerlec,
+                $idProf
+            );
+
+            return;
+        }
 
         if ($this->esDestinatarioFamilia()) {
             if (! CanalesPolicy::puedeIniciar($rolEmisor, ComCanalRolCatalog::CLAVE_FAMILIA)) {
@@ -560,6 +687,110 @@ class NuevoComunicado extends Component
         $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('informe-envio'), ['id' => $hilo->id]);
     }
 
+    private function enviarDesdeGrupos(
+        string $rolEmisor,
+        string $nombreProfesor,
+        string $dniProfesor,
+        int $idNivel,
+        int $idTerlec,
+        int $idProf
+    ): void {
+        if ($this->gruposSeleccionados === []) {
+            $this->addError('destinatarioTipo', 'Seleccione al menos un grupo.');
+
+            return;
+        }
+
+        $idsGrupos = array_map(fn ($g) => (int) $g['id'], $this->gruposSeleccionados);
+        $exp = ComGruposRepository::expandirParaEnvio($idsGrupos, $idProf, $idNivel, $idTerlec);
+
+        $idLegajos = [];
+        if ($exp['legajos'] !== [] && CanalesPolicy::puedeIniciar($rolEmisor, ComCanalRolCatalog::CLAVE_FAMILIA, $idNivel)) {
+            $idLegajos = $exp['legajos'];
+        }
+
+        $idsProf = [];
+        $clavesProf = ComGruposRepository::clavesCanalPorIdsProfesores($exp['profesores'], $idNivel);
+        foreach ($clavesProf as $idP => $clave) {
+            if ((int) $idP === $idProf) {
+                continue;
+            }
+            if (CanalesPolicy::puedeIniciar($rolEmisor, $clave, $idNivel)) {
+                $idsProf[] = (int) $idP;
+            }
+        }
+        $idsProf = array_values(array_unique($idsProf));
+
+        if ($idLegajos === [] && $idsProf === []) {
+            $this->addError('destinatarioTipo', 'Los grupos no tienen destinatarios vigentes a los que usted pueda enviar según los canales del nivel.');
+
+            return;
+        }
+
+        $rolesMedios = [];
+        if ($idLegajos !== []) {
+            $rolesMedios[] = ComCanalRolCatalog::CLAVE_FAMILIA;
+        }
+        foreach ($idsProf as $idP) {
+            if (isset($clavesProf[$idP])) {
+                $rolesMedios[] = $clavesProf[$idP];
+            }
+        }
+        $mediosCanal = [];
+        foreach (array_unique($rolesMedios) as $rolRec) {
+            $mediosCanal = array_merge($mediosCanal, CanalesPolicy::mediosPermitidos($rolEmisor, $rolRec, $idNivel));
+        }
+        $mediosCanal = array_values(array_unique($mediosCanal));
+        if ($mediosCanal === []) {
+            $this->addError('contenido', 'No hay medios habilitados para este tipo de envío. Revise la parametrización de canales.');
+
+            return;
+        }
+
+        if ($idLegajos !== []) {
+            $scope = count($idLegajos) === 1 && $idsProf === [] ? 'alumno' : 'varios_alumnos';
+            $rolReceptor = ComCanalRolCatalog::CLAVE_FAMILIA;
+        } else {
+            $scope = 'docentes';
+            $rolReceptor = $rolesMedios[0] ?? 'profesor';
+        }
+
+        $hilo = ComunicacionesRepository::crearHiloConMensaje([
+            'asunto'                      => $this->asunto,
+            'contenido'                   => $this->contenido,
+            'scope'                       => $scope,
+            'id_legajos'                  => $idLegajos,
+            'id_curso'                    => null,
+            'cursos_envio'                => null,
+            'id_nivel'                    => $idNivel,
+            'id_terlec'                   => $idTerlec,
+            'creado_por_tipo'             => 'profesor',
+            'creado_por_id'               => $idProf,
+            'creado_por_rol'              => $rolEmisor,
+            'rol_receptor'                => $rolReceptor,
+            'vinculo_familiar'            => null,
+            'nombre_remitente'            => $nombreProfesor,
+            'dni_remitente'               => $dniProfesor,
+            'destinatarios_profesores'    => $idsProf,
+            'familia_puede_responder'     => $idLegajos !== [] ? $this->familiaPuedeResponder : true,
+            'docentes_permite_respuestas' => $idsProf !== [] ? $this->docentesDestinatariosPuedenResponder : true,
+        ], $mediosCanal);
+
+        $idPrimerMensaje = (int) ($hilo->cuerpo_inicial_id ?? 0);
+        if ($idPrimerMensaje > 0) {
+            $waLinks = ComunicacionesRepository::enlacesWhatsappWaMeDelMensaje($idPrimerMensaje);
+            if ($waLinks !== []) {
+                session()->flash('whatsapp_wa_links', [
+                    'hilo_id' => (int) $hilo->id,
+                    'links'   => $waLinks,
+                ]);
+            }
+        }
+
+        session()->flash('success', 'Comunicado registrado. A continuación el detalle de cada envío por medio.');
+        $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('informe-envio'), ['id' => $hilo->id]);
+    }
+
     private function recargarModalAlumnosLista(): void
     {
         $ctx = schoolCtx();
@@ -612,9 +843,33 @@ class NuevoComunicado extends Component
         );
     }
 
+    private function recargarModalGruposLista(): void
+    {
+        $ctx = schoolCtx();
+        if (! $ctx->idNivel || ! $ctx->idProfesor) {
+            $this->modalGruposLista = [];
+
+            return;
+        }
+        $all = ComGruposRepository::paraSelector((int) $ctx->idProfesor, (int) $ctx->idNivel);
+        $f = mb_strtolower(trim($this->modalGruposFiltro));
+        if ($f !== '') {
+            $all = array_values(array_filter(
+                $all,
+                fn (array $g) => str_contains(mb_strtolower((string) ($g['label'] ?? '')), $f)
+            ));
+        }
+        $this->modalGruposLista = $all;
+    }
+
     public function esDestinatarioFamilia(): bool
     {
         return $this->destinatarioTipo === 'familia';
+    }
+
+    public function esDestinatarioGrupos(): bool
+    {
+        return $this->destinatarioTipo === 'grupos';
     }
 
     public function idTipoProfDestinatario(): ?int

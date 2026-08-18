@@ -21,7 +21,7 @@
     /** En desktop: rail colapsado salvo inicio; hover/focus expanden (mismo patrón que Secretaría salvo dashboard). */
     $isSidebarPeekMode = (($route ?? '') !== 'portalDocente.home');
     $docenteComBandejaActiva = str_starts_with($route ?? '', 'portalDocente.comunicaciones')
-        && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.revision'], true);
+        && ! in_array($route ?? '', ['portalDocente.comunicaciones.nuevo', 'portalDocente.comunicaciones.grupos', 'portalDocente.comunicaciones.revision'], true);
     $docentePushActivo = ($route ?? '') === 'portalDocente.push.suscribir';
     $docenteRecursosDidacticosVisible = tenantPortalDocenteRecursosDidacticosVisible();
     $docenteRecursosDidacticosListadoActivo = ($route ?? '') === 'portalDocente.materialDidactico.index';
@@ -216,6 +216,19 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             <span x-show="!sidebarCollapsed" x-cloak class="truncate">Nuevo comunicado</span>
+        </a>
+
+        <a href="{{ route('portalDocente.comunicaciones.grupos') }}"
+           @class([
+               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+               'is-active shadow-sm' => ($route ?? '') === 'portalDocente.comunicaciones.grupos',
+           ])
+           title="Grupos propios de destinatarios para este nivel">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span x-show="!sidebarCollapsed" x-cloak class="truncate">Mis grupos</span>
         </a>
 
         <a href="{{ route('portalDocente.push.suscribir') }}"

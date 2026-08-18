@@ -65,6 +65,15 @@ final class SiroDescargaRendicionResumen
         if ($this->procesados > 0) {
             $lineas[] = 'Registros procesados: '.$this->procesados.'.';
         }
+        $duplicados = 0;
+        foreach ($this->registrosArchivo as $registro) {
+            if (($registro['estado'] ?? '') === 'encontrado_duplicado') {
+                $duplicados++;
+            }
+        }
+        if ($duplicados > 0) {
+            $lineas[] = 'Pagos duplicados (se registran igual): '.$duplicados.'.';
+        }
         if ($this->impactados > 0) {
             $lineas[] = 'Cuotas impactadas: '.$this->impactados.'.';
         }

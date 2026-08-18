@@ -23,14 +23,16 @@
     </section>
 
     <section class="se-card mb-4 overflow-hidden">
-        @if (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::HABILITADO)
+        @if (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionProvisorios::hayAlgunoHabilitado())
             <div class="border-b border-amber-200 bg-amber-50/90 px-4 py-3 sm:px-5" role="status">
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-900">
-                    Excepción provisorio — puesta en marcha
+                    Excepciones provisorio — puesta en marcha
                 </p>
-                <p class="mt-1 text-sm leading-relaxed text-amber-950/90">
-                    {{ \App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::mensajeAvisoFormulario() }}
-                </p>
+                @foreach (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionProvisorios::mensajesAvisoFormulario() as $mensajeProvisorio)
+                    <p class="mt-1 text-sm leading-relaxed text-amber-950/90">
+                        {{ $mensajeProvisorio }}
+                    </p>
+                @endforeach
             </div>
         @endif
         <div class="se-toolbar flex flex-col gap-3 border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-end sm:px-5">
@@ -106,10 +108,7 @@
         @else
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div @class([
-                        'gf gf-vcenter gf-siro-descarga-rendiciones',
-                        'has-obs-data' => $hayObsEnPlanilla,
-                    ])>
+                    <div class="gf gf-vcenter gf-siro-descarga-rendiciones has-obs-data">
                         <div class="gf-head">
                             <div class="gf-th gf-th-item">#</div>
                             <div class="gf-th gf-th-fecha-pago" title="Fecha de pago">F. pago</div>
@@ -126,9 +125,7 @@
                             <div class="gf-th gf-th-pagado" title="Pagado">Pagado</div>
                             <div class="gf-th gf-th-nombre-archivo" title="Nombre del archivo">Archivo</div>
                             <div class="gf-th gf-th-impactado" title="Impactado">Impto.</div>
-                            @if ($hayObsEnPlanilla)
-                                <div class="gf-th gf-th-obs" title="Observaciones">Obs.</div>
-                            @endif
+                            <div class="gf-th gf-th-obs" title="Observaciones">Obs.</div>
                         </div>
                         @foreach ($rendiciones as $i => $r)
                             @php
@@ -164,13 +161,16 @@
                                         No
                                     @endif
                                 </div>
-                                @if ($hayObsEnPlanilla)
-                                    @php $obsTexto = trim((string) ($r->obs ?? '')); @endphp
-                                    <div @class([
-                                        'gf-td gf-td-obs',
-                                        'text-amber-800' => $obsTexto !== '',
-                                    ]) title="{{ $obsTexto }}">{{ $obsTexto }}</div>
-                                @endif
+                                @php
+                                    $obsTexto = trim((string) ($r->obsMostrada ?? $r->obs ?? ''));
+                                    $obsCorta = \App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionArchivo::leyendaCortaObs($obsTexto);
+                                    $obsDuplicado = $obsCorta === 'PAGO DUPLICADO';
+                                @endphp
+                                <div @class([
+                                    'gf-td gf-td-obs',
+                                    'font-semibold text-red-700' => $obsDuplicado,
+                                    'text-amber-800' => $obsTexto !== '' && ! $obsDuplicado,
+                                ]) title="{{ $obsTexto }}">{{ $obsCorta }}</div>
                             </div>
                         @endforeach
                     </div>
@@ -223,15 +223,17 @@
                                                 <th class="min-w-[12rem] px-2 py-2 text-left">id_factura buscado</th>
                                                 <th class="min-w-[10rem] px-2 py-2 text-left">Modalidad</th>
                                                 <th class="w-28 px-2 py-2 text-left">Resultado</th>
-                                                <th class="min-w-[10rem] px-2 py-2 text-left">Detalle</th>
+                                                <th class="min-w-[22rem] px-2 py-2 text-left">Detalle</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach ($modalRegistrosArchivo as $registro)
                                                 @php
                                                     $estado = (string) ($registro['estado'] ?? '');
+                                                    $esDuplicado = $estado === 'encontrado_duplicado';
                                                     $estadoEtiqueta = match ($estado) {
                                                         'encontrado' => 'Encontrado',
+                                                        'encontrado_duplicado' => 'Duplicado',
                                                         'no_encontrado' => 'No encontrado',
                                                         'omitido' => 'Omitido',
                                                         'rechazo' => 'Rechazo',
@@ -239,19 +241,28 @@
                                                     };
                                                     $estadoClase = match ($estado) {
                                                         'encontrado' => 'text-primary-700 font-semibold',
+                                                        'encontrado_duplicado' => 'text-red-800 font-semibold',
                                                         'no_encontrado' => 'text-red-700 font-semibold',
                                                         'omitido' => 'text-amber-800 font-semibold',
                                                         'rechazo' => 'text-red-800 font-semibold',
                                                         default => 'text-neutral-700',
                                                     };
                                                 @endphp
-                                                <tr class="border-t border-accent-100 hover:bg-accent-50/60" wire:key="siro-resumen-reg-{{ $registro['linea'] ?? $loop->index }}">
+                                                <tr @class([
+                                                    'border-t border-accent-100',
+                                                    'bg-red-50/80 hover:bg-red-50' => $esDuplicado,
+                                                    'hover:bg-accent-50/60' => ! $esDuplicado,
+                                                ]) wire:key="siro-resumen-reg-{{ $registro['linea'] ?? $loop->index }}">
                                                     <td class="px-2 py-2 tabular-nums">{{ $registro['linea'] ?? '—' }}</td>
                                                     <td class="px-2 py-2">{{ $registro['canal'] ?? '—' }}</td>
                                                     <td class="px-2 py-2 font-mono text-xs break-all">{{ $registro['idFacturaBuscado'] ?? '—' }}</td>
                                                     <td class="px-2 py-2 text-xs text-neutral-700">{{ $registro['modalidadIdentificacion'] ?? '—' }}</td>
                                                     <td class="px-2 py-2 {{ $estadoClase }}">{{ $estadoEtiqueta }}</td>
-                                                    <td class="px-2 py-2 text-xs text-neutral-600">{{ $registro['detalle'] ?? '' }}</td>
+                                                    <td @class([
+                                                        'px-2 py-2 text-xs leading-snug',
+                                                        'font-semibold text-red-800' => $esDuplicado,
+                                                        'text-neutral-600' => ! $esDuplicado,
+                                                    ])>{{ $registro['detalle'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -331,6 +342,7 @@
             }).join('');
             const registrosHtml = (registros ?? []).map((reg) => {
                 const estado = reg.estado === 'encontrado' ? 'Encontrado'
+                    : reg.estado === 'encontrado_duplicado' ? 'Duplicado'
                     : reg.estado === 'no_encontrado' ? 'No encontrado'
                     : reg.estado === 'omitido' ? 'Omitido'
                     : reg.estado === 'rechazo' ? 'Rechazo'

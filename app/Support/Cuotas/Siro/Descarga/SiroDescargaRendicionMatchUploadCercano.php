@@ -13,8 +13,14 @@ use Illuminate\Support\Collection;
  * cadena salvo el nro. de upload (posiciones 16–17) y elige el upload más cercano
  * al del archivo de rendición.
  *
+ * Solo pagos electrónicos 0449/0444/0447. Los 0448 no entran por acá (pueden
+ * coincidir un upload de la subida SIRO y pisar el criterio del provisorio 2).
+ *
  * Cuando la puesta en marcha termine y los contadores de upload estén alineados,
  * poner {@see self::HABILITADO} en false (o eliminar esta clase y el aviso del form).
+ *
+ * Hay un segundo provisorio para 0448 sin cupón de impresión:
+ * {@see SiroDescargaRendicionMatchCuotaSinCupon448}.
  */
 final class SiroDescargaRendicionMatchUploadCercano
 {
@@ -27,9 +33,26 @@ final class SiroDescargaRendicionMatchUploadCercano
 
     public static function mensajeAvisoFormulario(): string
     {
-        return 'Puesta en marcha (provisorio): si no hay coincidencia exacta de id_factura, '
-            .'se busca la misma cadena salvo el nro. de upload y se elige el upload más cercano '
-            .'al del archivo SIRO. Quitar esta excepción cuando los contadores de upload estén alineados.';
+        return 'Puesta en marcha (provisorio 1): en pagos electrónicos 449, si no hay '
+            .'coincidencia exacta de id_factura, se busca la misma cadena salvo el nro. de upload '
+            .'y se elige el upload más cercano. Si el cupón existe pero el importe no cierra con '
+            .'los vencimientos, se descarga el valor del archivo y se desglosan interés/bonificación. '
+            .'No aplica a cupones 448. Quitar esta excepción cuando los contadores de upload '
+            .'y los importes de cupón estén alineados.';
+    }
+
+    /**
+     * @param  array<string, mixed>  $linea
+     */
+    public static function aplicaALinea(array $linea): bool
+    {
+        if (! self::HABILITADO) {
+            return false;
+        }
+
+        $familia = SiroDescargaRendicionIdFactura::familiaDesdeLinea($linea);
+
+        return SiroDescargaRendicionBarcodeFamilia::esElectronico($familia);
     }
 
     /**
