@@ -6,6 +6,7 @@ use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDi
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Sancion;
+use App\Support\Mail\MailDesarrollo;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\Seguimiento\NotificarFamiliaSancion;
 use Illuminate\Support\Collection;
@@ -159,10 +160,13 @@ class DisciplinarioIndex extends Component
         if ($resultado['email_incluido'] ?? false) {
             $mailer = strtolower(trim((string) ($resultado['email_mailer'] ?? '')));
             if ($mailer !== '' && $mailer !== 'smtp') {
+                $mensajeMailer = MailDesarrollo::bloquearSmtp()
+                    ? 'El comunicado se creó. En desarrollo (APP_ENV=local) el correo no sale por SMTP: queda en storage/logs. Para una prueba real: MAIL_FORCE_REAL=true y MAIL_MAILER=smtp.'
+                    : 'El comunicado se creó en el cuaderno, pero el correo no salió por SMTP real (MAIL_MAILER='.$mailer.'). En el .env de producción debe ser MAIL_MAILER=smtp y la cuenta/contraseña se configuran en Parametrización → Correo institucional (ento del nivel).';
                 $this->dispatch(
                     'se-swal-aviso',
-                    mensaje: 'El comunicado se creó en el cuaderno, pero el correo no salió por SMTP real (MAIL_MAILER='.$mailer.'). En el .env de producción debe ser MAIL_MAILER=smtp y la cuenta/contraseña se configuran en Parametrización → Correo institucional (ento del nivel).',
-                    titulo: 'Correo no enviado'
+                    mensaje: $mensajeMailer,
+                    titulo: MailDesarrollo::bloquearSmtp() ? 'Correo en log (desarrollo)' : 'Correo no enviado'
                 );
 
                 return;

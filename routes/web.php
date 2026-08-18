@@ -327,6 +327,7 @@ use App\Http\Controllers\InstitutionalIconController;
 use App\Http\Controllers\Pwa\PwaIconController;
 use App\Http\Controllers\Pwa\PwaInicioController;
 use App\Http\Controllers\Pwa\PwaManifestController;
+use App\Http\Controllers\Pwa\PwaServiceWorkerController;
 use App\Http\Controllers\ManualComunicacionInstitucionalPdfController;
 use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\Auth\CerrarSesionAplicacion;
@@ -338,10 +339,20 @@ Route::get('/favicon.ico', InstitutionalIconController::class);
 
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
+    Route::get('/manifest.json', PwaManifestController::class);
     Route::get('/pwa-icon/{size}.png', PwaIconController::class)
         ->where('size', '180|192|512')
         ->name('pwa.icon');
 });
+Route::get('/sw.js', PwaServiceWorkerController::class)
+    ->withoutMiddleware([
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    ])
+    ->name('pwa.sw');
 Route::get('/entrar', PwaInicioController::class)->name('pwa.inicio');
 
 // Registro público de aspirantes (sin auth, sin school.context).

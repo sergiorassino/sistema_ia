@@ -26,6 +26,7 @@
                 Familias y estudiantes
             </a>
         </div>
+        @include('layouts.partials.pwa-instalar-boton')
     </div>
 </div>
 </body>

@@ -65,6 +65,7 @@ SQL: `database/sql/create_com_grupos.sql`.
 3. No persistir un envío “al grupo”: siempre destinatarios concretos, revalidados al enviar.
 4. No usar grupos en el portal familia.
 5. No mostrar éxito si faltan las tablas `com_grupos` / `com_grupos_miembros`.
+6. En `APP_ENV=local` el correo institucional **no sale por SMTP** (queda en `storage/logs`). Ver `docs/05-preferencias-y-convenciones.md` §15.
 
 ## Checklist al modificar
 

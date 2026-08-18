@@ -8,8 +8,8 @@ Permitir instalar el sistema como aplicación (icono en el dispositivo) **sin ex
 
 | Superficie | Qué ocurre |
 |------------|------------|
-| Chrome / Edge (Android o escritorio) | Banner **Instalar** cuando el navegador lo ofrece. El push funciona en pestaña o en la app. |
-| iPhone / iPad | Banner con *Compartir → Agregar a inicio*. El push **solo** funciona al abrir desde ese icono. |
+| Chrome / Edge (Android o escritorio) | En el **login** aparece **Instalar en este dispositivo**. Si el navegador lo permite, abre el diálogo nativo; si no, indica el menú Instalar. |
+| iPhone / iPad | El mismo enlace explica Compartir → Agregar a inicio. El push **solo** funciona al abrir desde ese icono. |
 | Quien no instala | Mismo service worker y mismo Activar / Desactivar que en el navegador. |
 
 Hay **una** app por origen/subcarpeta de tenant (`id` del manifiesto = path de `APP_URL`).
@@ -24,10 +24,11 @@ Ninguna tabla nueva. Las suscripciones push siguen en el esquema actual (`PushSu
 
 ## Flujo principal
 
-1. Todas las pantallas con favicon cargan el manifiesto, el SW `/sw.js` (alcance = `APP_URL`) y el script `se-pwa.js`.
-2. Al abrir el icono, `GET /entrar` (`pwa.inicio`): si hay sesión, redirige al home del portal; si no, dos botones (personal / familias).
-3. Activar notificaciones usa el SW de raíz (`PushManager` de esa registración).
-4. Un SW viejo en `/notificaciones-push/` se desregistra solo.
+1. Todas las pantallas con favicon cargan el manifiesto (URLs **relativas** al host actual), el SW `/sw.js` y `se-pwa.js`.
+2. Login y `/entrar` muestran **Instalar en este dispositivo**.
+3. Al abrir el icono, `GET /entrar` (`pwa.inicio`): si hay sesión, redirige al home del portal; si no, dos botones (personal / familias).
+4. Activar notificaciones usa el SW de raíz (`PushManager` de esa registración).
+5. Un SW viejo en `/notificaciones-push/` se desregistra solo.
 
 ## Fuente de verdad
 
@@ -47,7 +48,7 @@ Ninguna tabla nueva. Las suscripciones push siguen en el esquema actual (`PushSu
 | SW | `public/sw.js` |
 | Cliente | `resources/js/se-pwa.js` |
 | Head | `resources/views/layouts/partials/pwa.blade.php` |
-| Rutas | `pwa.manifest`, `pwa.icon`, `pwa.inicio` |
+| Rutas | `pwa.manifest`, `pwa.icon`, `pwa.inicio`, `pwa.sw` |
 
 ## Qué no hacer / reglas de negocio
 
@@ -59,6 +60,6 @@ Ninguna tabla nueva. Las suscripciones push siguen en el esquema actual (`PushSu
 ## Checklist al modificar
 
 - [ ] Iconos 192 y 512 en el manifiesto; `display: standalone`.
-- [ ] `start_url` = `pwa.inicio`; `scope` con barra final de `APP_URL`.
-- [ ] Tras cambiar `sw.js` o `se-pwa.js`: `npm run build` si tocó Vite; el SW estático se sube como `public/sw.js`.
+- [ ] `start_url` / `scope` / iconos **relativos** (`./entrar`, `./`, `./pwa-icon/…`), no el host de `APP_URL`.
+- [ ] Tras cambiar `sw.js` o `se-pwa.js`: `npm run build` si tocó Vite; subir también `public/sw.js` y `public/build/`.
 - [ ] Push: Activar / Desactivar sigue usando `/notificaciones-push/api/subscribe|unsubscribe`.

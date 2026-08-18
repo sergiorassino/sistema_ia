@@ -201,7 +201,18 @@
         };
     }
 
-    function pageWantsIosInstallHint() {
+    function asSameOriginPath(value) {
+        if (!value) return '';
+        try {
+            if (/^https?:\/\//i.test(value)) {
+                var u = new URL(value);
+                return u.pathname + (String(value).endsWith('/') && !u.pathname.endsWith('/') ? '/' : '');
+            }
+        } catch (e) {}
+        return value;
+    }
+
+    function pageWantsInstallHint() {
         var path = window.location.pathname || '';
         return /loginUsuario|loginEstudiante|\/entrar\/?$|notificaciones/i.test(path);
     }
@@ -224,6 +235,35 @@
         } catch (e) {}
         var el = document.getElementById('se-pwa-install');
         if (el) el.remove();
+    }
+
+    function installInstructionsMessage() {
+        if (isIos()) {
+            return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
+        }
+        return 'En el menú del navegador (⋮ o ⋯) elegí Instalar aplicación. En la computadora también puede aparecer un icono de instalar en la barra de direcciones.';
+    }
+
+    function tryNativeInstall() {
+        if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            return deferredInstallPrompt.userChoice.finally(function () {
+                deferredInstallPrompt = null;
+                dismissInstall();
+            });
+        }
+        if (typeof window.seSwalAviso === 'function') {
+            return window.seSwalAviso(installInstructionsMessage(), 'Instalar');
+        }
+        window.alert(installInstructionsMessage());
+        return Promise.resolve();
+    }
+
+    window.sePwaTryInstall = tryNativeInstall;
+
+    function revealInlineInstallButtons() {
+        if (isStandalone()) return;
+        document.documentElement.classList.add('se-pwa-can-install');
     }
 
     function ensureInstallBanner() {
@@ -273,12 +313,7 @@
         btn.hidden = false;
         btn.textContent = 'Instalar';
         btn.onclick = function () {
-            if (!deferredInstallPrompt) return;
-            deferredInstallPrompt.prompt();
-            deferredInstallPrompt.userChoice.finally(function () {
-                deferredInstallPrompt = null;
-                dismissInstall();
-            });
+            tryNativeInstall();
         };
         wrap.hidden = false;
     }
@@ -295,7 +330,16 @@
     }
 
     function setupInstallUi() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-se-pwa-install]');
+            if (!btn) return;
+            e.preventDefault();
+            tryNativeInstall();
+        });
+
         if (isStandalone()) return;
+
+        revealInlineInstallButtons();
 
         window.addEventListener('beforeinstallprompt', function (e) {
             e.preventDefault();
@@ -306,9 +350,10 @@
         window.addEventListener('appinstalled', function () {
             deferredInstallPrompt = null;
             dismissInstall();
+            document.documentElement.classList.remove('se-pwa-can-install');
         });
 
-        if (isIos() && pageWantsIosInstallHint()) {
+        if (isIos() && pageWantsInstallHint()) {
             showIosInstallBanner();
         }
     }
@@ -351,8 +396,13 @@
         }
 
         unregisterLegacyPushSw().finally(function () {
-            var opts = scope ? { scope: scope } : {};
-            navigator.serviceWorker.register(swUrl, opts).then(function (reg) {
+            var swPath = asSameOriginPath(swUrl) || swUrl;
+            var scopePath = asSameOriginPath(scope);
+            var opts = {};
+            if (scopePath && scopePath !== '/') {
+                opts.scope = scopePath;
+            }
+            navigator.serviceWorker.register(swPath, opts).then(function (reg) {
                 pushNotificationsRegistration = reg;
                 window.dispatchEvent(new CustomEvent('pwa-sw-registered', { detail: reg }));
                 bindPushHelpers();
