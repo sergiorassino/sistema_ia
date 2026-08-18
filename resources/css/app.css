@@ -3837,3 +3837,10 @@
 .se-pwa-install__dismiss:hover {
     background: var(--color-accent-50);
 }
+
+[data-se-pwa-install-wrap] {
+    display: none;
+}
+html.se-pwa-can-install [data-se-pwa-install-wrap] {
+    display: block;
+}

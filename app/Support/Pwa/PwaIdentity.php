@@ -54,4 +54,19 @@ final class PwaIdentity
 
         return ($path !== null && $path !== '') ? rtrim($path, '/').'/' : '/';
     }
+
+    /**
+     * Ruta absoluta en el host actual (`/ia/colegio/sw.js` o `/sw.js`).
+     * Evita el host de APP_URL (www vs sin www, http vs https) que rompe la instalación.
+     */
+    public static function rootPath(string $relative = ''): string
+    {
+        $base = rtrim(self::idPath(), '/');
+        $suffix = ltrim($relative, '/');
+        if ($suffix === '') {
+            return $base === '' ? '/' : $base.'/';
+        }
+
+        return ($base === '' ? '' : $base).'/'.$suffix;
+    }
 }

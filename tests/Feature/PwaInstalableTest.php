@@ -23,7 +23,10 @@ class PwaInstalableTest extends TestCase
         $this->assertNotEmpty($data['start_url'] ?? null);
         $this->assertNotEmpty($data['scope'] ?? null);
         $this->assertNotEmpty($data['icons'] ?? null);
-        $this->assertSame(route('pwa.inicio'), $data['start_url']);
+        $this->assertSame('./entrar', $data['start_url']);
+        $this->assertSame('./', $data['scope']);
+        $this->assertSame('./', $data['id']);
+        $this->assertStringContainsString('pwa-icon/192.png', (string) ($data['icons'][0]['src'] ?? ''));
     }
 
     public function test_icono_pwa_png(): void
@@ -42,8 +45,21 @@ class PwaInstalableTest extends TestCase
         $response->assertOk();
         $response->assertSee('Personal de la institución', false);
         $response->assertSee('Familias y estudiantes', false);
+        $response->assertSee('Instalar en este dispositivo', false);
         $response->assertSee(route('login'), false);
         $response->assertSee(route('alumnos.login'), false);
+    }
+
+    public function test_service_worker_ruta_javascript(): void
+    {
+        $response = $this->get(route('pwa.sw'));
+
+        $response->assertOk();
+        $this->assertStringContainsString(
+            'javascript',
+            strtolower((string) $response->headers->get('content-type'))
+        );
+        $response->assertSee("addEventListener('push'", false);
     }
 
     public function test_service_worker_incluye_push_y_no_cachea_html(): void

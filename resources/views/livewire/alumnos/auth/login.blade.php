@@ -94,6 +94,7 @@
         </form>
 
         @include('layouts.partials.login-autofill-sync', ['loginAutofillSugerirAcceso' => false])
+        @include('layouts.partials.pwa-instalar-boton')
     </div>
 </div>
 

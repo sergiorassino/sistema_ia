@@ -115,6 +115,7 @@
         </form>
 
         @include('layouts.partials.login-autofill-sync')
+        @include('layouts.partials.pwa-instalar-boton')
     </div>
 
     @if ($mensajeBloqueoDocenteTerlec)

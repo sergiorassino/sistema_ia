@@ -6,6 +6,7 @@ use App\Mail\CorreoMasivoEstudiantesMail;
 use App\Models\EmailEnviado;
 use App\Models\EmailEscrito;
 use App\Models\Profesor;
+use App\Support\Mail\MailDesarrollo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -148,7 +149,7 @@ final class EnvioCorreoMasivo
     {
         config([
             'mail.mailers.profesor_emails_masivos' => [
-                'transport' => 'smtp',
+                'transport' => MailDesarrollo::transporteSmtp(),
                 'host' => 'smtp.gmail.com',
                 'port' => 587,
                 'encryption' => 'tls',

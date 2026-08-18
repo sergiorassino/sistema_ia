@@ -10,18 +10,18 @@ class PwaManifestController extends Controller
 {
     public function __invoke(): Response
     {
-        $base = PwaIdentity::baseUrl();
         $nombre = PwaIdentity::nombre();
 
         $payload = [
-            'id' => PwaIdentity::idPath(),
+            // Relativo al manifiesto: el navegador resuelve contra el host real (no APP_URL).
+            'id' => './',
             'name' => $nombre,
             'short_name' => PwaIdentity::nombreCorto(),
             'description' => 'Gestión escolar: personal, familias y notificaciones.',
             'lang' => 'es',
             'dir' => 'ltr',
-            'start_url' => route('pwa.inicio'),
-            'scope' => $base,
+            'start_url' => './entrar',
+            'scope' => './',
             'display' => 'standalone',
             'display_override' => ['standalone', 'minimal-ui'],
             'background_color' => '#F4F8F9',
@@ -31,25 +31,25 @@ class PwaManifestController extends Controller
             'categories' => ['education', 'productivity'],
             'icons' => [
                 [
-                    'src' => route('pwa.icon', ['size' => 192]),
+                    'src' => './pwa-icon/192.png',
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => route('pwa.icon', ['size' => 512]),
+                    'src' => './pwa-icon/512.png',
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => route('pwa.icon', ['size' => 192, 'maskable' => 1]),
+                    'src' => './pwa-icon/192.png?maskable=1',
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
                 ],
                 [
-                    'src' => route('pwa.icon', ['size' => 512, 'maskable' => 1]),
+                    'src' => './pwa-icon/512.png?maskable=1',
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
@@ -59,12 +59,12 @@ class PwaManifestController extends Controller
                 [
                     'name' => 'Personal de la institución',
                     'short_name' => 'Personal',
-                    'url' => route('login'),
+                    'url' => './loginUsuario',
                 ],
                 [
                     'name' => 'Familias y estudiantes',
                     'short_name' => 'Familias',
-                    'url' => route('alumnos.login'),
+                    'url' => './loginEstudiante',
                 ],
             ],
         ];

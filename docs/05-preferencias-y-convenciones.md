@@ -515,3 +515,13 @@ Valores vacíos (`null`, cadena vacía, flag en `false`) pueden omitirse del pay
 ### Regla Cursor
 
 `.cursor/rules/persistencia-bd-sin-falso-exito.mdc`
+
+---
+
+## 15. Correo en desarrollo local (sin SMTP real)
+
+Con `APP_ENV=local` **no se envía correo por SMTP** (comunicados, recuperación de contraseña, cooperadora, emails masivos). Laravel usa el mailer `log`: el mensaje queda en `storage/logs`.
+
+- El bloqueo es de código (`App\Support\Mail\MailDesarrollo`): `MailInstitucionalConfig` ya no puede forzar SMTP al enviar.
+- En `.env` local conviene `MAIL_MAILER=log`. En producción: `APP_ENV=production` y `MAIL_MAILER=smtp`.
+- Escape hatch puntual en la PC: `MAIL_FORCE_REAL=true` (no usar en servidores).

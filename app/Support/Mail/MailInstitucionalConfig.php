@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Schema;
  *
  * Compatibilidad: si el nivel no tiene cuenta en ento, se intenta el JSON legacy
  * en storage y luego MAIL_* del .env.
+ *
+ * En APP_ENV=local no fuerza SMTP (MailDesarrollo): el envío queda en el log.
  */
 final class MailInstitucionalConfig
 {
@@ -152,6 +154,20 @@ final class MailInstitucionalConfig
             return;
         }
 
+        $fromName = $name !== '' ? $name : $user;
+
+        if (MailDesarrollo::bloquearSmtp()) {
+            Config::set([
+                'mail.default' => 'log',
+                'mail.mailers.smtp.transport' => 'log',
+                'mail.mailers.smtp.username' => $user,
+                'mail.from.address' => $user,
+                'mail.from.name' => $fromName,
+            ]);
+
+            return;
+        }
+
         Config::set([
             'mail.default' => 'smtp',
             'mail.mailers.smtp.transport' => 'smtp',
@@ -161,7 +177,7 @@ final class MailInstitucionalConfig
             'mail.mailers.smtp.username' => $user,
             'mail.mailers.smtp.password' => $pass,
             'mail.from.address' => $user,
-            'mail.from.name' => $name !== '' ? $name : $user,
+            'mail.from.name' => $fromName,
         ]);
     }
 
