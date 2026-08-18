@@ -12,9 +12,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class PwaIconController extends Controller
 {
     private const FILES = [
-        180 => 'apple-touch-icon.png',
-        192 => 'icon-192.png',
-        512 => 'icon-512.png',
+        180 => 'apple-touch-icon-se.png',
+        192 => 'icon-se-192.png',
+        512 => 'icon-se-512.png',
     ];
 
     public function __invoke(string $size): Response|BinaryFileResponse
@@ -32,7 +32,7 @@ class PwaIconController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'image/png',
-            'Cache-Control' => 'public, max-age=86400, must-revalidate',
+            'Cache-Control' => 'no-cache, must-revalidate',
         ]);
     }
 }

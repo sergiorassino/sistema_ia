@@ -478,8 +478,7 @@ if (! function_exists('seMonogramFaviconUrls')) {
      */
     function seMonogramFaviconUrls(): array
     {
-        $version = '15';
-        $url = asset('img/favicon-32.png').'?v='.$version;
+        $url = \App\Support\Pwa\PwaIdentity::iconAbsoluto('favicon-32.png');
 
         return [
             'light' => $url,
