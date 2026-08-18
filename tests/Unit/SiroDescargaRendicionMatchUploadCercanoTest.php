@@ -76,6 +76,18 @@ class SiroDescargaRendicionMatchUploadCercanoTest extends TestCase
 
         $this->assertStringContainsString('puesta en marcha', mb_strtolower($mensaje));
         $this->assertStringContainsString('upload', mb_strtolower($mensaje));
+        $this->assertStringContainsString('449', $mensaje);
+        $this->assertStringContainsString('448', $mensaje);
+    }
+
+    public function test_aplica_a_linea_solo_electronicos(): void
+    {
+        $this->assertTrue(SiroDescargaRendicionMatchUploadCercano::aplicaALinea([
+            'codigoBarras' => '0449090001376260813',
+        ]));
+        $this->assertFalse(SiroDescargaRendicionMatchUploadCercano::aplicaALinea([
+            'codigoBarras' => '0448101376088000000',
+        ]));
     }
 
     private function cupon(string $idFactura, float $saldo, int $id): CuponAPagar

@@ -305,7 +305,7 @@ Los modales de confirmación, edición o selección múltiple (destinatarios, li
 
 ### Referencia en el repo
 
-- **Comunicaciones — elegir destinatarios:** `resources/views/comunicaciones/livewire/comunicaciones/nuevo-comunicado.blade.php` (modales alumnos, cursos, docentes).
+- **Comunicaciones — elegir destinatarios:** `resources/views/comunicaciones/livewire/comunicaciones/nuevo-comunicado.blade.php` (modales alumnos, cursos, docentes, grupos).
 - **Historial de exámenes:** `resources/views/livewire/examenes/historial-examenes.blade.php` (bloque `@teleport` al final del archivo).
 
 ### Regla Cursor

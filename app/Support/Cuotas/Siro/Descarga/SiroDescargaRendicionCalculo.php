@@ -31,6 +31,7 @@ final class SiroDescargaRendicionCalculo
         array $linea,
         CuotaGenerada $cuotaGenerada,
         ?CuponAPagar $cupon,
+        string $matchTipo = '',
     ): array {
         $pagado = SiroDescargaRendicionLinea::importeDesdeCentavos((int) ($linea['importePagadoCentavos'] ?? 0));
         $fechaPagoRaw = SiroDescargaRendicionLinea::fechaDesdeSiro((string) ($linea['fechaPago'] ?? ''));
@@ -39,6 +40,10 @@ final class SiroDescargaRendicionCalculo
             : Carbon::today()->startOfDay();
 
         if ($cupon === null) {
+            if (SiroDescargaRendicionMatchCuotaSinCupon448::esMatchTipo($matchTipo)) {
+                return self::calcularProvisorioImporteArchivo($cuotaGenerada, null, $pagado);
+            }
+
             return self::noDescargable(
                 $pagado,
                 'Sin cupón en cupones_a_pagar: no se descarga el pago hasta resolver la referencia.',
@@ -59,6 +64,10 @@ final class SiroDescargaRendicionCalculo
 
         $tramo = self::tramoCuponParaPago($cupon, $fechaPago, $pagado);
         if ($tramo === null) {
+            if (SiroDescargaRendicionProvisorios::debeUsarImporteArchivoSiTramoNoCierra($linea)) {
+                return self::calcularProvisorioImporteArchivo($cuotaGenerada, $cupon, $pagado);
+            }
+
             return self::noDescargable(
                 $pagado,
                 'El importe cobrado por SIRO ($'.number_format($pagado, 2, ',', '.')
@@ -69,14 +78,11 @@ final class SiroDescargaRendicionCalculo
         }
 
         $desglose = self::desgloseDesdeCapitalYPagado($capital, $pagado);
-        $advertencias = [];
-
-        $faltapa = round((float) ($cuotaGenerada->faltapa ?? 0), 2);
-        if ($faltapa <= self::TOLERANCIA) {
-            $advertencias[] = 'La cuota ya estaba saldada al descargar; posible pago doble.'
-                .' Desglose tomado del cupón '.(string) $cupon->id_factura
-                .' (tramo '.$tramo['tramo'].').';
-        }
+        $advertencias = self::avisosCuotaYaCobrada(
+            $cuotaGenerada,
+            ' Desglose tomado del cupón '.(string) $cupon->id_factura
+            .' (tramo '.$tramo['tramo'].').',
+        );
 
         return [
             'importe' => $desglose['importe'],
@@ -85,6 +91,59 @@ final class SiroDescargaRendicionCalculo
             'bonificacion' => $desglose['bonificacion'],
             'advertencias' => $advertencias,
             'descargable' => true,
+        ];
+    }
+
+    /**
+     * TEMPORAL — provisorio 2: toma el importe del archivo y desglosa contra el capital.
+     *
+     * @return array{
+     *     importe: float,
+     *     pagado: float,
+     *     interes: float,
+     *     bonificacion: float,
+     *     advertencias: list<string>,
+     *     descargable: bool,
+     *     provisorioImporteArchivo: bool
+     * }
+     */
+    private static function calcularProvisorioImporteArchivo(
+        CuotaGenerada $cuotaGenerada,
+        ?CuponAPagar $cupon,
+        float $pagado,
+    ): array {
+        if ($pagado <= 0) {
+            return self::noDescargable($pagado, 'Importe pagado inválido o cero.');
+        }
+
+        $capital = SiroDescargaRendicionMatchCuotaSinCupon448::capitalParaDesglose($cupon, $cuotaGenerada);
+        if ($capital <= 0) {
+            return self::noDescargable(
+                $pagado,
+                'No hay saldo de cuota para desglosar el pago (provisorio).',
+            );
+        }
+
+        $desglose = self::desgloseDesdeCapitalYPagado($capital, $pagado);
+        $advertencias = [];
+        if ($cupon !== null) {
+            $advertencias[] = SiroDescargaRendicionProvisorios::avisoImporteArchivo($pagado, $capital);
+        } else {
+            $advertencias[] = 'Provisorio 448: desglose tomado del importe del archivo SIRO ($'
+                .number_format($pagado, 2, ',', '.')
+                .') contra capital $'.number_format($capital, 2, ',', '.').'.';
+        }
+
+        $advertencias = array_merge($advertencias, self::avisosCuotaYaCobrada($cuotaGenerada));
+
+        return [
+            'importe' => $desglose['importe'],
+            'pagado' => $pagado,
+            'interes' => $desglose['interes'],
+            'bonificacion' => $desglose['bonificacion'],
+            'advertencias' => $advertencias,
+            'descargable' => true,
+            'provisorioImporteArchivo' => true,
         ];
     }
 
@@ -203,6 +262,27 @@ final class SiroDescargaRendicionCalculo
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function avisosCuotaYaCobrada(CuotaGenerada $cuotaGenerada, string $extraSaldada = ''): array
+    {
+        $faltapa = round((float) ($cuotaGenerada->faltapa ?? 0), 2);
+        $pagadoPrevio = round((float) ($cuotaGenerada->pagado ?? 0), 2);
+        if ($faltapa <= self::TOLERANCIA) {
+            return ['La cuota ya estaba saldada al descargar; posible pago doble.'.$extraSaldada];
+        }
+        if ($pagadoPrevio > self::TOLERANCIA) {
+            return [
+                'La cuota ya tenía un pago registrado ($'
+                .number_format($pagadoPrevio, 2, ',', '.')
+                .'); posible pago doble.',
+            ];
+        }
+
+        return [];
     }
 
     private static function importesIguales(float $a, float $b): bool

@@ -57,4 +57,10 @@ final class ComunicacionesRutasGestion
 
         return tienePermiso(3) && tienePermiso(4);
     }
+
+    /** Grupos propios de destinatarios: mismo acceso que iniciar un comunicado. */
+    public static function accesoMisGrupos(): bool
+    {
+        return self::accesoNuevoComunicado();
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Support\Cuotas\Siro\Descarga;
 
 use App\Models\PlanillaDescargaCuota;
 use App\Models\RendicionRoela;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,6 +24,7 @@ final class SiroDescargaRendicionArchivo
         $resumen = new SiroDescargaRendicionResumen;
         $lineas = preg_split('/\R/', $contenido) ?: [];
         $idsPagoVistos = [];
+        /** @var array<string, int> idPagoSiro => nro de registro en el archivo */
         /** @var array<int, int> idCuotasgeneradas => nro de registro en el archivo */
         $cuotasVistasEnArchivo = [];
         $fechasAcred = [];
@@ -89,45 +91,65 @@ final class SiroDescargaRendicionArchivo
                 continue;
             }
 
+            $idPago = (string) ($linea['idPagoSiro'] ?? '');
             $motivoDuplicadoPlanilla = self::motivoDuplicadoEnPlanilla($linea, $indicePlanilla);
             if ($motivoDuplicadoPlanilla !== null) {
+                $avisosYaCargado = self::avisosIdPagoEnOtraPlanilla($idPago, $nroPlanilla);
+                $existente = RendicionRoela::query()
+                    ->where('nroPlanilla', $nroPlanilla)
+                    ->where('cadenaPago', (string) ($linea['cadenaPago'] ?? ''))
+                    ->first();
+                if ($existente !== null) {
+                    $avisoCuota = self::avisoCuotaYaDescargada((int) ($existente->idCuotasgeneradas ?? 0), $nroPlanilla);
+                    if ($avisoCuota !== null) {
+                        $avisosYaCargado[] = $avisoCuota;
+                    }
+                    $obs = self::obsParaFormularioPlanilla($avisosYaCargado);
+                    if ($obs !== null && trim((string) ($existente->obs ?? '')) !== $obs) {
+                        $existente->obs = $obs;
+                        $existente->save();
+                    }
+                }
+
+                $detalleDuplicado = self::detallePagoDuplicado($avisosYaCargado);
                 $resumen->omitidos++;
-                $resumen->agregarAdvertencia($motivoDuplicadoPlanilla, $nroRegistro);
+                foreach ($avisosYaCargado !== [] ? $avisosYaCargado : [$motivoDuplicadoPlanilla] as $aviso) {
+                    $resumen->agregarAdvertencia($aviso, $nroRegistro);
+                }
                 $resumen->agregarRegistroArchivo([
                     'linea' => $nroRegistro,
                     'canal' => $canalEtiqueta,
                     'idFacturaBuscado' => $idFacturaBuscado,
                     'modalidadIdentificacion' => $modalidadIdentificacion,
-                    'estado' => 'omitido',
-                    'detalle' => 'Registro ya cargado en esta planilla.',
+                    'estado' => $detalleDuplicado !== null ? 'encontrado_duplicado' : 'omitido',
+                    'detalle' => $detalleDuplicado ?? 'Registro ya cargado en esta planilla.',
                 ]);
 
                 continue;
             }
 
-            $avisosPagoRepetido = [];
-            $idPago = (string) ($linea['idPagoSiro'] ?? '');
+            $avisosPagoRepetido = self::avisosIdPagoEnOtraPlanilla($idPago, $nroPlanilla);
             if ($idPago !== '' && $idPago !== '0000000000') {
                 if (isset($idsPagoVistos[$idPago])) {
-                    $avisosPagoRepetido[] = 'Id de pago SIRO duplicado en el archivo: '.$idPago.'; se registra igual (posible pago doble).';
+                    $avisosPagoRepetido[] = self::mensajePagoDuplicadoIdSiroMismoArchivo(
+                        $idPago,
+                        $idsPagoVistos[$idPago],
+                    );
                 } else {
-                    $idsPagoVistos[$idPago] = true;
-                }
-
-                $nroPlanillaPrevia = self::nroPlanillaImpactadoPorIdPagoSiro($idPago);
-                if ($nroPlanillaPrevia !== null && $nroPlanillaPrevia !== $nroPlanilla) {
-                    $avisosPagoRepetido[] = self::mensajePagoRepetidoPlanilla($idPago, $nroPlanillaPrevia);
+                    $idsPagoVistos[$idPago] = $nroRegistro;
                 }
             }
 
             $match = SiroDescargaRendicionCupon::resolver($linea, $idTerlec);
             $cupon = $match['cupon'];
             $cuotaGenerada = $match['cuotaGenerada'];
+            $matchTipo = (string) ($match['matchTipo'] ?? '');
             $modalidadMatch = $match['modalidadIdentificacion'] !== ''
                 ? $match['modalidadIdentificacion']
                 : $modalidadIdentificacion;
 
-            if ($cupon === null || $cuotaGenerada === null) {
+            $permiteSinCupon = SiroDescargaRendicionMatchCuotaSinCupon448::esMatchTipo($matchTipo);
+            if ($cuotaGenerada === null || ($cupon === null && ! $permiteSinCupon)) {
                 $bloqueosCupon++;
                 $detalle = $match['advertencias'][0]
                     ?? 'Sin cupón en cupones_a_pagar: no se descarga hasta resolver la referencia.';
@@ -152,26 +174,19 @@ final class SiroDescargaRendicionArchivo
 
             $idCuotaGen = (int) $cuotaGenerada->id;
             if (isset($cuotasVistasEnArchivo[$idCuotaGen])) {
-                $avisosPagoRepetido[] = 'La cuota ya tiene otro pago en este archivo (registro '
-                    .$cuotasVistasEnArchivo[$idCuotaGen].'); posible pago doble.';
+                $avisosPagoRepetido[] = self::mensajePagoDuplicadoMismoArchivo(
+                    $cuotasVistasEnArchivo[$idCuotaGen],
+                );
             }
             $cuotasVistasEnArchivo[$idCuotaGen] = $nroRegistro;
-
-            $idEncontrado = (string) ($cupon->id_factura ?? '');
-            $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
-            if ($avisosPagoRepetido !== []) {
-                $detalleEncontrado = $avisosPagoRepetido[0];
-            } elseif ($detalleMatch !== '') {
-                $detalleEncontrado = $detalleMatch;
-            } elseif ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
-                $detalleEncontrado = 'Encontrado con id_factura '.$idEncontrado;
-            } else {
-                $detalleEncontrado = null;
+            $avisoCuotaPrevia = self::avisoCuotaYaDescargada($idCuotaGen, $nroPlanilla);
+            if ($avisoCuotaPrevia !== null) {
+                $avisosPagoRepetido[] = $avisoCuotaPrevia;
             }
 
             $cuotaGenerada->loadMissing(['cuota', 'legajo', 'curso', 'beca']);
 
-            $montos = SiroDescargaRendicionCalculo::calcular($linea, $cuotaGenerada, $cupon);
+            $montos = SiroDescargaRendicionCalculo::calcular($linea, $cuotaGenerada, $cupon, $matchTipo);
             if (! ($montos['descargable'] ?? false)) {
                 $bloqueosCupon++;
                 $detalle = $montos['advertencias'][0] ?? 'No se pudo desglosar el pago desde el cupón.';
@@ -195,10 +210,30 @@ final class SiroDescargaRendicionArchivo
                 continue;
             }
 
+            $idEncontrado = (string) ($cupon?->id_factura ?? '');
+            $detalleProvisorio = SiroDescargaRendicionProvisorios::detalleColumna([
+                'matchTipo' => $matchTipo,
+                'provisorioImporteArchivo' => (bool) ($montos['provisorioImporteArchivo'] ?? false),
+                'idFacturaBuscado' => $idFacturaBuscado,
+                'cupon' => $cupon,
+                'cuotaGenerada' => $cuotaGenerada,
+                'pagadoArchivo' => $montos['pagado'],
+                'desglose' => $montos,
+            ]);
+            $detalleMatch = trim((string) ($match['detalleMatch'] ?? ''));
+            $detallePagoDuplicado = self::detallePagoDuplicado($avisosPagoRepetido, $montos['advertencias']);
+            $detalleEncontrado = self::componerDetalleEncontrado(
+                $detallePagoDuplicado,
+                $detalleProvisorio,
+                $detalleMatch,
+                $idEncontrado,
+                $idFacturaBuscado,
+            );
+
             $advertencias = array_merge($avisosPagoRepetido, $montos['advertencias'], $match['advertencias']);
             $fechaPago = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaPago']);
             $fechaAcred = SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechaAcreditacion']);
-            $fechVenc1 = $cupon->fecha1venc?->format('Y-m-d')
+            $fechVenc1 = $cupon?->fecha1venc?->format('Y-m-d')
                 ?? SiroDescargaRendicionLinea::fechaDesdeSiro((string) $linea['fechVenc1'])
                 ?? $cuotaGenerada->venc1?->format('Y-m-d');
 
@@ -217,10 +252,8 @@ final class SiroDescargaRendicionArchivo
                 'modalidadIdentificacion' => $modalidadMatch,
                 'canalEtiqueta' => $canalEtiqueta,
                 'detalleEncontrado' => $detalleEncontrado,
+                'esPagoDuplicado' => $detallePagoDuplicado !== null,
             ];
-
-            // Índice en memoria: evita duplicar la misma cadena/id dentro del mismo archivo.
-            self::registrarEnIndicePlanilla($linea, $indicePlanilla);
         }
 
         if ($bloqueosCupon > 0) {
@@ -301,7 +334,7 @@ final class SiroDescargaRendicionArchivo
                     'canal' => $pendiente['canalEtiqueta'],
                     'idFacturaBuscado' => $pendiente['idFacturaBuscado'],
                     'modalidadIdentificacion' => $pendiente['modalidadIdentificacion'],
-                    'estado' => 'encontrado',
+                    'estado' => ($pendiente['esPagoDuplicado'] ?? false) ? 'encontrado_duplicado' : 'encontrado',
                     'detalle' => $pendiente['detalleEncontrado'],
                 ]);
 
@@ -349,9 +382,201 @@ final class SiroDescargaRendicionArchivo
             }
         }
 
-        $texto = implode(' | ', array_slice($partes, 0, 3));
+        if ($partes === []) {
+            return null;
+        }
 
-        return $texto !== '' ? mb_substr($texto, 0, 500) : null;
+        $texto = implode(' | ', array_slice($partes, 0, 3));
+        foreach ($partes as $parte) {
+            if (self::esAvisoPagoDuplicado($parte)) {
+                $texto = 'PAGO DUPLICADO: '.$texto;
+                break;
+            }
+        }
+
+        return mb_substr($texto, 0, 500);
+    }
+
+    /**
+     * Texto para la columna Detalle del modal cuando la cuota registra un pago duplicado.
+     *
+     * @param  list<string>  $avisosPagoRepetido
+     * @param  list<string>  $advertenciasMontos
+     */
+    public static function detallePagoDuplicado(array $avisosPagoRepetido, array $advertenciasMontos = []): ?string
+    {
+        $partes = [];
+        foreach (array_merge($avisosPagoRepetido, $advertenciasMontos) as $texto) {
+            $texto = trim((string) $texto);
+            if ($texto === '' || self::esAdvertenciaMatchProvisorio($texto) || ! self::esAvisoPagoDuplicado($texto)) {
+                continue;
+            }
+            if (! in_array($texto, $partes, true)) {
+                $partes[] = $texto;
+            }
+        }
+
+        return $partes !== [] ? 'PAGO DUPLICADO: '.implode(' | ', $partes) : null;
+    }
+
+    /**
+     * Detalle del modal: el aviso de duplicado va primero, después el provisorio.
+     */
+    public static function componerDetalleEncontrado(
+        ?string $detallePagoDuplicado,
+        ?string $detalleProvisorio,
+        string $detalleMatch = '',
+        string $idEncontrado = '',
+        string $idFacturaBuscado = '',
+    ): ?string {
+        $partes = [];
+        if ($detallePagoDuplicado !== null && $detallePagoDuplicado !== '') {
+            $partes[] = $detallePagoDuplicado;
+        }
+        if ($detalleProvisorio !== null && $detalleProvisorio !== '') {
+            $partes[] = $detalleProvisorio;
+        }
+        if ($partes !== []) {
+            return implode(' | ', $partes);
+        }
+
+        $detalleMatch = trim($detalleMatch);
+        if ($detalleMatch !== '') {
+            return $detalleMatch;
+        }
+        if ($idEncontrado !== '' && $idEncontrado !== $idFacturaBuscado) {
+            return 'Encontrado con id_factura '.$idEncontrado;
+        }
+
+        return null;
+    }
+
+    public static function esAvisoPagoDuplicado(string $texto): bool
+    {
+        return str_contains($texto, 'posible pago doble')
+            || str_contains($texto, 'Pago repetido')
+            || str_contains($texto, 'Id de pago SIRO duplicado')
+            || str_contains($texto, 'ya tiene otro pago')
+            || str_contains($texto, 'ya tiene un pago descargado')
+            || str_contains($texto, 'ya estaba saldada')
+            || str_contains($texto, 'ya tenía un pago registrado')
+            || str_contains($texto, 'misma cadena SIRO ya imputada')
+            || str_contains($texto, 'el saldo quedará negativo');
+    }
+
+    public static function leyendaCortaObs(?string $obs): string
+    {
+        $obs = trim((string) $obs);
+        if ($obs === '') {
+            return '';
+        }
+        if (str_contains($obs, 'PAGO DUPLICADO') || self::esAvisoPagoDuplicado($obs)) {
+            return 'PAGO DUPLICADO';
+        }
+
+        return $obs;
+    }
+
+    /**
+     * Completa obsMostrada para la grilla: usa rendicionesroela.obs o infiere
+     * duplicado si la misma cuota ya está en otra planilla o repetida acá.
+     *
+     * @param  Collection<int, RendicionRoela>  $rendiciones
+     * @return Collection<int, RendicionRoela>
+     */
+    public static function completarLeyendaDuplicados(Collection $rendiciones, int $nroPlanilla): Collection
+    {
+        $ids = $rendiciones
+            ->pluck('idCuotasgeneradas')
+            ->map(fn ($id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values();
+
+        $otraPlanillaPorCuota = [];
+        if ($ids->isNotEmpty()) {
+            $previas = RendicionRoela::query()
+                ->whereIn('idCuotasgeneradas', $ids)
+                ->where('nroPlanilla', '!=', $nroPlanilla)
+                ->orderBy('id')
+                ->get(['idCuotasgeneradas', 'nroPlanilla']);
+            foreach ($previas as $previa) {
+                $idCg = (int) $previa->idCuotasgeneradas;
+                if ($idCg > 0 && ! isset($otraPlanillaPorCuota[$idCg])) {
+                    $otraPlanillaPorCuota[$idCg] = (int) $previa->nroPlanilla;
+                }
+            }
+        }
+
+        $primeraEnPlanilla = [];
+        $item = 0;
+        foreach ($rendiciones as $rendicion) {
+            $item++;
+            $idCg = (int) ($rendicion->idCuotasgeneradas ?? 0);
+            $obsDb = trim((string) ($rendicion->obs ?? ''));
+            $avisos = [];
+            if ($idCg > 0) {
+                if (isset($primeraEnPlanilla[$idCg])) {
+                    $avisos[] = self::mensajePagoDuplicadoMismoArchivo($primeraEnPlanilla[$idCg]);
+                } else {
+                    $primeraEnPlanilla[$idCg] = $item;
+                }
+                if (isset($otraPlanillaPorCuota[$idCg])) {
+                    $avisos[] = self::mensajePagoDuplicadoCuotaPlanilla($otraPlanillaPorCuota[$idCg]);
+                }
+            }
+
+            if ($obsDb !== '') {
+                $rendicion->setAttribute('obsMostrada', $obsDb);
+            } elseif ($avisos !== []) {
+                $rendicion->setAttribute('obsMostrada', self::obsParaFormularioPlanilla($avisos) ?? '');
+            } else {
+                $rendicion->setAttribute('obsMostrada', '');
+            }
+        }
+
+        return $rendiciones;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function avisosIdPagoEnOtraPlanilla(string $idPago, int $nroPlanilla): array
+    {
+        $nroPrevia = self::nroPlanillaPreviaPorIdPagoSiro($idPago, $nroPlanilla);
+        if ($nroPrevia === null) {
+            return [];
+        }
+
+        return [self::mensajePagoRepetidoPlanilla($idPago, $nroPrevia)];
+    }
+
+    public static function avisoCuotaYaDescargada(int $idCuotasgeneradas, int $nroPlanilla): ?string
+    {
+        $nroPrevia = self::nroPlanillaPreviaPorCuota($idCuotasgeneradas, $nroPlanilla);
+        if ($nroPrevia === null) {
+            return null;
+        }
+
+        return self::mensajePagoDuplicadoCuotaPlanilla($nroPrevia);
+    }
+
+    public static function mensajePagoDuplicadoIdSiroMismoArchivo(string $idPago, int $nroRegistroPrevio): string
+    {
+        return 'Id de pago SIRO duplicado en el archivo: '.$idPago
+            .' (registro '.$nroRegistroPrevio.'); se registra igual (posible pago doble).';
+    }
+
+    public static function mensajePagoDuplicadoMismoArchivo(int $nroRegistroPrevio): string
+    {
+        return 'La cuota ya tiene otro pago en este archivo (registro '.$nroRegistroPrevio
+            .'); se registra igual (posible pago doble).';
+    }
+
+    public static function mensajePagoDuplicadoCuotaPlanilla(int $nroPlanillaPrevia): string
+    {
+        return 'La cuota ya tiene un pago descargado en planilla '.$nroPlanillaPrevia
+            .'; se registra igual (posible pago doble).';
     }
 
     public static function mensajePagoRepetidoPlanilla(string $idPago, int $nroPlanillaPrevia): string
@@ -365,7 +590,9 @@ final class SiroDescargaRendicionArchivo
     public static function esAdvertenciaMatchProvisorio(string $texto): bool
     {
         return str_contains($texto, 'Match provisorio')
-            || str_contains($texto, 'Provisorio upload cercano');
+            || str_contains($texto, 'Provisorio upload cercano')
+            || str_contains($texto, 'Provisorio 448')
+            || str_contains($texto, 'PROVISORIO');
     }
 
     public static function normalizarNombreArchivo(string $nombre): string
@@ -422,8 +649,27 @@ final class SiroDescargaRendicionArchivo
     }
 
     /**
-     * Busca un id de pago SIRO ya impactado, anclado a las posiciones 227–236 de la cadena
-     * (no un LIKE libre que pueda coincidir con el código de barras).
+     * Busca un id de pago SIRO ya descargado en otra planilla (impactado o no),
+     * anclado a las posiciones 227–236 de la cadena (no un LIKE libre).
+     */
+    public static function nroPlanillaPreviaPorIdPagoSiro(string $idPago, int $nroPlanillaActual): ?int
+    {
+        $idPago = trim($idPago);
+        if ($idPago === '' || $idPago === '0000000000') {
+            return null;
+        }
+
+        $nro = RendicionRoela::query()
+            ->where('nroPlanilla', '!=', $nroPlanillaActual)
+            ->where('cadenaPago', 'like', self::patronLikeIdPagoSiro($idPago))
+            ->orderBy('id')
+            ->value('nroPlanilla');
+
+        return $nro !== null ? (int) $nro : null;
+    }
+
+    /**
+     * @deprecated Usar nroPlanillaPreviaPorIdPagoSiro (también considera no impactadas).
      */
     public static function nroPlanillaImpactadoPorIdPagoSiro(string $idPago): ?int
     {
@@ -433,9 +679,23 @@ final class SiroDescargaRendicionArchivo
         }
 
         $nro = RendicionRoela::query()
-            ->where('impactado', 1)
             ->where('cadenaPago', 'like', self::patronLikeIdPagoSiro($idPago))
-            ->orderByDesc('id')
+            ->orderBy('id')
+            ->value('nroPlanilla');
+
+        return $nro !== null ? (int) $nro : null;
+    }
+
+    public static function nroPlanillaPreviaPorCuota(int $idCuotasgeneradas, int $nroPlanillaActual): ?int
+    {
+        if ($idCuotasgeneradas <= 0) {
+            return null;
+        }
+
+        $nro = RendicionRoela::query()
+            ->where('idCuotasgeneradas', $idCuotasgeneradas)
+            ->where('nroPlanilla', '!=', $nroPlanillaActual)
+            ->orderBy('id')
             ->value('nroPlanilla');
 
         return $nro !== null ? (int) $nro : null;
@@ -450,6 +710,9 @@ final class SiroDescargaRendicionArchivo
     }
 
     /**
+     * Solo filas ya persistidas en esta planilla (una carga anterior).
+     * Un pago repetido dentro del mismo archivo no se omite: se registra con aviso.
+     *
      * @param  array{cadenas: array<string, true>, idsPago: array<string, true>}  $indicePlanilla
      * @param  array{idPagoSiro: string, cadenaPago: string}  $linea
      */

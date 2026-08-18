@@ -492,6 +492,80 @@ class ComunicacionesRepository
     }
 
     /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public static function filtrarIdsProfesoresDelNivel(array $ids, int $idNivel): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if ($ids === []) {
+            return [];
+        }
+
+        return DB::table('profesores as p')
+            ->where('p.nivel', $idNivel)
+            ->whereIn('p.id', $ids)
+            ->pluck('p.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * Personal del nivel (todos los roles, salvo «Sin Rol») para armar grupos mixtos.
+     *
+     * @return list<array{id:int,label:string,dni:?string,rol:string,rol_label:string}>
+     */
+    public static function profesoresDelNivelParaSelectorTodos(
+        int $idNivel,
+        string $filtro = '',
+        int $limit = 800,
+        ?int $excluirId = null
+    ): array {
+        $limit = max(1, min(2000, $limit));
+        $t = mb_strtolower(trim($filtro));
+        $excluirId = $excluirId !== null && $excluirId > 0 ? $excluirId : null;
+
+        $rows = DB::table('profesores as p')
+            ->join('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->where('p.nivel', $idNivel)
+            ->when($excluirId !== null, static fn ($q) => $q->where('p.id', '!=', $excluirId))
+            ->orderBy('p.apellido')
+            ->orderBy('p.nombre')
+            ->get(['p.id', 'p.apellido', 'p.nombre', 'p.dni', 'p.IdTipoProf', 'pt.tipo']);
+
+        $out = [];
+        foreach ($rows as $r) {
+            if ((int) $r->IdTipoProf === self::ID_TIPO_SIN_ROL) {
+                continue;
+            }
+            $rolLabel = trim((string) ($r->tipo ?? ''));
+            if (ComCanalRolCatalog::esSinRolPorNombre($rolLabel)) {
+                continue;
+            }
+            $label = trim((string) $r->apellido.', '.(string) $r->nombre);
+            $dni = $r->dni !== null ? (string) $r->dni : null;
+            if ($t !== '') {
+                $blob = mb_strtolower($label.' '.($dni ?? '').' '.$rolLabel);
+                if (! str_contains($blob, $t)) {
+                    continue;
+                }
+            }
+            $out[] = [
+                'id'        => (int) $r->id,
+                'label'     => $label,
+                'dni'       => $dni,
+                'rol'       => CanalesPolicy::normalizarRolProfesor($rolLabel),
+                'rol_label' => $rolLabel !== '' ? $rolLabel : 'Sin rol asignado',
+            ];
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Medios permitidos al iniciar un comunicado hacia varios roles receptores (intersección).
      *
      * @param  list<string>  $rolesReceptor

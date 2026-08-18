@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\CuponAPagar;
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionCalculo;
+use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchCuotaSinCupon448;
 use Tests\TestCase;
 
 class SiroDescargaRendicionCalculoTest extends TestCase
@@ -118,6 +119,161 @@ class SiroDescargaRendicionCalculoTest extends TestCase
         $this->assertFalse($resultado['descargable']);
         $this->assertSame(0.0, $resultado['importe']);
         $this->assertStringContainsString('cupones_a_pagar', $resultado['advertencias'][0]);
+    }
+
+    public function test_provisorio_448_sin_cupon_descarga_importe_archivo(): void
+    {
+        $cuota = new CuotaGenerada([
+            'id' => 40,
+            'faltapa' => 109800.0,
+            'importe' => 109800.0,
+        ]);
+
+        $resultado = SiroDescargaRendicionCalculo::calcular(
+            [
+                'importePagadoCentavos' => 12200000,
+                'fechaPago' => '20260810',
+                'codigoBarras' => '04481013760880000002608130010980000140012200000515001102940',
+            ],
+            $cuota,
+            null,
+            SiroDescargaRendicionMatchCuotaSinCupon448::MATCH_TIPO,
+        );
+
+        $this->assertTrue($resultado['descargable']);
+        $this->assertSame(109800.0, $resultado['importe']);
+        $this->assertSame(122000.0, $resultado['pagado']);
+        $this->assertSame(12200.0, $resultado['interes']);
+        $this->assertSame(0.0, $resultado['bonificacion']);
+        $this->assertStringContainsString('Provisorio 448', $resultado['advertencias'][0]);
+    }
+
+    public function test_provisorio_448_importe_distinto_al_cupon_usa_archivo(): void
+    {
+        $cuota = new CuotaGenerada(['id' => 41, 'faltapa' => 109800.0]);
+        $cupon = new CuponAPagar([
+            'id_factura' => '00001376000008801088',
+            'origen' => CuponAPagar::ORIGEN_SUBIDA_SIRO,
+            'saldo_pagar' => 109800.0,
+            'fecha1venc' => '2026-08-13',
+            'importe1venc' => 98700.0,
+            'fecha2venc' => '2026-08-20',
+            'importe2venc' => 109800.0,
+            'fecha3venc' => '2026-08-27',
+            'importe3venc' => 109800.0,
+        ]);
+
+        $resultado = SiroDescargaRendicionCalculo::calcular(
+            [
+                'importePagadoCentavos' => 12200000,
+                'fechaPago' => '20260810',
+                'codigoBarras' => '04481013760880000002608130010980000140012200000515001102940',
+            ],
+            $cuota,
+            $cupon,
+        );
+
+        $this->assertTrue($resultado['descargable']);
+        $this->assertSame(109800.0, $resultado['importe']);
+        $this->assertSame(122000.0, $resultado['pagado']);
+        $this->assertSame(12200.0, $resultado['interes']);
+        $this->assertStringContainsString('Match provisorio', $resultado['advertencias'][0]);
+    }
+
+    public function test_cupon_autogestion_con_importe_distinto_usa_provisorio_2(): void
+    {
+        $cuota = new CuotaGenerada(['id' => 42, 'faltapa' => 109800.0]);
+        $cupon = new CuponAPagar([
+            'id_factura' => '00001376000008802088',
+            'origen' => CuponAPagar::ORIGEN_IMPRESION_AUTOGESTION,
+            'saldo_pagar' => 109800.0,
+            'fecha1venc' => '2026-08-13',
+            'importe1venc' => 98700.0,
+            'fecha2venc' => '2026-08-20',
+            'importe2venc' => 109800.0,
+            'fecha3venc' => '2026-08-27',
+            'importe3venc' => 109800.0,
+        ]);
+
+        $resultado = SiroDescargaRendicionCalculo::calcular(
+            [
+                'importePagadoCentavos' => 12200000,
+                'fechaPago' => '20260810',
+                'codigoBarras' => '04481013760880000002608130010980000140012200000515001102940',
+            ],
+            $cuota,
+            $cupon,
+        );
+
+        $this->assertTrue($resultado['descargable']);
+        $this->assertSame(109800.0, $resultado['importe']);
+        $this->assertSame(122000.0, $resultado['pagado']);
+        $this->assertSame(12200.0, $resultado['interes']);
+        $this->assertStringContainsString('Match provisorio', $resultado['advertencias'][0]);
+    }
+
+    public function test_cupon_autogestion_con_importe_coincidente_usa_el_registro(): void
+    {
+        $cuota = new CuotaGenerada(['id' => 43, 'faltapa' => 109800.0]);
+        $cupon = new CuponAPagar([
+            'id_factura' => '00001376000008802088',
+            'origen' => CuponAPagar::ORIGEN_IMPRESION_AUTOGESTION,
+            'saldo_pagar' => 109800.0,
+            'fecha1venc' => '2026-08-13',
+            'importe1venc' => 98700.0,
+            'fecha2venc' => '2026-08-20',
+            'importe2venc' => 109800.0,
+            'fecha3venc' => '2026-08-27',
+            'importe3venc' => 122000.0,
+        ]);
+
+        $resultado = SiroDescargaRendicionCalculo::calcular(
+            [
+                'importePagadoCentavos' => 12200000,
+                'fechaPago' => '20260810',
+                'codigoBarras' => '04481013760880000002608130010980000140012200000515001102940',
+            ],
+            $cuota,
+            $cupon,
+        );
+
+        $this->assertTrue($resultado['descargable']);
+        $this->assertSame(109800.0, $resultado['importe']);
+        $this->assertSame(122000.0, $resultado['pagado']);
+        $this->assertSame(12200.0, $resultado['interes']);
+        $this->assertSame([], $resultado['advertencias']);
+    }
+
+    public function test_449_importe_distinto_al_cupon_usa_archivo_en_puesta_en_marcha(): void
+    {
+        $cuota = new CuotaGenerada(['id' => 45, 'faltapa' => 111000.0]);
+        $cupon = new CuponAPagar([
+            'id_factura' => '00001735000008703087',
+            'saldo_pagar' => 111000.0,
+            'fecha1venc' => '2026-08-13',
+            'importe1venc' => 99900.0,
+            'fecha2venc' => '2026-08-20',
+            'importe2venc' => 111000.0,
+            'fecha3venc' => '2026-08-27',
+            'importe3venc' => 111000.0,
+        ]);
+
+        $resultado = SiroDescargaRendicionCalculo::calcular(
+            [
+                'importePagadoCentavos' => 11721600,
+                'fechaPago' => '20260807',
+                'codigoBarras' => '044909000173526081011721600000000000000000000515001105240',
+            ],
+            $cuota,
+            $cupon,
+        );
+
+        $this->assertTrue($resultado['descargable']);
+        $this->assertSame(111000.0, $resultado['importe']);
+        $this->assertSame(117216.0, $resultado['pagado']);
+        $this->assertSame(6216.0, $resultado['interes']);
+        $this->assertStringContainsString('Match provisorio', $resultado['advertencias'][0]);
+        $this->assertTrue($resultado['provisorioImporteArchivo']);
     }
 
     public function test_importe_no_coincide_con_cupon_no_es_descargable(): void

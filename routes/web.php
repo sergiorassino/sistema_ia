@@ -266,6 +266,7 @@ use App\Livewire\Comunicaciones\BandejaRevision;
 use App\Livewire\Comunicaciones\ComAuditoriaIndex;
 use App\Livewire\Comunicaciones\HiloShow;
 use App\Livewire\Comunicaciones\InformeEnvioComunicado;
+use App\Livewire\Comunicaciones\MisGruposIndex;
 use App\Livewire\Comunicaciones\NuevoComunicado;
 use App\Livewire\EmailsMasivos\EmailsMasivosCampanaShow;
 use App\Livewire\EmailsMasivos\EmailsMasivosEnviar;
@@ -323,6 +324,9 @@ use App\Livewire\Seguimiento\Tea\TeaIndex;
 use App\Http\Controllers\TeaRegistroPdfController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstitutionalIconController;
+use App\Http\Controllers\Pwa\PwaIconController;
+use App\Http\Controllers\Pwa\PwaInicioController;
+use App\Http\Controllers\Pwa\PwaManifestController;
 use App\Http\Controllers\ManualComunicacionInstitucionalPdfController;
 use App\Http\Controllers\ManualSistemaPdfController;
 use App\Support\Auth\CerrarSesionAplicacion;
@@ -331,6 +335,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/icono-escuela.png', InstitutionalIconController::class)->name('institutional.icon');
 Route::get('/favicon.ico', InstitutionalIconController::class);
+
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/manifest.webmanifest', PwaManifestController::class)->name('pwa.manifest');
+    Route::get('/pwa-icon/{size}.png', PwaIconController::class)
+        ->where('size', '180|192|512')
+        ->name('pwa.icon');
+});
+Route::get('/entrar', PwaInicioController::class)->name('pwa.inicio');
 
 // Registro público de aspirantes (sin auth, sin school.context).
 // El token es opaco por instancia: no expone idNivel ni permite saltar de nivel.
@@ -579,6 +591,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/comunicaciones', BandejaGestion::class)->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->name('portalDocente.comunicaciones.nuevo');
+    Route::get('/comunicaciones/grupos', MisGruposIndex::class)->name('portalDocente.comunicaciones.grupos');
     Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.informe-envio');
@@ -844,6 +857,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:43')
         ->name('comunicaciones.auditoria');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->middleware('permiso:4')->name('comunicaciones.nuevo');
+    Route::get('/comunicaciones/grupos', MisGruposIndex::class)->middleware('permiso:4')->name('comunicaciones.grupos');
     Route::get('/comunicaciones/informe-envio/{id}', InformeEnvioComunicado::class)
         ->middleware(['permiso:3', 'permiso:4'])
         ->whereNumber('id')

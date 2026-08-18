@@ -13,10 +13,12 @@
                 <p class="text-xs text-white/75">
                     Planillas de cobranza · Cada archivo de rendición genera una planilla y sus pagos en rendicionesroela.
                 </p>
-                @if (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::HABILITADO)
+                @if (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionProvisorios::hayAlgunoHabilitado())
                     <p class="mt-2 max-w-3xl rounded-lg border border-amber-300/40 bg-amber-500/20 px-3 py-2 text-xs leading-relaxed text-amber-50">
-                        <span class="font-semibold">Excepción provisorio (puesta en marcha):</span>
-                        {{ \App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionMatchUploadCercano::mensajeAvisoFormulario() }}
+                        <span class="font-semibold">Excepciones provisorio (puesta en marcha):</span>
+                        @foreach (\App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionProvisorios::mensajesAvisoFormulario() as $mensajeProvisorio)
+                            <span class="mt-1 block">{{ $mensajeProvisorio }}</span>
+                        @endforeach
                     </p>
                 @endif
             </div>
