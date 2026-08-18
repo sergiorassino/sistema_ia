@@ -17,6 +17,8 @@ class PwaManifestController extends Controller
         $portal = PwaIdentity::normalizarPortal($portal);
         $esFamilias = $portal === PwaIdentity::FAMILIAS;
         $startUrl = PwaIdentity::startUrlAbsoluto($portal);
+        $icon192 = PwaIdentity::iconAbsoluto('icon-se-192.png');
+        $icon512 = PwaIdentity::iconAbsoluto('icon-se-512.png');
 
         return response()->json([
             'id' => $startUrl,
@@ -32,25 +34,25 @@ class PwaManifestController extends Controller
             'theme_color' => '#40848D',
             'icons' => [
                 [
-                    'src' => asset('img/icon-192.png'),
+                    'src' => $icon192,
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => asset('img/icon-512.png'),
+                    'src' => $icon512,
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => asset('img/icon-192.png'),
+                    'src' => $icon192,
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
                 ],
                 [
-                    'src' => asset('img/icon-512.png'),
+                    'src' => $icon512,
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'maskable',

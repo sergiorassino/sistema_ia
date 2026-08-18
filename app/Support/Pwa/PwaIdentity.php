@@ -140,4 +140,19 @@ final class PwaIdentity
 
         return ($base === '' ? '' : $base).'/'.$suffix;
     }
+
+    /**
+     * URL absoluta del icono PWA en el host de esta petición, con ?v=filemtime
+     * para que Chrome no reutilice el PNG verde anterior (misma ruta, otro contenido).
+     */
+    public static function iconAbsoluto(string $filename): string
+    {
+        $filename = basename($filename);
+        $path = self::rootPath('img/'.$filename);
+        $url = request()->getSchemeAndHttpHost().$path;
+        $file = public_path('img/'.$filename);
+        $v = is_file($file) ? (string) filemtime($file) : '16';
+
+        return $url.'?v='.$v;
+    }
 }

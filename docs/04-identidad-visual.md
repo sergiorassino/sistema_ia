@@ -38,7 +38,7 @@ Ubicacion actual: `public/img/`.
 | `1.png` | Icono compacto, sidebar colapsado |
 | `2.png` | Variante clara del icono |
 | `favicon-32.png` | Favicon de pestaña: círculo blanco, letras **SE** en gris oscuro (estilo SILAVET) |
-| `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` | Iconos PWA del mismo diseño |
+| `icon-se-192.png` / `icon-se-512.png` / `apple-touch-icon-se.png` | Iconos PWA / “Instalar” (nombres nuevos para no reutilizar el PNG verde en caché) |
 | `3.png` | Logo principal/prominente para login, dashboard y fallback general |
 | `4.png` | Variante horizontal para headers amplios |
 | `5.png` | Variante compacta horizontal |

@@ -26,7 +26,8 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('loginEstudiante', (string) ($f['id'] ?? ''));
         $this->assertSame('Familias', $f['short_name']);
         $this->assertNotSame($p['id'], $f['id']);
-        $this->assertStringContainsString('icon-192.png', (string) ($p['icons'][0]['src'] ?? ''));
+        $this->assertStringContainsString('icon-se-192.png', (string) ($p['icons'][0]['src'] ?? ''));
+        $this->assertStringContainsString('?v=', (string) ($p['icons'][0]['src'] ?? ''));
         $this->assertStringContainsString('http', (string) ($p['icons'][0]['src'] ?? ''));
     }
 

@@ -241,7 +241,7 @@
         if (isIos()) {
             return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
         }
-        return 'En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
+        return 'Puedes instalar el sistema como App para tenerlo más a mano en el escritorio. En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
     }
 
     function tryNativeInstall() {

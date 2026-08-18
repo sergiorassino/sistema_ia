@@ -34,7 +34,7 @@ Ninguna tabla nueva.
 ## Flujo principal
 
 1. Cada login enlaza su manifiesto vía `route('pwa.manifest', ['portal' => …])`.
-2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`.
+2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`. El manifiesto usa `icon-se-192.png` / `icon-se-512.png` (no `icon-192.png`, que Chrome puede tener cacheado del icono verde).
 3. SW `/sw.js` solo para push; SILAVET no necesita SW para instalar.
 4. Al abrir el icono se carga el login de ese portal (igual que SILAVET).
 
@@ -43,7 +43,7 @@ Ninguna tabla nueva.
 | Dato | Quién escribe |
 |------|---------------|
 | Manifiesto | `PwaManifestController` (copia el enfoque de SILAVET `WebManifestController`) |
-| Iconos | `public/img/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` |
+| Iconos | `public/img/icon-se-192.png`, `icon-se-512.png`, `apple-touch-icon-se.png` |
 | SW push | `public/sw.js` |
 
 ## Archivos clave
@@ -64,5 +64,5 @@ Ninguna tabla nueva.
 
 ## Checklist al modificar
 
-- [ ] Manifiesto con `url()` / `asset()`, `start_url` = login, iconos `icon-192`/`icon-512`.
-- [ ] Tras tocar Vite: `npm run build`. Subir también `public/img/icon-*.png` y `apple-touch-icon.png`.
+- [ ] Manifiesto con `url()` / `asset()`, `start_url` = login, iconos `icon-se-192`/`icon-se-512` con `?v=`.
+- [ ] Tras tocar Vite: `npm run build`. Subir también `public/img/icon-se-*.png`, `apple-touch-icon-se.png` y `public/sw.js`.

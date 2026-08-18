@@ -2,7 +2,7 @@
  * Service Worker del sistema (alcance: directorio de esta URL = APP_URL).
  * Push + fallback offline en navegaciones. No cachea HTML autenticado ni Livewire.
  */
-const CACHE_NAME = 'se-pwa-v1';
+const CACHE_NAME = 'se-pwa-v2';
 const OFFLINE_URL = 'offline.html';
 
 self.addEventListener('install', function (event) {
@@ -56,7 +56,7 @@ self.addEventListener('push', function (event) {
             data.body = event.data.text();
         }
     }
-    const icon = new URL('img/1.png', self.registration.scope).href;
+    const icon = new URL('img/icon-se-192.png', self.registration.scope).href;
     const opts = {
         body: data.body || '',
         icon: icon,
