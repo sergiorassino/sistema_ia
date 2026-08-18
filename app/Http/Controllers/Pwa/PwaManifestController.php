@@ -26,7 +26,7 @@ class PwaManifestController extends Controller
             'name' => PwaIdentity::nombreApp($portal),
             'short_name' => PwaIdentity::nombreCortoApp($portal),
             'description' => $esFamilias
-                ? 'Portal de familias y estudiantes.'
+                ? 'Portal de estudiantes.'
                 : 'Portal del personal de la institución.',
             'start_url' => $startUrl,
             'scope' => $scopeUrl,

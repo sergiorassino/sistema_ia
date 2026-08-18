@@ -242,7 +242,7 @@
         if (isIos()) {
             return 'En Safari, tocá Compartir (el cuadrado con flecha) y después Agregar a inicio. Luego abrí el sistema desde ese icono.';
         }
-        return 'Puedes instalar el sistema como App para tenerlo más a mano en el escritorio. Si ya tenés instalada la otra app (o una instalación vieja), desinstalala primero: clic derecho en el icono → Desinstalar. Después recargá este login e instalá Personal y Familias por separado. En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
+        return 'Puedes instalar el sistema como App para tenerlo más a mano en el escritorio. Si ya tenés instalada la otra app (o una instalación vieja), desinstalala primero: clic derecho en el icono → Desinstalar. Después recargá este login e instalá Personal y Estudiante por separado. En Chrome o Edge, usá Instalar en la barra de direcciones (icono de monitor con flecha) o el menú ⋮ → Instalar. No elijas «Crear acceso directo»: eso no abre como aplicación.';
     }
 
     function installInstructionsMessage() {

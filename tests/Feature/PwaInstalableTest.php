@@ -28,7 +28,7 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('/entrar', (string) ($f['start_url'] ?? ''));
         $this->assertStringContainsString('pwa-familias', (string) ($f['id'] ?? ''));
         $this->assertStringContainsString('pwa-familias', (string) ($f['scope'] ?? ''));
-        $this->assertSame('Familias', $f['short_name']);
+        $this->assertSame('Estudiante', $f['short_name']);
         $this->assertNotSame($p['id'], $f['id']);
         $this->assertNotSame($p['scope'], $f['scope']);
         $this->assertFalse(str_starts_with(rtrim((string) $f['scope'], '/').'/', rtrim((string) $p['scope'], '/').'/'));
