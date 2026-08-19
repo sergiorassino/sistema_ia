@@ -24,7 +24,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |
 | Comunicación institucional | [comunicacion-institucional.md](comunicacion-institucional.md) |
 | PWA instalable | [pwa-instalable.md](pwa-instalable.md) |
-| Descarga de rendición SIRO | [siro-descarga-rendicion.md](siro-descarga-rendicion.md) |
+| Recalcular promedios (secundario) | [recalculo-promedios-secundario.md](recalculo-promedios-secundario.md) |
 
 ## Plantilla
 

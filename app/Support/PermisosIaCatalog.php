@@ -217,6 +217,9 @@ final class PermisosIaCatalog
     /** Capacitación docente: registro de cursos, certificado PDF y resumen por año. */
     public const CAPACITACION_DOCENTE = 93;
 
+    /** Recálculo masivo de promedio anual (`calif`) tras descarga CIDI (secundario estándar). */
+    public const CALIF_RECALCULO_PROMEDIOS = 94;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -312,6 +315,7 @@ final class PermisosIaCatalog
             ['id' => 90, 'orden' => self::REGISTRO_ASISTENCIA, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Registro de asistencia: impresión PDF mensual por curso(s) (con o sin datos) y administración de feriados del nivel.'],
             ['id' => 91, 'orden' => self::SANCION_TIPOS_CONFIG, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Tipos de sanción disciplinaria: alta, edición y baja de tipos; configurar texto de notificación a padres, remitente y refuerzo por correo.'],
             ['id' => 93, 'orden' => self::CAPACITACION_DOCENTE, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Capacitación docente: alta, edición y consulta de cursos realizados por docentes; certificado PDF y resumen por año.'],
+            ['id' => 94, 'orden' => self::CALIF_RECALCULO_PROMEDIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Recalcular promedios: completar el promedio final (calif) de todas las materias del ciclo a partir de Eval/JIS, tras la descarga CIDI.'],
         ];
     }
 

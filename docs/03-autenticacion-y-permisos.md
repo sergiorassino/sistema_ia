@@ -180,6 +180,7 @@ permisos_ia = "111111111111111..."
 - Seguimiento disciplinario: orden **37** (`PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO`).
 - Gestión de inasistencias del estudiante: orden **38** (`PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION`).
 - Gestión de TEA por inasistencias: orden **85** (`PermisosIaCatalog::TEA_ESTUDIANTES_GESTION`).
+- Recalcular promedios (secundario): orden **94** (`PermisosIaCatalog::CALIF_RECALCULO_PROMEDIOS`).
 - Legajos docentes (ABM + listado PDF/Excel): orden **11** (`PermisosIaCatalog::LEGAJOS_DOCENTES`, `puedeModificarLegajosDocentes()`). Con permiso: alta/edición/baja y datos completos. Sin permiso: solo consulta e impresión de apellido, nombre y DNI (`puedeConsultarLegajosDocentes()`).
 - Rutas: middleware `permiso:N` o `permiso-config:N`.
 - Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.
