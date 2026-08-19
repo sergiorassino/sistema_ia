@@ -4,6 +4,7 @@ namespace App\Livewire\CalificacionesSecundario;
 
 use App\Models\Curso;
 use App\Support\CalificacionesColoquioSecundario;
+use App\Support\CalificacionesSecundario\RecalculoPromedioAnualSecundario;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PromedioAnualCalificacionesSecundario;
 use Illuminate\Support\Collection;
@@ -474,27 +475,13 @@ class CargaColoquiosSecundario extends Component
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->where('idCursos', (int) $this->cursoId)
             ->where('idMaterias', (int) $this->materiaId)
-            ->first([
-                'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
-                'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
-                'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
-            ]);
+            ->first(PromedioAnualCalificacionesSecundario::camposIcModulos());
 
         if (! $row) {
             return;
         }
 
-        $arr = [];
-        foreach ([
-            'ic01', 'ic02', 'ic03', 'ic04', 'ic05', 'ic06', 'ic07', 'ic08', 'ic09', 'ic10',
-            'ic11', 'ic12', 'ic13', 'ic14', 'ic15', 'ic16', 'ic17', 'ic18', 'ic19', 'ic20',
-            'ic21', 'ic22', 'ic23', 'ic24', 'ic25', 'ic26', 'ic27', 'ic28',
-        ] as $k) {
-            $arr[$k] = (string) ($row->{$k} ?? '');
-        }
-
-        $prom = PromedioAnualCalificacionesSecundario::calcular($arr);
-        $calif = (string) ($prom['promedio'] ?? '');
+        $calif = RecalculoPromedioAnualSecundario::califDesdeFilaModulos($row);
 
         DB::table('calificaciones')->where('id', $id)->update(['calif' => $calif]);
 

@@ -55,7 +55,7 @@ Antes de trabajar en cualquier módulo, leer:
 
 ### Promedio de calificaciones (secundario)
 - No calcular promedios en planillas PDF, boletines, consultas ni importaciones.
-- Único cálculo autorizado: `CargaCalificacionesSecundario::syncPromedioAnual()` al guardar `ic01..ic28` → `calif`.
+- Único cálculo autorizado: `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()` (carga `ic01..ic28`, coloquios sin aprobación, recálculo masivo Secretaría) → `calif`.
 - Ver `docs/05-preferencias-y-convenciones.md` §7.
 
 ### Identidad visual

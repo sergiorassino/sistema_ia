@@ -36,7 +36,7 @@ Referencia de despliegue: `docs/09-despliegue-sin-public-en-url.md`.
 
 ## Promedio de calificaciones (secundario)
 
-No calcular promedios salvo en **carga manual** (`CargaCalificacionesSecundario`, al guardar `ic01..ic28` → `calif`). El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
+No calcular promedios salvo en **carga manual / coloquios** (`CargaCalificacionesSecundario` / `CargaColoquiosSecundario`) y el **recálculo masivo** de Secretaría (`RecalculoPromediosSecundario`), siempre vía `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()`. El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
 
 ## PDFs
 

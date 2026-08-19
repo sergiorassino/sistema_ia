@@ -6,7 +6,8 @@ namespace App\Support;
  * Cálculo del promedio anual para nivel secundario según módulos (Eval 1..8 y JIS 1..2).
  *
  * Política del proyecto (docs/05 §7): `calcular()` solo debe invocarse desde
- * `CargaCalificacionesSecundario::syncPromedioAnual()` al guardar `ic01..ic28`.
+ * `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()`. Ese helper lo usan
+ * la carga manual (`syncPromedioAnual` al guardar `ic01..ic28`) y el recálculo masivo.
  * Planillas PDF, boletines, consultas e importaciones leen `calif` tal cual está en BD.
  *
  * Regla de negocio:
@@ -26,29 +27,14 @@ final class PromedioAnualCalificacionesSecundario
     public const DEFAULT_NOTA_MINIMA_APROBACION = 7.0;
 
     /**
-     * Único caller permitido: `CargaCalificacionesSecundario::syncPromedioAnual()`.
+     * Único caller permitido: `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()`.
      *
      * @param  array<string, mixed>  $row  Debe incluir ic01..ic28 como strings (vacío si no hay dato)
      * @return array{promedio: string, aprobado: bool, modulos_con_nota: int, modulos_aprobados: int, modulos_totales: int}
      */
     public static function calcular(array $row, float $notaMinimaAprobacion = self::DEFAULT_NOTA_MINIMA_APROBACION): array
     {
-        // Cada “módulo” es un grupo de columnas legacy (`ic**`) que compiten entre sí (se toma el máximo numérico).
-        // El doble array (`[['ic..']]`) deja lugar a futuros subgrupos sin reescribir el `foreach` principal.
-        $modulos = [
-            // Eval 1..8
-            [['ic01', 'ic02', 'ic03']],
-            [['ic04', 'ic05', 'ic06']],
-            [['ic07', 'ic08', 'ic09']],
-            [['ic10', 'ic11', 'ic12']],
-            [['ic13', 'ic14', 'ic15']],
-            [['ic16', 'ic17', 'ic18']],
-            [['ic19', 'ic20', 'ic21']],
-            [['ic22', 'ic23', 'ic24']],
-            // JIS 1..2
-            [['ic25', 'ic26']],
-            [['ic27', 'ic28']],
-        ];
+        $modulos = self::gruposModulosCalculo();
 
         $suma = 0.0;
         // `conNota`: módulos donde hay al menos un valor numérico parseable (N/R1/R2, etc.).
@@ -152,6 +138,45 @@ final class PromedioAnualCalificacionesSecundario
             'texto' => self::formatNotaCorta($max),
             'rojo' => $rojo,
             'gris' => $gris,
+        ];
+    }
+
+    /**
+     * Columnas `ic01`…`ic28` que participan del promedio anual (Eval 1..8 y JIS 1..2).
+     *
+     * @return list<string>
+     */
+    public static function camposIcModulos(): array
+    {
+        $campos = [];
+        foreach (self::gruposModulosCalculo() as $grupo) {
+            foreach ($grupo[0] as $c) {
+                $campos[] = $c;
+            }
+        }
+
+        return $campos;
+    }
+
+    /**
+     * Cada “módulo” es un grupo de columnas legacy (`ic**`) que compiten entre sí (se toma el máximo numérico).
+     * El doble array (`[['ic..']]`) deja lugar a futuros subgrupos sin reescribir el `foreach` principal.
+     *
+     * @return list<list<list<string>>>
+     */
+    private static function gruposModulosCalculo(): array
+    {
+        return [
+            [['ic01', 'ic02', 'ic03']],
+            [['ic04', 'ic05', 'ic06']],
+            [['ic07', 'ic08', 'ic09']],
+            [['ic10', 'ic11', 'ic12']],
+            [['ic13', 'ic14', 'ic15']],
+            [['ic16', 'ic17', 'ic18']],
+            [['ic19', 'ic20', 'ic21']],
+            [['ic22', 'ic23', 'ic24']],
+            [['ic25', 'ic26']],
+            [['ic27', 'ic28']],
         ];
     }
 

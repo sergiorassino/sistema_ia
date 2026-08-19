@@ -142,18 +142,19 @@ Cuando un módulo aplica solo a **secundario**, **primario** o **inicial** (o ex
 
 **Regla obligatoria:** no calcular promedios de calificaciones en ninguna parte del sistema salvo que se pida explícitamente en una tarea o decisión de producto documentada.
 
-### Único lugar autorizado (por ahora)
+### Únicos lugares autorizados a persistir el promedio
 
-- **Carga manual de calificaciones (secundario):** `Livewire/CalificacionesSecundario/CargaCalificacionesSecundario.php`
-- Al salir de un campo de módulo (`ic01`…`ic28`, blur/change), tras persistir la nota, se ejecuta `syncPromedioAnual()` y se guarda el resultado en `calificaciones.calif` (columna Pr. Final, solo lectura en la UI).
-- La lógica numérica vive en `App\Support\PromedioAnualCalificacionesSecundario::calcular()` y **solo** debe llamarse desde ese `syncPromedioAnual()`.
+- **Carga manual de calificaciones (secundario):** `Livewire/CalificacionesSecundario/CargaCalificacionesSecundario.php` — al salir de un campo de módulo (`ic01`…`ic28`), tras persistir la nota, se guarda el resultado en `calificaciones.calif`.
+- **Carga de coloquios:** si Dic/Feb no aprueban, se vuelve a escribir `calif` desde módulos (misma fórmula). Si el coloquio aprueba, `calif` sale de la nota de coloquio (no de módulos).
+- **Recálculo masivo:** `RecalculoPromediosSecundario` (Menú de Secretaría), para completar `calif` tras la descarga CIDI. Ficha: `docs/modulos/recalculo-promedios-secundario.md`.
+- La lógica numérica vive en `App\Support\PromedioAnualCalificacionesSecundario::calcular()` y **solo** debe llamarse desde `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()`.
 
 ### Qué no debe calcular promedios
 
 - Planilla PDF de calificaciones: mostrar `calif` de BD (vacío si no hay valor).
 - Boletines, consulta de calificaciones (alumno o personal), exportaciones e impresiones: leer `calif` persistido.
-- Sincronización GE/CIDI: importar `calif` del archivo; no recalcular desde `ic**`.
-- Cualquier vista, job o script nuevo: no inferir Pr. Final desde Eval/JIS salvo nueva autorización explícita.
+- Sincronización GE/CIDI: importar `calif` del archivo; no recalcular desde `ic**`. El recálculo masivo de Secretaría es el flujo explícito para completar `calif` cuando CIDI aún no envió el promedio.
+- Cualquier vista, job o script nuevo: no inferir Pr. Final desde Eval/JIS salvo nueva autorización explícita (documentar aquí y usar `RecalculoPromedioAnualSecundario`).
 
 ### Presentación sin promedio
 
@@ -161,7 +162,7 @@ Cuando un módulo aplica solo a **secundario**, **primario** o **inicial** (o ex
 
 ### Extender el cálculo en el futuro
 
-Si se agrega otro flujo que deba calcular (p. ej. batch nocturno o otro nivel), documentarlo aquí y centralizar la llamada a `calcular()` — no duplicar fórmulas en Blade ni en importadores.
+Si se agrega otro flujo que deba calcular, documentarlo aquí y en `docs/modulos/`, y centralizar la llamada en `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()` — no duplicar fórmulas en Blade ni en importadores.
 
 ---
 

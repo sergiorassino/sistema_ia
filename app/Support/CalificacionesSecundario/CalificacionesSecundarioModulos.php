@@ -182,4 +182,15 @@ final class CalificacionesSecundarioModulos
 
         return array_values(array_unique($out));
     }
+
+    /**
+     * Carga estándar (Eval/JIS). `null` en config equivale a la ruta histórica.
+     * La variante EPQ no calcula promedio anual automático.
+     */
+    public static function cargaEsEstandar(): bool
+    {
+        $impl = self::implementacionConfigurada(self::CARGA);
+
+        return $impl === null || $impl === 'estandar';
+    }
 }

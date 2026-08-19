@@ -197,6 +197,7 @@ use App\Livewire\CalificacionesSecundario\ActaVolanteColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualIndex;
+use App\Livewire\CalificacionesSecundario\RecalculoPromediosSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
 use App\Http\Controllers\Certificados\CertificadoAlumnoRegularPdfController;
 use App\Http\Controllers\Certificados\CertificadoEstudiosTramitePdfController;
@@ -1217,6 +1218,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/calificaciones-secundario/sincro-ge', SincroGe::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_SINCRO_CIDI)
         ->name('calificacionesSecundario.sincroGe');
+    Route::get('/calificaciones-secundario/recalculo-promedios', RecalculoPromediosSecundario::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_RECALCULO_PROMEDIOS)
+        ->name('calificacionesSecundario.recalculoPromedios');
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesSecundario.carga');
