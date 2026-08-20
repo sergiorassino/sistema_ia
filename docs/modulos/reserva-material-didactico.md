@@ -64,7 +64,7 @@ Tablas **nuevas** (migraciones `2026_06_11_*` / aditivas posteriores). No son le
 2. **Nueva reserva:** fecha + horario → elegir grupo → agregar recursos que pasen antelación, ventana y sin solapamiento → guardar.
    - 1 pedido + N reservas (atómico).
    - Admin puede marcar **préstamo espontáneo** (`entregado_directo`): estado inicial `entregado` y **omite** antelación.
-3. **Listado:** reservas agrupadas por pedido; filtros fecha (día / todas), grupo, recurso, estado, curso, texto.
+3. **Listado:** reservas agrupadas por pedido; filtros fecha (día / todas), grupo, recurso, estado, curso, texto. En **Reservado por** se muestra el nombre, debajo `rrd_pedidos.created_at` (`dd/mm/aaaa hh:mm` entre paréntesis) y el enlace Enviar mensaje.
 4. **Entrega / devolución (solo admin Secretaría):** modal por pedido; nombres quedan fijos (no se editan ni se revierten desde UI).
 5. **Edición / cancelación:** solo con ítems pendientes; profesor solo sobre pedidos propios.
    - Al **editar** (`editarPedido`): valida antelación/ventanas **antes** de modificar la BD; el reemplazo de ítems va en **una sola** transacción. Si la validación falla, el pedido no se altera.

@@ -168,6 +168,9 @@
                                         @endphp
                                         <div class="gf-rrd-meta-line gf-rrd-reservado-por">
                                             <span>{{ $pedido->profesor->nombre_completo }}</span>
+                                            @if($pedido->created_at)
+                                                <span class="gf-rrd-reservado-at tabular-nums">({{ $pedido->created_at->format('d/m/Y H:i') }})</span>
+                                            @endif
                                             @if($urlMensajeReservador)
                                                 <a href="{{ $urlMensajeReservador }}"
                                                    class="gf-rrd-link-mensaje">

@@ -88,11 +88,17 @@ final class ImputacionPagoCalculo
      *     tramo: string
      * }
      */
+    /**
+     * @param  bool  $moraDiariaHastaFechaCalculo  Si true (solo Estado de Deuda Familiar),
+     *                                             en tramo 4 cuenta días hasta la fecha de cálculo
+     *                                             (legacy imputarPago), no hasta nueVenc/venc3.
+     */
     public static function calcular(
         CuotaGenerada $registro,
         float $saldoAPagar,
         CarbonInterface $fechaPago,
         ?float $porcentManual = null,
+        bool $moraDiariaHastaFechaCalculo = false,
     ): array {
         $saldoAPagar = max(0, round($saldoAPagar, 2));
 
@@ -143,7 +149,7 @@ final class ImputacionPagoCalculo
 
         $diasMora = 0;
         if ($usaDias) {
-            $diasMora = $tramo === '4'
+            $diasMora = ($tramo === '4' && ! $moraDiariaHastaFechaCalculo)
                 ? self::diasMoraTramo4($registro, $venc1, $venc3)
                 : self::diasMoraDesdeVenc1($fecha, $venc1);
         }

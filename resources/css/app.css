@@ -2055,6 +2055,12 @@
     .gf.gf-rrd-listado .gf-rrd-reservado-por {
         align-items: flex-start;
     }
+    .gf.gf-rrd-listado .gf-rrd-reservado-at {
+        font-size: 9px;
+        font-weight: 500;
+        line-height: 1.2;
+        color: rgb(82 82 82);
+    }
     .gf.gf-rrd-listado .gf-rrd-link-mensaje {
         display: inline-block;
         margin-top: 0.15rem;
