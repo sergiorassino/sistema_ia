@@ -14,6 +14,9 @@ use Illuminate\Support\Collection;
 
 /**
  * Datos del PDF «Estado de deuda» por familia (legacy FPDF estado de deuda).
+ *
+ * Interés diario en tramo 4: hasta la fecha de hoy (como imputarPago legacy),
+ * no hasta nueVenc/venc3 del cupón.
  */
 final class EstadoDeudaFamiliarDatos
 {
@@ -42,6 +45,7 @@ final class EstadoDeudaFamiliarDatos
                 (float) ($registro->faltapa ?? 0),
                 Carbon::today(),
                 null,
+                true,
             );
 
             $importe = round((float) ($registro->importe ?? 0), 2);
@@ -165,7 +169,7 @@ final class EstadoDeudaFamiliarDatos
             ])
             ->get()
             ->sortBy([
-                fn (CuotaGenerada $r) => (int) ($r->cuota?->orden ?? 9999),
+                fn (CuotaGenerada $r) => self::claveOrdenVenc1($r),
                 fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->apellido ?? ''))),
                 fn (CuotaGenerada $r) => mb_strtoupper(trim((string) ($r->legajo?->nombre ?? ''))),
                 fn (CuotaGenerada $r) => (int) $r->id,
@@ -199,8 +203,29 @@ final class EstadoDeudaFamiliarDatos
             (float) ($registro->faltapa ?? 0),
             Carbon::today(),
             null,
+            true,
         );
 
         return round((float) $calc['aPagar'], 2);
+    }
+
+    /** Clave de orden ascendente por 1.er vencimiento (fechas vacías al final). */
+    private static function claveOrdenVenc1(CuotaGenerada $registro): string
+    {
+        $venc1 = $registro->venc1;
+        if ($venc1 instanceof \Carbon\CarbonInterface) {
+            return $venc1->format('Y-m-d');
+        }
+
+        $raw = trim((string) ($venc1 ?? ''));
+        if ($raw === '' || str_starts_with($raw, '0000-') || str_starts_with($raw, '-0001')) {
+            return '9999-99-99';
+        }
+
+        try {
+            return Carbon::parse($raw)->format('Y-m-d');
+        } catch (\Throwable) {
+            return '9999-99-99';
+        }
     }
 }
