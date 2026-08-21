@@ -64,6 +64,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_LEGAJO_FOTO_CARNET = 'abm.legajos.foto-carnet';
 
+    public const PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO = 'examenes.materias-adeudadas-por-curso';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -221,6 +223,21 @@ final class OpaqueRouteToken
     public static function forLegajoFotoCarnet(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_LEGAJO_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    /**
+     * @param  list<int>  $idsCursos
+     */
+    public static function forMateriasAdeudadasPorCurso(array $idsCursos): string
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map(static fn ($id) => (int) $id, $idsCursos),
+            static fn (int $id) => $id > 0,
+        )));
+
+        return self::encodePayload(self::PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO, [
+            'c' => $ids,
+        ]);
     }
 
     /**

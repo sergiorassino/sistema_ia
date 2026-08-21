@@ -5,7 +5,9 @@ namespace App\Livewire\Examenes;
 use App\Livewire\Examenes\Concerns\RequiresPermisoExamenes;
 use App\Support\Examenes\MateriasAdeudadasExporter;
 use App\Support\Examenes\MateriasAdeudadasFiltros;
+use App\Support\Examenes\MateriasAdeudadasPorCurso;
 use App\Support\Examenes\MateriasAdeudadasPreparacion;
+use App\Support\Security\OpaqueRouteToken;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -26,6 +28,13 @@ class MateriasAdeudadasListadoIndex extends Component
 
     /** si|no|'' */
     public string $filtroInscri = '';
+
+    public bool $modalAdeudadasCursoAbierto = false;
+
+    public string $modalAdeudadasCursoFiltro = '';
+
+    /** @var list<int|string> */
+    public array $cursosMarcadosModal = [];
 
     public function updatedAgrupar(mixed $value): void
     {
@@ -49,6 +58,40 @@ class MateriasAdeudadasListadoIndex extends Component
         $this->filtroInscri = $norm ?? '';
     }
 
+    public function abrirModalAdeudadasCurso(): void
+    {
+        $this->cursosMarcadosModal = [];
+        $this->modalAdeudadasCursoFiltro = '';
+        $this->modalAdeudadasCursoAbierto = true;
+        $this->resetErrorBag('cursosMarcadosModal');
+    }
+
+    public function cerrarModalAdeudadasCurso(): void
+    {
+        $this->modalAdeudadasCursoAbierto = false;
+        $this->cursosMarcadosModal = [];
+        $this->modalAdeudadasCursoFiltro = '';
+        $this->resetErrorBag('cursosMarcadosModal');
+    }
+
+    public function modalAdeudadasCursoSeleccionarTodosVisibles(): void
+    {
+        $idsVisibles = $this->idsCursosModalVisibles();
+        $this->cursosMarcadosModal = array_values(array_unique(array_merge(
+            array_map('intval', $this->cursosMarcadosModal),
+            $idsVisibles,
+        )));
+    }
+
+    public function modalAdeudadasCursoDesmarcarVisibles(): void
+    {
+        $vis = array_flip($this->idsCursosModalVisibles());
+        $this->cursosMarcadosModal = array_values(array_filter(
+            array_map('intval', $this->cursosMarcadosModal),
+            static fn (int $id) => ! isset($vis[$id]),
+        ));
+    }
+
     public function render()
     {
         $ctx = schoolCtx();
@@ -58,6 +101,10 @@ class MateriasAdeudadasListadoIndex extends Component
         $filas = [];
         $bloques = [];
         $ambitoAlumnos = MateriasAdeudadasFiltros::normalizeAlumnos($this->filtroAlumnos);
+        $cursosModal = collect();
+        $cursosModalLista = [];
+        $pdfPorCursoUrl = null;
+        $cantidadCursosMarcados = 0;
 
         if ($preparacionLista) {
             $filas = MateriasAdeudadasExporter::filas(
@@ -68,6 +115,31 @@ class MateriasAdeudadasListadoIndex extends Component
                 (int) $ctx->idTerlec,
             );
             $bloques = MateriasAdeudadasExporter::agrupar($filas, $this->agrupar);
+
+            if ($this->modalAdeudadasCursoAbierto) {
+                $cursosModal = MateriasAdeudadasPorCurso::cursosDelContexto(
+                    (int) $ctx->idNivel,
+                    (int) $ctx->idTerlec,
+                );
+                $cursosModalLista = $this->filtrarCursosModalLista($cursosModal);
+
+                $marcadosSet = array_flip(array_values(array_unique(array_filter(
+                    array_map('intval', $this->cursosMarcadosModal),
+                    static fn (int $id) => $id > 0,
+                ))));
+                $idsOk = $cursosModal
+                    ->pluck('Id')
+                    ->map(static fn ($id) => (int) $id)
+                    ->filter(static fn (int $id) => isset($marcadosSet[$id]))
+                    ->values()
+                    ->all();
+                $cantidadCursosMarcados = count($idsOk);
+                if ($idsOk !== []) {
+                    $pdfPorCursoUrl = route('examenes.materias-adeudadas.por-curso.pdf', [
+                        'ref' => OpaqueRouteToken::forMateriasAdeudadasPorCurso($idsOk),
+                    ]);
+                }
+            }
         }
 
         $pdfParams = array_filter([
@@ -84,6 +156,9 @@ class MateriasAdeudadasListadoIndex extends Component
             'preparacionLista' => $preparacionLista,
             'alumnosRegulares' => MateriasAdeudadasFiltros::ALUMNOS_REGULARES_CICLO,
             'alumnosTodos' => MateriasAdeudadasFiltros::ALUMNOS_TODOS,
+            'cursosModalLista' => $cursosModalLista,
+            'pdfPorCursoUrl' => $pdfPorCursoUrl,
+            'cantidadCursosMarcados' => $cantidadCursosMarcados,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Listado de materias adeudadas']);
     }
 
@@ -93,5 +168,45 @@ class MateriasAdeudadasListadoIndex extends Component
         if ($modulo === MateriasAdeudadasPreparacion::MODULO_LISTADO) {
             $this->prepTick++;
         }
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function idsCursosModalVisibles(): array
+    {
+        $ctx = schoolCtx();
+        if (! $ctx->isValid()) {
+            return [];
+        }
+
+        $cursos = MateriasAdeudadasPorCurso::cursosDelContexto((int) $ctx->idNivel, (int) $ctx->idTerlec);
+
+        return array_map(
+            static fn (array $r) => (int) $r['id'],
+            $this->filtrarCursosModalLista($cursos),
+        );
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\Curso>  $cursos
+     * @return list<array{id: int, label: string}>
+     */
+    private function filtrarCursosModalLista($cursos): array
+    {
+        $f = mb_strtolower(trim($this->modalAdeudadasCursoFiltro));
+        $out = [];
+        foreach ($cursos as $curso) {
+            $label = $curso->nombreParaListado();
+            if ($f !== '' && ! str_contains(mb_strtolower($label), $f)) {
+                continue;
+            }
+            $out[] = [
+                'id' => (int) $curso->Id,
+                'label' => $label,
+            ];
+        }
+
+        return $out;
     }
 }

@@ -1,6 +1,7 @@
+<div>
 <div class="se-page max-w-6xl">
     <section class="se-hero">
-        <div class="se-hero-inner">
+        <div class="se-hero-inner flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-2">
                 <p class="se-eyebrow">Exámenes</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Listado de materias adeudadas</h2>
@@ -8,6 +9,13 @@
                     {{ schoolCtx()->nivelNombre() }} · Nivel activo
                 </p>
             </div>
+            @if ($preparacionLista ?? false)
+                <button type="button"
+                        wire:click="abrirModalAdeudadasCurso"
+                        class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    Adeudadas por curso
+                </button>
+            @endif
         </div>
     </section>
 
@@ -188,4 +196,101 @@
         </div>
     </div>
     @endif
+</div>
+
+@if (($preparacionLista ?? false) && $modalAdeudadasCursoAbierto)
+    @teleport('body')
+    <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="ma-adeudadas-curso-titulo"
+         wire:key="ma-modal-adeudadas-curso">
+        <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm"
+             wire:click="cerrarModalAdeudadasCurso"
+             aria-hidden="true"></div>
+
+        <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),40rem)]"
+             @click.stop>
+            <div class="shrink-0 border-b border-accent-200 bg-accent-50/60 px-5 py-4">
+                <h3 id="ma-adeudadas-curso-titulo" class="text-base font-bold text-neutral-900">
+                    Adeudadas por curso
+                </h3>
+                <p class="mt-1 text-sm text-neutral-600">
+                    Marcá uno, varios o todos los cursos del ciclo {{ schoolCtx()->terlecAno() ?? 'actual' }}.
+                    El PDF incluye una sección por curso (materias adeudadas, también de años anteriores).
+                </p>
+            </div>
+
+            <div class="shrink-0 border-b border-accent-100 bg-white px-5 py-3">
+                <label for="ma-adeudadas-curso-filtro" class="form-label">Filtrar por nombre</label>
+                <input id="ma-adeudadas-curso-filtro"
+                       type="text"
+                       wire:model.live.debounce.300ms="modalAdeudadasCursoFiltro"
+                       placeholder="Texto del curso…"
+                       class="form-input mt-1.5" />
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <button type="button"
+                            wire:click="modalAdeudadasCursoSeleccionarTodosVisibles"
+                            class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-800 transition hover:bg-accent-50">
+                        Marcar visibles
+                    </button>
+                    <button type="button"
+                            wire:click="modalAdeudadasCursoDesmarcarVisibles"
+                            class="inline-flex rounded-lg border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-accent-50">
+                        Desmarcar visibles
+                    </button>
+                    @if ($cantidadCursosMarcados > 0)
+                        <span class="se-pill tabular-nums">
+                            {{ $cantidadCursosMarcados }} seleccionado{{ $cantidadCursosMarcados === 1 ? '' : 's' }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-1">
+                @forelse ($cursosModalLista as $c)
+                    <label wire:key="ma-adeudadas-curso-{{ $c['id'] }}"
+                           class="flex cursor-pointer items-center gap-2 border-b border-accent-100 py-2 last:border-b-0 hover:bg-accent-50/60">
+                        <input type="checkbox"
+                               wire:model.live="cursosMarcadosModal"
+                               value="{{ $c['id'] }}"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                        <span class="text-sm font-semibold leading-tight text-neutral-900">{{ $c['label'] }}</span>
+                    </label>
+                @empty
+                    <p class="py-8 text-center text-sm text-neutral-500">
+                        @if (trim($modalAdeudadasCursoFiltro) !== '')
+                            No hay cursos que coincidan con el filtro.
+                        @else
+                            No hay cursos cargados para este ciclo y nivel.
+                        @endif
+                    </p>
+                @endforelse
+            </div>
+
+            <div class="flex shrink-0 flex-wrap justify-end gap-2 border-t border-accent-200 bg-accent-50/80 px-5 py-4">
+                <button type="button"
+                        wire:click="cerrarModalAdeudadasCurso"
+                        class="btn-secondary">
+                    Cancelar
+                </button>
+                @if ($pdfPorCursoUrl)
+                    <a href="{{ $pdfPorCursoUrl }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center rounded-xl border border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                        Generar PDF
+                    </a>
+                @else
+                    <button type="button"
+                            disabled
+                            class="inline-flex cursor-not-allowed items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-400">
+                        Generar PDF
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endteleport
+@endif
 </div>

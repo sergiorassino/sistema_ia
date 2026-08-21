@@ -76,7 +76,7 @@ final class SiroDescargaRendicionMatchCuotaSinCupon448
             'detalle' => '',
         ];
 
-        if (! self::aplicaALinea($linea) || $idTerlec <= 0) {
+        if (! self::aplicaALinea($linea)) {
             return $vacio;
         }
 
@@ -85,11 +85,11 @@ final class SiroDescargaRendicionMatchCuotaSinCupon448
             return $vacio;
         }
 
-        $cuota = CuotaGenerada::query()
-            ->where('idLegajos', $ids['idLegajos'])
-            ->where('idCuotas', $ids['idCuotas'])
-            ->where('idTerlec', $idTerlec)
-            ->first();
+        $cuota = SiroDescargaRendicionCuotaAlcance::porLegajoYCuota(
+            $ids['idLegajos'],
+            $ids['idCuotas'],
+            $idTerlec,
+        );
 
         if ($cuota === null) {
             return $vacio;
@@ -103,6 +103,7 @@ final class SiroDescargaRendicionMatchCuotaSinCupon448
             .'se descarga el importe del archivo SIRO ($'.number_format($pagado, 2, ',', '.')
             .') sobre cuotasgeneradas.id '.(int) $cuota->id
             .' (legajo '.$ids['idLegajos'].', cuota '.$ids['idCuotas']
+            .', ciclo '.(int) $cuota->idTerlec
             .') y se desglosan interés/bonificación.';
 
         return [

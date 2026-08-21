@@ -921,7 +921,7 @@
                 <a href="{{ route('examenes.materias-adeudadas.entrar') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas', 'examenes.materias-adeudadas.entrar', 'examenes.materias-adeudadas.pdf'),
+                       'is-active shadow-sm' => request()->routeIs('examenes.materias-adeudadas', 'examenes.materias-adeudadas.entrar', 'examenes.materias-adeudadas.pdf', 'examenes.materias-adeudadas.por-curso.pdf'),
                    ])
                    title="{{ seSidebarTooltip('Listado de materias adeudadas', \App\Support\PermisosIaCatalog::EXAMENES) }}">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -33,6 +33,10 @@ final class SiroDescargaRendicionLinea
      */
     public static function parsear(string $linea): ?array
     {
+        // Algunos exportes SIRO traen BOM UTF-8 al inicio del archivo (solo 1.ª línea).
+        if (str_starts_with($linea, "\xEF\xBB\xBF")) {
+            $linea = substr($linea, 3);
+        }
         $linea = rtrim($linea, "\r\n");
         if ($linea === '' || strlen($linea) < self::LARGO_MINIMO) {
             return null;

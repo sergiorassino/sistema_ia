@@ -53,6 +53,7 @@ use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
 use App\Http\Controllers\Examenes\ActaVolantePreviosPdfController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasPdfController;
+use App\Http\Controllers\Examenes\MateriasAdeudadasPorCursoPdfController;
 use App\Http\Controllers\Examenes\ActaCompromisoTercerMateriaPdfController;
 use App\Http\Controllers\Examenes\PermisoExamenPdfController;
 use App\Http\Controllers\Examenes\TercerMateriaPdfController;
@@ -1029,6 +1030,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->name('examenes.materias-adeudadas');
         Route::get('/examenes/materias-adeudadas/pdf', MateriasAdeudadasPdfController::class)
             ->name('examenes.materias-adeudadas.pdf');
+        Route::get('/examenes/materias-adeudadas/por-curso/pdf/{ref}', MateriasAdeudadasPorCursoPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('examenes.materias-adeudadas.por-curso.pdf');
         Route::get('/examenes/materias-adeudadas/gestion/entrar', [MateriasAdeudadasEntradaController::class, 'gestion'])
             ->name('examenes.materias-adeudadas.gestion.entrar');
         Route::get('/examenes/materias-adeudadas/gestion', MateriasAdeudadasGestionIndex::class)

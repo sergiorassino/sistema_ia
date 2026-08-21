@@ -22,7 +22,7 @@ Nombre en el sidebar: **Descarga rendición** (grupo Medios de pago → SIRO).
 - **Menú de Administración** (`layouts/administracion`), no Secretaría pedagógica.
 - Auth + `school.context`. Rutas con middleware `permiso:` orden **49** (`PermisosIaCatalog::ADMIN_ARANCELES_ESTUDIANTE`).
 - Gate de negocio: `PermisosCuotas::puedeSiroDescargaRendicion()` = nivel Administración + permiso 49 + SIRO habilitado en el tenant.
-- Ciclo lectivo: `schoolCtx()->idTerlec`. Toda cuota generada se revalida contra ese ciclo.
+- Ciclo lectivo: el contexto de sesión (`schoolCtx()->idTerlec`) se usa solo como **preferencia** al desambiguar. La descarga e impacto aceptan cuotas de **cualquier año** (pagos históricos).
 - Rate-limit: alta de planilla, proceso de archivo, impacto, PDF.
 
 ## Tablas y campos críticos
@@ -114,13 +114,12 @@ No se puede borrar la planilla ni sus pagos si `planilla.impactado=1`.
 
 Orden en `SiroDescargaRendicionCupon::resolver`:
 
-1. **Exacto.** `cupones_a_pagar.id_factura` = id armado desde la línea. `matchTipo = exacto`. La cuota es `cupones_a_pagar.id_cuotas_generadas` filtrada por `idTerlec`.
+1. **Exacto.** `cupones_a_pagar.id_factura` = id armado desde la línea. `matchTipo = exacto`. La cuota es `cupones_a_pagar.id_cuotas_generadas` (cualquier ciclo).
 2. **Provisorio 1 — upload cercano** (solo 449/444/447, `HABILITADO`). Misma cadena de 20 dígitos salvo posiciones 16–17 (`ultUpload`); se elige el upload más cercano. `matchTipo = upload_cercano`. **Los 448 no entran** (si lo hicieran, podrían tomar un cupón de subida SIRO y saltarse el provisorio 2).
-3. **Provisorio 2 — 448 sin cupón** (solo 448, `HABILITADO`). Si no hubo cupón: identifica `cuotasgeneradas` por `idLegajos` + `idCuotas` del barcode / ID extendido + ciclo. `matchTipo = sin_cupon_448`. Cupón nulo, cuota sí.
+3. **Provisorio 2 — 448 sin cupón** (solo 448, `HABILITADO`). Si no hubo cupón: identifica `cuotasgeneradas` por `idLegajos` + `idCuotas` del barcode / ID extendido (prefiere el ciclo de sesión; si no hay, el más reciente). `matchTipo = sin_cupon_448`. Cupón nulo, cuota sí.
 4. Si nada resolvió: error, bloqueo de todo el archivo.
 
-La cuota del cupón **debe** pertenecer al ciclo de sesión. Si el cupón existe pero la cuota no es de ese `idTerlec` → no descargable.
-
+No se exige que la cuota pertenezca al ciclo de sesión: se pueden descargar e impactar pagos de años anteriores.
 ## Desglose de importes
 
 Clase: `SiroDescargaRendicionCalculo`. Tolerancia ±0,02.
@@ -277,5 +276,5 @@ php artisan test --filter=SiroDescargaRendicion
 - [ ] ¿Reprocesar el mismo archivo sobre filas ya grabadas no duplica INSERT?
 - [ ] Tests `SiroDescargaRendicion*` en verde.
 - [ ] Modal: Detalle `PROVISORIO:` / `PAGO DUPLICADO:` según corresponda; grilla Obs. en rojo.
-- [ ] Permiso 49 + tenant SIRO + ciclo `schoolCtx()->idTerlec`.
+- [ ] Permiso 49 + tenant SIRO. Ciclo de sesión solo como preferencia; pagos de cualquier año.
 - [ ] Esta ficha actualizada.
