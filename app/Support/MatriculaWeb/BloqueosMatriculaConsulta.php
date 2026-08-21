@@ -38,10 +38,11 @@ final class BloqueosMatriculaConsulta
      *     dni: string,
      *     curso: string,
      *     bloqmatr: bool,
-     *     bloqadmi: bool
+     *     bloqadmi: bool,
+     *     correosFamilia: list<array{rol: string, email: string}>
      * }>
      */
-    public static function paginar(int $idCurso = 0, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    public static function paginar(int $idCurso = 0, string $busqueda = '', int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
         if ($idTerlec < 1) {
@@ -50,7 +51,7 @@ final class BloqueosMatriculaConsulta
 
         $idCurso = self::validarIdCurso($idCurso);
 
-        $query = self::queryBase($idTerlec, $idCurso);
+        $query = self::queryBase($idTerlec, $idCurso, $busqueda);
 
         return $query
             ->paginate(max(10, min(100, $porPagina)))
@@ -63,16 +64,21 @@ final class BloqueosMatriculaConsulta
                     'curso' => self::cursoLabelDesdeFila($row),
                     'bloqmatr' => (bool) ($row->bloqmatr ?? false),
                     'bloqadmi' => (bool) ($row->bloqadmi ?? false),
+                    'correosFamilia' => NotificarFamiliaBloqueoMatricula::correosFamiliaValidosDesdeCampos(
+                        isset($row->emailmad) ? (string) $row->emailmad : null,
+                        isset($row->emailpad) ? (string) $row->emailpad : null,
+                        isset($row->emailtut) ? (string) $row->emailtut : null,
+                    ),
                 ];
             });
     }
 
     /**
-     * IDs de matrícula del listado actual (mismo filtro de curso que la grilla).
+     * IDs de matrícula del listado actual (mismo filtro de curso y búsqueda que la grilla).
      *
      * @return Collection<int, int>
      */
-    public static function idsDelListado(int $idCurso = 0): Collection
+    public static function idsDelListado(int $idCurso = 0, string $busqueda = ''): Collection
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
         if ($idTerlec < 1) {
@@ -81,7 +87,7 @@ final class BloqueosMatriculaConsulta
 
         $idCurso = self::validarIdCurso($idCurso);
 
-        return self::queryBase($idTerlec, $idCurso)
+        return self::queryBase($idTerlec, $idCurso, $busqueda)
             ->pluck('idMatricula')
             ->map(fn ($id): int => (int) $id)
             ->filter(fn (int $id): bool => $id > 0)
@@ -109,7 +115,7 @@ final class BloqueosMatriculaConsulta
             ->first();
     }
 
-    private static function queryBase(int $idTerlec, ?int $idCurso): Builder
+    private static function queryBase(int $idTerlec, ?int $idCurso, string $busqueda = ''): Builder
     {
         $query = DB::table('matricula as m')
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
@@ -132,6 +138,8 @@ final class BloqueosMatriculaConsulta
             $query->where('m.idCursos', $idCurso);
         }
 
+        self::aplicarFiltroBusqueda($query, $busqueda);
+
         return $query
             ->orderBy('l.apellido')
             ->orderBy('l.nombre')
@@ -141,6 +149,9 @@ final class BloqueosMatriculaConsulta
                 'l.apellido',
                 'l.nombre',
                 'l.dni',
+                'l.emailmad',
+                'l.emailpad',
+                'l.emailtut',
                 'm.bloqmatr',
                 'm.bloqadmi',
                 'cu.cursec',
@@ -149,6 +160,43 @@ final class BloqueosMatriculaConsulta
                 'cu.c',
                 'cu.s',
             ]);
+    }
+
+    /**
+     * Misma lógica que {@see \App\Models\Legajo::scopeBuscar()} sobre alias `l`.
+     */
+    private static function aplicarFiltroBusqueda(Builder $query, string $termino): void
+    {
+        $termino = trim($termino);
+        if ($termino === '') {
+            return;
+        }
+
+        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $termino).'%';
+        $palabras = preg_split('/\s+/u', $termino, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $query->where(function (Builder $q) use ($like, $palabras): void {
+            $q->where('l.apellido', 'like', $like)
+                ->orWhere('l.nombre', 'like', $like)
+                ->orWhere('l.dni', 'like', $like)
+                ->orWhereRaw("CONCAT(l.apellido, ' ', l.nombre) LIKE ?", [$like])
+                ->orWhereRaw("CONCAT(l.apellido, ', ', l.nombre) LIKE ?", [$like]);
+
+            if (count($palabras) >= 2) {
+                $apellido = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $palabras[0]).'%';
+                $nombre = '%'.str_replace(['%', '_'], ['\\%', '\\_'], implode(' ', array_slice($palabras, 1))).'%';
+
+                $q->orWhere(function (Builder $sub) use ($apellido, $nombre): void {
+                    $sub->where('l.apellido', 'like', $apellido)
+                        ->where('l.nombre', 'like', $nombre);
+                });
+
+                $q->orWhere(function (Builder $sub) use ($apellido, $nombre): void {
+                    $sub->where('l.nombre', 'like', $apellido)
+                        ->where('l.apellido', 'like', $nombre);
+                });
+            }
+        });
     }
 
     private static function validarIdCurso(int $idCurso): int
