@@ -2,8 +2,6 @@
 
 namespace App\Support\Cuotas\Siro\Descarga;
 
-use App\Models\CuotaGenerada;
-
 /**
  * ult_upload en modalidad legacy 0448 (relleno o cuotasgeneradas).
  */
@@ -31,23 +29,10 @@ final class SiroDescargaRendicionBarcode448UltUpload
             }
         }
 
-        return self::desdeCuotaGenerada($parsed['idLegajos'], $parsed['idCuotas'], $idTerlec);
-    }
-
-    private static function desdeCuotaGenerada(int $idLegajos, int $idCuotas, int $idTerlec): ?int
-    {
-        if ($idTerlec <= 0) {
-            return null;
-        }
-
-        $ultUpload = CuotaGenerada::query()
-            ->where('idLegajos', $idLegajos)
-            ->where('idCuotas', $idCuotas)
-            ->where('idTerlec', $idTerlec)
-            ->value('ultUpload');
-
-        $ultUpload = (int) $ultUpload;
-
-        return $ultUpload > 0 ? $ultUpload : null;
+        return SiroDescargaRendicionCuotaAlcance::ultUpload(
+            $parsed['idLegajos'],
+            $parsed['idCuotas'],
+            $idTerlec,
+        );
     }
 }

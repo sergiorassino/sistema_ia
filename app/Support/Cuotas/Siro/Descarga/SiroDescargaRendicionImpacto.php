@@ -15,10 +15,15 @@ use Illuminate\Support\Facades\DB;
 final class SiroDescargaRendicionImpacto
 {
     /**
+     * Impacta la planilla sobre las cuotas generadas referenciadas (cualquier ciclo lectivo).
+     *
+     * @param  int  $idTerlec  Reservado por compatibilidad; no restringe el impacto.
      * @return SiroDescargaRendicionResumen
      */
-    public static function impactarPlanilla(PlanillaDescargaCuota $planilla, int $idTerlec): SiroDescargaRendicionResumen
+    public static function impactarPlanilla(PlanillaDescargaCuota $planilla, int $idTerlec = 0): SiroDescargaRendicionResumen
     {
+        unset($idTerlec);
+
         $resumen = new SiroDescargaRendicionResumen;
         $nroPlanilla = (int) $planilla->nroPlanilla;
 
@@ -33,7 +38,7 @@ final class SiroDescargaRendicionImpacto
             return $resumen;
         }
 
-        DB::transaction(function () use ($rendiciones, $planilla, $idTerlec, &$resumen): void {
+        DB::transaction(function () use ($rendiciones, $planilla, &$resumen): void {
             foreach ($rendiciones as $rendicion) {
                 $resumen->procesados++;
 
@@ -55,14 +60,13 @@ final class SiroDescargaRendicionImpacto
 
                 $registro = CuotaGenerada::query()
                     ->where('id', $idCuotaGen)
-                    ->where('idTerlec', $idTerlec)
                     ->lockForUpdate()
                     ->first();
 
                 if ($registro === null) {
-                    self::marcarNoImpactado($rendicion, 'Cuota no encontrada en el ciclo activo.');
+                    self::marcarNoImpactado($rendicion, 'Cuota generada no encontrada.');
                     $resumen->noImpactados++;
-                    $resumen->agregarAdvertencia('Rendición #'.$rendicion->id.': cuota fuera del ciclo lectivo.');
+                    $resumen->agregarAdvertencia('Rendición #'.$rendicion->id.': cuota generada inexistente.');
 
                     continue;
                 }

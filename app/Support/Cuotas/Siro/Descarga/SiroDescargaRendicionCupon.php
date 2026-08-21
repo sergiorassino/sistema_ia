@@ -32,7 +32,7 @@ final class SiroDescargaRendicionCupon
             : null;
 
         foreach ($candidatos as $idFactura) {
-            $resultado = self::resolverPorIdFactura($idFactura, $idTerlec, $importeArchivo, $linea);
+            $resultado = self::resolverPorIdFactura($idFactura, $importeArchivo, $linea);
             if ($resultado['cupon'] !== null) {
                 $respuesta = self::respuestaDesdeResultado($resultado, $advertencias);
                 $respuesta['modalidadIdentificacion'] = $modalidadIdentificacion;
@@ -120,7 +120,7 @@ final class SiroDescargaRendicionCupon
         if ($resultado['cupon'] === null) {
             $advertencias[] = $resultado['mensaje'];
         } elseif ($resultado['cuotaGenerada'] === null) {
-            $advertencias[] = 'El cupón encontrado no pertenece al ciclo lectivo activo.';
+            $advertencias[] = 'El cupón encontrado no tiene cuota generada asociada (id_cuotas_generadas).';
         }
 
         foreach ($resultado['advertenciasExtra'] as $extra) {
@@ -150,13 +150,13 @@ final class SiroDescargaRendicionCupon
      *     detalleMatch: string
      * }
      */
-    private static function resolverPorIdFactura(string $idFactura, int $idTerlec, ?float $importeArchivo, array $linea): array
+    private static function resolverPorIdFactura(string $idFactura, ?float $importeArchivo, array $linea): array
     {
         $cupon = CuponAPagar::query()->where('id_factura', $idFactura)->first();
         if ($cupon !== null) {
             return [
                 'cupon' => $cupon,
-                'cuotaGenerada' => self::cuotaGeneradaDelCupon($cupon, $idTerlec),
+                'cuotaGenerada' => self::cuotaGeneradaDelCupon($cupon),
                 'mensaje' => '',
                 'matchTipo' => 'exacto',
                 'advertenciasExtra' => [],
@@ -169,7 +169,7 @@ final class SiroDescargaRendicionCupon
             if ($provisorio['cupon'] !== null) {
                 return [
                     'cupon' => $provisorio['cupon'],
-                    'cuotaGenerada' => self::cuotaGeneradaDelCupon($provisorio['cupon'], $idTerlec),
+                    'cuotaGenerada' => self::cuotaGeneradaDelCupon($provisorio['cupon']),
                     'mensaje' => '',
                     'matchTipo' => 'upload_cercano',
                     'advertenciasExtra' => $provisorio['advertencias'],
@@ -188,11 +188,10 @@ final class SiroDescargaRendicionCupon
         ];
     }
 
-    private static function cuotaGeneradaDelCupon(CuponAPagar $cupon, int $idTerlec): ?CuotaGenerada
+    private static function cuotaGeneradaDelCupon(CuponAPagar $cupon): ?CuotaGenerada
     {
-        return CuotaGenerada::query()
-            ->where('id', (int) $cupon->id_cuotas_generadas)
-            ->where('idTerlec', $idTerlec)
-            ->first();
+        // El cupón apunta al id concreto; no se restringe al ciclo de sesión
+        // (permite descargar pagos históricos de años anteriores).
+        return SiroDescargaRendicionCuotaAlcance::porId((int) $cupon->id_cuotas_generadas);
     }
 }

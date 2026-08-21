@@ -27,6 +27,18 @@ class SiroDescargaRendicionLineaTest extends TestCase
         $this->assertNull(SiroDescargaRendicionLinea::parsear('20260616'));
     }
 
+    public function test_parsear_quita_bom_utf8_al_inicio(): void
+    {
+        $base = '202606162026061820260612000055500008600000000448102565086000000260612000499500014000555000051500110529300000000000000000000PF';
+        $linea = "\xEF\xBB\xBF".str_pad($base, SiroDescargaRendicionLinea::LARGO_MINIMO, ' ', STR_PAD_RIGHT);
+
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+        $this->assertNotNull($parsed);
+        $this->assertSame('20260616', $parsed['fechaPago']);
+        $this->assertSame(5550000, $parsed['importePagadoCentavos']);
+        $this->assertSame('PF', $parsed['canalAbrev']);
+    }
+
     public function test_parsea_linea_integrado_corta_api_bpd(): void
     {
         $archivo = 'd:/_enviar/_06-Junio/sfq/CobranzasSiro_33609754309_20260629_12_57_19.txt';

@@ -22,6 +22,9 @@ final class SiroDescargaRendicionArchivo
         ?string $nombreArchivoOrigen = null,
     ): array {
         $resumen = new SiroDescargaRendicionResumen;
+        if (str_starts_with($contenido, "\xEF\xBB\xBF")) {
+            $contenido = substr($contenido, 3);
+        }
         $lineas = preg_split('/\R/', $contenido) ?: [];
         $idsPagoVistos = [];
         /** @var array<string, int> idPagoSiro => nro de registro en el archivo */
