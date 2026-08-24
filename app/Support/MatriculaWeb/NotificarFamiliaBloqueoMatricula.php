@@ -146,7 +146,7 @@ final class NotificarFamiliaBloqueoMatricula
 
         $lineas = [$cuerpo, ''];
         if ($alumno !== ', ') {
-            $lineas[] = 'Alumno/a: '.$alumno;
+            $lineas[] = 'Estudiante: '.$alumno;
         }
         if ($curso !== '') {
             $lineas[] = 'Curso: '.$curso;
