@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 /**
- * Envía un comunicado institucional a la familia avisando el bloqueo de matrícula
- * (botón «Notif. familia» en Bloqueos de matrícula).
+ * Envía un comunicado institucional a la familia avisando el bloqueo o desbloqueo
+ * de matrícula (botones «Notif. Bloqueo» / «Notif. Desbloqueo»).
  *
  * Remitente: profesor logueado. Medios: push (si el canal lo permite) + email de refuerzo.
  * Correo de refuerzo: a diferencia del resto del módulo de comunicaciones (un solo mail
@@ -31,6 +31,10 @@ use Throwable;
  */
 final class NotificarFamiliaBloqueoMatricula
 {
+    public const TIPO_BLOQUEO = 'bloqueo';
+
+    public const TIPO_DESBLOQUEO = 'desbloqueo';
+
     /**
      * @return array{
      *     ok: bool,
@@ -45,7 +49,7 @@ final class NotificarFamiliaBloqueoMatricula
      *     motivo_fallo: ?string
      * }
      */
-    public static function despachar(Matricula $matricula): array
+    public static function despachar(Matricula $matricula, string $tipo = self::TIPO_BLOQUEO): array
     {
         $fallo = static fn (?string $motivo = null): array => [
             'ok'                   => false,
@@ -59,6 +63,10 @@ final class NotificarFamiliaBloqueoMatricula
             'refuerzo_mail_pedido' => true,
             'motivo_fallo'         => $motivo,
         ];
+
+        if ($tipo !== self::TIPO_BLOQUEO && $tipo !== self::TIPO_DESBLOQUEO) {
+            return $fallo('Tipo de notificación inválido.');
+        }
 
         $ctx = schoolCtx();
         $idProfesor = (int) ($ctx->idProfesor ?? 0);
@@ -84,8 +92,13 @@ final class NotificarFamiliaBloqueoMatricula
 
         $bloqPeda = (bool) ($matricula->bloqmatr ?? false);
         $bloqAdmi = (bool) ($matricula->bloqadmi ?? false);
-        if (! $bloqPeda && ! $bloqAdmi) {
+
+        if ($tipo === self::TIPO_BLOQUEO && ! $bloqPeda && ! $bloqAdmi) {
             return $fallo('El alumno no tiene bloqueo de matrícula activo.');
+        }
+
+        if ($tipo === self::TIPO_DESBLOQUEO && ($bloqPeda || $bloqAdmi)) {
+            return $fallo('El alumno aún tiene bloqueo de matrícula activo.');
         }
 
         $profesor = Profesor::query()->find($idProfesor);
@@ -127,7 +140,9 @@ final class NotificarFamiliaBloqueoMatricula
             $nombreNivel = trim((string) schoolCtx()->nivelNombre());
         }
 
-        $cuerpo = self::armarCuerpo($bloqPeda, $bloqAdmi, $nombreNivel);
+        $cuerpo = $tipo === self::TIPO_DESBLOQUEO
+            ? self::armarCuerpoDesbloqueo($bloqPeda, $bloqAdmi)
+            : self::armarCuerpo($bloqPeda, $bloqAdmi, $nombreNivel);
 
         $lineas = [$cuerpo, ''];
         if ($alumno !== ', ') {
@@ -136,8 +151,11 @@ final class NotificarFamiliaBloqueoMatricula
         if ($curso !== '') {
             $lineas[] = 'Curso: '.$curso;
         }
+        if ($nombreNivel !== '') {
+            $lineas[] = 'Nivel: '.$nombreNivel;
+        }
 
-        $asunto = 'Bloqueo de matrícula — '.$alumno;
+        $asunto = ($tipo === self::TIPO_DESBLOQUEO ? 'Desbloqueo de matrícula — ' : 'Bloqueo de matrícula — ').$alumno;
 
         $hilo = ComunicacionesRepository::crearHiloConMensaje([
             'asunto'                   => $asunto,
@@ -184,24 +202,16 @@ final class NotificarFamiliaBloqueoMatricula
 
     public static function armarCuerpo(bool $bloqPeda, bool $bloqAdmi, string $nombreNivel): string
     {
-        $motivos = [];
-        if ($bloqPeda) {
-            $motivos[] = 'PEDAGÓGICOS';
-        }
-        if ($bloqAdmi) {
-            $motivos[] = 'ADMINISTRATIVOS';
-        }
-
-        $textoMotivos = match (count($motivos)) {
-            2 => $motivos[0].' y '.$motivos[1],
-            1 => $motivos[0],
+        $textoMotivos = match (true) {
+            $bloqPeda && $bloqAdmi => 'PEDAGÓGICOS y/o ADMINISTRATIVOS',
+            $bloqAdmi => 'ADMINISTRATIVOS',
             default => 'PEDAGÓGICOS',
         };
 
+        $secretariaNivel = self::etiquetaSecretariaNivel($nombreNivel);
         $contactos = [];
         if ($bloqPeda) {
-            $etiquetaNivel = $nombreNivel !== '' ? $nombreNivel : 'nivel';
-            $contactos[] = 'Secretaría de '.$etiquetaNivel;
+            $contactos[] = $secretariaNivel;
         }
         if ($bloqAdmi) {
             $contactos[] = 'Administración';
@@ -210,15 +220,53 @@ final class NotificarFamiliaBloqueoMatricula
         $textoContacto = match (count($contactos)) {
             2 => $contactos[0].' y '.$contactos[1],
             1 => $contactos[0],
-            default => 'Secretaría',
+            default => $secretariaNivel,
         };
 
-        return "Sres. Padres:\n"
-            .'Les informamos que la Matrícula para el año próximo del estudiante se encuentra bloqueada por motivos '
+        return "Estimada Familia:\n"
+            .'Les informamos que la Matrícula para el año próximo del/la estudiante se encuentra bloqueada por motivos '
             .$textoMotivos
             .'. Por favor, comunicarse a la brevedad con '
             .$textoContacto
-            .".\nAtte:\nEquipo Directivo";
+            .".\nAtte.\nEquipo Directivo";
+    }
+
+    /**
+     * «Secretaría de Nivel Secundario» sin duplicar «Nivel» si el nombre del nivel ya lo trae.
+     */
+    public static function etiquetaSecretariaNivel(string $nombreNivel): string
+    {
+        $etiqueta = trim($nombreNivel);
+        if ($etiqueta === '') {
+            $etiqueta = 'Nivel';
+        } elseif (! preg_match('/^nivel\b/iu', $etiqueta)) {
+            $etiqueta = 'Nivel '.$etiqueta;
+        }
+
+        return 'Secretaría de '.$etiqueta;
+    }
+
+    /**
+     * Texto de desbloqueo. Los flags indican el estado actual (deben estar en false
+     * al notificar desbloqueo total); el tipo de requisitos refleja lo liberado.
+     */
+    public static function armarCuerpoDesbloqueo(bool $bloqPeda, bool $bloqAdmi): string
+    {
+        $librePeda = ! $bloqPeda;
+        $libreAdmi = ! $bloqAdmi;
+
+        $textoRequisitos = match (true) {
+            $librePeda && $libreAdmi => 'administrativos y/o pedagógicos',
+            $libreAdmi => 'administrativos',
+            default => 'pedagógicos',
+        };
+
+        return "Estimada Familia:\n"
+            .'Les informamos que, habiendo cumplimentado los requisitos '
+            .$textoRequisitos
+            .' pendientes, la matrícula para el próximo año lectivo del/la estudiante se encuentra desbloqueada.'
+            ."\nPor lo tanto, ya están en condiciones de continuar con el trámite correspondiente de matriculación."
+            ."\nAtte.\nEquipo Directivo";
     }
 
     /**

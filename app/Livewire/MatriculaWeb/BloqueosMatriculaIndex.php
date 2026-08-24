@@ -105,6 +105,16 @@ class BloqueosMatriculaIndex extends Component
 
     public function notificarFamilia(int $idMatricula): void
     {
+        $this->enviarNotificacionFamilia($idMatricula, NotificarFamiliaBloqueoMatricula::TIPO_BLOQUEO);
+    }
+
+    public function notificarFamiliaDesbloqueo(int $idMatricula): void
+    {
+        $this->enviarNotificacionFamilia($idMatricula, NotificarFamiliaBloqueoMatricula::TIPO_DESBLOQUEO);
+    }
+
+    private function enviarNotificacionFamilia(int $idMatricula, string $tipo): void
+    {
         abort_unless(PermisosMatriculaWeb::tiene(PermisosMatriculaWeb::BLOQUEOS_MATRICULA), 403);
 
         $rateKey = 'matricula-web:bloqueos-notif:'.(auth()->id() ?? 'guest');
@@ -122,8 +132,16 @@ class BloqueosMatriculaIndex extends Component
             return;
         }
 
-        if (! (bool) ($enAlcance->bloqmatr ?? false) && ! (bool) ($enAlcance->bloqadmi ?? false)) {
+        $tieneBloqueo = (bool) ($enAlcance->bloqmatr ?? false) || (bool) ($enAlcance->bloqadmi ?? false);
+
+        if ($tipo === NotificarFamiliaBloqueoMatricula::TIPO_BLOQUEO && ! $tieneBloqueo) {
             $this->dispatch('se-swal-error', mensaje: 'El alumno no tiene bloqueo activo para notificar.');
+
+            return;
+        }
+
+        if ($tipo === NotificarFamiliaBloqueoMatricula::TIPO_DESBLOQUEO && $tieneBloqueo) {
+            $this->dispatch('se-swal-error', mensaje: 'El alumno aún tiene bloqueo activo; no se puede notificar desbloqueo.');
 
             return;
         }
@@ -138,7 +156,7 @@ class BloqueosMatriculaIndex extends Component
             return;
         }
 
-        $resultado = NotificarFamiliaBloqueoMatricula::despachar($matricula);
+        $resultado = NotificarFamiliaBloqueoMatricula::despachar($matricula, $tipo);
 
         if (! ($resultado['ok'] ?? false)) {
             $detalle = trim((string) ($resultado['motivo_fallo'] ?? ''));
