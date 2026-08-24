@@ -106,7 +106,7 @@
             <p class="mt-1 text-sm text-neutral-600">
                 Haga clic en <strong>SÍ</strong> o <strong>NO</strong> para alternar cada bloqueo. Los cambios se guardan al instante.
                 Las acciones masivas aplican a todos los alumnos del filtro actual (todas las páginas).
-                Con bloqueo activo, use <strong>Notif. familia</strong> para avisar por comunicación institucional (con refuerzo de correo).
+                Use <strong>Notif. Bloqueo</strong> o <strong>Notif. Desbloqueo</strong> para avisar a la familia por comunicación institucional (con refuerzo de correo).
             </p>
         </div>
 
@@ -141,16 +141,20 @@
                             <th scope="col" class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Curso actual</th>
                             <th scope="col" class="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-neutral-500 w-36">Bloq. pedagógico</th>
                             <th scope="col" class="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wide text-neutral-500 w-36">Bloq. administrativo</th>
-                            <th scope="col" class="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500 w-36">Avisar</th>
+                            <th scope="col" class="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500 w-40">Avisar</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-100 bg-white">
                         @foreach ($alumnos as $fila)
                             @php
                                 $tieneBloqueo = $fila['bloqmatr'] || $fila['bloqadmi'];
-                                $motivosNotif = collect([
+                                $motivosBloqueo = collect([
                                     $fila['bloqmatr'] ? 'pedagógico' : null,
                                     $fila['bloqadmi'] ? 'administrativo' : null,
+                                ])->filter()->implode(' y ');
+                                $motivosDesbloqueo = collect([
+                                    ! $fila['bloqmatr'] ? 'pedagógico' : null,
+                                    ! $fila['bloqadmi'] ? 'administrativo' : null,
                                 ])->filter()->implode(' y ');
                                 $nombreAlumnoNotif = trim(
                                     collect([$fila['apellido'] ?? '', $fila['nombre'] ?? ''])
@@ -193,18 +197,34 @@
                                     </button>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    @if ($tieneBloqueo)
+                                    <div class="inline-flex flex-col items-stretch gap-1.5 sm:items-end">
                                         <button type="button"
-                                                x-on:click="window.__seNotificarBloqueoFamilia?.({{ (int) $fila['idMatricula'] }}, @js($motivosNotif), @js($nombreAlumnoNotif), @js($fila['correosFamilia'] ?? []))"
+                                                x-on:click="window.__seNotificarFamiliaMatricula?.({{ (int) $fila['idMatricula'] }}, @js($motivosBloqueo), @js($nombreAlumnoNotif), @js($fila['correosFamilia'] ?? []), 'bloqueo')"
                                                 wire:loading.attr="disabled"
-                                                wire:target="notificarFamilia"
-                                                class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:opacity-60"
-                                                title="Notificar a la familia por comunicación institucional">
-                                            Notif. familia
+                                                wire:target="notificarFamilia, notificarFamiliaDesbloqueo"
+                                                @disabled(! $tieneBloqueo)
+                                                @class([
+                                                    'inline-flex items-center justify-center rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
+                                                    'border-accent-200 bg-white text-primary-700 hover:border-primary-500 hover:bg-accent-50' => $tieneBloqueo,
+                                                    'border-accent-100 bg-accent-50/50 text-neutral-400' => ! $tieneBloqueo,
+                                                ])
+                                                title="{{ $tieneBloqueo ? 'Notificar bloqueo a la familia' : 'Disponible solo con bloqueo activo' }}">
+                                            Notif. Bloqueo
                                         </button>
-                                    @else
-                                        <span class="text-xs text-neutral-400">—</span>
-                                    @endif
+                                        <button type="button"
+                                                x-on:click="window.__seNotificarFamiliaMatricula?.({{ (int) $fila['idMatricula'] }}, @js($motivosDesbloqueo), @js($nombreAlumnoNotif), @js($fila['correosFamilia'] ?? []), 'desbloqueo')"
+                                                wire:loading.attr="disabled"
+                                                wire:target="notificarFamilia, notificarFamiliaDesbloqueo"
+                                                @disabled($tieneBloqueo)
+                                                @class([
+                                                    'inline-flex items-center justify-center rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
+                                                    'border-accent-200 bg-white text-primary-700 hover:border-primary-500 hover:bg-accent-50' => ! $tieneBloqueo,
+                                                    'border-accent-100 bg-accent-50/50 text-neutral-400' => $tieneBloqueo,
+                                                ])
+                                                title="{{ ! $tieneBloqueo ? 'Notificar desbloqueo a la familia' : 'Disponible solo sin bloqueos activos' }}">
+                                            Notif. Desbloqueo
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -249,7 +269,8 @@
                 .replace(/'/g, '&#39;');
         }
 
-        window.__seNotificarBloqueoFamilia = async function (idMatricula, motivos, alumno, correos) {
+        window.__seNotificarFamiliaMatricula = async function (idMatricula, motivos, alumno, correos, tipo) {
+            const esDesbloqueo = tipo === 'desbloqueo';
             const detalleMotivos = motivos ? ` (${escapeHtmlSe(motivos)})` : '';
             const nombreAlumno = String(alumno ?? '').trim() || '—';
             const listaCorreos = Array.isArray(correos) ? correos : [];
@@ -267,14 +288,15 @@
                 bloqueCorreos = `<p style="margin:0.85rem 0 0;text-align:left;font-size:0.9rem;color:#666;"><strong>Correos a enviar:</strong> ninguno válido en el legajo (madre / padre / tutor).</p>`;
             }
 
-            const html = `<p style="margin:0;text-align:left;font-size:0.95rem;color:#444;">¿Enviar notificación a la familia sobre el bloqueo de matrícula${detalleMotivos}?</p>`
+            const accion = esDesbloqueo ? 'desbloqueo' : 'bloqueo';
+            const html = `<p style="margin:0;text-align:left;font-size:0.95rem;color:#444;">¿Enviar notificación a la familia sobre el ${accion} de matrícula${detalleMotivos}?</p>`
                 + `<p style="margin:0.85rem 0 0;text-align:left;font-size:0.9rem;color:#333;"><strong>Estudiante:</strong> ${escapeHtmlSe(nombreAlumno)}</p>`
                 + bloqueCorreos
                 + `<p style="margin:0.85rem 0 0;text-align:left;font-size:0.9rem;color:#666;">Se creará un comunicado institucional con refuerzo por correo.</p>`;
 
             const ok = await window.seSwalConfirmar?.(
                 '',
-                'Notificar familia',
+                esDesbloqueo ? 'Notificar desbloqueo' : 'Notificar bloqueo',
                 { html }
             );
             if (! ok) {
@@ -293,7 +315,11 @@
             }
 
             try {
-                await $wire.notificarFamilia(idMatricula);
+                if (esDesbloqueo) {
+                    await $wire.notificarFamiliaDesbloqueo(idMatricula);
+                } else {
+                    await $wire.notificarFamilia(idMatricula);
+                }
             } catch (e) {
                 if (typeof window.seSwalError === 'function') {
                     window.seSwalError(
