@@ -78,7 +78,7 @@
                             <div class="gf-th gf-th-importe">Importe</div>
                             <div class="gf-th gf-th-estado">Estado</div>
                             @if (! $esNotaCredito)
-                                <div class="gf-th gf-th-accion" title="Responsable administrativo">Resp.</div>
+                                <div class="gf-th gf-th-accion" title="Destinatario de facturación AFIP">Resp.</div>
                             @endif
                         </div>
                                 @foreach ($filasPrevio as $fila)
@@ -118,7 +118,7 @@
                                                 @if ($idFamiliaFila > 0)
                                                     <button type="button"
                                                             wire:click="abrirModalRespAdmi({{ (int) ($fila['idLegajo'] ?? 0) }})"
-                                                            title="Responsable administrativo"
+                                                            title="Destinatario de facturación AFIP"
                                                             class="inline-flex items-center rounded-lg border border-accent-200 bg-white px-1 py-0.5 text-[9px] font-semibold leading-tight text-primary-700 hover:bg-accent-50">
                                                         Resp.
                                                     </button>

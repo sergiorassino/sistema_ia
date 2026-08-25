@@ -12,7 +12,7 @@
         <div class="relative z-10 my-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <div class="shrink-0 border-b border-accent-200 px-4 py-2.5">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                    <p id="modal-resp-admi-titulo" class="text-base font-bold text-neutral-800">Responsable económico</p>
+                    <p id="modal-resp-admi-titulo" class="text-base font-bold text-neutral-800">Destinatario de facturación AFIP</p>
                     @if ($respAdmiEstudianteEtiqueta !== '')
                         <p class="text-[11px] font-medium text-neutral-600">{{ $respAdmiEstudianteEtiqueta }}</p>
                     @endif
@@ -20,18 +20,9 @@
             </div>
 
             <div class="shrink-0 space-y-2.5 px-4 py-3">
-                <section class="rounded-xl border-2 border-primary-300 bg-gradient-to-r from-primary-50 to-accent-50/70 px-3 py-2 shadow-sm">
-                    <label class="text-[10px] font-semibold uppercase tracking-wide text-primary-800" for="resp-admi-apellido">
-                        Apellido de la familia
-                    </label>
-                    <input wire:model="respAdmiApellido"
-                           id="resp-admi-apellido"
-                           type="text"
-                           maxlength="50"
-                           class="mt-1 w-full rounded-lg border-2 border-primary-200 bg-white px-3 py-1.5 text-base font-bold uppercase tracking-wide text-neutral-900 placeholder:font-normal placeholder:normal-case placeholder:text-neutral-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-300 @error('respAdmiApellido') border-red-400 ring-2 ring-red-300 @enderror"
-                           placeholder="Ej. GARCÍA">
-                    @error('respAdmiApellido') <p class="se-field-error mt-1 text-[11px]">{{ $message }}</p> @enderror
-                </section>
+                <p class="text-[11px] text-neutral-500">
+                    Elija padre, madre o tutor para completar, o escriba los datos. Se guardan en el legajo.
+                </p>
 
                 <div class="grid grid-cols-3 gap-1.5">
                     @foreach (['padre' => 'Padre', 'madre' => 'Madre', 'tutor' => 'Tutor'] as $vinculo => $etiqueta)
@@ -76,10 +67,6 @@
                                         Sin DNI
                                     @endif
                                 </span>
-                                <span class="max-w-full truncate text-[9px]
-                                    {{ $respAdmiVinculo === $vinculo ? 'text-white/75' : 'text-neutral-500' }}">
-                                    {{ $emailVinculo !== '' ? $emailVinculo : 'Sin email' }}
-                                </span>
                             @else
                                 <span class="mt-0.5 text-[10px] italic">Sin datos</span>
                             @endif
@@ -89,24 +76,18 @@
 
                 <div class="grid gap-2 sm:grid-cols-2">
                     <div class="sm:col-span-2">
-                        <label class="form-label !mb-0.5 {{ $respAdmiFamiliaNueva ? 'text-amber-800' : '' }}" for="resp-admi-nombre">
-                            @if ($respAdmiFamiliaNueva)
-                                Responsable Económico: FAMILIA NO ENCONTRADA: Creando familia.
-                            @else
-                                Responsable económico
-                            @endif
-                        </label>
+                        <label class="form-label !mb-0.5" for="resp-admi-nombre">Apellidos y nombres *</label>
                         <input wire:model="respAdmiNombre"
                                id="resp-admi-nombre"
                                type="text"
-                               maxlength="50"
+                               maxlength="100"
                                class="form-input !py-1.5 text-sm w-full @error('respAdmiNombre') ring-2 ring-red-400 @enderror"
-                               placeholder="Nombre del responsable a facturar">
+                               placeholder="Apellidos y nombres a facturar">
                         @error('respAdmiNombre') <p class="se-field-error text-[11px]">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="form-label !mb-0.5" for="resp-admi-dni">DNI del responsable</label>
+                        <label class="form-label !mb-0.5" for="resp-admi-dni">DNI *</label>
                         <input wire:model="respAdmiDni"
                                id="resp-admi-dni"
                                type="text"
@@ -115,18 +96,6 @@
                                class="form-input !py-1.5 text-sm w-full tabular-nums @error('respAdmiDni') ring-2 ring-red-400 @enderror"
                                placeholder="Solo números">
                         @error('respAdmiDni') <p class="se-field-error text-[11px]">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="form-label !mb-0.5" for="resp-admi-email">Email de la familia</label>
-                        <input wire:model="respAdmiEmail"
-                               id="resp-admi-email"
-                               type="email"
-                               maxlength="100"
-                               autocomplete="email"
-                               class="form-input !py-1.5 text-sm w-full @error('respAdmiEmail') ring-2 ring-red-400 @enderror"
-                               placeholder="correo@ejemplo.com">
-                        @error('respAdmiEmail') <p class="se-field-error text-[11px]">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>

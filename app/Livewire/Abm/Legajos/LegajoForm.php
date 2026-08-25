@@ -290,22 +290,35 @@ class LegajoForm extends Component
 
     public function mount(): void
     {
+        // Alta: no reutilizar idLegajos de sesión (p. ej. tras editar otro legajo o cambiar tenant).
+        if (request()->routeIs('abm.legajos.create')) {
+            \App\Support\Navegacion\ContextoEstudianteSesion::limpiar(
+                \App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM,
+            );
+            abort_unless(
+                puedeModificarLegajosEstudiantes(),
+                403,
+                'Sin permiso para crear legajos de estudiantes.'
+            );
+            $this->id = null;
+
+            return;
+        }
+
         $id = \App\Support\Navegacion\ContextoEstudianteSesion::legajo(
             \App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM,
         );
 
-        if (! $id && ! puedeModificarLegajosEstudiantes()) {
-            abort(403, 'Sin permiso para crear legajos de estudiantes.');
+        if (! $id) {
+            abort(404);
         }
 
         $this->id = $id;
-        if ($id) {
-            $this->loadLegajo($id);
+        $this->loadLegajo($id);
 
-            if (session()->pull('legajo_abrir_matriculas', false)) {
-                $this->matriculasDesdeListado = true;
-                $this->openMatriculas();
-            }
+        if (session()->pull('legajo_abrir_matriculas', false)) {
+            $this->matriculasDesdeListado = true;
+            $this->openMatriculas();
         }
     }
 
@@ -511,10 +524,11 @@ class LegajoForm extends Component
         } else {
             $data['fechhora'] = now();
             $legajo = Legajo::create($data);
-            if ($persistPwrd) {
-                $legajo->pwrd = trim($this->pwrd);
-                $legajo->save();
-            }
+            // Texto plano legacy: ver docs/03-autenticacion-y-permisos.md §2.2
+            // pwrd está en $guarded; si el campo quedó vacío, default 1234.
+            $nuevaPwrd = $persistPwrd ? trim($this->pwrd) : '';
+            $legajo->pwrd = $nuevaPwrd !== '' ? $nuevaPwrd : '1234';
+            $legajo->save();
             $this->id = (int) $legajo->id;
         }
 

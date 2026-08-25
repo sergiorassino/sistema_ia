@@ -58,6 +58,8 @@
             @error('pwrd') <p class="form-error">{{ $message }}</p> @enderror
             @if($id ?? null)
                 <p class="mt-1 text-xs text-neutral-500">Dejá vacío para mantener la contraseña actual.</p>
+            @else
+                <p class="mt-1 text-xs text-neutral-500">Si lo dejás vacío se asigna 1234 por defecto.</p>
             @endif
         </div>
         @break

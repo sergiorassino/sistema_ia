@@ -121,6 +121,22 @@ Al **crear** un legajo nuevo en **Legajos del docente** (`LegajoProfesorForm`), 
 
 **Legajos docentes (orden 11):** con `LEGAJOS_DOCENTES` (`puedeModificarLegajosDocentes()`) se pueden crear, editar y eliminar legajos con todos los campos, e imprimir/exportar columnas completas en listados. Sin ese permiso, la consulta (`puedeConsultarLegajosDocentes()`) y los listados PDF/Excel quedan limitados a apellido, nombre y DNI en solo lectura.
 
+### 2.2 Alta de legajo de estudiante (Menú de Secretaría)
+
+Al **crear** un legajo nuevo en **Legajos** (`LegajoForm`), el sistema asigna automáticamente:
+
+| Campo  | Valor |
+|--------|--------|
+| `pwrd` | Valor ingresado en el formulario, o `1234` en **texto plano** si el campo quedó vacío |
+
+**Motivo:** alineado con el esquema legacy de `legajos.pwrd` y con la operativa del colegio (secretaría informa la clave inicial al alumno/familia; el usuario ingresa con DNI + `1234`).
+
+**Implementación:** `App\Livewire\Abm\Legajos\LegajoForm::save()` — `pwrd` está en `$guarded` del modelo `Legajo`, por lo que se asigna con asignación directa y un segundo `save()` tras el `create()`.
+
+**Login:** `AlumnoUserProvider` compara con `hash_equals()`.
+
+**Edición:** al modificar un legajo existente, si el campo `pwrd` se deja vacío se **conserva** la contraseña actual; solo se actualiza si se ingresa un valor nuevo.
+
 ---
 
 ## 3. Ciclo Lectivo — Comportamiento en Sesión

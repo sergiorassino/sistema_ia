@@ -41,6 +41,8 @@ final class GestionAranceles
                 'dni',
                 'legajo',
                 'idFamilias',
+                'respAdmiNom',
+                'respAdmiDni',
                 'nombrepad',
                 'dnipad',
                 'emailpad',

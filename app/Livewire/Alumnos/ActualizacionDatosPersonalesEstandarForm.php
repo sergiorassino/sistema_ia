@@ -7,6 +7,7 @@ use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesEstandar;
 use App\Support\Alumnos\DocumentosEstudianteAutogestion;
+use App\Support\DniInput;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -73,6 +74,10 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
 
     public string $ocupactut = '';
 
+    public string $respAdmiNom = '';
+
+    public string $respAdmiDni = '';
+
     public bool $bloqueado = false;
 
     public string $mensajeBloqueo = '';
@@ -112,7 +117,9 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
             return;
         }
 
-        if (is_string($this->{$property})) {
+        if ($property === 'respAdmiDni') {
+            $this->respAdmiDni = DniInput::digitsOnly($this->respAdmiDni);
+        } elseif (is_string($this->{$property})) {
             $this->{$property} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$property});
         }
 
@@ -392,6 +399,12 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
     {
         foreach ($keys as $campo) {
             if (! property_exists($this, $campo) || ! is_string($this->{$campo})) {
+                continue;
+            }
+
+            if ($campo === 'respAdmiDni') {
+                $this->{$campo} = DniInput::digitsOnly($this->{$campo});
+
                 continue;
             }
 

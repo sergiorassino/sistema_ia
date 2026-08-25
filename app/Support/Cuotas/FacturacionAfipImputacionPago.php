@@ -771,19 +771,7 @@ final class FacturacionAfipImputacionPago
      */
     private static function responsablePago(Legajo $legajo): array
     {
-        $nombre = trim((string) ($legajo->respAdmiNom ?? ''));
-        $dni = self::documentoNumerico($legajo->respAdmiDni ?? null);
-
-        if ($nombre === '' || $dni <= 0) {
-            $nombre = trim((string) ($legajo->nombrepad ?? ''));
-            $dni = self::documentoNumerico($legajo->dnipad ?? null);
-        }
-        if ($nombre === '' || $dni <= 0) {
-            $nombre = trim((string) ($legajo->nombremad ?? ''));
-            $dni = self::documentoNumerico($legajo->dnimad ?? null);
-        }
-
-        return [$nombre, $dni > 0 ? (string) $dni : ''];
+        return FacturacionAfipComun::responsablePago($legajo);
     }
 
     private static function formatearFechaBarra(string $yyyymmdd): string

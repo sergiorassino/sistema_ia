@@ -61,6 +61,7 @@ Campos del listado de alumnos). Para que la familia también pueda subirla, adem
 ## Tablas y campos críticos
 
 - `legajos` (datos editables según variante; `fechActDatos`; opcional `fotoCarnet`)
+- **Destinatario de facturación AFIP** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión)
 - `matricula` (bloqueos / aceptaciones SFA)
 - `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
 - `campos_legajo` / `solapas_legajo` (visibilidad de foto carnet)
@@ -72,6 +73,7 @@ Campos del listado de alumnos). Para que la familia también pueda subirla, adem
 - `app/Livewire/Alumnos/ActualizacionDatosPersonalesSanFranciscoAsisForm.php`
 - `app/Livewire/Alumnos/Concerns/ConFotoCarnetActualizacionDatos.php`
 - `app/Support/Alumnos/ActualizacionDatosPersonales*.php`
+- `resources/views/livewire/alumnos/partials/destinatario-facturacion-afip.blade.php`
 - `app/Support/MatriculaBloqueos.php`
 - `resources/views/livewire/alumnos/partials/foto-carnet-actualizacion.blade.php`
 
