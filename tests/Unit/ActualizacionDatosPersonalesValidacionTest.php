@@ -3,7 +3,8 @@
 namespace Tests\Unit;
 
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Facades\Validator;
+use Tests\TestCase;
 
 class ActualizacionDatosPersonalesValidacionTest extends TestCase
 {
@@ -47,5 +48,37 @@ class ActualizacionDatosPersonalesValidacionTest extends TestCase
     {
         $this->assertSame('2024-03-15', ActualizacionDatosPersonalesComun::normalizarTextoInput('2024-03-15'));
         $this->assertSame('Ana-Maria', ActualizacionDatosPersonalesComun::normalizarTextoInput('Ana-Maria'));
+    }
+
+    public function test_destinatario_facturacion_afip_nombre_obligatorio_sin_guion(): void
+    {
+        $rules = ['respAdmiNom' => ActualizacionDatosPersonalesComun::reglaNombreDestinatarioFacturacionAfip()];
+
+        $this->assertTrue(Validator::make(['respAdmiNom' => 'García, Juan'], $rules)->passes());
+        $this->assertTrue(Validator::make(['respAdmiNom' => ''], $rules)->fails());
+        $this->assertTrue(Validator::make(['respAdmiNom' => '-'], $rules)->fails());
+        $this->assertTrue(Validator::make(['respAdmiNom' => '---'], $rules)->fails());
+    }
+
+    public function test_destinatario_facturacion_afip_dni_obligatorio_7_a_11_digitos(): void
+    {
+        $rules = ['respAdmiDni' => ActualizacionDatosPersonalesComun::reglaDniDestinatarioFacturacionAfip()];
+
+        $this->assertTrue(Validator::make(['respAdmiDni' => '30111222'], $rules)->passes());
+        $this->assertTrue(Validator::make(['respAdmiDni' => '30.111.222'], $rules)->passes());
+        $this->assertTrue(Validator::make(['respAdmiDni' => ''], $rules)->fails());
+        $this->assertTrue(Validator::make(['respAdmiDni' => '-'], $rules)->fails());
+        $this->assertTrue(Validator::make(['respAdmiDni' => '123'], $rules)->fails());
+    }
+
+    public function test_datos_destinatario_facturacion_afip_para_guardar_normaliza_dni(): void
+    {
+        $datos = ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar([
+            'respAdmiNom' => '  García Juan  ',
+            'respAdmiDni' => '30.111.222',
+        ]);
+
+        $this->assertSame('García Juan', $datos['respAdmiNom']);
+        $this->assertSame('30111222', $datos['respAdmiDni']);
     }
 }

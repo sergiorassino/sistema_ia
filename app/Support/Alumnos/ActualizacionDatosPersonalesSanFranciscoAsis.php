@@ -96,7 +96,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
      */
     public static function atributosDesdeLegajo(Legajo $legajo): array
     {
-        return [
+        return array_merge([
             'reglamApenom' => (string) ($legajo->reglamApenom ?? ''),
             'reglamDni' => (string) ($legajo->reglamDni ?? ''),
             'reglamEmail' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->reglamEmail ?? ''),
@@ -139,7 +139,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'contacto3' => (string) ($legajo->contacto3 ?? ''),
             'retira1' => (string) ($legajo->retira1 ?? ''),
             'obs_web' => (string) ($legajo->obs_web ?? ''),
-        ];
+        ], ActualizacionDatosPersonalesComun::atributosDestinatarioFacturacionAfipDesdeLegajo($legajo));
     }
 
     /**
@@ -211,7 +211,10 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             $data['telltt'] = '';
         }
 
-        return $data;
+        return array_merge(
+            $data,
+            ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state)
+        );
     }
 
     public static function guardar(Legajo $legajo, Matricula $matricula, array $state): void
@@ -288,6 +291,8 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'emailtut' => self::reglaEmailOpcional(),
             'lugtratut' => $opc,
             'telltt' => $opc,
+            'respAdmiNom' => ActualizacionDatosPersonalesComun::reglaNombreDestinatarioFacturacionAfip(),
+            'respAdmiDni' => ActualizacionDatosPersonalesComun::reglaDniDestinatarioFacturacionAfip(),
         ];
 
         if (studentEsNivelSecundario()) {
@@ -304,7 +309,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
      */
     public static function mensajesValidacion(): array
     {
-        return [
+        return array_merge([
             'fechnaci.date_format' => 'La fecha de nacimiento debe ser dd/mm/aaaa.',
             'reglamEmail.email' => 'El e-mail del adulto responsable no es válido.',
             'email.email' => 'El e-mail institucional del estudiante no es válido.',
@@ -314,7 +319,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'needes.required' => 'Debe indicar si el estudiante tiene necesidades especiales.',
             'needes.in' => 'Seleccione «No» o «Sí» en necesidades especiales.',
             'needes_detalle.required' => 'Debe completar el detalle de necesidades especiales.',
-        ];
+        ], ActualizacionDatosPersonalesComun::mensajesValidacionDestinatarioFacturacionAfip());
     }
 
     /**
@@ -365,7 +370,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'contacto3' => 'Contacto de emergencia (3)',
             'retira1' => 'Personas autorizadas para el retiro del estudiante',
             'obs_web' => 'Observaciones',
-        ];
+        ] + ActualizacionDatosPersonalesComun::etiquetasDestinatarioFacturacionAfip();
     }
 
     /**

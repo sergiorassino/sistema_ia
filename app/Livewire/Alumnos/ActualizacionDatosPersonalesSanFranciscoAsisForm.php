@@ -6,6 +6,7 @@ use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
+use App\Support\DniInput;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -110,6 +111,10 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public string $obs_web = '';
 
+    public string $respAdmiNom = '';
+
+    public string $respAdmiDni = '';
+
     /** @var array<string, bool> */
     public array $aceptaciones = [];
 
@@ -131,7 +136,9 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
             return;
         }
 
-        if (is_string($this->{$property})) {
+        if ($property === 'respAdmiDni') {
+            $this->respAdmiDni = DniInput::digitsOnly($this->respAdmiDni);
+        } elseif (is_string($this->{$property})) {
             $this->{$property} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$property});
         }
 
@@ -243,9 +250,17 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
         $keys = array_keys(ActualizacionDatosPersonalesSanFranciscoAsis::atributosDesdeLegajo($ctx['legajo']));
         foreach ($keys as $campo) {
-            if (property_exists($this, $campo) && is_string($this->{$campo})) {
-                $this->{$campo} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$campo});
+            if (! property_exists($this, $campo) || ! is_string($this->{$campo})) {
+                continue;
             }
+
+            if ($campo === 'respAdmiDni') {
+                $this->{$campo} = DniInput::digitsOnly($this->{$campo});
+
+                continue;
+            }
+
+            $this->{$campo} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$campo});
         }
         $validator = Validator::make(
             $this->only($keys),

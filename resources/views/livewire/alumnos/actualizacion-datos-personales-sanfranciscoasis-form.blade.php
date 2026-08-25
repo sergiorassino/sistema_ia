@@ -382,10 +382,16 @@
                     <input id="campo-retira1" wire:model.live.blur="retira1" type="text" class="form-input mt-1" placeholder="Apellido, nombre, relación, teléfono" @disabled($bloqueado)>
                     @error('retira1') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
-                <div>
-                    <label class="form-label">Observaciones</label>
-                    <textarea id="campo-obs_web" wire:model.live.blur="obs_web" rows="3" class="form-input mt-1 resize-y" @disabled($bloqueado)></textarea>
-                </div>
+            </div>
+        </section>
+
+        @include('livewire.alumnos.partials.destinatario-facturacion-afip')
+
+        <section class="se-card p-4 sm:p-5" aria-labelledby="seccion-observaciones">
+            <p id="seccion-observaciones" class="se-section-title mb-4">Observaciones</p>
+            <div>
+                <label class="form-label" for="campo-obs_web">Observaciones</label>
+                <textarea id="campo-obs_web" wire:model.live.blur="obs_web" rows="3" class="form-input mt-1 resize-y" @disabled($bloqueado)></textarea>
             </div>
         </section>
 

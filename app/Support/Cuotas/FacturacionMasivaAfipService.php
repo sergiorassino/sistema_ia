@@ -782,8 +782,8 @@ final class FacturacionMasivaAfipService
 
         $importeTotal = round($importeTotal, 2);
 
-        $nombreResp = FacturacionAfipComun::responsableEconomicoFamilia($legajo);
-        $dniResp = FacturacionAfipComun::dniRespDesdeFamilia($legajo);
+        $nombreResp = FacturacionAfipComun::nombreDestinatarioAfipDesdeLegajo($legajo);
+        $dniResp = FacturacionAfipComun::dniDestinatarioAfipDesdeLegajo($legajo);
         $docNro = FacturacionAfipComun::documentoNumerico($dniResp);
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
         $conceptoPrincipal = count($conceptos) === 1 ? $conceptos[0] : 'CUOTAS ESCOLARES';

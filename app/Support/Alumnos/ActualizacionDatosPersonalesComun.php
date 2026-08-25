@@ -5,6 +5,7 @@ namespace App\Support\Alumnos;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\DniInput;
 use App\Support\InformeInasistencias;
 use App\Support\MatriculaBloqueos;
 use Illuminate\Database\QueryException;
@@ -210,6 +211,102 @@ final class ActualizacionDatosPersonalesComun
                     $fail('Este campo es obligatorio. Si no corresponde, escriba un guión (-).');
                 }
             },
+        ];
+    }
+
+    /**
+     * Nombre del destinatario de facturación AFIP (obligatorio; no admite guión).
+     *
+     * @return list<mixed>
+     */
+    public static function reglaNombreDestinatarioFacturacionAfip(int $max = 100): array
+    {
+        return [
+            'required',
+            'string',
+            'max:'.$max,
+            static function (string $attribute, mixed $value, \Closure $fail): void {
+                $v = self::normalizarTextoInput($value);
+                if ($v === '' || self::esGuionNoCorresponde($v)) {
+                    $fail('Indique el nombre y apellido del destinatario de facturación AFIP.');
+                }
+            },
+        ];
+    }
+
+    /**
+     * DNI del destinatario de facturación AFIP (obligatorio, 7 a 11 dígitos).
+     *
+     * @return list<mixed>
+     */
+    public static function reglaDniDestinatarioFacturacionAfip(): array
+    {
+        return [
+            'required',
+            'string',
+            static function (string $attribute, mixed $value, \Closure $fail): void {
+                $digits = DniInput::digitsOnly((string) $value);
+                $len = strlen($digits);
+                if ($digits === '' || $len < 7 || $len > DniInput::MAX_LENGTH) {
+                    $fail('Indique el DNI del destinatario de facturación AFIP (7 a 11 dígitos).');
+                }
+            },
+        ];
+    }
+
+    /**
+     * @return array{respAdmiNom: string, respAdmiDni: string}
+     */
+    public static function atributosDestinatarioFacturacionAfipDesdeLegajo(Legajo $legajo): array
+    {
+        $dni = self::textoDniDesdeLegajo($legajo->respAdmiDni ?? '');
+        if ($dni === '-') {
+            $dni = '';
+        }
+
+        $nombre = trim((string) ($legajo->respAdmiNom ?? ''));
+        if (self::esGuionNoCorresponde($nombre)) {
+            $nombre = '';
+        }
+
+        return [
+            'respAdmiNom' => $nombre,
+            'respAdmiDni' => $dni,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     * @return array{respAdmiNom: string, respAdmiDni: string}
+     */
+    public static function datosDestinatarioFacturacionAfipParaGuardar(array $state): array
+    {
+        return [
+            'respAdmiNom' => self::normalizarTextoInput($state['respAdmiNom'] ?? ''),
+            'respAdmiDni' => DniInput::digitsOnly((string) ($state['respAdmiDni'] ?? '')),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function etiquetasDestinatarioFacturacionAfip(): array
+    {
+        return [
+            'respAdmiNom' => 'Facturación AFIP — Nombre y apellido',
+            'respAdmiDni' => 'Facturación AFIP — DNI',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function mensajesValidacionDestinatarioFacturacionAfip(): array
+    {
+        return [
+            'respAdmiNom.required' => 'Indique el nombre y apellido del destinatario de facturación AFIP.',
+            'respAdmiNom.max' => 'El nombre del destinatario no puede superar los 100 caracteres.',
+            'respAdmiDni.required' => 'Indique el DNI del destinatario de facturación AFIP.',
         ];
     }
 

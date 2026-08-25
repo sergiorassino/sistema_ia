@@ -212,7 +212,8 @@ final class FacturacionAfipComun
     }
 
     /**
-     * Responsable económico impreso en la factura: campo `familias.responsable`.
+     * Responsable económico de la familia (`familias.responsable`).
+     * No es el destinatario AFIP: ese sale de `legajos.respAdmiNom` / `respAdmiDni`.
      */
     public static function responsableEconomicoFamilia(Legajo $legajo): string
     {
@@ -229,7 +230,7 @@ final class FacturacionAfipComun
     }
 
     /**
-     * DNI del responsable económico (`familias.dniResp`): receptor AFIP y texto del PDF.
+     * DNI del responsable económico en `familias.dniResp` (dato de familia, no receptor AFIP).
      */
     public static function dniRespDesdeFamilia(Legajo $legajo): string
     {
@@ -250,11 +251,37 @@ final class FacturacionAfipComun
     }
 
     /**
-     * Documento del receptor ante AFIP (`DocNro`): `familias.dniResp`.
+     * Nombre del destinatario de facturación AFIP: `legajos.respAdmiNom`.
+     */
+    public static function nombreDestinatarioAfipDesdeLegajo(Legajo $legajo): string
+    {
+        $nombre = trim((string) ($legajo->respAdmiNom ?? ''));
+        if ($nombre === '' || $nombre === '-') {
+            return '';
+        }
+
+        return $nombre;
+    }
+
+    /**
+     * DNI del destinatario de facturación AFIP: `legajos.respAdmiDni` (solo dígitos).
+     */
+    public static function dniDestinatarioAfipDesdeLegajo(Legajo $legajo): string
+    {
+        $digits = preg_replace('/\D/', '', (string) ($legajo->respAdmiDni ?? '')) ?? '';
+        if ($digits === '' || $digits === '0') {
+            return '';
+        }
+
+        return $digits;
+    }
+
+    /**
+     * Documento del receptor ante AFIP (`DocNro`): `legajos.respAdmiDni`.
      */
     public static function docNroReceptorDesdeLegajo(Legajo $legajo): int
     {
-        return self::documentoNumerico(self::dniRespDesdeFamilia($legajo));
+        return self::documentoNumerico(self::dniDestinatarioAfipDesdeLegajo($legajo));
     }
 
     /**
@@ -268,13 +295,13 @@ final class FacturacionAfipComun
      */
     public static function destinatarioFacturaDesdeLegajo(Legajo $legajo, bool $asegurarFamilia = false): array
     {
-        if ($asegurarFamilia) {
-            self::asegurarFamiliaDesdeVinculosLegajo($legajo);
-        }
+        // $asegurarFamilia se conserva por compatibilidad; el destinatario AFIP
+        // ya no depende de la familia, solo de legajos.respAdmiNom / respAdmiDni.
+        unset($asegurarFamilia);
 
         $idFamilia = (int) ($legajo->idFamilias ?? 0);
-        $responsable = self::responsableEconomicoFamilia($legajo);
-        $dniResp = self::dniRespDesdeFamilia($legajo);
+        $responsable = self::nombreDestinatarioAfipDesdeLegajo($legajo);
+        $dniResp = self::dniDestinatarioAfipDesdeLegajo($legajo);
         $motivo = self::motivoDestinatarioInvalido($idFamilia, $responsable, $dniResp);
 
         return [
@@ -416,18 +443,22 @@ final class FacturacionAfipComun
         return $apellido !== '' ? $apellido : $nombrePila;
     }
 
+    /**
+     * Valida destinatario AFIP (`legajos.respAdmiNom` / `respAdmiDni`).
+     * El parámetro $idFamilia se conserva por compatibilidad y no se usa.
+     */
     public static function motivoDestinatarioInvalido(int $idFamilia, string $responsable, string $dniResp): ?string
     {
-        if ($idFamilia <= 0 || $idFamilia === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
-            return 'El estudiante no tiene familia asignada.';
-        }
+        unset($idFamilia);
 
         if (trim($responsable) === '') {
-            return 'Falta el responsable económico de la familia.';
+            return 'Falta el destinatario de facturación AFIP en el legajo (nombre).';
         }
 
-        if (self::documentoNumerico($dniResp) <= 0) {
-            return 'Falta o es inválido el DNI del responsable económico.';
+        $digits = preg_replace('/\D/', '', $dniResp) ?? '';
+        $len = strlen($digits);
+        if ($digits === '' || $digits === '0' || $len < 7 || $len > 11) {
+            return 'Falta o es inválido el DNI del destinatario de facturación AFIP en el legajo.';
         }
 
         return null;
@@ -496,23 +527,16 @@ final class FacturacionAfipComun
     }
 
     /**
+     * Destinatario de facturación AFIP desde el legajo (`respAdmiNom` / `respAdmiDni`).
+     *
      * @return array{0: string, 1: string}
      */
     public static function responsablePago(Legajo $legajo): array
     {
-        $nombre = trim((string) ($legajo->respAdmiNom ?? ''));
-        $dni = self::documentoNumerico($legajo->respAdmiDni ?? null);
+        $nombre = self::nombreDestinatarioAfipDesdeLegajo($legajo);
+        $dni = self::dniDestinatarioAfipDesdeLegajo($legajo);
 
-        if ($nombre === '' || $dni <= 0) {
-            $nombre = trim((string) ($legajo->nombrepad ?? ''));
-            $dni = self::documentoNumerico($legajo->dnipad ?? null);
-        }
-        if ($nombre === '' || $dni <= 0) {
-            $nombre = trim((string) ($legajo->nombremad ?? ''));
-            $dni = self::documentoNumerico($legajo->dnimad ?? null);
-        }
-
-        return [$nombre, $dni > 0 ? (string) $dni : ''];
+        return [$nombre, $dni];
     }
 
     public static function formatearFechaBarra(string $yyyymmdd): string

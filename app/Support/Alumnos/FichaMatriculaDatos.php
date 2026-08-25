@@ -42,6 +42,7 @@ final class FichaMatriculaDatos
         'ec_padres', 'vivecon', 'contacto1', 'contacto2', 'contacto3', 'obs_web',
         'needes', 'needes_detalle',
         'nombretut', 'dnitut', 'teletut', 'ocupactut', 'emailtut',
+        'respAdmiNom', 'respAdmiDni',
         'legajo', 'escori', 'retira1', 'retira2',
         'reglamApenom', 'reglamDni', 'reglamEmail',
     ];
@@ -250,6 +251,8 @@ final class FichaMatriculaDatos
             'contacto3' => trim((string) ($legajo->contacto3 ?? '')),
             'retira1' => trim((string) ($legajo->retira1 ?? '')),
             'retira2' => trim((string) ($legajo->retira2 ?? '')),
+            'respAdmiNom' => trim((string) ($legajo->respAdmiNom ?? '')),
+            'respAdmiDni' => trim((string) ($legajo->respAdmiDni ?? '')),
             'reglamApenom' => trim((string) ($legajo->reglamApenom ?? '')),
             'reglamDni' => trim((string) ($legajo->reglamDni ?? '')),
             'reglamEmail' => trim((string) ($legajo->reglamEmail ?? '')),

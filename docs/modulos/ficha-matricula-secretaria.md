@@ -10,7 +10,7 @@ Activación por tenant en `config/tenants/{slug}.php` → `secretaria.ficha_matr
 
 | `implementacion` | PDF | Datos |
 |------------------|-----|-------|
-| `sanfranciscoasis` | `FichaMatriculaConAceptacionTcpdf` | `FichaMatriculaDatos` |
+| `sanfranciscoasis` | `FichaMatriculaConAceptacionTcpdf` (incluye Destinatario de Facturación: `respAdmiNom` / `respAdmiDni` en INFORMACIÓN ADICIONAL, antes de observaciones; una página) | `FichaMatriculaDatos` |
 | `iess` | `FichaMatriculaIessTcpdf` (layout legacy IESS: AEC en primario, autorización de imágenes en secundario, `grupsang` a la derecha del nombre) | `FichaMatriculaDatos` |
 | `montecristo` | `FichaMatriculaSolicitudMontecristoTcpdf` | `FichaMatriculaMontecristoDatos` |
 | `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos`. Misma ficha que autogestión: hueco 30×40 mm a la derecha; la foto entra ahí sin deformar y el marco negro rodea la imagen (no el hueco). |

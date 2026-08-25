@@ -22,8 +22,8 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
     /** Altura de filas de datos (formato legacy FPDF). */
     private const ALTURA_FILA = 5.0;
 
-    /** Ahorro vertical respecto al bloque de firma legacy (Ln 20 → 5). */
-    private const ESPACIO_ANTES_FIRMA = 5.0;
+    /** Espacio antes de la firma (una página; SetAutoPageBreak desactivado). */
+    private const ESPACIO_ANTES_FIRMA = 12.0;
 
     /** @var array<string, mixed> */
     private array $datos;
@@ -352,6 +352,16 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
         if (! empty($d['mostrarRetira2'])) {
             $this->filaEtiquetaValor('Apellido, Nombre, Relación, Teléfono (2): ', (string) $d['retira2'], 60, 80);
         }
+
+        // Una sola fila (nombre + DNI) para no empujar el documento a una 2.ª página.
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->Cell(50, self::ALTURA_FILA, 'Destinatario de Facturación: ', 0, 0, 'L', false);
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(70, self::ALTURA_FILA, (string) ($d['respAdmiNom'] ?? ''), 0, 0, 'L', false);
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->Cell(15, self::ALTURA_FILA, 'D.N.I.: ', 0, 0, 'L', false);
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(25, self::ALTURA_FILA, (string) ($d['respAdmiDni'] ?? ''), 0, 1, 'L', false);
 
         TcpdfFuenteArial::aplicar($this, 'B', 8);
         $this->Cell(40, self::ALTURA_FILA, 'OBSERVACIONES: ', 0, 1, 'L', false);

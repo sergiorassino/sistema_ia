@@ -43,7 +43,7 @@ final class ActualizacionDatosPersonalesEstandar
      */
     public static function atributosDesdeLegajo(Legajo $legajo): array
     {
-        return [
+        return array_merge([
             'nombrepad' => (string) ($legajo->nombrepad ?? ''),
             'dnipad' => ActualizacionDatosPersonalesComun::textoDniDesdeLegajo($legajo->dnipad ?? ''),
             'fechnacpad' => self::fechaInput($legajo->fechnacpad),
@@ -67,7 +67,7 @@ final class ActualizacionDatosPersonalesEstandar
             'teletut' => (string) ($legajo->teletut ?? ''),
             'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($legajo->emailtut ?? ''),
             'ocupactut' => (string) ($legajo->ocupactut ?? ''),
-        ];
+        ], ActualizacionDatosPersonalesComun::atributosDestinatarioFacturacionAfipDesdeLegajo($legajo));
     }
 
     /**
@@ -76,7 +76,7 @@ final class ActualizacionDatosPersonalesEstandar
      */
     public static function datosParaGuardar(array $state): array
     {
-        return [
+        return array_merge([
             'nombrepad' => self::trimCampo($state['nombrepad'] ?? ''),
             'dnipad' => self::trimCampo($state['dnipad'] ?? ''),
             'fechnacpad' => self::parseFecha($state['fechnacpad'] ?? '') ?: null,
@@ -101,7 +101,7 @@ final class ActualizacionDatosPersonalesEstandar
             'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailtut'] ?? ''),
             'ocupactut' => self::trimCampo($state['ocupactut'] ?? ''),
             'fechActDatos' => now()->format('Y-m-d H:i:s'),
-        ];
+        ], ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state));
     }
 
     public static function guardar(Legajo $legajo, array $state): void
@@ -156,6 +156,8 @@ final class ActualizacionDatosPersonalesEstandar
             'teletut' => $req,
             'emailtut' => $reqEmail,
             'ocupactut' => $req,
+            'respAdmiNom' => ActualizacionDatosPersonalesComun::reglaNombreDestinatarioFacturacionAfip(),
+            'respAdmiDni' => ActualizacionDatosPersonalesComun::reglaDniDestinatarioFacturacionAfip(),
         ];
     }
 
@@ -164,14 +166,14 @@ final class ActualizacionDatosPersonalesEstandar
      */
     public static function mensajesValidacion(): array
     {
-        return [
+        return array_merge([
             'fechnacpad.date' => 'La fecha de nacimiento del padre no es válida.',
             'fechnacmad.date' => 'La fecha de nacimiento de la madre no es válida.',
             'emailpad.email' => 'El e-mail del padre no es válido.',
             'emailmad.email' => 'El e-mail de la madre no es válido.',
             'emailtut.email' => 'El e-mail del tutor no es válido.',
             '*.required' => 'Este campo es obligatorio. Si no corresponde, escriba un guión (-).',
-        ];
+        ], ActualizacionDatosPersonalesComun::mensajesValidacionDestinatarioFacturacionAfip());
     }
 
     /**
@@ -203,7 +205,7 @@ final class ActualizacionDatosPersonalesEstandar
             'teletut' => 'Tutor — Celular',
             'emailtut' => 'Tutor — E-mail',
             'ocupactut' => 'Tutor — Ocupación',
-        ];
+        ] + ActualizacionDatosPersonalesComun::etiquetasDestinatarioFacturacionAfip();
     }
 
     /**

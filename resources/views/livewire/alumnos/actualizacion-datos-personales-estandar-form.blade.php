@@ -374,6 +374,8 @@
                         </div>
                     </section>
                 @endif
+
+                @include('livewire.alumnos.partials.destinatario-facturacion-afip')
             </div>
 
             <div class="sticky bottom-0 z-20 -mx-2 mt-6 border-t border-accent-200 bg-[#F4F8F9]/95 px-2 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0">
