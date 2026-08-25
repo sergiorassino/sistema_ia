@@ -74,7 +74,10 @@ final class ArancelesEscolares
             return null;
         }
 
-        $curso = InformeInasistencias::cursoNombreAutogestion();
+        $curso = '';
+        if (InformeInasistencias::tieneMatriculaCursoAutogestion()) {
+            $curso = InformeInasistencias::cursoNombreAutogestion();
+        }
 
         $idLegajo = (int) $ctx->idLegajo;
         $idNivel = (int) $ctx->idNivel;

@@ -158,7 +158,7 @@ class ListadoPorCurso extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'camposPorGrupo' => $camposPorGrupo,
             'plantillas' => $plantillas,
-        ])->layout(ListadoPorCursoPortalDocente::layout(), ['pageTitle' => 'Alumnos por curso']);
+        ])->layout(ListadoPorCursoPortalDocente::layout(), ['pageTitle' => 'Listados de Estudiantes por Curso']);
     }
 
     /** Al elegir un radio de plantilla, aplica columnas y condición automáticamente. */

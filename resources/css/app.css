@@ -462,18 +462,18 @@
     .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
         background-color: #d4e8ec;
     }
-    /* Portal familia — aranceles escolares (desktop: planilla con scroll; mobile: cards en Blade) */
+    /* Portal familia — aranceles escolares (desktop: planilla a ancho completo; mobile: cards en Blade) */
     .gf.gf-cuotas-autogestion {
         display: block;
-        width: max-content;
-        min-width: 56rem;
+        width: 100%;
+        min-width: 70rem;
         max-width: none;
         flex-shrink: 0;
     }
     .gf.gf-cuotas-autogestion .gf-head,
     .gf.gf-cuotas-autogestion .gf-row {
         width: 100%;
-        min-width: 56rem;
+        min-width: 70rem;
         max-width: none;
         flex-wrap: nowrap;
         align-items: stretch;
@@ -484,53 +484,62 @@
         min-width: 0;
     }
     .gf.gf-cuotas-autogestion .gf-col-dni {
-        flex: 0 0 5.5rem;
-        width: 5.5rem;
+        flex: 0 0 6rem;
+        width: 6rem;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
     .gf.gf-cuotas-autogestion .gf-col-curso {
-        flex: 0 1 7.5rem;
-        min-width: 4.5rem;
-        max-width: 8.5rem;
+        flex: 1 1 8rem;
+        min-width: 5rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         text-transform: uppercase;
     }
     .gf.gf-cuotas-autogestion .gf-col-nivel {
-        flex: 0 1 6.5rem;
-        min-width: 4rem;
-        max-width: 7.5rem;
+        flex: 1 1 7rem;
+        min-width: 4.5rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         text-transform: uppercase;
     }
     .gf.gf-cuotas-autogestion .gf-col-ano {
-        flex: 0 0 3.25rem;
-        width: 3.25rem;
+        flex: 0 0 3.5rem;
+        width: 3.5rem;
         text-align: center;
     }
     .gf.gf-cuotas-autogestion .gf-col-cuota {
-        flex: 1 1 0;
-        min-width: 6rem;
+        flex: 1.4 1 0;
+        min-width: 7rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
     .gf.gf-cuotas-autogestion .gf-col-fecha {
-        flex: 0 0 4.75rem;
-        width: 4.75rem;
+        flex: 0 0 5.25rem;
+        width: 5.25rem;
         text-align: center;
         font-variant-numeric: tabular-nums;
     }
     .gf.gf-cuotas-autogestion .gf-col-importe {
-        flex: 0 0 4.75rem;
-        width: 4.75rem;
+        flex: 0 0 5.5rem;
+        width: 5.5rem;
         text-align: right;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+    }
+    .gf.gf-cuotas-autogestion .gf-col-interes {
+        color: #b91c1c;
+        font-weight: 600;
+    }
+    .gf.gf-cuotas-autogestion .gf-col-total {
+        color: #333333;
+        font-weight: 700;
+    }
+    .gf.gf-cuotas-autogestion .gf-row.gf-row--totales:last-of-type .gf-td.gf-col-total {
+        color: #b91c1c;
     }
     .gf.gf-cuotas-autogestion .gf-row.gf-row--pagada {
         background-color: #bbf7d0;

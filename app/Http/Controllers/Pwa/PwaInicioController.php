@@ -25,10 +25,10 @@ class PwaInicioController extends Controller
 
         if ($portal === PwaIdentity::FAMILIAS) {
             if (Auth::guard('alumno')->check()) {
-                return redirect()->route('alumnos.home');
+                return redirect()->to(se_route_url('alumnos.home'));
             }
 
-            return redirect()->route('alumnos.login');
+            return redirect()->to(se_route_url('alumnos.login'));
         }
 
         if (Auth::guard('web')->check()) {

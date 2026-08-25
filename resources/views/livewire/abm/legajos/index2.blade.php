@@ -116,7 +116,14 @@
                                             {{ mb_substr((string) $l->apellido, 0, 1) }}{{ mb_substr((string) $l->nombre, 0, 1) }}
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-semibold text-neutral-900" title="ID {{ $l->id }}">{{ $l->apellido }}, {{ $l->nombre }}</div>
+                                            <x-nav-contexto-estudiante
+                                                destino="abm.legajos.edit"
+                                                :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::LEGAJO_ABM"
+                                                :id-legajos="$l->id"
+                                                tag="a"
+                                                class="inline">
+                                                <span class="font-semibold text-neutral-900 transition-colors hover:text-primary-700 hover:underline" title="ID {{ $l->id }}">{{ $l->apellido }}, {{ $l->nombre }}</span>
+                                            </x-nav-contexto-estudiante>
                                             <div class="mt-0.5 text-xs text-neutral-500">Legajo {{ $l->legajo ?: 'sin número' }}</div>
                                         </div>
                                     </div>
@@ -234,43 +241,6 @@
             @endif
         </div>
 
-        @if ($showConfirm)
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm">
-                <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl" @click.stop>
-                    <div class="px-6 py-5">
-                        <div class="flex items-start gap-4">
-                            <div @class([
-                                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
-                                'bg-red-100 text-red-600' => $deleteId,
-                                'bg-amber-100 text-amber-700' => ! $deleteId,
-                            ])>
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-base font-bold text-neutral-900">
-                                    {{ $deleteId ? 'Confirmar eliminación' : 'No se puede eliminar' }}
-                                </h3>
-                                <p class="mt-2 text-sm leading-6 text-neutral-600">{{ $deleteInfo }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-3 border-t border-accent-200 bg-accent-50/70 px-6 py-4">
-                        <button wire:click="$set('showConfirm', false)" class="btn-secondary">
-                            {{ $deleteId ? 'Cancelar' : 'Cerrar' }}
-                        </button>
-                        @if ($deleteId)
-                            <button wire:click="delete" wire:loading.attr="disabled" class="btn-danger">
-                                <span wire:loading.remove wire:target="delete">Eliminar</span>
-                                <span wire:loading wire:target="delete">Eliminando...</span>
-                            </button>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        @endif
     </div>
 
     @if ($showPasswordModal)
@@ -303,5 +273,17 @@
 @script
 <script>
     $wire.on('se-swal-error', ({ mensaje }) => window.seSwalError(mensaje));
+    $wire.on('legajo-confirmar-eliminacion', ({ mensaje }) => {
+        window.seSwalConfirmar(mensaje, 'Confirmar eliminación', {
+            icon: 'warning',
+            confirmButtonText: 'Sí, eliminar',
+        }).then((ok) => {
+            if (ok) {
+                $wire.delete();
+            } else {
+                $wire.cancelDelete();
+            }
+        });
+    });
 </script>
 @endscript

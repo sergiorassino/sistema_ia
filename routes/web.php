@@ -555,6 +555,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/solicitud-evaluacion/nueva', SolicitudEvaluacionForm::class)
         ->name('portalDocente.solicitudEvaluacion.create');
 
+    Route::get('/listados/por-curso', ListadoPorCurso::class)
+        ->name('portalDocente.listados.porCurso');
+    Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)
+        ->name('portalDocente.listados.porCurso.pdf');
+    Route::get('/listados/exportar-excel', EstudiantesExcelController::class)
+        ->name('portalDocente.listados.exportarExcel');
+
     Route::get('/listados/estudiantes-formato', ListadoEstudiantesFormato::class)
         ->name('portalDocente.listados.estudiantesFormato');
     Route::get('/listados/estudiantes-formato/pdf', ListadoEstudiantesFormatoPdfController::class)

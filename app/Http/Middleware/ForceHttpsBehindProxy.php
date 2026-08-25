@@ -39,6 +39,13 @@ class ForceHttpsBehindProxy
             $request->headers->set('X-Forwarded-Prefix', $appPath);
         }
 
+        // Host de la barra de direcciones (127.0.0.1 vs localhost, www vs sin www).
+        // Si forceRootUrl queda en APP_URL y el usuario entró por otro host, la cookie no viaja.
+        $host = trim((string) $request->getHost());
+        if ($host !== '') {
+            URL::forceRootUrl(rtrim($request->getSchemeAndHttpHost(), '/').$appPath);
+        }
+
         return $next($request);
     }
 

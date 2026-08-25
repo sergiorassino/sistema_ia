@@ -28,7 +28,7 @@
         <div class="flex items-center gap-2 flex-shrink-0"
              :class="sidebarCollapsed ? 'flex-col gap-2' : ''">
             <livewire:auth.cambiar-contrasena-modal :guard="$guard" :key="'cambiar-pwrd-'.$guard" />
-            <form method="POST" action="{{ route($logoutRoute) }}">
+            <form method="POST" action="{{ se_route_url($logoutRoute) }}">
                 @csrf
                 <button type="submit"
                         title="Cerrar sesión"

@@ -31,12 +31,15 @@ class ArancelesEscolaresIndex extends Component
         // Misma columna en pendientes e historial (solo si AFIP está activo en el tenant).
         $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible();
 
+        $totalesAdeudados = $this->mostrarHistorial
+            ? ['neto' => 0.0, 'interes' => 0.0, 'conIntereses' => 0.0, 'porCuota' => []]
+            : GestionAranceles::totalizarSaldosAdeudados($cuotas);
+
         return view('livewire.alumnos.aranceles-escolares-index', [
             'cuotas' => $cuotas,
             'encabezado' => ArancelesEscolares::encabezadoAutogestion(),
-            'totalesAdeudados' => $this->mostrarHistorial
-                ? ['neto' => 0.0, 'conIntereses' => 0.0]
-                : GestionAranceles::totalizarSaldosAdeudados($cuotas),
+            'totalesAdeudados' => $totalesAdeudados,
+            'interesesPorCuota' => $totalesAdeudados['porCuota'] ?? [],
             'facturasAfip' => $muestraComprobanteAfip
                 ? ArancelesEscolares::facturasAfipVigentes($cuotas)
                 : [],

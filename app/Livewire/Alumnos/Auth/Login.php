@@ -2,10 +2,7 @@
 
 namespace App\Livewire\Alumnos\Auth;
 
-use App\Models\Ento;
 use App\Models\Legajo;
-use App\Models\Matricula;
-use App\Models\Terlec;
 use App\Support\Alumnos\SinMatriculaAutogestionException;
 use App\Support\DniInput;
 use App\Support\InformeInasistencias;
@@ -45,6 +42,10 @@ class Login extends Component
             if ($dni !== '') {
                 $this->dni = $dni;
             }
+        }
+
+        if ($request->query('aviso') === 'inactividad' && ! session()->has('info') && ! session()->has('error')) {
+            session()->flash('info', 'Su sesión se cerró por inactividad. Ingrese nuevamente.');
         }
     }
 
@@ -105,20 +106,7 @@ class Login extends Component
 
             session(['auth.pending_session_regenerate' => true]);
 
-            $idNivel = (int) ($alumno->idnivel ?? 0);
-            if ($idNivel <= 0) {
-                $idNivel = (int) (Matricula::query()
-                    ->where('idLegajos', (int) $alumno->id)
-                    ->orderByDesc('idTerlec')
-                    ->orderByDesc('id')
-                    ->value('idNivel') ?? 0);
-            }
-
-            $idTerlec = (int) (Ento::query()
-                ->where('idNivel', $idNivel)
-                ->value('idTerlecVerNotas') ?? 0);
-
-            if ($idNivel <= 0 || $idTerlec <= 0 || ! Terlec::query()->whereKey($idTerlec)->exists()) {
+            if (! StudentContext::establecerDesdeLegajo($alumno)) {
                 Auth::guard('alumno')->logout();
                 StudentContext::clear();
                 RateLimiter::clear($throttleKey);
@@ -127,12 +115,6 @@ class Login extends Component
                     'dni' => 'No se pudo determinar el ciclo lectivo para autogestión. Contacte a secretaría.',
                 ]);
             }
-
-            StudentContext::set(
-                idLegajo: (int) $alumno->id,
-                idNivel: $idNivel,
-                idTerlec: $idTerlec,
-            );
 
             if (! InformeInasistencias::tieneMatriculaCursoAutogestion()) {
                 Auth::guard('alumno')->logout();
@@ -151,7 +133,7 @@ class Login extends Component
 
             RateLimiter::clear($throttleKey);
 
-            return $this->redirectRoute(tenantAutogestionRutaInicio(), navigate: false);
+            return $this->redirect(se_route_url(tenantAutogestionRutaInicio()), navigate: false);
         }
 
         RateLimiter::hit($throttleKey, 60);

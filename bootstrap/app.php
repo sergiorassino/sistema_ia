@@ -9,7 +9,6 @@ use App\Http\Middleware\PwaPortalPrefixRewrite;
 use App\Http\Middleware\PwaPortalPrefixSession;
 use App\Http\Middleware\RegenerarSesionPostLogin;
 use App\Support\Alumnos\SinMatriculaAutogestionException;
-use App\Support\Auth\CerrarSesionAplicacion;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -37,17 +36,45 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', RegenerarSesionPostLogin::class);
 
         $middleware->redirectGuestsTo(function (Request $request) {
+            $path = trim($request->path(), '/');
+            $esPortalAlumno = $path === 'alumnos' || str_starts_with($path, 'alumnos/');
+
             if (! $request->expectsJson() && $request->hasSession()) {
                 $request->session()->flash(
                     'error',
-                    'Debe iniciar sesión para continuar.',
+                    $esPortalAlumno
+                        ? 'Su sesión expiró. Ingrese nuevamente con su DNI y contraseña.'
+                        : 'Debe iniciar sesión para continuar.',
                 );
             }
 
-            $path = trim($request->path(), '/');
-
-            if ($path === 'alumnos' || str_starts_with($path, 'alumnos/')) {
+            if ($esPortalAlumno) {
                 return se_route_url('alumnos.login');
+            }
+
+            $referer = (string) $request->headers->get('referer', '');
+            if (
+                str_contains($referer, '/alumnos')
+                || str_contains($referer, 'loginEstudiante')
+                || str_contains($referer, 'pwa-familias')
+            ) {
+                if ($request->hasSession() && ! $request->session()->has('error')) {
+                    $request->session()->flash(
+                        'error',
+                        'Su sesión expiró. Ingrese nuevamente con su DNI y contraseña.',
+                    );
+                }
+
+                return se_route_url('alumnos.login');
+            }
+
+            if ($request->hasSession()) {
+                foreach (array_keys($request->session()->all()) as $key) {
+                    $key = (string) $key;
+                    if (str_starts_with($key, 'login_alumno_') || str_starts_with($key, 'student.')) {
+                        return se_route_url('alumnos.login');
+                    }
+                }
             }
 
             return se_route_url('login');
@@ -71,10 +98,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => $e->getMessage()], 422);
             }
 
-            CerrarSesionAplicacion::ejecutar($request);
+            // No cerrar sesión: el alumno ya autenticado debe poder volver al menú.
+            // Cerrar aquí provocaba “vuelve al login” al abrir un PDF/opción del portal.
+            if (auth('alumno')->check()) {
+                return redirect()
+                    ->to(se_route_url(tenantAutogestionRutaInicio()))
+                    ->with('se_swal_error', $e->getMessage())
+                    ->with('se_swal_error_titulo', 'Acceso no disponible');
+            }
 
             return redirect()
-                ->route('alumnos.login')
+                ->to(se_route_url('alumnos.login'))
                 ->with('se_swal_error', $e->getMessage())
                 ->with('se_swal_error_titulo', 'Acceso no disponible');
         });

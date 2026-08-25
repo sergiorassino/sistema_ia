@@ -25,12 +25,32 @@ use Livewire\Component;
 
 if (! function_exists('se_route_url')) {
     /**
-     * URL absoluta con el prefijo de APP_URL (subcarpeta en producción).
-     * Evita enlaces a /alumnos/... o /dashboard en la raíz del dominio.
+     * URL absoluta en el host de la petición actual, con la subcarpeta de APP_URL.
+     *
+     * No usa el host de APP_URL: si el usuario entró por 127.0.0.1 y APP_URL es
+     * localhost (o www vs sin www), la cookie de sesión no viaja y el login
+     * de autogestión parece “cerrarse” al elegir una opción del menú.
      */
     function se_route_url(string $name, mixed $parameters = []): string
     {
-        return rtrim((string) config('app.url'), '/').route($name, $parameters, false);
+        $relative = route($name, $parameters, false);
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $appPath = rtrim((string) (parse_url($appUrl, PHP_URL_PATH) ?: ''), '/');
+
+        if ($appPath !== '' && ($relative === $appPath || str_starts_with($relative, $appPath.'/'))) {
+            $relative = substr($relative, strlen($appPath)) ?: '/';
+        }
+
+        $root = $appUrl;
+        if (app()->bound('request')) {
+            $request = request();
+            $host = trim((string) $request->getHost());
+            if ($host !== '') {
+                $root = rtrim($request->getSchemeAndHttpHost(), '/').$appPath;
+            }
+        }
+
+        return $root.$relative;
     }
 }
 

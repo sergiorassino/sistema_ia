@@ -363,7 +363,7 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
     private function dibujarConsentimiento(): void
     {
         $d = $this->datos;
-        $texto = 'ACEPTO Y DOY MI CONSENTIMIENTO EN LO REFERIDO A: COMPROMISO EDUCATIVO, AEC y NORMATIVAS DEL NIVEL Y AUTORIZACIÓN PARA EL TRASLADO POR LOS ESPACIOS INSTITUCIONALES, EN REPRESENTACIÓN DE LA RESPONSABILIDAD PARENTAL Y ASUMIENDO EL COMPROMISO DE INFORMAR EL OTRO PROGENITOR Y/O TUTOR LEGAL
+        $texto = 'ACEPTO Y DOY MI CONSENTIMIENTO EN LO REFERIDO A: COMPROMISO EDUCATIVO, AEC y NORMATIVAS DEL NIVEL Y AUTORIZACIÓN PARA EL TRASLADO POR LOS ESPACIOS INSTITUCIONALES, EN REPRESENTACIÓN DE LA RESPONSABILIDAD PARENTAL Y ASUMIENDO EL COMPROMISO DE INFORMAR AL OTRO PROGENITOR Y/O TUTOR LEGAL
 Mediante la presente, manifiesto que toda la información aquí consignada es veraz y ha sido entregada de buena fe, comprometiéndome a informar oportunamente a la Institución sobre cualquier modificación que pudiera surgir.';
 
         TcpdfFuenteArial::aplicar($this, 'B', 8);

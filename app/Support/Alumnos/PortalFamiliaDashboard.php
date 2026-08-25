@@ -92,7 +92,7 @@ final class PortalFamiliaDashboard
                 'id' => 'actualizacion-datos',
                 'titulo' => 'Actualización de datos personales',
                 'descripcion' => 'Revise y actualice los datos del legajo.',
-                'url' => route('alumnos.actualizacion-datos'),
+                'url' => se_route_url('alumnos.actualizacion-datos'),
                 'externo' => false,
                 'icono' => 'datos',
             ];
@@ -147,7 +147,7 @@ final class PortalFamiliaDashboard
                 'id' => 'aranceles-escolares',
                 'titulo' => tenantAutogestionArancelesEscolaresMenuEtiqueta(),
                 'descripcion' => 'Cuotas pendientes y comprobantes de pago.',
-                'url' => route('alumnos.aranceles-escolares'),
+                'url' => se_route_url('alumnos.aranceles-escolares'),
                 'externo' => false,
                 'icono' => 'aranceles',
             ];
@@ -181,7 +181,7 @@ final class PortalFamiliaDashboard
                 'id' => 'comunicaciones',
                 'titulo' => 'Bandeja de comunicados',
                 'descripcion' => 'Mensajes con la institución.',
-                'url' => route('alumnos.comunicaciones.index'),
+                'url' => se_route_url('alumnos.comunicaciones.index'),
                 'externo' => false,
                 'icono' => 'comunicaciones',
             ];
@@ -255,9 +255,14 @@ final class PortalFamiliaDashboard
             ? ArancelesEscolares::formatearDni($legajo->dni ?? '')
             : '';
 
+        $curso = '';
+        if (InformeInasistencias::tieneMatriculaCursoAutogestion()) {
+            $curso = InformeInasistencias::cursoNombreAutogestion();
+        }
+
         return [
             'dni' => $dni !== '' ? $dni : '—',
-            'curso' => mb_strtoupper(InformeInasistencias::cursoNombreAutogestion()),
+            'curso' => $curso !== '' ? mb_strtoupper($curso) : '',
         ];
     }
 }

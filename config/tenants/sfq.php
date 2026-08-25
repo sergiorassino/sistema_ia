@@ -85,6 +85,7 @@ return [
         'menu' => [
             'inicial' => [
                 'listado_estudiantes' => true,
+                'listado_estudiantes_formato' => true,
                 'recursos_didacticos_nueva_reserva' => true,
                 'recursos_didacticos_listado' => true,
                 'carga_notas' => true,
@@ -97,6 +98,7 @@ return [
             ],
             'primario' => [
                 'listado_estudiantes' => true,
+                'listado_estudiantes_formato' => true,
                 'recursos_didacticos_nueva_reserva' => true,
                 'recursos_didacticos_listado' => true,
                 'carga_estudiante' => true,

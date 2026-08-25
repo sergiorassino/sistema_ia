@@ -142,7 +142,7 @@
          @click.capture="$event.target.closest('a[href]') && (sidebarOpen = false)">
 
         @if (tenantAutogestionMenuInicioHabilitada())
-            <a href="{{ route('alumnos.home') }}"
+            <a href="{{ se_route_url('alumnos.home') }}"
                @class([
                    'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => ($route ?? '') === 'alumnos.home',
@@ -173,7 +173,7 @@
         @endif
 
         @if (tenantAutogestionActualizacionDatosHabilitada())
-            <a href="{{ route('alumnos.actualizacion-datos') }}"
+            <a href="{{ se_route_url('alumnos.actualizacion-datos') }}"
                @if ($bloqueoFichaYDatosAlumno['bloqueada'])
                    @click.prevent="window.seSwalAviso(@js($bloqueoFichaYDatosAlumno['mensaje']), 'Actualización de datos')"
                @endif
@@ -237,7 +237,7 @@
         @endif
 
         @if (tenantAutogestionArancelesEscolaresHabilitada())
-            <a href="{{ route('alumnos.aranceles-escolares') }}"
+            <a href="{{ se_route_url('alumnos.aranceles-escolares') }}"
                @class([
                    'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.aranceles-escolares'),
@@ -284,7 +284,7 @@
                 Cuaderno de comunicados
             </p>
 
-            <a href="{{ route('alumnos.comunicaciones.index') }}"
+            <a href="{{ se_route_url('alumnos.comunicaciones.index') }}"
                @class([
                    'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => $alumnoComCuadernoActivo,
@@ -297,7 +297,7 @@
                 <span x-show="!sidebarCollapsed" x-cloak class="truncate">Bandeja de Comunicados</span>
             </a>
 
-            <a href="{{ route('alumnos.comunicaciones.nuevo') }}"
+            <a href="{{ se_route_url('alumnos.comunicaciones.nuevo') }}"
                @class([
                    'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => $alumnoRuta === 'alumnos.comunicaciones.nuevo',
@@ -313,7 +313,7 @@
                 Ajustes
             </p>
 
-            <a href="{{ route('alumnos.push.index') }}"
+            <a href="{{ se_route_url('alumnos.push.index') }}"
                @class([
                    'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
                    'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.push'),
@@ -369,6 +369,7 @@
 @include('layouts.partials.livewire-scripts')
 <script>
     (() => {
+        // Cierre por inactividad (antes del vencimiento del servidor) con aviso amable en el login.
         const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
         const LOGOUT_URL = @json(se_route_url('alumnos.logout'));
         const LOGIN_URL = @json(se_route_url('alumnos.login'));
@@ -378,6 +379,16 @@
 
         const getCsrfToken = () =>
             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        const loginPorInactividadUrl = () => {
+            try {
+                const u = new URL(LOGIN_URL, window.location.origin);
+                u.searchParams.set('aviso', 'inactividad');
+                return u.toString();
+            } catch (e) {
+                return LOGIN_URL + (LOGIN_URL.includes('?') ? '&' : '?') + 'aviso=inactividad';
+            }
+        };
 
         const logoutAndRedirect = async () => {
             if (hasTriggered) return;
@@ -394,7 +405,7 @@
                 });
             } catch (e) {
             } finally {
-                window.location.assign(LOGIN_URL);
+                window.location.assign(loginPorInactividadUrl());
             }
         };
 
@@ -404,16 +415,7 @@
             timer = window.setTimeout(logoutAndRedirect, IDLE_TIMEOUT_MS);
         };
 
-        const activityEvents = [
-            'mousemove',
-            'mousedown',
-            'keydown',
-            'scroll',
-            'touchstart',
-            'pointerdown',
-        ];
-
-        activityEvents.forEach((evt) => {
+        ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'pointerdown'].forEach((evt) => {
             window.addEventListener(evt, resetTimer, { passive: true });
         });
 

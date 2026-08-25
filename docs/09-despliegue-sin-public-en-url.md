@@ -32,7 +32,8 @@ Si el hosting apunta el dominio solo a `sistema/public/`, el `.htaccess` de la r
 | Livewire 404 en AJAX | `APP_URL` mal; hace falta `URL::forceRootUrl` en `AppServiceProvider` (subcarpeta). |
 | Login no ingresa / no carga último nivel-año | JS de Livewire en URL sin subcarpeta (`/vendor/livewire/` en vez de `/ia/.../vendor/livewire/`). Tras desplegar: `php artisan config:clear`. |
 | Tras login, **404** en `https://dominio.com/dashboard` (sin `/ia/...`) | `APP_URL` debe incluir la subcarpeta; subir `AppServiceProvider` con `URL::forceRootUrl` y `config:clear`. La URL correcta es `https://dominio.com/ia/25demayo/dashboard`. |
-| PDF / enlaces a `/alumnos/...` sin subcarpeta | Usar `se_route_url('nombre.ruta')` o `APP_URL` con path + `config:clear`. Enlaces del menú alumno ya usan `se_route_url`. |
+| PDF / enlaces a `/alumnos/...` sin subcarpeta | Usar `se_route_url('nombre.ruta')` (host de la petición + path de `APP_URL`) o `APP_URL` con path + `config:clear`. |
+| Tras login de estudiante, el menú vuelve a pedir sesión | 1) Host distinto a `APP_URL` (`127.0.0.1` vs `localhost`, `www`). Usar la misma URL que `APP_URL` o reiniciar `npm run dev:all` (sirve en `localhost`). 2) `se_route_url` / `forceRootUrl` deben usar el host de la petición. 3) No cerrar sesión ante errores de matrícula en el portal. |
 | `livewire.js` **403 Forbidden** en `/ia/.../vendor/livewire/` | LiteSpeed/hosting suele bloquear la palabra `vendor` en la URL. Usar la ruta Laravel `/livewire-{hash}/livewire.js` (`AppServiceProvider` + `php artisan config:clear`), no archivos en `public/vendor/livewire/`. |
 | Sigue apareciendo `/public` | Enlaces viejos o document root incorrecto. |
 | Logo del colegio no se guarda / no hay carpeta `storage/.../ento/logos/{slug}` | Ver sección **Logo institucional** más abajo. |

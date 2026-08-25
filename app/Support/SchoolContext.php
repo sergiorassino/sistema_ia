@@ -40,6 +40,10 @@ class SchoolContext
             'school.idNivel' => $idNivel,
             'school.idTerlec' => $idTerlec,
         ]);
+
+        if (app()->resolved(static::class)) {
+            app()->forgetInstance(static::class);
+        }
     }
 
     public static function clear(): void
@@ -50,6 +54,10 @@ class SchoolContext
             'school.idTerlec',
             'school.idNivelTrabajo',
         ]);
+
+        if (app()->resolved(static::class)) {
+            app()->forgetInstance(static::class);
+        }
     }
 
     public function isValid(): bool
