@@ -49,6 +49,7 @@
                         <div class="gf-th w-16 text-center">Año lect.</div>
                         <div class="gf-th w-32">Curso</div>
                         <div class="gf-th w-40 shrink-0">Nivel</div>
+                        <div class="gf-th w-28 shrink-0" title="Condición en el ciclo lectivo actual">Condición</div>
                         <div class="gf-th w-20 justify-center">Beca</div>
                         <div class="gf-th w-32 justify-center"></div>
                     </div>
@@ -92,6 +93,10 @@
                                         {{ $datos['nivelEtiqueta'] }}
                                     </span>
                                 @endif
+                            </div>
+                            <div class="gf-td w-28 shrink-0 truncate whitespace-nowrap"
+                                 title="{{ $datos['condicion'] !== '—' ? 'Ciclo actual: '.$datos['condicion'] : 'Sin matrícula en el ciclo lectivo actual' }}">
+                                {{ $datos['condicion'] }}
                             </div>
                             <div class="gf-td w-20 justify-center whitespace-nowrap">{{ $datos['beca'] }}</div>
                             <div class="gf-td w-32 justify-center">

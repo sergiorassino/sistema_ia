@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "dev:all": "concurrently -n php,vite -c blue,green \"php artisan serve --host=127.0.0.1 --port=8000\" \"vite\"",
+        "dev:all": "concurrently -n php,vite -c blue,green \"php artisan serve --host=localhost --port=8000\" \"vite\"",
         "build": "vite build"
     },
     "devDependencies": {

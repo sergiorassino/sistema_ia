@@ -32,6 +32,20 @@ final class PortalDocenteMenuCatalog
                 'id' => 'inicial.listado_estudiantes',
                 'nivel' => NivelSistema::INICIAL,
                 'menu_config' => 'tenant.portal_docente.menu.inicial.listado_estudiantes',
+                'route' => 'portalDocente.listados.porCurso',
+                'active_routes' => [
+                    'portalDocente.listados.porCurso',
+                    'portalDocente.listados.porCurso.pdf',
+                    'portalDocente.listados.exportarExcel',
+                ],
+                'label' => 'Listados de Estudiantes por Curso',
+                'title' => 'Listados de Estudiantes por Curso',
+                'icon' => 'document',
+            ],
+            [
+                'id' => 'inicial.listado_estudiantes_formato',
+                'nivel' => NivelSistema::INICIAL,
+                'menu_config' => 'tenant.portal_docente.menu.inicial.listado_estudiantes_formato',
                 'route' => 'portalDocente.listados.estudiantesFormato',
                 'active_routes' => [
                     'portalDocente.listados.estudiantesFormato',
@@ -39,7 +53,7 @@ final class PortalDocenteMenuCatalog
                 ],
                 'label' => 'Listados de Estudiantes con Formato',
                 'title' => 'Listados de Estudiantes con Formato',
-                'icon' => 'document',
+                'icon' => 'rows',
             ],
             [
                 'id' => 'inicial.carga_notas',
@@ -179,6 +193,20 @@ final class PortalDocenteMenuCatalog
                 'id' => 'primario.listado_estudiantes',
                 'nivel' => NivelSistema::PRIMARIO,
                 'menu_config' => 'tenant.portal_docente.menu.primario.listado_estudiantes',
+                'route' => 'portalDocente.listados.porCurso',
+                'active_routes' => [
+                    'portalDocente.listados.porCurso',
+                    'portalDocente.listados.porCurso.pdf',
+                    'portalDocente.listados.exportarExcel',
+                ],
+                'label' => 'Listados de Estudiantes por Curso',
+                'title' => 'Listados de Estudiantes por Curso',
+                'icon' => 'document',
+            ],
+            [
+                'id' => 'primario.listado_estudiantes_formato',
+                'nivel' => NivelSistema::PRIMARIO,
+                'menu_config' => 'tenant.portal_docente.menu.primario.listado_estudiantes_formato',
                 'route' => 'portalDocente.listados.estudiantesFormato',
                 'active_routes' => [
                     'portalDocente.listados.estudiantesFormato',
@@ -186,7 +214,7 @@ final class PortalDocenteMenuCatalog
                 ],
                 'label' => 'Listados de Estudiantes con Formato',
                 'title' => 'Listados de Estudiantes con Formato',
-                'icon' => 'document',
+                'icon' => 'rows',
             ],
             [
                 'id' => 'secundario.calificaciones',
@@ -233,6 +261,20 @@ final class PortalDocenteMenuCatalog
                 'id' => 'secundario.listado_estudiantes',
                 'nivel' => NivelSistema::SECUNDARIO,
                 'menu_config' => 'tenant.portal_docente.menu.secundario.listado_estudiantes',
+                'route' => 'portalDocente.listados.porCurso',
+                'active_routes' => [
+                    'portalDocente.listados.porCurso',
+                    'portalDocente.listados.porCurso.pdf',
+                    'portalDocente.listados.exportarExcel',
+                ],
+                'label' => 'Listados de Estudiantes por Curso',
+                'title' => 'Listados de Estudiantes por Curso',
+                'icon' => 'document',
+            ],
+            [
+                'id' => 'secundario.listado_estudiantes_formato',
+                'nivel' => NivelSistema::SECUNDARIO,
+                'menu_config' => 'tenant.portal_docente.menu.secundario.listado_estudiantes_formato',
                 'route' => 'portalDocente.listados.estudiantesFormato',
                 'active_routes' => [
                     'portalDocente.listados.estudiantesFormato',
@@ -240,7 +282,7 @@ final class PortalDocenteMenuCatalog
                 ],
                 'label' => 'Listados de Estudiantes con Formato',
                 'title' => 'Listados de Estudiantes con Formato',
-                'icon' => 'document',
+                'icon' => 'rows',
             ],
         ];
     }

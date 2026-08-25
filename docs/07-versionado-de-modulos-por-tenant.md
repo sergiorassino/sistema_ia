@@ -254,7 +254,7 @@ Ver también [08-menus-de-navegacion.md](08-menus-de-navegacion.md) §3 (sidebar
 | Módulo | Ubicación principal | Rutas típicas |
 |--------|---------------------|---------------|
 | **Comunicaciones / cuaderno** | `App\Livewire\Comunicaciones\*`, `App\Comunicaciones\*`, modelos `Com*`, vistas `resources/views/comunicaciones/` | `comunicaciones.*`, `alumnos.comunicaciones.*`, `param.com-canales` |
-| **Listados por curso** | `App\Livewire\Listados\ListadoPorCurso`, `ListadoCursoPdfController`, `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf` |
+| **Listados por curso** | `App\Livewire\Listados\ListadoPorCurso`, `ListadoCursoPdfController`, `App\Support\Listados\*`, vistas `resources/views/listados/` | `listados.por-curso`, `listados.por-curso.pdf`, `portalDocente.listados.porCurso` |
 | **Listados con formato** | `App\Livewire\Listados\ListadoEstudiantesFormato`, `ListadoEstudiantesFormatoPdfController`, `App\Support\Listados\ListadoEstudiantesFormato*` | `listados.estudiantes-formato`, `portalDocente.listados.estudiantesFormato` |
 | **Legajos** | `App\Livewire\Abm\Legajos\*`, `LegajoForm` + `solapas_legajo` / `campos_legajo` | `abm.legajos`, `param.campos-listado-alumnos`, `param.solapas-legajo` |
 | **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |

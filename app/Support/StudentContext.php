@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Ento;
 use App\Models\Legajo;
+use App\Models\Matricula;
 use App\Models\Nivel;
 use App\Models\Terlec;
 
@@ -19,9 +21,9 @@ class StudentContext
     public static function fromSession(): static
     {
         $ctx = new static();
-        $ctx->idLegajo = session('student.idLegajo');
-        $ctx->idNivel  = session('student.idNivel');
-        $ctx->idTerlec = session('student.idTerlec');
+        $ctx->idLegajo = self::idPositivo(session('student.idLegajo'));
+        $ctx->idNivel  = self::idPositivo(session('student.idNivel'));
+        $ctx->idTerlec = self::idPositivo(session('student.idTerlec'));
         return $ctx;
     }
 
@@ -32,11 +34,62 @@ class StudentContext
             'student.idNivel'  => $idNivel,
             'student.idTerlec' => $idTerlec,
         ]);
+        self::olvidarInstanciaResuelta();
     }
 
     public static function clear(): void
     {
         session()->forget(['student.idLegajo', 'student.idNivel', 'student.idTerlec']);
+        self::olvidarInstanciaResuelta();
+    }
+
+    /**
+     * Completa nivel y ciclo (ento.idTerlecVerNotas) a partir del legajo autenticado.
+     */
+    public static function establecerDesdeLegajo(Legajo $alumno): bool
+    {
+        $idNivel = (int) ($alumno->idnivel ?? 0);
+        if ($idNivel <= 0) {
+            $idNivel = (int) (Matricula::query()
+                ->where('idLegajos', (int) $alumno->id)
+                ->orderByDesc('idTerlec')
+                ->orderByDesc('id')
+                ->value('idNivel') ?? 0);
+        }
+
+        $idTerlec = (int) (Ento::query()
+            ->where('idNivel', $idNivel)
+            ->value('idTerlecVerNotas') ?? 0);
+
+        if ($idNivel <= 0 || $idTerlec <= 0 || ! Terlec::query()->whereKey($idTerlec)->exists()) {
+            return false;
+        }
+
+        self::set(
+            idLegajo: (int) $alumno->id,
+            idNivel: $idNivel,
+            idTerlec: $idTerlec,
+        );
+
+        return true;
+    }
+
+    public static function olvidarInstanciaResuelta(): void
+    {
+        if (app()->resolved(static::class)) {
+            app()->forgetInstance(static::class);
+        }
+    }
+
+    private static function idPositivo(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $id = (int) $value;
+
+        return $id > 0 ? $id : null;
     }
 
     public function isValid(): bool

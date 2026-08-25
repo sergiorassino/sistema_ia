@@ -350,9 +350,15 @@ final class GestionAranceles
 
     /**
      * Totales de saldo neto (faltapa) y a pagar con interés/bonificación al día de hoy.
+     * Incluye desglose por cuota para la grilla de autogestión.
      *
      * @param  iterable<CuotaGenerada>  $registros
-     * @return array{neto: float, conIntereses: float}
+     * @return array{
+     *     neto: float,
+     *     interes: float,
+     *     conIntereses: float,
+     *     porCuota: array<int, array{interes: float, aPagar: float}>
+     * }
      */
     public static function totalizarSaldosAdeudados(iterable $registros): array
     {
@@ -362,13 +368,20 @@ final class GestionAranceles
         );
 
         if ($adeudadas->isEmpty()) {
-            return ['neto' => 0.0, 'conIntereses' => 0.0];
+            return [
+                'neto' => 0.0,
+                'interes' => 0.0,
+                'conIntereses' => 0.0,
+                'porCuota' => [],
+            ];
         }
 
         ImputacionPagoCalculo::precargarFormulas($adeudadas);
 
         $neto = 0.0;
+        $interesTotal = 0.0;
         $conIntereses = 0.0;
+        $porCuota = [];
         $hoy = Carbon::today();
 
         foreach ($adeudadas as $registro) {
@@ -381,14 +394,23 @@ final class GestionAranceles
                 $hoy,
                 null,
             );
-            $conIntereses += (float) $calc['aPagar'];
+            $interesFila = round((float) $calc['interes'], 2);
+            $aPagarFila = round((float) $calc['aPagar'], 2);
+            $interesTotal += $interesFila;
+            $conIntereses += $aPagarFila;
+            $porCuota[(int) $registro->id] = [
+                'interes' => $interesFila,
+                'aPagar' => $aPagarFila,
+            ];
         }
 
         ImputacionPagoCalculo::limpiarCacheFormulas();
 
         return [
             'neto' => round($neto, 2),
+            'interes' => round($interesTotal, 2),
             'conIntereses' => round($conIntereses, 2),
+            'porCuota' => $porCuota,
         ];
     }
 
@@ -565,7 +587,8 @@ final class GestionAranceles
      *     tieneMatriculaActual: bool,
      *     anoUltimaMatricula: string,
      *     nivelEtiqueta: string,
-     *     claseChipNivel: string
+     *     claseChipNivel: string,
+     *     condicion: string
      * }
      */
     public static function datosListadoBusqueda(Legajo $legajo): array
@@ -573,27 +596,51 @@ final class GestionAranceles
         $idTerlec = (int) schoolCtx()->idTerlec;
         $ultima = self::ultimaMatriculaDesdeLegajo($legajo);
         $matReferencia = self::matriculaReferenciaListado($legajo);
+        $matActual = self::matriculaCicloActivoDesdeLegajo($legajo, $idTerlec);
         $nivelNombre = trim((string) ($matReferencia?->nivel?->nivel ?? ''));
 
         return array_merge(self::datosMatriculaParaListado($legajo), [
-            'tieneMatriculaActual' => self::tieneMatriculaCicloActivo($legajo, $idTerlec),
+            'tieneMatriculaActual' => $matActual !== null,
             'anoUltimaMatricula' => self::anoTerlecMatricula($ultima),
             'nivelEtiqueta' => $nivelNombre !== '' ? $nivelNombre : '—',
             'claseChipNivel' => MatriculaNivelEstilo::claseChipPorNombreNivel($nivelNombre),
+            'condicion' => self::etiquetaCondicionMatricula($matActual),
         ]);
     }
 
     public static function tieneMatriculaCicloActivo(Legajo $legajo, ?int $idTerlec = null): bool
     {
+        return self::matriculaCicloActivoDesdeLegajo($legajo, $idTerlec) !== null;
+    }
+
+    /**
+     * Matrícula del ciclo lectivo indicado (sesión por defecto), reutilizando eager load si existe.
+     */
+    private static function matriculaCicloActivoDesdeLegajo(Legajo $legajo, ?int $idTerlec = null): ?Matricula
+    {
         $idTerlec ??= (int) schoolCtx()->idTerlec;
 
         if ($legajo->relationLoaded('matriculas')) {
-            return $legajo->matriculas->contains(
+            $mat = $legajo->matriculas->first(
                 fn (Matricula $m) => (int) $m->idTerlec === $idTerlec,
             );
+
+            return $mat instanceof Matricula ? $mat : null;
         }
 
-        return self::matriculaCicloActivo((int) $legajo->id) !== null;
+        return self::matriculaCicloActivo((int) $legajo->id);
+    }
+
+    /** Texto de condición pedagógica (`condiciones.condicion`) de una matrícula. */
+    private static function etiquetaCondicionMatricula(?Matricula $mat): string
+    {
+        if ($mat === null) {
+            return '—';
+        }
+
+        $texto = trim((string) ($mat->condicion?->condicion ?? ''));
+
+        return $texto !== '' ? $texto : '—';
     }
 
     /**
@@ -676,6 +723,7 @@ final class GestionAranceles
             'curso.curplan:id,curPlanCurso',
             'curso.turnoClase:id,nombre',
             'nivel:id,nivel',
+            'condicion:id,condicion',
         ];
     }
 }

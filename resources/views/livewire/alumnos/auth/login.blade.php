@@ -2,8 +2,19 @@
     <div class="card p-4 sm:p-5">
         <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-2.5 sm:mb-3">Acceso estudiantes</h2>
 
-        @if (session('error'))
-            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+        @php
+            $avisoInactividad = request()->query('aviso') === 'inactividad';
+            $avisoSesion = session('info')
+                ?? session('sesion_aviso')
+                ?? ($avisoInactividad ? 'Su sesión se cerró por inactividad. Ingrese nuevamente.' : null);
+        @endphp
+
+        @if ($avisoSesion)
+            <div class="mb-4 rounded-md border border-[#C1D7DA] bg-[#F4F8F9] px-3 py-2.5 text-sm text-neutral-700">
+                {{ $avisoSesion }}
+            </div>
+        @elseif (session('error'))
+            <div class="mb-4 rounded-md border border-[#C1D7DA] bg-[#F4F8F9] px-3 py-2.5 text-sm text-neutral-700">
                 {{ session('error') }}
             </div>
         @endif

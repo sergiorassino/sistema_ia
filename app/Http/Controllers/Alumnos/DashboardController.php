@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         $destino = tenantAutogestionRutaInicio();
         if ($destino !== 'alumnos.home') {
-            return redirect()->route($destino);
+            return redirect()->to(se_route_url($destino));
         }
 
         $ctx = studentCtx();

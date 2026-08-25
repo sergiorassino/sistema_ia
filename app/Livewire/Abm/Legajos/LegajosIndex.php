@@ -28,9 +28,7 @@ class LegajosIndex extends Component
     public bool   $soloMiNivel    = false;
     public ?int   $focusId       = null;
 
-    public bool   $showConfirm  = false;
-    public ?int   $deleteId     = null;
-    public string $deleteInfo   = '';
+    public ?int $deleteId = null;
 
     public bool $showPasswordModal = false;
 
@@ -170,14 +168,25 @@ class LegajosIndex extends Component
 
         if ($deps !== []) {
             $detail = LegajoDependenciasEliminacion::resumen($deps);
-            $this->deleteInfo = "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}.";
             $this->deleteId = null;
-        } else {
-            $this->deleteId = $id;
-            $this->deleteInfo = "¿Confirma eliminar el legajo de {$l->apellido}, {$l->nombre}?";
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}."
+            );
+
+            return;
         }
 
-        $this->showConfirm = true;
+        $this->deleteId = $id;
+        $this->dispatch(
+            'legajo-confirmar-eliminacion',
+            mensaje: "¿Confirma eliminar el legajo de {$l->apellido}, {$l->nombre}?"
+        );
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->reset('deleteId');
     }
 
     public function delete(): void
@@ -186,9 +195,9 @@ class LegajosIndex extends Component
 
         $key = 'legajos:delete:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
-            session()->flash('success', 'Demasiados intentos. Espere un momento e intente nuevamente.');
-            $this->showConfirm = false;
-            $this->reset('deleteId', 'deleteInfo');
+            $this->reset('deleteId');
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento e intente nuevamente.');
+
             return;
         }
         RateLimiter::hit($key, 60);
@@ -199,9 +208,10 @@ class LegajosIndex extends Component
                 $l = $this->scopedLegajoOrFail((int) $this->deleteId);
                 $detail = LegajoDependenciasEliminacion::resumen($deps);
                 $this->deleteId = null;
-                $this->deleteInfo = "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}.";
-                $this->showConfirm = true;
-                $this->dispatch('se-swal-error', mensaje: $this->deleteInfo);
+                $this->dispatch(
+                    'se-swal-error',
+                    mensaje: "No se puede eliminar el legajo de {$l->apellido}, {$l->nombre} porque tiene: {$detail}."
+                );
 
                 return;
             }
@@ -216,8 +226,6 @@ class LegajosIndex extends Component
                 $msg = LegajoDependenciasEliminacion::mensajeDesdeQueryException($e, "el legajo de {$nombre}")
                     ?? "No se puede eliminar el legajo de {$nombre} porque tiene registros relacionados en otros módulos.";
                 $this->deleteId = null;
-                $this->deleteInfo = $msg;
-                $this->showConfirm = true;
                 $this->dispatch('se-swal-error', mensaje: $msg);
 
                 return;
@@ -226,8 +234,7 @@ class LegajosIndex extends Component
             session()->flash('success', "Legajo de {$nombre} eliminado.");
         }
 
-        $this->showConfirm = false;
-        $this->reset('deleteId', 'deleteInfo');
+        $this->reset('deleteId');
     }
 
     public function render()

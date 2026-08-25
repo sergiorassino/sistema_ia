@@ -58,6 +58,12 @@ Portal completamente separado del login de Secretaría.
 
 **Estado:** Implementado (guard `alumno`, layout `alumno.blade.php`).
 
+Los enlaces del portal (menú, escritorio, logout) deben usarse con `se_route_url()`, que conserva el **host de la barra de direcciones** y antepone la subcarpeta de `APP_URL`. Si se arma la URL con el host de `APP_URL` (p. ej. `localhost` vs `127.0.0.1`, o `www` vs sin `www`), la cookie de sesión no viaja y al elegir una opción del menú el sistema pide login de nuevo.
+
+Si el alumno está autenticado pero faltan `student.idNivel` / `student.idTerlec` en sesión, `EnsureStudentContext` reconstruye el contexto; no redirige al login (esa pantalla limpia la sesión).
+
+Si se abre `/loginEstudiante` con sesión alumno aún válida (p. ej. un PDF redirigió mal), `LimpiarSesionEnPaginaLogin` **no** borra la sesión: vuelve al portal. Para entrar con otra cuenta hay que usar **Cerrar sesión**.
+
 **Diferencias clave con el login de Secretaría:**
 - Sin selección de nivel ni ciclo lectivo en el formulario.
 - El ciclo lectivo se determina automáticamente desde `ento.idTerlecVerNotas`.
