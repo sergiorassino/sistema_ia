@@ -94,22 +94,26 @@ final class PermisoExamenTcpdf extends TCPDF
         $x0 = self::MARGEN_IZQ;
         $centro = $x0 + self::ANCHO_UTIL / 2;
 
-        $this->SetY(14);
-        $this->SetFont(self::FUENTE, '', 11);
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+        $this->SetTextColor(0, 0, 0);
+
+        $this->SetY(12);
+        $this->SetFont(self::FUENTE, '', 8.5);
         $titulo = 'Permiso de Examen';
-        $tw = $this->GetStringWidth($titulo, self::FUENTE, '', 11) + 8;
-        $this->Rect($centro - $tw / 2, 12, $tw, 8);
-        $this->SetXY($centro - $tw / 2 + 4, 14.5);
-        $this->Cell($tw - 8, 4, $titulo, 0, 1, 'C');
+        $tw = $this->GetStringWidth($titulo, self::FUENTE, '', 8.5) + 6;
+        $this->Rect($centro - $tw / 2, 10.5, $tw, 5.8);
+        $this->SetXY($centro - $tw / 2 + 3, 11.8);
+        $this->Cell($tw - 6, 3.2, $titulo, 0, 1, 'C');
 
-        $this->SetY(24);
-        $this->SetFont(self::FUENTE, 'B', 13);
-        $this->Cell(self::ANCHO_UTIL, 6, $this->meta['instiNombre'], 0, 1, 'C');
-
-        $this->SetFont(self::FUENTE, '', 10);
-        $this->Cell(self::ANCHO_UTIL * 0.55, 5, $this->meta['etiquetaTurno'], 0, 0, 'L');
+        $this->SetY(19);
         $this->SetFont(self::FUENTE, 'B', 10);
-        $this->Cell(self::ANCHO_UTIL * 0.45, 5, 'Permiso Nº: '.$numero, 0, 1, 'R');
+        $this->Cell(self::ANCHO_UTIL, 4.5, $this->meta['instiNombre'], 0, 1, 'C');
+
+        $this->SetFont(self::FUENTE, '', 8);
+        $this->Cell(self::ANCHO_UTIL * 0.55, 4, $this->meta['etiquetaTurno'], 0, 0, 'L');
+        $this->SetFont(self::FUENTE, 'B', 8);
+        $this->Cell(self::ANCHO_UTIL * 0.45, 4, 'Permiso Nº: '.$numero, 0, 1, 'R');
 
         $lineaAlumno = $nombreCompleto;
         if ($dni !== '') {
@@ -118,27 +122,27 @@ final class PermisoExamenTcpdf extends TCPDF
         $introHtml = 'Conste por el presente que el Alumno/a: <b>'.$this->escapeHtml($lineaAlumno).'</b> '
             .'está habilitado para rendir las asignaturas correspondientes al año de estudio que indica a continuación, '
             .'lo que hizo en las fechas señaladas.';
-        $this->SetFont(self::FUENTE, '', 9.5);
-        $this->writeHTMLCell(self::ANCHO_UTIL, 0, $x0, $this->GetY() + 2, $introHtml, 0, 1, false, true, 'J');
+        $this->SetFont(self::FUENTE, '', 8.5);
+        $this->writeHTMLCell(self::ANCHO_UTIL, 0, $x0, $this->GetY() + 1.2, $introHtml, 0, 1, false, true, 'J');
 
-        $yTabla = $this->GetY() + 2;
+        $yTabla = $this->GetY() + 1.2;
         $this->dibujarTabla($x0, $yTabla, $filas);
 
-        $yPie = $yTabla + self::ALTURA_ENCABEZADO + (PermisoExamen::FILAS_POR_PERMISO * self::ALTURA_FILA) + 4;
+        $yPie = $yTabla + self::ALTURA_ENCABEZADO + (PermisoExamen::FILAS_POR_PERMISO * self::ALTURA_FILA) + 2.5;
         $this->SetXY($x0, $yPie);
-        $this->SetFont(self::FUENTE, '', 10);
-        $this->Cell(self::ANCHO_UTIL, 5, $this->meta['pieLugarFecha'], 0, 1, 'L');
+        $this->SetFont(self::FUENTE, '', 8);
+        $this->Cell(self::ANCHO_UTIL, 4, $this->meta['pieLugarFecha'], 0, 1, 'L');
 
-        $yFirmas = $yPie + 18;
-        $this->SetFont(self::FUENTE, '', 9);
+        $yFirmas = $yPie + 14;
+        $this->SetFont(self::FUENTE, '', 6);
         $this->SetXY($x0, $yFirmas);
-        $this->Cell(self::ANCHO_UTIL / 2, 5, 'Sello', 0, 0, 'C');
-        $this->Cell(self::ANCHO_UTIL / 2, 5, 'Firma manuscrita de la Secretaría', 0, 1, 'C');
+        $this->Cell(self::ANCHO_UTIL / 2, 3.5, 'Sello', 0, 0, 'C');
+        $this->Cell(self::ANCHO_UTIL / 2, 3.5, 'Firma manuscrita de la Secretaría', 0, 1, 'C');
 
-        $this->SetFont(self::FUENTE, 'B', 7.5);
-        $this->SetXY($x0, $yFirmas + 14);
-        $this->Cell(self::ANCHO_UTIL, 4, 'Notas:', 0, 1, 'L');
-        $this->SetFont(self::FUENTE, '', 7.5);
+        $this->SetFont(self::FUENTE, 'B', 7);
+        $this->SetXY($x0, $yFirmas + 5);
+        $this->Cell(self::ANCHO_UTIL, 3.5, 'Notas:', 0, 1, 'L');
+        $this->SetFont(self::FUENTE, '', 7);
         $this->MultiCell(
             self::ANCHO_UTIL,
             3.5,
@@ -165,6 +169,10 @@ final class PermisoExamenTcpdf extends TCPDF
             'Firma Presidente Mesa',
         ];
 
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+        $this->SetTextColor(0, 0, 0);
+
         $this->SetXY($x, $y);
         $this->SetFont(self::FUENTE, '', 7);
         $this->filaTabla($encabezados, true);
@@ -181,6 +189,38 @@ final class PermisoExamenTcpdf extends TCPDF
                 '',
                 '',
             ], false);
+        }
+
+        $this->dibujarRejillaTabla($x, $y, 1 + count($filas));
+    }
+
+    /**
+     * Dibuja la rejilla una sola vez (borde exterior + líneas H/V) para tonalidad uniforme.
+     */
+    private function dibujarRejillaTabla(float $x, float $y, int $cantidadFilas): void
+    {
+        $anchoTotal = array_sum(self::ANCHOS_COL);
+        $altoTotal = self::ALTURA_ENCABEZADO + (($cantidadFilas - 1) * self::ALTURA_FILA);
+
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+
+        $this->Rect($x, $y, $anchoTotal, $altoTotal);
+
+        $yLinea = $y + self::ALTURA_ENCABEZADO;
+        for ($i = 1; $i < $cantidadFilas; $i++) {
+            $this->Line($x, $yLinea, $x + $anchoTotal, $yLinea);
+            $yLinea += self::ALTURA_FILA;
+        }
+
+        $xLinea = $x;
+        $ultima = count(self::ANCHOS_COL) - 1;
+        foreach (self::ANCHOS_COL as $i => $w) {
+            if ($i === $ultima) {
+                break;
+            }
+            $xLinea += $w;
+            $this->Line($xLinea, $y, $xLinea, $y + $altoTotal);
         }
     }
 
@@ -199,7 +239,6 @@ final class PermisoExamenTcpdf extends TCPDF
             if (! $esEncabezado && $i === 1 && mb_strlen($texto) > 42) {
                 $texto = mb_substr($texto, 0, 41).'…';
             }
-            $this->Rect($x, $y, $w, $altura);
             $this->SetXY($x + 0.5, $y + ($altura - 3.5) / 2);
             $this->Cell($w - 1, 3.5, $texto, 0, 0, $aligns[$i] ?? 'L', false, '', 0, false, 'T', 'M');
             $x += $w;
