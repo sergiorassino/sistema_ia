@@ -78,7 +78,7 @@ class ImputarPagoForm extends Component
         $this->idsCuotasGeneradas = $registros->pluck('id')->map(fn ($id) => (int) $id)->all();
         $this->idCuotaGenerada = (int) ($this->idsCuotasGeneradas[0] ?? 0);
 
-        $this->fechaPago = Carbon::today()->format('Y-m-d');
+        $this->fechaPago = ImputacionPagoService::ahoraParaInput();
         $this->tipoComprobanteImputacion = tenantCuotasFacturacionAfipMuestraEnImputacionPago() ? 'afip' : 'interno';
 
         if (! in_array($this->idCuotastipopago, GestionAranceles::idsMediosPagoImputacion(), true)) {
@@ -142,7 +142,7 @@ class ImputarPagoForm extends Component
             $this->saldoAPagar = CuotasFormato::importeParaInput($saldo);
         }
 
-        $fecha = $this->fechaPagoValida() ?? Carbon::today();
+        $fecha = $this->fechaPagoValida() ?? Carbon::now(ImputacionPagoService::TIMEZONE_PAGO)->startOfDay();
         $porcentRaw = trim($this->porcent);
         $porcentManual = $porcentRaw !== '' ? (float) str_replace(',', '.', $porcentRaw) : 0.0;
 
@@ -205,10 +205,10 @@ class ImputarPagoForm extends Component
             return;
         }
 
-        $fecha = Carbon::parse($validated['fechaPago'])->startOfDay();
+        $fechaHora = ImputacionPagoService::fechaHoraPago((string) $validated['fechaPago']);
         $porcentRaw = trim((string) ($validated['porcent'] ?? ''));
         $porcentManual = $porcentRaw !== '' ? (float) $validated['porcent'] : null;
-        $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fecha, $porcentManual);
+        $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fechaHora, $porcentManual);
 
         if ($saldo <= 0 && ! $avisoPago) {
             $this->addError('saldoAPagar', 'Indique un importe a abonar'.(tenantCuotasSiroHabilitado() ? ' o active aviso de pago.' : '.'));
@@ -228,7 +228,7 @@ class ImputarPagoForm extends Component
             'interes' => $calc['interes'],
             'bonificacion' => $calc['bonificacion'],
             'aPagar' => $calc['aPagar'],
-            'fechaPago' => $fecha->format('Y-m-d'),
+            'fechaPago' => $fechaHora->format('Y-m-d H:i:s'),
             'obs' => trim((string) ($validated['obs'] ?? '')),
             'avisoPago' => $avisoPago,
         ]);
@@ -262,7 +262,7 @@ class ImputarPagoForm extends Component
             abort(404);
         }
 
-        $fecha = Carbon::parse($validated['fechaPago'])->startOfDay();
+        $fechaHora = ImputacionPagoService::fechaHoraPago((string) $validated['fechaPago']);
         $obs = trim((string) ($validated['obs'] ?? ''));
         $items = [];
 
@@ -290,7 +290,7 @@ class ImputarPagoForm extends Component
 
             $porcentRaw = trim(is_array($linea) ? (string) ($linea['porcent'] ?? '') : '');
             $porcentManual = $porcentRaw !== '' ? (float) str_replace(',', '.', $porcentRaw) : null;
-            $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fecha, $porcentManual);
+            $calc = ImputacionPagoCalculo::calcular($registro, $saldo, $fechaHora, $porcentManual);
             $items[] = [
                 'registro' => $registro,
                 'datos' => [
@@ -299,7 +299,7 @@ class ImputarPagoForm extends Component
                     'interes' => $calc['interes'],
                     'bonificacion' => $calc['bonificacion'],
                     'aPagar' => $calc['aPagar'],
-                    'fechaPago' => $fecha->format('Y-m-d'),
+                    'fechaPago' => $fechaHora->format('Y-m-d H:i:s'),
                     'obs' => $obs,
                     'avisoPago' => false,
                 ],
@@ -387,7 +387,7 @@ class ImputarPagoForm extends Component
      */
     private function inicializarLineasImputacion(Collection $registros): void
     {
-        $fecha = $this->fechaPagoValida() ?? Carbon::today();
+        $fecha = $this->fechaPagoValida() ?? Carbon::now(ImputacionPagoService::TIMEZONE_PAGO)->startOfDay();
         $lineas = [];
 
         foreach ($registros as $registro) {
@@ -439,7 +439,7 @@ class ImputarPagoForm extends Component
         $calc = ImputacionPagoCalculo::calcular(
             $registro,
             CuotasFormato::parseImporte($this->saldoAPagar),
-            $this->fechaPagoValida() ?? Carbon::today(),
+            $this->fechaPagoValida() ?? Carbon::now(ImputacionPagoService::TIMEZONE_PAGO)->startOfDay(),
             null,
         );
 
@@ -479,7 +479,7 @@ class ImputarPagoForm extends Component
      */
     private function resumenMultiples(): array
     {
-        $fecha = $this->fechaPagoValida() ?? Carbon::today();
+        $fecha = $this->fechaPagoValida() ?? Carbon::now(ImputacionPagoService::TIMEZONE_PAGO)->startOfDay();
         $lineas = [];
         $neto = 0.0;
         $interes = 0.0;
@@ -569,7 +569,7 @@ class ImputarPagoForm extends Component
         }
 
         try {
-            return Carbon::parse($raw)->startOfDay();
+            return ImputacionPagoService::fechaHoraPago($raw);
         } catch (\Throwable) {
             return null;
         }

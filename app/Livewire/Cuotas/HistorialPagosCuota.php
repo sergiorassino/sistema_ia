@@ -4,6 +4,7 @@ namespace App\Livewire\Cuotas;
 
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\HistorialPagosCuotaService;
+use App\Support\Cuotas\ImputacionPagoService;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
 use Carbon\Carbon;
@@ -92,14 +93,17 @@ class HistorialPagosCuota extends Component
         }
 
         $fechaRaw = trim((string) ($pago->fechhora ?? ''));
+        $tz = ImputacionPagoService::TIMEZONE_PAGO;
         try {
-            $fecha = $fechaRaw !== '' ? Carbon::parse($fechaRaw) : Carbon::today();
+            $fecha = $fechaRaw !== ''
+                ? Carbon::parse($fechaRaw, $tz)
+                : Carbon::now($tz);
         } catch (\Throwable) {
-            $fecha = Carbon::today();
+            $fecha = Carbon::now($tz);
         }
 
         $this->idCuotaPagoFecha = $idCuotaPago;
-        $this->fechaPagoEdit = $fecha->format('Y-m-d');
+        $this->fechaPagoEdit = ImputacionPagoService::paraInputDatetimeLocal($fecha);
         $this->modalFechaPagoAbierto = true;
         $this->resetValidation();
     }
@@ -137,9 +141,9 @@ class HistorialPagosCuota extends Component
         RateLimiter::hit($key, 60);
 
         try {
-            $fecha = Carbon::parse($this->fechaPagoEdit)->startOfDay();
+            $fecha = ImputacionPagoService::fechaHoraPago($this->fechaPagoEdit);
         } catch (\Throwable) {
-            $this->addError('fechaPagoEdit', 'Fecha inválida.');
+            $this->addError('fechaPagoEdit', 'Fecha y hora inválidas.');
 
             return;
         }
@@ -150,13 +154,13 @@ class HistorialPagosCuota extends Component
             $this->idCuotaGenerada,
             $fecha,
         )) {
-            $this->dispatch('se-swal-error', mensaje: 'No se pudo actualizar la fecha del pago.');
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo actualizar la fecha y hora del pago.');
 
             return;
         }
 
         $this->cerrarModalFechaPago();
-        $this->dispatch('se-swal-exito', mensaje: 'Fecha de pago actualizada correctamente.');
+        $this->dispatch('se-swal-exito', mensaje: 'Fecha y hora de pago actualizadas correctamente.');
     }
 
     public function render()
