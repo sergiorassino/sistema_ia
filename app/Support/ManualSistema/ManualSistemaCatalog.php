@@ -582,6 +582,21 @@ final class ManualSistemaCatalog
                         ],
                         'Permiso de parametrización (1)',
                     ),
+                    self::mod(
+                        'Preceptores por curso',
+                        'Menú Docentes / Usuarios → Preceptores por curso',
+                        'Indica qué preceptor(es) tiene cada curso en el año lectivo activo (tabla preceptoresporcurso).',
+                        [
+                            'Abra el ciclo y el nivel correctos en el selector de contexto.',
+                            'En cada curso elija el preceptor (legajo con rol Preceptor) y pulse Asignar.',
+                            'Puede asignar más de un preceptor al mismo curso. Quite con confirmación si corresponde.',
+                        ],
+                        [
+                            'Hace falta el permiso 95. El personal debe tener rol Preceptor en el legajo docente.',
+                            'Lo usan avisos de situación áulica y comunicaciones al preceptor del curso.',
+                        ],
+                        'Permiso de preceptores por curso (95)',
+                    ),
                 ],
             ],
             [
@@ -664,7 +679,7 @@ final class ManualSistemaCatalog
             [
                 'grupo'       => 'HORARIOS',
                 'grupo_id'    => self::idGrupo('HORARIOS'),
-                'descripcion' => 'Armado e impresión de grillas horarias por curso o docente.',
+                'descripcion' => 'Armado e impresión de grillas horarias por curso o docente, y listado de profesores presentes en una franja horaria.',
                 'modulos'     => [
                     self::mod(
                         'Configuración de horarios',
@@ -702,6 +717,22 @@ final class ManualSistemaCatalog
                             'Distribuya o publique según necesidad (puerta de aula, cartelera).',
                         ],
                         [
+                            'La impresión no usa el permiso orden 13; ese permiso solo habilita Configuración y Carga de horarios.',
+                        ],
+                    ),
+                    self::mod(
+                        'Profesores presentes',
+                        'Menú Horarios → Profesores presentes',
+                        'Lista los docentes que tienen clase un día de la semana, entre dos horas, en los cursos y secciones elegidos. Disponible para cualquier usuario del Menú de Secretaría (no requiere el permiso 13).',
+                        [
+                            'Elija el día de la semana, el horario de inicio y el de fin.',
+                            'Seleccione los cursos o secciones involucrados.',
+                            'Pulse Emitir listado: cada docente aparece una sola vez, ordenado por horario de presencia.',
+                            'Si lo necesita, abra Imprimir PDF (TCPDF) en una pestaña nueva.',
+                        ],
+                        [
+                            'El listado cruza la grilla cargada (horarios26), el reloj de cada turno y la asignación de profesores por materia (ppc).',
+                            'Si un módulo del reloj no tiene hora interpretable (por ejemplo 08:00-08:40), no entra en el filtro de franja.',
                             'La impresión no usa el permiso orden 13; ese permiso solo habilita Configuración y Carga de horarios.',
                         ],
                     ),
