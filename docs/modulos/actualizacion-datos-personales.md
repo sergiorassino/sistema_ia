@@ -61,7 +61,7 @@ Campos del listado de alumnos). Para que la familia también pueda subirla, adem
 ## Tablas y campos críticos
 
 - `legajos` (datos editables según variante; `fechActDatos`; opcional `fotoCarnet`)
-- **Destinatario de facturación AFIP** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión)
+- **Destinatario de facturación ARCA** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión)
 - `matricula` (bloqueos / aceptaciones SFA)
 - `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
 - `campos_legajo` / `solapas_legajo` (visibilidad de foto carnet)
