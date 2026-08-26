@@ -42,6 +42,18 @@
             </div>
 
             <div>
+                <label for="nivel-estudiantes-cuota" class="form-label">Nivel</label>
+                <select id="nivel-estudiantes-cuota"
+                        wire:model.live="idNivel"
+                        class="form-input">
+                    <option value="0">Todos</option>
+                    @foreach ($niveles as $nivel)
+                        <option value="{{ (int) $nivel['id'] }}">{{ $nivel['nombre'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
                 <label for="curso-estudiantes-cuota" class="form-label">Curso del año actual</label>
                 <select id="curso-estudiantes-cuota"
                         wire:model.live="idCurso"

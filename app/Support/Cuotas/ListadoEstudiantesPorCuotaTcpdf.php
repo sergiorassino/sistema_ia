@@ -135,6 +135,7 @@ final class ListadoEstudiantesPorCuotaTcpdf extends TCPDF
     {
         $partes = [];
         $partes[] = 'Año cuota: '.(string) ($filtros['titAno'] ?? 'TODOS');
+        $partes[] = 'Nivel: '.(string) ($filtros['titNivel'] ?? 'TODOS');
         $partes[] = 'Curso: '.(string) ($filtros['titCurso'] ?? 'TODOS');
         $partes[] = 'Cuota: '.(string) ($filtros['titCuota'] ?? 'TODAS');
 
