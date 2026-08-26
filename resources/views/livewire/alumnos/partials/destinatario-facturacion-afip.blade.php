@@ -1,5 +1,5 @@
 <section class="se-card p-4 sm:p-5" aria-labelledby="seccion-facturacion-afip">
-    <p id="seccion-facturacion-afip" class="se-section-title mb-4">Destinatario de facturación AFIP</p>
+    <p id="seccion-facturacion-afip" class="se-section-title mb-4">Destinatario de facturación ARCA</p>
     <p class="mb-4 text-xs text-neutral-500">
         Persona a cuyo nombre se emitirán las facturas. Ambos campos son obligatorios.
     </p>
