@@ -20,7 +20,6 @@ class ConstanciaDocumentosPdfController extends Controller
 
         $ctx = schoolCtx();
         $idNivel = (int) $ctx->idNivel;
-        $idTerlec = (int) $ctx->idTerlec;
 
         $validator = Validator::make(
             $request->all(),
@@ -39,7 +38,7 @@ class ConstanciaDocumentosPdfController extends Controller
         $idLegajos = (int) $validated['idLegajos'];
         unset($validated['idLegajos']);
 
-        if ($idNivel < 1 || $idTerlec < 1 || $idLegajos < 1) {
+        if ($idNivel < 1 || $idLegajos < 1) {
             abort(404);
         }
 
@@ -60,9 +59,9 @@ class ConstanciaDocumentosPdfController extends Controller
         $form['parnacop'] = trim((string) $form['parnacop']);
         $form['parapre'] = trim((string) $form['parapre']);
 
-        $datos = ConstanciaDocumentosDatos::paraLegajo($idLegajos, $idNivel, $idTerlec, $form);
+        $datos = ConstanciaDocumentosDatos::paraLegajo($idLegajos, $idNivel, $form);
         if ($datos === null) {
-            abort(404, 'Alumno no matriculado en el ciclo lectivo activo.');
+            abort(404, 'Alumno sin matrícula histórica en el nivel activo.');
         }
 
         $pdf = ConstanciaDocumentosTcpdf::generar($datos);

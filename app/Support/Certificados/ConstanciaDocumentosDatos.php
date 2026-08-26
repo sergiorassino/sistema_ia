@@ -26,21 +26,20 @@ final class ConstanciaDocumentosDatos
     public static function paraLegajo(
         int $idLegajos,
         int $idNivel,
-        int $idTerlec,
         array $formulario,
     ): ?array {
-        if (ConstanciaDocumentos::alumnoMatriculado($idLegajos, $idNivel, $idTerlec) === null) {
+        if (ConstanciaDocumentos::alumnoDelNivel($idLegajos, $idNivel) === null) {
             return null;
         }
 
         $legajo = DB::table('legajos as l')
-            ->join('matricula as m', function ($join) use ($idTerlec, $idNivel): void {
+            ->join('matricula as m', function ($join) use ($idNivel): void {
                 $join->on('m.idLegajos', '=', 'l.id')
-                    ->where('m.idTerlec', $idTerlec)
-                    ->where('m.idNivel', $idNivel)
-                    ->whereNull('m.fechaBaja');
+                    ->where('m.idNivel', $idNivel);
             })
+            ->join('terlec as t', 't.id', '=', 'm.idTerlec')
             ->where('l.id', $idLegajos)
+            ->orderByDesc('t.ano')
             ->orderByDesc('m.id')
             ->first([
                 'l.apellido',
