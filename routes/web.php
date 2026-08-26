@@ -50,6 +50,7 @@ use App\Http\Controllers\ListadoDocentesPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
+use App\Http\Controllers\Horarios\ProfesoresPresentesPdfController;
 use App\Http\Controllers\Examenes\ActaVolantePreviosPdfController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasPdfController;
@@ -82,6 +83,7 @@ use App\Http\Controllers\DocPp\DocPpArchivoController;
 use App\Livewire\Abm\Curplan\CurplanIndex;
 use App\Livewire\Abm\Cursos\CursosIndex;
 use App\Livewire\Abm\CursosPorProfesor\CursosPorProfesorIndex;
+use App\Livewire\Abm\PreceptoresPorCurso\PreceptoresPorCursoIndex;
 use App\Livewire\Abm\Legajos\LegajoCargaPorCurso;
 use App\Livewire\Abm\Legajos\LegajoBuscarFamilias;
 use App\Livewire\Abm\Legajos\LegajoFamilia;
@@ -314,6 +316,7 @@ use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
 use App\Livewire\Horarios\HorariosCargaIndex;
 use App\Livewire\Horarios\HorariosConfigIndex;
 use App\Livewire\Horarios\HorariosImpresionIndex;
+use App\Livewire\Horarios\ProfesoresPresentesIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciasIndex;
 use App\Livewire\Seguimiento\Inasistencias\SincroCidiInasistencias;
 use App\Livewire\Seguimiento\Inasistencias\PartesDiariosIndex;
@@ -1095,6 +1098,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('horarios.carga');
     Route::get('/horarios/impresion', HorariosImpresionIndex::class)
         ->name('horarios.impresion');
+    Route::get('/horarios/profesores-presentes', ProfesoresPresentesIndex::class)
+        ->name('horarios.profesores-presentes');
+    Route::get('/horarios/profesores-presentes/pdf', ProfesoresPresentesPdfController::class)
+        ->name('horarios.profesores-presentes.pdf');
     Route::get('/horarios/pdf/curso', HorarioCursoPdfController::class)
         ->name('horarios.pdf.curso');
     Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)
@@ -1469,6 +1476,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::get('/abm/profesores-por-materia', ProfesoresPorMateriaIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO)->name('abm.profesores-por-materia');
     Route::get('/abm/cursos-por-profesor', CursosPorProfesorIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::ASIGNACION_PROFESORES_POR_CURSO)->name('abm.cursos-por-profesor');
+    Route::get('/abm/preceptores-por-curso', PreceptoresPorCursoIndex::class)->middleware('permiso:'.\App\Support\PermisosIaCatalog::PRECEPTORES_POR_CURSO)->name('abm.preceptores-por-curso');
     Route::get('/parametrizacion/com-canales', ComCanalesIndex::class)
         ->middleware('permiso:5')
         ->name('param.com-canales');

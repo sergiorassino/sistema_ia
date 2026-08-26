@@ -5,6 +5,7 @@ namespace App\Comunicaciones;
 use App\Models\Legajo;
 use App\Models\Profesor;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
+use App\Support\PreceptoresPorCurso;
 use App\Support\ProfesorMenuPortal;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -1885,7 +1886,25 @@ class ComunicacionesRepository
             return [];
         }
 
-        return static::profesoresPorRol($idNivel, 'preceptor');
+        $ids = PreceptoresPorCurso::idsPreceptores((int) $idCurso, $idNivel, $idTerlec);
+        if ($ids === []) {
+            return [];
+        }
+
+        $filas = DB::table('profesores')
+            ->whereIn('id', $ids)
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->get(['id', 'apellido', 'nombre']);
+
+        return $filas
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'label' => trim((string) $r->apellido.', '.(string) $r->nombre),
+                'rol' => 'preceptor',
+            ])
+            ->values()
+            ->all();
     }
 
     /**

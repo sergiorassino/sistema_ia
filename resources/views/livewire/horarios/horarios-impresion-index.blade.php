@@ -172,6 +172,7 @@
         <div class="flex flex-wrap gap-3 text-sm">
             <a href="{{ route('horarios.carga') }}" class="font-semibold text-primary-700 hover:underline">Carga</a>
             <a href="{{ route('horarios.config') }}" class="font-semibold text-primary-700 hover:underline">Configuración</a>
+            <a href="{{ route('horarios.profesores-presentes') }}" class="font-semibold text-primary-700 hover:underline">Profesores presentes</a>
         </div>
     @endif
 

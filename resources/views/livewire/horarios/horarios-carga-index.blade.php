@@ -150,5 +150,6 @@
             <a href="{{ route('horarios.config') }}" class="text-sm font-semibold text-primary-700 hover:underline">Configuración</a>
         @endif
         <a href="{{ route('horarios.impresion') }}" class="text-sm font-semibold text-primary-700 hover:underline">Impresión →</a>
+        <a href="{{ route('horarios.profesores-presentes') }}" class="text-sm font-semibold text-primary-700 hover:underline">Profesores presentes →</a>
     </div>
 </div>
