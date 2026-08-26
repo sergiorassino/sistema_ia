@@ -247,7 +247,7 @@ final class PermisosIaCatalog
             ['id' => 18, 'orden' => self::MATRIZ_ANALITICO, 'tema' => 'MATRÍZ Y ANALÍTICOS', 'descripcion' => 'Libro matriz, pase y certificado analítico: consulta y edición de calificaciones en matriz.'],
             ['id' => 19, 'orden' => self::CERT_ALUMNO_REGULAR, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado escolar de alumno/a regular: listado de matriculados del año en curso y emisión de PDF.'],
             ['id' => 20, 'orden' => self::CERT_ESTUDIOS_TRAMITE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de certificado de estudios en trámite: listado de matriculados y emisión de PDF.'],
-            ['id' => 21, 'orden' => self::CERT_CONSTANCIA_DOCS, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de documentos: listado de matriculados y emisión de PDF.'],
+            ['id' => 21, 'orden' => self::CERT_CONSTANCIA_DOCS, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de documentos: listado histórico de legajos del nivel y emisión de PDF.'],
             ['id' => 22, 'orden' => self::CERT_ASISTENCIA_PROF, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de asistencia del profesor: listado de personal del legajo y emisión de PDF.'],
             ['id' => 23, 'orden' => self::CERT_PASE_PARCIAL, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'],
             ['id' => 24, 'orden' => self::CERT_SOLICITUD_PASE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'],

@@ -48,8 +48,8 @@ class ConstanciaDocumentosIndex extends Component
         abort_unless(tienePermiso(19), 403, 'Sin permiso para constancias de documentos.');
 
         $ctx = schoolCtx();
-        if ($ctx->idNivel < 1 || $ctx->idTerlec < 1) {
-            abort(403, 'Seleccione nivel y ciclo lectivo en el contexto activo.');
+        if ($ctx->idNivel < 1) {
+            abort(403, 'Seleccione nivel en el contexto activo.');
         }
     }
 
@@ -61,10 +61,9 @@ class ConstanciaDocumentosIndex extends Component
     public function abrirModal(int $idLegajos): void
     {
         $ctx = schoolCtx();
-        $alumno = ConstanciaDocumentos::alumnoMatriculado(
+        $alumno = ConstanciaDocumentos::alumnoDelNivel(
             $idLegajos,
             (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
         );
 
         if ($alumno === null) {
@@ -130,14 +129,12 @@ class ConstanciaDocumentosIndex extends Component
         $ctx = schoolCtx();
         $alumnos = ConstanciaDocumentos::paginarAlumnos(
             (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
             $this->buscar,
             50,
         );
 
         return view('livewire.certificados.constancia-documentos-index', [
             'alumnos' => $alumnos,
-            'anoLectivo' => (int) ($ctx->terlecAno() ?? 0),
         ])
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Constancia de Documentos']);
     }

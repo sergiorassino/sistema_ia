@@ -9,7 +9,7 @@
                     <p class="se-eyebrow !text-[10px]">Certificados</p>
                     <h2 class="font-bold tracking-tight">Constancia de Documentos</h2>
                     <p class="text-xs text-white/80 truncate">
-                        {{ schoolCtx()->nivelNombre() }} · Ciclo {{ $anoLectivo }} · Matriculados activos
+                        {{ schoolCtx()->nivelNombre() }} · Histórico de alumnos · Orden alfabético
                     </p>
                 </div>
                 <a href="{{ route('dashboard') }}"
@@ -91,7 +91,7 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="!h-auto py-8 text-center text-xs text-neutral-500">
-                                        No hay alumnos matriculados en el ciclo lectivo activo que coincidan con la búsqueda.
+                                        No hay alumnos con matrícula en este nivel que coincidan con la búsqueda.
                                     </td>
                                 </tr>
                             @endforelse
