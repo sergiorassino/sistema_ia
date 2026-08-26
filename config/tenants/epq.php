@@ -155,8 +155,9 @@ return [
                 'url' => 'https://siropagos.bancoroela.com.ar',
             ],
         ],
+        // Primario (2) sin cuaderno; secundario (3) sí muestra comunicación institucional.
         'comunicaciones' => [
-            'niveles_deshabilitados' => [2, 3],
+            'niveles_deshabilitados' => [2],
         ],
         // Boletín (Prim) EPQ en autogestión familia (portada + calificaciones).
         'boletin_prim_epq' => [
