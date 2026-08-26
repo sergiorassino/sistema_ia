@@ -139,7 +139,8 @@ final class HistorialPagosCuotaService
             return false;
         }
 
-        $fechaNueva = $nuevaFecha->copy()->startOfDay();
+        $tz = ImputacionPagoService::TIMEZONE_PAGO;
+        $fechaNueva = $nuevaFecha->copy()->timezone($tz);
 
         DB::transaction(function () use ($pago, $registro, $fechaNueva): void {
             $locked = CuotaGenerada::query()->whereKey($registro->id)->lockForUpdate()->firstOrFail();

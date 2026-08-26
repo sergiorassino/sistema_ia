@@ -165,18 +165,19 @@
             <div class="relative z-10 my-auto flex w-full max-w-md max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5"
                  @click.stop>
                 <div class="shrink-0 border-b border-accent-200 px-5 py-4">
-                    <h3 id="historial-fecha-pago-titulo" class="text-base font-bold text-neutral-900">Cambiar fecha de pago</h3>
-                    <p class="mt-1 text-sm text-neutral-600">Ingrese la nueva fecha del pago seleccionado.</p>
+                    <h3 id="historial-fecha-pago-titulo" class="text-base font-bold text-neutral-900">Cambiar fecha y hora de pago</h3>
+                    <p class="mt-1 text-sm text-neutral-600">Ingrese la nueva fecha y hora del pago seleccionado.</p>
                 </div>
 
                 <form wire:submit="guardarFechaPago" class="flex min-h-0 flex-1 flex-col overflow-hidden">
                     <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
                         <div>
-                            <label for="historial-fecha-pago" class="form-label">Fecha de pago</label>
+                            <label for="historial-fecha-pago" class="form-label">Fecha y hora de pago</label>
                             <input id="historial-fecha-pago"
-                                   type="date"
+                                   type="datetime-local"
                                    wire:model="fechaPagoEdit"
                                    class="form-input @error('fechaPagoEdit') border-red-400 @enderror"
+                                   step="60"
                                    required>
                             @error('fechaPagoEdit') <p class="form-error">{{ $message }}</p> @enderror
                         </div>

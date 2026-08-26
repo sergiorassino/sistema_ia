@@ -114,12 +114,13 @@
                                aria-readonly="true">
                     </div>
                     <div>
-                        <label class="form-label" for="fechaPago">Fecha pago</label>
+                        <label class="form-label" for="fechaPago">Fecha y hora de pago</label>
                         <input id="fechaPago"
-                               type="date"
+                               type="datetime-local"
                                wire:model.live="fechaPago"
                                x-on:keydown="onKey($event, 'fechaPago')"
-                               class="form-input w-full">
+                               class="form-input w-full"
+                               step="60">
                         @error('fechaPago') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -181,11 +182,12 @@
                 @endif
 
                 <div class="mx-auto max-w-sm">
-                    <label class="form-label" for="fechaPagoMulti">Fecha pago</label>
+                    <label class="form-label" for="fechaPagoMulti">Fecha y hora de pago</label>
                     <input id="fechaPagoMulti"
-                           type="date"
+                           type="datetime-local"
                            wire:model.live="fechaPago"
-                           class="form-input w-full">
+                           class="form-input w-full"
+                           step="60">
                     @error('fechaPago') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
             @endif
@@ -275,10 +277,7 @@
             </div>
         @endif
 
-        <div class="mx-auto flex w-full max-w-md flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-            <x-volver-cuotas-estudiante
-                :id-legajos="$idLegajo"
-                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-accent-50" />
+        <div class="flex justify-center">
             <button type="submit"
                     class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700">
                 {{ $esUnaCuota ? 'Registrar pago' : 'Cobrar cuotas' }}
