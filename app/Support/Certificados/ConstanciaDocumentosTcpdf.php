@@ -94,6 +94,7 @@ final class ConstanciaDocumentosTcpdf extends TCPDF
     {
         $leg = $this->datos['legajo'] ?? [];
         $cert = $this->datos['constancia'] ?? [];
+        $inst = $this->datos['institucion'] ?? [];
 
         $apellido = trim((string) ($leg['apellido'] ?? ''));
         $nombre = trim((string) ($leg['nombre'] ?? ''));
@@ -112,11 +113,13 @@ final class ConstanciaDocumentosTcpdf extends TCPDF
         $diaEm = trim((string) ($cert['diaEmision'] ?? ''));
         $mesEm = trim((string) ($cert['mesEmision'] ?? ''));
         $anioEm = trim((string) ($cert['anioEmision'] ?? ''));
+        $insti = trim((string) ($inst['insti'] ?? ''));
 
         $this->SetXY(self::MARGEN_IZQ, 61);
         $this->SetFont(self::FUENTE, '', 10);
 
-        $htmlIntro = 'El Director del I.E.S. hace constar que el/la alumno/a '
+        $htmlIntro = 'El Director del '.$this->escapeHtml($insti !== '' ? $insti : 'este Establecimiento')
+            .' hace constar que el/la alumno/a '
             .'<b>'.$this->escapeHtml($apellido.' '.$nombre).'</b>'
             .', D.N.I. Nº '.$this->escapeHtml($dni)
             .' tiene archivados en la Secretaría de este Establecimiento los siguientes documentos:';
