@@ -187,7 +187,8 @@ final class SolicitudDePaseTcpdf extends TCPDF
 
 
 
-        $html1 = 'Sr. Director del <b>INSTITUTO DE ENSEÑANZA SECUNDARIA</b>';
+        $destinatario = $insti !== '' ? $insti : 'este establecimiento';
+        $html1 = 'Sr. Director del <b>'.$this->escapeHtml($destinatario).'</b>';
 
         $this->writeHTMLCell(self::ANCHO_UTIL, 0, self::MARGEN_IZQ, $this->GetY(), $html1, 0, 1, false, true, 'J', true);
 
@@ -401,6 +402,12 @@ final class SolicitudDePaseTcpdf extends TCPDF
 
 
 
+        $inst = $this->datos['institucion'] ?? [];
+        $instiTroquel = trim((string) ($inst['insti'] ?? ''));
+        if ($instiTroquel === '') {
+            $instiTroquel = 'este establecimiento';
+        }
+
         $this->MultiCell(self::ANCHO_UTIL, 5, 'Sres. Padres:', 0, 'J', false, 1);
 
         $this->MultiCell(
@@ -409,7 +416,7 @@ final class SolicitudDePaseTcpdf extends TCPDF
 
             5,
 
-            'Completar en la escuela receptora y entregar este troquel al I.E.S. Debe constar en el legajo del alumno como constancia de matrícula y para confeccionar el analítico parcial.',
+            'Completar en la escuela receptora y entregar este troquel al '.$instiTroquel.'. Debe constar en el legajo del alumno como constancia de matrícula y para confeccionar el analítico parcial.',
 
             0,
 
