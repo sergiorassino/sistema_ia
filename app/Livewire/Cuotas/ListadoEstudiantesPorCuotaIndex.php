@@ -18,6 +18,9 @@ class ListadoEstudiantesPorCuotaIndex extends Component
     /** 0 = sin año lectivo elegido */
     public int $idTerlecCuota = 0;
 
+    /** 0 = todos los niveles del alcance */
+    public int $idNivel = 0;
+
     /** 0 = todos los cursos del año actual */
     public int $idCurso = 0;
 
@@ -35,6 +38,11 @@ class ListadoEstudiantesPorCuotaIndex extends Component
     public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeListadoEstudiantesPorCuota(), 403);
+    }
+
+    public function updatedIdNivel(): void
+    {
+        $this->idCurso = 0;
     }
 
     public function getPdfUrlProperty(): string
@@ -65,6 +73,7 @@ class ListadoEstudiantesPorCuotaIndex extends Component
         return [
             'ano_op' => $this->anoOp,
             'terlec' => $this->idTerlecCuota,
+            'nivel' => $this->idNivel,
             'curso' => $this->idCurso,
             'cuota' => $this->idCuota,
             'importe_op' => $this->importeOp,
@@ -77,11 +86,13 @@ class ListadoEstudiantesPorCuotaIndex extends Component
     public function render()
     {
         $ano = (int) schoolCtx()->terlecAno();
+        $idNivelFiltro = $this->idNivel > 0 ? $this->idNivel : null;
 
         return view('livewire.cuotas.listado-estudiantes-por-cuota', [
             'ano' => $ano,
             'terlecs' => ListadoEstudiantesPorCuotaDatos::terlecsParaSelector(),
-            'cursos' => ListadoEstudiantesPorCuotaDatos::cursosAnoActualParaSelector(),
+            'niveles' => ListadoEstudiantesPorCuotaDatos::nivelesParaSelector(),
+            'cursos' => ListadoEstudiantesPorCuotaDatos::cursosAnoActualParaSelector($idNivelFiltro),
             'cuotas' => ListadoEstudiantesPorCuotaDatos::cuotasParaSelector(),
             'opcionesComparador' => FiltroComparacionNumerica::opcionesEtiquetas(),
             'pdfUrl' => $this->pdfUrl,

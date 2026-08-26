@@ -5,7 +5,9 @@ namespace App\Support\Cuotas;
 use App\Models\Cuota;
 use App\Models\CuotaGenerada;
 use App\Models\Curso;
+use App\Models\Nivel;
 use App\Models\Terlec;
+use App\Support\NivelSistema;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -27,13 +29,46 @@ final class ListadoEstudiantesPorCuotaDatos
     }
 
     /**
+     * Niveles pedagógicos disponibles en el alcance institucional.
+     *
+     * @return list<array{id: int, nombre: string, abrev: string}>
+     */
+    public static function nivelesParaSelector(): array
+    {
+        $query = Nivel::query()
+            ->where('id', '<', NivelSistema::ADMINISTRACION)
+            ->orderBy('id');
+
+        $idFiltro = SchoolAlcancePedagogico::idNivelFiltroUnico();
+        if ($idFiltro !== null) {
+            $query->whereKey($idFiltro);
+        }
+
+        return $query
+            ->get(['id', 'nivel', 'abrev'])
+            ->map(fn (Nivel $nivel) => [
+                'id' => (int) $nivel->id,
+                'nombre' => trim((string) ($nivel->nivel ?? '')),
+                'abrev' => trim((string) ($nivel->abrev ?? '')),
+            ])
+            ->all();
+    }
+
+    /**
      * Cursos del ciclo lectivo activo (año actual de contexto).
+     * Si se indica nivel, solo cursos de ese nivel.
      *
      * @return Collection<int, Curso>
      */
-    public static function cursosAnoActualParaSelector(): Collection
+    public static function cursosAnoActualParaSelector(?int $idNivel = null): Collection
     {
-        return GeneracionMasivaCuotasConsulta::cursosEnContexto();
+        $cursos = GeneracionMasivaCuotasConsulta::cursosEnContexto();
+
+        if ($idNivel !== null && $idNivel > 0) {
+            $cursos = $cursos->filter(fn (Curso $c) => (int) ($c->idNivel ?? 0) === $idNivel);
+        }
+
+        return $cursos->values();
     }
 
     /**
@@ -76,8 +111,19 @@ final class ListadoEstudiantesPorCuotaDatos
             ]);
         }
 
+        $idNivel = (int) ($input['nivel'] ?? $input['idNivel'] ?? 0);
+        $nivelesPermitidos = collect(self::nivelesParaSelector())->pluck('id')->map(fn ($id) => (int) $id)->all();
+        if ($idNivel !== 0 && ! in_array($idNivel, $nivelesPermitidos, true)) {
+            throw ValidationException::withMessages([
+                'nivel' => 'Nivel no válido.',
+            ]);
+        }
+
         $idCurso = (int) ($input['curso'] ?? $input['idCurso'] ?? 0);
-        $cursosPermitidos = self::cursosAnoActualParaSelector()->pluck('Id')->map(fn ($id) => (int) $id)->all();
+        $cursosPermitidos = self::cursosAnoActualParaSelector($idNivel > 0 ? $idNivel : null)
+            ->pluck('Id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
         if ($idCurso !== 0 && ! in_array($idCurso, $cursosPermitidos, true)) {
             throw ValidationException::withMessages([
                 'curso' => 'Curso no válido para el ciclo lectivo activo.',
@@ -112,6 +158,7 @@ final class ListadoEstudiantesPorCuotaDatos
             'anoOp' => $anoOp,
             'idTerlecCuota' => $idTerlecCuota,
             'anoValor' => $anoValor,
+            'idNivel' => $idNivel,
             'idCurso' => $idCurso,
             'idCuota' => $idCuota,
             'importeOp' => $importeOp,
@@ -119,7 +166,8 @@ final class ListadoEstudiantesPorCuotaDatos
             'pagadoOp' => $pagadoOp,
             'pagadoValor' => $pagadoValor,
             'titAno' => self::tituloAno($anoOp, $anoValor),
-            'titCurso' => self::tituloCurso($idCurso),
+            'titNivel' => self::tituloNivel($idNivel),
+            'titCurso' => self::tituloCurso($idCurso, $idNivel),
             'titCuota' => self::tituloCuota($idCuota),
             'titImporte' => FiltroComparacionNumerica::etiquetaFiltro('Importe', $importeOp, $importeValor),
             'titPagado' => FiltroComparacionNumerica::etiquetaFiltro('Pagado', $pagadoOp, $pagadoValor),
@@ -208,6 +256,11 @@ final class ListadoEstudiantesPorCuotaDatos
         $anoValor = $filtros['anoValor'] ?? null;
         if ($anoOp !== '' && $anoValor !== null) {
             FiltroComparacionNumerica::aplicar($query, 'terlec.ano', $anoOp, (float) $anoValor);
+        }
+
+        $idNivel = (int) ($filtros['idNivel'] ?? 0);
+        if ($idNivel > 0) {
+            $query->where('cursos.idNivel', $idNivel);
         }
 
         $idCurso = (int) ($filtros['idCurso'] ?? 0);
@@ -305,13 +358,27 @@ final class ListadoEstudiantesPorCuotaDatos
         return 'Año '.$simbolo.' '.self::formatearAnoLectivo($valor);
     }
 
-    private static function tituloCurso(int $idCurso): string
+    private static function tituloNivel(int $idNivel): string
+    {
+        if ($idNivel === 0) {
+            return 'TODOS';
+        }
+
+        $nivel = collect(self::nivelesParaSelector())->firstWhere('id', $idNivel);
+
+        return $nivel !== null
+            ? (string) ($nivel['nombre'] !== '' ? $nivel['nombre'] : 'TODOS')
+            : 'TODOS';
+    }
+
+    private static function tituloCurso(int $idCurso, int $idNivel = 0): string
     {
         if ($idCurso === 0) {
             return 'TODOS';
         }
 
-        $curso = self::cursosAnoActualParaSelector()->firstWhere('Id', $idCurso);
+        $curso = self::cursosAnoActualParaSelector($idNivel > 0 ? $idNivel : null)
+            ->firstWhere('Id', $idCurso);
 
         return $curso !== null
             ? GeneracionMasivaCuotasConsulta::etiquetaCursoConNivel($curso)
