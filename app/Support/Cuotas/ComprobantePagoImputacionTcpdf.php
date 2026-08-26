@@ -29,6 +29,23 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
 
     private const ALTO_SECCION_PAGO = 58.0;
 
+    /** Alto fijo del bloque de título + medio de pago + márgenes internos (múltiples cuotas). */
+    private const ALTO_PAGO_MULTIPLE_BASE = 28.0;
+
+    /** Alto de cada fila de la grilla (encabezado, ítems y totales). */
+    private const ALTO_FILA_TABLA = 5.0;
+
+    /** Anchos de columna de la grilla multi-cuota (suma = ANCHO_BLOQUE − 2×pad). */
+    private const COL_CUOTA = 54.0;
+
+    private const COL_IMPORTE = 26.0;
+
+    private const COL_INTERES = 26.0;
+
+    private const COL_BONIF = 28.0;
+
+    private const COL_ABONADO = 24.0;
+
     /** @var array<string, mixed> */
     private array $datos;
 
@@ -91,8 +108,12 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $y0 = $y + 4;
 
         $altoAlumno = self::ALTO_SECCION_ALUMNO;
+        // Título + encabezado + N ítems + fila totales + fecha.
         $altoPago = $esMultiple
-            ? max(self::ALTO_SECCION_PAGO, 34.0 + (count($lineas) * 14.0))
+            ? max(
+                self::ALTO_SECCION_PAGO,
+                self::ALTO_PAGO_MULTIPLE_BASE + ((count($lineas) + 2) * self::ALTO_FILA_TABLA) + 7.0,
+            )
             : self::ALTO_SECCION_PAGO;
         $altoTotal = $altoAlumno + $altoPago;
 
@@ -154,9 +175,12 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
             $this->SetXY($x, $yTop + 6);
             TcpdfFuenteArial::aplicar($this, '', 8);
             $this->Cell($w, 5, '(Importe Original: $ '.$importeOriginal.')', 0, 1, 'C');
+            $y = $this->GetY() + 4;
+        } else {
+            // Siempre debajo del separador alumno/pago (no usar GetY de la sección alumno).
+            $y = $yTop + 6;
         }
 
-        $y = $this->GetY() + ($esMultiple ? 6 : 4);
         $this->SetXY($x + $padX, $y);
         TcpdfFuenteArial::aplicar($this, 'B', 8);
         $this->Cell(90, 5, 'DETALLE DEL PAGO REALIZADO', 0, 0, 'L');
@@ -166,25 +190,7 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $yDetalle = $this->GetY() + 2;
 
         if ($esMultiple && $lineas !== []) {
-            foreach ($lineas as $linea) {
-                $this->SetXY($x + $padX, $yDetalle);
-                TcpdfFuenteArial::aplicar($this, 'B', 7.5);
-                $this->Cell($w - ($padX * 2), 4.5, (string) ($linea['cuotaNombre'] ?? ''), 0, 1, 'L');
-                $yDetalle = $this->GetY();
-                $this->dibujarFilaDetalle($x + $padX + 4, $yDetalle, 'Importe:', (string) ($linea['importeFmt'] ?? ''));
-                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Intereses:', (string) ($linea['interesFmt'] ?? ''));
-                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Bonificación:', (string) ($linea['bonificacionFmt'] ?? ''));
-                $this->dibujarFilaDetalle($x + $padX + 4, $this->GetY(), 'Abonado:', (string) ($linea['abonadoFmt'] ?? ''), true);
-                $yDetalle = $this->GetY() + 1.5;
-            }
-
-            $this->Line($x + $padX, $yDetalle, $x + $w - $padX, $yDetalle);
-            $yDetalle += 2;
-            $this->dibujarFilaDetalle($x + $padX, $yDetalle, 'Total importe:', (string) ($this->datos['importeFmt'] ?? ''));
-            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Total bonificación:', (string) ($this->datos['bonificacionFmt'] ?? ''));
-            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Total intereses:', (string) ($this->datos['interesFmt'] ?? ''));
-            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Importe abonado:', (string) ($this->datos['abonadoFmt'] ?? ''), true);
-            $this->dibujarFilaDetalle($x + $padX, $this->GetY(), 'Fecha de Pago:', (string) ($this->datos['fechaPagoEsp'] ?? ''));
+            $this->dibujarTablaDetalleMultiple($x + $padX, $yDetalle, $lineas);
 
             return;
         }
@@ -203,6 +209,111 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $this->Cell(55, 5, $label, 0, 0, 'L');
         TcpdfFuenteArial::aplicar($this, $resaltar ? 'B' : '', 8);
         $this->Cell(40, 5, $valor, 0, 1, 'R');
+    }
+
+    /**
+     * Grilla de cuotas cobradas (una fila por cuota + totales por columna).
+     *
+     * @param  list<array<string, mixed>>  $lineas
+     */
+    private function dibujarTablaDetalleMultiple(float $x, float $y, array $lineas): void
+    {
+        $h = self::ALTO_FILA_TABLA;
+        $anchoTabla = self::COL_CUOTA + self::COL_IMPORTE + self::COL_INTERES + self::COL_BONIF + self::COL_ABONADO;
+
+        $this->dibujarFilaTablaMultiple(
+            $x,
+            $y,
+            'Cuota',
+            'Importe',
+            'Intereses',
+            'Bonificación',
+            'Abonado',
+            encabezado: true,
+            resaltarAbonado: false,
+        );
+        $y += $h;
+        $this->Line($x, $y, $x + $anchoTabla, $y);
+        $y += 0.8;
+
+        foreach ($lineas as $linea) {
+            $this->dibujarFilaTablaMultiple(
+                $x,
+                $y,
+                (string) ($linea['cuotaNombre'] ?? ''),
+                (string) ($linea['importeFmt'] ?? ''),
+                (string) ($linea['interesFmt'] ?? ''),
+                (string) ($linea['bonificacionFmt'] ?? ''),
+                (string) ($linea['abonadoFmt'] ?? ''),
+                encabezado: false,
+                resaltarAbonado: true,
+            );
+            $y += $h;
+        }
+
+        $this->Line($x, $y + 0.5, $x + $anchoTabla, $y + 0.5);
+        $y += 1.5;
+
+        $this->dibujarFilaTablaMultiple(
+            $x,
+            $y,
+            'TOTALES',
+            (string) ($this->datos['importeFmt'] ?? ''),
+            (string) ($this->datos['interesFmt'] ?? ''),
+            (string) ($this->datos['bonificacionFmt'] ?? ''),
+            (string) ($this->datos['abonadoFmt'] ?? ''),
+            encabezado: false,
+            resaltarAbonado: true,
+            negritaFila: true,
+        );
+        $y += $h + 2.0;
+
+        $this->dibujarFilaDetalle($x, $y, 'Fecha de Pago:', (string) ($this->datos['fechaPagoEsp'] ?? ''));
+    }
+
+    private function dibujarFilaTablaMultiple(
+        float $x,
+        float $y,
+        string $cuota,
+        string $importe,
+        string $interes,
+        string $bonificacion,
+        string $abonado,
+        bool $encabezado,
+        bool $resaltarAbonado,
+        bool $negritaFila = false,
+    ): void {
+        $h = self::ALTO_FILA_TABLA;
+        $estilo = ($encabezado || $negritaFila) ? 'B' : '';
+        $size = $encabezado ? 7.0 : 7.5;
+
+        $this->SetXY($x, $y);
+        TcpdfFuenteArial::aplicar($this, $estilo, $size);
+        $this->Cell(self::COL_CUOTA, $h, $this->recortarTextoCelda($cuota, self::COL_CUOTA - 1.0), 0, 0, 'L');
+
+        TcpdfFuenteArial::aplicar($this, $estilo, $size);
+        $this->Cell(self::COL_IMPORTE, $h, $importe, 0, 0, $encabezado ? 'C' : 'R');
+        $this->Cell(self::COL_INTERES, $h, $interes, 0, 0, $encabezado ? 'C' : 'R');
+        $this->Cell(self::COL_BONIF, $h, $bonificacion, 0, 0, $encabezado ? 'C' : 'R');
+
+        TcpdfFuenteArial::aplicar($this, ($resaltarAbonado && ! $encabezado) || $negritaFila || $encabezado ? 'B' : '', $size);
+        $this->Cell(self::COL_ABONADO, $h, $abonado, 0, 1, $encabezado ? 'C' : 'R');
+    }
+
+    private function recortarTextoCelda(string $texto, float $anchoMaxMm): string
+    {
+        $texto = trim($texto);
+        if ($texto === '' || $this->GetStringWidth($texto) <= $anchoMaxMm) {
+            return $texto;
+        }
+
+        $ellipsis = '…';
+        $candidato = $texto;
+        while ($candidato !== '' && $this->GetStringWidth($candidato.$ellipsis) > $anchoMaxMm) {
+            $candidato = mb_substr($candidato, 0, mb_strlen($candidato) - 1);
+        }
+
+        return $candidato === '' ? $ellipsis : $candidato.$ellipsis;
     }
 
     /**
