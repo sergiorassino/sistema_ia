@@ -122,4 +122,83 @@ final class CertificadoFinalizacionTextoEs
 
         return trim($dni);
     }
+
+    /**
+     * Primera palabra (tipo: Instituto, Colegio, Escuela…) sin negrita; el resto en título.
+     *
+     * @return array{tipo: string, nombre: string}
+     */
+    public static function partesNombreInstitucion(string $insti): array
+    {
+        $t = trim(preg_replace('/\s+/u', ' ', $insti) ?? '');
+        if ($t === '') {
+            return ['tipo' => '', 'nombre' => ''];
+        }
+
+        $palabras = preg_split('/\s+/u', $t, -1, PREG_SPLIT_NO_EMPTY);
+        if ($palabras === false || $palabras === []) {
+            return ['tipo' => '', 'nombre' => ''];
+        }
+
+        $tipo = self::tituloPalabra((string) $palabras[0]);
+        $resto = array_slice($palabras, 1);
+        if ($resto === []) {
+            return ['tipo' => $tipo, 'nombre' => ''];
+        }
+
+        $nombre = implode(' ', array_map([self::class, 'tituloPalabraNombre'], $resto));
+
+        return ['tipo' => $tipo, 'nombre' => $nombre];
+    }
+
+    public static function nacidoSegunSexo(mixed $sexo, ?string $etiqueta = null): string
+    {
+        return self::esFemenino($sexo, $etiqueta) ? 'nacida' : 'nacido';
+    }
+
+    public static function acreditadoSegunSexo(mixed $sexo, ?string $etiqueta = null): string
+    {
+        return self::esFemenino($sexo, $etiqueta) ? 'acreditada' : 'acreditado';
+    }
+
+    public static function esFemenino(mixed $sexo, ?string $etiqueta = null): bool
+    {
+        $texto = mb_strtolower(trim((string) ($etiqueta ?? '')), 'UTF-8');
+        if ($texto !== '') {
+            if (str_contains($texto, 'femen') || $texto === 'f' || $texto === 'mujer') {
+                return true;
+            }
+            if (str_contains($texto, 'masc') || $texto === 'm' || str_contains($texto, 'varon') || str_contains($texto, 'varón') || $texto === 'hombre') {
+                return false;
+            }
+        }
+
+        if (is_numeric($sexo)) {
+            return (int) $sexo === 1;
+        }
+
+        $s = mb_strtolower(trim((string) $sexo), 'UTF-8');
+
+        return str_contains($s, 'femen') || $s === 'f' || $s === 'mujer';
+    }
+
+    private static function tituloPalabra(string $palabra): string
+    {
+        $lower = mb_strtolower($palabra, 'UTF-8');
+        $primera = mb_substr($lower, 0, 1, 'UTF-8');
+        $resto = mb_substr($lower, 1, null, 'UTF-8');
+
+        return mb_strtoupper($primera, 'UTF-8').$resto;
+    }
+
+    private static function tituloPalabraNombre(string $palabra): string
+    {
+        $lower = mb_strtolower($palabra, 'UTF-8');
+        $particulas = ['de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'da', 'do'];
+        if (in_array($lower, $particulas, true)) {
+            return $lower;
+        }
+
+        return self::tituloPalabra($palabra);
+    }
 }

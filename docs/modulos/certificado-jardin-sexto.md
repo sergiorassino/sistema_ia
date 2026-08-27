@@ -27,7 +27,7 @@ Un registro por tabla (`id` = 1) con datos comunes a todos los alumnos del lote:
 
 - `serie`, `mesApro` (o `mesAprobacion`), `anoApro` (o `anoAprobacion`), `diaEmision`, `mesEmision`, `anoEmision`, `ppi` (observaciones).
 
-Datos personales por alumno: `legajos` (nombre, DNI, lugar y fecha de nacimiento). Institución: `ento` del nivel (nombre, CUE, domicilio).
+Datos personales por alumno: `legajos` (nombre, DNI, sexo, lugar y fecha de nacimiento). Institución: `ento` del nivel (nombre, CUE, domicilio). En sexto, el nombre institucional se parte: primera palabra (Instituto, Colegio, Escuela…) sin negrita; el resto en negrita con mayúscula inicial. `nacido`/`nacida` y `acreditado`/`acreditada` según `legajos.sexo` (1 = femenino en la convención del sistema).
 
 ## Flujo principal
 
@@ -40,7 +40,7 @@ Datos personales por alumno: `legajos` (nombre, DNI, lugar y fecha de nacimiento
 - Cursos y matrículas del ciclo/nivel de sesión.
 - Datos comunes: tabla `certificadojardin` o `certificadosextogrado`.
 - El PDF no calcula calificaciones; solo certifica la aprobación de sala de 5 / sexto con el texto oficial.
-- Sexto grado: textos, pie y escudos según plantilla Word provincial (Monte Cristo): `CERTIFICADO DE ESTUDIOS` / `EDUCACIÓN PRIMARIA`, párrafos justificados, `CERTIFICA que…`, validez nacional y firmas Inspector / Director. Escudos extraídos del .docx: `public/img/certificados/escudo-nacion.png` (izquierda) y `public/img/certificados/escudo-cordoba.png` (derecha).
+- Sexto grado: textos, pie y escudos según plantilla Word provincial (Monte Cristo). Fuente **Verdana** (TTF en `storage/fonts/verdana.ttf` y `verdanab.ttf`), mismos puntos que el .docx: 14 pt títulos, 9 pt leyes/serie, 11 pt cuerpo, 8 pt pie. Escudos: `public/img/certificados/escudo-nacion.png` y `escudo-cordoba.png`.
 
 ## Archivos clave
 
@@ -54,7 +54,7 @@ Datos personales por alumno: `legajos` (nombre, DNI, lugar y fecha de nacimiento
 - No mostrar el ítem de jardín en primario ni el de sexto en inicial.
 - No listar quintos ni otras salas: solo los cursos de cierre de nivel.
 - Guardado con `PersistenciaColumnas`: si el tenant no tiene la tabla o una columna con valor, error visible (no éxito falso).
-- PDF nuevo: TCPDF + Arial; no DomPDF.
+- PDF nuevo: TCPDF. Jardín: Arial. Sexto grado: Verdana (modelo Word provincial); no DomPDF.
 
 ## Checklist al modificar
 

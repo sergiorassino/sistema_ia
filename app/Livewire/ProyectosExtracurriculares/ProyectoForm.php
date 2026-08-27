@@ -31,16 +31,16 @@ class ProyectoForm extends Component
     /** @var list<array{fecha: string, hora_inicio: string, hora_fin: string}> */
     public array $fechas = [];
 
-    /** @var list<int> */
+    /** @var list<string> */
     public array $idsCursos = [];
 
-    /** @var list<int> */
+    /** @var list<string> */
     public array $idsAlumnos = [];
 
-    /** @var list<int> */
+    /** @var list<string> */
     public array $idsDocentesACargo = [];
 
-    /** @var list<int> */
+    /** @var list<string> */
     public array $idsOtrosDocentes = [];
 
     public string $filtroAlumno = '';
@@ -51,13 +51,15 @@ class ProyectoForm extends Component
 
     public bool $soloLectura = false;
 
+    public string $mensajeForm = '';
+
     public function mount(?string $ref = null): void
     {
         abort_unless(ExtActividadesService::tablasDisponibles(), 404, ExtActividadesService::mensajeTablasFaltantes());
 
         $this->descripcion = ExtActividadesService::DESCRIPCION_PLANTILLA;
         $this->fechas = [$this->filaFechaVacia()];
-        $this->idsDocentesACargo = [(int) Auth::id()];
+        $this->idsDocentesACargo = [(string) (int) Auth::id()];
 
         if ($ref === null || trim($ref) === '') {
             return;
@@ -83,18 +85,18 @@ class ProyectoForm extends Component
         if ($this->fechas === []) {
             $this->fechas = [$this->filaFechaVacia()];
         }
-        $this->idsCursos = $act->cursos->pluck('id_curso')->map(fn ($id) => (int) $id)->all();
-        $this->idsAlumnos = $act->alumnos->pluck('id_legajo')->map(fn ($id) => (int) $id)->all();
+        $this->idsCursos = $act->cursos->pluck('id_curso')->map(fn ($id) => (string) (int) $id)->all();
+        $this->idsAlumnos = $act->alumnos->pluck('id_legajo')->map(fn ($id) => (string) (int) $id)->all();
         $this->idsDocentesACargo = $act->docentes
             ->where('rol', ExtActividad::ROL_A_CARGO)
             ->pluck('id_profesor')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn ($id) => (string) (int) $id)
             ->values()
             ->all();
         $this->idsOtrosDocentes = $act->docentes
             ->where('rol', ExtActividad::ROL_OTRO)
             ->pluck('id_profesor')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn ($id) => (string) (int) $id)
             ->values()
             ->all();
     }
@@ -120,11 +122,28 @@ class ProyectoForm extends Component
         }
     }
 
+    public function updatedIdsCursos(): void
+    {
+        $this->normalizarIdsSeleccion();
+    }
+
+    public function updatedIdsDocentesACargo(): void
+    {
+        $this->normalizarIdsSeleccion();
+        $this->idsOtrosDocentes = array_values(array_diff($this->idsOtrosDocentes, $this->idsDocentesACargo));
+    }
+
+    public function updatedIdsOtrosDocentes(): void
+    {
+        $this->normalizarIdsSeleccion();
+        $this->idsDocentesACargo = array_values(array_diff($this->idsDocentesACargo, $this->idsOtrosDocentes));
+    }
+
     public function seleccionarTodosCursos(): void
     {
         $this->idsCursos = ExtActividadesService::cursosDelContexto()
             ->pluck('Id')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn ($id) => (string) (int) $id)
             ->all();
     }
 
@@ -135,29 +154,30 @@ class ProyectoForm extends Component
 
     public function toggleCurso(int $idCurso): void
     {
-        $idCurso = (int) $idCurso;
-        if (in_array($idCurso, $this->idsCursos, true)) {
-            $this->idsCursos = array_values(array_diff($this->idsCursos, [$idCurso]));
+        $id = (string) (int) $idCurso;
+        if (in_array($id, $this->idsCursos, true)) {
+            $this->idsCursos = array_values(array_diff($this->idsCursos, [$id]));
 
             return;
         }
-        $this->idsCursos[] = $idCurso;
+        $this->idsCursos[] = $id;
     }
 
     public function toggleAlumno(int $idLegajo): void
     {
-        $idLegajo = (int) $idLegajo;
-        if (in_array($idLegajo, $this->idsAlumnos, true)) {
-            $this->idsAlumnos = array_values(array_diff($this->idsAlumnos, [$idLegajo]));
+        $id = (string) (int) $idLegajo;
+        if (in_array($id, $this->idsAlumnos, true)) {
+            $this->idsAlumnos = array_values(array_diff($this->idsAlumnos, [$id]));
 
             return;
         }
-        $this->idsAlumnos[] = $idLegajo;
+        $this->idsAlumnos[] = $id;
     }
 
     public function quitarAlumno(int $idLegajo): void
     {
-        $this->idsAlumnos = array_values(array_diff($this->idsAlumnos, [(int) $idLegajo]));
+        $id = (string) (int) $idLegajo;
+        $this->idsAlumnos = array_values(array_diff($this->idsAlumnos, [$id]));
     }
 
     public function toggleDocenteACargo(int $idProfesor): void
@@ -200,8 +220,11 @@ class ProyectoForm extends Component
             return;
         }
 
+        $this->mensajeForm = '';
+        $this->resetErrorBag();
+
         if (! RateLimiter::attempt('ext-proy-guardar-'.(auth()->id() ?? 0), 40, fn () => true)) {
-            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+            $this->avisoError('Demasiados intentos. Espere un momento.');
 
             return;
         }
@@ -211,62 +234,70 @@ class ProyectoForm extends Component
         $this->horario = trim($this->horario);
         $this->descripcion = trim($this->descripcion);
         $this->evaluacion = trim($this->evaluacion);
-
-        $idsCursosValidos = ExtActividadesService::cursosDelContexto()
-            ->pluck('Id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-        $idsDocentesValidos = collect(ExtActividadesService::docentesAulaParaSelector('', 2000))
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-        $idActual = (int) Auth::id();
-        if ($idActual > 0 && ! in_array($idActual, $idsDocentesValidos, true)) {
-            $idsDocentesValidos[] = $idActual;
-        }
-        $this->idsAlumnos = ExtActividadesService::filtrarIdsAlumnosDelContexto($this->idsAlumnos);
-
-        $this->idsCursos = array_values(array_intersect($this->idsCursos, $idsCursosValidos));
-        $this->idsDocentesACargo = array_values(array_intersect($this->idsDocentesACargo, $idsDocentesValidos));
-        $this->idsOtrosDocentes = array_values(array_intersect($this->idsOtrosDocentes, $idsDocentesValidos));
-
-        $this->validate($this->reglas(), $this->mensajes());
-
-        if ($this->tipo_grupo === ExtActividad::TIPO_GRUPO_CURSOS && $this->idsCursos === []) {
-            $this->addError('idsCursos', 'Seleccione al menos un curso, o todos.');
-
-            return;
-        }
-        if ($this->tipo_grupo === ExtActividad::TIPO_GRUPO_ALUMNOS && $this->idsAlumnos === []) {
-            $this->addError('idsAlumnos', 'Seleccione al menos un alumno.');
-
-            return;
-        }
-        if ($this->idsDocentesACargo === []) {
-            $this->addError('idsDocentesACargo', 'Indique al menos un docente a cargo.');
-
-            return;
-        }
-
-        $fechasNorm = [];
-        foreach ($this->fechas as $fila) {
-            $fecha = trim((string) ($fila['fecha'] ?? ''));
-            if ($fecha === '') {
-                continue;
-            }
-            $fechasNorm[] = [
-                'fecha' => $fecha,
-                'hora_inicio' => trim((string) ($fila['hora_inicio'] ?? '')),
-                'hora_fin' => trim((string) ($fila['hora_fin'] ?? '')),
-            ];
-        }
-        if ($fechasNorm === []) {
-            $this->addError('fechas', 'Indique al menos un día con fecha.');
-
-            return;
-        }
+        $this->normalizarIdsSeleccion();
+        $this->normalizarFechasHoras();
 
         try {
+            $idsCursosValidos = array_map(
+                static fn ($id) => (string) (int) $id,
+                ExtActividadesService::cursosDelContexto()->pluck('Id')->all()
+            );
+            $idsDocentesValidos = array_map(
+                static fn ($id) => (string) (int) $id,
+                ExtActividadesService::filtrarIdsDocentesAula(array_merge(
+                    $this->idsComoEnteros($this->idsDocentesACargo),
+                    $this->idsComoEnteros($this->idsOtrosDocentes),
+                ))
+            );
+            $idActual = (string) (int) Auth::id();
+            if ($idActual !== '0' && ! in_array($idActual, $idsDocentesValidos, true)) {
+                $idsDocentesValidos[] = $idActual;
+            }
+            $this->idsAlumnos = array_map(
+                static fn ($id) => (string) (int) $id,
+                ExtActividadesService::filtrarIdsAlumnosDelContexto($this->idsComoEnteros($this->idsAlumnos))
+            );
+
+            $this->idsCursos = array_values(array_intersect($this->idsComoTexto($this->idsCursos), $idsCursosValidos));
+            $this->idsDocentesACargo = array_values(array_intersect($this->idsComoTexto($this->idsDocentesACargo), $idsDocentesValidos));
+            $this->idsOtrosDocentes = array_values(array_intersect($this->idsComoTexto($this->idsOtrosDocentes), $idsDocentesValidos));
+
+            $this->validate($this->reglas(), $this->mensajes());
+
+            if ($this->tipo_grupo === ExtActividad::TIPO_GRUPO_CURSOS && $this->idsCursos === []) {
+                $this->avisoError('Seleccione al menos un curso, o todos.', 'idsCursos');
+
+                return;
+            }
+            if ($this->tipo_grupo === ExtActividad::TIPO_GRUPO_ALUMNOS && $this->idsAlumnos === []) {
+                $this->avisoError('Seleccione al menos un alumno.', 'idsAlumnos');
+
+                return;
+            }
+            if ($this->idsDocentesACargo === []) {
+                $this->avisoError('Indique al menos un docente a cargo.', 'idsDocentesACargo');
+
+                return;
+            }
+
+            $fechasNorm = [];
+            foreach ($this->fechas as $fila) {
+                $fecha = trim((string) ($fila['fecha'] ?? ''));
+                if ($fecha === '') {
+                    continue;
+                }
+                $fechasNorm[] = [
+                    'fecha' => $fecha,
+                    'hora_inicio' => ExtActividadesService::formatearHora((string) ($fila['hora_inicio'] ?? '')),
+                    'hora_fin' => ExtActividadesService::formatearHora((string) ($fila['hora_fin'] ?? '')),
+                ];
+            }
+            if ($fechasNorm === []) {
+                $this->avisoError('Indique al menos un día con fecha.', 'fechas');
+
+                return;
+            }
+
             ExtActividadesService::guardar($this->actividadId, [
                 'nombre' => $this->nombre,
                 'lugar' => $this->lugar,
@@ -275,19 +306,45 @@ class ProyectoForm extends Component
                 'evaluacion' => $this->evaluacion,
                 'tipo_grupo' => $this->tipo_grupo,
                 'fechas' => $fechasNorm,
-                'ids_cursos' => $this->idsCursos,
-                'ids_alumnos' => $this->idsAlumnos,
-                'ids_docentes_a_cargo' => $this->idsDocentesACargo,
-                'ids_otros_docentes' => $this->idsOtrosDocentes,
+                'ids_cursos' => $this->idsComoEnteros($this->idsCursos),
+                'ids_alumnos' => $this->idsComoEnteros($this->idsAlumnos),
+                'ids_docentes_a_cargo' => $this->idsComoEnteros($this->idsDocentesACargo),
+                'ids_otros_docentes' => $this->idsComoEnteros($this->idsOtrosDocentes),
             ], (int) Auth::id());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $primero = collect($e->validator->errors()->all())->first();
+            $this->avisoError(is_string($primero) && $primero !== ''
+                ? $primero
+                : 'Revise los datos del formulario.');
+            throw $e;
         } catch (QueryException $e) {
-            $this->dispatch('se-swal-error', mensaje: ExtActividadesService::mensajeDesdeQueryException($e));
+            $this->avisoError(ExtActividadesService::mensajeDesdeQueryException($e));
+
+            return;
+        } catch (\RuntimeException $e) {
+            $this->avisoError($e->getMessage());
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->avisoError('No se pudo guardar el proyecto. Intente nuevamente.');
 
             return;
         }
 
+        $url = route('portalDocente.proyectosExtracurriculares.index');
         session()->flash('success', $this->actividadId ? 'Proyecto actualizado.' : 'Proyecto presentado a dirección.');
-        $this->redirectRoute('portalDocente.proyectosExtracurriculares.index', navigate: false);
+        $this->js('window.location.assign('.json_encode($url).')');
+        $this->redirect($url, navigate: false);
+    }
+
+    private function avisoError(string $mensaje, ?string $campo = null): void
+    {
+        $this->mensajeForm = $mensaje;
+        if ($campo !== null && $campo !== '') {
+            $this->addError($campo, $mensaje);
+        }
+        $this->js('window.seSwalError('.json_encode($mensaje, JSON_UNESCAPED_UNICODE).')');
     }
 
     /**
@@ -304,8 +361,8 @@ class ProyectoForm extends Component
             'tipo_grupo' => ['required', Rule::in([ExtActividad::TIPO_GRUPO_CURSOS, ExtActividad::TIPO_GRUPO_ALUMNOS])],
             'fechas' => ['required', 'array', 'min:1'],
             'fechas.*.fecha' => ['required', 'date'],
-            'fechas.*.hora_inicio' => ['nullable', 'date_format:H:i'],
-            'fechas.*.hora_fin' => ['nullable', 'date_format:H:i'],
+            'fechas.*.hora_inicio' => ['nullable', 'regex:/^(|([01]?\d|2[0-3]):[0-5]\d)$/'],
+            'fechas.*.hora_fin' => ['nullable', 'regex:/^(|([01]?\d|2[0-3]):[0-5]\d)$/'],
         ];
     }
 
@@ -319,8 +376,55 @@ class ProyectoForm extends Component
             'descripcion.required' => 'Complete la breve descripción.',
             'fechas.required' => 'Indique al menos un día.',
             'fechas.*.fecha.required' => 'Cada día debe tener fecha.',
+            'fechas.*.hora_inicio.regex' => 'El horario de inicio no es válido.',
+            'fechas.*.hora_fin.regex' => 'El horario de fin no es válido.',
             'tipo_grupo.in' => 'Seleccione cursos o alumnos.',
         ];
+    }
+
+    private function normalizarIdsSeleccion(): void
+    {
+        $this->idsCursos = $this->idsComoTexto($this->idsCursos);
+        $this->idsAlumnos = $this->idsComoTexto($this->idsAlumnos);
+        $this->idsDocentesACargo = $this->idsComoTexto($this->idsDocentesACargo);
+        $this->idsOtrosDocentes = $this->idsComoTexto($this->idsOtrosDocentes);
+    }
+
+    /**
+     * @param  list<mixed>  $ids
+     * @return list<string>
+     */
+    private function idsComoTexto(array $ids): array
+    {
+        $out = [];
+        foreach ($ids as $id) {
+            $n = (int) $id;
+            if ($n > 0) {
+                $out[] = (string) $n;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * @param  list<mixed>  $ids
+     * @return list<int>
+     */
+    private function idsComoEnteros(array $ids): array
+    {
+        return array_map('intval', $this->idsComoTexto($ids));
+    }
+
+    private function normalizarFechasHoras(): void
+    {
+        foreach ($this->fechas as $i => $fila) {
+            if (! is_array($fila)) {
+                continue;
+            }
+            $this->fechas[$i]['hora_inicio'] = ExtActividadesService::formatearHora((string) ($fila['hora_inicio'] ?? ''));
+            $this->fechas[$i]['hora_fin'] = ExtActividadesService::formatearHora((string) ($fila['hora_fin'] ?? ''));
+        }
     }
 
     /**
@@ -339,7 +443,7 @@ class ProyectoForm extends Component
     {
         $tipo = ExtActividadesService::tipoRegistroDefault();
         $cursos = ExtActividadesService::cursosDelContexto();
-        $docentes = ExtActividadesService::docentesAulaParaSelector($this->filtroDocente);
+        $docentes = ExtActividadesService::docentesAulaParaSelector('', 200);
         $idActual = (int) Auth::id();
         if ($idActual > 0 && ! collect($docentes)->contains(fn ($d) => (int) $d['id'] === $idActual)) {
             $yo = Auth::user();

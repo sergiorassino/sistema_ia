@@ -4,6 +4,7 @@ namespace App\Support\Certificados;
 
 use App\Models\Ento;
 use App\Models\Matricula;
+use App\Models\Sexo;
 use App\Support\MatrizAnaliticos\AnaliticoFrenteDatos;
 use App\Support\CalificacionesPrimario\PlanillaCalificacionesPrimarioDatos;
 use Illuminate\Support\Collection;
@@ -140,6 +141,8 @@ final class CertificadoFinalizacionNivelDatos
      *     ln_depto: string,
      *     ln_provincia: string,
      *     ln_pais: string,
+     *     sexo: mixed,
+     *     sexo_etiqueta: string,
      *     dia_naci: string,
      *     mes_naci: string,
      *     ano_naci: string
@@ -153,6 +156,7 @@ final class CertificadoFinalizacionNivelDatos
         }
 
         $dni = trim((string) ($leg->dni ?? ''));
+        $sexo = $leg->sexo ?? '';
         $fechnaci = $leg->fechnaci;
         $diaNaci = '';
         $mesNaci = '';
@@ -174,6 +178,8 @@ final class CertificadoFinalizacionNivelDatos
             'ln_depto' => trim((string) ($leg->ln_depto ?? '')),
             'ln_provincia' => trim((string) ($leg->ln_provincia ?? '')),
             'ln_pais' => trim((string) ($leg->ln_pais ?? '')),
+            'sexo' => $sexo,
+            'sexo_etiqueta' => Sexo::etiquetaParaValorAlmacenado($sexo),
             'dia_naci' => $diaNaci,
             'mes_naci' => $mesNaci,
             'ano_naci' => $anoNaci,
