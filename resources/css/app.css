@@ -259,6 +259,47 @@
         @apply justify-center text-neutral-500;
     }
 
+    /* Proyectos extracurriculares — listado a todo el ancho del card */
+    .gf.gf-ext-proy {
+        display: block;
+        width: 100%;
+        min-width: 40rem;
+    }
+    .gf.gf-ext-proy .gf-head,
+    .gf.gf-ext-proy .gf-row {
+        @apply w-full items-center;
+    }
+    .gf.gf-ext-proy .gf-th,
+    .gf.gf-ext-proy .gf-td,
+    .gf.gf-ext-proy .gf-th-right {
+        min-width: 0;
+    }
+    .gf.gf-ext-proy .gf-col-actividad {
+        flex: 2 1 14rem;
+    }
+    .gf.gf-ext-proy .gf-col-fechas {
+        flex: 1.3 1 12rem;
+    }
+    .gf.gf-ext-proy .gf-col-proponente {
+        flex: 1 1 10rem;
+    }
+    .gf.gf-ext-proy .gf-col-estado {
+        flex: 0 0 7.5rem;
+        width: 7.5rem;
+    }
+    .gf.gf-ext-proy .gf-col-acciones {
+        flex: 0 0 11.5rem;
+        width: 11.5rem;
+        text-align: right;
+    }
+    .gf.gf-ext-proy.gf-ext-proy--gestion .gf-col-acciones {
+        flex: 0 0 17rem;
+        width: 17rem;
+    }
+    .gf.gf-ext-proy.gf-ext-proy--gestion {
+        min-width: 52rem;
+    }
+
     /* Fila de datos (listado o formulario) */
     .gf-row {
         @apply flex border-b border-gray-300 last:border-b-0;

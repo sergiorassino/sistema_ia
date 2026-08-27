@@ -28,7 +28,12 @@ El ciclo y el nivel son los de `schoolCtx()` (selector de contexto). Cada año l
 
 Columnas típicas de `preceptoresporcurso`: `idCursos`, `idProfesores` (o `idProfesor`), `idTerlec`, `idNivel` (o `idNiveles`).
 
-SQL: `database/sql/preceptoresporcurso_tabla_idempotente.sql` · permiso: `database/sql/permiso_ia_orden_95_preceptores_por_curso.sql` · migración: `database/migrations/2026_08_26_200000_add_permiso_ia_orden_95_preceptores_por_curso.php`.
+SQL: `database/sql/preceptoresporcurso_tabla_idempotente.sql` · permiso: `database/sql/permiso_ia_orden_95_preceptores_por_curso.sql`.
+
+Migraciones (`php artisan migrate` o `php artisan se:migrate-legacy --force`):
+
+- Tabla: `database/migrations/2026_08_27_130000_create_preceptoresporcurso_table_if_missing.php` (CREATE si no existe; ALTER de columnas faltantes si el esquema es incompleto).
+- Permiso 95: `database/migrations/2026_08_26_200000_add_permiso_ia_orden_95_preceptores_por_curso.php`.
 
 ## Flujo principal
 

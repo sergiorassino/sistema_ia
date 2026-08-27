@@ -42,7 +42,15 @@ class GestionIndex extends Component
 
     public function verDetalle(int $id): void
     {
-        $this->detalleId = $id;
+        $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
+        if ($act === null) {
+            $this->detalleId = null;
+            $this->js('window.seSwalError('.json_encode('No se encontró el proyecto en el ciclo y nivel actuales.', JSON_UNESCAPED_UNICODE).')');
+
+            return;
+        }
+
+        $this->detalleId = (int) $act->id;
     }
 
     public function cerrarDetalle(): void
@@ -78,6 +86,32 @@ class GestionIndex extends Component
         $this->dispatch('se-swal-exito', mensaje: 'El proyecto volvió a pendiente y salió del calendario.');
     }
 
+    public function confirmarComunicar(int $id): void
+    {
+        abort_unless(tienePermiso(PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR), 403);
+
+        $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
+        if ($act === null) {
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró el proyecto en el ciclo y nivel actuales.');
+
+            return;
+        }
+        if (! $act->estaAprobada()) {
+            $this->dispatch('se-swal-error', mensaje: 'Solo se comunica un proyecto aprobado.');
+
+            return;
+        }
+
+        $html = ExtActividadesService::htmlConfirmarComunicar($id, (int) Auth::id());
+        if ($html === '') {
+            $this->dispatch('se-swal-error', mensaje: 'No hay destinatarios distintos del remitente para este proyecto.');
+
+            return;
+        }
+
+        $this->dispatch('ext-confirmar-comunicar', html: $html, id: $id);
+    }
+
     public function comunicar(int $id): void
     {
         abort_unless(tienePermiso(PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR), 403);
@@ -89,13 +123,23 @@ class GestionIndex extends Component
         }
 
         $r = ExtActividadesService::comunicarInvolucrados($id);
-        if ($r['ok']) {
-            $this->dispatch('se-swal-exito', mensaje: $r['mensaje']);
+        if (! $r['ok']) {
+            $this->dispatch('se-swal-error', mensaje: $r['mensaje']);
 
             return;
         }
 
-        $this->dispatch('se-swal-error', mensaje: $r['mensaje']);
+        if ($r['refuerzo_mail_desarrollo'] ?? false) {
+            $this->dispatch(
+                'se-swal-aviso',
+                mensaje: $r['mensaje'],
+                titulo: 'Correo desactivado (desarrollo)',
+            );
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: $r['mensaje']);
     }
 
     public function render()
@@ -119,7 +163,13 @@ class GestionIndex extends Component
             $registros = $q->paginate(self::POR_PAGINA);
 
             if ($this->detalleId !== null) {
-                $detalle = ExtActividadesService::cargarCompleta($this->detalleId);
+                try {
+                    $detalle = ExtActividadesService::cargarCompleta($this->detalleId);
+                } catch (\Throwable $e) {
+                    report($e);
+                    $this->detalleId = null;
+                    $detalle = null;
+                }
             }
         }
 

@@ -16,6 +16,7 @@ use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\Mail\MailDesarrollo;
 use App\Support\PreceptoresPorCurso;
 use App\Support\ProfesorMenuPortal;
 use Carbon\Carbon;
@@ -293,8 +294,168 @@ final class ExtActividadesService
         return $act;
     }
 
+    /** Correo de refuerzo: activo salvo APP_ENV=local (MailDesarrollo). Escape: MAIL_FORCE_REAL=true. */
+    public static function refuerzoMailActivo(): bool
+    {
+        return ! MailDesarrollo::bloquearSmtp();
+    }
+
+    public static function textoConfirmarComunicar(): string
+    {
+        if (self::refuerzoMailActivo()) {
+            return 'Se enviará un comunicado institucional y un correo de refuerzo a:';
+        }
+
+        return 'Se enviará un comunicado institucional a:';
+    }
+
     /**
-     * @return array{ok: bool, mensaje: string, cantidad: int}
+     * Destinatarios del comunicado (sin el remitente) y su rol en el proyecto.
+     *
+     * @return list<array{id: int, nombre: string, participaciones: list<string>}>
+     */
+    public static function destinatariosComunicacionDetalle(ExtActividad $act, ?int $idExcluir = null): array
+    {
+        $idNivel = (int) $act->id_nivel;
+        $idTerlec = (int) $act->id_terlec;
+        $idsCursos = self::idsCursosInvolucrados($act);
+        $etiquetasCursos = self::etiquetasCursos($idsCursos, $idNivel, $idTerlec);
+        $ppcPorProfesor = self::cursosPorDocentePpc($idsCursos, $idNivel, $idTerlec);
+
+        /** @var array<int, array{a_cargo: bool, otro: bool, cursos_ppc: list<int>, cursos_pre: list<int>}> $buckets */
+        $buckets = [];
+        $asegurar = static function (int $id) use (&$buckets): void {
+            if ($id < 1) {
+                return;
+            }
+            $buckets[$id] ??= [
+                'a_cargo' => false,
+                'otro' => false,
+                'cursos_ppc' => [],
+                'cursos_pre' => [],
+            ];
+        };
+
+        foreach ($act->docentes as $d) {
+            $id = (int) $d->id_profesor;
+            $asegurar($id);
+            if ($id < 1) {
+                continue;
+            }
+            if ((string) $d->rol === ExtActividad::ROL_A_CARGO) {
+                $buckets[$id]['a_cargo'] = true;
+            } else {
+                $buckets[$id]['otro'] = true;
+            }
+        }
+
+        foreach ($ppcPorProfesor as $idProf => $idsCursoProf) {
+            $idProf = (int) $idProf;
+            $asegurar($idProf);
+            if ($idProf < 1) {
+                continue;
+            }
+            foreach ($idsCursoProf as $idCurso) {
+                $idCurso = (int) $idCurso;
+                if ($idCurso > 0 && ! in_array($idCurso, $buckets[$idProf]['cursos_ppc'], true)) {
+                    $buckets[$idProf]['cursos_ppc'][] = $idCurso;
+                }
+            }
+        }
+
+        foreach ($idsCursos as $idCurso) {
+            foreach (PreceptoresPorCurso::idsPreceptores((int) $idCurso, $idNivel, $idTerlec) as $idProf) {
+                $idProf = (int) $idProf;
+                $asegurar($idProf);
+                if ($idProf < 1) {
+                    continue;
+                }
+                if (! in_array((int) $idCurso, $buckets[$idProf]['cursos_pre'], true)) {
+                    $buckets[$idProf]['cursos_pre'][] = (int) $idCurso;
+                }
+            }
+        }
+
+        if ($idExcluir !== null && $idExcluir > 0) {
+            unset($buckets[$idExcluir]);
+        }
+
+        $ids = array_values(array_filter(array_map('intval', array_keys($buckets)), static fn (int $id) => $id > 0));
+        if ($ids === []) {
+            return [];
+        }
+
+        $profesores = Profesor::query()->whereIn('id', $ids)->get()->keyBy('id');
+        $filas = [];
+        foreach ($buckets as $idProf => $info) {
+            $idProf = (int) $idProf;
+            $p = $profesores->get($idProf);
+            $nombre = $p instanceof Profesor
+                ? trim($p->nombre_completo)
+                : '';
+            if ($nombre === '' || $nombre === ',') {
+                $nombre = 'Legajo #'.$idProf;
+            }
+
+            $partes = [];
+            if ($info['a_cargo']) {
+                $partes[] = 'Docente a cargo';
+            }
+            if ($info['otro']) {
+                $partes[] = 'Otro docente';
+            }
+            if ($info['cursos_ppc'] !== []) {
+                $cursos = self::textoCursosDe($info['cursos_ppc'], $etiquetasCursos);
+                $partes[] = $cursos !== '' ? 'Docente del curso ('.$cursos.')' : 'Docente del curso';
+            }
+            if ($info['cursos_pre'] !== []) {
+                $cursos = self::textoCursosDe($info['cursos_pre'], $etiquetasCursos);
+                $partes[] = $cursos !== '' ? 'Preceptor ('.$cursos.')' : 'Preceptor';
+            }
+            if ($partes === []) {
+                continue;
+            }
+
+            $filas[] = [
+                'id' => $idProf,
+                'nombre' => $nombre,
+                'participaciones' => $partes,
+            ];
+        }
+
+        usort($filas, static fn (array $a, array $b): int => strcmp($a['nombre'], $b['nombre']));
+
+        return $filas;
+    }
+
+    public static function htmlConfirmarComunicar(int $id, ?int $idExcluir = null): string
+    {
+        $act = self::cargarCompleta($id);
+        $filas = self::destinatariosComunicacionDetalle($act, $idExcluir);
+        if ($filas === []) {
+            return '';
+        }
+
+        $items = '';
+        foreach ($filas as $fila) {
+            $nombre = e($fila['nombre']);
+            $part = e(implode(' · ', $fila['participaciones']));
+            $items .= '<li style="margin:0.2rem 0;"><strong>'.$nombre.'</strong> — '.$part.'</li>';
+        }
+
+        $intro = e(self::textoConfirmarComunicar());
+        $pieMail = self::refuerzoMailActivo()
+            ? ''
+            : '<p style="margin:0.85rem 0 0;text-align:left;font-size:0.85rem;color:#666;">El correo de refuerzo está desactivado en desarrollo (APP_ENV=local).</p>';
+
+        return '<p style="margin:0 0 0.65rem;text-align:left;font-size:0.95rem;color:#444;">'.$intro.'</p>'
+            .'<ul style="margin:0;padding-left:1.15rem;text-align:left;font-size:0.9rem;color:#333;max-height:16rem;overflow:auto;">'.$items.'</ul>'
+            .$pieMail
+            .'<p style="margin:0.85rem 0 0;text-align:left;font-size:0.95rem;color:#444;">¿Continuar?</p>';
+    }
+
+    /**
+     * @return array{ok: bool, mensaje: string, cantidad: int, refuerzo_mail_pedido: bool, refuerzo_mail_desarrollo: bool}
      */
     public static function comunicarInvolucrados(int $id): array
     {
@@ -304,13 +465,13 @@ final class ExtActividadesService
         /** @var Profesor|null $emisor */
         $emisor = Auth::user();
         if (! $emisor instanceof Profesor) {
-            return ['ok' => false, 'mensaje' => 'No hay un usuario de personal autenticado.', 'cantidad' => 0];
+            return self::resultadoComunicar(false, 'No hay un usuario de personal autenticado.', 0);
         }
 
         $ids = self::idsDestinatariosComunicacion($act);
         $ids = array_values(array_diff($ids, [(int) $emisor->id]));
         if ($ids === []) {
-            return ['ok' => false, 'mensaje' => 'No hay destinatarios distintos del remitente para este proyecto.', 'cantidad' => 0];
+            return self::resultadoComunicar(false, 'No hay destinatarios distintos del remitente para este proyecto.', 0);
         }
 
         $emisor->loadMissing('tipo');
@@ -327,13 +488,15 @@ final class ExtActividadesService
         }
 
         if ($porClave === []) {
-            return ['ok' => false, 'mensaje' => 'No se encontraron destinatarios vigentes.', 'cantidad' => 0];
+            return self::resultadoComunicar(false, 'No se encontraron destinatarios vigentes.', 0);
         }
 
         $contenido = self::textoComunicado($act);
         $asunto = 'Proyecto extracurricular aprobado: '.$act->nombre;
         $enviados = 0;
         $omitidosCanal = 0;
+        $pidioEmail = false;
+        $refuerzoMail = self::refuerzoMailActivo();
 
         foreach ($porClave as $claveRec => $idsGrupo) {
             if (! CanalesPolicy::puedeIniciar($rolEmisor, $claveRec)) {
@@ -346,6 +509,15 @@ final class ExtActividadesService
                 $omitidosCanal += count($idsGrupo);
 
                 continue;
+            }
+
+            if ($refuerzoMail) {
+                if (! in_array('email', $medios, true)) {
+                    $medios[] = 'email';
+                }
+                $pidioEmail = true;
+            } else {
+                $medios = array_values(array_filter($medios, static fn (string $m): bool => $m !== 'email'));
             }
 
             ComunicacionesRepository::crearHiloConMensaje([
@@ -373,11 +545,11 @@ final class ExtActividadesService
         }
 
         if ($enviados < 1) {
-            return [
-                'ok' => false,
-                'mensaje' => 'No hay canales de comunicación habilitados hacia los involucrados. Revise la parametrización de canales.',
-                'cantidad' => 0,
-            ];
+            return self::resultadoComunicar(
+                false,
+                'No hay canales de comunicación habilitados hacia los involucrados. Revise la parametrización de canales.',
+                0,
+            );
         }
 
         $act->comunicado_at = now();
@@ -386,12 +558,16 @@ final class ExtActividadesService
         $extra = $omitidosCanal > 0
             ? ' '.$omitidosCanal.' destinatario(s) no recibieron el aviso por falta de canal.'
             : '';
+        $mailExtra = $pidioEmail
+            ? ' Se envió correo de refuerzo.'
+            : ' El correo de refuerzo está desactivado en desarrollo (APP_ENV=local).';
 
-        return [
-            'ok' => true,
-            'mensaje' => 'Se comunicó a '.$enviados.' involucrado(s).'.$extra,
-            'cantidad' => $enviados,
-        ];
+        return self::resultadoComunicar(
+            true,
+            'Se comunicó a '.$enviados.' involucrado(s).'.$extra.$mailExtra,
+            $enviados,
+            $pidioEmail,
+        );
     }
 
     /**
@@ -461,22 +637,41 @@ final class ExtActividadesService
      */
     public static function idsDocentesPpcDeCursos(array $idsCursos, int $idNivel, int $idTerlec): array
     {
+        return array_values(array_map('intval', array_keys(self::cursosPorDocentePpc($idsCursos, $idNivel, $idTerlec))));
+    }
+
+    /**
+     * @param  list<int>  $idsCursos
+     * @return array<int, list<int>> id profesor => ids de curso
+     */
+    public static function cursosPorDocentePpc(array $idsCursos, int $idNivel, int $idTerlec): array
+    {
         $idsCursos = array_values(array_unique(array_filter($idsCursos, static fn (int $id) => $id > 0)));
         if ($idsCursos === [] || ! Schema::hasTable('ppc') || ! Schema::hasTable('materias')) {
             return [];
         }
 
-        return DB::table('ppc as ppc')
+        $filas = DB::table('ppc as ppc')
             ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
             ->whereIn('m.idCursos', $idsCursos)
             ->where('m.idNivel', $idNivel)
             ->where('m.idTerlec', $idTerlec)
-            ->pluck('ppc.idProfesor')
-            ->map(static fn ($id) => (int) $id)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+            ->get(['ppc.idProfesor', 'm.idCursos']);
+
+        $out = [];
+        foreach ($filas as $fila) {
+            $idProf = (int) ($fila->idProfesor ?? 0);
+            $idCurso = (int) ($fila->idCursos ?? 0);
+            if ($idProf < 1 || $idCurso < 1) {
+                continue;
+            }
+            $out[$idProf] ??= [];
+            if (! in_array($idCurso, $out[$idProf], true)) {
+                $out[$idProf][] = $idCurso;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -740,6 +935,63 @@ final class ExtActividadesService
     public static function mensajeDesdeQueryException(QueryException $e): string
     {
         return 'No se pudo guardar el proyecto. Verifique los datos e intente nuevamente.';
+    }
+
+    /**
+     * @param  list<int>  $idsCursos
+     * @return array<int, string>
+     */
+    private static function etiquetasCursos(array $idsCursos, int $idNivel, int $idTerlec): array
+    {
+        $idsCursos = array_values(array_unique(array_filter($idsCursos, static fn (int $id) => $id > 0)));
+        if ($idsCursos === []) {
+            return [];
+        }
+
+        return Curso::query()
+            ->with(['curplan', 'turnoClase'])
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->whereIn('Id', $idsCursos)
+            ->get()
+            ->mapWithKeys(static function (Curso $c): array {
+                $nombre = trim($c->nombreParaListado());
+
+                return [(int) $c->getKey() => $nombre !== '' ? $nombre : ('Curso #'.(int) $c->getKey())];
+            })
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $idsCursos
+     * @param  array<int, string>  $etiquetas
+     */
+    private static function textoCursosDe(array $idsCursos, array $etiquetas): string
+    {
+        $nombres = [];
+        foreach ($idsCursos as $id) {
+            $id = (int) $id;
+            if ($id < 1) {
+                continue;
+            }
+            $nombres[] = $etiquetas[$id] ?? ('Curso #'.$id);
+        }
+
+        return implode(', ', $nombres);
+    }
+
+    /**
+     * @return array{ok: bool, mensaje: string, cantidad: int, refuerzo_mail_pedido: bool, refuerzo_mail_desarrollo: bool}
+     */
+    private static function resultadoComunicar(bool $ok, string $mensaje, int $cantidad, bool $pidioEmail = false): array
+    {
+        return [
+            'ok' => $ok,
+            'mensaje' => $mensaje,
+            'cantidad' => $cantidad,
+            'refuerzo_mail_pedido' => $pidioEmail,
+            'refuerzo_mail_desarrollo' => ! self::refuerzoMailActivo(),
+        ];
     }
 
     private static function textoComunicado(ExtActividad $act): string

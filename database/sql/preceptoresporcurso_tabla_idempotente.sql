@@ -2,7 +2,8 @@
 -- Tabla legacy preceptoresporcurso — asignación de preceptor(es) por curso y ciclo.
 -- Aditiva: CREATE TABLE solo si no existe. Columnas opcionales si faltan.
 -- No agrega idProfesores si ya existe idProfesor (esquema variable entre tenants).
--- Revisar antes de ejecutar.
+-- Preferir: php artisan migrate (migración 2026_08_27_130000_create_preceptoresporcurso_table_if_missing).
+-- Este SQL es el equivalente revisable; no ejecutar UPDATE masivo sin backup.
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS `preceptoresporcurso` (
