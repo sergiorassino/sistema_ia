@@ -73,7 +73,7 @@ Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcio
 Implementación: `App\Support\ProfesorMenuPortal` y middleware `menu.portal:secretaria` / `menu.portal:docente`.
 Un profesor (`IdTipoProf = 6`) no puede abrir rutas de secretaría (redirección al portal); el resto no puede abrir `/portal-docente`.
 
-**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`.
+**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`. El escritorio incluye el widget de **calendario escolar** (próximas actividades extracurriculares aprobadas).
 
 ### Sidebar dinámico (tenant × nivel × implementación)
 
@@ -199,3 +199,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-07-31:** Menú de Docentes: el ítem `listado_estudiantes` pasa de «Listados por curso» a **Listados de Estudiantes con Formato** (`portalDocente.listados.estudiantesFormato`, mismo Livewire/PDF que secretaría).
 - **2026-08-18:** Comunicación institucional: **Mis grupos** de destinatarios por usuario y nivel (`com_grupos` / `com_grupos_miembros`; rutas `comunicaciones.grupos` y `portalDocente.comunicaciones.grupos`).
 - **2026-08-25:** Menú de Docentes: dos listados de estudiantes (mismo alcance de cursos del nivel de sesión que secretaría pedagógica): **Listados de Estudiantes por Curso** (`listado_estudiantes` → `portalDocente.listados.porCurso` + PDF/Excel) y **Listados de Estudiantes con Formato** (`listado_estudiantes_formato` → `portalDocente.listados.estudiantesFormato`).
+- **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.

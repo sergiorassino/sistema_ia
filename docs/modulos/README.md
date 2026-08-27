@@ -27,6 +27,8 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Recalcular promedios (secundario) | [recalculo-promedios-secundario.md](recalculo-promedios-secundario.md) |
 | Profesores presentes | [profesores-presentes.md](profesores-presentes.md) |
 | Preceptores por curso | [preceptores-por-curso.md](preceptores-por-curso.md) |
+| Proyectos extracurriculares | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |
+| Certificado Jardín / Sexto Grado | [certificado-jardin-sexto.md](certificado-jardin-sexto.md) |
 
 ## Plantilla
 

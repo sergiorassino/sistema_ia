@@ -132,6 +132,12 @@ final class MenuSecretariaPerfil
         return ProfesorMenuPortal::usaMenuSecretariaPedagogica($profesor instanceof Profesor ? $profesor : null);
     }
 
+    /** Calendario escolar y proyectos extracurriculares: Menú de Secretaría, niveles 1–4. */
+    public static function muestraProyectosExtracurriculares(): bool
+    {
+        return self::muestraViajesSalidasEducativas();
+    }
+
     public static function abortSiNoViajesSalidasEducativas(): void
     {
         abort_unless(

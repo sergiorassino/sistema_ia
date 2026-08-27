@@ -347,6 +347,8 @@ return [
                 'listado_estudiantes_formato' => true,
                 'recursos_didacticos_nueva_reserva' => false,
                 'recursos_didacticos_listado' => false,
+                'proyectos_extracurriculares' => true,
+                'calendario_escolar' => true,
             ],
             'primario' => [
                 'carga_estudiante' => false,
@@ -357,6 +359,8 @@ return [
                 'listado_estudiantes_formato' => true,
                 'recursos_didacticos_nueva_reserva' => false,
                 'recursos_didacticos_listado' => false,
+                'proyectos_extracurriculares' => true,
+                'calendario_escolar' => true,
             ],
             'secundario' => [
                 'calificaciones' => true,
@@ -366,6 +370,8 @@ return [
                 'listado_estudiantes_formato' => true,
                 'recursos_didacticos_nueva_reserva' => false,
                 'recursos_didacticos_listado' => false,
+                'proyectos_extracurriculares' => true,
+                'calendario_escolar' => true,
             ],
         ],
         /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */

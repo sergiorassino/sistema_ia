@@ -38,6 +38,7 @@
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf', 'viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf') ? 'true' : 'false' }},
+        proyectosExtracurriculares: {{ request()->routeIs('calendarioEscolar', 'proyectosExtracurriculares.gestion') ? 'true' : 'false' }},
         materialDidactico: {{ request()->routeIs('material-didactico.*') ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
         calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicial() ? 'true' : 'false' }},
@@ -472,6 +473,58 @@
                     </svg>
                     <span class="truncate">Generar Excel Viaje</span>
                 </a>
+            </div>
+        @endif
+
+        @if (\App\Support\Navegacion\MenuSecretariaPerfil::muestraProyectosExtracurriculares())
+            <div class="mt-4"></div>
+            <button type="button"
+                    class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
+                    :class="(groups.proyectosExtracurriculares && !sidebarCollapsed) ? 'is-open' : ''"
+                    @click="toggleGroup('proyectosExtracurriculares')"
+                    title="{{ seSidebarTooltip('Proyectos extracurriculares y calendario escolar') }}">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="se-sidebar-group-label min-w-0 flex-1 truncate text-left">PROYECTOS EXTRACURRICULARES</span>
+                <svg x-show="!sidebarCollapsed" x-cloak class="w-4 h-4 transition-transform"
+                     :class="groups.proyectosExtracurriculares ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div class="mt-1 space-y-0.5 se-sidebar-group-items"
+                 x-show="groups.proyectosExtracurriculares && !sidebarCollapsed"
+                 x-collapse
+                 x-cloak>
+                <a href="{{ route('calendarioEscolar') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('calendarioEscolar'),
+                   ])
+                   title="{{ seSidebarTooltip('Calendario escolar') }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate">Calendario escolar</span>
+                </a>
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR))
+                    <a href="{{ route('proyectosExtracurriculares.gestion') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => request()->routeIs('proyectosExtracurriculares.gestion'),
+                       ])
+                       title="{{ seSidebarTooltip('Aprobar proyectos extracurriculares', 96) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="truncate">Aprobar proyectos</span>
+                    </a>
+                @endif
             </div>
         @endif
 
@@ -1024,7 +1077,7 @@
             </div>
         @endif
 
-        @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21) || tienePermiso(22) || tienePermiso(66))
+        @if (tienePermiso(17) || tienePermiso(18) || tienePermiso(19) || tienePermiso(20) || tienePermiso(21) || tienePermiso(22) || tienePermiso(66) || tienePermiso(97))
             <div class="mt-4"></div>
             <button type="button"
                     class="se-sidebar-groupbtn w-full flex items-center gap-2 px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md transition-colors"
@@ -1143,6 +1196,34 @@
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span class="truncate">C.U.S. / I.S.A. / Voz-Imagen</span>
+                    </a>
+                @endif
+                @if (tienePermiso(97) && \App\Support\NivelSistema::esInicial((int) (schoolCtx()->idNivel ?? 0)))
+                    <a href="{{ route('certificados.jardin') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => in_array($route ?? '', ['certificados.jardin', 'certificados.jardin.pdf'], true),
+                       ])
+                       title="{{ seSidebarTooltip('Certificado Jardín (inicial) · Sala de 5 v1.0', 97) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Certificado Jardín</span>
+                    </a>
+                @endif
+                @if (tienePermiso(97) && \App\Support\NivelSistema::esPrimario((int) (schoolCtx()->idNivel ?? 0)))
+                    <a href="{{ route('certificados.sextoGrado') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => in_array($route ?? '', ['certificados.sextoGrado', 'certificados.sextoGrado.pdf'], true),
+                       ])
+                       title="{{ seSidebarTooltip('Certificado Sexto Grado (primario) v1.0', 97) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Certificado Sexto Grado</span>
                     </a>
                 @endif
             </div>

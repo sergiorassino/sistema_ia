@@ -739,6 +739,59 @@ final class ManualSistemaCatalog
                 ],
             ],
             [
+                'grupo'       => 'PROYECTOS EXTRACURRICULARES',
+                'grupo_id'    => self::idGrupo('PROYECTOS EXTRACURRICULARES'),
+                'descripcion' => 'Propuestas de docentes, aprobación de dirección y calendario escolar compartido.',
+                'modulos'     => [
+                    self::mod(
+                        'Proponer un proyecto (Menú de Docentes)',
+                        'Menú de Docentes → Proyectos extracurriculares',
+                        'El docente presenta a dirección una actividad extraprogramática: fechas, lugar, grupo, docentes y descripción.',
+                        [
+                            'Abra Proyectos extracurriculares y pulse Nuevo proyecto.',
+                            'Complete el nombre, las fechas (un renglón por día, con horario de inicio y fin) y el lugar.',
+                            'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
+                            'Indique docente(s) a cargo y, si corresponde, otros docentes (legajos con rol Profesor/a).',
+                            'Complete la breve descripción (Actividades Previas / Durante / Posteriores) y la evaluación.',
+                            'Pulse Presentar a dirección. El proyecto queda pendiente hasta que dirección lo apruebe.',
+                        ],
+                        [
+                            'Solo puede editar o eliminar un proyecto mientras esté pendiente.',
+                            'El tipo de registro es, por ahora, Actividad Extraprogramática.',
+                        ],
+                    ),
+                    self::mod(
+                        'Aprobar y comunicar (dirección)',
+                        'Menú de Secretaría → Proyectos extracurriculares → Aprobar proyectos',
+                        'Dirección revisa las propuestas, las aprueba (pasan al calendario) y avisa a los involucrados.',
+                        [
+                            'Abra Aprobar proyectos y revise el detalle de cada propuesta.',
+                            'Pulse Aprobar: el proyecto entra al calendario escolar de Secretaría y del Menú de Docentes.',
+                            'Pulse Comunicar para enviar un comunicado a docentes organizadores, docentes del curso (tabla ppc) y preceptores de los cursos (preceptoresporcurso).',
+                        ],
+                        [
+                            'La comunicación usa los canales institucionales ya configurados. Si un rol no tiene canal, ese destinatario no recibe el aviso.',
+                            'Puede volver un proyecto a pendiente: deja de verse en el calendario.',
+                        ],
+                        'Permiso IA orden 96',
+                    ),
+                    self::mod(
+                        'Calendario escolar',
+                        'Menú de Secretaría o Menú de Docentes → Calendario escolar (también en el escritorio)',
+                        'Muestra las actividades aprobadas por mes, semana o día. Al hacer clic se ve el detalle completo.',
+                        [
+                            'Abra el calendario o use el recuadro del escritorio.',
+                            'Alterne Mes, Semana o Día y recorra el período con las flechas.',
+                            'Haga clic en el nombre de la actividad para ver fechas, lugar, grupo, docentes, descripción y evaluación.',
+                        ],
+                        [
+                            'Solo se listan proyectos aprobados del nivel y ciclo lectivo activos.',
+                            'El calendario del escritorio muestra las próximas fechas a partir de hoy.',
+                        ],
+                    ),
+                ],
+            ],
+            [
                 'grupo'       => 'CONFIGURACIÓN',
                 'grupo_id'    => self::idGrupo('CONFIGURACIÓN'),
                 'descripcion' => 'Parametrización institucional, planes, cursos del año y permisos de usuarios.',
