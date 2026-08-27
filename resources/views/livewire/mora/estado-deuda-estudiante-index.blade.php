@@ -66,7 +66,7 @@
         <div class="se-card se-card-mora-estudiantes overflow-hidden p-0">
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div class="gf gf-vcenter gf-mora-estudiantes min-w-[64rem]">
+                    <div class="gf gf-vcenter gf-mora-estudiantes">
                         <div class="gf-head">
                             <div class="gf-th gf-th-mora-accion gf-th-mora-accion-label justify-center text-center" title="Estado Deuda">Estado<br>Deuda</div>
                             <div class="gf-th gf-th-mora-accion gf-th-mora-accion-label justify-center text-center" title="Diferimiento Matrícula">Difer.<br>Matr.</div>
