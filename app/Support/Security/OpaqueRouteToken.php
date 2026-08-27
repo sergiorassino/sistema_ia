@@ -44,6 +44,14 @@ final class OpaqueRouteToken
 
     public const PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE = 'mora.estado-deuda-estudiante';
 
+    public const PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_PDF = 'mora.estado-deuda-familiar.listado-pdf';
+
+    public const PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_XLSX = 'mora.estado-deuda-familiar.listado-excel';
+
+    public const PURPOSE_MORA_DEUDA_ESTUDIANTE_LISTADO_PDF = 'mora.estado-deuda-estudiante.listado-pdf';
+
+    public const PURPOSE_MORA_DEUDA_ESTUDIANTE_LISTADO_XLSX = 'mora.estado-deuda-estudiante.listado-excel';
+
     public const PURPOSE_MORA_LISTADO_DEUDA = 'mora.listado-deuda';
 
     public const PURPOSE_MORA_NOTIFICACION_DEUDA = 'mora.notificacion-deuda';
@@ -169,6 +177,38 @@ final class OpaqueRouteToken
     public static function forEstadoDeudaEstudiante(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE, $idLegajo, $idLegajo);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forEstadoDeudaFamiliarListadoPdf(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_PDF, $filtros);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forEstadoDeudaFamiliarListadoExcel(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_XLSX, $filtros);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forEstadoDeudaEstudianteListadoPdf(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_DEUDA_ESTUDIANTE_LISTADO_PDF, $filtros);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forEstadoDeudaEstudianteListadoExcel(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_MORA_DEUDA_ESTUDIANTE_LISTADO_XLSX, $filtros);
     }
 
     /**

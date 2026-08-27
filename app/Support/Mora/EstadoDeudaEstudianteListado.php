@@ -32,9 +32,9 @@ final class EstadoDeudaEstudianteListado
     }
 
     /**
-     * @return LengthAwarePaginator<int, Legajo>
+     * @return Builder<Legajo>
      */
-    public static function listarEstudiantes(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    public static function consultarEstudiantes(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false): Builder
     {
         $idNivel = self::normalizarIdNivel($idNivel);
         $idTerlec = (int) schoolCtx()->idTerlec;
@@ -78,12 +78,25 @@ final class EstadoDeudaEstudianteListado
             });
         }
 
-        return $query
-            ->orderBy('apellido')
-            ->orderBy('nombre')
-            ->orderBy('id')
+        return $query->orderBy('apellido')->orderBy('nombre')->orderBy('id');
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Legajo>
+     */
+    public static function listarEstudiantes(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    {
+        return self::consultarEstudiantes($termino, $idNivel, $soloConDeuda)
             ->paginate($porPagina)
             ->withQueryString();
+    }
+
+    /**
+     * @return Collection<int, Legajo>
+     */
+    public static function coleccionEstudiantes(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false): Collection
+    {
+        return self::consultarEstudiantes($termino, $idNivel, $soloConDeuda)->get();
     }
 
     public static function estudianteEnAlcance(int $idLegajo): ?Legajo

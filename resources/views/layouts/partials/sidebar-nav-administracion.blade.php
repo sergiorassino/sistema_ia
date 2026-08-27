@@ -629,7 +629,12 @@
                 <a href="{{ route('mora.estado-deuda-familiar') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => ($route ?? '') === 'mora.estado-deuda-familiar',
+                       'is-active shadow-sm' => in_array($route ?? '', [
+                           'mora.estado-deuda-familiar',
+                           'mora.estado-deuda-familiar.pdf',
+                           'mora.estado-deuda-familiar.listado-pdf',
+                           'mora.estado-deuda-familiar.listado-excel',
+                       ], true),
                    ])
                    title="Listado de familias y estado de deuda">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -643,7 +648,12 @@
                 <a href="{{ route('mora.estado-deuda-estudiante') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
-                       'is-active shadow-sm' => in_array($route ?? '', ['mora.estado-deuda-estudiante', 'mora.estado-deuda-estudiante.pdf'], true),
+                       'is-active shadow-sm' => in_array($route ?? '', [
+                           'mora.estado-deuda-estudiante',
+                           'mora.estado-deuda-estudiante.pdf',
+                           'mora.estado-deuda-estudiante.listado-pdf',
+                           'mora.estado-deuda-estudiante.listado-excel',
+                       ], true),
                    ])
                    title="Listado de estudiantes y estado de deuda (con o sin familia)">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

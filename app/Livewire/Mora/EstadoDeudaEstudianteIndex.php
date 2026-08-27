@@ -4,7 +4,9 @@ namespace App\Livewire\Mora;
 
 use App\Support\Mora\EstadoDeudaEstudianteDatos;
 use App\Support\Mora\EstadoDeudaEstudianteListado;
+use App\Support\Mora\EstadoDeudaListadoFiltros;
 use App\Support\Mora\PermisosMora;
+use App\Support\Security\OpaqueRouteToken;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -76,5 +78,24 @@ class EstadoDeudaEstudianteIndex extends Component
         $id = EstadoDeudaEstudianteListado::normalizarIdNivel((int) $this->idNivel);
 
         return $id > 0 ? (string) $id : '';
+    }
+
+    public function urlListadoPdf(): string
+    {
+        return route('mora.estado-deuda-estudiante.listado-pdf', [
+            'ref' => OpaqueRouteToken::forEstadoDeudaEstudianteListadoPdf($this->filtrosExportacion()->aPayload()),
+        ]);
+    }
+
+    public function urlListadoExcel(): string
+    {
+        return route('mora.estado-deuda-estudiante.listado-excel', [
+            'ref' => OpaqueRouteToken::forEstadoDeudaEstudianteListadoExcel($this->filtrosExportacion()->aPayload()),
+        ]);
+    }
+
+    private function filtrosExportacion(): EstadoDeudaListadoFiltros
+    {
+        return EstadoDeudaListadoFiltros::desdeLivewire($this->search, $this->idNivel, $this->soloConDeuda);
     }
 }

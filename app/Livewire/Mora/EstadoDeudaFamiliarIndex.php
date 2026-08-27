@@ -4,7 +4,9 @@ namespace App\Livewire\Mora;
 
 use App\Support\Mora\EstadoDeudaFamiliarDatos;
 use App\Support\Mora\EstadoDeudaFamiliarListado;
+use App\Support\Mora\EstadoDeudaListadoFiltros;
 use App\Support\Mora\PermisosMora;
+use App\Support\Security\OpaqueRouteToken;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -76,5 +78,24 @@ class EstadoDeudaFamiliarIndex extends Component
         $id = EstadoDeudaFamiliarListado::normalizarIdNivel((int) $this->idNivel);
 
         return $id > 0 ? (string) $id : '';
+    }
+
+    public function urlListadoPdf(): string
+    {
+        return route('mora.estado-deuda-familiar.listado-pdf', [
+            'ref' => OpaqueRouteToken::forEstadoDeudaFamiliarListadoPdf($this->filtrosExportacion()->aPayload()),
+        ]);
+    }
+
+    public function urlListadoExcel(): string
+    {
+        return route('mora.estado-deuda-familiar.listado-excel', [
+            'ref' => OpaqueRouteToken::forEstadoDeudaFamiliarListadoExcel($this->filtrosExportacion()->aPayload()),
+        ]);
+    }
+
+    private function filtrosExportacion(): EstadoDeudaListadoFiltros
+    {
+        return EstadoDeudaListadoFiltros::desdeLivewire($this->search, $this->idNivel, $this->soloConDeuda);
     }
 }
