@@ -1,6 +1,6 @@
 @php
     use App\Support\Cuotas\CuotasFormato;
-    use App\Support\Mora\EstadoDeudaFamiliarListado;
+    use App\Support\Mora\EstadoDeudaEstudianteListado;
     use App\Support\Security\OpaqueRouteToken;
 @endphp
 
@@ -9,34 +9,34 @@
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-1">
                 <p class="se-eyebrow">Administración · Gestión de mora</p>
-                <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Estado de Deuda Familiar</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Estado de Deuda por Estudiante</h1>
                 <p class="text-sm text-white/80 max-w-2xl">
-                    Ciclo lectivo {{ schoolCtx()->terlecAno() }} — familias con estudiantes matriculados en Inicial, Primario o Secundario.
+                    Ciclo lectivo {{ schoolCtx()->terlecAno() }} — estudiantes matriculados en Inicial, Primario o Secundario, con o sin familia asignada.
                 </p>
             </div>
         </div>
     </section>
 
-    <div class="se-toolbar mb-4 sm:items-end" x-data x-init="$nextTick(() => $refs.moraBuscar?.focus())">
+    <div class="se-toolbar mb-4 sm:items-end" x-data x-init="$nextTick(() => $refs.moraBuscarEst?.focus())">
         <div class="flex-1 max-w-xl">
-            <label for="mora-buscar" class="form-label">Búsqueda</label>
+            <label for="mora-buscar-estudiante" class="form-label">Búsqueda</label>
             <div class="relative">
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                 </svg>
                 <input wire:model.live.debounce.400ms="search"
-                       id="mora-buscar"
+                       id="mora-buscar-estudiante"
                        type="search"
-                       x-ref="moraBuscar"
+                       x-ref="moraBuscarEst"
                        autofocus
-                       placeholder="Familia, responsable, apellido, nombre o DNI del estudiante..."
+                       placeholder="Apellido, nombre o DNI del estudiante; familia o responsable..."
                        class="form-input pl-9"
                        autocomplete="off">
             </div>
         </div>
         <div class="w-full sm:w-56 shrink-0">
-            <label for="filtro-nivel-mora" class="form-label">Nivel</label>
-            <select id="filtro-nivel-mora"
+            <label for="filtro-nivel-mora-est" class="form-label">Nivel</label>
+            <select id="filtro-nivel-mora-est"
                     wire:model.live="idNivel"
                     class="form-input">
                 <option value="">Todos</option>
@@ -45,8 +45,8 @@
                 @endforeach
             </select>
         </div>
-        <label for="mora-solo-deuda-fam" class="inline-flex items-center gap-2 cursor-pointer sm:pb-0.5">
-            <input id="mora-solo-deuda-fam"
+        <label for="mora-solo-deuda-est" class="inline-flex items-center gap-2 cursor-pointer sm:pb-0.5">
+            <input id="mora-solo-deuda-est"
                    type="checkbox"
                    wire:model.live="soloConDeuda"
                    class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
@@ -54,37 +54,42 @@
         </label>
     </div>
 
-    @if ($familias->isEmpty())
+    @if ($estudiantes->isEmpty())
         <div class="se-card p-8 text-center text-sm text-neutral-600">
             @if (trim($search) !== '' || $idNivel !== '' || $soloConDeuda)
-                No se encontraron familias con ese criterio.
+                No se encontraron estudiantes con ese criterio.
             @else
-                No hay familias con estudiantes matriculados en el ciclo lectivo activo.
+                No hay estudiantes matriculados en el ciclo lectivo activo.
             @endif
         </div>
     @else
-        <div class="se-card se-card-mora-familias overflow-hidden p-0">
+        <div class="se-card se-card-mora-estudiantes overflow-hidden p-0">
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <div class="gf gf-vcenter gf-mora-familias min-w-[58rem]">
+                    <div class="gf gf-vcenter gf-mora-estudiantes min-w-[64rem]">
                         <div class="gf-head">
                             <div class="gf-th gf-th-mora-accion gf-th-mora-accion-label justify-center text-center" title="Estado Deuda">Estado<br>Deuda</div>
                             <div class="gf-th gf-th-mora-accion gf-th-mora-accion-label justify-center text-center" title="Diferimiento Matrícula">Difer.<br>Matr.</div>
                             <div class="gf-th gf-th-mora-accion gf-th-mora-accion-label justify-center text-center" title="Plan de Pago">Plan de<br>Pago</div>
+                            <div class="gf-th gf-th-mora-estudiante">Estudiante</div>
+                            <div class="gf-th gf-th-mora-dni">DNI</div>
+                            <div class="gf-th gf-th-mora-curso">Curso actual</div>
                             <div class="gf-th gf-th-mora-familia">Familia</div>
                             <div class="gf-th gf-th-mora-responsable">Responsable</div>
-                            <div class="gf-th gf-th-mora-estudiantes gf-th-mora-estudiantes-label flex-1 min-w-[22rem]">ESTUDIANTES (Curso Actual)</div>
                         </div>
 
-                        @foreach ($familias as $familia)
+                        @foreach ($estudiantes as $estudiante)
                             @php
-                                $estudiantes = $familia->legajos;
-                                $etiquetaFamilia = trim((string) ($familia->apellido ?? ''));
-                                $etiquetaResponsable = trim((string) ($familia->responsable ?? ''));
+                                $apellidoNombre = EstadoDeudaEstudianteListado::apellidoNombre($estudiante);
+                                $curso = EstadoDeudaEstudianteListado::cursoCicloActivo($estudiante);
+                                $familia = EstadoDeudaEstudianteListado::familiaAsignada($estudiante->familia);
+                                $etiquetaFamilia = trim((string) ($familia?->apellido ?? ''));
+                                $etiquetaResponsable = trim((string) ($familia?->responsable ?? ''));
+                                $deudaEstudiante = (float) ($totalesDeuda[$estudiante->id] ?? 0);
                             @endphp
-                            <div class="gf-row gf-row-hover gf-row-mora-familia" wire:key="familia-{{ $familia->id }}">
+                            <div class="gf-row gf-row-hover gf-row-mora-estudiante" wire:key="estudiante-{{ $estudiante->id }}">
                                 <div class="gf-td gf-td-mora-accion justify-center">
-                                    <a href="{{ route('mora.estado-deuda-familiar.pdf', ['ref' => OpaqueRouteToken::forEstadoDeudaFamiliar((int) $familia->id)]) }}"
+                                    <a href="{{ route('mora.estado-deuda-estudiante.pdf', ['ref' => OpaqueRouteToken::forEstadoDeudaEstudiante((int) $estudiante->id)]) }}"
                                        target="_blank"
                                        rel="noopener noreferrer"
                                        class="se-mora-accion-btn"
@@ -120,18 +125,31 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="gf-td gf-td-mora-familia font-medium uppercase">
-                                    <span class="inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                        @if ($etiquetaFamilia !== '')
-                                            <span>{!! CuotasFormato::resaltarTerminoBusqueda($etiquetaFamilia, $search) !!}</span>
+                                <div class="gf-td gf-td-mora-estudiante font-medium uppercase">
+                                    <span class="inline-flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                        @if ($apellidoNombre !== '')
+                                            <span class="truncate">{!! CuotasFormato::resaltarTerminoBusqueda($apellidoNombre, $search) !!}</span>
                                         @else
                                             <span class="text-neutral-400">—</span>
                                         @endif
-                                        <span class="se-mora-deuda tabular-nums whitespace-nowrap {{ ($totalesDeuda['porFamilia'][$familia->id] ?? 0) > 0 ? 'se-mora-deuda--positivo' : '' }}"
-                                              title="Total adeudado (familia)">
-                                            {{ CuotasFormato::formatearImporte($totalesDeuda['porFamilia'][$familia->id] ?? 0) }}
+                                        <span class="se-mora-deuda tabular-nums whitespace-nowrap {{ $deudaEstudiante > 0 ? 'se-mora-deuda--positivo' : '' }}"
+                                              title="Total adeudado (estudiante)">
+                                            {{ CuotasFormato::formatearImporte($deudaEstudiante) }}
                                         </span>
                                     </span>
+                                </div>
+                                <div class="gf-td gf-td-mora-dni tabular-nums whitespace-nowrap">
+                                    {{ CuotasFormato::formatearDni($estudiante->dni) }}
+                                </div>
+                                <div class="gf-td gf-td-mora-curso uppercase truncate" title="{{ $curso }}">
+                                    {{ $curso !== '' ? $curso : '—' }}
+                                </div>
+                                <div class="gf-td gf-td-mora-familia uppercase">
+                                    @if ($etiquetaFamilia !== '')
+                                        {!! CuotasFormato::resaltarTerminoBusqueda($etiquetaFamilia, $search) !!}
+                                    @else
+                                        <span class="text-neutral-400 italic font-normal normal-case">Sin familia</span>
+                                    @endif
                                 </div>
                                 <div class="gf-td gf-td-mora-responsable uppercase">
                                     @if ($etiquetaResponsable !== '')
@@ -140,51 +158,15 @@
                                         <span class="text-neutral-400">—</span>
                                     @endif
                                 </div>
-                                <div class="gf-td gf-td-mora-estudiantes flex-1 min-w-[22rem] !p-0">
-                                    @if ($estudiantes->isEmpty())
-                                        <p class="px-2 py-2 text-neutral-500 italic">No hay registros para mostrar</p>
-                                    @else
-                                        <div class="se-mora-estudiantes-list">
-                                            @foreach ($estudiantes as $estudiante)
-                                                @php
-                                                    $apellidoNombre = EstadoDeudaFamiliarListado::apellidoNombre($estudiante);
-                                                    $curso = EstadoDeudaFamiliarListado::cursoCicloActivo($estudiante);
-                                                    $deudaEstudiante = (float) ($totalesDeuda['porLegajo'][$estudiante->id] ?? 0);
-                                                @endphp
-                                                <div class="se-mora-estudiante-row" wire:key="estudiante-{{ $familia->id }}-{{ $estudiante->id }}">
-                                                    <span class="se-mora-estudiante-nombre uppercase truncate" title="{{ $apellidoNombre }}">
-                                                        <span class="inline-flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                                            @if ($apellidoNombre !== '')
-                                                                <span class="truncate">{!! CuotasFormato::resaltarTerminoBusqueda($apellidoNombre, $search) !!}</span>
-                                                            @else
-                                                                <span class="text-neutral-400">—</span>
-                                                            @endif
-                                                            <span class="se-mora-deuda tabular-nums whitespace-nowrap {{ $deudaEstudiante > 0 ? 'se-mora-deuda--positivo' : '' }}"
-                                                                  title="Total adeudado (estudiante)">
-                                                                {{ CuotasFormato::formatearImporte($deudaEstudiante) }}
-                                                            </span>
-                                                        </span>
-                                                    </span>
-                                                    <span class="se-mora-estudiante-dni tabular-nums whitespace-nowrap">
-                                                        {{ CuotasFormato::formatearDni($estudiante->dni) }}
-                                                    </span>
-                                                    <span class="se-mora-estudiante-curso uppercase truncate" title="{{ $curso }}">
-                                                        {{ $curso !== '' ? $curso : '—' }}
-                                                    </span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
             </div>
 
-            @if ($familias->hasPages())
-                <div class="border-t border-accent-200 bg-accent-50/70 px-4 py-3">
-                    {{ $familias->links('vendor.pagination.se') }}
+            @if ($estudiantes->hasPages())
+                <div class="se-matriz-list-footer">
+                    {{ $estudiantes->links('vendor.pagination.se-compact') }}
                 </div>
             @endif
         </div>

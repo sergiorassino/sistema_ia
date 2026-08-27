@@ -188,9 +188,11 @@ use App\Livewire\Cooperadora\MovimientosIndex;
 use App\Livewire\Cooperadora\ProveedoresForm;
 use App\Livewire\Cooperadora\ProveedoresIndex;
 use App\Livewire\Cooperadora\RubrosIndex;
+use App\Http\Controllers\Mora\EstadoDeudaEstudiantePdfController;
 use App\Http\Controllers\Mora\EstadoDeudaFamiliarPdfController;
 use App\Http\Controllers\Mora\ListadoMorososPdfController;
 use App\Http\Controllers\Mora\NotificacionDeudaPdfController;
+use App\Livewire\Mora\EstadoDeudaEstudianteIndex;
 use App\Livewire\Mora\EstadoDeudaFamiliarIndex;
 use App\Livewire\Mora\GestionMorososIndex;
 use App\Livewire\Mora\TextosNotificacionDeudaForm;
@@ -782,6 +784,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             ->where('ref', '[A-Za-z0-9_-]+')
             ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
             ->name('mora.estado-deuda-familiar.pdf');
+        Route::get('/estado-deuda-estudiante', EstadoDeudaEstudianteIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
+            ->name('mora.estado-deuda-estudiante');
+        Route::get('/estado-deuda-estudiante/pdf/{ref}', EstadoDeudaEstudiantePdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
+            ->name('mora.estado-deuda-estudiante.pdf');
         Route::get('/gestion-morosos', GestionMorososIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos');

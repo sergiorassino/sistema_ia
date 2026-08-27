@@ -37,6 +37,10 @@ class GestionMorososIndex extends Component
     /** @var list<int> */
     public array $idsExcluirCuotas = [];
 
+    public bool $chkNivel = false;
+
+    public int $idNivel = 0;
+
     public bool $chkCurso = false;
 
     /** @var list<int> */
@@ -85,6 +89,16 @@ class GestionMorososIndex extends Component
         }
     }
 
+    public function updatedChkNivel(): void
+    {
+        $this->sincronizarCursosConNivel();
+    }
+
+    public function updatedIdNivel(): void
+    {
+        $this->sincronizarCursosConNivel();
+    }
+
     public function puedeGenerarPdf(): bool
     {
         return GestionMorososFiltros::puedeGenerarPdf($this->filtrosCrudos());
@@ -121,6 +135,32 @@ class GestionMorososIndex extends Component
         $this->dispatch('mora-gestion-morosos-abrir-pdf', url: se_route_url($ruta, ['ref' => $ref]));
     }
 
+    private function idNivelFiltroCursos(): ?int
+    {
+        if (! $this->chkNivel || $this->idNivel < 1) {
+            return null;
+        }
+
+        return $this->idNivel;
+    }
+
+    private function sincronizarCursosConNivel(): void
+    {
+        if ($this->idsCursos === []) {
+            return;
+        }
+
+        $permitidos = GestionMorososFiltros::cursosParaSelector($this->idNivelFiltroCursos())
+            ->pluck('Id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $this->idsCursos = array_values(array_filter(
+            array_map(fn ($id) => (int) $id, $this->idsCursos),
+            fn (int $id) => in_array($id, $permitidos, true),
+        ));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -138,6 +178,8 @@ class GestionMorososIndex extends Component
             'vencHasta' => $this->vencHasta,
             'chkExcluir' => $this->chkExcluir,
             'idsExcluirCuotas' => $this->idsExcluirCuotas,
+            'chkNivel' => $this->chkNivel,
+            'idNivel' => $this->idNivel,
             'chkCurso' => $this->chkCurso,
             'idsCursos' => $this->idsCursos,
             'chkMasDe' => $this->chkMasDe,
@@ -155,12 +197,13 @@ class GestionMorososIndex extends Component
 
     public function render()
     {
-        $cursos = GestionMorososFiltros::cursosParaSelector();
+        $cursos = GestionMorososFiltros::cursosParaSelector($this->idNivelFiltroCursos());
 
         return view('livewire.mora.gestion-morosos-index', [
             'familias' => GestionMorososFiltros::familiasParaSelector(),
             'alumnos' => GestionMorososFiltros::alumnosParaSelector(),
             'cuotas' => GestionMorososFiltros::cuotasParaExcluir(),
+            'niveles' => GestionMorososFiltros::nivelesParaSelector(),
             'cursos' => $cursos,
             'becas' => GestionMorososFiltros::becasParaSelector(),
             'terlecs' => GestionMorososFiltros::terlecsParaSelector(),

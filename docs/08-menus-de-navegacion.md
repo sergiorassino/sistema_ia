@@ -177,7 +177,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 
 En cada colegio se activa o no el orden **47** en el usuario de Administración según si ese tenant permite que administración modifique legajos. Sin el 47: solo consulta (todos los niveles).
 
-**Gestión de aranceles / masiva / resúmenes / becas / mora:** cada ítem del sidebar tiene su propio orden en `permisos_ia` (49–64). El grupo del menú solo se muestra si el usuario tiene al menos un ítem habilitado de ese bloque; no hay un permiso único por grupo.
+**Gestión de aranceles / masiva / resúmenes / becas / mora:** cada ítem del sidebar tiene su propio orden en `permisos_ia` (49–64 y **98** estado de deuda por estudiante). El grupo del menú solo se muestra si el usuario tiene al menos un ítem habilitado de ese bloque; no hay un permiso único por grupo.
 
 **Viajes / salidas educativas (Excel):** solo en el **Menú de Secretaría** (`layouts/app`) para usuarios con portal secretaría en nivel pedagógico (Inicial, Primario o Secundario). No en Administración, Menú de Docentes ni Menú de Alumnos (`MenuSecretariaPerfil::muestraViajesSalidasEducativas()` + rutas `menu.portal:secretaria`).
 
@@ -200,3 +200,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-08-18:** Comunicación institucional: **Mis grupos** de destinatarios por usuario y nivel (`com_grupos` / `com_grupos_miembros`; rutas `comunicaciones.grupos` y `portalDocente.comunicaciones.grupos`).
 - **2026-08-25:** Menú de Docentes: dos listados de estudiantes (mismo alcance de cursos del nivel de sesión que secretaría pedagógica): **Listados de Estudiantes por Curso** (`listado_estudiantes` → `portalDocente.listados.porCurso` + PDF/Excel) y **Listados de Estudiantes con Formato** (`listado_estudiantes_formato` → `portalDocente.listados.estudiantesFormato`).
 - **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.
+- **2026-08-27:** Administración → Gestión de mora: **Estado de Deuda por Estudiante** (permiso IA orden 98), además de Estado de Deuda Familiar (63).
