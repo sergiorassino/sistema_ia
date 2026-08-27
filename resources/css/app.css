@@ -456,19 +456,40 @@
         @apply text-red-700;
     }
 
-    /* Gestión de mora — estado de deuda por estudiante */
+    /* Gestión de mora — estado de deuda por estudiante
+       Grid (no flex): misma plantilla en encabezado y filas, para que no se desalineen
+       si el CSS compilado de producción no trae anchos flex por contenido. */
     .se-card.se-card-mora-estudiantes,
     .gf.gf-mora-estudiantes {
         border-radius: 0;
     }
     .gf.gf-mora-estudiantes {
+        display: block;
         width: 100%;
         min-width: 64rem;
     }
     .gf.gf-mora-estudiantes .gf-head,
     .gf.gf-mora-estudiantes .gf-row-mora-estudiante {
+        display: grid;
         width: 100%;
         align-items: stretch;
+        grid-template-columns:
+            4.75rem
+            4.75rem
+            4.75rem
+            minmax(12rem, 1.5fr)
+            6.5rem
+            9rem
+            minmax(8rem, 1fr)
+            minmax(8rem, 10rem);
+    }
+    .gf.gf-mora-estudiantes .gf-th,
+    .gf.gf-mora-estudiantes .gf-td {
+        box-sizing: border-box;
+        min-width: 0;
+        width: auto;
+        max-width: none;
+        flex: none;
     }
     .gf.gf-mora-estudiantes .gf-row-mora-estudiante {
         border-bottom-width: 1px;
@@ -479,10 +500,6 @@
     }
     .gf.gf-mora-estudiantes .gf-th.gf-th-mora-accion,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-accion {
-        flex: 0 0 4.75rem;
-        width: 4.75rem;
-        min-width: 4.75rem;
-        max-width: 4.75rem;
         @apply flex items-center justify-center px-0.5 py-1;
     }
     .gf.gf-mora-estudiantes .gf-th.gf-th-mora-accion-label {
@@ -492,37 +509,14 @@
         text-transform: none;
         font-size: 9px;
     }
-    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-estudiante,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-estudiante {
-        flex: 1 1 14rem;
-        min-width: 12rem;
-    }
-    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-dni,
-    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-dni {
-        flex: 0 0 6.5rem;
-        width: 6.5rem;
-        min-width: 6.5rem;
         @apply flex items-center;
     }
-    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-curso,
-    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-curso {
-        flex: 0 0 9rem;
-        width: 9rem;
-        min-width: 8rem;
-        @apply flex items-center;
-    }
-    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-familia,
-    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-familia {
-        flex: 1 1 10rem;
-        min-width: 8rem;
-        max-width: 16rem;
-    }
-    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-responsable,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-dni,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-curso,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-familia,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-responsable {
-        flex: 0 0 10rem;
-        width: 10rem;
-        min-width: 8rem;
-        max-width: 12rem;
+        @apply flex items-center;
     }
 
     /* Gestión de aranceles — grillas sin esquinas redondeadas */
