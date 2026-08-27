@@ -99,6 +99,11 @@ final class CertificadoJardinTcpdf extends TCPDF
 
         TcpdfFuenteArial::aplicar($this, '', 11);
         $insti = trim((string) ($inst['insti'] ?? ''));
+        $partesInsti = CertificadoFinalizacionTextoEs::partesNombreInstitucion($insti);
+        $nombreInsti = trim($partesInsti['tipo'].' '.$partesInsti['nombre']);
+        if ($nombreInsti === '') {
+            $nombreInsti = $insti !== '' ? $insti : '_______';
+        }
         $cue = trim((string) ($inst['cue'] ?? ''));
         $dire = trim((string) ($inst['direccion'] ?? ''));
         $loca = trim((string) ($inst['localidad'] ?? ''));
@@ -106,17 +111,19 @@ final class CertificadoJardinTcpdf extends TCPDF
         $prov = trim((string) ($inst['provincia'] ?? ''));
 
         $this->parrafoJustificado(
-            'La Dirección del '.$insti.' C.U.E. Nº '.$cue.' ubicado en '.$dire
+            'La Dirección del '.$nombreInsti.' C.U.E. Nº '.$cue.' ubicado en '.$dire
             .' de la Localidad de '.$loca.', Departamento '.$depa.', Provincia de '.$prov.'. '
         );
 
         $this->Ln(5);
         $apellido = trim((string) ($alu['apellido'] ?? ''));
         $nombre = trim((string) ($alu['nombre'] ?? ''));
+        $nacido = CertificadoFinalizacionTextoEs::nacidoSegunSexo($alu['sexo'] ?? 0, $alu['sexo_etiqueta'] ?? null);
+        $acreditado = CertificadoFinalizacionTextoEs::acreditadoSegunSexo($alu['sexo'] ?? 0, $alu['sexo_etiqueta'] ?? null);
         $this->parrafoJustificado(
             'CERTIFICA que   '.$apellido.' '.$nombre
             .', Documento Nacional de Identidad Nº '.trim((string) ($alu['dni'] ?? ''))
-            .', nacido en '.trim((string) ($alu['ln_ciudad'] ?? ''))
+            .', '.$nacido.' en '.trim((string) ($alu['ln_ciudad'] ?? ''))
             .', Dpto  '.trim((string) ($alu['ln_depto'] ?? ''))
             .' Provincia de '.trim((string) ($alu['ln_provincia'] ?? ''))
             .' de '.trim((string) ($alu['ln_pais'] ?? ''))
@@ -126,7 +133,7 @@ final class CertificadoJardinTcpdf extends TCPDF
             .', aprobó los estudios correspondientes a la Sección de 5 años de la Educación Inicial, acorde a la estructura del Sistema Educativo vigente,'
             .' en el mes de '.trim((string) ($cert['mesApro'] ?? ''))
             .' del año '.trim((string) ($cert['anoApro'] ?? ''))
-            .' quedando acreditado para acceder a PRIMER GRADO de la Educación Primaria.'
+            .' quedando '.$acreditado.' para acceder a PRIMER GRADO de la Educación Primaria.'
         );
 
         $this->Ln(5);

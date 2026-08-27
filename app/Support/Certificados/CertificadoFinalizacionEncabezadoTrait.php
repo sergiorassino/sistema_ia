@@ -16,6 +16,11 @@ trait CertificadoFinalizacionEncabezadoTrait
 
     private const ANCHO_UTIL = 170.0;
 
+    private function aplicarFuente(string $style = '', float $size = 10): void
+    {
+        TcpdfFuenteArial::aplicar($this, $style, $size);
+    }
+
     /**
      * @param  array<string, mixed>  $institucion
      */
@@ -65,7 +70,7 @@ trait CertificadoFinalizacionEncabezadoTrait
     private function dibujarPieFirmas(float $tamFuente): void
     {
         $this->SetY(255);
-        TcpdfFuenteArial::aplicar($this, '', $tamFuente);
+        $this->aplicarFuente('', $tamFuente);
         $this->SetX(self::MARGEN_IZQ);
         $this->Cell(40, 3, '...........................................................', 0, 0, 'C');
         $this->Cell(47, 3, 'Sello de', 0, 0, 'C');
@@ -89,7 +94,7 @@ trait CertificadoFinalizacionEncabezadoTrait
             if ($texto === '') {
                 continue;
             }
-            TcpdfFuenteArial::aplicar($this, ! empty($parte['b']) ? 'B' : '', $tam);
+            $this->aplicarFuente(! empty($parte['b']) ? 'B' : '', $tam);
             $this->Write($alto, $texto);
         }
     }
@@ -108,7 +113,7 @@ trait CertificadoFinalizacionEncabezadoTrait
 
         $x = $this->GetX();
         $ancho = self::ANCHO_UTIL;
-        TcpdfFuenteArial::aplicar($this, '', $tam);
+        $this->aplicarFuente('', $tam);
         $anchoEspacio = $this->GetStringWidth(' ');
 
         $lineas = [];
@@ -116,7 +121,7 @@ trait CertificadoFinalizacionEncabezadoTrait
         $anchoLinea = 0.0;
 
         foreach ($palabras as $palabra) {
-            TcpdfFuenteArial::aplicar($this, ! empty($palabra['b']) ? 'B' : '', $tam);
+            $this->aplicarFuente(! empty($palabra['b']) ? 'B' : '', $tam);
             $w = $this->GetStringWidth($palabra['t']);
             $sep = $linea === [] ? 0.0 : $anchoEspacio;
             if ($linea !== [] && ($anchoLinea + $sep + $w) > $ancho) {
@@ -180,10 +185,10 @@ trait CertificadoFinalizacionEncabezadoTrait
     {
         $ultimo = count($palabras) - 1;
         foreach ($palabras as $i => $palabra) {
-            TcpdfFuenteArial::aplicar($this, $palabra['b'] ? 'B' : '', $tam);
+            $this->aplicarFuente($palabra['b'] ? 'B' : '', $tam);
             $this->Write($alto, $palabra['t']);
             if ($i < $ultimo) {
-                TcpdfFuenteArial::aplicar($this, '', $tam);
+                $this->aplicarFuente('', $tam);
                 $this->Cell($anchoEspacio, $alto, '', 0, 0, 'L');
             }
         }
@@ -196,7 +201,7 @@ trait CertificadoFinalizacionEncabezadoTrait
     {
         $anchoPalabras = 0.0;
         foreach ($palabras as $palabra) {
-            TcpdfFuenteArial::aplicar($this, $palabra['b'] ? 'B' : '', $tam);
+            $this->aplicarFuente($palabra['b'] ? 'B' : '', $tam);
             $anchoPalabras += $this->GetStringWidth($palabra['t']);
         }
 
@@ -205,7 +210,7 @@ trait CertificadoFinalizacionEncabezadoTrait
         $ultimo = count($palabras) - 1;
 
         foreach ($palabras as $i => $palabra) {
-            TcpdfFuenteArial::aplicar($this, $palabra['b'] ? 'B' : '', $tam);
+            $this->aplicarFuente($palabra['b'] ? 'B' : '', $tam);
             $w = $this->GetStringWidth($palabra['t']);
             $this->Cell($w + ($i < $ultimo ? $extra : 0.0), $alto, $palabra['t'], 0, 0, 'L');
         }

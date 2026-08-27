@@ -14,6 +14,7 @@ use App\Models\ExtTipoRegistro;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Profesor;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PreceptoresPorCurso;
 use App\Support\ProfesorMenuPortal;
@@ -161,13 +162,45 @@ final class ExtActividadesService
                 $horario = self::horarioDesdeFechas($datos['fechas']);
             }
 
-            $act->nombre = $datos['nombre'];
-            $act->lugar = $datos['lugar'] !== '' ? $datos['lugar'] : null;
-            $act->horario = $horario !== '' ? $horario : null;
-            $act->descripcion = $datos['descripcion'];
-            $act->evaluacion = $datos['evaluacion'] !== '' ? $datos['evaluacion'] : null;
-            $act->tipo_grupo = $datos['tipo_grupo'];
+            $payload = [
+                'nombre' => $datos['nombre'],
+                'lugar' => $datos['lugar'] !== '' ? $datos['lugar'] : null,
+                'horario' => $horario !== '' ? $horario : null,
+                'descripcion' => $datos['descripcion'],
+                'evaluacion' => $datos['evaluacion'] !== '' ? $datos['evaluacion'] : null,
+                'tipo_grupo' => $datos['tipo_grupo'],
+            ];
+            if ($id === null || $id <= 0) {
+                $payload['id_tipo_registro'] = self::TIPO_REGISTRO_ACTIVIDAD;
+                $payload['id_nivel'] = $idNivel;
+                $payload['id_terlec'] = $idTerlec;
+                $payload['id_profesor_proponente'] = $idProponente;
+                $payload['estado'] = ExtActividad::ESTADO_PENDIENTE;
+            }
+
+            $preparado = PersistenciaColumnas::prepararPayload('ext_actividades', $payload);
+            if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+                throw new \RuntimeException(PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'ext_actividades',
+                    $preparado['columnas_con_valor_sin_columna']
+                ));
+            }
+            foreach ($preparado['payload'] as $columna => $valor) {
+                $act->{$columna} = $valor;
+            }
             $act->save();
+
+            $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+                'ext_actividades',
+                ['id' => $act->id],
+                ['nombre' => $datos['nombre']]
+            );
+            if ($noPersistidas !== []) {
+                throw new \RuntimeException(PersistenciaColumnas::mensajeColumnasNoPersistidas(
+                    'ext_actividades',
+                    $noPersistidas
+                ));
+            }
 
             $act->fechas()->delete();
             foreach ($datos['fechas'] as $fila) {
@@ -607,13 +640,50 @@ final class ExtActividadesService
      *
      * @return list<array{id: int, label: string, dni: string}>
      */
-    public static function docentesAulaParaSelector(string $filtro = '', int $limit = 400): array
+    public static function docentesAulaParaSelector(string $filtro = '', int $limit = 80): array
     {
-        return ComunicacionesRepository::profesoresDelNivelParaSelectorPorIdTipoProf(
+        $limit = max(1, min(200, $limit));
+        $t = mb_strtolower(trim($filtro));
+
+        $q = Profesor::query()
+            ->where('nivel', self::idNivelContexto())
+            ->where('IdTipoProf', ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA)
+            ->orderBy('apellido')
+            ->orderBy('nombre');
+
+        if ($t !== '') {
+            $q->where(function ($w) use ($t) {
+                $w->whereRaw('LOWER(apellido) LIKE ?', ['%'.$t.'%'])
+                    ->orWhereRaw('LOWER(nombre) LIKE ?', ['%'.$t.'%']);
+                if (ctype_digit($t)) {
+                    $w->orWhere('dni', $t);
+                }
+            });
+        }
+
+        $rows = $q->limit($limit)->get(['id', 'apellido', 'nombre', 'dni']);
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id' => (int) $r->id,
+                'label' => trim((string) $r->apellido.', '.(string) $r->nombre),
+                'dni' => $r->dni !== null ? (string) $r->dni : '',
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public static function filtrarIdsDocentesAula(array $ids): array
+    {
+        return ComunicacionesRepository::filtrarIdsProfesoresPorIdTipoProf(
+            $ids,
             self::idNivelContexto(),
             ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA,
-            $filtro,
-            $limit,
         );
     }
 

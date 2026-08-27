@@ -16,7 +16,18 @@
             </div>
         </section>
 
-        <form wire:submit.prevent="guardar" class="space-y-6">
+        <form id="ext-proyecto-form" wire:submit.prevent="guardar()" novalidate class="space-y-6">
+            @if ($errors->any())
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                    <p class="font-semibold">No se pudo presentar el proyecto</p>
+                    <ul class="mt-1 list-disc pl-5">
+                        @foreach ($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="se-card space-y-5 p-5 sm:p-6">
                 <div>
                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Tipo de registro</label>
@@ -45,11 +56,11 @@
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Inicio</label>
-                                    <input type="time" wire:model="fechas.{{ $i }}.hora_inicio" @disabled($soloLectura) class="form-input w-full">
+                                    <input type="time" wire:model="fechas.{{ $i }}.hora_inicio" step="60" @disabled($soloLectura) class="form-input w-full">
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Fin</label>
-                                    <input type="time" wire:model="fechas.{{ $i }}.hora_fin" @disabled($soloLectura) class="form-input w-full">
+                                    <input type="time" wire:model="fechas.{{ $i }}.hora_fin" step="60" @disabled($soloLectura) class="form-input w-full">
                                 </div>
                                 @if (! $soloLectura)
                                     <div class="flex items-end">
@@ -63,8 +74,8 @@
                         @endforeach
                     </div>
                     @if (! $soloLectura)
-                        <button type="button" wire:click="agregarFecha"
-                                class="mt-3 inline-flex items-center rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50">
+                        <button type="button" wire:click="agregarFecha()"
+                                class="mt-3 inline-flex items-center rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
                             Agregar día
                         </button>
                     @endif
@@ -108,12 +119,12 @@
                     @error('idsCursos') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     @if (! $soloLectura)
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" wire:click="seleccionarTodosCursos"
-                                    class="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50">
+                            <button type="button" wire:click="seleccionarTodosCursos()"
+                                    class="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
                                 Todos los cursos
                             </button>
-                            <button type="button" wire:click="limpiarCursos"
-                                    class="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 ring-1 ring-accent-200 hover:bg-accent-50">
+                            <button type="button" wire:click="limpiarCursos()"
+                                    class="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
                                 Limpiar
                             </button>
                         </div>
@@ -121,11 +132,10 @@
                     <div class="grid max-h-64 gap-2 overflow-y-auto rounded-2xl border border-accent-200 p-3 sm:grid-cols-2">
                         @foreach ($cursos as $curso)
                             @php $cid = (int) $curso->Id; @endphp
-                            <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50">
+                            <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50" wire:key="curso-{{ $cid }}">
                                 <input type="checkbox"
                                        value="{{ $cid }}"
-                                       wire:click="toggleCurso({{ $cid }})"
-                                       @checked(in_array($cid, $idsCursos, true))
+                                       wire:model="idsCursos"
                                        @disabled($soloLectura)
                                        class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                 <span class="text-sm text-neutral-800">{{ $curso->nombreParaListado() }}</span>
@@ -145,18 +155,18 @@
                         @endforeach
                     </div>
                     @if (! $soloLectura)
-                        <button type="button" wire:click="abrirModalAlumnos"
-                                class="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50">
+                        <button type="button" wire:click="abrirModalAlumnos()"
+                                class="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
                             Elegir alumnos
                         </button>
                     @endif
                 @endif
             </div>
 
-            <div class="se-card space-y-4 p-5 sm:p-6">
+            <div class="se-card space-y-4 p-5 sm:p-6" x-data="{ q: '' }">
                 <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Docentes</p>
                 <div class="relative max-w-sm">
-                    <input type="search" wire:model.live.debounce.300ms="filtroDocente"
+                    <input type="search" x-model="q"
                            placeholder="Filtrar docentes…" class="form-input w-full" autocomplete="off" @disabled($soloLectura)>
                 </div>
                 <div class="grid gap-4 lg:grid-cols-2">
@@ -165,9 +175,12 @@
                         @error('idsDocentesACargo') <p class="mb-2 text-xs text-red-600">{{ $message }}</p> @enderror
                         <div class="max-h-56 space-y-1 overflow-y-auto rounded-2xl border border-accent-200 p-2">
                             @foreach ($docentes as $d)
-                                <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50">
-                                    <input type="checkbox" wire:click="toggleDocenteACargo({{ $d['id'] }})"
-                                           @checked(in_array((int) $d['id'], $idsDocentesACargo, true))
+                                @php $did = (int) $d['id']; @endphp
+                                <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50"
+                                       wire:key="doc-ac-{{ $did }}"
+                                       x-show="!q.trim() || {{ \Illuminate\Support\Js::from(mb_strtolower($d['label'].' '.$d['dni'])) }}.includes(q.toLowerCase())">
+                                    <input type="checkbox" value="{{ $did }}"
+                                           wire:model="idsDocentesACargo"
                                            @disabled($soloLectura)
                                            class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                     <span class="text-sm">{{ $d['label'] }}</span>
@@ -179,9 +192,12 @@
                         <p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Otros docentes</p>
                         <div class="max-h-56 space-y-1 overflow-y-auto rounded-2xl border border-accent-200 p-2">
                             @foreach ($docentes as $d)
-                                <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50">
-                                    <input type="checkbox" wire:click="toggleOtroDocente({{ $d['id'] }})"
-                                           @checked(in_array((int) $d['id'], $idsOtrosDocentes, true))
+                                @php $did = (int) $d['id']; @endphp
+                                <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50"
+                                       wire:key="doc-ot-{{ $did }}"
+                                       x-show="!q.trim() || {{ \Illuminate\Support\Js::from(mb_strtolower($d['label'].' '.$d['dni'])) }}.includes(q.toLowerCase())">
+                                    <input type="checkbox" value="{{ $did }}"
+                                           wire:model="idsOtrosDocentes"
                                            @disabled($soloLectura)
                                            class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                     <span class="text-sm">{{ $d['label'] }}</span>
@@ -207,15 +223,36 @@
             </div>
 
             @if (! $soloLectura)
-                <div class="flex flex-wrap justify-end gap-2">
-                    <a href="{{ route('portalDocente.proyectosExtracurriculares.index') }}"
-                       class="inline-flex items-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50">
-                        Cancelar
-                    </a>
-                    <button type="submit"
-                            class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700">
-                        {{ $actividadId ? 'Guardar cambios' : 'Presentar a dirección' }}
-                    </button>
+                <div class="relative z-20 flex flex-col items-end gap-2">
+                    @if ($mensajeForm !== '' || $errors->any())
+                        <div class="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                            <p class="font-semibold">{{ $mensajeForm !== '' ? $mensajeForm : 'No se pudo presentar el proyecto' }}</p>
+                            @if ($errors->any())
+                                <ul class="mt-1 list-disc pl-5">
+                                    @foreach ($errors->all() as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    @endif
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        <a href="{{ route('portalDocente.proyectosExtracurriculares.index') }}"
+                           class="btn-secondary">
+                            Cancelar
+                        </a>
+                        <button type="button"
+                                class="btn-primary"
+                                wire:click="guardar()"
+                                wire:loading.attr="disabled"
+                                wire:target="guardar">
+                            <span wire:loading.remove wire:target="guardar">{{ $actividadId ? 'Guardar cambios' : 'Presentar a dirección' }}</span>
+                            <span wire:loading wire:target="guardar">Guardando…</span>
+                        </button>
+                    </div>
+                    <p wire:loading.delay wire:target="guardar" class="text-xs font-semibold text-primary-700">
+                        Presentando el proyecto a dirección…
+                    </p>
                 </div>
             @endif
         </form>
@@ -237,7 +274,7 @@
                             @forelse ($alumnosBusqueda as $al)
                                 <label class="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent-50">
                                     <input type="checkbox" wire:click="toggleAlumno({{ $al['id'] }})"
-                                           @checked(in_array((int) $al['id'], $idsAlumnos, true))
+                                           @checked(in_array((string) (int) $al['id'], $idsAlumnos, true))
                                            class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                                     <span class="text-sm">{{ $al['label'] }}</span>
                                     @if (($al['dni'] ?? '') !== '')
@@ -250,8 +287,8 @@
                         </div>
                     </div>
                     <div class="shrink-0 border-t border-accent-200 bg-accent-50 px-5 py-3 text-right">
-                        <button type="button" wire:click="cerrarModalAlumnos"
-                                class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
+                        <button type="button" wire:click="cerrarModalAlumnos()"
+                                class="btn-primary">
                             Listo
                         </button>
                     </div>
@@ -262,8 +299,12 @@
 
     @script
     <script>
-        $wire.on('se-swal-exito', (e) => window.seSwalExito(e.mensaje));
-        $wire.on('se-swal-error', (e) => window.seSwalError(e.mensaje));
+        $wire.on('se-swal-exito', (event) => {
+            window.seSwalExito?.(event?.mensaje ?? event?.detail?.mensaje ?? 'Guardado.');
+        });
+        $wire.on('se-swal-error', (event) => {
+            window.seSwalError?.(event?.mensaje ?? event?.detail?.mensaje ?? 'Error.');
+        });
     </script>
     @endscript
 </div>

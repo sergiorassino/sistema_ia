@@ -2,7 +2,7 @@
 
 namespace App\Support\Certificados;
 
-use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfFuenteVerdana;
 use TCPDF;
 
 /**
@@ -32,6 +32,11 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
         $this->SetAutoPageBreak(false);
         $this->SetMargins(self::MARGEN_IZQ, 20, 20);
         $this->SetFillColor(232, 232, 232);
+    }
+
+    private function aplicarFuente(string $style = '', float $size = 10): void
+    {
+        TcpdfFuenteVerdana::aplicar($this, $style, $size);
     }
 
     /**
@@ -76,27 +81,27 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
         $this->dibujarEscudosModeloWord($inst);
 
         $this->SetY(21);
-        TcpdfFuenteArial::aplicar($this, 'B', 14);
+        $this->aplicarFuente('B', 14);
         $this->Cell(self::ANCHO_UTIL, 6, 'REPÚBLICA ARGENTINA', 0, 1, 'C');
         $this->Ln(4);
 
-        TcpdfFuenteArial::aplicar($this, '', 9);
+        $this->aplicarFuente('', 9);
         $this->Cell(self::ANCHO_UTIL, 4, 'LEY DE EDUCACIÓN NACIONAL Nº 26.206', 0, 1, 'C');
-        TcpdfFuenteArial::aplicar($this, 'B', 9);
+        $this->aplicarFuente('B', 9);
         $this->Cell(self::ANCHO_UTIL, 4, 'GOBIERNO DE LA PROVINCIA DE CÓRDOBA', 0, 1, 'C');
-        TcpdfFuenteArial::aplicar($this, '', 9);
+        $this->aplicarFuente('', 9);
         $this->Cell(self::ANCHO_UTIL, 4, 'LEY DE EDUCACIÓN PROVINCIAL Nº 9870', 0, 1, 'C');
-        TcpdfFuenteArial::aplicar($this, 'B', 9);
+        $this->aplicarFuente('B', 9);
         $this->Cell(self::ANCHO_UTIL, 4, 'MINISTERIO DE EDUCACIÓN DE LA PROVINCIA DE CÓRDOBA', 0, 1, 'C');
         $this->Cell(self::ANCHO_UTIL, 4, 'DIRECCIÓN GENERAL DE INSTITUTOS PRIVADOS DE ENSEÑANZA', 0, 1, 'C');
 
         $this->Ln(3);
-        TcpdfFuenteArial::aplicar($this, '', 9);
+        $this->aplicarFuente('', 9);
         $serie = trim((string) ($cert['serie'] ?? ''));
         $this->Cell(self::ANCHO_UTIL, 5, $serie !== '' ? 'Serie  '.$serie : '', 0, 1, 'R');
 
         $this->Ln(2);
-        TcpdfFuenteArial::aplicar($this, 'B', 14);
+        $this->aplicarFuente('B', 14);
         $this->Cell(self::ANCHO_UTIL, 7, 'CERTIFICADO DE ESTUDIOS', 0, 1, 'C');
         $this->Cell(self::ANCHO_UTIL, 7, 'EDUCACIÓN PRIMARIA', 0, 1, 'C');
 
@@ -104,15 +109,24 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
         $this->SetX(self::MARGEN_IZQ);
 
         $insti = trim((string) ($inst['insti'] ?? ''));
-        $this->writeMezcladoJustificado([
+        $partesInsti = CertificadoFinalizacionTextoEs::partesNombreInstitucion($insti);
+        $bloquesInsti = [
             ['t' => 'La Dirección del '],
-            ['t' => $insti !== '' ? $insti : $this->textoOGuiones(''), 'b' => true],
-            ['t' => ', C.U.E. Nº '.$this->textoOGuiones((string) ($inst['cue'] ?? ''))
-                .' ubicado en '.$this->textoOGuiones((string) ($inst['direccion'] ?? ''))
-                .', Localidad '.$this->textoOGuiones((string) ($inst['localidad'] ?? ''))
-                .', Departamento '.$this->textoOGuiones((string) ($inst['departamento'] ?? ''))
-                .', Provincia de '.$this->textoOGuiones((string) ($inst['provincia'] ?? '')).'.'],
-        ], self::ALTO_CUERPO, 11);
+        ];
+        if ($partesInsti['tipo'] === '' && $partesInsti['nombre'] === '') {
+            $bloquesInsti[] = ['t' => $this->textoOGuiones(''), 'b' => true];
+        } else {
+            $bloquesInsti[] = ['t' => $partesInsti['tipo']];
+            if ($partesInsti['nombre'] !== '') {
+                $bloquesInsti[] = ['t' => $partesInsti['nombre'], 'b' => true];
+            }
+        }
+        $bloquesInsti[] = ['t' => ', C.U.E. Nº '.$this->textoOGuiones((string) ($inst['cue'] ?? ''))
+            .' ubicado en '.$this->textoOGuiones((string) ($inst['direccion'] ?? ''))
+            .', Localidad '.$this->textoOGuiones((string) ($inst['localidad'] ?? ''))
+            .', Departamento '.$this->textoOGuiones((string) ($inst['departamento'] ?? ''))
+            .', Provincia de '.$this->textoOGuiones((string) ($inst['provincia'] ?? '')).'.'];
+        $this->writeMezcladoJustificado($bloquesInsti, self::ALTO_CUERPO, 11);
 
         $this->Ln(3);
         $this->SetX(self::MARGEN_IZQ);
@@ -123,6 +137,8 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
         );
         $mesApro = trim((string) ($cert['mesApro'] ?? ''));
         $anoApro = CertificadoFinalizacionTextoEs::enLetrasDesdeTexto((string) ($cert['anoApro'] ?? ''));
+        $nacido = CertificadoFinalizacionTextoEs::nacidoSegunSexo($alu['sexo'] ?? 0, $alu['sexo_etiqueta'] ?? null);
+        $acreditado = CertificadoFinalizacionTextoEs::acreditadoSegunSexo($alu['sexo'] ?? 0, $alu['sexo_etiqueta'] ?? null);
 
         $this->writeMezcladoJustificado([
             ['t' => 'CERTIFICA', 'b' => true],
@@ -130,7 +146,7 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
             ['t' => $nombreCompleto !== '' ? $nombreCompleto : $this->textoOGuiones(''), 'b' => true],
             ['t' => ', Documento Nacional de Identidad Nº: '
                 .$this->textoOGuiones((string) ($alu['dni_puntos'] ?? $alu['dni'] ?? ''))
-                .', nacido en '.$this->textoOGuiones((string) ($alu['ln_ciudad'] ?? ''))
+                .', '.$nacido.' en '.$this->textoOGuiones((string) ($alu['ln_ciudad'] ?? ''))
                 .', Dpto. '.$this->textoOGuiones((string) ($alu['ln_depto'] ?? ''))
                 .', Provincia de '.$this->textoOGuiones((string) ($alu['ln_provincia'] ?? ''))
                 .', País '.$this->textoOGuiones((string) ($alu['ln_pais'] ?? ''))
@@ -142,7 +158,7 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
                 .$this->textoOGuiones($mesApro)
                 .' del año: '
                 .$this->textoOGuiones($anoApro).','],
-            ['t' => 'quedando acreditado para acceder al PRIMER AÑO de Educación Secundaria.', 'b' => true],
+            ['t' => 'quedando '.$acreditado.' para acceder al PRIMER AÑO de Educación Secundaria.', 'b' => true],
         ], self::ALTO_CUERPO, 11);
 
         $this->Ln(3);
@@ -172,7 +188,7 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
 
         $this->Ln(4);
         $this->SetX(self::MARGEN_IZQ);
-        TcpdfFuenteArial::aplicar($this, '', 11);
+        $this->aplicarFuente('', 11);
         $ppi = trim((string) ($cert['ppi'] ?? ''));
         if ($ppi === '') {
             $this->Cell(self::ANCHO_UTIL, self::ALTO_CUERPO, 'Observaciones:', 0, 1, 'L');
@@ -186,7 +202,7 @@ final class CertificadoSextoGradoTcpdf extends TCPDF
     private function dibujarPieFirmasSexto(): void
     {
         $this->SetY(248);
-        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->aplicarFuente('', 8);
         $this->SetX(self::MARGEN_IZQ);
         $anchoCol = self::ANCHO_UTIL / 4.0;
 
