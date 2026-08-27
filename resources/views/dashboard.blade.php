@@ -167,5 +167,7 @@
             </div>
         </section>
     @endif
+
+    @livewire(\App\Livewire\ProyectosExtracurriculares\CalendarioWidget::class)
 </div>
 @endsection

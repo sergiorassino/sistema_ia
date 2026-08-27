@@ -66,6 +66,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO = 'examenes.materias-adeudadas-por-curso';
 
+    public const PURPOSE_EXT_ACTIVIDAD = 'ext.actividad';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -223,6 +225,21 @@ final class OpaqueRouteToken
     public static function forLegajoFotoCarnet(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_LEGAJO_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    public static function forExtActividad(int $idActividad): string
+    {
+        return self::encodePayload(self::PURPOSE_EXT_ACTIVIDAD, [
+            'a' => $idActividad,
+        ]);
+    }
+
+    public static function decodeExtActividad(string $ref): ?int
+    {
+        $data = self::decodePayload($ref, self::PURPOSE_EXT_ACTIVIDAD);
+        $id = (int) ($data['a'] ?? 0);
+
+        return $id > 0 ? $id : null;
     }
 
     /**

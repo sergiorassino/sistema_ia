@@ -103,6 +103,10 @@ use App\Livewire\Docentes\Inasistencias\InasistenciasDocentesIndex;
 use App\Livewire\Docentes\Inasistencias\RankingInasistenciasMateriasCursos;
 use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosIndex;
 use App\Livewire\Docentes\Capacitacion\CapacitacionDocenteIndex;
+use App\Livewire\ProyectosExtracurriculares\CalendarioEscolar;
+use App\Livewire\ProyectosExtracurriculares\GestionIndex as ProyectosExtracurricularesGestionIndex;
+use App\Livewire\ProyectosExtracurriculares\ProyectoForm as ProyectoExtracurricularForm;
+use App\Livewire\ProyectosExtracurriculares\ProyectosIndex as ProyectosExtracurricularesIndex;
 use App\Http\Controllers\Docentes\CapacitacionDocenteCertificadoController;
 use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosForm;
 use App\Http\Controllers\Docentes\RankingInasistenciasMateriasCursosCsvController;
@@ -210,6 +214,7 @@ use App\Http\Controllers\Certificados\ConstanciaDocumentosPdfController;
 use App\Http\Controllers\Certificados\PaseParcialPdfController;
 use App\Http\Controllers\Certificados\SolicitudDePasePdfController;
 use App\Http\Controllers\Certificados\CusIsaVozImagenPdfController;
+use App\Http\Controllers\Certificados\CertificadoFinalizacionNivelPdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoFrentePdfController;
 use App\Http\Controllers\MatrizAnaliticos\AnaliticoReversoPdfController;
 use App\Http\Controllers\Navegacion\AutogestionDocenteController;
@@ -221,6 +226,7 @@ use App\Livewire\Certificados\ConstanciaDocumentosIndex;
 use App\Livewire\Certificados\PaseParcialIndex;
 use App\Livewire\Certificados\SolicitudDePaseIndex;
 use App\Livewire\Certificados\CusIsaVozImagenIndex;
+use App\Livewire\Certificados\CertificadoFinalizacionNivelIndex;
 use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
@@ -617,6 +623,16 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
         ->whereNumber('id')
         ->name('portalDocente.materialDidactico.reservar.edit');
 
+    Route::get('/proyectos-extracurriculares', ProyectosExtracurricularesIndex::class)
+        ->name('portalDocente.proyectosExtracurriculares.index');
+    Route::get('/proyectos-extracurriculares/nuevo', ProyectoExtracurricularForm::class)
+        ->name('portalDocente.proyectosExtracurriculares.create');
+    Route::get('/proyectos-extracurriculares/{ref}/editar', ProyectoExtracurricularForm::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('portalDocente.proyectosExtracurriculares.edit');
+    Route::get('/calendario-escolar', CalendarioEscolar::class)
+        ->name('portalDocente.calendarioEscolar');
+
     Route::get('/comunicaciones', BandejaGestion::class)->name('portalDocente.comunicaciones.index');
     Route::get('/comunicaciones/revision', BandejaRevision::class)->middleware(['permiso:3', 'permiso:8'])->name('portalDocente.comunicaciones.revision');
     Route::get('/comunicaciones/nuevo', NuevoComunicado::class)->name('portalDocente.comunicaciones.nuevo');
@@ -1008,6 +1024,11 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::post('/viajes/salidas/pdf', SalidaViajePdfController::class)->name('viajes.salidas.pdf');
     });
 
+    Route::get('/calendario-escolar', CalendarioEscolar::class)->name('calendarioEscolar');
+    Route::get('/proyectos-extracurriculares', ProyectosExtracurricularesGestionIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR)
+        ->name('proyectosExtracurriculares.gestion');
+
     // Material Didáctico — acceso: Admin (68) | Profesor (69) | Solo Lectura (70)
     // Los órdenes separados por coma son OR (ver CheckPermiso con ...$ordenes).
     Route::prefix('material-didactico')->group(function () {
@@ -1374,6 +1395,20 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->where('tipo', 'cus|isa|voz-imagen')
         ->middleware('permiso:66')
         ->name('certificados.cusIsaVozImagen.pdf');
+
+    // Certificados — jardín (inicial) / sexto grado (primario)
+    Route::get('/certificados/jardin', CertificadoFinalizacionNivelIndex::class)
+        ->middleware('permiso:97')
+        ->name('certificados.jardin');
+    Route::post('/certificados/jardin/pdf', CertificadoFinalizacionNivelPdfController::class)
+        ->middleware('permiso:97')
+        ->name('certificados.jardin.pdf');
+    Route::get('/certificados/sexto-grado', CertificadoFinalizacionNivelIndex::class)
+        ->middleware('permiso:97')
+        ->name('certificados.sextoGrado');
+    Route::post('/certificados/sexto-grado/pdf', CertificadoFinalizacionNivelPdfController::class)
+        ->middleware('permiso:97')
+        ->name('certificados.sextoGrado.pdf');
 
     // Boletines / informe de progreso escolar (nivel secundario)
     Route::get('/boletines-secundario', BoletinesSecundarioIndex::class)

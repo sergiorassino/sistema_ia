@@ -223,6 +223,12 @@ final class PermisosIaCatalog
     /** Asignar preceptor(es) a cada curso del ciclo (tabla preceptoresporcurso). */
     public const PRECEPTORES_POR_CURSO = 95;
 
+    /** Aprobar proyectos extracurriculares y comunicar a los involucrados. */
+    public const PROYECTOS_EXTRACURRICULARES_APROBAR = 96;
+
+    /** Certificado de Jardín (inicial, sala de 5) y Certificado de Sexto Grado (primario). */
+    public const CERT_JARDIN_SEXTO_GRADO = 97;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -255,6 +261,7 @@ final class PermisosIaCatalog
             ['id' => 23, 'orden' => self::CERT_PASE_PARCIAL, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'],
             ['id' => 24, 'orden' => self::CERT_SOLICITUD_PASE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'],
             ['id' => 66, 'orden' => self::CERT_CUS_ISA_VOZ_IMAGEN, 'tema' => 'CERTIFICADOS', 'descripcion' => 'C.U.S., I.S.A. y autorización de uso de imagen y voz: selección por curso y emisión de PDF.'],
+            ['id' => 97, 'orden' => self::CERT_JARDIN_SEXTO_GRADO, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de Jardín (sala de 5) y Certificado de Sexto Grado: selección de curso, alumnos y emisión de PDF.'],
             ['id' => 25, 'orden' => self::INASISTENCIAS_DOCENTES, 'tema' => 'INASISTENCIAS DOCENTES', 'descripcion' => 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'],
             ['id' => 26, 'orden' => self::INASISTENCIAS_SINCRO_CIDI, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Descargar e importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'],
             ['id' => 81, 'orden' => self::PARTE_DIARIO_PRECEPTOR, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Parte diario del preceptor: selección de curso(s), fecha e impresión PDF por día.'],
@@ -320,6 +327,7 @@ final class PermisosIaCatalog
             ['id' => 93, 'orden' => self::CAPACITACION_DOCENTE, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Capacitación docente: alta, edición y consulta de cursos realizados por docentes; certificado PDF y resumen por año.'],
             ['id' => 94, 'orden' => self::CALIF_RECALCULO_PROMEDIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Recalcular promedios: completar el promedio final (calif) de todas las materias del ciclo a partir de Eval/JIS, tras la descarga CIDI.'],
             ['id' => 95, 'orden' => self::PRECEPTORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar preceptores por curso y año lectivo (tabla preceptoresporcurso).'],
+            ['id' => 96, 'orden' => self::PROYECTOS_EXTRACURRICULARES_APROBAR, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Aprobar proyectos extracurriculares presentados por docentes y comunicar a los involucrados (organizadores, docentes del curso y preceptores).'],
         ];
     }
 

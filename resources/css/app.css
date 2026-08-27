@@ -3859,3 +3859,70 @@
 html.se-pwa-can-install [data-se-pwa-install-wrap] {
     display: block;
 }
+
+/* Calendario escolar (proyectos extracurriculares) */
+.se-dash-cal-panel {
+    @apply overflow-hidden rounded-3xl border border-[#C1D7DA] bg-white shadow-sm;
+}
+.se-cal-mes-head {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+.se-cal-mes-head > div {
+    @apply px-1 py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-neutral-500;
+}
+.se-cal-mes-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+.se-cal-celda {
+    @apply min-h-[6.5rem] rounded-xl border border-accent-200 bg-white p-1.5;
+}
+.se-cal-celda--fuera {
+    @apply bg-accent-50/50 opacity-60;
+}
+.se-cal-celda--hoy {
+    @apply border-primary-500 ring-1 ring-primary-500/30;
+}
+.se-cal-dia-num {
+    @apply mb-1 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-lg px-1 text-xs font-semibold tabular-nums text-neutral-700 hover:bg-accent-50;
+}
+.se-cal-eventos {
+    @apply flex flex-col gap-1;
+}
+.se-cal-chip {
+    @apply flex w-full items-center gap-1 rounded-lg bg-primary-600/10 px-1.5 py-0.5 text-left text-[11px] font-semibold leading-tight text-primary-800 transition hover:bg-primary-600 hover:text-white;
+}
+.se-cal-chip--block {
+    @apply flex-col items-start py-1.5;
+}
+.se-cal-chip-hora {
+    @apply shrink-0 text-[10px] font-bold tabular-nums opacity-80;
+}
+.se-cal-semana {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(8rem, 1fr));
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+.se-cal-semana-col {
+    @apply min-h-[12rem] rounded-xl border border-accent-200 bg-white;
+}
+.se-cal-semana-titulo {
+    @apply w-full border-b border-accent-200 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700 hover:bg-accent-50;
+}
+@media (max-width: 640px) {
+    .se-cal-mes-grid {
+        grid-template-columns: repeat(7, minmax(2.4rem, 1fr));
+    }
+    .se-cal-celda {
+        min-height: 4.5rem;
+        padding: 0.2rem;
+    }
+    .se-cal-chip {
+        font-size: 9px;
+    }
+}
