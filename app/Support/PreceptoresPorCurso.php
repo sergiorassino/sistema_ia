@@ -63,7 +63,7 @@ final class PreceptoresPorCurso
         }
 
         if (! Schema::hasTable(self::TABLA)) {
-            return 'No está disponible la tabla preceptoresporcurso. Ejecute el SQL de actualización de esquema del módulo.';
+            return 'No está disponible la tabla preceptoresporcurso. Ejecute php artisan migrate (o se:migrate-legacy --force) en este colegio.';
         }
 
         return 'La tabla preceptoresporcurso no tiene las columnas necesarias (idCursos e idProfesores o idProfesor).';
