@@ -14,6 +14,30 @@
                     Ciclo lectivo {{ schoolCtx()->terlecAno() }} — familias con estudiantes matriculados en Inicial, Primario o Secundario.
                 </p>
             </div>
+            <div class="flex flex-wrap gap-2 shrink-0">
+                <a href="{{ $this->urlListadoPdf() }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   @class([
+                       'inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => ! $familias->isEmpty(),
+                       'pointer-events-none border-white/10 bg-white/20 text-white/50' => $familias->isEmpty(),
+                   ])
+                   title="Listado PDF con los filtros actuales">
+                    Exportar PDF
+                </a>
+                <a href="{{ $this->urlListadoExcel() }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   @class([
+                       'inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => ! $familias->isEmpty(),
+                       'pointer-events-none border-white/10 bg-white/20 text-white/50' => $familias->isEmpty(),
+                   ])
+                   title="Listado Excel con los filtros actuales">
+                    Exportar Excel
+                </a>
+            </div>
         </div>
     </section>
 

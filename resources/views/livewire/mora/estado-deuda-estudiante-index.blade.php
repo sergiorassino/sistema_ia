@@ -14,6 +14,30 @@
                     Ciclo lectivo {{ schoolCtx()->terlecAno() }} — estudiantes matriculados en Inicial, Primario o Secundario, con o sin familia asignada.
                 </p>
             </div>
+            <div class="flex flex-wrap gap-2 shrink-0">
+                <a href="{{ $this->urlListadoPdf() }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   @class([
+                       'inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => ! $estudiantes->isEmpty(),
+                       'pointer-events-none border-white/10 bg-white/20 text-white/50' => $estudiantes->isEmpty(),
+                   ])
+                   title="Listado PDF con los filtros actuales">
+                    Exportar PDF
+                </a>
+                <a href="{{ $this->urlListadoExcel() }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   @class([
+                       'inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors',
+                       'border-white/20 bg-white text-primary-700 hover:bg-accent-50' => ! $estudiantes->isEmpty(),
+                       'pointer-events-none border-white/10 bg-white/20 text-white/50' => $estudiantes->isEmpty(),
+                   ])
+                   title="Listado Excel con los filtros actuales">
+                    Exportar Excel
+                </a>
+            </div>
         </div>
     </section>
 
@@ -74,6 +98,7 @@
                             <div class="gf-th gf-th-mora-estudiante">Estudiante</div>
                             <div class="gf-th gf-th-mora-dni">DNI</div>
                             <div class="gf-th gf-th-mora-curso">Curso actual</div>
+                            <div class="gf-th gf-th-mora-deuda">Deuda</div>
                             <div class="gf-th gf-th-mora-familia">Familia</div>
                             <div class="gf-th gf-th-mora-responsable">Responsable</div>
                         </div>
@@ -126,23 +151,21 @@
                                     </button>
                                 </div>
                                 <div class="gf-td gf-td-mora-estudiante font-medium uppercase">
-                                    <span class="inline-flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                        @if ($apellidoNombre !== '')
-                                            <span class="truncate">{!! CuotasFormato::resaltarTerminoBusqueda($apellidoNombre, $search) !!}</span>
-                                        @else
-                                            <span class="text-neutral-400">—</span>
-                                        @endif
-                                        <span class="se-mora-deuda tabular-nums whitespace-nowrap {{ $deudaEstudiante > 0 ? 'se-mora-deuda--positivo' : '' }}"
-                                              title="Total adeudado (estudiante)">
-                                            {{ CuotasFormato::formatearImporte($deudaEstudiante) }}
-                                        </span>
-                                    </span>
+                                    @if ($apellidoNombre !== '')
+                                        <span class="truncate">{!! CuotasFormato::resaltarTerminoBusqueda($apellidoNombre, $search) !!}</span>
+                                    @else
+                                        <span class="text-neutral-400">—</span>
+                                    @endif
                                 </div>
                                 <div class="gf-td gf-td-mora-dni tabular-nums whitespace-nowrap">
                                     {{ CuotasFormato::formatearDni($estudiante->dni) }}
                                 </div>
                                 <div class="gf-td gf-td-mora-curso uppercase truncate" title="{{ $curso }}">
                                     {{ $curso !== '' ? $curso : '—' }}
+                                </div>
+                                <div class="gf-td gf-td-mora-deuda tabular-nums whitespace-nowrap {{ $deudaEstudiante > 0 ? 'se-mora-deuda se-mora-deuda--positivo' : 'se-mora-deuda' }}"
+                                     title="Total adeudado (estudiante)">
+                                    {{ CuotasFormato::formatearImporte($deudaEstudiante) }}
                                 </div>
                                 <div class="gf-td gf-td-mora-familia uppercase">
                                     @if ($etiquetaFamilia !== '')

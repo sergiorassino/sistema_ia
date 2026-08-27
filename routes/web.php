@@ -188,7 +188,11 @@ use App\Livewire\Cooperadora\MovimientosIndex;
 use App\Livewire\Cooperadora\ProveedoresForm;
 use App\Livewire\Cooperadora\ProveedoresIndex;
 use App\Livewire\Cooperadora\RubrosIndex;
+use App\Http\Controllers\Mora\EstadoDeudaEstudianteListadoExcelController;
+use App\Http\Controllers\Mora\EstadoDeudaEstudianteListadoPdfController;
 use App\Http\Controllers\Mora\EstadoDeudaEstudiantePdfController;
+use App\Http\Controllers\Mora\EstadoDeudaFamiliarListadoExcelController;
+use App\Http\Controllers\Mora\EstadoDeudaFamiliarListadoPdfController;
 use App\Http\Controllers\Mora\EstadoDeudaFamiliarPdfController;
 use App\Http\Controllers\Mora\ListadoMorososPdfController;
 use App\Http\Controllers\Mora\NotificacionDeudaPdfController;
@@ -784,6 +788,14 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             ->where('ref', '[A-Za-z0-9_-]+')
             ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
             ->name('mora.estado-deuda-familiar.pdf');
+        Route::get('/estado-deuda-familiar/listado/pdf/{ref}', EstadoDeudaFamiliarListadoPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
+            ->name('mora.estado-deuda-familiar.listado-pdf');
+        Route::get('/estado-deuda-familiar/listado/excel/{ref}', EstadoDeudaFamiliarListadoExcelController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA)
+            ->name('mora.estado-deuda-familiar.listado-excel');
         Route::get('/estado-deuda-estudiante', EstadoDeudaEstudianteIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
             ->name('mora.estado-deuda-estudiante');
@@ -791,6 +803,14 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
             ->where('ref', '[A-Za-z0-9_-]+')
             ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
             ->name('mora.estado-deuda-estudiante.pdf');
+        Route::get('/estado-deuda-estudiante/listado/pdf/{ref}', EstadoDeudaEstudianteListadoPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
+            ->name('mora.estado-deuda-estudiante.listado-pdf');
+        Route::get('/estado-deuda-estudiante/listado/excel/{ref}', EstadoDeudaEstudianteListadoExcelController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->middleware('permiso:'.$pi::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE)
+            ->name('mora.estado-deuda-estudiante.listado-excel');
         Route::get('/gestion-morosos', GestionMorososIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_MORA_GESTION_MOROSOS)
             ->name('mora.gestion-morosos');

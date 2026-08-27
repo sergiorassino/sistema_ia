@@ -41,9 +41,9 @@ final class EstadoDeudaFamiliarListado
     }
 
     /**
-     * @return LengthAwarePaginator<int, Familia>
+     * @return Builder<Familia>
      */
-    public static function listarFamilias(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    public static function consultarFamilias(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false): Builder
     {
         $idNivel = self::normalizarIdNivel($idNivel);
 
@@ -89,11 +89,25 @@ final class EstadoDeudaFamiliarListado
             });
         }
 
-        return $query
-            ->orderBy('apellido')
-            ->orderBy('id')
+        return $query->orderBy('apellido')->orderBy('id');
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Familia>
+     */
+    public static function listarFamilias(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    {
+        return self::consultarFamilias($termino, $idNivel, $soloConDeuda)
             ->paginate($porPagina)
             ->withQueryString();
+    }
+
+    /**
+     * @return Collection<int, Familia>
+     */
+    public static function coleccionFamilias(string $termino = '', int $idNivel = 0, bool $soloConDeuda = false): Collection
+    {
+        return self::consultarFamilias($termino, $idNivel, $soloConDeuda)->get();
     }
 
     public static function normalizarIdNivel(int $idNivel): int

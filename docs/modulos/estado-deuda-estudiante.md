@@ -26,8 +26,9 @@ Menú de Administración (`layouts/administracion`) → Gestión de mora → **E
 1. Búsqueda por apellido, nombre, DNI; opcionalmente por familia o responsable (si hay familia real).
 2. Filtro de nivel pedagógico (Todos / Inicial / Primario / Secundario).
 3. Casilla **Solo alumnos con deuda**: deja en el listado únicamente estudiantes con cuotas `faltapa > 0` e `importe > 0` (cualquier ciclo).
-4. En cada fila: estudiante, deuda, DNI, curso, familia (o «Sin familia»), responsable y PDF.
-5. El PDF usa el mismo layout TCPDF que el estado de deuda familiar, con líneas de cuotas **solo del estudiante**.
+4. **Exportar PDF / Excel** del listado filtrado (búsqueda, nivel y «Solo alumnos con deuda»). Incluye **todos** los registros que coinciden, no solo la página. Columnas: estudiante, DNI, curso, deuda, familia, responsable. PDF en A4 **vertical**; si el texto no entra, la fila usa hasta dos líneas. URLs con `{ref}` opaco.
+5. En cada fila de pantalla: estudiante, DNI, curso, **deuda**, familia (o «Sin familia»), responsable y PDF individual.
+6. El PDF individual usa el mismo layout TCPDF que el estado de deuda familiar, con líneas de cuotas **solo del estudiante**.
 
 ## Fuente de verdad
 
@@ -40,6 +41,8 @@ Listado: `EstadoDeudaEstudianteListado`. Totales y PDF: `EstadoDeudaEstudianteDa
 - `app/Support/Mora/EstadoDeudaEstudianteDatos.php`
 - `resources/views/livewire/mora/estado-deuda-estudiante-index.blade.php`
 - `app/Http/Controllers/Mora/EstadoDeudaEstudiantePdfController.php`
+- Listado PDF/Excel: `EstadoDeudaEstudianteListadoPdfController` / `EstadoDeudaEstudianteListadoExcelController`
+- `app/Support/Mora/EstadoDeudaEstudianteListadoExport.php` (Excel/PDF de listado; TCPDF A4 vertical, hasta 2 líneas por fila)
 
 ## Qué no hacer / reglas de negocio
 

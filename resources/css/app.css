@@ -466,7 +466,7 @@
     .gf.gf-mora-estudiantes {
         display: block;
         width: 100%;
-        min-width: 64rem;
+        min-width: 70rem;
     }
     .gf.gf-mora-estudiantes .gf-head,
     .gf.gf-mora-estudiantes .gf-row-mora-estudiante {
@@ -480,6 +480,7 @@
             minmax(12rem, 1.5fr)
             6.5rem
             9rem
+            6.75rem
             minmax(8rem, 1fr)
             minmax(8rem, 10rem);
     }
@@ -514,9 +515,14 @@
     }
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-dni,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-curso,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-deuda,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-familia,
     .gf.gf-mora-estudiantes .gf-td.gf-td-mora-responsable {
         @apply flex items-center;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-deuda,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-deuda {
+        @apply flex items-center justify-end text-right;
     }
 
     /* Gestión de aranceles — grillas sin esquinas redondeadas */
