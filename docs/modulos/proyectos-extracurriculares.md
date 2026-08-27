@@ -40,7 +40,7 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · permiso: `data
 
 1. El docente abre **Proyectos extracurriculares**, carga el formulario (tipo de registro fijo, fechas por día, grupo, docentes, descripción con subtítulos Previas/Durante/Posteriores, evaluación) y presenta a dirección.
 2. Dirección abre **Aprobar proyectos**, revisa el detalle y marca **Aprobado**. Desde entonces figura en el calendario.
-3. **Comunicar** arma destinatarios: docentes a cargo y otros del proyecto, docentes `ppc` de los cursos involucrados, preceptores de esos cursos. Envía hilos `scope=docentes` por canal habilitado.
+3. **Comunicar** abre un diálogo con el listado de destinatarios (nombre y participación: docente a cargo, otro docente, docente del curso `ppc`, preceptor). Envía hilos `scope=docentes` por canal habilitado y, en producción, **correo de refuerzo** (`profesores.email` / `emailInsti`). En `APP_ENV=local` el correo no se pide (queda el comunicado interno); para una prueba SMTP real: `MAIL_FORCE_REAL=true`. El remitente no figura en el listado ni recibe el aviso.
 4. Secretaría y docentes ven el **calendario** (mes/semana/día) y el widget del escritorio (próximas fechas desde hoy). Clic en la actividad abre el detalle.
 
 ## Fuente de verdad
@@ -49,7 +49,7 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · permiso: `data
 |------|---------------|----------------|
 | Proyecto pendiente | Docente proponente | Dirección (listado) |
 | Estado aprobado | Dirección (permiso 96) | Calendario / widget |
-| Comunicado | Dirección (permiso 96) | Bandeja de involucrados |
+| Comunicado | Dirección (permiso 96) | Bandeja de involucrados (+ correo de refuerzo en producción) |
 
 ## Archivos clave
 
@@ -69,6 +69,7 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · permiso: `data
 4. No poner el ID numérico del proyecto en la URL del portal docente (edición con `OpaqueRouteToken`).
 5. No mostrar éxito si faltan las tablas `ext_*`.
 6. La comunicación no incluye al remitente; si no hay canal hacia un rol, ese grupo se omite con aviso.
+7. El correo de refuerzo se agrega al canal (aunque el canal no tenga medio email). En desarrollo (`APP_ENV=local`) no se envía; `MailDesarrollo` también bloquea SMTP real.
 
 ## Checklist al modificar
 
@@ -78,3 +79,4 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · permiso: `data
 - [ ] Confirmaciones con `seSwalConfirmar` / eventos `se-swal-*`.
 - [ ] Paginación `se-compact` en listados.
 - [ ] Calendario usable en Secretaría y Menú de Docentes; widget en ambos escritorios.
+- [ ] Comunicar: correo de refuerzo en producción; omitido en `APP_ENV=local` (`MailDesarrollo`).

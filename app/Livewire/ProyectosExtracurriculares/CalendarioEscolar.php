@@ -29,6 +29,15 @@ class CalendarioEscolar extends Component
         }
     }
 
+    public function cambiarVista(string $vista): void
+    {
+        if (! in_array($vista, ['mes', 'semana', 'dia'], true)) {
+            return;
+        }
+        $this->vista = $vista;
+        $this->detalleId = null;
+    }
+
     public function updatedVista(): void
     {
         if (! in_array($this->vista, ['mes', 'semana', 'dia'], true)) {
@@ -76,6 +85,17 @@ class CalendarioEscolar extends Component
 
     public function verDetalle(int $id): void
     {
+        if ($id < 1 || ! ExtActividadesService::tablasDisponibles()) {
+            return;
+        }
+
+        $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
+        if (! $act instanceof ExtActividad || ! $act->estaAprobada()) {
+            $this->detalleId = null;
+
+            return;
+        }
+
         $this->detalleId = $id;
     }
 
@@ -143,8 +163,13 @@ class CalendarioEscolar extends Component
 
         $detalle = null;
         if ($tablasOk && $this->detalleId !== null) {
-            $detalle = ExtActividadesService::cargarCompleta($this->detalleId);
-            if (! $detalle->estaAprobada()) {
+            try {
+                $detalle = ExtActividadesService::cargarCompleta($this->detalleId);
+                if (! $detalle->estaAprobada()) {
+                    $detalle = null;
+                    $this->detalleId = null;
+                }
+            } catch (\Throwable $e) {
                 $detalle = null;
                 $this->detalleId = null;
             }

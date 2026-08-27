@@ -526,3 +526,4 @@ Con `APP_ENV=local` **no se envía correo por SMTP** (comunicados, recuperación
 - El bloqueo es de código (`App\Support\Mail\MailDesarrollo`): `MailInstitucionalConfig` ya no puede forzar SMTP al enviar.
 - En `.env` local conviene `MAIL_MAILER=log`. En producción: `APP_ENV=production` y `MAIL_MAILER=smtp`.
 - Escape hatch puntual en la PC: `MAIL_FORCE_REAL=true` (no usar en servidores).
+- Proyectos extracurriculares → **Comunicar**: además, en `APP_ENV=local` no se pide el medio email (solo el comunicado interno). En producción sí hay correo de refuerzo.

@@ -767,10 +767,11 @@ final class ManualSistemaCatalog
                         [
                             'Abra Aprobar proyectos y revise el detalle de cada propuesta.',
                             'Pulse Aprobar: el proyecto entra al calendario escolar de Secretaría y del Menú de Docentes.',
-                            'Pulse Comunicar para enviar un comunicado a docentes organizadores, docentes del curso (tabla ppc) y preceptores de los cursos (preceptoresporcurso).',
+                            'Pulse Comunicar: verá el listado de destinatarios y su participación (a cargo, otro docente, docente del curso, preceptor). Confirme para enviar el comunicado. En producción también sale un correo de refuerzo.',
                         ],
                         [
                             'La comunicación usa los canales institucionales ya configurados. Si un rol no tiene canal, ese destinatario no recibe el aviso.',
+                            'El correo de refuerzo usa el mail del legajo docente. En el entorno de desarrollo no se envía correo real.',
                             'Puede volver un proyecto a pendiente: deja de verse en el calendario.',
                         ],
                         'Permiso IA orden 96',

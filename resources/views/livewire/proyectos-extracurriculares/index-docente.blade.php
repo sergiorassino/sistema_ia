@@ -51,47 +51,45 @@
                     </div>
                 @else
                     <div class="w-full overflow-x-auto">
-                        <div class="flex justify-start">
-                            <div class="gf min-w-[44rem]">
-                                <div class="gf-head">
-                                    <div class="gf-th">Actividad</div>
-                                    <div class="gf-th">Fechas</div>
-                                    <div class="gf-th">Estado</div>
-                                    <div class="gf-th-right w-44">Acciones</div>
-                                </div>
-                                @foreach ($registros as $reg)
-                                    <div class="gf-row" wire:key="ext-doc-{{ $reg->id }}">
-                                        <div class="gf-td font-semibold text-neutral-900">{{ $reg->nombre }}</div>
-                                        <div class="gf-td text-neutral-700">
-                                            {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($reg) ?: '—' }}
-                                        </div>
-                                        <div class="gf-td">
-                                            <span @class([
-                                                'se-pill',
-                                                'bg-emerald-100 text-emerald-800' => $reg->estaAprobada(),
-                                                'bg-amber-100 text-amber-900' => $reg->estaPendiente(),
-                                            ])>
-                                                {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::etiquetaEstado((string) $reg->estado) }}
-                                            </span>
-                                        </div>
-                                        <div class="gf-td w-44">
-                                            <div class="flex flex-wrap justify-end gap-2">
-                                                <a href="{{ route('portalDocente.proyectosExtracurriculares.edit', ['ref' => \App\Support\Security\OpaqueRouteToken::forExtActividad((int) $reg->id)]) }}"
-                                                   class="inline-flex items-center rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 transition hover:bg-accent-50">
-                                                    {{ $reg->estaAprobada() ? 'Ver' : 'Editar' }}
-                                                </a>
-                                                @if ($reg->estaPendiente())
-                                                    <button type="button"
-                                                            class="inline-flex items-center rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition hover:bg-red-50"
-                                                            x-on:click="window.seSwalConfirmar('¿Eliminar este proyecto pendiente?', 'Eliminar').then(ok => ok && $wire.eliminar({{ (int) $reg->id }}))">
-                                                        Eliminar
-                                                    </button>
-                                                @endif
-                                            </div>
+                        <div class="gf gf-ext-proy">
+                            <div class="gf-head">
+                                <div class="gf-th gf-col-actividad">Actividad</div>
+                                <div class="gf-th gf-col-fechas">Fechas</div>
+                                <div class="gf-th gf-col-estado">Estado</div>
+                                <div class="gf-th-right gf-col-acciones">Acciones</div>
+                            </div>
+                            @foreach ($registros as $reg)
+                                <div class="gf-row gf-row-hover" wire:key="ext-doc-{{ $reg->id }}">
+                                    <div class="gf-td gf-col-actividad font-semibold text-neutral-900">{{ $reg->nombre }}</div>
+                                    <div class="gf-td gf-col-fechas text-neutral-700">
+                                        {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($reg) ?: '—' }}
+                                    </div>
+                                    <div class="gf-td gf-col-estado">
+                                        <span @class([
+                                            'se-pill',
+                                            'bg-emerald-100 text-emerald-800' => $reg->estaAprobada(),
+                                            'bg-amber-100 text-amber-900' => $reg->estaPendiente(),
+                                        ])>
+                                            {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::etiquetaEstado((string) $reg->estado) }}
+                                        </span>
+                                    </div>
+                                    <div class="gf-td gf-col-acciones">
+                                        <div class="flex flex-wrap justify-end gap-2">
+                                            <a href="{{ route('portalDocente.proyectosExtracurriculares.edit', ['ref' => \App\Support\Security\OpaqueRouteToken::forExtActividad((int) $reg->id)]) }}"
+                                               class="inline-flex items-center rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 transition hover:bg-accent-50">
+                                                {{ $reg->estaAprobada() ? 'Ver' : 'Editar' }}
+                                            </a>
+                                            @if ($reg->estaPendiente())
+                                                <button type="button"
+                                                        class="inline-flex items-center rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition hover:bg-red-50"
+                                                        x-on:click="window.seSwalConfirmar('¿Eliminar este proyecto pendiente?', 'Eliminar').then(ok => ok && $wire.eliminar({{ (int) $reg->id }}))">
+                                                    Eliminar
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
-                                @endforeach
-                            </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                     @if ($registros->hasPages())
