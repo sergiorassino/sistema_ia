@@ -89,7 +89,7 @@ final class ImputacionPagoCalculo
      * }
      */
     /**
-     * @param  bool  $moraDiariaHastaFechaCalculo  Si true (solo Estado de Deuda Familiar),
+     * @param  bool  $moraDiariaHastaFechaCalculo  Si true (Estado de Deuda Familiar / por Estudiante),
      *                                             en tramo 4 cuenta días hasta la fecha de cálculo
      *                                             (legacy imputarPago), no hasta nueVenc/venc3.
      */

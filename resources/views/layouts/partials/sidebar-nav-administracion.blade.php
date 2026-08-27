@@ -639,6 +639,20 @@
                     <span class="truncate">Estado de Deuda Familiar</span>
                 </a>
                 @endif
+                @if (\App\Support\Mora\PermisosMora::puedeEstadoDeudaEstudiante())
+                <a href="{{ route('mora.estado-deuda-estudiante') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['mora.estado-deuda-estudiante', 'mora.estado-deuda-estudiante.pdf'], true),
+                   ])
+                   title="Listado de estudiantes y estado de deuda (con o sin familia)">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="truncate">Estado de Deuda por Estudiante</span>
+                </a>
+                @endif
                 @if (\App\Support\Mora\PermisosMora::puedeGestionMorosos())
                 <a href="{{ route('mora.gestion-morosos') }}"
                    @class([

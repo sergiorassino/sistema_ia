@@ -42,6 +42,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_MORA_ESTADO_DEUDA = 'mora.estado-deuda-familiar';
 
+    public const PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE = 'mora.estado-deuda-estudiante';
+
     public const PURPOSE_MORA_LISTADO_DEUDA = 'mora.listado-deuda';
 
     public const PURPOSE_MORA_NOTIFICACION_DEUDA = 'mora.notificacion-deuda';
@@ -162,6 +164,11 @@ final class OpaqueRouteToken
     public static function forEstadoDeudaFamiliar(int $idFamilia): string
     {
         return self::encode(self::PURPOSE_MORA_ESTADO_DEUDA, $idFamilia, $idFamilia);
+    }
+
+    public static function forEstadoDeudaEstudiante(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE, $idLegajo, $idLegajo);
     }
 
     /**

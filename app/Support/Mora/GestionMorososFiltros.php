@@ -8,9 +8,11 @@ use App\Models\CuotasBeca;
 use App\Models\Curso;
 use App\Models\Familia;
 use App\Models\Legajo;
+use App\Models\Nivel;
 use App\Models\Terlec;
 use App\Support\Cuotas\GeneracionMasivaCuotasConsulta;
 use App\Support\Cuotas\ListadoEstudiantesPorCuotaDatos;
+use App\Support\NivelSistema;
 use App\Support\SchoolAlcancePedagogico;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,6 +28,7 @@ use Illuminate\Validation\ValidationException;
  * - «Año» es el id de {@see Terlec}, no el número de año suelto.
  * - Conteo «más de / hasta X cuotas» solo considera cuotas con saldo (`faltapa` > 0).
  * - Solo entran cuotas vencidas al 2.º vencimiento (`venc2` anterior a la fecha de cálculo).
+ * - «Nivel» filtra por {@see Curso::$idNivel} de la cuota generada (cualquier ciclo).
  */
 final class GestionMorososFiltros
 {
@@ -81,12 +84,23 @@ final class GestionMorososFiltros
         }
         self::validarIdsCuotas($idsExcluir);
 
+        $chkNivel = (bool) ($input['chkNivel'] ?? false);
+        $idNivel = (int) ($input['idNivel'] ?? 0);
+        $nivelesPermitidos = self::nivelesParaSelector()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        if ($chkNivel) {
+            if ($idNivel < 1 || ! in_array($idNivel, $nivelesPermitidos, true)) {
+                throw ValidationException::withMessages(['idNivel' => 'Seleccione un nivel.']);
+            }
+        } else {
+            $idNivel = 0;
+        }
+
         $chkCurso = (bool) ($input['chkCurso'] ?? false);
         $idsCursos = self::normalizarIds($input['idsCursos'] ?? []);
         if ($chkCurso && $idsCursos === []) {
             throw ValidationException::withMessages(['idsCursos' => 'Seleccione al menos un curso.']);
         }
-        self::validarIdsCursos($idsCursos);
+        self::validarIdsCursos($idsCursos, $chkNivel ? $idNivel : null);
 
         $chkMasDe = (bool) ($input['chkMasDe'] ?? false);
         $masDe = (int) ($input['masDe'] ?? 0);
@@ -134,6 +148,8 @@ final class GestionMorososFiltros
             'vencHasta' => $vencHasta?->format('Y-m-d'),
             'chkExcluir' => $chkExcluir,
             'idsExcluirCuotas' => $idsExcluir,
+            'chkNivel' => $chkNivel,
+            'idNivel' => $idNivel,
             'chkCurso' => $chkCurso,
             'idsCursos' => $idsCursos,
             'chkMasDe' => $chkMasDe,
@@ -161,6 +177,7 @@ final class GestionMorososFiltros
             || (bool) ($input['chkVencDesde'] ?? false)
             || (bool) ($input['chkVencHasta'] ?? false)
             || (bool) ($input['chkExcluir'] ?? false)
+            || (bool) ($input['chkNivel'] ?? false)
             || (bool) ($input['chkCurso'] ?? false)
             || (bool) ($input['chkMasDe'] ?? false)
             || (bool) ($input['chkHasta'] ?? false)
@@ -212,6 +229,15 @@ final class GestionMorososFiltros
             $ids = (array) ($filtros['idsExcluirCuotas'] ?? []);
             if ($ids !== []) {
                 $query->whereNotIn('cuotasgeneradas.idCuotas', $ids);
+            }
+        }
+
+        if ($filtros['chkNivel'] ?? false) {
+            $idNivel = (int) ($filtros['idNivel'] ?? 0);
+            if ($idNivel > 0) {
+                $query->whereHas('curso', function (Builder $curso) use ($idNivel) {
+                    $curso->where('idNivel', $idNivel);
+                });
             }
         }
 
@@ -316,11 +342,36 @@ final class GestionMorososFiltros
     }
 
     /**
+     * Niveles pedagógicos del alcance (Administración: todos; resto: el del login).
+     *
+     * @return Collection<int, Nivel>
+     */
+    public static function nivelesParaSelector(): Collection
+    {
+        $query = Nivel::query()
+            ->where('id', '<', NivelSistema::ADMINISTRACION)
+            ->orderBy('id');
+
+        $idFiltro = SchoolAlcancePedagogico::idNivelFiltroUnico();
+        if ($idFiltro !== null) {
+            $query->whereKey($idFiltro);
+        }
+
+        return $query->get(['id', 'nivel', 'abrev']);
+    }
+
+    /**
      * @return Collection<int, Curso>
      */
-    public static function cursosParaSelector(): Collection
+    public static function cursosParaSelector(?int $idNivel = null): Collection
     {
-        return GeneracionMasivaCuotasConsulta::cursosEnContexto();
+        $cursos = GeneracionMasivaCuotasConsulta::cursosEnContexto();
+
+        if ($idNivel !== null && $idNivel > 0) {
+            $cursos = $cursos->filter(fn (Curso $c) => (int) ($c->idNivel ?? 0) === $idNivel);
+        }
+
+        return $cursos->values();
     }
 
     /**
@@ -391,13 +442,13 @@ final class GestionMorososFiltros
     /**
      * @param  list<int>  $ids
      */
-    private static function validarIdsCursos(array $ids): void
+    private static function validarIdsCursos(array $ids, ?int $idNivel = null): void
     {
         if ($ids === []) {
             return;
         }
 
-        $permitidos = self::cursosParaSelector()->pluck('Id')->map(fn ($id) => (int) $id)->all();
+        $permitidos = self::cursosParaSelector($idNivel)->pluck('Id')->map(fn ($id) => (int) $id)->all();
         foreach ($ids as $id) {
             if (! in_array($id, $permitidos, true)) {
                 throw ValidationException::withMessages(['idsCursos' => 'Curso no válido.']);

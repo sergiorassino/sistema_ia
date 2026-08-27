@@ -95,6 +95,22 @@
                        class="form-input w-full max-w-xs tabular-nums text-center" />
             </div>
 
+            <div>
+                <label class="inline-flex items-center gap-2 mb-1">
+                    <input type="checkbox" wire:model.live="chkNivel" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                    <span class="form-label mb-0">Nivel</span>
+                </label>
+                <select id="filtro-nivel-morosos"
+                        wire:model.live="idNivel"
+                        class="form-input"
+                        @disabled(! $chkNivel)>
+                    <option value="0">— Seleccione —</option>
+                    @foreach ($niveles as $nivel)
+                        <option value="{{ (int) $nivel->id }}">{{ $nivel->nivel }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="sm:col-span-2">
                 <label class="inline-flex items-center gap-2 mb-1">
                     <input type="checkbox" wire:model.live="chkFamilia" class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />

@@ -229,6 +229,9 @@ final class PermisosIaCatalog
     /** Certificado de Jardín (inicial, sala de 5) y Certificado de Sexto Grado (primario). */
     public const CERT_JARDIN_SEXTO_GRADO = 97;
 
+    /** Menú Administración — estado de deuda por estudiante. */
+    public const ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE = 98;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -304,6 +307,7 @@ final class PermisosIaCatalog
             ['id' => 62, 'orden' => self::ADMIN_BECAS_SOLICITUD_AYUDA, 'tema' => 'BECAS', 'descripcion' => 'Buscar estudiante e imprimir solicitud de ayuda familiar.'],
             ['id' => 63, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda familiar: listado de familias y deuda.'],
             ['id' => 64, 'orden' => self::ADMIN_MORA_GESTION_MOROSOS, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.'],
+            ['id' => 98, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda por estudiante: listado de estudiantes (con o sin familia) y deuda.'],
             ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
             ['id' => 67, 'orden' => self::VIAJES_SALIDAS_EDUCATIVAS, 'tema' => 'VIAJES / SALIDAS EDUCATIVAS', 'descripcion' => 'Gestión de salidas educativas, autorizaciones en PDF y exportación Excel de datos para viajes.'],
             ['id' => 68, 'orden' => self::RESERVA_MATERIAL_ADMIN, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — préstamos espontáneos, gestión de todas las reservas, ABM de grupos/recursos/disponibilidad y registro de entregas/devoluciones.'],

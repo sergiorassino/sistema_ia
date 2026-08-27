@@ -24,6 +24,11 @@ final class PermisosMora
         return self::tiene(PermisosIaCatalog::ADMIN_MORA_ESTADO_DEUDA);
     }
 
+    public static function puedeEstadoDeudaEstudiante(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE);
+    }
+
     public static function puedeGestionMorosos(): bool
     {
         return self::tiene(PermisosIaCatalog::ADMIN_MORA_GESTION_MOROSOS);
@@ -32,6 +37,8 @@ final class PermisosMora
     /** Grupo sidebar «Gestión de mora». */
     public static function muestraGrupoGestionMora(): bool
     {
-        return self::puedeEstadoDeudaFamiliar() || self::puedeGestionMorosos();
+        return self::puedeEstadoDeudaFamiliar()
+            || self::puedeEstadoDeudaEstudiante()
+            || self::puedeGestionMorosos();
     }
 }

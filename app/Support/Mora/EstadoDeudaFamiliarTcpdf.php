@@ -56,7 +56,7 @@ final class EstadoDeudaFamiliarTcpdf extends TCPDF
         $this->datos = $datos;
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
-        $this->SetTitle('Estado de deuda familiar');
+        $this->SetTitle(trim((string) ($datos['tituloDocumento'] ?? 'Estado de deuda familiar')));
         $this->setPrintHeader(false);
         $this->setPrintFooter(false);
         $this->SetAutoPageBreak(false, 10);

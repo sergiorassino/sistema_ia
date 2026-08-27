@@ -2,16 +2,16 @@
 
 namespace App\Livewire\Mora;
 
-use App\Support\Mora\EstadoDeudaFamiliarDatos;
-use App\Support\Mora\EstadoDeudaFamiliarListado;
+use App\Support\Mora\EstadoDeudaEstudianteDatos;
+use App\Support\Mora\EstadoDeudaEstudianteListado;
 use App\Support\Mora\PermisosMora;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Listado de familias — Gestión de mora (Administración).
+ * Listado de estudiantes — Gestión de mora (Administración).
  */
-class EstadoDeudaFamiliarIndex extends Component
+class EstadoDeudaEstudianteIndex extends Component
 {
     use WithPagination;
 
@@ -32,9 +32,9 @@ class EstadoDeudaFamiliarIndex extends Component
     public function mount(): void
     {
         abort_unless(
-            PermisosMora::puedeEstadoDeudaFamiliar(),
+            PermisosMora::puedeEstadoDeudaEstudiante(),
             403,
-            'Sin permiso para estado de deuda familiar.',
+            'Sin permiso para estado de deuda por estudiante.',
         );
     }
 
@@ -58,22 +58,22 @@ class EstadoDeudaFamiliarIndex extends Component
     {
         $this->idNivel = $this->idNivelNormalizadoParaVista();
         $idNivel = $this->idNivel === '' ? 0 : (int) $this->idNivel;
-        $familias = EstadoDeudaFamiliarListado::listarFamilias($this->search, $idNivel, $this->soloConDeuda);
-        $idsFamilias = $familias->getCollection()
+        $estudiantes = EstadoDeudaEstudianteListado::listarEstudiantes($this->search, $idNivel, $this->soloConDeuda);
+        $idsLegajos = $estudiantes->getCollection()
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        return view('livewire.mora.estado-deuda-familiar-index', [
-            'familias' => $familias,
-            'niveles' => EstadoDeudaFamiliarListado::nivelesParaSelector(),
-            'totalesDeuda' => EstadoDeudaFamiliarDatos::totalesAPagarPorFamilias($idsFamilias),
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Estado de Deuda Familiar']);
+        return view('livewire.mora.estado-deuda-estudiante-index', [
+            'estudiantes' => $estudiantes,
+            'niveles' => EstadoDeudaEstudianteListado::nivelesParaSelector(),
+            'totalesDeuda' => EstadoDeudaEstudianteDatos::totalesAPagarPorLegajos($idsLegajos),
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Estado de Deuda por Estudiante']);
     }
 
     private function idNivelNormalizadoParaVista(): string
     {
-        $id = EstadoDeudaFamiliarListado::normalizarIdNivel((int) $this->idNivel);
+        $id = EstadoDeudaEstudianteListado::normalizarIdNivel((int) $this->idNivel);
 
         return $id > 0 ? (string) $id : '';
     }

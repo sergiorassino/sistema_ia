@@ -456,6 +456,75 @@
         @apply text-red-700;
     }
 
+    /* Gestión de mora — estado de deuda por estudiante */
+    .se-card.se-card-mora-estudiantes,
+    .gf.gf-mora-estudiantes {
+        border-radius: 0;
+    }
+    .gf.gf-mora-estudiantes {
+        width: 100%;
+        min-width: 64rem;
+    }
+    .gf.gf-mora-estudiantes .gf-head,
+    .gf.gf-mora-estudiantes .gf-row-mora-estudiante {
+        width: 100%;
+        align-items: stretch;
+    }
+    .gf.gf-mora-estudiantes .gf-row-mora-estudiante {
+        border-bottom-width: 1px;
+        border-bottom-color: #6b7280;
+    }
+    .gf.gf-mora-estudiantes .gf-row-mora-estudiante:last-child {
+        border-bottom-width: 0;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-accion,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-accion {
+        flex: 0 0 4.75rem;
+        width: 4.75rem;
+        min-width: 4.75rem;
+        max-width: 4.75rem;
+        @apply flex items-center justify-center px-0.5 py-1;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-accion-label {
+        white-space: normal;
+        line-height: 1.15;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 9px;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-estudiante,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-estudiante {
+        flex: 1 1 14rem;
+        min-width: 12rem;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-dni,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-dni {
+        flex: 0 0 6.5rem;
+        width: 6.5rem;
+        min-width: 6.5rem;
+        @apply flex items-center;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-curso,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-curso {
+        flex: 0 0 9rem;
+        width: 9rem;
+        min-width: 8rem;
+        @apply flex items-center;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-familia,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-familia {
+        flex: 1 1 10rem;
+        min-width: 8rem;
+        max-width: 16rem;
+    }
+    .gf.gf-mora-estudiantes .gf-th.gf-th-mora-responsable,
+    .gf.gf-mora-estudiantes .gf-td.gf-td-mora-responsable {
+        flex: 0 0 10rem;
+        width: 10rem;
+        min-width: 8rem;
+        max-width: 12rem;
+    }
+
     /* Gestión de aranceles — grillas sin esquinas redondeadas */
     .se-card.se-card-cuotas-busqueda,
     .se-card.se-card-cuotas-grid,
