@@ -1493,8 +1493,6 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/seguimiento/inasistencias/{id}/editar', InasistenciaForm::class)
             ->whereNumber('id')
             ->name('seguimiento.inasistencias.edit');
-        Route::post('/seguimiento/inasistencias/informe/pdf', InformeInasistenciasPdfController::class)
-            ->name('seguimiento.inasistencias.informe.pdf');
     });
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::TEA_ESTUDIANTES_GESTION)->group(function () {
         Route::get('/seguimiento/tea', TeaIndex::class)
@@ -1516,6 +1514,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('seguimiento.toma-asistencia-clase');
     Route::get('/seguimiento/inasistencias/informe', InformeInasistenciasLoteIndex::class)
         ->name('seguimiento.inasistencias.informe');
+    Route::post('/seguimiento/inasistencias/informe/pdf', InformeInasistenciasPdfController::class)
+        ->name('seguimiento.inasistencias.informe.pdf');
     Route::post('/seguimiento/inasistencias/informe/lote/pdf', InformeInasistenciasLotePdfController::class)
         ->name('seguimiento.inasistencias.informe.lote.pdf');
 
