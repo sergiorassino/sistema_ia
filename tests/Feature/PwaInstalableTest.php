@@ -57,7 +57,17 @@ class PwaInstalableTest extends TestCase
         $this->assertStringNotContainsString('manifest-personal.webmanifest', $html);
         $this->assertStringNotContainsString('manifest-familias.webmanifest', $html);
         $this->assertStringNotContainsString('rel="manifest"', $html);
+        $this->assertStringNotContainsString('mobile-web-app-capable', $html);
         $this->assertStringContainsString('pwa-sw-url', $html);
+    }
+
+    public function test_favicon_incluye_ico_del_tenant_sin_sizes_any(): void
+    {
+        $html = view('layouts.partials.favicon')->render();
+
+        $this->assertStringContainsString('favicon-32.png', $html);
+        $this->assertStringContainsString('favicon.ico', $html);
+        $this->assertStringNotContainsString('sizes="any"', $html);
     }
 
     public function test_iconos_favicon_no_quedan_bajo_prefijo_pwa(): void

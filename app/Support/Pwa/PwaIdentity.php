@@ -282,4 +282,14 @@ final class PwaIdentity
 
         return $url.'?v='.$v;
     }
+
+    /** URL absoluta de /favicon.ico del tenant (Chrome lo pide solo en cada ruta). */
+    public static function faviconIcoAbsoluto(): string
+    {
+        $url = request()->getSchemeAndHttpHost().self::rootPath('favicon.ico');
+        $file = public_path('favicon.ico');
+        $v = is_file($file) ? (string) filemtime($file) : '16';
+
+        return $url.'?v='.$v;
+    }
 }
