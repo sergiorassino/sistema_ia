@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Support\PermisosIaCatalog;
 use App\Models\Matricula;
 use App\Support\InformeInasistencias;
 use App\Support\InformeInasistenciasTcpdf;
@@ -14,11 +13,6 @@ class InformeInasistenciasPdfController extends Controller
 {
     public function __invoke(Request $request)
     {
-        abort_unless(
-            tienePermiso(PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION),
-            403,
-            'Sin permiso para gestión de inasistencias de estudiantes.'
-        );
         abort_unless(tenantSecretariaInformeInasistenciasHabilitada(), 404);
 
         $validated = $request->validate([
