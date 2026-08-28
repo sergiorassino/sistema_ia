@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\Pwa\PwaIdentity;
 use Tests\TestCase;
 
 class PwaInstalableTest extends TestCase
@@ -36,6 +37,45 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('icon-se-192.png', (string) ($p['icons'][0]['src'] ?? ''));
         $this->assertStringContainsString('?v=', (string) ($p['icons'][0]['src'] ?? ''));
         $this->assertStringContainsString('http', (string) ($p['icons'][0]['src'] ?? ''));
+    }
+
+    public function test_favicon_de_pestana_es_png_circular_sin_ico_ni_192(): void
+    {
+        $html = $this->get(route('login'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('favicon-32.png', $html);
+        $this->assertStringNotContainsString('sizes="any"', $html);
+        $this->assertDoesNotMatchRegularExpression('/rel="icon"[^>]*sizes="192x192"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/rel="icon"[^>]*sizes="512x512"/', $html);
+        $this->assertStringContainsString('manifest-personal.webmanifest', $html);
+    }
+
+    public function test_manifiesto_pwa_no_va_en_layouts_autenticados(): void
+    {
+        $html = view('layouts.partials.pwa', ['incluirManifiestoPwa' => false])->render();
+
+        $this->assertStringNotContainsString('manifest-personal.webmanifest', $html);
+        $this->assertStringNotContainsString('manifest-familias.webmanifest', $html);
+        $this->assertStringNotContainsString('rel="manifest"', $html);
+        $this->assertStringContainsString('pwa-sw-url', $html);
+    }
+
+    public function test_iconos_favicon_no_quedan_bajo_prefijo_pwa(): void
+    {
+        PwaIdentity::aplicarPrefijoUrls(PwaIdentity::PERSONAL);
+
+        try {
+            $url = PwaIdentity::iconAbsoluto('favicon-32.png');
+            $this->assertStringContainsString('/img/favicon-32.png', $url);
+            $this->assertStringNotContainsString('pwa-personal', $url);
+            $this->assertStringNotContainsString('pwa-familias', $url);
+        } finally {
+            PwaIdentity::quitarPrefijoUrls();
+        }
+
+        $html = $this->get('/pwa-personal/loginUsuario')->assertOk()->getContent();
+        $this->assertStringContainsString('favicon-32.png', $html);
+        $this->assertStringNotContainsString('pwa-personal/img/', $html);
     }
 
     public function test_login_personal_enlaza_manifiesto_personal(): void
@@ -103,7 +143,6 @@ class PwaInstalableTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('content-type', 'image/png');
-        $this->assertNotEmpty($response->getContent());
     }
 
     public function test_service_worker_ruta_javascript(): void

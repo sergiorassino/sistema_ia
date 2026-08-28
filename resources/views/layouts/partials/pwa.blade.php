@@ -1,10 +1,12 @@
 @php
     $pwaPortal = \App\Support\Pwa\PwaIdentity::portalDesdeContexto($guestPortal ?? null);
+    $incluirManifiestoPwa = $incluirManifiestoPwa ?? true;
 @endphp
-<link rel="icon" type="image/png" sizes="192x192" href="{{ \App\Support\Pwa\PwaIdentity::iconAbsoluto('icon-se-192.png') }}">
-<link rel="icon" type="image/png" sizes="512x512" href="{{ \App\Support\Pwa\PwaIdentity::iconAbsoluto('icon-se-512.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ \App\Support\Pwa\PwaIdentity::iconAbsoluto('apple-touch-icon-se.png') }}">
-<link rel="manifest" href="{{ route('pwa.manifest', ['portal' => $pwaPortal]) }}">
+@if ($incluirManifiestoPwa)
+    {{-- Solo login / páginas públicas: Chrome usa el manifiesto para la solapa y pisa favicon-32.png. --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ \App\Support\Pwa\PwaIdentity::iconAbsoluto('apple-touch-icon-se.png') }}">
+    <link rel="manifest" href="{{ route('pwa.manifest', ['portal' => $pwaPortal]) }}">
+@endif
 <meta name="theme-color" content="#40848D">
 <meta name="msapplication-TileColor" content="#40848D">
 <meta name="mobile-web-app-capable" content="yes">

@@ -225,18 +225,32 @@ final class PwaIdentity
         return 'manifest-'.self::normalizarPortal($portal).'.webmanifest';
     }
 
-    /** Base pública con barra final (`https://dominio/ia/colegio/`). */
+    /** Base pública con barra final (`https://dominio/ia/colegio/`), sin prefijo PWA. */
     public static function baseUrl(): string
     {
-        return rtrim(url('/'), '/').'/';
+        return rtrim(request()->getSchemeAndHttpHost().self::idPath(), '/').'/';
     }
 
-    /** Path de APP_URL (`/ia/colegio/` o `/`) — id estable de la app instalada. */
+    /**
+     * Path de instalación del tenant (`/ia/colegio/` o `/`).
+     * No usar url('/') — con prefijo PWA activo devuelve `/pwa-personal/` y los PNG del favicon dan 404 en producción.
+     */
     public static function idPath(): string
     {
-        $path = parse_url(self::baseUrl(), PHP_URL_PATH);
+        try {
+            $base = request()->getBasePath();
+            if (is_string($base) && $base !== '') {
+                return rtrim(str_replace('\\', '/', $base), '/').'/';
+            }
+        } catch (\Throwable) {
+            // Tests / consola sin request.
+        }
 
-        return ($path !== null && $path !== '') ? rtrim($path, '/').'/' : '/';
+        $path = parse_url((string) config('app.url', ''), PHP_URL_PATH);
+
+        return (is_string($path) && $path !== '' && $path !== '/')
+            ? rtrim($path, '/').'/'
+            : '/';
     }
 
     /**
@@ -255,7 +269,7 @@ final class PwaIdentity
     }
 
     /**
-     * URL absoluta del icono PWA en el host de esta petición, con ?v=filemtime
+     * URL absoluta del icono en el host de esta petición (sin prefijo PWA), con ?v=filemtime
      * para que Chrome no reutilice el PNG verde anterior (misma ruta, otro contenido).
      */
     public static function iconAbsoluto(string $filename): string

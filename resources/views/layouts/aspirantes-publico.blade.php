@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? 'Registro de aspirante' }} — {{ config('app.name') }}</title>
     @include('layouts.partials.favicon')
+    @include('layouts.partials.pwa', ['incluirManifiestoPwa' => false])
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
