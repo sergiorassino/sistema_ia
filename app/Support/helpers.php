@@ -493,6 +493,7 @@ if (! function_exists('matriculaWebDocumentoUrl')) {
 if (! function_exists('seAssetVersioned')) {
     /**
      * asset() con ?v=filemtime para iconos (mismo criterio que SILAVET, con bust de caché).
+     * El sufijo fijo fuerza recarga en Chrome cuando cambian rutas (p. ej. /dashboard con globo cacheado).
      */
     function seAssetVersioned(string $path): string
     {
@@ -500,7 +501,7 @@ if (! function_exists('seAssetVersioned')) {
         $url = asset($path);
         $file = public_path($path);
         if (is_file($file)) {
-            $url .= '?v='.(string) filemtime($file);
+            $url .= '?v='.(string) filemtime($file).'-r2';
         }
 
         return $url;
