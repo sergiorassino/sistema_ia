@@ -109,16 +109,21 @@ class LegajoProfesorForm extends Component
     protected function rules(): array
     {
         $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
-        $dniUnique = Rule::unique('profesores', 'dni')
-            ->where(fn ($q) => $q->where('nivel', $idNivel));
-        if ($this->id) {
-            $dniUnique = $dniUnique->ignore($this->id);
+
+        $dniRules = ['required', 'digits_between:7,11'];
+        if (! $this->dniSinCambiosAlGuardar()) {
+            $dniUnique = Rule::unique('profesores', 'dni')
+                ->where(fn ($q) => $q->where('nivel', $idNivel));
+            if ($this->id) {
+                $dniUnique = $dniUnique->ignore((int) $this->id);
+            }
+            $dniRules[] = $dniUnique;
         }
 
         $r = [
             'apellido' => ['required', 'string', 'max:50'],
             'nombre' => ['required', 'string', 'max:50'],
-            'dni' => ['required', 'digits_between:7,11', $dniUnique],
+            'dni' => $dniRules,
             'IdTipoProf' => ['required', 'integer', 'min:1'],
         ];
 
@@ -211,7 +216,6 @@ class LegajoProfesorForm extends Component
         }
 
         return redirect()->route('abm.legajos-profesor', [
-            'page' => $this->pageForProfesor((int) $this->id, 25),
             'focus' => (int) $this->id,
         ]);
     }
@@ -334,6 +338,32 @@ class LegajoProfesorForm extends Component
     }
 
     /**
+     * Al editar sin modificar el DNI no se valida unicidad: evita falsos positivos
+     * si hay más de un legajo legacy con el mismo DNI en el mismo nivel.
+     */
+    private function dniSinCambiosAlGuardar(): bool
+    {
+        if ($this->id === null || $this->id < 1) {
+            return false;
+        }
+
+        try {
+            $profesor = $this->scopedProfesorOrFail($this->id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return false;
+        }
+
+        $dniActual = (int) ($profesor->dni ?? 0);
+        if ($dniActual < 1) {
+            return false;
+        }
+
+        $dniIngresado = (int) preg_replace('/\D+/', '', $this->dni);
+
+        return $dniIngresado === $dniActual;
+    }
+
+    /**
      * @return array<string, int>|null
      */
     private function camposActivosSet(): ?array
@@ -396,27 +426,6 @@ class LegajoProfesorForm extends Component
         }
 
         $this->activeTab = $slug;
-    }
-
-    private function pageForProfesor(int $id, int $perPage): int
-    {
-        $idNivel = (int) (SchoolAlcancePedagogico::idNivelLegajosDocente() ?? 0);
-        $p = Profesor::query()->delNivel($idNivel)->find($id);
-        if (! $p) {
-            return 1;
-        }
-
-        $countBefore = Profesor::query()
-            ->delNivel($idNivel)
-            ->where(function ($q) use ($p) {
-                $q->where('apellido', '<', $p->apellido)
-                    ->orWhere(function ($q2) use ($p) {
-                        $q2->where('apellido', $p->apellido)
-                            ->where('nombre', '<', $p->nombre);
-                    });
-            })->count();
-
-        return (int) floor($countBefore / $perPage) + 1;
     }
 
     public function render()

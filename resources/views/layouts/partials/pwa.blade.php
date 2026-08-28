@@ -3,7 +3,7 @@
     $incluirManifiestoPwa = $incluirManifiestoPwa ?? true;
 @endphp
 @if ($incluirManifiestoPwa)
-    {{-- Solo login / páginas públicas: Chrome usa el manifiesto para la solapa y puede pisar favicon-32.png. --}}
+    {{-- Solo login / páginas públicas: Chrome usa el manifiesto para la solapa y pisa favicon-32.png. --}}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ \App\Support\Pwa\PwaIdentity::iconAbsoluto('apple-touch-icon-se.png') }}">
     <link rel="manifest" href="{{ route('pwa.manifest', ['portal' => $pwaPortal]) }}">
 @endif

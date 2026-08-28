@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\Pwa\PwaIdentity;
 use Tests\TestCase;
 
 class PwaInstalableTest extends TestCase
@@ -59,13 +60,22 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('pwa-sw-url', $html);
     }
 
-    public function test_iconos_png_no_quedan_bajo_prefijo_pwa(): void
+    public function test_iconos_favicon_no_quedan_bajo_prefijo_pwa(): void
     {
-        $html = $this->get('/pwa-personal/loginUsuario')->assertOk()->getContent();
+        PwaIdentity::aplicarPrefijoUrls(PwaIdentity::PERSONAL);
 
+        try {
+            $url = PwaIdentity::iconAbsoluto('favicon-32.png');
+            $this->assertStringContainsString('/img/favicon-32.png', $url);
+            $this->assertStringNotContainsString('pwa-personal', $url);
+            $this->assertStringNotContainsString('pwa-familias', $url);
+        } finally {
+            PwaIdentity::quitarPrefijoUrls();
+        }
+
+        $html = $this->get('/pwa-personal/loginUsuario')->assertOk()->getContent();
         $this->assertStringContainsString('favicon-32.png', $html);
         $this->assertStringNotContainsString('pwa-personal/img/', $html);
-        $this->assertStringNotContainsString('pwa-familias/img/', $html);
     }
 
     public function test_login_personal_enlaza_manifiesto_personal(): void

@@ -233,7 +233,7 @@ final class PwaIdentity
 
     /**
      * Path de instalación del tenant (`/ia/colegio/` o `/`).
-     * No usa url('/') — con el prefijo PWA activo eso devolvería `/pwa-personal/` y los PNG 404.
+     * No usar url('/') — con prefijo PWA activo devuelve `/pwa-personal/` y los PNG del favicon dan 404 en producción.
      */
     public static function idPath(): string
     {
