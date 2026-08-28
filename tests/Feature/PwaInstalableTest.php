@@ -79,6 +79,7 @@ class PwaInstalableTest extends TestCase
             $this->assertStringContainsString('/img/favicon-32.png', $html);
             $this->assertStringNotContainsString('pwa-personal/img/', $html);
             $this->assertStringNotContainsString('pwa-familias/img/', $html);
+            $this->assertStringContainsString('data-navigate-track="reload"', $html);
         } finally {
             PwaIdentity::quitarPrefijoUrls();
         }
@@ -86,6 +87,18 @@ class PwaInstalableTest extends TestCase
         $html = $this->get('/pwa-personal/loginUsuario')->assertOk()->getContent();
         $this->assertStringContainsString('favicon-32.png', $html);
         $this->assertStringNotContainsString('pwa-personal/img/', $html);
+    }
+
+    public function test_favicon_urls_absolutas_con_app_url_en_subcarpeta(): void
+    {
+        config(['app.url' => 'https://sistesco.site/ia/sanjose']);
+        config(['app.asset_url' => 'https://sistesco.site/ia/sanjose']);
+
+        $html = view('layouts.partials.favicon')->render();
+
+        $this->assertStringContainsString('https://sistesco.site/ia/sanjose/img/favicon-32.png', $html);
+        $this->assertStringContainsString('https://sistesco.site/ia/sanjose/favicon.ico', $html);
+        $this->assertStringNotContainsString('pwa-personal', $html);
     }
 
     public function test_login_personal_enlaza_manifiesto_personal(): void
