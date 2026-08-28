@@ -39,46 +39,46 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('http', (string) ($p['icons'][0]['src'] ?? ''));
     }
 
-    public function test_favicon_de_pestana_es_png_circular_sin_ico_ni_192(): void
+    public function test_favicon_de_pestana_como_silavet_en_login(): void
     {
         $html = $this->get(route('login'))->assertOk()->getContent();
 
         $this->assertStringContainsString('favicon-32.png', $html);
-        $this->assertStringNotContainsString('sizes="any"', $html);
-        $this->assertDoesNotMatchRegularExpression('/rel="icon"[^>]*sizes="192x192"/', $html);
-        $this->assertDoesNotMatchRegularExpression('/rel="icon"[^>]*sizes="512x512"/', $html);
+        $this->assertStringContainsString('sizes="any"', $html);
+        $this->assertStringContainsString('icon-se-192.png', $html);
+        $this->assertStringContainsString('icon-se-512.png', $html);
         $this->assertStringContainsString('manifest-personal.webmanifest', $html);
     }
 
-    public function test_manifiesto_pwa_no_va_en_layouts_autenticados(): void
-    {
-        $html = view('layouts.partials.pwa', ['incluirManifiestoPwa' => false])->render();
-
-        $this->assertStringNotContainsString('manifest-personal.webmanifest', $html);
-        $this->assertStringNotContainsString('manifest-familias.webmanifest', $html);
-        $this->assertStringNotContainsString('rel="manifest"', $html);
-        $this->assertStringNotContainsString('mobile-web-app-capable', $html);
-        $this->assertStringContainsString('pwa-sw-url', $html);
-    }
-
-    public function test_favicon_incluye_ico_del_tenant_sin_sizes_any(): void
+    public function test_favicon_como_silavet_en_layout_autenticado(): void
     {
         $html = view('layouts.partials.favicon')->render();
 
+        $this->assertStringContainsString('sizes="any"', $html);
         $this->assertStringContainsString('favicon-32.png', $html);
-        $this->assertStringContainsString('favicon.ico', $html);
-        $this->assertStringNotContainsString('sizes="any"', $html);
+        $this->assertStringContainsString('icon-se-192.png', $html);
+        $this->assertStringContainsString('manifest-personal.webmanifest', $html);
+        $this->assertStringContainsString('mobile-web-app-capable', $html);
     }
 
-    public function test_iconos_favicon_no_quedan_bajo_prefijo_pwa(): void
+    public function test_pwa_partial_solo_metadatos_sw(): void
+    {
+        $html = view('layouts.partials.pwa')->render();
+
+        $this->assertStringNotContainsString('rel="manifest"', $html);
+        $this->assertStringContainsString('pwa-sw-url', $html);
+        $this->assertStringContainsString('vapid-public-key', $html);
+    }
+
+    public function test_favicon_usa_asset_sin_prefijo_pwa(): void
     {
         PwaIdentity::aplicarPrefijoUrls(PwaIdentity::PERSONAL);
 
         try {
-            $url = PwaIdentity::iconAbsoluto('favicon-32.png');
-            $this->assertStringContainsString('/img/favicon-32.png', $url);
-            $this->assertStringNotContainsString('pwa-personal', $url);
-            $this->assertStringNotContainsString('pwa-familias', $url);
+            $html = view('layouts.partials.favicon')->render();
+            $this->assertStringContainsString('/img/favicon-32.png', $html);
+            $this->assertStringNotContainsString('pwa-personal/img/', $html);
+            $this->assertStringNotContainsString('pwa-familias/img/', $html);
         } finally {
             PwaIdentity::quitarPrefijoUrls();
         }

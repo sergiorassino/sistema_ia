@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
-    @include('layouts.partials.favicon-alumno')
-    @include('layouts.partials.pwa', ['guestPortal' => 'alumno', 'incluirManifiestoPwa' => false])
+    @include('layouts.partials.favicon', ['guestPortal' => 'alumno'])
+    @include('layouts.partials.pwa', ['guestPortal' => 'alumno'])
     @include('layouts.partials.sidebar-bosque-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles

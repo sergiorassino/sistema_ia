@@ -10,7 +10,7 @@
     @endphp
     <title>{{ $pageTitle ?? 'Programas de examen' }} — {{ $programasColegioNombre }}</title>
     @include('layouts.partials.favicon')
-    @include('layouts.partials.pwa', ['incluirManifiestoPwa' => false])
+    @include('layouts.partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>

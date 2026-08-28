@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle ?? (isset($title) ? $title . ' — ' : '') }}{{ config('app.name') }}</title>
     @include('layouts.partials.favicon')
-    @include('layouts.partials.pwa', ['incluirManifiestoPwa' => false])
+    @include('layouts.partials.pwa')
     @include('layouts.partials.sidebar-bosque-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles

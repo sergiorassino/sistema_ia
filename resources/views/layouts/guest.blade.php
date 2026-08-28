@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }} — {{ ($guestPortal ?? 'staff') === 'alumno' ? 'Estudiantes' : 'Acceso' }}</title>
-    @include('layouts.partials.favicon-guest')
+    @include('layouts.partials.favicon', ['guestPortal' => $guestPortal ?? 'staff'])
     @include('layouts.partials.pwa', ['guestPortal' => $guestPortal ?? 'staff'])
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles

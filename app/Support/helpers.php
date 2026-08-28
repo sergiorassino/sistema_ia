@@ -490,6 +490,23 @@ if (! function_exists('matriculaWebDocumentoUrl')) {
     }
 }
 
+if (! function_exists('seAssetVersioned')) {
+    /**
+     * asset() con ?v=filemtime para iconos (mismo criterio que SILAVET, con bust de caché).
+     */
+    function seAssetVersioned(string $path): string
+    {
+        $path = ltrim($path, '/');
+        $url = asset($path);
+        $file = public_path($path);
+        if (is_file($file)) {
+            $url .= '?v='.(string) filemtime($file);
+        }
+
+        return $url;
+    }
+}
+
 if (! function_exists('seMonogramFaviconUrls')) {
     /**
      * Favicon de pestaña: círculo blanco con letras SE (gris oscuro), mismo criterio que SILAVET.
@@ -498,7 +515,7 @@ if (! function_exists('seMonogramFaviconUrls')) {
      */
     function seMonogramFaviconUrls(): array
     {
-        $url = \App\Support\Pwa\PwaIdentity::iconAbsoluto('favicon-32.png');
+        $url = seAssetVersioned('img/favicon-32.png');
 
         return [
             'light' => $url,

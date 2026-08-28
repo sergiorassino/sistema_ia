@@ -18,8 +18,8 @@ class PwaManifestController extends Controller
         $esFamilias = $portal === PwaIdentity::FAMILIAS;
         $startUrl = PwaIdentity::startUrlAbsoluto($portal);
         $scopeUrl = PwaIdentity::scopeAbsoluto($portal);
-        $icon192 = PwaIdentity::iconAbsoluto('icon-se-192.png');
-        $icon512 = PwaIdentity::iconAbsoluto('icon-se-512.png');
+        $icon192 = seAssetVersioned('img/icon-se-192.png');
+        $icon512 = seAssetVersioned('img/icon-se-512.png');
 
         return response()->json([
             'id' => $scopeUrl,

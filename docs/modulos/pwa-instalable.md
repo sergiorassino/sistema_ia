@@ -38,7 +38,7 @@ Ninguna tabla nueva.
 ## Flujo principal
 
 1. Cada login enlaza su manifiesto vía `route('pwa.manifest', ['portal' => …])`.
-2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`. El manifiesto usa `icon-se-192.png` / `icon-se-512.png` (no `icon-192.png`, que Chrome puede tener cacheado del icono verde). La **solapa del navegador** usa `favicon-32.png` + `public/favicon.ico`; el `<link rel="manifest">` solo en login/páginas públicas (`guest`), no en menús autenticados (Chrome pisa el favicon con los PNG 192/512 del manifiesto).
+2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`. El manifiesto usa `icon-se-192.png` / `icon-se-512.png` (no `icon-192.png`, que Chrome puede tener cacheado del icono verde). La **solapa del navegador** usa el mismo partial `layouts.partials.favicon` en **login y menú** (patrón SILAVET: `asset()` + `favicon.ico` + PNG 32/192/512 + manifiesto).
 3. SW `/sw.js` solo para push (alcance del tenant, no el de cada manifiesto).
 4. Al abrir el icono se carga `/pwa-…/entrar` y de ahí el home o el login de ese portal.
 
