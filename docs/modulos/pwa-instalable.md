@@ -38,7 +38,7 @@ Ninguna tabla nueva.
 ## Flujo principal
 
 1. Cada login enlaza su manifiesto vía `route('pwa.manifest', ['portal' => …])`.
-2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`. El manifiesto usa `icon-se-192.png` / `icon-se-512.png` (no `icon-192.png`, que Chrome puede tener cacheado del icono verde).
+2. Iconos estáticos en `public/img/` (círculo SE, mismo criterio visual que SILAVET). Regenerar: `php tools/generate-pwa-icons.php`. El manifiesto usa `icon-se-192.png` / `icon-se-512.png` (no `icon-192.png`, que Chrome puede tener cacheado del icono verde). La **solapa del navegador** usa `favicon-32.png` + `public/favicon.ico`; el `<link rel="manifest">` solo en login/páginas públicas (`guest`), no en menús autenticados (Chrome pisa el favicon con los PNG 192/512 del manifiesto).
 3. SW `/sw.js` solo para push (alcance del tenant, no el de cada manifiesto).
 4. Al abrir el icono se carga `/pwa-…/entrar` y de ahí el home o el login de ese portal.
 
@@ -68,8 +68,10 @@ Ninguna tabla nueva.
 3. No usar la carpeta raíz del tenant como `scope` ni `start_url` (impediría instalar la segunda app).
 4. No unificar las dos apps en un solo `id` ni un solo `scope`.
 5. No poner el login como `start_url` (limpia la sesión).
+6. No poner el login como `start_url` (limpia la sesión).
+7. No enlazar `<link rel="manifest">` en layouts autenticados (`app`, `docente`, `alumno`, etc.): solo en `guest` / login. El menú debe usar solo `favicon-32.png` y `public/favicon.ico`.
 
 ## Checklist al modificar
 
 - [ ] Manifiesto con `url()` / `asset()`, `scope` distinto por portal (`/pwa-personal/` vs `/pwa-familias/`), `start_url` = `/entrar` prefijado, iconos `icon-se-192`/`icon-se-512` con `?v=`.
-- [ ] Tras tocar Vite: `npm run build`. Subir también `public/img/icon-se-*.png`, `apple-touch-icon-se.png` y `public/sw.js`.
+- [ ] Tras tocar Vite: `npm run build`. Subir también `public/img/favicon-32.png`, `public/img/icon-se-*.png`, `apple-touch-icon-se.png`, `public/favicon.ico` y `public/sw.js`.

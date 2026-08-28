@@ -48,7 +48,7 @@ Regla de uso:
 - Preferir `schoolLogoUrl()` cuando exista logo institucional dinamico.
 - Usar `asset('img/3.png')` como fallback principal.
 - El logo debe tener presencia real en login, dashboard y pantallas institucionales.
-- **Pestañas del navegador:** favicon circular (blanco, borde fino, letras **SE** en `#333333`), vía `layouts/partials/favicon.blade.php` y `/favicon.ico`. Regenerar: `php tools/generate-pwa-icons.php`.
+- **Pestañas del navegador:** favicon circular (blanco, borde fino, letras **SE** en `#333333`), vía `layouts/partials/favicon.blade.php` → `img/favicon-32.png` (con `?v=`). No declarar `favicon.ico` con `sizes="any"` ni PNG 192/512 como `rel="icon"`: Chrome los prioriza; el ICO viejo (SE verde) o un 404 dejan el icono incorrecto o el globo genérico. Regenerar: `php tools/generate-pwa-icons.php`.
 
 ---
 
