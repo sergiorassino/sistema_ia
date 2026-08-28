@@ -48,6 +48,7 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('icon-se-192.png', $html);
         $this->assertStringContainsString('icon-se-512.png', $html);
         $this->assertStringContainsString('manifest-personal.webmanifest', $html);
+        $this->assertStringContainsString('<!-- se-favicon-partial: silavet-asset-v1 -->', $html);
     }
 
     public function test_favicon_como_silavet_en_layout_autenticado(): void
@@ -58,6 +59,7 @@ class PwaInstalableTest extends TestCase
         $this->assertStringContainsString('favicon-32.png', $html);
         $this->assertStringContainsString('icon-se-192.png', $html);
         $this->assertStringContainsString('manifest-personal.webmanifest', $html);
+        $this->assertStringContainsString('<!-- se-favicon-partial: silavet-asset-v1 -->', $html);
         $this->assertStringContainsString('mobile-web-app-capable', $html);
     }
 

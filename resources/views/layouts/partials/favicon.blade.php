@@ -1,5 +1,5 @@
 {{-- Favicon de solapa + iconos PWA: mismo partial en login y menú (patrón SILAVET). --}}
-{{-- se-favicon-partial: silavet-asset-v1 — si no aparece en Ver código fuente del menú, falta view:clear o subir vistas. --}}
+<!-- se-favicon-partial: silavet-asset-v1 -->
 @php
     $pwaPortal = \App\Support\Pwa\PwaIdentity::portalDesdeContexto($guestPortal ?? null);
     $seAppTitle = \App\Support\Pwa\PwaIdentity::nombreCortoApp($pwaPortal);
