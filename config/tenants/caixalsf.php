@@ -6,6 +6,7 @@
  | Requiere TENANT_SLUG=caixalsf en el despliegue de ese colegio.
  |
  | Autogestión familia (inicial / primario): mismas opciones de menú que San José.
+ | Menú de Docentes (nivel inicial): carga de observaciones, por espacio curricular e informe de progreso.
  */
 
 return [
@@ -19,6 +20,16 @@ return [
         'carga_estudiante' => ['implementacion' => 'montecristo'],
         'carga_materia' => ['implementacion' => 'montecristo'],
         'planilla' => ['implementacion' => 'montecristo'],
+    ],
+
+    'portal_docente' => [
+        'menu' => [
+            'inicial' => [
+                'observaciones' => true,
+                'observaciones_materia' => true,
+                'informe_progreso' => true,
+            ],
+        ],
     ],
 
     'autogestion' => [

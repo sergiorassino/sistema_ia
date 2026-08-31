@@ -201,3 +201,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-08-25:** Menú de Docentes: dos listados de estudiantes (mismo alcance de cursos del nivel de sesión que secretaría pedagógica): **Listados de Estudiantes por Curso** (`listado_estudiantes` → `portalDocente.listados.porCurso` + PDF/Excel) y **Listados de Estudiantes con Formato** (`listado_estudiantes_formato` → `portalDocente.listados.estudiantesFormato`).
 - **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.
 - **2026-08-27:** Administración → Gestión de mora: **Estado de Deuda por Estudiante** (permiso IA orden 98), además de Estado de Deuda Familiar (63).
+- **2026-08-31:** Menú de Docentes (Caixal SF, nivel inicial): Carga de observaciones, Carga por Espacio Curricular e Informe de progreso escolar (`portal_docente.menu.inicial.*` en `config/tenants/caixalsf.php`).

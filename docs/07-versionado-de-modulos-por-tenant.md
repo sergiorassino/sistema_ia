@@ -238,6 +238,8 @@ Helpers: `tenantCalificacionesPrimarioCargaEstudianteImplementacion()`, `tenantC
 
 **Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`.
 
+Ítems de **inicial** (`observaciones`, `observaciones_materia`, `informe_progreso`, `indicadores`) se muestran solo con el flag de menú; no exigen `calificaciones_inicial.{modulo}.implementacion`. **Montecristo** y **Caixal SF** activan observaciones + espacio curricular + informe de progreso. El PDF del informe usa `calificaciones_inicial.informe_progreso.implementacion` (`estandar` por default; `montecristo` omite aprendizajes y cierre).
+
 **Al agregar una variante nueva** (otro colegio con UI distinta):
 
 1. Implementar Livewire/controladores bajo `app/Livewire/CalificacionesPrimario/`.
