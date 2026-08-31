@@ -2,6 +2,7 @@
 
 namespace App\Livewire\CalificacionesSecundario;
 
+use App\Support\CalificacionesSecundario\CierreAnualJournal;
 use App\Support\CalificacionesSecundario\CierreAnualSecundario;
 use App\Support\Examenes\MateriasAdeudadasCargaManual;
 use Livewire\Component;
@@ -65,6 +66,12 @@ class CierreAnualHistorial extends Component
             (string) ($this->alumno['apellido'] ?? ''),
             (string) ($this->alumno['nombre'] ?? ''),
         );
+
+        $chips = CierreAnualJournal::chipsPorCalificacion($this->idLegajos, (int) $ctx->idNivel);
+        foreach ($filas as &$fila) {
+            $fila['cierres'] = $chips[(int) ($fila['id'] ?? 0)] ?? [];
+        }
+        unset($fila);
 
         return view('livewire.calificaciones-secundario.cierre-anual-historial', [
             'filas' => $filas,

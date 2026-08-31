@@ -11,13 +11,25 @@
                     · Regulares y salidos (1–4)
                 </p>
             </div>
-            <a href="{{ route('dashboard') }}"
-               class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Panel
-            </a>
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+                @if ($puedeVerLotes)
+                    <button type="button"
+                            wire:click="irALotes"
+                            class="inline-flex items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                        Lotes
+                        @if (($cantidadLotes ?? 0) > 0)
+                            <span class="tabular-nums text-white/80">({{ $cantidadLotes }})</span>
+                        @endif
+                    </button>
+                @endif
+                <a href="{{ route('dashboard') }}"
+                   class="inline-flex items-center justify-center gap-1 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Panel
+                </a>
+            </div>
         </div>
     </section>
 
@@ -32,6 +44,11 @@
                 {{ $message }}
             </div>
         @enderror
+        @if (! ($journalListo ?? true))
+            <div class="border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950" role="status">
+                Faltan las tablas de registro del cierre. Aplique el SQL de esquema (<span class="font-semibold">cierre_anual_lotes</span>) antes de ejecutar Dic o Feb.
+            </div>
+        @endif
         <div class="border-b border-accent-200 bg-accent-50 px-3 py-2.5 sm:px-4">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Cierre masivo del ciclo lectivo</p>
             @php($anoCierre = schoolCtx()->terlecAno() ?? '—')
@@ -68,7 +85,8 @@
                 @elseif (! $confirmarFeb)
                     <button type="button"
                             wire:click="solicitarCierreDic"
-                            class="btn-secondary border-primary-200 text-primary-800 hover:border-primary-300">
+                            @disabled(! ($journalListo ?? true))
+                            class="btn-secondary border-primary-200 text-primary-800 hover:border-primary-300 disabled:cursor-not-allowed disabled:opacity-50">
                         Pasar materias APROBADAS al Matriz (Dic)
                     </button>
                 @endif
@@ -95,7 +113,8 @@
                 @elseif (! $confirmarDic)
                     <button type="button"
                             wire:click="solicitarCierreFeb"
-                            class="btn-secondary border-primary-200 text-primary-800 hover:border-primary-300">
+                            @disabled(! ($journalListo ?? true))
+                            class="btn-secondary border-primary-200 text-primary-800 hover:border-primary-300 disabled:cursor-not-allowed disabled:opacity-50">
                         Pasar APROBADAS al Matriz y REPROBADAS como Previas (Feb)
                     </button>
                 @endif
@@ -119,53 +138,11 @@
             </div>
 
             @if (! empty($informeCierre))
-                <div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4" role="status" wire:key="informe-cierre-{{ $informeCierre['operacion'] }}">
-                    <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div class="min-w-0 space-y-1">
-                            <p class="text-sm font-semibold text-emerald-950">{{ $informeCierre['titulo'] }}</p>
-                            <p class="text-xs text-emerald-900/80">
-                                {{ $informeCierre['nivel'] }} · Ciclo lectivo {{ $informeCierre['ano_lectivo'] }}
-                                · Alcance: todas las calificaciones con matrícula del ciclo activo
-                            </p>
-                        </div>
-                        <button type="button"
-                                wire:click="cerrarInformeCierre"
-                                class="btn-secondary btn-sm shrink-0 border-emerald-200 text-emerald-900 hover:bg-white">
-                            Cerrar informe
-                        </button>
-                    </div>
-                    <dl class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5">
-                            <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Registros procesados</dt>
-                            <dd class="mt-0.5 text-xl font-bold tabular-nums text-neutral-900">{{ $informeCierre['procesados'] }}</dd>
-                        </div>
-                        <div class="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5">
-                            <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Registros actualizados</dt>
-                            <dd class="mt-0.5 text-xl font-bold tabular-nums text-emerald-800">{{ $informeCierre['actualizados'] }}</dd>
-                        </div>
-                        <div class="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5">
-                            <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Pasados al matriz</dt>
-                            <dd class="mt-0.5 text-xl font-bold tabular-nums text-neutral-900">{{ $informeCierre['aprobados'] }}</dd>
-                        </div>
-                        @if (($informeCierre['operacion'] ?? '') === 'feb')
-                            <div class="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5">
-                                <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Nuevas previas en esta ejecución</dt>
-                                <dd class="mt-0.5 text-xl font-bold tabular-nums text-amber-800">{{ $informeCierre['previas'] }}</dd>
-                            </div>
-                        @endif
-                        <div class="rounded-xl border border-emerald-200/80 bg-white px-3 py-2.5 {{ ($informeCierre['operacion'] ?? '') === 'feb' ? 'sm:col-span-2 lg:col-span-1' : '' }}">
-                            <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Sin cambio</dt>
-                            <dd class="mt-0.5 text-xl font-bold tabular-nums text-neutral-600">{{ $informeCierre['omitidos'] }}</dd>
-                            <p class="mt-1 text-[10px] leading-snug text-neutral-500">
-                                @if (($informeCierre['operacion'] ?? '') === 'feb')
-                                    Sin cambio: ya al matriz, ya previa sin nuevas notas aprobatorias, o sin filas modificadas
-                                @else
-                                    No aprobados (Dic) o ya cerrados al matriz
-                                @endif
-                            </p>
-                        </div>
-                    </dl>
-                </div>
+                @include('livewire.calificaciones-secundario.partials.cierre-anual-informe', [
+                    'informe' => $informeCierre,
+                    'mostrarVerFilas' => $puedeVerLotes,
+                    'mostrarCerrar' => true,
+                ])
             @endif
         </div>
     </div>
@@ -236,4 +213,16 @@
         </div>
     </div>
     </div>
+    @script
+    <script>
+        $wire.on('se-swal-exito', (event) => {
+            const mensaje = event?.mensaje ?? event?.detail?.mensaje ?? 'Cierre registrado.';
+            if (typeof window.seSwalExito === 'function') window.seSwalExito(mensaje);
+        });
+        $wire.on('se-swal-error', (event) => {
+            const mensaje = event?.mensaje ?? event?.detail?.mensaje ?? 'No se pudo completar el cierre.';
+            if (typeof window.seSwalError === 'function') window.seSwalError(mensaje);
+        });
+    </script>
+    @endscript
 </div>

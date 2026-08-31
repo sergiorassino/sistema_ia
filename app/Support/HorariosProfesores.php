@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Schema;
  * Horarios de profesores (carga en horarios26, reloj, impresión por curso/docente).
  *
  * Modelo vigente: `horarios26.idHora` = módulo 1..10; `horarios26.idTurnoClase` = jornada (como `reloj` y `cursos`).
- * Compatibilidad lectura: filas sin `idTurnoClase` o con idHora 11–30 (bloques antiguos).
+ * Compatibilidad lectura: filas de `horarios26` sin `idTurnoClase` o con idHora 11–30 (bloques antiguos).
+ * La tabla `horarios` es del sistema anterior y no interviene en este módulo.
  */
 final class HorariosProfesores
 {
@@ -973,30 +974,6 @@ final class HorariosProfesores
             );
         }
 
-        if (Schema::hasTable('horarios') && $idsMat !== []) {
-            $qH = DB::table('horarios as h')
-                ->leftJoin('materias as m', 'm.id', '=', 'h.idMaterias')
-                ->whereIn('h.idMaterias', $idsMat);
-            self::aplicarFiltroDiasLegacyEnQuery($qH, 'h.idDia', $dias);
-            self::aplicarFiltroIdHoraRangoTurnoEnQuery($qH, 'h.idHora', $idTurnoClase);
-
-            foreach ($qH->orderBy('h.idHora')->orderBy('m.materia')->get([
-                'h.idDia',
-                'h.idHora',
-                'h.idMaterias',
-                'm.materia',
-            ]) as $r) {
-                self::agregarLineaGrilla(
-                    $celdas,
-                    (string) ($r->idDia ?? ''),
-                    (int) ($r->idHora ?? 0),
-                    self::materiaImpresionCursoPdf(self::etiquetaMateriaHorario((int) ($r->idMaterias ?? 0), (string) ($r->materia ?? ''), $idCurso)),
-                    self::nombreProfesorImpresionCursoPdf(self::nombresProfesoresMateria((int) ($r->idMaterias ?? 0))),
-                    true,
-                );
-            }
-        }
-
         return [
             'dias' => $dias,
             'horas' => $horas,
@@ -1548,7 +1525,7 @@ SQL;
 
         $mats = <<<SQL
 
-── 2) Materias solo de este curso y ciclo (ids usados en filtros horarios26 / horarios) ──
+── 2) Materias solo de este curso y ciclo (ids usados en filtros horarios26) ──
 
 SELECT id
   FROM materias
@@ -1585,27 +1562,9 @@ SELECT h.idDia,
 
 SQL;
 
-        $legacy = '';
-        if (Schema::hasTable('horarios') && $idsMat !== []) {
-            $legacy = <<<SQL
-
-── 4) Tabla horarios (legado; si existe) ── mismas materias IN y mismo filtro de días ──
-
-SELECT h.idDia, h.idHora, h.idMaterias, m.materia
-  FROM horarios AS h
-  LEFT JOIN materias AS m ON m.id = h.idMaterias
- WHERE h.idMaterias IN ({$listaIn})
-   AND ( …filtro días activos… )
- ORDER BY h.idHora ASC, m.materia ASC
-
-(En la aplicación estas filas solo completan una celda si horarios26 no aportó ninguna línea para ese día y hora; horarios26 manda cuando hay datos.)
-
-SQL;
-        }
-
         $reloj = <<<SQL
 
-── 5) Reloj de horas (por hoja PDF; un pdf por turno en: {$turnosTxt}) ──
+── 4) Reloj de horas (por hoja PDF; un pdf por turno en: {$turnosTxt}) ──
 `reloj.orden` siempre 1–10 por nivel; el turno se filtra con `idTurnoClase`.
 Ejemplo para el primer turno imprimible de este curso: idTurnoClase = {$idTurnoEjemplo}.
 
@@ -1627,7 +1586,7 @@ IDs turno en esta vista: {$turnosTxt}.
 
 TXT;
 
-        return $valida.$mats.$filtroHor26.$legacy.$reloj.$notaTurno;
+        return $valida.$mats.$filtroHor26.$reloj.$notaTurno;
     }
 
     /**
@@ -2411,7 +2370,6 @@ TXT;
 
     /**
      * @param  array<string, list<string>>  $celdas
-     * @param  bool  $soloRellenarHueco  Si true, no escribe si la celda día/hora ya tiene al menos una línea (prioridad para la fuente previa).
      */
     private static function agregarLineaGrilla(
         array &$celdas,
@@ -2419,7 +2377,6 @@ TXT;
         int $idHoraLegacy,
         string $textoPrincipal,
         string $sufijoProfesor,
-        bool $soloRellenarHueco = false,
     ): void {
         $dia = self::diaFromLegacy($idDiaLegacy);
         $hora = self::normalizarHoraLegacy($idHoraLegacy);
@@ -2437,10 +2394,6 @@ TXT;
         }
 
         $key = self::celdaKey($dia, $hora);
-        if ($soloRellenarHueco && isset($celdas[$key]) && $celdas[$key] !== []) {
-            return;
-        }
-
         $celdas[$key] ??= [];
         if (! in_array($linea, $celdas[$key], true)) {
             $celdas[$key][] = $linea;

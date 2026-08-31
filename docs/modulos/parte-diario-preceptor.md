@@ -26,7 +26,7 @@ Helper: `tenantParteDiarioImplementacion()`.
 
 - `cursos` (selección; filtro `schoolCtx` nivel/ciclo).
 - Modelo `sanfranciscoasis`: `matricula` + `legajos` (solo `idCondiciones = 1`).
-- Horario del día: `horarios26` / `materias` / `reloj` vía `HorariosProfesores::filasParteDiarioCursoDia()`.
+- Horario del día: **`horarios26`** / `materias` / `reloj` vía `HorariosProfesores::filasParteDiarioCursoDia()` (no la tabla `horarios` de ScriptCase). Detalle: [horarios.md](horarios.md).
 
 ## Flujo principal
 

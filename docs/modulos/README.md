@@ -25,6 +25,8 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Comunicación institucional | [comunicacion-institucional.md](comunicacion-institucional.md) |
 | PWA instalable | [pwa-instalable.md](pwa-instalable.md) |
 | Recalcular promedios (secundario) | [recalculo-promedios-secundario.md](recalculo-promedios-secundario.md) |
+| Cierre anual (secundario) | [cierre-anual-secundario.md](cierre-anual-secundario.md) |
+| Horarios (configuración, carga, impresión) | [horarios.md](horarios.md) |
 | Profesores presentes | [profesores-presentes.md](profesores-presentes.md) |
 | Preceptores por curso | [preceptores-por-curso.md](preceptores-por-curso.md) |
 | Proyectos extracurriculares | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |

@@ -49,6 +49,7 @@
                                 <col style="width:3.5rem">
                                 <col style="width:8rem">
                                 <col style="width:5.5rem">
+                                <col style="width:7rem">
                             </colgroup>
                             <thead>
                                 <tr>
@@ -64,6 +65,7 @@
                                     <th scope="col" class="text-left">Cond.</th>
                                     <th scope="col" class="text-left">Esc. aprob.</th>
                                     <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Cierre</th>
                                 </tr>
                             </thead>
                         </table>
@@ -87,6 +89,7 @@
                                 <col style="width:3.5rem">
                                 <col style="width:8rem">
                                 <col style="width:5.5rem">
+                                <col style="width:7rem">
                             </colgroup>
                             <tbody class="bg-white">
                                 @forelse ($filas as $f)
@@ -113,10 +116,37 @@
                                                 'bg-accent-100 text-neutral-700' => $apro === 0,
                                             ])>{{ $f['apro_etiqueta'] }}</span>
                                         </td>
+                                        <td class="text-center">
+                                            @if (($f['cierres'] ?? []) === [])
+                                                <span class="text-neutral-400">—</span>
+                                            @else
+                                                <div class="flex flex-col items-center gap-0.5">
+                                                    @foreach ($f['cierres'] as $chip)
+                                                        @php
+                                                            $txt = ($chip['operacion'] === 'feb' ? 'Feb' : 'Dic');
+                                                            if ($chip['tipo'] === 'previa') {
+                                                                $txt .= ' · previa';
+                                                            }
+                                                            if ($chip['fecha'] !== '') {
+                                                                $txt .= ' · '.$chip['fecha'];
+                                                            }
+                                                            if ($chip['revertida'] || $chip['estado_lote'] === 'revertido') {
+                                                                $txt .= ' · rev.';
+                                                            }
+                                                        @endphp
+                                                        <span @class([
+                                                            'inline-flex max-w-full rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide',
+                                                            'bg-neutral-200 text-neutral-600' => $chip['revertida'] || $chip['estado_lote'] === 'revertido',
+                                                            'bg-primary-100 text-primary-900' => ! $chip['revertida'] && $chip['estado_lote'] !== 'revertido',
+                                                        ]) title="Lote {{ $chip['lote_id'] }}">{{ $txt }}</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="12" class="!px-5 !py-10 text-center text-sm text-neutral-500">
+                                        <td colspan="13" class="!px-5 !py-10 text-center text-sm text-neutral-500">
                                             No hay calificaciones registradas para este alumno en el nivel.
                                         </td>
                                     </tr>

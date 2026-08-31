@@ -170,7 +170,8 @@
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => ($route ?? '') === 'calificacionesSecundario.cierreAnual'
-                   || ($route ?? '') === 'calificacionesSecundario.cierreAnual.historial',
+                   || ($route ?? '') === 'calificacionesSecundario.cierreAnual.historial'
+                   || ($route ?? '') === 'calificacionesSecundario.cierreAnual.lotes',
            ])
            title="{{ seSidebarTooltip('Cierre anual (secundario)', 15) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

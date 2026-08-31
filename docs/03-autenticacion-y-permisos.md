@@ -205,6 +205,7 @@ permisos_ia = "111111111111111..."
 - Recalcular promedios (secundario): orden **94** (`PermisosIaCatalog::CALIF_RECALCULO_PROMEDIOS`).
 - Preceptores por curso: orden **95** (`PermisosIaCatalog::PRECEPTORES_POR_CURSO`).
 - Permisos por Tarea: orden **99** (`PermisosIaCatalog::PERMISOS_POR_TAREA`). Consulta de usuarios habilitados por módulo o función (inverso de Permisos por Usuario, orden 14).
+- Órdenes **25, 26, 33, 34, 35, 36 y 100**: en asignación y consulta aparecen con aviso destacado `NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR` (`PermisosIaCatalog::ordenesReservadosAdministrador()`).
 - Legajos docentes (ABM + listado PDF/Excel): orden **11** (`PermisosIaCatalog::LEGAJOS_DOCENTES`, `puedeModificarLegajosDocentes()`). Con permiso: alta/edición/baja y datos completos. Sin permiso: solo consulta e impresión de apellido, nombre y DNI (`puedeConsultarLegajosDocentes()`).
 - Rutas: middleware `permiso:N` o `permiso-config:N`.
 - Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.

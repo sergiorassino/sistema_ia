@@ -71,12 +71,18 @@
 
                     <ul class="divide-y divide-accent-200">
                         @foreach ($filasTema as $fila)
-                            <li class="px-4 py-3 hover:bg-accent-50/40" wire:key="tarea-{{ $fila['orden'] }}">
+                            <li @class([
+                                    'px-4 py-3 hover:bg-accent-50/40',
+                                    'bg-amber-50/80' => \App\Support\PermisosIaCatalog::esReservadoAdministrador((int) $fila['orden']),
+                                ])
+                                wire:key="tarea-{{ $fila['orden'] }}">
                                 <div class="grid grid-cols-1 gap-2 md:grid-cols-12 md:items-start md:gap-4">
                                     <div class="min-w-0 md:col-span-5">
-                                        <p class="text-sm font-semibold text-neutral-900">
-                                            {{ $fila['descripcion'] }}
-                                        </p>
+                                        @include('livewire.administracion.permisos.partials.descripcion-permiso', [
+                                            'orden' => (int) $fila['orden'],
+                                            'descripcion' => (string) $fila['descripcion'],
+                                            'titulo' => true,
+                                        ])
                                         <p class="mt-0.5 text-xs text-neutral-500">Orden {{ $fila['orden'] }}</p>
                                     </div>
                                     <div class="min-w-0 md:col-span-7">

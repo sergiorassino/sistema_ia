@@ -70,3 +70,4 @@ Migración (`php artisan se:migrate-legacy --force`, no ejecutar desde el asiste
 - [ ] Filtro de usuarios por `schoolCtx()->idNivel`.
 - [ ] Catálogo y `maxOrden` alineados si se agrega un orden nuevo (el editor de asignación rellena la cadena).
 - [ ] Vista de consulta: sin `alert` nativo ni formularios de guardado.
+- [ ] Órdenes reservados (25, 26, 33–36, 100) muestran el aviso destacado «NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR» (catálogo + asignación + por tarea / por usuario).

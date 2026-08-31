@@ -211,6 +211,7 @@ use App\Livewire\CalificacionesSecundario\ActaVolanteColoquiosSecundario;
 use App\Livewire\CalificacionesSecundario\PlanillaResumenCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\ConsultaCalificacionesSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualIndex;
+use App\Livewire\CalificacionesSecundario\CierreAnualLotes;
 use App\Livewire\CalificacionesSecundario\RecalculoPromediosSecundario;
 use App\Livewire\CalificacionesSecundario\CierreAnualHistorial;
 use App\Http\Controllers\Certificados\CertificadoAlumnoRegularPdfController;
@@ -1341,10 +1342,16 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::post('/calificaciones-secundario/consulta/pdf', ConsultaCalificacionesSecundarioPdfController::class)
         ->name('calificacionesSecundario.consulta.pdf');
     Route::get('/calificaciones-secundario/cierre-anual', CierreAnualIndex::class)
-        ->middleware('permiso:15')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CIERRE_ANUAL)
         ->name('calificacionesSecundario.cierreAnual');
+    Route::get('/calificaciones-secundario/cierre-anual/lotes', CierreAnualLotes::class)
+        ->middleware([
+            'permiso:'.\App\Support\PermisosIaCatalog::CALIF_CIERRE_ANUAL,
+            'permiso:'.\App\Support\PermisosIaCatalog::CALIF_CIERRE_ANUAL_LOTES,
+        ])
+        ->name('calificacionesSecundario.cierreAnual.lotes');
     Route::get('/calificaciones-secundario/cierre-anual/historial', CierreAnualHistorial::class)
-        ->middleware('permiso:15')
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CIERRE_ANUAL)
         ->name('calificacionesSecundario.cierreAnual.historial');
     Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::SOLICITUDES_EVALUACION_GESTION)
         ->prefix('calificaciones-secundario/gestion-solicitudes-evaluacion')

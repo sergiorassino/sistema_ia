@@ -3065,7 +3065,11 @@
     }
     .se-cierre-anual-tabla-wide {
         @apply w-full;
-        min-width: 66rem;
+        min-width: 73rem;
+    }
+    .se-cierre-anual-lote-tabla-wide {
+        @apply w-full;
+        min-width: 58rem;
     }
     .se-cierre-anual-tabla {
         @apply w-full min-w-full border-separate border-spacing-0 text-sm;

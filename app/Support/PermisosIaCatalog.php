@@ -52,6 +52,12 @@ final class PermisosIaCatalog
 
     public const CALIF_CIERRE_ANUAL = 15;
 
+    /** Cierre anual: consultar lotes persistidos y revertir un cierre (Dic / Feb). */
+    public const CALIF_CIERRE_ANUAL_LOTES = 100;
+
+    /** Aviso en descripción de permisos reservados (asignación). */
+    public const AVISO_NO_OTORGAR_ADMIN = 'NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR';
+
     /** Planilla resumen de calificaciones por curso (secundario, PDF). */
     public const CALIF_PLANILLA_RESUMEN = 76;
 
@@ -258,6 +264,7 @@ final class PermisosIaCatalog
             ['id' => 15, 'orden' => self::PERMISOS_POR_USUARIO, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],
             ['id' => 99, 'orden' => self::PERMISOS_POR_TAREA, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar usuarios con permiso por módulo o función (módulo Permisos por Tarea).'],
             ['id' => 17, 'orden' => self::CALIF_CIERRE_ANUAL, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Cierre anual: historial de calificaciones y pasaje al matriz (Dic / Feb).'],
+            ['id' => 100, 'orden' => self::CALIF_CIERRE_ANUAL_LOTES, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => self::descripcionConAvisoAdmin('Cierre anual: consultar lotes persistidos (informe de cada ejecución) y revertir un cierre.')],
             ['id' => 76, 'orden' => self::CALIF_PLANILLA_RESUMEN, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Planilla resumen de calificaciones: selección de cursos e impresión PDF (secundario).'],
             ['id' => 77, 'orden' => self::CALIF_ACTAS_VOLANTES_COLOQUIO, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Actas volantes de coloquio: selección de curso, materias e impresión PDF (Dic / Feb, secundario).'],
             ['id' => 18, 'orden' => self::MATRIZ_ANALITICO, 'tema' => 'MATRÍZ Y ANALÍTICOS', 'descripcion' => 'Libro matriz, pase y certificado analítico: consulta y edición de calificaciones en matriz.'],
@@ -272,18 +279,18 @@ final class PermisosIaCatalog
             ['id' => 25, 'orden' => self::INASISTENCIAS_DOCENTES, 'tema' => 'INASISTENCIAS DOCENTES', 'descripcion' => 'Gestión de inasistencias docentes: cargos, registros, informes por bimestre y PDF.'],
             ['id' => 26, 'orden' => self::INASISTENCIAS_SINCRO_CIDI, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Descargar e importar inasistencias de estudiantes desde CSV CIDI/GE (InasistenciasDetalle).'],
             ['id' => 81, 'orden' => self::PARTE_DIARIO_PRECEPTOR, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Parte diario del preceptor: selección de curso(s), fecha e impresión PDF por día.'],
-            ['id' => 27, 'orden' => PermisosConfiguracion::TERLEC, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Términos lectivos.'],
-            ['id' => 28, 'orden' => PermisosConfiguracion::NIVELES, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Niveles educativos.'],
+            ['id' => 27, 'orden' => PermisosConfiguracion::TERLEC, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Términos lectivos.')],
+            ['id' => 28, 'orden' => PermisosConfiguracion::NIVELES, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Niveles educativos.')],
             ['id' => 29, 'orden' => PermisosConfiguracion::CAMPOS_LEGAJO_ESTUDIANTE, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del legajo del estudiante.'],
             ['id' => 30, 'orden' => PermisosConfiguracion::SOLAPAS_LEGAJO_ESTUDIANTE, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Solapas del legajo del estudiante.'],
             ['id' => 31, 'orden' => PermisosConfiguracion::CAMPOS_LEGAJO_DOCENTE, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del legajo del docente.'],
             ['id' => 32, 'orden' => PermisosConfiguracion::SOLAPAS_LEGAJO_DOCENTE, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Solapas del legajo del docente.'],
             ['id' => 33, 'orden' => PermisosConfiguracion::PARAMETROS_SISTEMA, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Parámetros del sistema.'],
             ['id' => 34, 'orden' => PermisosConfiguracion::NOTIFICACIONES_PUSH, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Notificaciones push (suscripción en este dispositivo).'],
-            ['id' => 35, 'orden' => PermisosConfiguracion::PLANES_ESTUDIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Gestión de planes de estudio.'],
-            ['id' => 36, 'orden' => PermisosConfiguracion::CURSOS_MATERIAS_PLAN, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Gestión de cursos y materias del plan.'],
-            ['id' => 37, 'orden' => PermisosConfiguracion::CURSOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Gestión de cursos / grados / salas del año.'],
-            ['id' => 38, 'orden' => PermisosConfiguracion::MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Gestión de asignaturas del año.'],
+            ['id' => 35, 'orden' => PermisosConfiguracion::PLANES_ESTUDIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de planes de estudio.')],
+            ['id' => 36, 'orden' => PermisosConfiguracion::CURSOS_MATERIAS_PLAN, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de cursos y materias del plan.')],
+            ['id' => 37, 'orden' => PermisosConfiguracion::CURSOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de cursos / grados / salas del año.')],
+            ['id' => 38, 'orden' => PermisosConfiguracion::MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de asignaturas del año.')],
             ['id' => 39, 'orden' => self::SEGUIMIENTO_DISCIPLINARIO, 'tema' => 'SEGUIMIENTO DISCIPLINARIO', 'descripcion' => 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'],
             ['id' => 40, 'orden' => self::INASISTENCIAS_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'],
             ['id' => 41, 'orden' => self::ASPIRANTES_GESTION, 'tema' => 'ASPIRANTES', 'descripcion' => 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'],
@@ -347,5 +354,42 @@ final class PermisosIaCatalog
         }
 
         return $max;
+    }
+
+    /**
+     * Órdenes que no deben asignarse en operación diaria (solo administrador).
+     *
+     * @return list<int>
+     */
+    public static function ordenesReservadosAdministrador(): array
+    {
+        return [
+            PermisosConfiguracion::TERLEC,
+            PermisosConfiguracion::NIVELES,
+            PermisosConfiguracion::PLANES_ESTUDIO,
+            PermisosConfiguracion::CURSOS_MATERIAS_PLAN,
+            PermisosConfiguracion::CURSOS_ANIO,
+            PermisosConfiguracion::MATERIAS_ANIO,
+            self::CALIF_CIERRE_ANUAL_LOTES,
+        ];
+    }
+
+    public static function esReservadoAdministrador(int $orden): bool
+    {
+        return in_array($orden, self::ordenesReservadosAdministrador(), true);
+    }
+
+    public static function descripcionConAvisoAdmin(string $descripcionBase): string
+    {
+        $base = trim($descripcionBase);
+        $aviso = self::AVISO_NO_OTORGAR_ADMIN;
+        if ($base === '') {
+            return $aviso;
+        }
+        if (str_contains($base, $aviso)) {
+            return $base;
+        }
+
+        return rtrim($base, '.').'. '.$aviso;
     }
 }

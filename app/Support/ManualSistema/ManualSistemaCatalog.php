@@ -718,6 +718,7 @@ final class ManualSistemaCatalog
                         ],
                         [
                             'La impresión no usa el permiso orden 13; ese permiso solo habilita Configuración y Carga de horarios.',
+                            'La grilla impresa lee solo horarios26 (misma fuente que Carga). La tabla horarios del sistema anterior no interviene.',
                         ],
                     ),
                     self::mod(

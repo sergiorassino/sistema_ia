@@ -4,6 +4,7 @@ namespace App\Livewire\Administracion\Permisos;
 
 use App\Models\PermisoIa;
 use App\Support\PermisosConfiguracion;
+use App\Support\PermisosIaCatalog;
 use App\Models\Profesor;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -35,11 +36,21 @@ class PermisosPorUsuarioIndex extends Component
             ->orderBy('orden')
             ->get(['orden', 'descripcion'])
             ->each(function (PermisoIa $perm) use (&$cache) {
+                $orden = (int) $perm->orden;
                 $desc = trim((string) ($perm->descripcion ?? ''));
-                if (strlen($desc) > 52) {
-                    $desc = substr($desc, 0, 49) . '…';
+                $aviso = PermisosIaCatalog::AVISO_NO_OTORGAR_ADMIN;
+                $reservado = PermisosIaCatalog::esReservadoAdministrador($orden);
+                $base = $reservado ? trim(str_replace($aviso, '', $desc), " \t.") : $desc;
+                if ($base === '') {
+                    $base = 'Orden '.$orden;
                 }
-                $cache[(int) $perm->orden] = $desc !== '' ? $desc : 'Orden ' . (int) $perm->orden;
+                if ($reservado) {
+                    $base = 'NO OTORGAR · '.$base;
+                }
+                if (strlen($base) > 52) {
+                    $base = substr($base, 0, 49).'…';
+                }
+                $cache[$orden] = $base;
             });
 
         return $cache;

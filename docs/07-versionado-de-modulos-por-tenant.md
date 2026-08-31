@@ -62,6 +62,8 @@ return [
 
 Consumir con `tenantAutogestionCusHabilitada()` / `tenantAutogestionIsaHabilitada()`. Detalle: [modulos/cus-isa-autogestion.md](modulos/cus-isa-autogestion.md).
 
+Horario de clase en PDF (portal familia; default off): `autogestion.horario_clase` + `tenantAutogestionHorarioClaseHabilitada()`. La grilla es **`horarios26`**, no la tabla `horarios` de ScriptCase. Detalle: [modulos/horarios.md](modulos/horarios.md).
+
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
 
 Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.

@@ -31,6 +31,8 @@ Columnas opcionales por tenant: `esInstitucional`, `infoCalif`, `escala`.
 
 Si la materia tiene dependencias (p. ej. `calificaciones`, `ppc`, horarios), **sí se permite el borrado** con doble confirmación:
 
+La grilla de horas cátedra de Laravel está en **`horarios26`** ([horarios.md](horarios.md)). La tabla **`horarios`** es del sistema ScriptCase: este ABM, al borrar, puede contar/eliminar filas ahí si la tabla existe; **no** es la fuente del módulo Horarios.
+
 1. Primer aviso: lista de calificaciones a borrar (materia, curso, alumno) y resumen de otros registros asociados.
 2. Segundo aviso: confirmación definitiva irreversible.
 3. En transacción: se borran dependencias directas y luego la fila de `materias`.

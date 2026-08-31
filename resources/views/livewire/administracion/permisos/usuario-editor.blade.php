@@ -7,7 +7,11 @@
             </div>
             <div class="divide-y divide-accent-200">
                 @foreach ($items as $perm)
-                    <label class="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-accent-50/40"
+                    @php($reservadoAdmin = \App\Support\PermisosIaCatalog::esReservadoAdministrador((int) $perm->orden))
+                    <label @class([
+                               'flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-accent-50/40',
+                               'bg-amber-50 hover:bg-amber-100/70' => $reservadoAdmin,
+                           ])
                            wire:loading.class="opacity-60"
                            wire:target="togglePermiso">
                         <input type="checkbox"
@@ -20,9 +24,11 @@
                             <span class="block text-sm font-normal text-neutral-700">
                                 Orden {{ (int) $perm->orden }}
                             </span>
-                            <span class="mt-0.5 block text-xs text-neutral-600">
-                                {{ $perm->descripcion }}
-                            </span>
+                            @include('livewire.administracion.permisos.partials.descripcion-permiso', [
+                                'orden' => (int) $perm->orden,
+                                'descripcion' => (string) $perm->descripcion,
+                                'titulo' => false,
+                            ])
                         </span>
                     </label>
                 @endforeach

@@ -1,5 +1,7 @@
 # Módulo: Profesores presentes
 
+Ítem del grupo HORARIOS. Contexto del módulo (tablas, permiso 13, **`horarios26` vs `horarios`**): [horarios.md](horarios.md).
+
 ## Propósito
 
 Listar los **docentes que tienen clase** un día de la semana, entre un horario de inicio y uno de fin, en **cursos y secciones** elegidos. Sirve para saber quién está (o debería estar) en la escuela en esa franja. Incluye listado en pantalla e impresión PDF (TCPDF).
@@ -18,7 +20,7 @@ Ninguna. Comportamiento único para todos los tenants.
 
 | Tabla | Uso |
 |-------|-----|
-| `horarios26` | Grilla: docente, materia, curso, día (`idDia` lun/mar/…), módulo (`idHora` 1–10), turno (`idTurnoClase` si existe) |
+| `horarios26` | Grilla Laravel: docente, materia, curso, día (`idDia` lun/mar/…), módulo (`idHora` 1–10), turno (`idTurnoClase` si existe). **No** usar la tabla `horarios` (ScriptCase). |
 | `reloj` | Texto de hora reloj por módulo (`orden` 1–10) y turno/nivel; se parsea para cruzar con la franja pedida |
 | `ppc` | Asignación vigente docente × materia; sin fila en `ppc` el docente de la grilla no se lista |
 | `cursos` / `materias` / `profesores` | Alcance `schoolCtx()` (nivel + ciclo) y etiquetas del listado |

@@ -242,112 +242,177 @@ final class CierreAnualSecundario
     /**
      * Pasar materias aprobadas al matriz (cierre diciembre) — todo el secundario del ciclo lectivo activo.
      *
-     * @return array{procesados: int, aprobados: int, omitidos: int}
+     * @return array{procesados: int, aprobados: int, omitidos: int, lote_id: int}
      */
     public static function pasarAprobadasMatrizDic(int $idNivel, int $idTerlec): array
     {
+        CierreAnualJournal::asegurarTablas();
+
         $anoLectivo = self::anoTerlec($idTerlec);
         $escuapro = self::nombreInstitucion($idNivel);
+        $actor = CierreAnualJournal::actorDesdeAuth();
+        $ctx = schoolCtx();
 
-        $procesados = 0;
-        $aprobados = 0;
-        $omitidos = 0;
+        return DB::transaction(function () use (
+            $idNivel,
+            $idTerlec,
+            $anoLectivo,
+            $escuapro,
+            $actor,
+            $ctx,
+        ) {
+            $loteId = CierreAnualJournal::crearLote([
+                'operacion' => 'dic',
+                'id_nivel' => $idNivel,
+                'id_terlec' => $idTerlec,
+                'ano_lectivo' => $anoLectivo,
+                'nivel_nombre' => $ctx->nivelNombre(),
+                'id_profesor' => $actor['id_profesor'],
+                'nombre_profesor' => $actor['nombre_profesor'],
+            ]);
 
-        self::calificacionesCicloActual($idNivel, $idTerlec)
-            ->orderBy('c.id')
-            ->chunk(200, function ($filas) use (
-                $anoLectivo,
-                $escuapro,
-                &$procesados,
-                &$aprobados,
-                &$omitidos,
-            ) {
-                foreach ($filas as $fila) {
-                    $procesados++;
-                    $calif = trim((string) ($fila->calif ?? ''));
-                    $dic = trim((string) ($fila->dic ?? ''));
+            $procesados = 0;
+            $aprobados = 0;
+            $omitidos = 0;
 
-                    if (! self::estaAprobadaEnDiciembre($calif, $dic)) {
-                        $omitidos++;
+            self::calificacionesCicloActual($idNivel, $idTerlec)
+                ->orderBy('c.id')
+                ->chunk(200, function ($filas) use (
+                    $loteId,
+                    $anoLectivo,
+                    $escuapro,
+                    &$procesados,
+                    &$aprobados,
+                    &$omitidos,
+                ) {
+                    $detalle = [];
+                    foreach ($filas as $fila) {
+                        $procesados++;
+                        $calif = trim((string) ($fila->calif ?? ''));
+                        $dic = trim((string) ($fila->dic ?? ''));
 
-                        continue;
-                    }
+                        if (! self::estaAprobadaEnDiciembre($calif, $dic)) {
+                            $omitidos++;
 
-                    $notaFinal = self::notaFinalCierre($calif, $dic, '', self::MES_DICIEMBRE);
-                    $cond = self::condMatriculaParaFila($fila);
+                            continue;
+                        }
 
-                    $afectados = DB::table('calificaciones')
-                        ->where('id', (int) $fila->id)
-                        ->where('idTerlec', (int) $fila->idTerlec)
-                        ->update([
+                        $notaFinal = self::notaFinalCierre($calif, $dic, '', self::MES_DICIEMBRE);
+                        $cond = self::condMatriculaParaFila($fila);
+                        $antes = CierreAnualJournal::snapshotDesdeFila($fila);
+                        $payload = [
                             'apro' => 2,
                             'calif' => $notaFinal,
                             'mes' => self::MES_DICIEMBRE,
                             'ano' => $anoLectivo,
                             'cond' => $cond,
                             'escuapro' => $escuapro,
-                        ]);
+                        ];
 
-                    if ($afectados > 0) {
-                        $aprobados++;
-                    } else {
-                        $omitidos++;
+                        $afectados = DB::table('calificaciones')
+                            ->where('id', (int) $fila->id)
+                            ->where('idTerlec', (int) $fila->idTerlec)
+                            ->update($payload);
+
+                        if ($afectados > 0) {
+                            $aprobados++;
+                            $detalle[] = CierreAnualJournal::filaDetalle(
+                                $loteId,
+                                $fila,
+                                CierreAnualJournal::TIPO_MATRIZ,
+                                $antes,
+                                CierreAnualJournal::snapshotTrasUpdate($antes, $payload),
+                                self::cursoLabelDesdeFila($fila),
+                            );
+                        } else {
+                            $omitidos++;
+                        }
                     }
-                }
-            });
+                    CierreAnualJournal::insertarFilas($detalle);
+                });
 
-        return [
-            'procesados' => $procesados,
-            'aprobados' => $aprobados,
-            'omitidos' => $omitidos,
-        ];
+            CierreAnualJournal::finalizarLote($loteId, [
+                'procesados' => $procesados,
+                'aprobados' => $aprobados,
+                'previas' => 0,
+                'omitidos' => $omitidos,
+            ]);
+
+            return [
+                'procesados' => $procesados,
+                'aprobados' => $aprobados,
+                'omitidos' => $omitidos,
+                'lote_id' => $loteId,
+            ];
+        });
     }
 
     /**
      * Aprobadas al matriz (feb) y reprobadas como previas — todo el secundario del ciclo lectivo activo.
      *
-     * @return array{procesados: int, aprobados: int, previas: int, omitidos: int}
+     * @return array{procesados: int, aprobados: int, previas: int, omitidos: int, lote_id: int}
      */
     public static function pasarAprobadasMatrizYPreviasFeb(int $idNivel, int $idTerlec): array
     {
+        CierreAnualJournal::asegurarTablas();
+
         $anoLectivo = self::anoTerlec($idTerlec);
         $escuapro = self::nombreInstitucion($idNivel);
+        $actor = CierreAnualJournal::actorDesdeAuth();
+        $ctx = schoolCtx();
 
-        $procesados = 0;
-        $aprobados = 0;
-        $previas = 0;
-        $omitidos = 0;
+        return DB::transaction(function () use (
+            $idNivel,
+            $idTerlec,
+            $anoLectivo,
+            $escuapro,
+            $actor,
+            $ctx,
+        ) {
+            $loteId = CierreAnualJournal::crearLote([
+                'operacion' => 'feb',
+                'id_nivel' => $idNivel,
+                'id_terlec' => $idTerlec,
+                'ano_lectivo' => $anoLectivo,
+                'nivel_nombre' => $ctx->nivelNombre(),
+                'id_profesor' => $actor['id_profesor'],
+                'nombre_profesor' => $actor['nombre_profesor'],
+            ]);
 
-        self::calificacionesCicloActual($idNivel, $idTerlec)
-            ->orderBy('c.id')
-            ->chunk(200, function ($filas) use (
-                $anoLectivo,
-                $escuapro,
-                &$procesados,
-                &$aprobados,
-                &$previas,
-                &$omitidos,
-            ) {
-                foreach ($filas as $fila) {
-                    $procesados++;
-                    $calif = trim((string) ($fila->calif ?? ''));
-                    $dic = trim((string) ($fila->dic ?? ''));
-                    $feb = trim((string) ($fila->feb ?? ''));
+            $procesados = 0;
+            $aprobados = 0;
+            $previas = 0;
+            $omitidos = 0;
 
-                    if (self::estaAprobadaEnFebrero($calif, $dic, $feb)) {
-                        if (! self::necesitaPaseAMatriz($fila)) {
-                            $omitidos++;
+            self::calificacionesCicloActual($idNivel, $idTerlec)
+                ->orderBy('c.id')
+                ->chunk(200, function ($filas) use (
+                    $loteId,
+                    $anoLectivo,
+                    $escuapro,
+                    &$procesados,
+                    &$aprobados,
+                    &$previas,
+                    &$omitidos,
+                ) {
+                    $detalle = [];
+                    foreach ($filas as $fila) {
+                        $procesados++;
+                        $calif = trim((string) ($fila->calif ?? ''));
+                        $dic = trim((string) ($fila->dic ?? ''));
+                        $feb = trim((string) ($fila->feb ?? ''));
 
-                            continue;
-                        }
+                        if (self::estaAprobadaEnFebrero($calif, $dic, $feb)) {
+                            if (! self::necesitaPaseAMatriz($fila)) {
+                                $omitidos++;
 
-                        $notaFinal = self::notaFinalCierre($calif, $dic, $feb, self::MES_FEBRERO);
-                        $cond = self::condMatriculaParaFila($fila);
+                                continue;
+                            }
 
-                        $afectados = DB::table('calificaciones')
-                            ->where('id', (int) $fila->id)
-                            ->where('idTerlec', (int) $fila->idTerlec)
-                            ->update([
+                            $notaFinal = self::notaFinalCierre($calif, $dic, $feb, self::MES_FEBRERO);
+                            $cond = self::condMatriculaParaFila($fila);
+                            $antes = CierreAnualJournal::snapshotDesdeFila($fila);
+                            $payload = [
                                 'apro' => 2,
                                 'calif' => $notaFinal,
                                 'mes' => self::MES_FEBRERO,
@@ -356,46 +421,80 @@ final class CierreAnualSecundario
                                 'escuapro' => $escuapro,
                                 'condAdeuda' => null,
                                 'inscri' => 0,
-                            ]);
+                            ];
 
-                        if ($afectados > 0) {
-                            $aprobados++;
-                        } else {
-                            $omitidos++;
+                            $afectados = DB::table('calificaciones')
+                                ->where('id', (int) $fila->id)
+                                ->where('idTerlec', (int) $fila->idTerlec)
+                                ->update($payload);
+
+                            if ($afectados > 0) {
+                                $aprobados++;
+                                $detalle[] = CierreAnualJournal::filaDetalle(
+                                    $loteId,
+                                    $fila,
+                                    CierreAnualJournal::TIPO_MATRIZ,
+                                    $antes,
+                                    CierreAnualJournal::snapshotTrasUpdate($antes, $payload),
+                                    self::cursoLabelDesdeFila($fila),
+                                );
+                            } else {
+                                $omitidos++;
+                            }
+
+                            continue;
                         }
 
-                        continue;
-                    }
+                        if (self::yaMarcadaComoPrevia($fila)) {
+                            $omitidos++;
 
-                    if (self::yaMarcadaComoPrevia($fila)) {
-                        $omitidos++;
+                            continue;
+                        }
 
-                        continue;
-                    }
-
-                    $afectados = DB::table('calificaciones')
-                        ->where('id', (int) $fila->id)
-                        ->where('idTerlec', (int) $fila->idTerlec)
-                        ->update([
+                        $antes = CierreAnualJournal::snapshotDesdeFila($fila);
+                        $payload = [
                             'apro' => 1,
                             'condAdeuda' => 'PR',
                             'inscri' => 0,
-                        ]);
+                        ];
 
-                    if ($afectados > 0) {
-                        $previas++;
-                    } else {
-                        $omitidos++;
+                        $afectados = DB::table('calificaciones')
+                            ->where('id', (int) $fila->id)
+                            ->where('idTerlec', (int) $fila->idTerlec)
+                            ->update($payload);
+
+                        if ($afectados > 0) {
+                            $previas++;
+                            $detalle[] = CierreAnualJournal::filaDetalle(
+                                $loteId,
+                                $fila,
+                                CierreAnualJournal::TIPO_PREVIA,
+                                $antes,
+                                CierreAnualJournal::snapshotTrasUpdate($antes, $payload),
+                                self::cursoLabelDesdeFila($fila),
+                            );
+                        } else {
+                            $omitidos++;
+                        }
                     }
-                }
-            });
+                    CierreAnualJournal::insertarFilas($detalle);
+                });
 
-        return [
-            'procesados' => $procesados,
-            'aprobados' => $aprobados,
-            'previas' => $previas,
-            'omitidos' => $omitidos,
-        ];
+            CierreAnualJournal::finalizarLote($loteId, [
+                'procesados' => $procesados,
+                'aprobados' => $aprobados,
+                'previas' => $previas,
+                'omitidos' => $omitidos,
+            ]);
+
+            return [
+                'procesados' => $procesados,
+                'aprobados' => $aprobados,
+                'previas' => $previas,
+                'omitidos' => $omitidos,
+                'lote_id' => $loteId,
+            ];
+        });
     }
 
     public static function estaAprobadaEnDiciembre(string $calif, string $dic): bool
@@ -450,18 +549,40 @@ final class CierreAnualSecundario
         return DB::table('calificaciones as c')
             ->join('matricula as m', 'c.idMatricula', '=', 'm.id')
             ->leftJoin('condiciones as co', 'co.id', '=', 'm.idCondiciones')
+            ->leftJoin('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->leftJoin('materias as mat', 'mat.id', '=', 'c.idMaterias')
+            ->leftJoin('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            ->leftJoin('curplan as cp', 'cp.id', '=', 'cu.idCurPlan')
+            ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
             ->where('c.idTerlec', $idTerlec)
             ->where('m.idNivel', $idNivel)
             ->whereNull('m.fechaBaja')
             ->select([
                 'c.id',
                 'c.idTerlec',
+                'c.idLegajos',
+                'c.idMatricula',
+                'c.idMaterias',
                 'c.calif',
                 'c.dic',
                 'c.feb',
                 'c.apro',
+                'c.mes',
+                'c.ano',
+                'c.cond',
+                'c.escuapro',
                 'c.condAdeuda',
+                'c.inscri',
                 'co.condicion as condicion_matricula',
+                'l.apellido',
+                'l.nombre',
+                'l.dni',
+                'mat.materia',
+                'cu.cursec',
+                'cp.curPlanCurso',
+                'tc.nombre as turnoClaseNombre',
+                'cu.c',
+                'cu.s',
             ]);
     }
 
@@ -597,7 +718,7 @@ final class CierreAnualSecundario
     }
 
     /**
-     * @param  array{procesados: int, aprobados: int, omitidos: int, previas?: int}  $res
+     * @param  array{procesados: int, aprobados: int, omitidos: int, previas?: int, lote_id?: int}  $res
      * @return array{
      *     operacion: string,
      *     titulo: string,
@@ -607,7 +728,8 @@ final class CierreAnualSecundario
      *     previas: int,
      *     omitidos: int,
      *     nivel: string,
-     *     ano_lectivo: int|string
+     *     ano_lectivo: int|string,
+     *     lote_id: int
      * }
      */
     public static function armarInformeCierre(string $operacion, array $res, SchoolContext $ctx): array
@@ -629,6 +751,7 @@ final class CierreAnualSecundario
             'omitidos' => $omitidos,
             'nivel' => $ctx->nivelNombre(),
             'ano_lectivo' => $ctx->terlecAno() ?? '—',
+            'lote_id' => (int) ($res['lote_id'] ?? 0),
         ];
     }
 }

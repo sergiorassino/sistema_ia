@@ -63,7 +63,12 @@
                             <div class="min-w-0 md:col-span-8">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach ($fila['permisos'] as $etiqueta)
-                                        <span class="inline-block max-w-full truncate rounded-md border border-accent-200 bg-accent-50/80 px-1.5 py-0.5 text-[10px] leading-snug text-neutral-700"
+                                        @php($chipReservado = str_starts_with((string) $etiqueta, 'NO OTORGAR'))
+                                        <span @class([
+                                                  'inline-block max-w-full truncate rounded-md border px-1.5 py-0.5 text-[10px] leading-snug',
+                                                  'border-amber-300 bg-amber-100 text-amber-950' => $chipReservado,
+                                                  'border-accent-200 bg-accent-50/80 text-neutral-700' => ! $chipReservado,
+                                              ])
                                               title="{{ $etiqueta }}">
                                             {{ $etiqueta }}
                                         </span>
