@@ -1019,6 +1019,20 @@
                         <span class="truncate">Permisos por Usuario</span>
                     </a>
                     @endif
+                    @if (tienePermiso(\App\Support\PermisosIaCatalog::PERMISOS_POR_TAREA))
+                    <a href="{{ route('admin.permisos-por-tarea') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'admin.permisos-por-tarea',
+                       ])
+                       title="Consulta de usuarios con permiso por módulo o función v1.0">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span class="truncate">Permisos por Tarea</span>
+                    </a>
+                    @endif
                 </div>
                 @endif
 

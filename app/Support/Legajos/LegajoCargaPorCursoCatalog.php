@@ -4,6 +4,7 @@ namespace App\Support\Legajos;
 
 use App\Models\CampoLegajo;
 use App\Models\SolapaLegajo;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoPdfFieldCatalog;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -256,7 +257,12 @@ final class LegajoCargaPorCursoCatalog
         if (in_array($columna, ['dnitut', 'respAdmiDni'], true)) {
             $s = trim((string) $value);
 
-            return $s !== '' ? (int) $s : null;
+            // INT NOT NULL legacy: vacío → 0. VARCHAR: vacío → string vacío.
+            if ($s === '') {
+                return PersistenciaColumnas::columnaEsEntera('legajos', $columna) ? 0 : '';
+            }
+
+            return PersistenciaColumnas::columnaEsEntera('legajos', $columna) ? (int) $s : $s;
         }
 
         if (is_string($value)) {
@@ -289,6 +295,12 @@ final class LegajoCargaPorCursoCatalog
 
         if ($columna === 'sexo') {
             return (string) (int) $raw;
+        }
+
+        if (in_array($columna, ['dnitut', 'respAdmiDni'], true)) {
+            $s = trim((string) $raw);
+
+            return ($s === '' || $s === '0') ? '' : $s;
         }
 
         return (string) $raw;

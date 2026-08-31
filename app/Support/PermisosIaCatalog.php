@@ -47,6 +47,9 @@ final class PermisosIaCatalog
 
     public const PERMISOS_POR_USUARIO = 14;
 
+    /** Consultar usuarios con permiso por módulo o función (módulo Permisos por Tarea). */
+    public const PERMISOS_POR_TAREA = 99;
+
     public const CALIF_CIERRE_ANUAL = 15;
 
     /** Planilla resumen de calificaciones por curso (secundario, PDF). */
@@ -253,6 +256,7 @@ final class PermisosIaCatalog
             ['id' => 13, 'orden' => self::EXAMENES, 'tema' => 'EXÁMENES', 'descripcion' => 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'],
             ['id' => 14, 'orden' => self::HORARIOS, 'tema' => 'HORARIOS', 'descripcion' => 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente. No incluye impresión de horarios.'],
             ['id' => 15, 'orden' => self::PERMISOS_POR_USUARIO, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],
+            ['id' => 99, 'orden' => self::PERMISOS_POR_TAREA, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar usuarios con permiso por módulo o función (módulo Permisos por Tarea).'],
             ['id' => 17, 'orden' => self::CALIF_CIERRE_ANUAL, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Cierre anual: historial de calificaciones y pasaje al matriz (Dic / Feb).'],
             ['id' => 76, 'orden' => self::CALIF_PLANILLA_RESUMEN, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Planilla resumen de calificaciones: selección de cursos e impresión PDF (secundario).'],
             ['id' => 77, 'orden' => self::CALIF_ACTAS_VOLANTES_COLOQUIO, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Actas volantes de coloquio: selección de curso, materias e impresión PDF (Dic / Feb, secundario).'],

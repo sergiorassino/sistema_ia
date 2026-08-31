@@ -117,6 +117,7 @@ use App\Livewire\Abm\Niveles\NivelesIndex;
 use App\Livewire\Abm\Planes\PlanesForm;
 use App\Livewire\Abm\Planes\PlanesIndex;
 use App\Livewire\Abm\Terlec\TerlecIndex;
+use App\Livewire\Administracion\Permisos\PermisosPorTareaIndex;
 use App\Livewire\Administracion\Permisos\PermisosPorUsuarioIndex;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
@@ -966,6 +967,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/administracion/permisos-por-usuario', PermisosPorUsuarioIndex::class)
         ->middleware('permiso:14')
         ->name('admin.permisos-por-usuario');
+    Route::get('/administracion/permisos-por-tarea', PermisosPorTareaIndex::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PERMISOS_POR_TAREA)
+        ->name('admin.permisos-por-tarea');
 
     Route::get('/notificaciones/push', SuscribirController::class)
         ->middleware('permiso-config:32')

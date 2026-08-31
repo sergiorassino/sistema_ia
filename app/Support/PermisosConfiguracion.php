@@ -6,8 +6,8 @@ namespace App\Support;
  * Permisos granulares del menú Configuración (secretaría).
  *
  * Cada ítem del menú Configuración usa su orden 25–36 (salvo orden 32,
- * «Notificaciones Push», que está en Comunicación institucional). El orden 14
- * es solo para el módulo «Permisos por Usuario» (grupo ADMINISTRACIÓN).
+ * «Notificaciones Push», que está en Comunicación institucional). Los órdenes
+ * 14 y 99 son consulta (Permisos por Usuario / Permisos por Tarea).
  */
 final class PermisosConfiguracion
 {
@@ -42,6 +42,9 @@ final class PermisosConfiguracion
 
     /** Consultar permisos concedidos (módulo Permisos por Usuario). */
     public const PERMISOS_POR_USUARIO = 14;
+
+    /** Consultar usuarios por módulo o función (módulo Permisos por Tarea). */
+    public const PERMISOS_POR_TAREA = PermisosIaCatalog::PERMISOS_POR_TAREA;
 
     /** Configuración de canales escuela–familia (menú Comunicación institucional). */
     public const COM_CANALES = PermisosIaCatalog::COM_CANALES;
@@ -79,7 +82,8 @@ final class PermisosConfiguracion
     public static function tieneAlgunAccesoMenu(): bool
     {
         if (tienePermiso(self::ADMIN_PERMISOS)
-            || tienePermiso(self::PERMISOS_POR_USUARIO)) {
+            || tienePermiso(self::PERMISOS_POR_USUARIO)
+            || tienePermiso(self::PERMISOS_POR_TAREA)) {
             return true;
         }
 
@@ -95,7 +99,8 @@ final class PermisosConfiguracion
     public static function tieneAlgunPermisoSistemaMenu(): bool
     {
         return tienePermiso(self::ADMIN_PERMISOS)
-            || tienePermiso(self::PERMISOS_POR_USUARIO);
+            || tienePermiso(self::PERMISOS_POR_USUARIO)
+            || tienePermiso(self::PERMISOS_POR_TAREA);
     }
 
     public static function tieneAlgunPlanCursoModelo(): bool

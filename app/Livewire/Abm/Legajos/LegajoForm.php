@@ -510,26 +510,62 @@ class LegajoForm extends Component
         $persistPwrd = $set === null || isset($set['pwrd']);
         $esAlta = $this->id === null;
 
-        if ($this->id) {
-            // update() only touches the given keys, preserving hidden-column values in the DB.
-            $legajo = Legajo::findOrFail($this->id);
-            $legajo->update($data);
-            if ($persistPwrd) {
-                $nuevaPwrd = trim($this->pwrd);
-                if ($nuevaPwrd !== '') {
-                    $legajo->pwrd = $nuevaPwrd;
-                    $legajo->save();
+        if ($esAlta) {
+            foreach ($data as $columna => $valor) {
+                if ($valor === null) {
+                    unset($data[$columna]);
                 }
             }
-        } else {
-            $data['fechhora'] = now();
-            $legajo = Legajo::create($data);
-            // Texto plano legacy: ver docs/03-autenticacion-y-permisos.md §2.2
-            // pwrd está en $guarded; si el campo quedó vacío, default 1234.
-            $nuevaPwrd = $persistPwrd ? trim($this->pwrd) : '';
-            $legajo->pwrd = $nuevaPwrd !== '' ? $nuevaPwrd : '1234';
-            $legajo->save();
-            $this->id = (int) $legajo->id;
+            $data['dnitut'] = (int) ($data['dnitut'] ?? 0);
+            $data = PersistenciaColumnas::completarNotNullSinDefault('legajos', $data, ['id', 'pwrd']);
+        }
+        $data = PersistenciaColumnas::adaptarEnterosVacios('legajos', $data);
+        $data = PersistenciaColumnas::reemplazarNulosExplicitos('legajos', $data);
+
+        $preparado = PersistenciaColumnas::prepararPayload('legajos', $data);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'legajos',
+                    $preparado['columnas_con_valor_sin_columna']
+                )
+            );
+
+            return null;
+        }
+        $data = $preparado['payload'];
+
+        try {
+            if ($this->id) {
+                // update() only touches the given keys, preserving hidden-column values in the DB.
+                $legajo = Legajo::findOrFail($this->id);
+                $legajo->update($data);
+                if ($persistPwrd) {
+                    $nuevaPwrd = trim($this->pwrd);
+                    if ($nuevaPwrd !== '') {
+                        $legajo->pwrd = $nuevaPwrd;
+                        $legajo->save();
+                    }
+                }
+            } else {
+                $data['fechhora'] = now();
+                $legajo = Legajo::create($data);
+                // Texto plano legacy: ver docs/03-autenticacion-y-permisos.md §2.2
+                // pwrd está en $guarded; si el campo quedó vacío, default 1234.
+                $nuevaPwrd = $persistPwrd ? trim($this->pwrd) : '';
+                $legajo->pwrd = $nuevaPwrd !== '' ? $nuevaPwrd : '1234';
+                $legajo->save();
+                $this->id = (int) $legajo->id;
+            }
+        } catch (QueryException $e) {
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el legajo. Verifique los datos e intente de nuevo.'
+            );
+
+            return null;
         }
 
         if ($fotoActiva && ! $this->persistirFotoCarnet((int) $this->id)) {
@@ -1558,11 +1594,11 @@ class LegajoForm extends Component
         $this->vivepad = $l->vivepad ?? '';
 
         $this->nombretut = $l->nombretut ?? '';
-        $this->dnitut = (string) ($l->dnitut ?? '');
+        $this->dnitut = self::dniEnteroParaFormulario($l->dnitut);
         $this->teletut = $l->teletut ?? '';
         $this->emailtut = $l->emailtut ?? '';
         $this->respAdmiNom = $l->respAdmiNom ?? '';
-        $this->respAdmiDni = (string) ($l->respAdmiDni ?? '');
+        $this->respAdmiDni = self::dniEnteroParaFormulario($l->respAdmiDni);
 
         $this->escori = $l->escori ?? '';
         $this->destino = $l->destino ?? '';
@@ -1651,11 +1687,12 @@ class LegajoForm extends Component
             'emailpad' => $this->emailpad,
             'vivepad' => $this->vivepad,
             'nombretut' => $this->nombretut,
-            'dnitut' => $this->dnitut !== '' ? (int) $this->dnitut : null,
+            // Vacío = 0 (INT/VARCHAR NOT NULL legacy no admite NULL).
+            'dnitut' => $this->dnitut !== '' ? (int) $this->dnitut : 0,
             'teletut' => $this->teletut,
             'emailtut' => $this->emailtut,
             'respAdmiNom' => $this->respAdmiNom,
-            'respAdmiDni' => $this->respAdmiDni !== '' ? (int) $this->respAdmiDni : 0,
+            'respAdmiDni' => $this->respAdmiDni !== '' ? (int) $this->respAdmiDni : null,
             'escori' => $this->escori,
             'destino' => $this->destino,
             'obs' => $this->obs,
@@ -1680,6 +1717,16 @@ class LegajoForm extends Component
         }
 
         return $data;
+    }
+
+    /**
+     * DNI 0 en columnas numéricas legacy = sin dato (no mostrar "0" en el formulario).
+     */
+    private static function dniEnteroParaFormulario(mixed $valor): string
+    {
+        $s = trim((string) ($valor ?? ''));
+
+        return ($s === '' || $s === '0') ? '' : $s;
     }
 
     /**

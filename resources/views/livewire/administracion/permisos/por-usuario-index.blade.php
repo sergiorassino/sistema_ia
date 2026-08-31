@@ -30,7 +30,11 @@
             {{ $totalUsuarios }} usuario(s) con permisos otorgados.
             @if (tienePermiso(0))
                 Para editar permisos, use
-                <a href="{{ route('admin.permisos') }}" class="font-semibold text-primary-700 hover:underline">Permisos de Usuarios</a>.
+                <a href="{{ route('admin.permisos') }}" class="font-semibold text-primary-700 hover:underline">Asignación de Permisos de Usuario</a>.
+            @endif
+            @if (tienePermiso(\App\Support\PermisosIaCatalog::PERMISOS_POR_TAREA))
+                Vista por módulo:
+                <a href="{{ route('admin.permisos-por-tarea') }}" class="font-semibold text-primary-700 hover:underline">Permisos por Tarea</a>.
             @endif
         </p>
 

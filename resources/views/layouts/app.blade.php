@@ -33,8 +33,8 @@
     _sidebarControlStorageKey: 'seSecretariaSidebarControl',
     _sidebarManualCollapsedKey: 'seSecretariaSidebarCollapsed',
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
-        permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan') || str_starts_with($route ?? '', 'abm.materias-anio') || str_starts_with($route ?? '', 'param.') || str_starts_with($route ?? '', 'admin.permisos')) ? 'true' : 'false' }},
+        permisosSistema: {{ str_starts_with($route ?? '', 'admin.permisos') ? 'true' : 'false' }},
         planesCursos: {{ (str_starts_with($route ?? '', 'abm.planes') || str_starts_with($route ?? '', 'abm.curplan')) ? 'true' : 'false' }},
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
@@ -1663,6 +1663,20 @@
                                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
                         <span class="truncate">Permisos por Usuario</span>
+                    </a>
+                    @endif
+                    @if (tienePermiso(\App\Support\PermisosIaCatalog::PERMISOS_POR_TAREA))
+                    <a href="{{ route('admin.permisos-por-tarea') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => ($route ?? '') === 'admin.permisos-por-tarea',
+                       ])
+                       title="{{ seSidebarTooltip('Consulta de usuarios con permiso por módulo o función v1.0', \App\Support\PermisosIaCatalog::PERMISOS_POR_TAREA) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span class="truncate">Permisos por Tarea</span>
                     </a>
                     @endif
                 </div>

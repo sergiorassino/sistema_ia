@@ -29,8 +29,8 @@
     _sidebarNavScrollTop: 0,
     _sidebarPeekTimer: null,
     groups: {
-        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'param.') || ($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
-        permisosSistema: {{ (($route ?? '') === 'admin.permisos' || ($route ?? '') === 'admin.permisos-por-usuario') ? 'true' : 'false' }},
+        config: {{ (str_starts_with($route ?? '', 'abm.terlec') || str_starts_with($route ?? '', 'abm.niveles') || str_starts_with($route ?? '', 'param.') || str_starts_with($route ?? '', 'admin.permisos')) ? 'true' : 'false' }},
+        permisosSistema: {{ str_starts_with($route ?? '', 'admin.permisos') ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.preceptores-por-curso') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias') || str_starts_with($route ?? '', 'docentes.certificacion-servicios') || str_starts_with($route ?? '', 'docentes.capacitacion') || request()->routeIs('listados.docentes', 'listados.docentes.pdf', 'listados.docentes.excel')) ? 'true' : 'false' }},
