@@ -188,7 +188,7 @@ final class CuotasImportesCatalog
         return array_key_exists($signo, self::opcionesSigno()) ? $signo : $fallback;
     }
 
-    private static function normalizarPorcan(mixed $valor): string
+    public static function normalizarPorcan(mixed $valor): string
     {
         $porcan = trim((string) $valor);
 

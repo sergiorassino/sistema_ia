@@ -32,6 +32,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Gestión de Morosos | [gestion-morosos.md](gestion-morosos.md) |
 | Estado de Deuda Familiar | [estado-deuda-familiar.md](estado-deuda-familiar.md) |
 | Estado de Deuda por Estudiante | [estado-deuda-estudiante.md](estado-deuda-estudiante.md) |
+| Imputar pago | [imputar-pago.md](imputar-pago.md) |
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |
 
 ## Plantilla

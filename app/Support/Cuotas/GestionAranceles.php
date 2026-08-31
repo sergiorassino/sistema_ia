@@ -184,7 +184,7 @@ final class GestionAranceles
                     'curso.curplan:id,curPlanCurso',
                     'curso.turnoClase:id,nombre',
                     'curso.nivel:id,nivel',
-                    'cuota:id,nombre',
+                    'cuota:id,nombre,venc1',
                 ])
                 ->whereKey($idCuotaGenerada)
                 ->where('idLegajos', $idLegajo),
@@ -236,7 +236,7 @@ final class GestionAranceles
                         'curso.curplan:id,curPlanCurso',
                         'curso.turnoClase:id,nombre',
                         'curso.nivel:id,nivel',
-                        'cuota:id,nombre',
+                        'cuota:id,nombre,venc1',
                         'terlec:id,ano',
                     ])
                     ->whereIn("{$tabla}.id", $ids)

@@ -540,6 +540,10 @@ class ImputarPagoForm extends Component
             return 'PORCENTAJE BONIFICACIÓN';
         }
 
+        if (($calc['porcan'] ?? '') === '$') {
+            return 'INTERÉS ($)';
+        }
+
         if ($calc['usaMeses'] ?? false) {
             $meses = (int) ($calc['mesesMora'] ?? 0);
             $sufijoMeses = $meses === 1 ? 'mes' : 'meses';

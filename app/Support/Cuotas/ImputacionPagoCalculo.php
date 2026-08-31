@@ -2,6 +2,7 @@
 
 namespace App\Support\Cuotas;
 
+use App\Models\Cuota;
 use App\Models\CuotaGenerada;
 use App\Models\CuotasImporte;
 use Carbon\Carbon;
@@ -14,6 +15,9 @@ final class ImputacionPagoCalculo
 {
     /** @var array<string, array<string, mixed>> */
     private static array $formulaCache = [];
+
+    /** @var array<int, CarbonInterface|null> 1.er venc. de la plantilla `cuotas` (no el actualizado). */
+    private static array $venc1PlantillaCache = [];
 
     /**
      * Precarga fórmulas de interés/bonificación en una sola consulta (PDF morosos con miles de filas).
@@ -40,6 +44,13 @@ final class ImputacionPagoCalculo
         }
 
         $idsCuotas = array_values(array_unique(array_map(fn (array $p) => $p[0], $pares)));
+
+        $plantillas = Cuota::query()
+            ->whereIn('id', $idsCuotas)
+            ->get(['id', 'venc1']);
+        foreach ($plantillas as $plantilla) {
+            self::$venc1PlantillaCache[(int) $plantilla->id] = self::carbon($plantilla->venc1);
+        }
 
         $importes = CuotasImporte::query()
             ->whereIn('idCuotas', $idsCuotas)
@@ -68,6 +79,7 @@ final class ImputacionPagoCalculo
     public static function limpiarCacheFormulas(): void
     {
         self::$formulaCache = [];
+        self::$venc1PlantillaCache = [];
     }
     /**
      * @return array{
@@ -104,9 +116,10 @@ final class ImputacionPagoCalculo
 
         $formula = self::formulaParaRegistro($registro);
 
-        $venc1 = self::carbon($registro->venc1);
+        $venc1Almacenado = self::carbon($registro->venc1);
         $venc2 = self::carbon($registro->venc2);
         $venc3 = self::carbon($registro->venc3);
+        $venc1 = self::venc1ParaTramo($registro, $venc1Almacenado, $venc2, $venc3);
         $fecha = $fechaPago->copy()->startOfDay();
 
         $tramo = '1';
@@ -166,6 +179,16 @@ final class ImputacionPagoCalculo
 
         if ($porcentManual !== null) {
             $porcent = $porcentManual;
+            // Tramo al día con recargo $ 0: el campo del formulario suele seguir
+            // mostrando el % de mora (p. ej. 10). No interpretarlo como $10.
+            if ($esRecargo && $porcan === '$' && $porcentDiario == 0.0 && $porcent != 0.0) {
+                $porcan = '%';
+                $usaDias = false;
+                $usaMeses = false;
+                $dias = 0;
+                $diasMora = 0;
+                $mesesMora = 0;
+            }
         } elseif ($usaDias && $esRecargo && $porcan === '%') {
             $porcent = $porcentDiario * $diasMora;
         } else {
@@ -298,23 +321,81 @@ final class ImputacionPagoCalculo
     }
 
     /**
-     * @return array<string, mixed>
+     * @param  array<string, mixed>  $formula
      */
+    public static function definirFormula(int $idCuotas, int $idCursos, array $formula): void
+    {
+        self::$formulaCache[self::claveFormula($idCuotas, $idCursos)] = array_merge(
+            self::formulaDesdeRegistro(null),
+            $formula,
+        );
+    }
+
+    public static function definirVenc1Plantilla(int $idCuotas, mixed $venc1): void
+    {
+        self::$venc1PlantillaCache[$idCuotas] = self::carbon($venc1);
+    }
+
+    /**
+     * El vencimiento actualizado (`nueVenc`) es un 4.º vencimiento (cupón ya vencido),
+     * no reemplaza al 1.er vencimiento. Si `venc1` de la cuota generada coincide con
+     * `nueVenc` y queda después del 2.º/3.º, se usa el venc1 de la plantilla.
+     */
+    private static function venc1ParaTramo(
+        CuotaGenerada $registro,
+        ?CarbonInterface $venc1,
+        ?CarbonInterface $venc2,
+        ?CarbonInterface $venc3,
+    ): ?CarbonInterface {
+        $nueVenc = self::carbon($registro->nueVenc);
+        if ($venc1 === null || $nueVenc === null || ! $venc1->eq($nueVenc)) {
+            return $venc1;
+        }
+
+        $esCuartoVencimiento = ($venc2 !== null && $venc1->gt($venc2))
+            || ($venc3 !== null && $venc1->gt($venc3));
+        if (! $esCuartoVencimiento) {
+            return $venc1;
+        }
+
+        return self::venc1DePlantilla($registro) ?? $venc1;
+    }
+
+    private static function venc1DePlantilla(CuotaGenerada $registro): ?CarbonInterface
+    {
+        $idCuotas = (int) $registro->idCuotas;
+        if ($idCuotas < 1) {
+            return null;
+        }
+
+        if (! array_key_exists($idCuotas, self::$venc1PlantillaCache)) {
+            $raw = null;
+            if ($registro->relationLoaded('cuota') && $registro->cuota !== null && $registro->cuota->venc1 !== null) {
+                $raw = $registro->cuota->venc1;
+            } else {
+                $raw = Cuota::query()->whereKey($idCuotas)->value('venc1');
+            }
+            self::$venc1PlantillaCache[$idCuotas] = self::carbon($raw);
+        }
+
+        return self::$venc1PlantillaCache[$idCuotas];
+    }
+
     private static function formulaDesdeRegistro(?CuotasImporte $importes): array
     {
         return [
-            'signo1' => trim((string) ($importes->signo1v ?? '+')),
-            'valor1' => (float) ($importes->valor1v ?? 0),
-            'porcan1' => trim((string) ($importes->porcan1v ?? '%')),
-            'signo2' => trim((string) ($importes->signo2v ?? '+')),
-            'valor2' => (float) ($importes->valor2v ?? 0),
-            'porcan2' => trim((string) ($importes->porcan2v ?? '%')),
-            'signo3' => trim((string) ($importes->signo3v ?? '+')),
-            'valor3' => (float) ($importes->valor3v ?? 0),
-            'porcan3' => trim((string) ($importes->porcan3v ?? '%')),
-            'signo4' => trim((string) ($importes->signo4v ?? '+')),
-            'valor4' => (float) ($importes->valor4v ?? 0),
-            'porcan4' => trim((string) ($importes->porcan4v ?? '%')),
+            'signo1' => trim((string) ($importes?->signo1v ?? '+')),
+            'valor1' => (float) ($importes?->valor1v ?? 0),
+            'porcan1' => CuotasImportesCatalog::normalizarPorcan($importes?->porcan1v ?? '%'),
+            'signo2' => trim((string) ($importes?->signo2v ?? '+')),
+            'valor2' => (float) ($importes?->valor2v ?? 0),
+            'porcan2' => CuotasImportesCatalog::normalizarPorcan($importes?->porcan2v ?? '%'),
+            'signo3' => trim((string) ($importes?->signo3v ?? '+')),
+            'valor3' => (float) ($importes?->valor3v ?? 0),
+            'porcan3' => CuotasImportesCatalog::normalizarPorcan($importes?->porcan3v ?? '%'),
+            'signo4' => trim((string) ($importes?->signo4v ?? '+')),
+            'valor4' => (float) ($importes?->valor4v ?? 0),
+            'porcan4' => CuotasImportesCatalog::normalizarPorcan($importes?->porcan4v ?? '%'),
         ];
     }
 
