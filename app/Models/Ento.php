@@ -57,6 +57,8 @@ class Ento extends Model
         // Logo (nuevo)
         'logo_path',
         'logo_original_name',
+        'logo_login_path',
+        'logo_login_original_name',
 
         // Matrícula web — nombre del PDF vigente por documento (legacy)
         'documAcept1',

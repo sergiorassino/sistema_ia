@@ -73,6 +73,13 @@ class ParametrosSistemaForm extends Component
 
     public ?string $currentLogoUrl = null;
 
+    /** @var TemporaryUploadedFile|null */
+    public $logoLogin = null;
+
+    public bool $removeLogoLogin = false;
+
+    public ?string $currentLogoLoginUrl = null;
+
     public int|string $idTerlecVerNotas = '';
 
     public bool $cargaNotasOff = false;
@@ -148,6 +155,7 @@ class ParametrosSistemaForm extends Component
         $this->siroIdentCuenta = (string) ($ento->siroIdentCuenta ?? '');
 
         $this->currentLogoUrl = schoolLogoUrl();
+        $this->currentLogoLoginUrl = entoLoginLogoUrl();
 
         $this->cargarParametrosOperativosDesdeEnto($ento);
         $this->cargarMailConfigDesdeEnto();
@@ -182,6 +190,7 @@ class ParametrosSistemaForm extends Component
             'mail' => ['nullable', 'email:rfc', 'max:120'],
             'replegal' => ['nullable', 'string', 'max:120'],
             'removeLogo' => ['boolean'],
+            'removeLogoLogin' => ['boolean'],
             'idTerlecVerNotas' => ['nullable', 'integer', Rule::in($terlecIds)],
             'cargaNotasOff' => ['boolean'],
             'notasOffMensaje' => ['nullable', 'string', 'max:500'],
@@ -249,6 +258,36 @@ class ParametrosSistemaForm extends Component
         );
     }
 
+    public function updatedLogoLogin(): void
+    {
+        $this->resetValidation('logoLogin');
+
+        if ($this->logoLogin === null) {
+            return;
+        }
+
+        if (! $this->logoLogin instanceof TemporaryUploadedFile) {
+            return;
+        }
+
+        $this->removeLogoLogin = false;
+
+        $error = $this->validarLogoSubido($this->logoLogin);
+        if ($error !== null) {
+            $this->addError('logoLogin', $error);
+            $this->logoLogin = null;
+        }
+    }
+
+    /** Llamado desde el navegador cuando Livewire no puede subir el archivo temporal del logo institucional. */
+    public function onLogoLoginUploadFailed(): void
+    {
+        $this->addError(
+            'logoLogin',
+            'No se pudo subir el archivo al servidor. Compruebe tamaño (máx. 2 MB), formato JPG/PNG y que la sesión siga activa.'
+        );
+    }
+
     public function getLogoPreviewUrlProperty(): ?string
     {
         if ($this->removeLogo && ! ($this->logo instanceof TemporaryUploadedFile)) {
@@ -258,6 +297,15 @@ class ParametrosSistemaForm extends Component
         // Archivo recién elegido: vista previa en el navegador (Alpine + blob URL en la vista).
         // temporaryUrl() (ruta firmada livewire.preview-file) suele devolver 401/403 en subcarpeta o HTTPS.
         return $this->currentLogoUrl;
+    }
+
+    public function getLogoLoginPreviewUrlProperty(): ?string
+    {
+        if ($this->removeLogoLogin && ! ($this->logoLogin instanceof TemporaryUploadedFile)) {
+            return null;
+        }
+
+        return $this->currentLogoLoginUrl;
     }
 
     public function save(): void
@@ -301,6 +349,22 @@ class ParametrosSistemaForm extends Component
             $this->addError(
                 'logo',
                 'La subida del logo no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
+            );
+
+            return;
+        }
+
+        if ($this->logoLogin instanceof TemporaryUploadedFile) {
+            $errorLogoLogin = $this->validarLogoSubido($this->logoLogin);
+            if ($errorLogoLogin !== null) {
+                $this->addError('logoLogin', $errorLogoLogin);
+
+                return;
+            }
+        } elseif ($this->logoLogin !== null) {
+            $this->addError(
+                'logoLogin',
+                'La subida del logo institucional no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
             );
 
             return;
@@ -428,9 +492,16 @@ class ParametrosSistemaForm extends Component
             }
         }
 
+        if (! $this->guardarLogoLoginEnTodosLosNiveles()) {
+            return;
+        }
+
         $this->currentLogoUrl = schoolLogoUrl();
+        $this->currentLogoLoginUrl = entoLoginLogoUrl();
         $this->logo = null;
         $this->removeLogo = false;
+        $this->logoLogin = null;
+        $this->removeLogoLogin = false;
 
         $this->dispatch('parametros-logo-guardado');
 
@@ -509,6 +580,148 @@ class ParametrosSistemaForm extends Component
             $this->addError(
                 'logo',
                 'No se pudo guardar el archivo del logo. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.'
+            );
+
+            return null;
+        }
+
+        if ($previousPath !== '' && $previousPath !== $newPath) {
+            $disk->delete($previousPath);
+        }
+
+        return $newPath;
+    }
+
+    /**
+     * Persiste el logo institucional de login en todas las filas de `ento`.
+     */
+    private function guardarLogoLoginEnTodosLosNiveles(): bool
+    {
+        if (! $this->removeLogoLogin
+            && ! ($this->logoLogin instanceof TemporaryUploadedFile)) {
+            return true;
+        }
+
+        if (! Schema::hasColumn('ento', 'logo_login_path')) {
+            $this->addError(
+                'logoLogin',
+                'Faltan las columnas ento.logo_login_path y ento.logo_login_original_name. Aplicá la migración o el SQL idempotente.'
+            );
+
+            return false;
+        }
+
+        $previousPath = trim((string) Ento::query()
+            ->whereNotNull('logo_login_path')
+            ->where('logo_login_path', '<>', '')
+            ->orderBy('idNivel')
+            ->value('logo_login_path'));
+
+        $payload = [];
+
+        if ($this->removeLogoLogin) {
+            if ($previousPath !== '') {
+                Storage::disk('public')->delete($previousPath);
+            }
+            $payload['logo_login_path'] = null;
+            $payload['logo_login_original_name'] = null;
+        }
+
+        $logoPathEsperado = null;
+
+        if ($this->logoLogin instanceof TemporaryUploadedFile) {
+            $logoPath = $this->persistLogoLoginFile($previousPath);
+            if ($logoPath === null) {
+                return false;
+            }
+
+            $payload['logo_login_path'] = $logoPath;
+            $payload['logo_login_original_name'] = (string) $this->logoLogin->getClientOriginalName();
+            $logoPathEsperado = $logoPath;
+        }
+
+        if ($payload === []) {
+            return true;
+        }
+
+        $preparado = PersistenciaColumnas::prepararPayload('ento', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            $this->reportarColumnasEntoFaltantes($preparado['columnas_con_valor_sin_columna']);
+
+            return false;
+        }
+
+        try {
+            Ento::query()->update($preparado['payload']);
+        } catch (QueryException $e) {
+            Log::warning('parametros-sistema: error al guardar logo institucional de login', [
+                'message' => $e->getMessage(),
+            ]);
+            $this->reportarErrorPersistenciaEnto(
+                'logoLogin',
+                PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el logo institucional de login. Intente nuevamente.',
+            );
+
+            return false;
+        }
+
+        if ($logoPathEsperado !== null) {
+            $persistido = trim((string) Ento::query()
+                ->whereNotNull('logo_login_path')
+                ->where('logo_login_path', '<>', '')
+                ->orderBy('idNivel')
+                ->value('logo_login_path'));
+
+            if ($persistido !== $logoPathEsperado) {
+                $this->addError(
+                    'logoLogin',
+                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_login_path y ento.logo_login_original_name.'
+                );
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Guarda el logo institucional de login en storage/app/public/ento/logos/{tenant}/institucional/.
+     *
+     * @return string|null Ruta relativa al disco public, o null si falló.
+     */
+    private function persistLogoLoginFile(string $previousPath): ?string
+    {
+        if (! $this->logoLogin instanceof TemporaryUploadedFile) {
+            return null;
+        }
+
+        $dir = 'ento/logos/'.tenantSlug().'/institucional';
+        $ext = strtolower((string) $this->logoLogin->getClientOriginalExtension());
+        if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            $ext = 'jpg';
+        }
+        $filename = 'logo.'.$ext;
+
+        $disk = Storage::disk('public');
+
+        try {
+            $disk->makeDirectory($dir, 0755, true);
+
+            $newPath = $this->logoLogin->storeAs($dir, $filename, 'public');
+        } catch (\Throwable $e) {
+            Log::warning('parametros-sistema: error al guardar logo institucional de login', [
+                'dir' => $dir,
+                'message' => $e->getMessage(),
+            ]);
+            $newPath = false;
+        }
+
+        if (! is_string($newPath) || $newPath === '' || ! $disk->exists($newPath)) {
+            $this->addError(
+                'logoLogin',
+                'No se pudo guardar el archivo del logo institucional. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.'
             );
 
             return null;
@@ -601,6 +814,7 @@ class ParametrosSistemaForm extends Component
             'facturacionAfipHabilitada' => $this->facturacionAfipHabilitadaEnTenant(),
             'puedeEditarCamposSiro' => $this->puedeEditarCamposSiro(),
             'logoPreviewUrl' => $this->logoPreviewUrl,
+            'logoLoginPreviewUrl' => $this->logoLoginPreviewUrl,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
     }
 
@@ -767,6 +981,7 @@ class ParametrosSistemaForm extends Component
         return match ($columna) {
             'idTerlecVerNotas' => 'idTerlecVerNotas',
             'logo_path', 'logo_original_name' => 'logo',
+            'logo_login_path', 'logo_login_original_name' => 'logoLogin',
             default => $columna,
         };
     }

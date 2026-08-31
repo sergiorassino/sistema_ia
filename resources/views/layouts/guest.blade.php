@@ -12,7 +12,7 @@
 </head>
 <body class="h-full antialiased text-neutral-800">
 @php
-    $guestBrandLogo = entoInstitutionalLogoUrlFallback() ?: asset('img/3.png');
+    $guestBrandLogo = guestBrandLogoUrl();
 @endphp
 
 <div class="min-h-screen flex flex-col md:flex-row">

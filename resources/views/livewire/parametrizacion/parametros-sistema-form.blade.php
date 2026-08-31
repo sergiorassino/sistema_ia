@@ -24,11 +24,11 @@
                    class="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
                     Volver
                 </a>
-                <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save,logo"
+                <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save,logo,logoLogin"
                         class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
-                    <span wire:loading.remove wire:target="save,logo">Guardar</span>
+                    <span wire:loading.remove wire:target="save,logo,logoLogin">Guardar</span>
                     <span wire:loading wire:target="save">Guardando…</span>
-                    <span wire:loading wire:target="logo">Subiendo logo…</span>
+                    <span wire:loading wire:target="logo,logoLogin">Subiendo logo…</span>
                 </button>
             </div>
         </div>
@@ -202,6 +202,86 @@
                         @endif
                         <span x-show="! localPreview && ($wire.removeLogo || @js(! $logoPreviewUrl))"
                               class="text-xs text-neutral-400">Sin logo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 border-t border-accent-200 pt-6">
+            <p class="se-section-title mb-1">Logo institucional (login)</p>
+            <p class="mb-4 text-xs text-neutral-500">
+                Se muestra en las pantallas de acceso (personal y estudiantes) cuando aún no hay nivel activo.
+                Es común a todos los niveles del colegio. Si no se carga, el login usa el logo del primer nivel disponible o la imagen genérica del sistema.
+            </p>
+
+            <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
+                 wire:key="logo-login-upload-section"
+                 x-data="{
+                     localPreview: null,
+                     revokeLocalPreview() {
+                         if (this.localPreview) {
+                             URL.revokeObjectURL(this.localPreview);
+                             this.localPreview = null;
+                         }
+                     },
+                     onLogoFileChange(event) {
+                         this.revokeLocalPreview();
+                         const file = event.target.files?.[0];
+                         if (file && /^image\/(jpe?g|png)$/i.test(file.type)) {
+                             this.localPreview = URL.createObjectURL(file);
+                         }
+                     }
+                 }"
+                 x-on:parametros-logo-guardado.window="revokeLocalPreview()">
+                <div class="space-y-3">
+                    <div>
+                        <label class="form-label">Subir logo institucional</label>
+                        <input wire:model="logoLogin" type="file" accept="image/jpeg,image/png"
+                               class="form-input mt-1.5 @error('logoLogin') border-red-400 @enderror"
+                               x-on:change="onLogoFileChange($event)"
+                               x-on:livewire-upload-error.window="
+                                   if ($event.detail?.property === 'logoLogin') {
+                                       revokeLocalPreview();
+                                       $wire.onLogoLoginUploadFailed();
+                                   }
+                               ">
+                        <p wire:loading wire:target="logoLogin" class="mt-1 text-xs font-medium text-primary-700">
+                            Subiendo archivo… espere a que termine antes de pulsar Guardar.
+                        </p>
+                        @error('logoLogin') <p class="form-error">{{ $message }}</p> @enderror
+                        <p class="mt-1 text-xs text-neutral-500">JPG/JPEG/PNG · máx. 2&nbsp;MB · se replica en todos los niveles.</p>
+                    </div>
+
+                    <label class="inline-flex cursor-pointer items-center gap-2">
+                        <input type="checkbox" wire:model.live="removeLogoLogin"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500"
+                               x-on:change="if ($event.target.checked) revokeLocalPreview()">
+                        <span class="text-xs text-neutral-600">Quitar logo institucional actual</span>
+                    </label>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Vista previa</p>
+                    <div @class([
+                        'flex min-h-[120px] items-center justify-center rounded-2xl border border-accent-200 bg-white p-4',
+                        'se-logo-preview--emblema' => schoolLogoEsEmblema(),
+                    ])>
+                        <img x-show="localPreview" x-bind:src="localPreview" alt="Logo institucional"
+                             @class([
+                                 'object-contain',
+                                 'h-28 w-28' => schoolLogoEsEmblema(),
+                                 'max-h-28' => ! schoolLogoEsEmblema(),
+                             ])>
+                        @if ($logoLoginPreviewUrl)
+                            <img x-show="! localPreview && ! $wire.removeLogoLogin" src="{{ $logoLoginPreviewUrl }}" alt="Logo institucional"
+                                 @class([
+                                     'object-contain',
+                                     'h-28 w-28' => schoolLogoEsEmblema(),
+                                     'max-h-28' => ! schoolLogoEsEmblema(),
+                                 ])>
+                        @endif
+                        <span x-show="! localPreview && ($wire.removeLogoLogin || @js(! $logoLoginPreviewUrl))"
+                              class="text-xs text-neutral-400">Sin logo institucional</span>
                     </div>
                 </div>
             </div>

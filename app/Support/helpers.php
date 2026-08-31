@@ -401,6 +401,53 @@ if (! function_exists('studentLogoUrl')) {
     }
 }
 
+if (! function_exists('entoLoginLogoStoragePath')) {
+    /**
+     * Logo institucional de login (`ento.logo_login_path`), replicado en todos los niveles.
+     */
+    function entoLoginLogoStoragePath(): ?string
+    {
+        $path = Ento::query()
+            ->whereNotNull('logo_login_path')
+            ->where('logo_login_path', '<>', '')
+            ->orderBy('idNivel')
+            ->value('logo_login_path');
+
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        $path = trim($path);
+        if (! publicStorageRelativePathExists($path)) {
+            return null;
+        }
+
+        return $path;
+    }
+}
+
+if (! function_exists('entoLoginLogoUrl')) {
+    function entoLoginLogoUrl(): ?string
+    {
+        $path = entoLoginLogoStoragePath();
+
+        return $path !== null ? Storage::disk('public')->url($path) : null;
+    }
+}
+
+if (! function_exists('guestBrandLogoUrl')) {
+    /**
+     * Logo en pantallas de login (staff y alumnos): logo institucional de login,
+     * primer logo por nivel, o imagen genérica del sistema.
+     */
+    function guestBrandLogoUrl(): string
+    {
+        return entoLoginLogoUrl()
+            ?: entoInstitutionalLogoUrlFallback()
+            ?: asset('img/3.png');
+    }
+}
+
 if (! function_exists('entoInstitutionalLogoStoragePath')) {
     /**
      * Primer `logo_path` definido en `ento` (cualquier nivel).
