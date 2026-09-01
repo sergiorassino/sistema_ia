@@ -27,9 +27,11 @@ use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesPdfContr
 use App\Http\Controllers\CalificacionesSecundario\BoletinEpqSecundarioLotePdfController;
 use App\Http\Controllers\CalificacionesSecundario\BoletinEpqSecundarioPdfController;
 use App\Http\Controllers\CalificacionesSecundario\CargaCalificacionesEpqSecundarioPdfController;
+use App\Http\Controllers\CalificacionesSecundario\CalifSecundarioFotoCarnetController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesEpqSecundarioPdfController;
 use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfController;
 use App\Http\Controllers\PortalDocente\PortalDocenteCargaCalificacionesEpqSecundarioPdfController;
+use App\Http\Controllers\PortalDocente\PortalDocenteFotoCarnetController;
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesDatosExcelController;
@@ -508,6 +510,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/calificaciones/{curso}/{materia}/pdf', PortalDocentePlanillaCalificacionesPdfController::class)
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.calificaciones.pdf');
+    Route::get('/foto-carnet/{ref}', PortalDocenteFotoCarnetController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('portalDocente.fotoCarnet');
 
     Route::get('/calificaciones-epq/{curso}/{materia}', CargaCalificacionesEpqSecundario::class)
         ->whereNumber(['curso', 'materia'])
@@ -1297,6 +1302,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/calificaciones-secundario/carga', CargaCalificacionesSecundario::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesSecundario.carga');
+    Route::get('/calificaciones-secundario/foto-carnet/{ref}', CalifSecundarioFotoCarnetController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('calificacionesSecundario.fotoCarnet');
     Route::get('/calificaciones-secundario-epq/carga', CargaCalificacionesEpqSecundario::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::CALIF_CARGA)
         ->name('calificacionesSecundarioEpq.carga');

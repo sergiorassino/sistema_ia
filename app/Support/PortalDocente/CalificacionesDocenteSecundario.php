@@ -47,6 +47,32 @@ final class CalificacionesDocenteSecundario
     }
 
     /**
+     * True si el docente tiene ppc en alguna materia del curso donde el estudiante está matriculado
+     * en el ciclo/nivel de sesión.
+     */
+    public static function profesorTieneAlumnoEnCursosAsignados(int $idProfesor, int $idLegajo): bool
+    {
+        if ($idProfesor < 1 || $idLegajo < 1) {
+            return false;
+        }
+
+        $ctx = schoolCtx();
+
+        return DB::table('matricula as m')
+            ->join('materias as mat', function ($join) {
+                $join->on('mat.idCursos', '=', 'm.idCursos')
+                    ->on('mat.idTerlec', '=', 'm.idTerlec');
+            })
+            ->join('ppc', 'ppc.idMateria', '=', 'mat.id')
+            ->where('m.idLegajos', $idLegajo)
+            ->where('m.idTerlec', (int) $ctx->idTerlec)
+            ->where('mat.idNivel', (int) $ctx->idNivel)
+            ->where('mat.idTerlec', (int) $ctx->idTerlec)
+            ->where('ppc.idProfesor', $idProfesor)
+            ->exists();
+    }
+
+    /**
      * Materias a cargo del docente según ppc (ciclo y nivel de sesión).
      *
      * @return list<object{

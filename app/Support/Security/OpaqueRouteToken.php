@@ -74,6 +74,10 @@ final class OpaqueRouteToken
 
     public const PURPOSE_LEGAJO_FOTO_CARNET = 'abm.legajos.foto-carnet';
 
+    public const PURPOSE_PORTAL_DOCENTE_FOTO_CARNET = 'portal-docente.foto-carnet';
+
+    public const PURPOSE_CALIF_SECUNDARIO_FOTO_CARNET = 'calificaciones-secundario.foto-carnet';
+
     public const PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO = 'examenes.materias-adeudadas-por-curso';
 
     public const PURPOSE_EXT_ACTIVIDAD = 'ext.actividad';
@@ -272,6 +276,30 @@ final class OpaqueRouteToken
     public static function forLegajoFotoCarnet(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_LEGAJO_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    public static function forPortalDocenteFotoCarnet(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_PORTAL_DOCENTE_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    public static function decodePortalDocenteFotoCarnet(string $ref): ?int
+    {
+        $decoded = self::decode($ref, self::PURPOSE_PORTAL_DOCENTE_FOTO_CARNET);
+
+        return $decoded !== null ? (int) $decoded['id'] : null;
+    }
+
+    public static function forCalifSecundarioFotoCarnet(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_CALIF_SECUNDARIO_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    public static function decodeCalifSecundarioFotoCarnet(string $ref): ?int
+    {
+        $decoded = self::decode($ref, self::PURPOSE_CALIF_SECUNDARIO_FOTO_CARNET);
+
+        return $decoded !== null ? (int) $decoded['id'] : null;
     }
 
     public static function forExtActividad(int $idActividad): string

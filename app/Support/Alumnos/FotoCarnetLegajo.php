@@ -5,6 +5,8 @@ namespace App\Support\Alumnos;
 use App\Models\CampoLegajo;
 use App\Models\Legajo;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\Security\OpaqueRouteToken;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -187,7 +189,8 @@ final class FotoCarnetLegajo
 
     public static function rutaAbsoluta(?string $pathRelativo): ?string
     {
-        $path = trim((string) $pathRelativo);
+        $path = str_replace('\\', '/', trim((string) $pathRelativo));
+        $path = ltrim($path, '/');
         if ($path === '') {
             return null;
         }
@@ -198,6 +201,88 @@ final class FotoCarnetLegajo
         }
 
         return $disk->path($path);
+    }
+
+    /**
+     * Resuelve el archivo: path de BD, o `ento/foto-carnet/{tenant}/{dni}.jpg`, o el mismo DNI en otra carpeta de tenant.
+     */
+    public static function rutaAbsolutaConRespaldo(?string $pathRelativo, string|int|null $dni = null): ?string
+    {
+        $abs = self::rutaAbsoluta($pathRelativo);
+        if ($abs !== null) {
+            return $abs;
+        }
+
+        $dniArchivo = self::dniParaNombreArchivo($dni);
+        if ($dniArchivo === '') {
+            return $abs;
+        }
+
+        $candidatos = [
+            'ento/foto-carnet/'.tenantSlug().'/'.$dniArchivo.'.jpg',
+            'ento/foto-carnet/'.tenantSlug().'/'.$dniArchivo.'.jpeg',
+            'ento/foto-carnet/'.tenantSlug().'/'.$dniArchivo.'.png',
+        ];
+        foreach ($candidatos as $candidato) {
+            $abs = self::rutaAbsoluta($candidato);
+            if ($abs !== null) {
+                return $abs;
+            }
+        }
+
+        $disk = Storage::disk(self::DISK);
+        if (! $disk->exists('ento/foto-carnet')) {
+            return null;
+        }
+
+        foreach ($disk->directories('ento/foto-carnet') as $dir) {
+            foreach (['jpg', 'jpeg', 'png'] as $ext) {
+                $candidato = $dir.'/'.$dniArchivo.'.'.$ext;
+                $abs = self::rutaAbsoluta($candidato);
+                if ($abs !== null) {
+                    return $abs;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Vista previa embebida desde un legajo (path en BD + respaldo por DNI).
+     */
+    public static function dataUrlDesdeLegajo(?object $legajo): ?string
+    {
+        if ($legajo === null) {
+            return null;
+        }
+
+        $path = trim((string) ($legajo->{self::COLUMNA} ?? ''));
+        if ($path === '') {
+            foreach (get_object_vars($legajo) as $clave => $valor) {
+                if (strtolower((string) $clave) === strtolower(self::COLUMNA)) {
+                    $path = trim((string) $valor);
+                    break;
+                }
+            }
+        }
+        $dni = $legajo->dni ?? $legajo->DNI ?? null;
+        $abs = self::rutaAbsolutaConRespaldo($path !== '' ? $path : null, $dni);
+        if ($abs === null) {
+            return null;
+        }
+
+        $bin = @file_get_contents($abs);
+        if ($bin === false || $bin === '') {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($abs, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            default => 'image/jpeg',
+        };
+
+        return 'data:'.$mime.';base64,'.base64_encode($bin);
     }
 
     /**
@@ -233,6 +318,77 @@ final class FotoCarnetLegajo
         $mtime = @filemtime(self::rutaAbsoluta($pathRelativo) ?? '') ?: time();
 
         return $url.(str_contains($url, '?') ? '&' : '?').'v='.$mtime;
+    }
+
+    /**
+     * URL de foto carnet para el Menú de Docentes (token opaco, sin ID en la ruta).
+     * No exige que el archivo exista al armar la URL: el controlador relee `legajos.fotoCarnet`.
+     */
+    public static function urlVerPortalDocente(int $idLegajo, ?string $pathRelativo = null): ?string
+    {
+        if ($idLegajo <= 0) {
+            return null;
+        }
+
+        return self::urlVerConRutaOpaca(
+            $idLegajo,
+            $pathRelativo,
+            'portalDocente.fotoCarnet',
+            OpaqueRouteToken::forPortalDocenteFotoCarnet($idLegajo),
+        );
+    }
+
+    /**
+     * URL de foto carnet en carga de calificaciones (Secretaría). Token opaco.
+     */
+    public static function urlVerCargaSecretaria(int $idLegajo, ?string $pathRelativo = null): ?string
+    {
+        if ($idLegajo <= 0) {
+            return null;
+        }
+
+        return self::urlVerConRutaOpaca(
+            $idLegajo,
+            $pathRelativo,
+            'calificacionesSecundario.fotoCarnet',
+            OpaqueRouteToken::forCalifSecundarioFotoCarnet($idLegajo),
+        );
+    }
+
+    /**
+     * @param  non-empty-string  $nombreRuta
+     */
+    private static function urlVerConRutaOpaca(
+        int $idLegajo,
+        ?string $pathRelativo,
+        string $nombreRuta,
+        string $ref,
+    ): ?string {
+        if ($idLegajo <= 0) {
+            return null;
+        }
+
+        $abs = self::rutaAbsoluta($pathRelativo);
+        $url = route($nombreRuta, ['ref' => $ref], false);
+        $mtime = $abs !== null ? (@filemtime($abs) ?: time()) : time();
+
+        return $url.(str_contains($url, '?') ? '&' : '?').'v='.$mtime;
+    }
+
+    public static function respuestaHttp(?string $pathRelativo): BinaryFileResponse
+    {
+        $abs = self::rutaAbsoluta($pathRelativo);
+        abort_unless($abs !== null && is_file($abs), 404);
+
+        $mime = match (strtolower(pathinfo($abs, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            default => 'image/jpeg',
+        };
+
+        return response()->file($abs, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 
     /**

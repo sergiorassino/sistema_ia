@@ -6,8 +6,64 @@
     $mensajeNotasOff = $mensajeNotasOff ?? '';
     $pdfUrl = $pdfUrl ?? null;
     $urlLista = $urlLista ?? null;
+    $modalFotoEstudiante = $modalFotoEstudiante ?? false;
 @endphp
-<div>
+<div
+    @if ($modalFotoEstudiante)
+        x-data="{
+            fotoOpen: false,
+            fotoNombre: '',
+            fotoUrl: '',
+            fotoLoaded: false,
+            fotoError: false,
+            fotoCargando: false,
+            fotoCargandoId: null,
+            abrirFoto(nombre, url) {
+                this.fotoNombre = nombre || this.fotoNombre;
+                this.fotoCargando = false;
+                this.fotoCargandoId = null;
+                if (!url) {
+                    this.fotoUrl = '';
+                    this.fotoLoaded = false;
+                    this.fotoError = true;
+                    this.fotoOpen = true;
+                    return;
+                }
+                const img = new Image();
+                img.onload = () => {
+                    this.fotoUrl = url;
+                    this.fotoLoaded = true;
+                    this.fotoError = false;
+                    this.fotoOpen = true;
+                };
+                img.onerror = () => {
+                    this.fotoUrl = '';
+                    this.fotoLoaded = false;
+                    this.fotoError = true;
+                    this.fotoOpen = true;
+                };
+                img.src = url;
+            },
+            pedirFoto(idCalif, nombre) {
+                this.fotoNombre = nombre || '';
+                this.fotoUrl = '';
+                this.fotoLoaded = false;
+                this.fotoError = false;
+                this.fotoCargando = true;
+                this.fotoCargandoId = idCalif;
+                this.fotoOpen = false;
+                $wire.mostrarFotoEstudiante(idCalif);
+            },
+            cerrarFoto() {
+                this.fotoOpen = false;
+                this.fotoCargando = false;
+                this.fotoCargandoId = null;
+            }
+        }"
+        x-on:keydown.escape.window="fotoOpen && cerrarFoto()"
+        x-on:se-calif-foto.window="abrirFoto($event.detail.nombre, $event.detail.url)"
+    @endif
+>
 <div class="mx-auto w-full max-w-[98rem] space-y-6">
     <style>
         /* Override inline para evitar “celdas enormes” por estilos globales/caché.
@@ -32,6 +88,20 @@
             box-sizing: border-box !important;
         }
         table.se-calif-grid input[type="checkbox"]{ height: 14px !important; width: 14px !important; }
+        table.se-calif-grid button.se-calif-nombre {
+            height: 18px;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+            border: 0;
+            background: transparent;
+            font-size: 10px;
+            line-height: 1.15;
+            text-align: left;
+            color: #40848D;
+            cursor: pointer;
+        }
+        table.se-calif-grid button.se-calif-nombre:hover { text-decoration: underline; }
     </style>
     <section class="se-hero">
         <div class="se-hero-inner flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -213,15 +283,26 @@
                                     {{ $row['ord'] ?? '' }}
                                 </td>
                                 <td class="border border-accent-200 px-1 py-0.5 text-neutral-800 bg-accent-50/80">
-                                    <input
-                                        type="text"
-                                        readonly
-                                        aria-readonly="true"
-                                        tabindex="-1"
-                                        class="w-full bg-transparent border-0 p-0 m-0 text-[10px] leading-tight text-neutral-800 truncate focus:outline-none focus:ring-0"
-                                        value="{{ $row['alumno'] ?? '—' }}"
-                                        title="{{ $row['alumno'] ?? '—' }}"
-                                    />
+                                    @if ($modalFotoEstudiante)
+                                        <button
+                                            type="button"
+                                            class="se-calif-nombre w-full truncate disabled:opacity-60"
+                                            title="Ver foto — {{ $row['alumno'] ?? '—' }}"
+                                            data-nombre="{{ $row['alumno'] ?? '' }}"
+                                            x-bind:disabled="fotoCargando && fotoCargandoId === {{ (int) $row['id'] }}"
+                                            x-on:click="pedirFoto({{ (int) $row['id'] }}, $el.getAttribute('data-nombre') || '')"
+                                        ><span x-show="!(fotoCargando && fotoCargandoId === {{ (int) $row['id'] }})">{{ $row['alumno'] ?? '—' }}</span><span x-show="fotoCargando && fotoCargandoId === {{ (int) $row['id'] }}" x-cloak class="text-neutral-500">Cargando…</span></button>
+                                    @else
+                                        <input
+                                            type="text"
+                                            readonly
+                                            aria-readonly="true"
+                                            tabindex="-1"
+                                            class="w-full bg-transparent border-0 p-0 m-0 text-[10px] leading-tight text-neutral-800 truncate focus:outline-none focus:ring-0"
+                                            value="{{ $row['alumno'] ?? '—' }}"
+                                            title="{{ $row['alumno'] ?? '—' }}"
+                                        />
+                                    @endif
                                 </td>
 
                                 @php
@@ -350,5 +431,42 @@
             'modalWireKey' => 'modal-notas-off-carga',
             'modalTituloId' => 'modal-notas-off-titulo',
         ])
+    @endif
+
+    @if ($modalFotoEstudiante)
+        @teleport('body')
+        <div x-show="fotoOpen"
+             x-cloak
+             class="fixed inset-0 z-[1100] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="se-calif-foto-titulo">
+            <div class="absolute inset-0 bg-neutral-900/55"
+                 x-on:click="cerrarFoto()"
+                 aria-hidden="true"></div>
+            <div class="relative z-10 my-auto flex w-full max-w-xs max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl border border-accent-200 bg-white shadow-xl ring-1 ring-black/5"
+                 x-on:click.stop>
+                <div class="flex shrink-0 items-start justify-between gap-3 border-b border-accent-200 px-4 py-3">
+                    <h3 id="se-calif-foto-titulo" class="min-w-0 text-sm font-bold leading-snug text-neutral-900" x-text="fotoNombre"></h3>
+                    <button type="button"
+                            class="shrink-0 rounded-lg p-1 text-neutral-500 hover:bg-accent-50 hover:text-neutral-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            x-on:click="cerrarFoto()"
+                            aria-label="Cerrar">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex min-h-[min(70dvh,22rem)] min-w-[12rem] flex-1 items-center justify-center bg-accent-50 px-4 py-4">
+                    <img x-show="fotoUrl && fotoLoaded && !fotoError"
+                         :src="fotoUrl"
+                         :alt="fotoNombre"
+                         class="max-h-[min(70dvh,22rem)] w-auto max-w-full rounded-lg object-contain"
+                         x-cloak>
+                    <p x-show="fotoError" class="text-sm text-neutral-600">Sin foto</p>
+                </div>
+            </div>
+        </div>
+        @endteleport
     @endif
 </div>

@@ -4,6 +4,8 @@ namespace App\Livewire\CalificacionesSecundario;
 
 use App\Livewire\Concerns\AvisoCargaNotasOffEnto;
 use App\Models\Curso;
+use App\Models\Legajo;
+use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
@@ -13,6 +15,7 @@ use App\Support\PromedioAnualCalificacionesSecundario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Js;
 use Livewire\Component;
@@ -231,6 +234,18 @@ class CargaCalificacionesSecundario extends Component
             ListadoCursoCondicionFiltro::REGULARES
         );
 
+        $conFoto = $this->modalFotoEstudianteHabilitado();
+        $columnas = [
+                'c.id',
+                'c.ord',
+                'c.idLegajos',
+                'l.apellido',
+                'l.nombre',
+        ];
+        if ($conFoto) {
+            $columnas[] = 'l.'.FotoCarnetLegajo::COLUMNA;
+        }
+
         // Join con `legajos` (nombre) y `matricula` (solo regulares: idCondiciones = 1).
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
@@ -242,11 +257,7 @@ class CargaCalificacionesSecundario extends Component
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
-            ->get([
-                'c.id',
-                'c.ord',
-                'l.apellido',
-                'l.nombre',
+            ->get(array_merge($columnas, [
                 'c.ic01', 'c.ic02', 'c.ic03',
                 'c.ic04', 'c.ic05', 'c.ic06',
                 'c.ic07', 'c.ic08', 'c.ic09',
@@ -257,13 +268,13 @@ class CargaCalificacionesSecundario extends Component
                 'c.ic22', 'c.ic23', 'c.ic24',
                 'c.ic25', 'c.ic26', 'c.ic27', 'c.ic28',
                 'c.dic', 'c.feb', 'c.tea', 'c.calif',
-            ]);
+            ]));
 
         $out = [];
         $nro = 1;
         foreach ($califs as $r) {
             $id = (int) $r->id;
-            $out[$id] = [
+            $fila = [
                 'id' => $id,
                 'ord' => $nro++,
                 'alumno' => trim(((string) $r->apellido).', '.((string) $r->nombre)),
@@ -300,9 +311,41 @@ class CargaCalificacionesSecundario extends Component
                 'calif' => (string) ($r->calif ?? ''),
                 'tea' => ((int) ($r->tea ?? 0)) === 1,
             ];
+            if ($conFoto) {
+                $idLegajo = (int) $this->valorAtributoFila($r, 'idLegajos');
+                $pathFoto = (string) $this->valorAtributoFila($r, FotoCarnetLegajo::COLUMNA);
+                $fila['fotoUrl'] = (
+                    $this->modoPortalDocente
+                        ? FotoCarnetLegajo::urlVerPortalDocente($idLegajo, $pathFoto)
+                        : FotoCarnetLegajo::urlVerCargaSecretaria($idLegajo, $pathFoto)
+                ) ?? '';
+            }
+            $out[$id] = $fila;
         }
 
         return $out;
+    }
+
+    /** Foto carnet habilitada en solapas del colegio (Caixal SF, IESS, etc.). */
+    protected function modalFotoEstudianteHabilitado(): bool
+    {
+        return FotoCarnetLegajo::habilitadaEnSolapasLegajo();
+    }
+
+    protected function valorAtributoFila(object $fila, string $nombre): mixed
+    {
+        if (isset($fila->{$nombre})) {
+            return $fila->{$nombre};
+        }
+
+        $lower = strtolower($nombre);
+        foreach (get_object_vars($fila) as $clave => $valor) {
+            if (strtolower((string) $clave) === $lower) {
+                return $valor;
+            }
+        }
+
+        return null;
     }
 
     protected function resetNotasPermitidas(): void
@@ -372,6 +415,81 @@ class CargaCalificacionesSecundario extends Component
             ),
             static fn (string $n) => $n !== ''
         ));
+    }
+
+    /**
+     * Abre la foto carnet del estudiante (misma fuente que el ABM de legajos).
+     * `skipRender` para no remorphear la planilla; el modal recibe la data-URL por evento.
+     */
+    public function mostrarFotoEstudiante(int $idCalificacion): void
+    {
+        $this->skipRender();
+
+        if (! $this->modalFotoEstudianteHabilitado() || $idCalificacion < 1) {
+            $this->emitirFotoModal('', '');
+
+            return;
+        }
+
+        if (! $this->modoPortalDocente) {
+            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
+        }
+
+        $this->ensureScopeOr404();
+
+        $ctx = schoolCtx();
+        $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+
+        $select = [
+            'l.id as id_legajo',
+            'l.apellido',
+            'l.nombre',
+        ];
+        if (Schema::hasColumn('legajos', 'dni')) {
+            $select[] = 'l.dni';
+        }
+        if (FotoCarnetLegajo::columnaDisponible()) {
+            $select[] = 'l.'.FotoCarnetLegajo::COLUMNA;
+        }
+
+        $row = DB::table('calificaciones as c')
+            ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
+            ->join('matricula as m', 'm.id', '=', 'c.idMatricula')
+            ->where('c.id', $idCalificacion)
+            ->where('c.idTerlec', (int) $ctx->idTerlec)
+            ->where('c.idCursos', (int) $this->cursoId)
+            ->where('c.idMaterias', (int) $this->materiaId)
+            ->whereIn('m.idCondiciones', $idsCondicionesRegulares)
+            ->first($select);
+
+        if ($row === null) {
+            $this->emitirFotoModal('', '');
+
+            return;
+        }
+
+        $idLegajo = (int) $this->valorAtributoFila($row, 'id_legajo');
+        $nombre = trim(
+            ((string) $this->valorAtributoFila($row, 'apellido')).', '
+            .((string) $this->valorAtributoFila($row, 'nombre'))
+        );
+
+        $legajo = $idLegajo > 0 ? Legajo::query()->find($idLegajo) : null;
+        $dataUrl = FotoCarnetLegajo::dataUrlDesdeLegajo($legajo);
+        $this->emitirFotoModal($nombre, $dataUrl ?? '');
+    }
+
+    protected function emitirFotoModal(string $nombre, string $url): void
+    {
+        $this->js(
+            'window.dispatchEvent(new CustomEvent("se-calif-foto",{detail:{nombre:'
+            .\Illuminate\Support\Js::from($nombre)
+            .',url:'
+            .\Illuminate\Support\Js::from($url)
+            .'}}))'
+        );
     }
 
     /**
@@ -634,6 +752,9 @@ class CargaCalificacionesSecundario extends Component
                 'urlLista',
                 'rows',
             ),
+            [
+                'modalFotoEstudiante' => $this->modalFotoEstudianteHabilitado(),
+            ],
             $this->datosVistaAvisoCargaNotasOff($this->modoPortalDocente),
         );
 

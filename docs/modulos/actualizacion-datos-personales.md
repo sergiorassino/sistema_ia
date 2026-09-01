@@ -63,7 +63,8 @@ La solapa del legajo y la carga en autogestión son **independientes**:
 | Dónde | Qué lo habilita |
 |-------|-----------------|
 | **Menú de Secretaría** (ABM de legajos) | Columna `legajos.fotoCarnet` + campo asignado a una solapa (`campos_legajo.solapa_legajo_id` no nulo). `FotoCarnetLegajo::habilitadaEnSolapasLegajo()`. |
-| **Menú de Alumnos** (Actualización de datos personales) | Lo anterior **y** `autogestion.actualizacion_datos.foto_carnet => true` en `config/tenants/{slug}.php`. Default **off**. `FotoCarnetLegajo::habilitadaEnAutogestion()`. |
+| **Menú de Secretaría / Docentes** (Carga de calificaciones, secundario) | Lo mismo: si hay solapa, el apellido y nombre de la planilla abre un modal con la foto (Alpine, sin round-trip Livewire). Secretaría: `calificacionesSecundario.fotoCarnet`. Docentes: `portalDocente.fotoCarnet`. |
+| **Menú de Alumnos** (Actualización de datos personales) | Solapa **y** `autogestion.actualizacion_datos.foto_carnet => true` en `config/tenants/{slug}.php`. Default **off**. `FotoCarnetLegajo::habilitadaEnAutogestion()`. |
 
 Así se puede cargar la foto desde Secretaría sin mostrarla a la familia.
 
@@ -83,8 +84,8 @@ Para la solapa (ABM):
 
 Tenants:
 
-- **Caixal SF:** Secretaría (solapa) + autogestión (`foto_carnet => true`).
-- **IESS:** solo Secretaría. No activar `foto_carnet` en `config/tenants/iess.php`.
+- **Caixal SF:** Secretaría (solapa) + autogestión (`foto_carnet => true`) + modal de foto en carga de calificaciones (Secretaría y Menú de Docentes, secundario).
+- **IESS:** Secretaría + mismo modal en carga de calificaciones si la solapa está activa. No activar `foto_carnet` en `config/tenants/iess.php`.
 
 Para que la familia también pueda subirla, además:
 
@@ -116,13 +117,16 @@ Para que la familia también pueda subirla, además:
 - `resources/views/livewire/alumnos/partials/destinatario-facturacion-afip.blade.php`
 - `app/Support/MatriculaBloqueos.php`
 - `resources/views/livewire/alumnos/partials/foto-carnet-actualizacion.blade.php`
+- `app/Http/Controllers/PortalDocente/PortalDocenteFotoCarnetController.php`
+- `app/Http/Controllers/CalificacionesSecundario/CalifSecundarioFotoCarnetController.php`
+- `resources/views/livewire/calificaciones-secundario/carga-calificaciones-secundario.blade.php`
 
 ## Qué no hacer / trampas
 
 - No mostrar documentos institucionales en un tenant SFA con `requiere_documentos => false` (EPQ). No cambiar a `estandar` solo para ocultarlos: se pierde el resto del formulario.
 - No mostrar foto carnet en autogestión solo porque está en solapas: hace falta `foto_carnet` del tenant.
-- No mostrar foto carnet en Secretaría si no está en solapas (aunque la columna exista).
-- No poner IDs de legajo en URLs del portal; la vista previa usa data-URL embebida.
+- No mostrar foto carnet en Secretaría (ABM ni modal de carga) ni en el portal docente si no está en solapas (aunque la columna exista).
+- No poner IDs de legajo en URLs de la foto en carga de calificaciones; Secretaría y docentes usan `OpaqueRouteToken`.
 - No calcular promedios ni tocar calificaciones desde este módulo.
 - No dejar entrar al formulario si hay `bloqmatr` o `bloqadmi`; usar el mensaje de `ento` del nivel, no un texto genérico.
 - **Guión (-) de “no corresponde”:** es un valor válido. Se acepta uno o más guiones (`-`, `--`, `---`) y rayas tipográficas; se normalizan a un solo `-`. Tras un intento de guardado fallido, hay que `resetValidation` en **todos** los campos al editarlos (no solo e-mail); si no, el error de obligatorio queda pegado aunque el usuario ya haya escrito el guión. Normalizar con `ActualizacionDatosPersonalesComun::normalizarTextoInput()`. Si `dnitut`/`dnipad`/`dnimad` es columna numérica, el guión se guarda como `0` y al recargar el formulario se vuelve a mostrar `-`. El `UPDATE` de `legajos` usa `PersistenciaColumnas` (sin falso éxito).
