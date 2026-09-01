@@ -14,12 +14,24 @@
     </p>
 
     <p class="meta">
-        <strong class="meta-alumno">{{ $consulta['alumnoLinea'] }}</strong>
-        @if (trim($consulta['dni']) !== '')
-            &nbsp;Â·&nbsp;D.N.I. {{ $consulta['dni'] }}
+        @php
+            $metaAlumno = trim((string) ($consulta['alumnoLinea'] ?? ''));
+            $metaDni = trim((string) ($consulta['dni'] ?? ''));
+            $metaCurso = trim((string) ($consulta['cursoLabel'] ?? ''));
+            $metaEscrito = false;
+        @endphp
+        @if ($metaAlumno !== '')
+            <span class="meta-lbl">Apellido y Nombre: </span><strong class="meta-dato">{{ $metaAlumno }}</strong>
+            @php $metaEscrito = true; @endphp
         @endif
-        @if (trim($consulta['cursoLabel']) !== '')
-            &nbsp;Â·&nbsp;<strong class="meta-curso">{{ $consulta['cursoLabel'] }}</strong>
+        @if ($metaDni !== '')
+            @if ($metaEscrito)<span class="meta-gap">&nbsp;</span>@endif
+            <span class="meta-lbl">D.N.I.: </span><strong class="meta-dato">{{ $metaDni }}</strong>
+            @php $metaEscrito = true; @endphp
+        @endif
+        @if ($metaCurso !== '')
+            @if ($metaEscrito)<span class="meta-gap">&nbsp;</span>@endif
+            <span class="meta-lbl">Curso: </span><strong class="meta-dato">{{ $metaCurso }}</strong>
         @endif
     </p>
 
@@ -42,8 +54,8 @@
         };
         /*
          * Anchos en % en cada th/td (Dompdf).
-         * Eval: 10% menos que 8.1% base, y un achique extra del bloque N+R1+R2; lo ahorrado extra va solo a Prom. Final.
-         * El primer ahorro (8Ã—0.81%) sigue repartido en Dic/Feb/Prom por igual (+2.16% c/u en coloquios y prom).
+         * Eval: 10% menos que 8.1% base, y un achique extra del bloque N+R1+R2; lo ahorrado extra va solo a Calific. Final.
+         * El primer ahorro (8×0.81%) sigue repartido en Dic/Feb/Calific. por igual (+2.16% c/u en coloquios y calific.).
          */
         $wEvPctNarrow = 7.05;
         $wEvPctBase = 8.1 * 0.9;
@@ -95,7 +107,7 @@
             </th>
             <th class="bay bay-col" style="{{ $wDicCell }}">Coloq.<br>Dic</th>
             <th class="bay bay-col" style="{{ $wFebCell }}">Coloq.<br>Feb</th>
-            <th class="bay bay-col" style="{{ $wPromCell }}">Prom.<br>Final</th>
+            <th class="bay bay-col" style="{{ $wPromCell }}">Calific.<br>Final</th>
         </tr>
         </thead>
         <tbody>

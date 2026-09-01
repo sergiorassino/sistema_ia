@@ -61,8 +61,9 @@
         }
         .subtitulo { text-align: center; margin: 0 0 5px 0; font-size: 6.5pt; }
         .meta { margin: 0 0 5px 0; font-size: 6.5pt; line-height: 1.25; }
-        .meta strong.meta-alumno { font-size: 8.5pt; }
-        .meta strong.meta-curso { font-size: 6.5pt; font-weight: 700; }
+        .meta .meta-lbl { font-weight: 400; font-size: 6.5pt; }
+        .meta strong.meta-dato { font-size: 7.5pt; font-weight: 700; }
+        .meta .meta-gap { display: inline-block; width: 6mm; }
 
         /* Tabla exterior: separaciÃ³n horizontal entre bloques redondeados */
         table.outer {

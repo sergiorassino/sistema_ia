@@ -1,7 +1,7 @@
 {{--
   Permiso de examen por alumno — DomPDF.
   Anchos de columna: docs/05-preferencias-y-convenciones.md §8
-  Columnas: Nº | Espacios Curriculares | Curso | Plan | Con | Fecha | Calificación | Firma Presidente Mesa
+  Columnas: Nº | Espacios Curriculares | Curso | Plan | Cond. | Fecha | Calificación | Firma Docente
 --}}
 @php
     $wNro = 4;
@@ -153,10 +153,10 @@
                     <th style="{{ $cell($wMateria) }}">Espacios Curriculares</th>
                     <th style="{{ $cell($wCurso) }}">Curso</th>
                     <th style="{{ $cell($wPlan) }}">Plan</th>
-                    <th style="{{ $cell($wCon) }}">Con</th>
+                    <th style="{{ $cell($wCon) }}">Cond.</th>
                     <th style="{{ $cell($wFecha) }}">Fecha</th>
                     <th style="{{ $cell($wCalif) }}">Calificación</th>
-                    <th style="{{ $cell($wFirma) }}">Firma Presidente Mesa</th>
+                    <th style="{{ $cell($wFirma) }}">Firma Docente</th>
                 </tr>
             </thead>
             <tbody>

@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\ProfesorMenuPortal;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Profesor extends Authenticatable
 {
+    /** Rol «Sin Rol» en `profesortipo`. No recibe `permisos_ia`. */
+    public const ID_TIPO_SIN_ROL = 1;
+
     protected $table = 'profesores';
 
     public $timestamps = false;
@@ -67,5 +71,20 @@ class Profesor extends Authenticatable
         }
 
         return $query;
+    }
+
+    /**
+     * Personal al que se asigna `permisos_ia` (Secretaría / Administración).
+     * Excluye «Sin Rol» (`IdTipoProf` = 1) y rol Profesor/a (`IdTipoProf` = 6).
+     */
+    public function scopeElegiblesParaPermisosIa($query)
+    {
+        return $query->where(function ($w) {
+            $w->whereNull('IdTipoProf')
+                ->orWhereNotIn('IdTipoProf', [
+                    self::ID_TIPO_SIN_ROL,
+                    ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA,
+                ]);
+        });
     }
 }

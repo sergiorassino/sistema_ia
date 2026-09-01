@@ -11,9 +11,6 @@ use Livewire\Component;
 
 class PermisosUsuariosIndex extends Component
 {
-    /** IdTipoProf que identifica «Sin Rol» en la tabla profesortipo. */
-    private const ID_TIPO_SIN_ROL = 1;
-
     public string $q = '';
 
     public ?int $profesorId = null;
@@ -86,11 +83,13 @@ class PermisosUsuariosIndex extends Component
 
         $origen = Profesor::query()
             ->where('nivel', $nivel)
+            ->elegiblesParaPermisosIa()
             ->whereKey($this->copiarOrigenId)
             ->firstOrFail(['id', 'apellido', 'nombre', 'permisos_ia']);
 
         $destino = Profesor::query()
             ->where('nivel', $nivel)
+            ->elegiblesParaPermisosIa()
             ->whereKey($this->copiarDestinoId)
             ->firstOrFail(['id', 'permisos_ia']);
 
@@ -98,6 +97,7 @@ class PermisosUsuariosIndex extends Component
 
         Profesor::query()
             ->where('nivel', $nivel)
+            ->elegiblesParaPermisosIa()
             ->whereKey($destino->id)
             ->update(['permisos_ia' => $cadena]);
 
@@ -145,10 +145,7 @@ class PermisosUsuariosIndex extends Component
 
         return Profesor::query()
             ->where('nivel', $nivel)
-            ->where(function ($w) {
-                $w->whereNull('IdTipoProf')
-                    ->orWhere('IdTipoProf', '<>', self::ID_TIPO_SIN_ROL);
-            })
+            ->elegiblesParaPermisosIa()
             ->when($term !== '', function ($q) use ($term) {
                 $like = '%' . $term . '%';
                 $q->where(function ($w) use ($like) {
@@ -173,9 +170,13 @@ class PermisosUsuariosIndex extends Component
         if ($this->profesorId) {
             $profesorSeleccionado = Profesor::query()
                 ->where('nivel', $nivel)
+                ->elegiblesParaPermisosIa()
                 ->whereKey($this->profesorId)
                 ->with(['tipo:id,tipo'])
                 ->first(['id', 'dni', 'nombre', 'apellido', 'IdTipoProf']);
+            if ($profesorSeleccionado === null) {
+                $this->profesorId = null;
+            }
         }
 
         return view('livewire.administracion.permisos.usuarios-index', [

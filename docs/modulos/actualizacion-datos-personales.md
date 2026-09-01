@@ -44,10 +44,22 @@ Persistencia y compresión: `FotoCarnetLegajo` (disco `privado`). Helper: `tenan
 
 En celular, `accept="image/jpeg,image/png"` abre solo Fotos/Galería. El control usa dos acciones: **Tomar foto** (`capture` + `image/*`, cámara) y **Galería**. Máx. 8 MB al subir; se comprime al guardar. La foto no queda en el legajo hasta pulsar Guardar.
 
-Para la solapa (ABM), como en Caixal SF: ejecutar
-`database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql` en la BD del tenant
-(o crear la solapa y asignar el campo en Parametrización → Solapas del legajo /
-Campos del listado de alumnos). Para que la familia también pueda subirla, además:
+Para la solapa (ABM):
+
+- **IESS:** `php artisan migrate` con `TENANT_SLUG=iess` (migración
+  `2026_09_01_120000_seed_solapa_foto_carnet_iess`). En otros tenants esa
+  migración no hace nada.
+- **Otros colegios (p. ej. Caixal SF):** ejecutar
+  `database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql` en la BD del tenant
+  (o crear la solapa y asignar el campo en Parametrización → Solapas del legajo /
+  Campos del listado de alumnos).
+
+Tenants:
+
+- **Caixal SF:** Secretaría (solapa) + autogestión (`foto_carnet => true`).
+- **IESS:** solo Secretaría. No activar `foto_carnet` en `config/tenants/iess.php`.
+
+Para que la familia también pueda subirla, además:
 
 ```php
 // config/tenants/{slug}.php

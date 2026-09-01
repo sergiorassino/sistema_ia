@@ -49,6 +49,7 @@ class PermisosUsuarioEditor extends Component
     {
         $profesor = Profesor::query()
             ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
+            ->elegiblesParaPermisosIa()
             ->whereKey($this->profesorId)
             ->firstOrFail(['id', 'permisos_ia']);
 
@@ -61,6 +62,7 @@ class PermisosUsuarioEditor extends Component
 
         $actualizado = Profesor::query()
             ->where('nivel', (int) (schoolCtx()->idNivel ?? 0))
+            ->elegiblesParaPermisosIa()
             ->whereKey($this->profesorId)
             ->update(['permisos_ia' => $cadena]);
 

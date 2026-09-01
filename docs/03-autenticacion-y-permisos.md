@@ -174,6 +174,9 @@ Al **crear** un legajo nuevo en **Legajos** (`LegajoForm`), el sistema asigna au
 
 - `permisos_ia` — catálogo de permisos del sistema nuevo (`id`, `orden`, `tema`, `descripcion`).
 - `profesores.permisos_ia` — cadena de `0` y `1` (un carácter por cada `orden` del catálogo).
+  La asignación (módulo **Permisos de Usuarios**) lista personal de Secretaría / Administración:
+  excluye rol «Sin Rol» (`IdTipoProf` = 1) y rol **Profesor/a** (`IdTipoProf` = 6). A esos docentes
+  no se les otorga `permisos_ia`; el Menú de Docentes no usa esa cadena.
 - `profesores.permisos` + `permisosusuarios` — legado; **no** usar en módulos nuevos.
 
 Catálogo de referencia en código: `App\Support\PermisosIaCatalog`.

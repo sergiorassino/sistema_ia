@@ -36,10 +36,13 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
     private const ALTURA_ENCABEZADO_INST = 22.0;
 
-    /** Línea meta (alumno / DNI / curso): separadores vs. datos destacados. */
+    /** Línea meta (alumno / DNI / curso): etiquetas vs. datos destacados. */
     private const META_FUENTE_SEP = 6.5;
 
     private const META_FUENTE_DATO = 7.5;
+
+    /** Separación horizontal entre Apellido y Nombre / DNI / Curso. */
+    private const META_GAP_CAMPOS = 6.0;
 
     private const ANCHO_LOGO = 17.0;
 
@@ -52,9 +55,11 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
     private const PIE_FIRMA_W_LINEA = 65.0;
 
-    private const PIE_FIRMA_SEP = 20.0;
+    /** Hueco entre firmas (sello). +10 mm respecto del layout original (20). */
+    private const PIE_FIRMA_SEP = 30.0;
 
-    private const PIE_FIRMA_PADRE_IZQ = 20.0;
+    /** Indentación de la 1.ª firma: 10 mm menos para compensar el hueco extra y no desbordar A4. */
+    private const PIE_FIRMA_IZQ = 10.0;
 
     private const PIE_FIRMA_PADDING_SUP = 10.0;
 
@@ -65,7 +70,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         52.4, // Espacio curricular 19.54%
         18.9, 18.9, 18.9, 18.9, 18.9, 18.9, 18.9, 18.9, // Eval 1-8
         15.5, 15.5, // JIS
-        10.6, 10.6, 14.3, // Coloq Dic, Feb, Prom
+        10.6, 10.6, 14.3, // Coloq Dic, Feb, Calific. Final
     ];
 
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
@@ -77,7 +82,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
     private bool $mostrarFirmas;
 
-    /** Si false, no se dibuja la columna «Prom. Final» (solo layout; no altera datos). */
+    /** Si false, la columna «Calific. Final» se dibuja vacía (no se oculta ni se altera `calif`). */
     private bool $mostrarPromedios;
 
     /**
@@ -227,7 +232,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
     }
 
     /**
-     * Apellido, nombre, DNI y curso en negrita y 1 pt más grande que los separadores.
+     * Apellido y nombre, DNI y curso con etiquetas; valores en negrita y 1 pt más grandes.
      *
      * @param  array<string, mixed>  $consulta
      */
@@ -243,29 +248,27 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
 
         $this->SetTextColor(0, 0, 0);
         $lineHeight = 4.0;
+        $escrito = false;
 
-        if ($alumno !== '') {
-            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
-            $this->Write($lineHeight, $alumno, '', false, 'L', false);
-        }
+        $this->escribirCampoMeta($lineHeight, 'Apellido y Nombre: ', $alumno, $escrito);
+        $this->escribirCampoMeta($lineHeight, 'D.N.I.: ', $dni, $escrito);
+        $this->escribirCampoMeta($lineHeight, 'Curso: ', $curso, $escrito);
+        $this->Ln($lineHeight);
+    }
 
-        if ($dni !== '') {
-            $this->SetFont(self::FUENTE, '', self::META_FUENTE_SEP);
-            $this->Write($lineHeight, ' · D.N.I. ', '', false, 'L', false);
-            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
-            $this->Write($lineHeight, $dni, '', false, 'L', false);
-        }
-
-        if ($curso !== '') {
-            $this->SetFont(self::FUENTE, '', self::META_FUENTE_SEP);
-            $this->Write($lineHeight, ' · ', '', false, 'L', false);
-            $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
-            $this->Write($lineHeight, $curso, '', false, 'L', true);
-
+    private function escribirCampoMeta(float $lineHeight, string $etiqueta, string $valor, bool &$escrito): void
+    {
+        if ($valor === '') {
             return;
         }
-
-        $this->Ln(0);
+        if ($escrito) {
+            $this->SetX($this->GetX() + self::META_GAP_CAMPOS);
+        }
+        $this->SetFont(self::FUENTE, '', self::META_FUENTE_SEP);
+        $this->Write($lineHeight, $etiqueta, '', false, 'L', false);
+        $this->SetFont(self::FUENTE, 'B', self::META_FUENTE_DATO);
+        $this->Write($lineHeight, $valor, '', false, 'L', false);
+        $escrito = true;
     }
 
     /**
@@ -358,10 +361,7 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
             $this->Cell($tw, 2.5, 'R', 0, 1, 'C');
         }
 
-        $titulosCol = [11 => "Coloq.\nDic", 12 => "Coloq.\nFeb"];
-        if ($this->mostrarPromedios) {
-            $titulosCol[13] = "Prom.\nFinal";
-        }
+        $titulosCol = [11 => "Coloq.\nDic", 12 => "Coloq.\nFeb", 13 => "Calific.\nFinal"];
         foreach ($titulosCol as $idx => $txt) {
             $this->dibujarCeldaBay($xs[$idx], $y, self::ANCHOS_COL[$idx], self::ALTURA_ENC, 'D');
             $this->SetFont(self::FUENTE, 'B', 5.1);
@@ -408,12 +408,11 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->Cell(self::ANCHOS_COL[11], 2.5, $this->valorIc($row, 'dic'), 0, 0, 'C');
         $this->SetXY($xs[12], $y + 1);
         $this->Cell(self::ANCHOS_COL[12], 2.5, $this->valorIc($row, 'feb'), 0, 0, 'C');
-        if ($this->mostrarPromedios) {
-            $this->dibujarCeldaBay($xs[13], $y, self::ANCHOS_COL[13], self::ALTURA_FILA, 'D');
-            $this->SetFont(self::FUENTE, 'B', 5.5);
-            $this->SetXY($xs[13], $y + 1);
-            $this->Cell(self::ANCHOS_COL[13], 2.5, $this->valorPromedio($row), 0, 0, 'C');
-        }
+        $this->dibujarCeldaBay($xs[13], $y, self::ANCHOS_COL[13], self::ALTURA_FILA, 'D');
+        $this->SetFont(self::FUENTE, 'B', 5.5);
+        $this->SetXY($xs[13], $y + 1);
+        $textoFinal = $this->mostrarPromedios ? $this->valorPromedio($row) : self::BLANK;
+        $this->Cell(self::ANCHOS_COL[13], 2.5, $textoFinal, 0, 0, 'C');
     }
 
     /**
@@ -546,15 +545,15 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $yLineaBase = $yFirmaCelTop + self::PIE_FIRMA_PADDING_SUP;
 
         $xTablaIzq = $hayPieTexto ? $xColFirmas : $xPag + 50.0;
-        $xPadreLinea = $xTablaIzq + self::PIE_FIRMA_PADRE_IZQ;
-        $xDirectivo = $xPadreLinea + self::PIE_FIRMA_W_LINEA + self::PIE_FIRMA_SEP;
+        $xPreceptorLinea = $xTablaIzq + self::PIE_FIRMA_IZQ;
+        $xDirectivo = $xPreceptorLinea + self::PIE_FIRMA_W_LINEA + self::PIE_FIRMA_SEP;
 
-        $this->dibujarLineaFirma($xPadreLinea, $yLineaBase, self::PIE_FIRMA_W_LINEA);
+        $this->dibujarLineaFirma($xPreceptorLinea, $yLineaBase, self::PIE_FIRMA_W_LINEA);
         $this->dibujarLineaFirma($xDirectivo, $yLineaBase, self::PIE_FIRMA_W_LINEA);
         $this->SetFont(self::FUENTE, '', 6);
         $yEtiqueta = $yLineaBase + 2.0;
-        $this->SetXY($xPadreLinea, $yEtiqueta);
-        $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Padre / Madre / Tutor', 0, 0, 'C');
+        $this->SetXY($xPreceptorLinea, $yEtiqueta);
+        $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Preceptor/a', 0, 0, 'C');
         $this->SetXY($xDirectivo, $yEtiqueta);
         $this->Cell(self::PIE_FIRMA_W_LINEA, 3, 'Firma Directivo', 0, 0, 'C');
     }
@@ -701,10 +700,10 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
         $this->SetDrawColor(51, 51, 51);
     }
 
-    /** Índice de la última columna dibujada (12 = Coloq. Feb, 13 = Prom. Final). */
+    /** Índice de la última columna (siempre 13 = Calific. Final; el flag solo vacía el valor). */
     private function indiceUltimaColumna(): int
     {
-        return $this->mostrarPromedios ? 13 : 12;
+        return 13;
     }
 
     /** @return list<float> */

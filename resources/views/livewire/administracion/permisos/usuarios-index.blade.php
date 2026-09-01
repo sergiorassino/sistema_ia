@@ -6,7 +6,7 @@
                     <p class="se-eyebrow">Configuración · Permisos del sistema</p>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Permisos de Usuarios</h2>
                     <p class="max-w-2xl text-sm text-white/80">
-                        Editá los permisos (cadena 0/1) de cada usuario del nivel actual.
+                        Editá los permisos de personal de secretaría y administración del nivel actual. No se listan docentes con rol Profesor/a.
                     </p>
                 </div>
                 <button type="button"

@@ -163,10 +163,10 @@ final class PermisoExamenTcpdf extends TCPDF
             'Espacios Curriculares',
             'Curso',
             'Plan',
-            'Con',
+            'Cond.',
             'Fecha',
             'Calificación',
-            'Firma Presidente Mesa',
+            'Firma Docente',
         ];
 
         $this->SetDrawColor(0, 0, 0);

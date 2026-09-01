@@ -35,7 +35,7 @@ Migración (`php artisan se:migrate-legacy --force`, no ejecutar desde el asiste
 1. Usuario con permiso 99 abre **Permisos por Tarea**.
 2. Ve solo las tareas del catálogo que tienen **al menos un** usuario del nivel con `'1'` en esa posición.
 3. Puede filtrar por **tema** y buscar por descripción, apellido, nombre o DNI.
-4. Cada fila muestra la descripción de la tarea y chips con los usuarios habilitados (excluye rol «Sin Rol», `IdTipoProf = 1`).
+4. Cada fila muestra la descripción de la tarea y chips con los usuarios habilitados (excluye rol «Sin Rol», `IdTipoProf = 1`, y rol «Profesor/a», `IdTipoProf = 6`).
 
 ## Fuente de verdad
 
@@ -59,7 +59,7 @@ Migración (`php artisan se:migrate-legacy --force`, no ejecutar desde el asiste
 
 1. No mutar `profesores.permisos_ia` desde esta pantalla.
 2. No listar usuarios de otro nivel que el de `schoolCtx()`.
-3. No incluir usuarios con rol «Sin Rol» (`IdTipoProf = 1`).
+3. No incluir usuarios con rol «Sin Rol» (`IdTipoProf = 1`) ni con rol «Profesor/a» (`IdTipoProf = 6`, `ProfesorMenuPortal::ID_TIPO_PROFESOR_AULA`). A los docentes de aula no se les asigna `permisos_ia`.
 4. No mostrar tareas sin ningún usuario habilitado en el nivel.
 5. No calcular ni inferir permisos del portal docente: este listado es solo `permisos_ia` de secretaría/administración.
 
@@ -68,6 +68,7 @@ Migración (`php artisan se:migrate-legacy --force`, no ejecutar desde el asiste
 - [ ] Permiso 99 en ruta, Livewire (`mount`) y ambos sidebars.
 - [ ] Grupo **Permisos del sistema** visible con 0, 14 o 99 (`PermisosConfiguracion::tieneAlgunPermisoSistemaMenu()`).
 - [ ] Filtro de usuarios por `schoolCtx()->idNivel`.
+- [ ] Exclusión de «Sin Rol» y rol Profesor/a (`Profesor::elegiblesParaPermisosIa()`).
 - [ ] Catálogo y `maxOrden` alineados si se agrega un orden nuevo (el editor de asignación rellena la cadena).
 - [ ] Vista de consulta: sin `alert` nativo ni formularios de guardado.
 - [ ] Órdenes reservados (25, 26, 33–36, 100) muestran el aviso destacado «NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR» (catálogo + asignación + por tarea / por usuario).

@@ -58,6 +58,13 @@ class GeneracionMasivaCuotas extends Component
         $this->resetErrorBag();
     }
 
+    public function volverAlInicio(): void
+    {
+        $this->volverACursos();
+        $this->cursosSeleccionados = [];
+        $this->filtroCursos = '';
+    }
+
     public function updatedIdCuota(): void
     {
         $this->vistaPrevia = [];

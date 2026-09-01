@@ -30,7 +30,7 @@ class BoletinesSecundarioIndex extends Component
     public ?int $cursoId = null;
 
     /**
-     * Si el PDF incluye la columna «Prom. Final» (1 = sí, 0 = no).
+     * Si el PDF muestra el valor de «Calific. Final» (1 = sí, 0 = celda vacía).
      * Entero (no bool): Livewire + `<select value="0">` pierde el false al re-renderizar.
      */
     public int $mostrarPromedios = 1;

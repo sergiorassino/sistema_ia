@@ -11,9 +11,6 @@ use Livewire\Component;
 
 class PermisosPorUsuarioIndex extends Component
 {
-    /** IdTipoProf que identifica «Sin Rol» en la tabla profesortipo. */
-    private const ID_TIPO_SIN_ROL = 1;
-
     public string $q = '';
 
     public function mount(): void
@@ -97,10 +94,7 @@ class PermisosPorUsuarioIndex extends Component
 
         $usuarios = Profesor::query()
             ->where('nivel', $nivel)
-            ->where(function ($w) {
-                $w->whereNull('IdTipoProf')
-                    ->orWhere('IdTipoProf', '<>', self::ID_TIPO_SIN_ROL);
-            })
+            ->elegiblesParaPermisosIa()
             ->when(trim($this->q) !== '', function ($q) {
                 $term = '%' . trim($this->q) . '%';
                 $q->where(function ($w) use ($term) {
