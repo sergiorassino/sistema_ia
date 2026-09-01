@@ -63,11 +63,15 @@ return [
          * `foto_carnet`: si la familia puede subir foto carnet en este formulario.
          * Independiente de la solapa del ABM de legajos (Secretaría). Default off;
          * activar en `config/tenants/{slug}.php` (sigue haciendo falta la solapa).
+         * `requiere_documentos`: solo aplica a `implementacion = sanfranciscoasis`.
+         * Si true, el formulario muestra y exige los cuatro PDF institucionales.
+         * Si false, se mantiene el formulario SFA sin ese bloque (p. ej. EPQ).
          */
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'estandar',
             'foto_carnet' => false,
+            'requiere_documentos' => true,
         ],
 
         /**

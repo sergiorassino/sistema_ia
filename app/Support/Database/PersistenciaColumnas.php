@@ -392,8 +392,14 @@ final class PersistenciaColumnas
             return (int) $actual === ($esperado ? 1 : 0);
         }
 
-        if (is_int($esperado) && is_numeric($actual)) {
-            return (int) $actual === $esperado;
+        if (is_int($esperado)) {
+            if ($actual === null || $actual === '') {
+                return $esperado === 0;
+            }
+
+            if (is_bool($actual) || is_numeric($actual)) {
+                return (int) $actual === $esperado;
+            }
         }
 
         return (string) $esperado === (string) $actual;

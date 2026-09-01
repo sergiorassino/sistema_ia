@@ -9,9 +9,11 @@ use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
 use App\Models\Terlec;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -312,27 +314,34 @@ class ParametrosSistemaForm extends Component
     {
         $key = 'parametros-sistema:save:' . (auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 30)) {
-            $this->addError('insti', 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->avisarErrorGuardado('Demasiados intentos. Espere un momento e intente nuevamente.', 'insti');
             return;
         }
         RateLimiter::hit($key, 60);
 
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (ValidationException $e) {
+            $primerCampo = $e->validator->errors()->keys()[0] ?? 'insti';
+            $this->mostrarSolapaDelCampo($primerCampo);
+            $this->dispatch(
+                'se-swal-error',
+                mensaje: $e->validator->errors()->first() ?: 'Revise los datos del formulario.',
+            );
+            throw $e;
+        }
 
         if ($this->facturacionAfipHabilitadaEnTenant()) {
-            if (Schema::hasColumn('ento', 'cuitFact') && trim($this->cuitFact) === '') {
-                $this->addError('cuitFact', 'El CUIT de facturación es obligatorio para emitir comprobantes AFIP.');
-
-                return;
-            }
-
             $carpeta = trim($this->afipCertCarpeta);
             $key = trim($this->afipCertKey);
             $crt = trim($this->afipCertCrt);
             $alguno = $carpeta !== '' || $key !== '' || $crt !== '';
             $todos = $carpeta !== '' && $key !== '' && $crt !== '';
             if ($alguno && ! $todos) {
-                $this->addError('afipCertCarpeta', 'Complete carpeta, archivo .key y archivo .crt de AFIP, o deje los tres vacíos.');
+                $this->avisarErrorGuardado(
+                    'Complete carpeta, archivo .key y archivo .crt de AFIP, o deje los tres vacíos.',
+                    'afipCertCarpeta',
+                );
 
                 return;
             }
@@ -341,14 +350,14 @@ class ParametrosSistemaForm extends Component
         if ($this->logo instanceof TemporaryUploadedFile) {
             $errorLogo = $this->validarLogoSubido($this->logo);
             if ($errorLogo !== null) {
-                $this->addError('logo', $errorLogo);
+                $this->avisarErrorGuardado($errorLogo, 'logo');
 
                 return;
             }
         } elseif ($this->logo !== null) {
-            $this->addError(
+            $this->avisarErrorGuardado(
+                'La subida del logo no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.',
                 'logo',
-                'La subida del logo no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
             );
 
             return;
@@ -357,14 +366,14 @@ class ParametrosSistemaForm extends Component
         if ($this->logoLogin instanceof TemporaryUploadedFile) {
             $errorLogoLogin = $this->validarLogoSubido($this->logoLogin);
             if ($errorLogoLogin !== null) {
-                $this->addError('logoLogin', $errorLogoLogin);
+                $this->avisarErrorGuardado($errorLogoLogin, 'logoLogin');
 
                 return;
             }
         } elseif ($this->logoLogin !== null) {
-            $this->addError(
+            $this->avisarErrorGuardado(
+                'La subida del logo institucional no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.',
                 'logoLogin',
-                'La subida del logo institucional no finalizó. Espere a que desaparezca «Subiendo archivo…» y vuelva a pulsar Guardar.'
             );
 
             return;
@@ -466,6 +475,10 @@ class ParametrosSistemaForm extends Component
             return;
         }
 
+        if (! $this->persistirFlagsBloqueo($idNivel)) {
+            return;
+        }
+
         $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
             'ento',
             ['idNivel' => $idNivel],
@@ -483,9 +496,9 @@ class ParametrosSistemaForm extends Component
                 ->value('logo_path'));
 
             if ($persistido !== $logoPathEsperado) {
-                $this->addError(
+                $this->avisarErrorGuardado(
+                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_path y ento.logo_original_name.',
                     'logo',
-                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_path y ento.logo_original_name.'
                 );
 
                 return;
@@ -494,6 +507,11 @@ class ParametrosSistemaForm extends Component
 
         if (! $this->guardarLogoLoginEnTodosLosNiveles()) {
             return;
+        }
+
+        $entoGuardado = Ento::query()->where('idNivel', $idNivel)->first();
+        if ($entoGuardado) {
+            $this->cargarParametrosOperativosDesdeEnto($entoGuardado);
         }
 
         $this->currentLogoUrl = schoolLogoUrl();
@@ -577,9 +595,9 @@ class ParametrosSistemaForm extends Component
         }
 
         if (! is_string($newPath) || $newPath === '' || ! $disk->exists($newPath)) {
-            $this->addError(
+            $this->avisarErrorGuardado(
+                'No se pudo guardar el archivo del logo. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.',
                 'logo',
-                'No se pudo guardar el archivo del logo. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.'
             );
 
             return null;
@@ -603,9 +621,9 @@ class ParametrosSistemaForm extends Component
         }
 
         if (! Schema::hasColumn('ento', 'logo_login_path')) {
-            $this->addError(
+            $this->avisarErrorGuardado(
+                'Faltan las columnas ento.logo_login_path y ento.logo_login_original_name. Aplicá la migración o el SQL idempotente.',
                 'logoLogin',
-                'Faltan las columnas ento.logo_login_path y ento.logo_login_original_name. Aplicá la migración o el SQL idempotente.'
             );
 
             return false;
@@ -674,9 +692,9 @@ class ParametrosSistemaForm extends Component
                 ->value('logo_login_path'));
 
             if ($persistido !== $logoPathEsperado) {
-                $this->addError(
+                $this->avisarErrorGuardado(
+                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_login_path y ento.logo_login_original_name.',
                     'logoLogin',
-                    'El archivo se subió pero no quedó registrado en la base de datos. Verifique que existan las columnas ento.logo_login_path y ento.logo_login_original_name.'
                 );
 
                 return false;
@@ -719,9 +737,9 @@ class ParametrosSistemaForm extends Component
         }
 
         if (! is_string($newPath) || $newPath === '' || ! $disk->exists($newPath)) {
-            $this->addError(
+            $this->avisarErrorGuardado(
+                'No se pudo guardar el archivo del logo institucional. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.',
                 'logoLogin',
-                'No se pudo guardar el archivo del logo institucional. En el servidor: permisos de escritura en storage/app/public (y storage/app/livewire-tmp), ejecutar php artisan storage:link, y TENANT_SLUG definido en .env antes de config:cache.'
             );
 
             return null;
@@ -927,6 +945,74 @@ class ParametrosSistemaForm extends Component
         }
     }
 
+    /**
+     * Flags de bloqueo: escritura directa 1/0 y verificación post-guardado.
+     */
+    private function persistirFlagsBloqueo(int $idNivel): bool
+    {
+        $payload = $this->payloadFlagsBloqueo();
+        if ($payload === null) {
+            return false;
+        }
+
+        if ($payload === []) {
+            return true;
+        }
+
+        if (! DB::table('ento')->where('idNivel', $idNivel)->exists()) {
+            $this->reportarErrorPersistenciaEnto(
+                'cargaNotasOff',
+                'No se encontró el registro de entorno (ento) para el nivel activo. Verifique la configuración del colegio.',
+            );
+
+            return false;
+        }
+
+        DB::table('ento')->where('idNivel', $idNivel)->update($payload);
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'ento',
+            ['idNivel' => $idNivel],
+            $payload,
+        );
+        if ($noPersistidas !== []) {
+            $this->reportarColumnasEntoNoPersistidas($noPersistidas);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<string, int>|null  null si falta columna con flag activo
+     */
+    private function payloadFlagsBloqueo(): ?array
+    {
+        $payload = [];
+        foreach ([
+            'cargaNotasOff' => $this->cargaNotasOff,
+            'verNotasOff' => $this->verNotasOff,
+            'verBimesOff' => $this->verBimesOff,
+            'imprBoleOff' => $this->imprBoleOff,
+            'verDatosFicha' => $this->verDatosFicha,
+        ] as $columna => $activo) {
+            if (! $this->entoTieneColumna($columna)) {
+                if ($activo) {
+                    $this->reportarColumnasEntoFaltantes([$columna]);
+
+                    return null;
+                }
+
+                continue;
+            }
+
+            $payload[$columna] = $activo ? 1 : 0;
+        }
+
+        return $payload;
+    }
+
     private function asignarTextoPayload(array &$payload, string $columna, string $valor): void
     {
         $texto = trim($valor);
@@ -966,14 +1052,28 @@ class ParametrosSistemaForm extends Component
 
     private function reportarErrorPersistenciaEnto(string $columna, string $mensaje): void
     {
-        $campo = $this->campoFormularioParaColumnaEnto($columna) ?? 'insti';
+        $this->avisarErrorGuardado($mensaje, $this->campoFormularioParaColumnaEnto($columna) ?? 'insti');
+    }
+
+    private function avisarErrorGuardado(string $mensaje, string $campo): void
+    {
+        $this->mostrarSolapaDelCampo($campo);
         $this->addError($campo, $mensaje);
-
-        if ($campo !== 'insti' && $this->activeTab !== 'parametros') {
-            $this->addError('insti', $mensaje);
-        }
-
         $this->dispatch('se-swal-error', mensaje: $mensaje);
+    }
+
+    private function mostrarSolapaDelCampo(string $campo): void
+    {
+        $this->activeTab = match ($campo) {
+            'idTerlecVerNotas',
+            'cargaNotasOff', 'notasOffMensaje',
+            'verNotasOff', 'verOffMensaje',
+            'verBimesOff', 'bimesOffMensaje',
+            'imprBoleOff', 'verDatosFicha',
+            'mensajeBloqPeda', 'mensajeBloqAdmi' => 'parametros',
+            'mailGmailUser', 'mailGmailPassword' => 'correo',
+            default => 'institucion',
+        };
     }
 
     private function campoFormularioParaColumnaEnto(string $columna): ?string
@@ -995,7 +1095,16 @@ class ParametrosSistemaForm extends Component
 
     private static function entoFlagActivo(mixed $valor): bool
     {
-        return (int) ($valor ?? 0) === 1;
+        if (is_bool($valor)) {
+            return $valor;
+        }
+
+        $raw = strtolower(trim((string) ($valor ?? '')));
+        if ($raw === '') {
+            return false;
+        }
+
+        return $raw === '1' || $raw === 'true' || $raw === 'on' || (is_numeric($valor) && (int) $valor === 1);
     }
 }
 

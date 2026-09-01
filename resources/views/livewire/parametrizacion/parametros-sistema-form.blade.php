@@ -1,4 +1,4 @@
-<div class="se-page max-w-4xl">
+<form class="se-page max-w-4xl" wire:submit="save">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
              class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -24,7 +24,7 @@
                    class="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
                     Volver
                 </a>
-                <button type="button" wire:click="save" wire:loading.attr="disabled" wire:target="save,logo,logoLogin"
+                <button type="submit" wire:loading.attr="disabled" wire:target="save,logo,logoLogin"
                         class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100 disabled:opacity-60">
                     <span wire:loading.remove wire:target="save,logo,logoLogin">Guardar</span>
                     <span wire:loading wire:target="save">Guardando…</span>
@@ -293,6 +293,7 @@
                     <p class="se-section-title mb-1">Facturación AFIP</p>
                     <p class="text-xs text-neutral-500">
                         Datos del emisor para comprobantes electrónicos. La condición frente al IVA del destinatario se aplica por defecto en cada factura.
+                        El CUIT de facturación se pide al emitir comprobantes; si este nivel no factura, puede quedar vacío y igual se guardan el resto de parámetros.
                     </p>
                 </div>
                 @if (\App\Support\PermisosArca::puedeDescargarGuiasArca())
@@ -449,8 +450,9 @@
             </div>
         @endif
         </div>
-        @elseif ($activeTab === 'parametros')
-        <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros">
+        @endif
+        {{-- Solapa siempre en el DOM: si se destruye con @elseif, los checkboxes no llegan al Guardar. --}}
+        <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros" @if ($activeTab !== 'parametros') hidden @endif>
             <div>
                 <p class="se-section-title mb-1">Ciclos lectivos</p>
                 <p class="mb-4 text-xs text-neutral-500">
@@ -469,7 +471,8 @@
                 <div class="space-y-5">
                     <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
                         <label class="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" wire:model.live="cargaNotasOff" class="mt-1 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <input type="checkbox" wire:model="cargaNotasOff"
+                                   class="mt-1 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                             <span>
                                 <span class="block text-sm font-semibold text-neutral-800">Bloquear carga de notas a docentes</span>
                                 <span class="mt-0.5 block text-xs text-neutral-500">Pueden seguir entrando a consultar.</span>
@@ -494,7 +497,8 @@
                 <div class="space-y-5">
                     <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
                         <label class="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" wire:model.live="verNotasOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <input type="checkbox" wire:model="verNotasOff"
+                                   class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                             <span class="block text-sm font-semibold text-neutral-800">Bloqueo de visualización de notas a los alumnos</span>
                         </label>
                         @error('verNotasOff') <p class="form-error">{{ $message }}</p> @enderror
@@ -510,7 +514,8 @@
 
                     <div class="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
                         <label class="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" wire:model.live="verBimesOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                            <input type="checkbox" wire:model="verBimesOff"
+                                   class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                             <span class="block text-sm font-semibold text-neutral-800">Bloqueo de visualización por bimestre</span>
                         </label>
                         @error('verBimesOff') <p class="form-error">{{ $message }}</p> @enderror
@@ -525,7 +530,8 @@
                     </div>
 
                     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
-                        <input type="checkbox" wire:model.live="imprBoleOff" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                        <input type="checkbox" wire:model="imprBoleOff"
+                               class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                         <span class="block text-sm font-semibold text-neutral-800">Bloquear impresión de boletines</span>
                     </label>
                     @error('imprBoleOff') <p class="form-error">{{ $message }}</p> @enderror
@@ -538,7 +544,8 @@
                     Un solo parámetro por nivel: muestra u oculta ambas opciones en autogestión.
                 </p>
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
-                    <input type="checkbox" wire:model.live="verDatosFicha" class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                    <input type="checkbox" wire:model="verDatosFicha"
+                           class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
                     <span>
                         <span class="block text-sm font-semibold text-neutral-800">Mostrar Actualización de Datos Personales e Imprimir Ficha de Matrícula</span>
                         <span class="mt-0.5 block text-xs text-neutral-500">Corresponde a <span class="font-mono">verDatosFicha</span>. La ficha solo aparece si el colegio tiene la variante PDF configurada.</span>
@@ -573,7 +580,7 @@
                 </div>
             </div>
         </div>
-        @elseif ($activeTab === 'correo')
+        @if ($activeTab === 'correo')
         <div class="space-y-6 p-6 sm:p-7" wire:key="param-tab-correo">
 
             {{-- Estado actual --}}
@@ -656,7 +663,7 @@
         </div>
         @endif
     </div>
-</div>
+</form>
 
 @script
 <script>

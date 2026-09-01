@@ -9,7 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 
 /**
- * Actualización de datos personales — variante San Francisco de Asís (formulario completo + documentos).
+ * Actualización de datos personales — variante San Francisco de Asís (formulario completo;
+ * documentos institucionales opcionales por tenant).
  */
 final class ActualizacionDatosPersonalesSanFranciscoAsis
 {
@@ -59,6 +60,10 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
     public static function todasAceptadas(Matricula $matricula): bool
     {
+        if (! tenantAutogestionActualizacionDatosRequiereDocumentos()) {
+            return true;
+        }
+
         $aceptaciones = self::aceptacionesDesdeMatricula($matricula);
 
         foreach (MatriculaWebDocumentos::claves() as $clave) {
@@ -76,6 +81,10 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
     public static function marcarAceptacion(Matricula $matricula, string $clave, bool $valor): void
     {
+        if (! tenantAutogestionActualizacionDatosRequiereDocumentos()) {
+            return;
+        }
+
         $def = MatriculaWebDocumentos::definicion($clave);
         if ($def === null) {
             return;

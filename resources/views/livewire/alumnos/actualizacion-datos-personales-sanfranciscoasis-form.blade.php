@@ -70,6 +70,7 @@
     </p>
 
     <form wire:submit.prevent="guardar" novalidate class="space-y-4">
+        @if ($requiereDocumentos)
         {{-- Aceptaciones --}}
         <section id="documentos-institucionales" class="se-card p-4 sm:p-5 space-y-4 scroll-mt-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">Documentos institucionales</p>
@@ -124,6 +125,7 @@
                 </div>
             @endforeach
         </section>
+        @endif
 
         {{-- Adulto responsable --}}
         <section class="se-card p-4 sm:p-5">
@@ -471,7 +473,7 @@
         @endteleport
     @endif
 
-    @if ($mostrarAvisoDocumentosPendientes)
+    @if ($requiereDocumentos && $mostrarAvisoDocumentosPendientes)
         @teleport('body')
             <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
                  role="alertdialog"

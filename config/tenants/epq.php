@@ -5,8 +5,9 @@
  |
  | Requiere TENANT_SLUG=epq en el despliegue de ese colegio.
  |
- | Base operativa igual que San Francisco de Asís (cuotas SIRO, autogestión con documentos,
- | ficha de matrícula, recursos didácticos en Menú de Docentes). Calificaciones primario: variante `epq`.
+ | Base operativa igual que San Francisco de Asís (cuotas SIRO, formulario SFA de datos
+ | personales sin documentos institucionales, ficha de matrícula, recursos didácticos en
+ | Menú de Docentes). Calificaciones primario: variante `epq`.
  */
 
 return [
@@ -142,6 +143,7 @@ return [
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
+            'requiere_documentos' => false,
         ],
         'ficha_matricula' => [
             'habilitado' => true,

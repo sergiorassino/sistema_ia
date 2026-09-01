@@ -86,6 +86,11 @@ class Ento extends Model
 
     protected $casts = [
         'ptoVta' => 'integer',
+        'cargaNotasOff' => 'integer',
+        'verNotasOff' => 'integer',
+        'verBimesOff' => 'integer',
+        'imprBoleOff' => 'integer',
+        'verDatosFicha' => 'integer',
     ];
 
     /**

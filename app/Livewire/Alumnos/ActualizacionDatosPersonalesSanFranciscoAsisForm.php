@@ -14,7 +14,8 @@ use Livewire\Component;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 /**
- * Actualización de datos personales — variante San Francisco de Asís (completo con documentos).
+ * Actualización de datos personales — variante San Francisco de Asís (formulario completo;
+ * documentos institucionales opcionales por tenant).
  */
 class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 {
@@ -205,7 +206,9 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public function revocarAceptacion(string $clave): void
     {
-        if ($this->bloqueado || ! MatriculaWebDocumentos::claveValida($clave)) {
+        if ($this->bloqueado
+            || ! tenantAutogestionActualizacionDatosRequiereDocumentos()
+            || ! MatriculaWebDocumentos::claveValida($clave)) {
             return;
         }
 
@@ -242,7 +245,8 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         }
 
         $matricula = $ctx['matricula']->fresh();
-        if (! ActualizacionDatosPersonalesSanFranciscoAsis::todasAceptadas($matricula)) {
+        if (tenantAutogestionActualizacionDatosRequiereDocumentos()
+            && ! ActualizacionDatosPersonalesSanFranciscoAsis::todasAceptadas($matricula)) {
             $this->mostrarAvisoDocumentosPendientes = true;
 
             return;
@@ -329,18 +333,22 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public function render()
     {
-        $definiciones = MatriculaWebDocumentos::definiciones();
+        $requiereDocumentos = tenantAutogestionActualizacionDatosRequiereDocumentos();
         $documentos = [];
-        foreach (MatriculaWebDocumentos::claves() as $clave) {
-            $documentos[$clave] = [
-                'def' => $definiciones[$clave],
-                'aceptado' => (bool) ($this->aceptaciones[$clave] ?? false),
-                'disponible' => ActualizacionDatosPersonalesSanFranciscoAsis::documentoDisponible($clave),
-            ];
+        if ($requiereDocumentos) {
+            $definiciones = MatriculaWebDocumentos::definiciones();
+            foreach (MatriculaWebDocumentos::claves() as $clave) {
+                $documentos[$clave] = [
+                    'def' => $definiciones[$clave],
+                    'aceptado' => (bool) ($this->aceptaciones[$clave] ?? false),
+                    'disponible' => ActualizacionDatosPersonalesSanFranciscoAsis::documentoDisponible($clave),
+                ];
+            }
         }
 
         return view('livewire.alumnos.actualizacion-datos-personales-sanfranciscoasis-form', array_merge([
             'documentos' => $documentos,
+            'requiereDocumentos' => $requiereDocumentos,
             'esSecundario' => studentEsNivelSecundario(),
             'textoCompromiso' => ActualizacionDatosPersonalesSanFranciscoAsis::TEXTO_COMPROMISO_PARENTAL,
         ], $this->datosVistaFotoCarnet()))->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);

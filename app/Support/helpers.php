@@ -407,6 +407,10 @@ if (! function_exists('entoLoginLogoStoragePath')) {
      */
     function entoLoginLogoStoragePath(): ?string
     {
+        if (! Schema::hasTable('ento') || ! Schema::hasColumn('ento', 'logo_login_path')) {
+            return null;
+        }
+
         $path = Ento::query()
             ->whereNotNull('logo_login_path')
             ->where('logo_login_path', '<>', '')
@@ -1602,11 +1606,16 @@ if (! function_exists('tenantAutogestionActualizacionDatosFotoCarnetHabilitada')
 
 if (! function_exists('tenantAutogestionActualizacionDatosRequiereDocumentos')) {
     /**
-     * Si el formulario exige aceptación de documentos institucionales antes de guardar.
+     * Si el formulario SFA muestra y exige aceptación de documentos institucionales.
+     * Requiere `implementacion = sanfranciscoasis` y `requiere_documentos` (default true).
      */
     function tenantAutogestionActualizacionDatosRequiereDocumentos(): bool
     {
-        return tenantAutogestionActualizacionDatosImplementacion() === 'sanfranciscoasis';
+        if (tenantAutogestionActualizacionDatosImplementacion() !== 'sanfranciscoasis') {
+            return false;
+        }
+
+        return (bool) config('tenant.autogestion.actualizacion_datos.requiere_documentos', true);
     }
 }
 

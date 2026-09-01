@@ -36,6 +36,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Estado de Deuda por Estudiante | [estado-deuda-estudiante.md](estado-deuda-estudiante.md) |
 | Imputar pago | [imputar-pago.md](imputar-pago.md) |
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |
+| Parámetros del sistema | [parametros-sistema.md](parametros-sistema.md) |
 
 ## Plantilla
 
