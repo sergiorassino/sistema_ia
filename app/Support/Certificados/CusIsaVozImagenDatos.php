@@ -8,6 +8,7 @@ use App\Models\Matricula;
 use App\Models\Terlec;
 use App\Support\InformeInasistencias;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\OrdenAlfabeticoEstudiante;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -54,13 +55,7 @@ final class CusIsaVozImagenDatos
         return self::queryRegularesCurso($cursoId, $idNivel, $idTerlec)
             ->with('legajo')
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     /**
@@ -128,15 +123,12 @@ final class CusIsaVozImagenDatos
             $filas[] = $fila;
         }
 
-        usort($filas, function (array $a, array $b): int {
-            $apA = mb_strtolower((string) ($a['apellido'] ?? ''));
-            $apB = mb_strtolower((string) ($b['apellido'] ?? ''));
-            if ($apA !== $apB) {
-                return $apA <=> $apB;
-            }
-
-            return mb_strtolower((string) ($a['nombre'] ?? '')) <=> mb_strtolower((string) ($b['nombre'] ?? ''));
-        });
+        usort($filas, fn (array $a, array $b): int => OrdenAlfabeticoEstudiante::comparar(
+            (string) ($a['apellido'] ?? ''),
+            (string) ($a['nombre'] ?? ''),
+            (string) ($b['apellido'] ?? ''),
+            (string) ($b['nombre'] ?? ''),
+        ));
 
         return $filas;
     }

@@ -67,8 +67,8 @@ final class AsignacionBecasConsulta
         }
 
         return $query
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('matricula.id')
             ->get()
             ->map(fn (Matricula $mat) => self::filaDesdeMatricula($mat))

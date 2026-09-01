@@ -50,8 +50,8 @@ class DestinatariosRepository
             })
             ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
             ->distinct()
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->limit(max(1, min(50, $limit)));
 
         return $q->get()->map(function ($r) {
@@ -88,8 +88,8 @@ class DestinatariosRepository
             });
         }
 
-        return $q->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+        return $q->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->limit($limit)
             ->get()
             ->map(function ($r) {
@@ -113,8 +113,8 @@ class DestinatariosRepository
             ->where('m.idCursos', $idCurso)
             ->whereNotNull('m.idLegajos')
             ->distinct()
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->pluck('m.idLegajos')
             ->map(fn ($v) => (string) $v)
             ->all();

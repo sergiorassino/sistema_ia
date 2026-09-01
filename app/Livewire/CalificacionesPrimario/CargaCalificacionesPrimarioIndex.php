@@ -7,6 +7,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
@@ -90,13 +91,7 @@ class CargaCalificacionesPrimarioIndex extends Component
             ->whereIn('idCondiciones', $idsCondiciones)
             ->whereNull('fechaBaja')
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function cursos(): Collection

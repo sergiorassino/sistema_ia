@@ -42,8 +42,8 @@ final class LibroMatriculaExporter
             ->orderBy('cursos.c')
             ->orderBy('cursos.s')
             ->orderBy('cursos.cursec')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->select([
                 'matricula.fechaMatricula',
                 'legajos.apellido',

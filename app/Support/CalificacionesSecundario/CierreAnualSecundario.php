@@ -76,8 +76,8 @@ final class CierreAnualSecundario
                 'cu.s',
                 'co.condicion as condicion_matricula',
             ])
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('l.id');
 
         $termino = self::normalizarBusqueda($buscar);

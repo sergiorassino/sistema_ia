@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\OrdenAlfabeticoEstudiante;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -148,20 +149,15 @@ class BoletinesSecundarioIndex extends Component
             ListadoCursoCondicionFiltro::REGULARES
         );
 
-        return Matricula::query()
-            ->with('legajo')
-            ->where('idCursos', (int) $this->cursoId)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
-            ->whereIn('idCondiciones', $idsCondicionesRegulares)
-            ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+        return OrdenAlfabeticoEstudiante::ordenarMatriculas(
+            Matricula::query()
+                ->with('legajo')
+                ->where('idCursos', (int) $this->cursoId)
+                ->where('idNivel', (int) $ctx->idNivel)
+                ->where('idTerlec', (int) $ctx->idTerlec)
+                ->whereIn('idCondiciones', $idsCondicionesRegulares)
+                ->get()
+        );
     }
 
     public function cursos(): Collection

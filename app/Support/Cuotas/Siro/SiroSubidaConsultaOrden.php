@@ -20,8 +20,8 @@ final class SiroSubidaConsultaOrden
             ->join('legajos', 'legajos.id', '=', 'cuotasgeneradas.idLegajos')
             ->join('cuotas', 'cuotas.id', '=', 'cuotasgeneradas.idCuotas')
             ->select('cuotasgeneradas.*')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('cuotas.orden')
             ->orderBy('cuotasgeneradas.id');
     }

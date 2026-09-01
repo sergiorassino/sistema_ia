@@ -750,8 +750,8 @@ final class ExtActividadesService
             ->where('matricula.idNivel', self::idNivelContexto())
             ->where('matricula.idTerlec', self::idTerlecContexto())
             ->whereIn('matricula.idCondiciones', $idsCond)
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre');
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'));
 
         if ($t !== '') {
             $q->where(function ($w) use ($t) {
@@ -814,8 +814,8 @@ final class ExtActividadesService
 
         $rows = Legajo::query()
             ->whereIn('id', $ids)
-            ->orderBy('apellido')
-            ->orderBy('nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('nombre'))
             ->get(['id', 'apellido', 'nombre', 'dni']);
 
         $out = [];

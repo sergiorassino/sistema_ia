@@ -127,8 +127,8 @@ final class MateriasAdeudadasPorCurso
             ->join('legajos as l', 'l.id', '=', 'mat.idLegajos')
             ->where('mat.idCursos', $idCurso)
             ->where('mat.idCondiciones', '<', 5)
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get([
                 'mat.idLegajos',
                 'l.apellido',

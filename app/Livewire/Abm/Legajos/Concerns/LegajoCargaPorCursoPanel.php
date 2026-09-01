@@ -96,8 +96,8 @@ trait LegajoCargaPorCursoPanel
                 SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($q, 'matricula.idNivel');
             })
             ->whereIn('matricula.idCondiciones', $idCondiciones)
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->get($select);
 
         $this->cargaPorCursoRows = [];

@@ -240,8 +240,8 @@ class CargaCalificacionesSecundario extends Component
             ->where('c.idMaterias', (int) $this->materiaId)
             ->whereIn('m.idCondiciones', $idsCondicionesRegulares)
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get([
                 'c.id',
                 'c.ord',

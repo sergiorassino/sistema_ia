@@ -1667,15 +1667,65 @@ function seCiiCallCommitCell(root, key, field, value) {
     return false;
 }
 
+function seCiiFindCell(key, field) {
+    return document.querySelector(
+        `[data-se-cii-tbody] [data-se-cii-row-key="${CSS.escape(String(key))}"][data-se-cii-field="${CSS.escape(String(field))}"]`,
+    );
+}
+
+function seCiiSetCellError(el, message) {
+    if (!el) {
+        return;
+    }
+    const has = Boolean(message);
+    el.classList.toggle('se-cii-input--err', has);
+    const box = el.parentElement?.querySelector('[data-se-cii-err]');
+    if (box) {
+        box.textContent = message || '';
+        box.hidden = !has;
+    }
+}
+
+/**
+ * Resultado renderless de `commitDraftCell`: revierte o formatea la celda sin remorph.
+ * @param {{ok?: boolean, key?: string, field?: string, value?: string, message?: string}} payload
+ */
+window.seCiiApplyCellResult = function seCiiApplyCellResult(payload) {
+    if (!payload || payload.key == null || !payload.field) {
+        return;
+    }
+    const el = seCiiFindCell(payload.key, payload.field);
+    if (!el) {
+        return;
+    }
+
+    if (payload.ok === false) {
+        if (payload.value != null) {
+            el.value = String(payload.value);
+        }
+        el.dataset.seCiiLast = el.value ?? '';
+        seCiiSetCellError(el, payload.message || 'Valor inválido.');
+        return;
+    }
+
+    seCiiSetCellError(el, '');
+    if (payload.value != null && document.activeElement !== el) {
+        el.value = String(payload.value);
+    }
+    el.dataset.seCiiLast = el.value ?? '';
+};
+
 /**
  * Importes por curso (cuotas): teclado numérico / punto → coma en campos decimales;
  * flechas y Enter para moverse entre inputs y selects de la grilla.
- * Importe/valor: value en DOM + commitDraftCell en focusout (como calificaciones).
- * Signo/%/$: wire:model.live en el select.
+ * Celdas: value en DOM + commitDraftCell renderless (focusout en inputs, change en selects).
  */
 function seCiiBuildNavMatrix(tbody) {
     const matrix = [];
     tbody.querySelectorAll(':scope > tr.se-cii-tr').forEach((tr) => {
+        if (tr.hidden) {
+            return;
+        }
         const row = [];
         tr.querySelectorAll('[data-se-cii-nav]').forEach((el) => {
             row.push(el);
@@ -1748,18 +1798,67 @@ function seCiiShouldConvertDecimalKeyToComma(el, e) {
     return el.hasAttribute('data-se-cii-valor') && e.key === '.' && e.code === 'Period';
 }
 
+function seCiiCommitEl(el) {
+    if (!el || !el.dataset.seCiiRowKey || !el.dataset.seCiiField) {
+        return;
+    }
+    const val = el.value ?? '';
+    if (val === (el.dataset.seCiiLast ?? '')) {
+        return;
+    }
+    const root = el.closest('[wire\\:id]');
+    if (!root) {
+        return;
+    }
+    el.dataset.seCiiLast = val;
+    seCiiCallCommitCell(root, el.dataset.seCiiRowKey, el.dataset.seCiiField, val);
+}
+
+function seCiiFiltrarCursos(root) {
+    const tbody = root.querySelector('[data-se-cii-tbody]');
+    const buscar = root.querySelector('[data-se-cii-buscar]');
+    if (!tbody) {
+        return;
+    }
+    const q = (buscar?.value ?? '').trim().toLowerCase();
+    let visibles = 0;
+    tbody.querySelectorAll(':scope > tr.se-cii-tr').forEach((tr) => {
+        const label = (tr.getAttribute('data-se-cii-curso') ?? '').toLowerCase();
+        const show = q === '' || label.includes(q);
+        tr.hidden = !show;
+        if (show) {
+            visibles += 1;
+        }
+    });
+    const empty = tbody.querySelector('[data-se-cii-empty-filter]');
+    if (empty) {
+        empty.hidden = visibles > 0 || q === '';
+    }
+}
+
 function bindCuotasImportesForm() {
-    document.querySelectorAll('[data-se-cii-tbody]').forEach((tbody) => {
-        if (tbody._seCiiBound) {
+    document.querySelectorAll('.se-cuotas-importes-fill').forEach((root) => {
+        if (root._seCiiBound) {
             return;
         }
-        tbody._seCiiBound = true;
+        root._seCiiBound = true;
+
+        const tbody = root.querySelector('[data-se-cii-tbody]');
+        const buscar = root.querySelector('[data-se-cii-buscar]');
+        if (!tbody) {
+            return;
+        }
+
+        if (buscar && !buscar._seCiiBuscarBound) {
+            buscar._seCiiBuscarBound = true;
+            buscar.addEventListener('input', () => seCiiFiltrarCursos(root));
+        }
 
         tbody.addEventListener(
             'focusin',
             (e) => {
                 const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || !el.dataset.seCiiRowKey || !el.dataset.seCiiField) {
+                if (!el || !el.dataset?.seCiiRowKey || !el.dataset?.seCiiField) {
                     return;
                 }
                 el.dataset.seCiiLast = el.value ?? '';
@@ -1771,18 +1870,22 @@ function bindCuotasImportesForm() {
             'focusout',
             (e) => {
                 const el = e.target;
-                if (!el || el.tagName !== 'INPUT' || !el.dataset.seCiiRowKey || !el.dataset.seCiiField) {
+                if (!el || el.tagName !== 'INPUT') {
                     return;
                 }
-                const val = el.value ?? '';
-                if (val === (el.dataset.seCiiLast ?? '')) {
+                seCiiCommitEl(el);
+            },
+            true,
+        );
+
+        tbody.addEventListener(
+            'change',
+            (e) => {
+                const el = e.target;
+                if (!el || el.tagName !== 'SELECT') {
                     return;
                 }
-                const root = el.closest('[wire\\:id]');
-                if (!root) {
-                    return;
-                }
-                seCiiCallCommitCell(root, el.dataset.seCiiRowKey, el.dataset.seCiiField, val);
+                seCiiCommitEl(el);
             },
             true,
         );

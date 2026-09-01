@@ -79,8 +79,8 @@ final class ParteDiarioSanfranciscoasisDatos
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
             ->where('m.idCursos', $idCurso)
             ->where('m.idCondiciones', 1)
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get(['l.legajo', 'l.apellido', 'l.nombre']);
 
         $out = [];

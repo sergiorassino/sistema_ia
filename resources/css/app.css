@@ -1053,6 +1053,10 @@
     .se-cuotas-importes-tabla .se-cii-tr:hover .se-cii-td {
         @apply bg-primary-50/50;
     }
+    .se-cuotas-importes-tabla .se-cii-tr[hidden],
+    .se-cuotas-importes-tabla tr[data-se-cii-empty-filter][hidden] {
+        display: none !important;
+    }
     .se-cuotas-importes-tabla .se-cii-input,
     .se-cuotas-importes-tabla .se-cii-select {
         @apply m-0 block w-full min-w-0 border-0 bg-transparent px-1 py-1 text-[11px] leading-tight text-gray-900 outline-none;

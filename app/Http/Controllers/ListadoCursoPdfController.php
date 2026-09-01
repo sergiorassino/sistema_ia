@@ -91,8 +91,8 @@ class ListadoCursoPdfController extends Controller
 
         $query
             ->orderBy('matricula.idCursos')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre');
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'));
 
         if (ListadoCursoPdfFieldCatalog::needsCondicionesJoin($campos)) {
             $query->leftJoin('condiciones', 'condiciones.id', '=', 'matricula.idCondiciones');

@@ -171,8 +171,8 @@ final class ActaVolanteColoquiosSecundario
             ->where('c.idCursos', $cursoId)
             ->whereIn('c.idMaterias', $materiaIds)
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get([
                 'c.idMaterias',
                 'c.idLegajos',

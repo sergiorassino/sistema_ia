@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\NivelSistema;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\Pdf\PdfPost;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
@@ -159,13 +160,7 @@ final class CertificadoFinalizacionNivel
         return self::queryRegularesCurso($cursoId, $idNivel, $idTerlec)
             ->with('legajo')
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     /**

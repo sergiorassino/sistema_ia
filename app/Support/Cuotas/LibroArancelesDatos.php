@@ -89,8 +89,8 @@ final class LibroArancelesDatos
             ->where('m.idTerlec', $idTerlec)
             ->where('m.idCondiciones', '<', 5)
             ->whereNull('m.fechaBaja')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('m.id')
             ->get(['m.id', 'm.idCuotasbecas', 'l.apellido', 'l.nombre']);
 

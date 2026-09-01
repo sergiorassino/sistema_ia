@@ -175,8 +175,8 @@ class ComunicacionesRepository
             })
             ->select(['l.id', 'l.apellido', 'l.nombre', 'l.dni'])
             ->distinct()
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->limit(max(1, min(50, $limit)))
             ->get();
 

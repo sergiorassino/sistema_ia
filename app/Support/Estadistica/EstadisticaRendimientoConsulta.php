@@ -59,8 +59,8 @@ final class EstadisticaRendimientoConsulta
                     ->where('mat.idNivel', '=', NivelSistema::SECUNDARIO)
                     ->where('mat.idCondiciones', '=', 1);
             })
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get(['l.id', 'l.apellido', 'l.nombre'])
             ->map(fn ($r) => [
                 'id' => (int) $r->id,

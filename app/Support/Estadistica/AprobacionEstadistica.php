@@ -2,6 +2,7 @@
 
 namespace App\Support\Estadistica;
 
+use App\Support\OrdenAlfabeticoEstudiante;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -550,7 +551,11 @@ final class AprobacionEstadistica
      */
     private static function ordenarPorEstudiante(array &$filas): void
     {
-        usort($filas, static fn (array $a, array $b): int => [$a['apellido'] ?? '', $a['nombre'] ?? '']
-            <=> [$b['apellido'] ?? '', $b['nombre'] ?? '']);
+        usort($filas, static fn (array $a, array $b): int => OrdenAlfabeticoEstudiante::comparar(
+            (string) ($a['apellido'] ?? ''),
+            (string) ($a['nombre'] ?? ''),
+            (string) ($b['apellido'] ?? ''),
+            (string) ($b['nombre'] ?? ''),
+        ));
     }
 }

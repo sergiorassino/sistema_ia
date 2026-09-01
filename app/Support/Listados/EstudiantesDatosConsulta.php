@@ -4,6 +4,7 @@ namespace App\Support\Listados;
 
 use App\Models\Curso;
 use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
+use App\Support\OrdenAlfabeticoEstudiante;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -112,8 +113,8 @@ final class EstudiantesDatosConsulta
             ->where('matricula.idCondiciones', 1)
             ->whereNull('matricula.fechaBaja')
             ->orderBy('matricula.idCursos')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('matricula.id')
             ->select($select)
             ->get();
@@ -166,13 +167,13 @@ final class EstudiantesDatosConsulta
             ->all();
     }
 
-    /** Clave de orden apellido + nombre (insensible a mayúsculas). */
+    /** Clave de orden apellido + nombre (collation española). */
     public static function claveOrdenAlfabetico(object $row): string
     {
-        $apellido = mb_strtolower(trim((string) ($row->apellido ?? '')), 'UTF-8');
-        $nombre = mb_strtolower(trim((string) ($row->nombre ?? '')), 'UTF-8');
-
-        return $apellido."\0".$nombre;
+        return OrdenAlfabeticoEstudiante::clave(
+            (string) ($row->apellido ?? ''),
+            (string) ($row->nombre ?? ''),
+        );
     }
 
     /**
@@ -181,9 +182,7 @@ final class EstudiantesDatosConsulta
      */
     public static function ordenarFilasAlfabeticamente(Collection $filas): Collection
     {
-        return $filas
-            ->sortBy(fn (object $row) => self::claveOrdenAlfabetico($row), SORT_STRING)
-            ->values();
+        return OrdenAlfabeticoEstudiante::ordenarFilas($filas);
     }
 
     public static function formatearApellidoNombre(string $apellido, string $nombre): string

@@ -785,8 +785,8 @@ class MateriasAnioIndex extends Component
             ->leftJoin('legajos as l', 'l.id', '=', 'c.idLegajos')
             ->leftJoin('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->where('c.idMaterias', $idMateria)
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('c.id')
             ->limit(500)
             ->get($select);

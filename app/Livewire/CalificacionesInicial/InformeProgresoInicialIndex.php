@@ -8,6 +8,7 @@ use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
@@ -167,13 +168,7 @@ class InformeProgresoInicialIndex extends Component
             ->whereIn('idCondiciones', $idsCondiciones)
             ->whereNull('fechaBaja')
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function cursos(): Collection

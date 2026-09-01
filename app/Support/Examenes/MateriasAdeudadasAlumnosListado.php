@@ -87,8 +87,8 @@ final class MateriasAdeudadasAlumnosListado
         }
 
         $paginator = $query
-            ->orderBy('apellido')
-            ->orderBy('nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('nombre'))
             ->orderBy('id')
             ->paginate(max(10, min(100, $porPagina)), ['id', 'apellido', 'nombre', 'dni']);
 

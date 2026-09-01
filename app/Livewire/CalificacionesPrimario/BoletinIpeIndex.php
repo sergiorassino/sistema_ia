@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
@@ -157,13 +158,7 @@ class BoletinIpeIndex extends Component
             ->where('idNivel', (int) $ctx->idNivel)
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function cursos(): Collection

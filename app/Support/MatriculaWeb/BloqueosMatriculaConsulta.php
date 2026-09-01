@@ -141,8 +141,8 @@ final class BloqueosMatriculaConsulta
         self::aplicarFiltroBusqueda($query, $busqueda);
 
         return $query
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('m.id')
             ->select([
                 'm.id as idMatricula',

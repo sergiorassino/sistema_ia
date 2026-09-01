@@ -104,8 +104,8 @@ final class GeneracionMasivaCuotasConsulta
 
         $rows = $query
             ->orderBy('matricula.idCursos')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('matricula.id')
             ->select([
                 'matricula.idLegajos as id_legajo',

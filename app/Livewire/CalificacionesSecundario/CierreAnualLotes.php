@@ -166,8 +166,8 @@ class CierreAnualLotes extends Component
                 $hayPosterior = CierreAnualJournal::hayLotePosterior($lote);
                 $q = DB::table(CierreAnualJournal::TABLA_FILAS)
                     ->where('id_lote', $this->loteId)
-                    ->orderBy('apellido')
-                    ->orderBy('nombre')
+                    ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('apellido'))
+                    ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('nombre'))
                     ->orderBy('materia')
                     ->orderBy('id');
 

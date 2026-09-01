@@ -80,8 +80,8 @@ final class LibroMatrizAnalitico
                 'cu.s',
                 'nv.nivel',
             ])
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('l.id');
 
         self::aplicarFiltroBusquedaLegajos($q, $buscar, 'l');

@@ -43,6 +43,10 @@ No calcular promedios salvo en **carga manual / coloquios** (`CargaCalificacione
 - **Nuevos:** **TCPDF** (`tecnickcom/tcpdf`), clase en `app/Support/`, controlador `*PdfController`. Fuente **Arial** vía `App\Support\Pdf\TcpdfFuenteArial` (`storage/fonts/arial.ttf`). Párrafos justificados: `TcpdfMultiCellJustificado::escribir()` (no `MultiCell` con `J`). No usar DomPDF ni vistas Blade de layout. Regla: `.cursor/rules/pdf-tcpdf-nuevos.mdc`. Referencia: `InformeInasistenciasTcpdf`, `ActaVolantePreviosTcpdf`.
 - **Legacy (DomPDF):** tablas con columnas de distinto ancho: **porcentaje inline en cada `th` y `td`** (`min-width:0; overflow:hidden`), tabla al **100%**, `table-layout: fixed`. Regla: `.cursor/rules/pdf-dompdf-columnas.mdc`; detalle en `docs/05-preferencias-y-convenciones.md` §9.
 
+## Orden alfabético de estudiantes
+
+Listados de alumnos de un curso (UI, PDF, Excel, asistencia, planillas, boletines): `App\Support\OrdenAlfabeticoEstudiante` (collation española: tildes no cambian el lugar; Ñ después de N). No ordenar apellido con `strcmp`/`sortBy` sobre UTF-8 crudo. Detalle: `docs/05-preferencias-y-convenciones.md` §16.
+
 ## Selects de año lectivo (`terlec`)
 
 Todo desplegable de ciclo lectivo: **orden decreciente** (año más reciente primero). Usar `Terlec::paraSelector()` o `Terlec::ordenado()`; en Livewire con re-render frecuente, `livewire:components.terlec-selector`. Regla Cursor: `.cursor/rules/terlec-selector-orden.mdc`.

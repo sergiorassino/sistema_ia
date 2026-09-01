@@ -527,3 +527,26 @@ Con `APP_ENV=local` **no se envía correo por SMTP** (comunicados, recuperación
 - En `.env` local conviene `MAIL_MAILER=log`. En producción: `APP_ENV=production` y `MAIL_MAILER=smtp`.
 - Escape hatch puntual en la PC: `MAIL_FORCE_REAL=true` (no usar en servidores).
 - Proyectos extracurriculares → **Comunicar**: además, en `APP_ENV=local` no se pide el medio email (solo el comunicado interno). En producción sí hay correo de refuerzo.
+
+---
+
+## 16. Orden alfabético de estudiantes (español)
+
+Los listados de alumnos de un curso (pantalla, PDF, Excel, asistencia, planillas, boletines) deben usar el **mismo** criterio, alineado a collation española:
+
+- Las tildes no cambian el lugar: **Cáceres** va con las C (antes de Castro y de Corzo), no después de la Z ni al final del grupo.
+- **Ñ** es letra propia: después de N y antes de O.
+- Desempate: **nombre**, y si hace falta el `id` de matrícula.
+
+No ordenar apellido/nombre con `sortBy` / `<=>` / `strcmp` / `SORT_STRING` sobre el texto crudo: en UTF-8 `Á` queda después de `Z` y **CÁCERES** aparece después de **CORZO**.
+
+Usar `App\Support\OrdenAlfabeticoEstudiante`:
+
+```php
+// SQL (forzado, independiente del charset de la columna en el tenant)
+$query->orderByRaw(OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+    ->orderByRaw(OrdenAlfabeticoEstudiante::sql('legajos.nombre'));
+
+// PHP (listados que ya trajeron matrículas)
+return OrdenAlfabeticoEstudiante::ordenarMatriculas($matriculas);
+```

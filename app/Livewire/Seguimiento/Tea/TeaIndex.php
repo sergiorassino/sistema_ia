@@ -66,8 +66,8 @@ class TeaIndex extends Component
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->select([
                 'matricula.id',
                 'matricula.idLegajos',

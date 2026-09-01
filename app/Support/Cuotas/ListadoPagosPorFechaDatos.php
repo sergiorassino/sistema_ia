@@ -186,8 +186,8 @@ final class ListadoPagosPorFechaDatos
 
         return $query
             ->orderBy('cuotaspagos.fechhora')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('cuotaspagos.id');
     }
 

@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Models\SalidaViaje;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\Navegacion\MenuSecretariaPerfil;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PermisosIaCatalog;
 use App\Support\Viajes\SalidaViajeDatos;
 use Illuminate\Support\Collection;
@@ -155,13 +156,7 @@ class SalidaViajeImpresion extends Component
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->whereNull('fechaBaja')
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function render()

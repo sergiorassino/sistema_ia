@@ -292,8 +292,8 @@ final class RegistroAsistenciaDatos
                 $q->whereNull('matricula.fechaBaja')
                     ->orWhere('matricula.fechaBaja', '>', $fechaInicioMes);
             })
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->get([
                 'matricula.id as id',
                 'legajos.apellido',

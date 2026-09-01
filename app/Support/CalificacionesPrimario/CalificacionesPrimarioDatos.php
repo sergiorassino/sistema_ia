@@ -488,8 +488,8 @@ final class CalificacionesPrimarioDatos
             ->where('matricula.idTerlec', (int) $ctx->idTerlec)
             ->whereIn('matricula.idCondiciones', $idsCondiciones)
             ->whereNull('matricula.fechaBaja')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->select('matricula.*')
             ->get();
 

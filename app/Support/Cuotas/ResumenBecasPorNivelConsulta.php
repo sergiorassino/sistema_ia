@@ -6,6 +6,7 @@ use App\Models\CuotasBeca;
 use App\Models\Matricula;
 use App\Models\Nivel;
 use App\Support\NivelSistema;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -157,8 +158,8 @@ final class ResumenBecasPorNivelConsulta
         }
 
         return $query
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->orderBy('matricula.id')
             ->get()
             ->map(fn (Matricula $mat) => self::filaDetalleDesdeMatricula($mat))
@@ -241,7 +242,7 @@ final class ResumenBecasPorNivelConsulta
 
     private static function compararTexto(string $a, string $b): int
     {
-        return strcmp(mb_strtolower($a, 'UTF-8'), mb_strtolower($b, 'UTF-8'));
+        return OrdenAlfabeticoEstudiante::comparar($a, '', $b, '');
     }
 
     public static function etiquetaBeca(int $idBeca): string

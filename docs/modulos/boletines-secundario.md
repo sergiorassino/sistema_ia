@@ -45,6 +45,7 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 
 ## Qué no hacer / reglas de negocio
 
+- El listado de alumnos del curso (pantalla y PDF en lote) se ordena con `OrdenAlfabeticoEstudiante` (collation española). No volver a `sortBy`/`<=>` sobre apellido en crudo: las tildes (Cáceres) quedarían fuera de lugar.
 - No calcular promedios en el PDF.
 - No borrar ni alterar `calif` al elegir «No mostrar promedios».
 - No aplicar el ocultamiento a consulta de calificaciones ni a boletines de otros niveles (IPE, EPQ primario, etc.) salvo pedido explícito.
@@ -57,3 +58,4 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 - [ ] Consulta / familia siguen mostrando promedio por defecto.
 - [ ] Consulta muestra las mismas etiquetas de alumno y «Calific. Final» que el boletín, **sin** bloque de firmas.
 - [ ] Con `verNotasOff` en el nivel secundario, el portal familia no abre la consulta (estándar ni EPQ): aviso + PDF 403.
+- [ ] El listado del curso (y el lote) ordena con `OrdenAlfabeticoEstudiante` (Cáceres con las C).

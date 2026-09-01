@@ -4,29 +4,26 @@ namespace App\Livewire\Cuotas;
 
 use App\Models\CuotasImporte;
 use App\Models\Curso;
-use App\Support\Cuotas\CuotasFormato;
 use App\Support\Cuotas\CuotasImportesCatalog;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\Navegacion\ContextoCuotasImportesSesion;
 use App\Support\PermisosCuotas;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Js;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 /**
  * Edición de importes y fórmulas por curso (`cuotasimportes`) para una plantilla de cuota.
+ *
+ * La grilla no viaja en el snapshot Livewire: cada celda se persiste con `commitDraftCell`
+ * en modo renderless (mismo criterio que la carga de calificaciones).
  */
 class CuotasImportesForm extends Component
 {
     public int $idCuotas = 0;
-
-    public string $search = '';
-
-    /** @var array<string|int, array<string, mixed>> */
-    public array $draft = [];
-
-    public bool $persistiendo = false;
-
-    /** @var array<string, string> */
-    public array $ultimoGuardadoHashes = [];
 
     public function mount(): void
     {
@@ -37,107 +34,115 @@ class CuotasImportesForm extends Component
 
         $this->idCuotas = $idCuotas;
         CuotasImportesCatalog::cuotaDelCicloOrFail($idCuotas);
-        $this->cargarFilas();
-    }
-
-    public function updatedSearch(): void
-    {
-        // Solo filtra en la vista.
-    }
-
-    public function updated($property): void
-    {
-        if ($this->persistiendo || $property === 'search') {
-            return;
-        }
-
-        if (! preg_match('/^draft\.([^.]+)\.([^.]+)$/', (string) $property, $coincidencias)) {
-            return;
-        }
-
-        $this->saveRowField($coincidencias[1]);
     }
 
     /**
-     * Persiste un campo de texto (importe / valor) desde el DOM (focusout o navegación con teclado).
-     * Los selects usan wire:model.live; los inputs no usan wire:model para evitar perder el valor al mover el foco.
+     * Persiste una celda (importe, valor, signo o %/$) sin remorph de la grilla.
      */
     public function commitDraftCell(string $key, string $field, string $value): void
     {
+        $this->skipRender();
+
         abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
 
-        $campos = ['importe', 'valor1v', 'valor2v', 'valor3v', 'valor4v'];
-        if (! in_array($field, $campos, true) || ! isset($this->draft[$key])) {
+        $field = trim($field);
+        if (! in_array($field, CuotasImportesCatalog::camposEditables(), true)) {
             return;
         }
 
-        $this->draft[$key][$field] = trim($value);
-        $this->saveRowField($key);
-    }
-
-    public function saveRowField(string $key): void
-    {
-        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
-
-        if ($this->persistiendo || ! isset($this->draft[$key])) {
+        $id = (int) $key;
+        if ($id <= 0) {
             return;
         }
 
-        $hash = $this->hashFila($key);
-        if (($this->ultimoGuardadoHashes[$key] ?? '') === $hash) {
-            return;
-        }
+        $registro = CuotasImportesCatalog::importeDelCicloOrFail($id, $this->idCuotas);
+        $clave = (string) $registro->id;
+        $revert = CuotasImportesCatalog::formatearCampoParaInput($field, $registro->{$field} ?? null);
+        $row = CuotasImportesCatalog::valoresDraftDesdeRegistro($registro);
+        $row[$field] = trim($value);
 
         $rateKey = 'cuotas-importes:save:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($rateKey, 120)) {
-            $this->addError("draft.{$key}.importe", 'Demasiados intentos. Espere un momento e intente nuevamente.');
+            $this->emitirResultadoCelda([
+                'ok' => false,
+                'key' => $clave,
+                'field' => $field,
+                'value' => $revert,
+                'message' => 'Demasiados intentos. Espere un momento e intente nuevamente.',
+            ]);
 
             return;
         }
+
+        $validator = Validator::make(
+            ['draft' => [$clave => $row]],
+            CuotasImportesCatalog::reglasFila($clave, $row),
+        );
+        if ($validator->fails()) {
+            $this->emitirResultadoCelda([
+                'ok' => false,
+                'key' => $clave,
+                'field' => $field,
+                'value' => $revert,
+                'message' => (string) ($validator->errors()->first() ?: 'Valor inválido.'),
+            ]);
+
+            return;
+        }
+
+        try {
+            CuotasImportesCatalog::validarMontos($row, "draft.{$clave}.");
+        } catch (ValidationException $e) {
+            $this->emitirResultadoCelda([
+                'ok' => false,
+                'key' => $clave,
+                'field' => $field,
+                'value' => $revert,
+                'message' => (string) ($e->validator->errors()->first() ?: 'Valor inválido.'),
+            ]);
+
+            return;
+        }
+
+        $persistido = CuotasImportesCatalog::valorPersistidoParaCampo($field, $row[$field]);
+        $formateado = CuotasImportesCatalog::formatearCampoParaInput($field, $persistido);
+
+        if (CuotasImportesCatalog::campoEquivaleAlRegistro($registro, $field, $persistido)) {
+            $this->emitirResultadoCelda([
+                'ok' => true,
+                'key' => $clave,
+                'field' => $field,
+                'value' => $formateado,
+                'message' => '',
+            ]);
+
+            return;
+        }
+
         RateLimiter::hit($rateKey, 60);
 
-        $this->persistiendo = true;
-
         try {
-            $this->validate(CuotasImportesCatalog::reglasFila($key, $this->draft[$key]));
-            CuotasImportesCatalog::validarMontos($this->draft[$key], "draft.{$key}.");
-        } catch (\Illuminate\Validation\ValidationException) {
-            $this->persistiendo = false;
+            $registro->update([$field => $persistido]);
+        } catch (QueryException $e) {
+            $this->emitirResultadoCelda([
+                'ok' => false,
+                'key' => $clave,
+                'field' => $field,
+                'value' => $revert,
+                'message' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar. Intente nuevamente.',
+            ]);
 
             return;
         }
 
-        $payload = CuotasImportesCatalog::payloadDesdeDraft($this->draft[$key]);
-
-        try {
-            $registro = CuotasImportesCatalog::importeDelCicloOrFail((int) $key, $this->idCuotas);
-            $registro->update($payload);
-            $clave = (string) $registro->id;
-            $this->draft[$clave] = $this->filaDesdeModelo($registro->fresh(['curso.curplan', 'curso.turnoClase', 'curso.nivel']));
-            $this->ultimoGuardadoHashes[$clave] = $this->hashFila($clave);
-            $this->resetValidation();
-        } finally {
-            $this->persistiendo = false;
-        }
-    }
-
-    /**
-     * @return array<int|string, array<string, mixed>>
-     */
-    public function filasVisibles(): array
-    {
-        $q = mb_strtolower(trim($this->search));
-        if ($q === '') {
-            return $this->draft;
-        }
-
-        return array_filter(
-            $this->draft,
-            fn (array $row): bool => str_contains(
-                mb_strtolower((string) ($row['cursoLabel'] ?? '')),
-                $q,
-            ),
-        );
+        $this->emitirResultadoCelda([
+            'ok' => true,
+            'key' => $clave,
+            'field' => $field,
+            'value' => $formateado,
+            'message' => '',
+        ]);
     }
 
     public function render()
@@ -146,7 +151,7 @@ class CuotasImportesForm extends Component
         $ano = (int) schoolCtx()->terlecAno();
 
         return view('livewire.cuotas.importes-form', [
-            'filas' => $this->filasVisibles(),
+            'filas' => $this->cargarFilas(),
             'cuota' => $cuota,
             'opcionesSigno' => CuotasImportesCatalog::opcionesSigno(),
             'opcionesPorcan' => CuotasImportesCatalog::opcionesPorcan(),
@@ -157,9 +162,20 @@ class CuotasImportesForm extends Component
         ]);
     }
 
-    private function cargarFilas(): void
+    /**
+     * @param  array{ok: bool, key: string, field: string, value: string, message: string}  $payload
+     */
+    private function emitirResultadoCelda(array $payload): void
     {
-        $this->draft = [];
+        $this->js('window.seCiiApplyCellResult && window.seCiiApplyCellResult('.Js::from($payload).')');
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function cargarFilas(): array
+    {
+        $filas = [];
 
         $registros = CuotasImporte::query()
             ->where('idCuotas', $this->idCuotas)
@@ -174,22 +190,10 @@ class CuotasImportesForm extends Component
             ->values();
 
         foreach ($registros as $registro) {
-            $clave = (string) $registro->id;
-            $this->draft[$clave] = $this->filaDesdeModelo($registro);
-            $this->ultimoGuardadoHashes[$clave] = $this->hashFila($clave);
-        }
-    }
-
-    private function hashFila(string $key): string
-    {
-        if (! isset($this->draft[$key])) {
-            return '';
+            $filas[(string) $registro->id] = $this->filaDesdeModelo($registro);
         }
 
-        return hash('xxh128', json_encode(
-            CuotasImportesCatalog::payloadDesdeDraft($this->draft[$key]),
-            JSON_THROW_ON_ERROR,
-        ));
+        return $filas;
     }
 
     /**
@@ -197,31 +201,14 @@ class CuotasImportesForm extends Component
      */
     private function filaDesdeModelo(CuotasImporte $registro): array
     {
-        $curso = $registro->curso;
-
-        return [
-            'id' => (int) $registro->id,
-            'idCursos' => (int) $registro->idCursos,
-            'cursoLabel' => $this->cursoLabelConNivel($curso, (int) $registro->idCursos),
-            'importe' => CuotasFormato::importeParaInput($registro->importe),
-            'signo1v' => trim((string) ($registro->signo1v ?? '-')),
-            'valor1v' => $this->valorParaInput($registro->valor1v),
-            'porcan1v' => trim((string) ($registro->porcan1v ?? '%')),
-            'signo2v' => trim((string) ($registro->signo2v ?? '+')),
-            'valor2v' => $this->valorParaInput($registro->valor2v),
-            'porcan2v' => trim((string) ($registro->porcan2v ?? '%')),
-            'signo3v' => trim((string) ($registro->signo3v ?? '+')),
-            'valor3v' => $this->valorParaInput($registro->valor3v),
-            'porcan3v' => trim((string) ($registro->porcan3v ?? '%')),
-            'signo4v' => trim((string) ($registro->signo4v ?? '+')),
-            'valor4v' => $this->valorParaInput($registro->valor4v),
-            'porcan4v' => trim((string) ($registro->porcan4v ?? '%')),
-        ];
-    }
-
-    private function valorParaInput(mixed $valor): string
-    {
-        return number_format((float) ($valor ?? 0), 2, ',', '');
+        return array_merge(
+            CuotasImportesCatalog::valoresDraftDesdeRegistro($registro),
+            [
+                'id' => (int) $registro->id,
+                'idCursos' => (int) $registro->idCursos,
+                'cursoLabel' => $this->cursoLabelConNivel($registro->curso, (int) $registro->idCursos),
+            ],
+        );
     }
 
     private function cursoLabelConNivel(?Curso $curso, int $idCursos): string

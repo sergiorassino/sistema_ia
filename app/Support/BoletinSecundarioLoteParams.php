@@ -73,21 +73,7 @@ final class BoletinSecundarioLoteParams
             }
         }
 
-        usort($ordenados, function (int $a, int $b) use ($allowed): int {
-            $ma = $allowed->get($a);
-            $mb = $allowed->get($b);
-            $apA = mb_strtolower((string) ($ma?->legajo?->apellido ?? ''));
-            $apB = mb_strtolower((string) ($mb?->legajo?->apellido ?? ''));
-            if ($apA !== $apB) {
-                return $apA <=> $apB;
-            }
-            $noA = mb_strtolower((string) ($ma?->legajo?->nombre ?? ''));
-            $noB = mb_strtolower((string) ($mb?->legajo?->nombre ?? ''));
-
-            return $noA <=> $noB;
-        });
-
-        return $ordenados;
+        return OrdenAlfabeticoEstudiante::ordenarIdsPorLegajo($ordenados, $allowed);
     }
 
     /**

@@ -55,8 +55,8 @@ final class CargaCalificacionesEpqSecundarioDatos
             ->where('c.idCursos', $cursoId)
             ->where('c.idMaterias', $materiaId)
             ->orderByRaw('COALESCE(c.ord, 9999) asc')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get($select);
 
         $filas = [];

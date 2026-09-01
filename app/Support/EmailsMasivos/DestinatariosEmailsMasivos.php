@@ -64,8 +64,8 @@ final class DestinatariosEmailsMasivos
                 'c.cursec',
             ])
             ->orderBy('m.idNivel')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('m.idCursos')
             ->limit($limit * 3)
             ->get();
@@ -108,8 +108,8 @@ final class DestinatariosEmailsMasivos
                 'c.cursec',
             ])
             ->distinct()
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get()
             ->map(fn ($r) => self::mapFilaAlumno($r))
             ->all();

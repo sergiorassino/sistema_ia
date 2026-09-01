@@ -109,8 +109,8 @@ final class CuadernoSeguimientoAulicoDocente
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
             ->whereIn('matricula.idCondiciones', self::idsCondicionesRegulares())
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->get([
                 'matricula.id',
                 'matricula.idLegajos',

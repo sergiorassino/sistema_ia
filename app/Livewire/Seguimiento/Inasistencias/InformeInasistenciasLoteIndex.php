@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Models\Matricula;
 use App\Support\InformeInasistenciasLoteParams;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use App\Support\OrdenAlfabeticoEstudiante;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -141,13 +142,7 @@ class InformeInasistenciasLoteIndex extends Component
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     /**

@@ -31,9 +31,9 @@
                 <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                 </svg>
-                <input wire:model.live.debounce.300ms="search"
-                       type="search"
+                <input type="search"
                        x-ref="cuotasImportesFormBuscar"
+                       data-se-cii-buscar
                        placeholder="Búsqueda por curso"
                        class="form-input pl-9 text-sm py-1.5"
                        autocomplete="off">
@@ -84,25 +84,23 @@
                             @endforeach
                         </tr>
                     </thead>
-                    <tbody data-se-cii-tbody>
+                    <tbody data-se-cii-tbody wire:ignore>
                         @forelse ($filas as $key => $row)
-                            <tr class="se-cii-tr" wire:key="cuota-importe-row-{{ $key }}">
+                            <tr class="se-cii-tr" data-se-cii-curso="{{ $row['cursoLabel'] }}">
                                 <td class="se-cii-td se-cii-td-text" title="{{ $cuota->nombre }}">{{ $cuota->nombre }}</td>
                                 <td class="se-cii-td se-cii-td-text" title="ID del registro: {{ $row['id'] }}">{{ $row['cursoLabel'] }}</td>
                                 <td class="se-cii-td">
                                     <input type="text"
                                            inputmode="decimal"
                                            value="{{ $row['importe'] }}"
-                                           wire:key="cii-{{ $key }}-importe"
                                            data-se-cii-nav
                                            data-se-cii-decimal
                                            data-se-cii-row-key="{{ $key }}"
                                            data-se-cii-field="importe"
-                                           class="se-cii-input @error('draft.'.$key.'.importe') se-cii-input--err @enderror"
-                                           title="Importe base">
-                                    @error('draft.'.$key.'.importe')
-                                        <div class="se-cii-field-err">{{ $message }}</div>
-                                    @enderror
+                                           class="se-cii-input"
+                                           title="Importe base"
+                                           autocomplete="off">
+                                    <div class="se-cii-field-err" data-se-cii-err hidden></div>
                                 </td>
                                 @foreach ([1, 2, 3, 4] as $num)
                                     @php
@@ -111,52 +109,57 @@
                                         $porcan = "porcan{$num}v";
                                     @endphp
                                     <td class="se-cii-td se-cii-td-bon">
-                                        <select wire:model.live="draft.{{ $key }}.{{ $signo }}"
-                                                data-se-cii-nav
-                                                class="se-cii-select se-cii-select--signo @error('draft.'.$key.'.'.$signo) se-cii-input--err @enderror"
+                                        <select data-se-cii-nav
+                                                data-se-cii-row-key="{{ $key }}"
+                                                data-se-cii-field="{{ $signo }}"
+                                                class="se-cii-select se-cii-select--signo"
                                                 title="{{ $opcionesSigno[$row[$signo]] ?? '' }}">
                                             @foreach ($opcionesSigno as $val => $etiq)
-                                                <option value="{{ $val }}">{{ $val }}</option>
+                                                <option value="{{ $val }}" @selected($row[$signo] === $val)>{{ $val }}</option>
                                             @endforeach
                                         </select>
+                                        <div class="se-cii-field-err" data-se-cii-err hidden></div>
                                     </td>
                                     <td class="se-cii-td">
                                         <input type="text"
                                                inputmode="decimal"
                                                value="{{ $row[$valor] }}"
-                                               wire:key="cii-{{ $key }}-{{ $valor }}"
                                                data-se-cii-nav
                                                data-se-cii-decimal
                                                data-se-cii-valor
                                                data-se-cii-row-key="{{ $key }}"
                                                data-se-cii-field="{{ $valor }}"
-                                               class="se-cii-input se-cii-input--center @error('draft.'.$key.'.'.$valor) se-cii-input--err @enderror">
-                                        @error('draft.'.$key.'.'.$valor)
-                                            <div class="se-cii-field-err">{{ $message }}</div>
-                                        @enderror
+                                               class="se-cii-input se-cii-input--center"
+                                               autocomplete="off">
+                                        <div class="se-cii-field-err" data-se-cii-err hidden></div>
                                     </td>
                                     <td class="se-cii-td">
-                                        <select wire:model.live="draft.{{ $key }}.{{ $porcan }}"
-                                                data-se-cii-nav
-                                                class="se-cii-select @error('draft.'.$key.'.'.$porcan) se-cii-input--err @enderror">
+                                        <select data-se-cii-nav
+                                                data-se-cii-row-key="{{ $key }}"
+                                                data-se-cii-field="{{ $porcan }}"
+                                                class="se-cii-select">
                                             @foreach ($opcionesPorcan as $val => $etiq)
-                                                <option value="{{ $val }}">{{ $etiq }}</option>
+                                                <option value="{{ $val }}" @selected($row[$porcan] === $val)>{{ $etiq }}</option>
                                             @endforeach
                                         </select>
+                                        <div class="se-cii-field-err" data-se-cii-err hidden></div>
                                     </td>
                                 @endforeach
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="15" class="se-cii-empty">
-                                    @if (trim($search) !== '')
-                                        No hay cursos que coincidan con la búsqueda.
-                                    @else
-                                        No hay importes cargados para esta cuota. Los registros se generan al crear la plantilla o al emitir cuotas masivamente.
-                                    @endif
+                                    No hay importes cargados para esta cuota. Los registros se generan al crear la plantilla o al emitir cuotas masivamente.
                                 </td>
                             </tr>
                         @endforelse
+                        @if (count($filas) > 0)
+                            <tr data-se-cii-empty-filter hidden>
+                                <td colspan="15" class="se-cii-empty">
+                                    No hay cursos que coincidan con la búsqueda.
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

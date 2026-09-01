@@ -9,6 +9,7 @@ use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\NivelSistema;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
@@ -150,13 +151,7 @@ class BoletinEpqSecundarioIndex extends Component
             ->where('idTerlec', (int) $ctx->idTerlec)
             ->whereIn('idCondiciones', $idsCondicionesRegulares)
             ->get()
-            ->sortBy(function (Matricula $m) {
-                $a = mb_strtolower((string) ($m->legajo?->apellido ?? ''));
-                $n = mb_strtolower((string) ($m->legajo?->nombre ?? ''));
-
-                return [$a, $n];
-            })
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function cursos(): Collection

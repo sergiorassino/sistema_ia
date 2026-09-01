@@ -161,8 +161,8 @@ final class PlanillaCalificacionesPrimarioDatos
                 ->where('matricula.idNivel', (int) $ctx->idNivel)
                 ->whereIn('matricula.idCondiciones', $idsCondiciones)
                 ->whereNull('matricula.fechaBaja')
-                ->orderBy('l.apellido')
-                ->orderBy('l.nombre')
+                ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+                ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
                 ->select('matricula.*')
                 ->get();
 

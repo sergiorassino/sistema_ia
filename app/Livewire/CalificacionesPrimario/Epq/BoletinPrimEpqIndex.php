@@ -8,6 +8,7 @@ use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos;
 use App\Support\CalificacionesPrimario\Epq\CalificacionesEpqCatalogo;
 use App\Support\NivelSistema;
+use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
 use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
@@ -125,11 +126,7 @@ class BoletinPrimEpqIndex extends Component
                 $q->whereIn('idCursos', CalificacionesPrimarioPortalDocente::idsCursosAsignados());
             })
             ->get()
-            ->sortBy(fn (Matricula $m) => [
-                mb_strtolower((string) ($m->legajo?->apellido ?? '')),
-                mb_strtolower((string) ($m->legajo?->nombre ?? '')),
-            ])
-            ->values();
+            ->pipe(fn ($c) => OrdenAlfabeticoEstudiante::ordenarMatriculas($c));
     }
 
     public function cursos(): Collection

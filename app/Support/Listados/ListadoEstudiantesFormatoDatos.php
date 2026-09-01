@@ -45,8 +45,8 @@ final class ListadoEstudiantesFormatoDatos
 
         $filas = $query
             ->orderBy('matricula.idCursos')
-            ->orderBy('legajos.apellido')
-            ->orderBy('legajos.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
             ->get([
                 'matricula.idCursos as __id_curso',
                 'legajos.apellido',

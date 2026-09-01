@@ -43,6 +43,97 @@ final class CuotasImportesCatalog
         ];
     }
 
+    /**
+     * Campos que el editor de importes puede persistir celda a celda.
+     *
+     * @return list<string>
+     */
+    public static function camposEditables(): array
+    {
+        return [
+            'importe',
+            'signo1v', 'valor1v', 'porcan1v',
+            'signo2v', 'valor2v', 'porcan2v',
+            'signo3v', 'valor3v', 'porcan3v',
+            'signo4v', 'valor4v', 'porcan4v',
+        ];
+    }
+
+    public static function esCampoMonto(string $field): bool
+    {
+        return $field === 'importe' || preg_match('/^valor[1-4]v$/', $field) === 1;
+    }
+
+    public static function formatearCampoParaInput(string $field, mixed $valor): string
+    {
+        if ($field === 'importe') {
+            return CuotasFormato::importeParaInput($valor);
+        }
+
+        if (preg_match('/^valor[1-4]v$/', $field) === 1) {
+            return number_format((float) ($valor ?? 0), 2, ',', '');
+        }
+
+        if (str_starts_with($field, 'signo')) {
+            $fallback = $field === 'signo1v' ? '-' : '+';
+
+            return self::normalizarSigno($valor, $fallback);
+        }
+
+        if (str_starts_with($field, 'porcan')) {
+            return self::normalizarPorcan($valor);
+        }
+
+        return trim((string) ($valor ?? ''));
+    }
+
+    /**
+     * Valores de la fila listos para inputs (sin etiqueta de curso).
+     *
+     * @return array<string, string>
+     */
+    public static function valoresDraftDesdeRegistro(CuotasImporte $registro): array
+    {
+        $out = [];
+        foreach (self::camposEditables() as $campo) {
+            $out[$campo] = self::formatearCampoParaInput($campo, $registro->{$campo} ?? null);
+        }
+
+        return $out;
+    }
+
+    public static function valorPersistidoParaCampo(string $field, mixed $valorDraft): float|string
+    {
+        if ($field === 'importe') {
+            return CuotasFormato::parseImporte((string) $valorDraft);
+        }
+
+        if (preg_match('/^valor[1-4]v$/', $field) === 1) {
+            return self::parseValorCampo($valorDraft);
+        }
+
+        if (str_starts_with($field, 'signo')) {
+            return self::normalizarSigno($valorDraft, '-');
+        }
+
+        if (str_starts_with($field, 'porcan')) {
+            return self::normalizarPorcan($valorDraft);
+        }
+
+        return trim((string) $valorDraft);
+    }
+
+    public static function campoEquivaleAlRegistro(CuotasImporte $registro, string $field, float|string $persistido): bool
+    {
+        $actual = $registro->{$field} ?? null;
+
+        if (self::esCampoMonto($field)) {
+            return round((float) ($actual ?? 0), 2) === round((float) $persistido, 2);
+        }
+
+        return trim((string) ($actual ?? '')) === trim((string) $persistido);
+    }
+
     public static function idTerlecActivo(): int
     {
         return CuotasPlantillaCatalog::idTerlecActivo();

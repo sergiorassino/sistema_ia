@@ -54,8 +54,8 @@ final class CertificadoAlumnoRegular
                 'cu.c',
                 'cu.s',
             ])
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('l.id');
 
         $termino = self::normalizarBusqueda($buscar);

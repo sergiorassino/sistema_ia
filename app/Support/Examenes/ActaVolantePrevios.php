@@ -314,8 +314,8 @@ final class ActaVolantePrevios
             }
 
             $alumnos = $alumnosQuery
-                ->orderBy('l.apellido')
-                ->orderBy('l.nombre')
+                ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+                ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
                 ->orderBy('l.id')
                 ->get([
                     'l.apellido',

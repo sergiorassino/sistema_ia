@@ -69,8 +69,8 @@ final class PermisoExamen
             ->where('c.inscri', 1)
             ->where('cu.idNivel', $idNivel)
             ->groupBy('l.id', 'l.apellido', 'l.nombre', 'l.dni')
-            ->orderBy('l.apellido')
-            ->orderBy('l.nombre')
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->orderBy('l.id')
             ->get([
                 'l.id as idLegajos',
