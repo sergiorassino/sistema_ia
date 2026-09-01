@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Alumnos;
 use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
+use App\Support\EntoVerNotasOff;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,6 +20,11 @@ class BoletinIpePrimarioPdfController extends Controller
     public function __invoke(Request $request, int $etapa)
     {
         abort_unless(PortalFamiliaBoletinIpe::habilitadoEnMenu(), 404);
+
+        if ($bloqueo = EntoVerNotasOff::respuestaPdfSiConsultaBloqueada()) {
+            return $bloqueo;
+        }
+
         abort_unless(in_array($etapa, [1, 2], true), 404);
         abort_unless(
             NivelSistema::esPrimario((int) studentCtx()->idNivel),

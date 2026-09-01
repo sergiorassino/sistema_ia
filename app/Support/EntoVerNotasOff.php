@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class EntoVerNotasOff
 {
+    public const TITULO_AVISO_CONSULTA = 'Consulta de calificaciones';
+
     /**
      * @return array{bloqueada: bool, mensaje: string}
      */
@@ -55,6 +58,40 @@ final class EntoVerNotasOff
     public static function mensajeConsultaEstudianteBloqueada(): string
     {
         return self::paraEstudianteActual()['mensaje'];
+    }
+
+    /**
+     * Si la consulta está bloqueada, respuesta 403 con el mensaje de parámetros.
+     */
+    public static function respuestaPdfSiConsultaBloqueada(): ?Response
+    {
+        $bloqueo = self::paraEstudianteActual();
+        if (! $bloqueo['bloqueada']) {
+            return null;
+        }
+
+        return response()->view('errors.alumno-pdf', [
+            'mensaje' => $bloqueo['mensaje'],
+        ], 403);
+    }
+
+    /**
+     * Intercepta el acceso rápido del escritorio cuando `verNotasOff` está activo.
+     *
+     * @param  array<string, mixed>  $acceso
+     * @param  array{bloqueada: bool, mensaje: string}|null  $bloqueo
+     * @return array<string, mixed>
+     */
+    public static function aplicarAvisoAAcceso(array $acceso, ?array $bloqueo = null): array
+    {
+        $bloqueo ??= self::paraEstudianteActual();
+        if ($bloqueo['bloqueada']) {
+            $acceso['aviso'] = $bloqueo['mensaje'];
+            $acceso['aviso_titulo'] = self::TITULO_AVISO_CONSULTA;
+            $acceso['externo'] = false;
+        }
+
+        return $acceso;
     }
 
     /**

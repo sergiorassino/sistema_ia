@@ -33,11 +33,14 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 
 `ento` del `idNivel` de contexto. Los bloqueos de notas se leen con `EntoCargaNotas` / `EntoVerNotasOff` de esa misma fila.
 
+`verNotasOff` (del nivel del estudiante) bloquea **toda** consulta de calificaciones en autogestión familia: menú, escritorio y PDF. Aplica a inicial (informe de progreso), primario (IPE y EPQ) y secundario (consulta estándar y EPQ). El controlador debe devolver 403 con `verOffMensaje`; no alcanza con ocultar el ítem.
+
 ## Archivos clave
 
 - `app/Livewire/Parametrizacion/ParametrosSistemaForm.php`
 - `resources/views/livewire/parametrizacion/parametros-sistema-form.blade.php`
 - `app/Models/Ento.php`
+- `app/Support/EntoVerNotasOff.php`
 - `app/Support/Database/PersistenciaColumnas.php`
 
 ## Qué no hacer / reglas de negocio
@@ -51,4 +54,5 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 
 - [ ] Guardar con AFIP habilitado y `cuitFact` vacío (niveles pedagógicos) sigue persistiendo flags.
 - [ ] Toggle de `cargaNotasOff` / `verNotasOff` desde la solapa Parámetros queda en `ento` al recargar.
+- [ ] Con `verNotasOff` en el nivel activo, el portal familia no abre ninguna consulta de calificaciones (aviso + PDF 403), en todos los niveles y variantes.
 - [ ] Si falla validación o persistencia, hay mensaje visible (`se-swal-error`).

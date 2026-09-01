@@ -41,12 +41,14 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 - PDF: `app/Support/BoletinesSecundario/BoletinConsultaCalificacionesTcpdf.php`
 - Controllers: `BoletinSecundarioPdfController`, `BoletinSecundarioLotePdfController`
 - Consulta (misma plantilla, sin firmas): `ConsultaCalificacionesSecundarioPdfController`, `Alumnos\CalificacionesController`
+- Autogestión EPQ: `PortalFamiliaBoletinEpqSecundario`, `BoletinEpqSecundarioFamiliaPdfController`
 
 ## Qué no hacer / reglas de negocio
 
 - No calcular promedios en el PDF.
 - No borrar ni alterar `calif` al elegir «No mostrar promedios».
 - No aplicar el ocultamiento a consulta de calificaciones ni a boletines de otros niveles (IPE, EPQ primario, etc.) salvo pedido explícito.
+- En autogestión familia, `ento.verNotasOff` del nivel del estudiante debe impedir el PDF de consulta (estándar y EPQ) y mostrar `verOffMensaje`. El controlador tiene que devolver 403.
 
 ## Checklist al modificar
 
@@ -54,3 +56,4 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 - [ ] Con «No mostrar», la grilla dibuja encabezado y celdas de Calific. Final **sin** el valor.
 - [ ] Consulta / familia siguen mostrando promedio por defecto.
 - [ ] Consulta muestra las mismas etiquetas de alumno y «Calific. Final» que el boletín, **sin** bloque de firmas.
+- [ ] Con `verNotasOff` en el nivel secundario, el portal familia no abre la consulta (estándar ni EPQ): aviso + PDF 403.

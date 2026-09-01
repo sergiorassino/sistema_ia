@@ -22,11 +22,8 @@ class InformeProgresoInicialPdfController extends Controller
     {
         abort_unless(PortalFamiliaInformeProgresoInicial::habilitadoEnMenu(), 404);
 
-        $bloqueoVerNotas = EntoVerNotasOff::paraEstudianteActual();
-        if ($bloqueoVerNotas['bloqueada']) {
-            return response()->view('errors.alumno-pdf', [
-                'mensaje' => $bloqueoVerNotas['mensaje'],
-            ], 403);
+        if ($bloqueo = EntoVerNotasOff::respuestaPdfSiConsultaBloqueada()) {
+            return $bloqueo;
         }
 
         abort_unless(in_array($etapa, [1, 2], true), 404);

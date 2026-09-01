@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
 use App\Support\CalificacionesSecundario\Epq\BoletinEpqSecundarioDatos;
 use App\Support\CalificacionesSecundario\Epq\BoletinEpqSecundarioTcpdf;
+use App\Support\EntoVerNotasOff;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,6 +20,10 @@ class BoletinEpqSecundarioFamiliaPdfController extends Controller
     public function __invoke(Request $request)
     {
         abort_unless(PortalFamiliaBoletinEpqSecundario::habilitadoEnMenu(), 404);
+
+        if ($bloqueo = EntoVerNotasOff::respuestaPdfSiConsultaBloqueada()) {
+            return $bloqueo;
+        }
 
         abort_unless(
             NivelSistema::esSecundario((int) studentCtx()->idNivel),

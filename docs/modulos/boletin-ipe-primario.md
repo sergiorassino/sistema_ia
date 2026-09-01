@@ -45,9 +45,11 @@ Despacho: `BoletinIpePrimarioGenerador`.
 - No calcular promedios en el PDF (solo leer notas guardadas).
 - No ramificar por `tenantSlug()`; usar `ipe_implementacion`.
 - PDFs nuevos solo TCPDF + Arial (`TcpdfFuenteArial`); párrafos justificados con `TcpdfMultiCellJustificado`.
+- En autogestión familia, `ento.verNotasOff` del nivel primario debe impedir el PDF (`BoletinIpePrimarioPdfController`) y mostrar `verOffMensaje`.
 
 ## Checklist al modificar
 
 - [ ] Actualizar match en `BoletinIpePrimarioGenerador` y `usaSelectorEtapa` / `usaBoletinUnico`.
 - [ ] Activar clave en `config/tenants/{slug}.php`.
 - [ ] Probar etapa 1 y 2 (o boletín único) en secretaría y, si aplica, portal familia.
+- [ ] Con `verNotasOff` en primario, el portal familia no abre el IPE (aviso + PDF 403).

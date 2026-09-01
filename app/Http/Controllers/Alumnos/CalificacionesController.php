@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\BoletinesSecundario\BoletinConsultaCalificacionesTcpdf;
 use App\Support\ConsultaCalificacionesAlumno;
+use App\Support\EntoVerNotasOff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -19,6 +20,10 @@ class CalificacionesController extends Controller
     public function __invoke(Request $request)
     {
         abort_unless(PortalFamiliaBoletinIpe::consultaSecundariaVisible(), 404);
+
+        if ($bloqueo = EntoVerNotasOff::respuestaPdfSiConsultaBloqueada()) {
+            return $bloqueo;
+        }
 
         $key = 'alumnos-consulta-calificaciones-pdf:'.(auth('alumno')->id() ?? $request->ip());
         if (RateLimiter::tooManyAttempts($key, 20)) {

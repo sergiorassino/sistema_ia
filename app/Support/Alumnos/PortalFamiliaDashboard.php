@@ -5,8 +5,10 @@ namespace App\Support\Alumnos;
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
 use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
+use App\Support\Alumnos\PortalFamiliaInformeProgresoInicial;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
+use App\Support\EntoVerNotasOff;
 use App\Support\InformeInasistencias;
 use App\Support\MatriculaBloqueos;
 
@@ -31,47 +33,59 @@ final class PortalFamiliaDashboard
     public static function accesosRapidos(): array
     {
         $accesos = [];
+        $bloqueoVerNotas = EntoVerNotasOff::paraEstudianteActual();
 
         if (PortalFamiliaBoletinPrimEpq::habilitadoEnMenu()) {
             foreach (PortalFamiliaBoletinPrimEpq::items() as $item) {
-                $accesos[] = [
+                $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
                     'id' => 'boletin-prim-epq-'.$item['cara'],
                     'titulo' => $item['titulo'],
                     'descripcion' => 'Boletín de calificaciones del ciclo lectivo activo.',
                     'url' => $item['url'],
                     'externo' => true,
                     'icono' => 'calificaciones',
-                ];
+                ], $bloqueoVerNotas);
             }
         } elseif (PortalFamiliaBoletinEpqSecundario::habilitadoEnMenu()) {
-            $accesos[] = [
+            $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
                 'id' => 'consulta-calificaciones-epq-sec',
                 'titulo' => PortalFamiliaBoletinEpqSecundario::tituloMenu(),
                 'descripcion' => 'Informe de calificaciones del ciclo lectivo activo.',
                 'url' => PortalFamiliaBoletinEpqSecundario::urlPdf(),
                 'externo' => true,
                 'icono' => 'calificaciones',
-            ];
+            ], $bloqueoVerNotas);
         } elseif (PortalFamiliaBoletinIpe::habilitadoEnMenu()) {
             foreach (PortalFamiliaBoletinIpe::itemsEtapa() as $item) {
-                $accesos[] = [
+                $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
                     'id' => 'boletin-ipe-etapa-'.$item['etapa'],
                     'titulo' => $item['titulo'],
                     'descripcion' => 'Boletín de calificaciones del ciclo lectivo activo.',
                     'url' => $item['url'],
                     'externo' => true,
                     'icono' => 'calificaciones',
-                ];
+                ], $bloqueoVerNotas);
+            }
+        } elseif (PortalFamiliaInformeProgresoInicial::habilitadoEnMenu()) {
+            foreach (PortalFamiliaInformeProgresoInicial::itemsEtapa() as $item) {
+                $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
+                    'id' => 'informe-progreso-inicial-'.$item['etapa'],
+                    'titulo' => $item['titulo'],
+                    'descripcion' => 'Informe de progreso escolar del ciclo lectivo activo.',
+                    'url' => $item['url'],
+                    'externo' => true,
+                    'icono' => 'calificaciones',
+                ], $bloqueoVerNotas);
             }
         } elseif (PortalFamiliaBoletinIpe::consultaSecundariaVisible()) {
-            $accesos[] = [
+            $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
                 'id' => 'calificaciones',
                 'titulo' => 'Consulta de calificaciones',
                 'descripcion' => 'Calificaciones del ciclo lectivo activo.',
                 'url' => se_route_url('alumnos.calificaciones'),
                 'externo' => true,
                 'icono' => 'calificaciones',
-            ];
+            ], $bloqueoVerNotas);
         }
 
         if (tenantAutogestionInformeInasistenciasHabilitada()) {

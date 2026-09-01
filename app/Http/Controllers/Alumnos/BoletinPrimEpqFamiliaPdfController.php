@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
 use App\Support\CalificacionesPrimario\Epq\BoletinPrimEpqDatos;
 use App\Support\CalificacionesPrimario\Epq\BoletinPrimEpqTcpdf;
+use App\Support\EntoVerNotasOff;
 use App\Support\NivelSistema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,6 +20,10 @@ class BoletinPrimEpqFamiliaPdfController extends Controller
     public function __invoke(Request $request, string $cara)
     {
         abort_unless(PortalFamiliaBoletinPrimEpq::habilitadoEnMenu(), 404);
+
+        if ($bloqueo = EntoVerNotasOff::respuestaPdfSiConsultaBloqueada()) {
+            return $bloqueo;
+        }
 
         $caraPdf = PortalFamiliaBoletinPrimEpq::caraPdf($cara);
         abort_unless($caraPdf !== null, 404);
