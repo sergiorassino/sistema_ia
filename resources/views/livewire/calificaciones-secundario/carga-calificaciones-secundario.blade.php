@@ -191,6 +191,11 @@
                         Los datos se guardan al salir de cada celda.
                     @endif
                 </span>
+                @if ($modalFotoEstudiante)
+                    <span class="mt-1 block text-xs font-medium text-primary-700 sm:mt-0 sm:inline sm:before:content-['·'] sm:before:mx-2">
+                        Click sobre Apellido y Nombre para ver foto
+                    </span>
+                @endif
             </p>
         </div>
 
