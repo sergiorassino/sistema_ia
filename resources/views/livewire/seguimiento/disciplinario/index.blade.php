@@ -49,7 +49,7 @@
                     @endforeach
                 </select>
                 @if ($idCurso && $alumnos->isEmpty())
-                    <p class="mt-1.5 text-xs text-amber-800">No hay matrículas para ese curso en el año actual.</p>
+                    <p class="mt-1.5 text-xs text-amber-800">No hay alumnos con condición 1 a 4 para ese curso en el año actual.</p>
                 @endif
             </div>
         </div>

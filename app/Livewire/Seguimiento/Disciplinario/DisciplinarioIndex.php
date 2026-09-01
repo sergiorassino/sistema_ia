@@ -6,6 +6,7 @@ use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDi
 use App\Models\Curso;
 use App\Models\Matricula;
 use App\Models\Sancion;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Mail\MailDesarrollo;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\Seguimiento\NotificarFamiliaSancion;
@@ -59,6 +60,12 @@ class DisciplinarioIndex extends Component
             ->get(['Id', 'cursec', 'orden', 'idTurnoClase', 'c', 's']);
     }
 
+    /** @return list<int> */
+    private function idsCondicionesSelector(): array
+    {
+        return ListadoCursoCondicionFiltro::idCondicionesParaQuery(ListadoCursoCondicionFiltro::TODOS);
+    }
+
     /** @return Collection<int, object> */
     private function alumnosDelCurso(int $idCurso): Collection
     {
@@ -66,6 +73,7 @@ class DisciplinarioIndex extends Component
             ->where('matricula.idNivel', schoolCtx()->idNivel)
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
+            ->whereIn('matricula.idCondiciones', $this->idsCondicionesSelector())
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre')
@@ -90,6 +98,7 @@ class DisciplinarioIndex extends Component
             ->with(['legajo', 'curso'])
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
+            ->whereIn('idCondiciones', $this->idsCondicionesSelector())
             ->find($id);
     }
 

@@ -6,6 +6,7 @@ use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDi
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\Seguimiento\SancionActaHtmlSanitizer;
 use Illuminate\Database\QueryException;
@@ -33,7 +34,12 @@ class SancionActaForm extends Component
             ->findOrFail($id);
 
         if ((int) ($s->matricula?->idNivel ?? 0) !== (int) schoolCtx()->idNivel
-            || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec) {
+            || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec
+            || ! in_array(
+                (int) ($s->matricula?->idCondiciones ?? 0),
+                ListadoCursoCondicionFiltro::idCondicionesParaQuery(ListadoCursoCondicionFiltro::TODOS),
+                true
+            )) {
             abort(404);
         }
 
@@ -95,7 +101,12 @@ class SancionActaForm extends Component
             ->findOrFail($this->id);
 
         if ((int) ($s->matricula?->idNivel ?? 0) !== (int) schoolCtx()->idNivel
-            || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec) {
+            || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec
+            || ! in_array(
+                (int) ($s->matricula?->idCondiciones ?? 0),
+                ListadoCursoCondicionFiltro::idCondicionesParaQuery(ListadoCursoCondicionFiltro::TODOS),
+                true
+            )) {
             abort(404);
         }
 

@@ -21,7 +21,7 @@ Registrar, editar e imprimir sanciones del Cuaderno de Seguimiento; notificar a 
 |-------|--------|--------|
 | `sanciones` | `idMatricula`, `idTipoSancion`, `fecha`, `cantidad`, `motivo`, **`acta`**, `solipor`, `comunicadaPadres`, … | `acta` = `MEDIUMTEXT` NULL (HTML sanitizado). Sin texto = comportamiento anterior. |
 | `sanciontipo` | `tipo`, `textoNotifPadres`, `idProfesorNotif`, `refuerzoMail`, `permiteNotifPadres` | Condicionan Notif. Padres. |
-| `matricula` / `legajos` / `cursos` | Alcance por contexto | Seguridad de listado, PDF y acta. |
+| `matricula` / `legajos` / `cursos` | Alcance por contexto | Selector de alumno: solo `idCondiciones` 1, 2, 3 o 4. Seguridad de listado, PDF y acta. |
 
 Migración: `database/migrations/2026_08_10_120000_add_acta_to_sanciones.php`.  
 SQL idempotente: `database/sql/sanciones_acta_idempotente.sql`.
@@ -60,6 +60,7 @@ SQL idempotente: `database/sql/sanciones_acta_idempotente.sql`.
 ## Checklist al modificar
 
 - [ ] ¿Queries filtradas por `schoolCtx()` vía matrícula?
+- [ ] ¿Selector de alumnos solo condiciones 1–4 (`ListadoCursoCondicionFiltro::TODOS`)?
 - [ ] ¿Acta opcional en PDF y en mail?
 - [ ] ¿HTML sanitizado al guardar y al imprimir?
 - [ ] ¿Esquema `acta` aplicado en el tenant (migrate o SQL)?

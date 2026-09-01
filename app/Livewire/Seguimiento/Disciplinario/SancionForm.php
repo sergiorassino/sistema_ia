@@ -6,6 +6,7 @@ use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDi
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Models\SancionTipo;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
@@ -84,6 +85,9 @@ class SancionForm extends Component
             ->with(['legajo', 'curso'])
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
+            ->whereIn('idCondiciones', ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+                ListadoCursoCondicionFiltro::TODOS
+            ))
             ->findOrFail($id);
 
         return $m;

@@ -5,6 +5,7 @@ namespace App\Livewire\Seguimiento\Disciplinario;
 use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDisciplinario;
 use App\Models\Matricula;
 use App\Models\Sancion;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -29,6 +30,9 @@ class AntecedentesIndex extends Component
             ->with(['legajo', 'curso', 'terlec'])
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
+            ->whereIn('idCondiciones', ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+                ListadoCursoCondicionFiltro::TODOS
+            ))
             ->findOrFail($this->idMatricula);
 
         return $m;
