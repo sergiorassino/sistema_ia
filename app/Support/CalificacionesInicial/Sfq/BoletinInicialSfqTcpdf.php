@@ -41,6 +41,8 @@ final class BoletinInicialSfqTcpdf extends TCPDF
 
     private const BA_ALTO_ENCABEZADO = 5.0;
 
+    private bool $mostrarMarcaAgua = false;
+
     /** @param  array<string, mixed>  $datos */
     private function __construct(private array $datos)
     {
@@ -57,9 +59,10 @@ final class BoletinInicialSfqTcpdf extends TCPDF
     /**
      * @param  array<string, mixed>  $datos
      */
-    public static function generarHoja(array $datos): self
+    public static function generarHoja(array $datos, bool $mostrarMarcaAgua = false): self
     {
         $pdf = new self($datos);
+        $pdf->mostrarMarcaAgua = $mostrarMarcaAgua;
         $pdf->AddPage();
         $pdf->dibujarInforme();
 
@@ -124,6 +127,10 @@ final class BoletinInicialSfqTcpdf extends TCPDF
             );
             $this->dibujarObservaciones(trim((string) ($this->datos['observaciones'] ?? '')));
             $this->dibujarFirmas(30);
+        }
+
+        if ($this->mostrarMarcaAgua) {
+            $this->dibujarMarcaAgua();
         }
     }
 
@@ -363,5 +370,23 @@ final class BoletinInicialSfqTcpdf extends TCPDF
         $this->Cell($anchoFirma, 6, 'Firma Tutor', 0, 0, 'C');
         $this->Cell($anchoFirma, 6, 'Firma Docente', 0, 0, 'C');
         $this->Cell($anchoFirma, 6, 'Firma Directivo', 0, 1, 'C');
+    }
+
+    /**
+     * Marca «SIN VALOR LEGAL» (autogestión familia). No aplica en Secretaría ni Docentes.
+     */
+    private function dibujarMarcaAgua(): void
+    {
+        $cx = self::MARGEN + self::ANCHO_BLOQUE / 2;
+        $cy = 140.0;
+        $this->SetAlpha(0.52);
+        $this->SetTextColor(168, 168, 168);
+        TcpdfFuenteArial::aplicar($this, 'B', 22);
+        $this->StartTransform();
+        $this->Rotate(-29, $cx, $cy);
+        $this->Text($cx - 38, $cy - 2, 'SIN VALOR LEGAL');
+        $this->StopTransform();
+        $this->SetAlpha(1);
+        $this->SetTextColor(0, 0, 0);
     }
 }

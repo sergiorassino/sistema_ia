@@ -8,6 +8,9 @@ use TCPDF;
 
 /**
  * Comprobante de pago tras imputación manual — TCPDF (legacy, sin cupón ni código de barras).
+ *
+ * En SFQ/EPQ (`tenant.cuotas.comprobante_imputacion.dos_copias_por_hoja`) imprime dos
+ * talonarios idénticos en la misma hoja A4, compactando espacios para el corte.
  */
 final class ComprobantePagoImputacionTcpdf extends TCPDF
 {
@@ -25,12 +28,22 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
 
     private const LOGO_ALTO = 17.0;
 
+    private const LOGO_ANCHO_COMPACTO = 15.0;
+
+    private const LOGO_ALTO_COMPACTO = 15.0;
+
     private const ALTO_SECCION_ALUMNO = 52.0;
+
+    private const ALTO_SECCION_ALUMNO_COMPACTO = 38.0;
 
     private const ALTO_SECCION_PAGO = 58.0;
 
+    private const ALTO_SECCION_PAGO_COMPACTO = 46.0;
+
     /** Alto fijo del bloque de título + medio de pago + márgenes internos (múltiples cuotas). */
     private const ALTO_PAGO_MULTIPLE_BASE = 28.0;
+
+    private const ALTO_PAGO_MULTIPLE_BASE_COMPACTO = 22.0;
 
     /** Alto de cada fila de la grilla (encabezado, ítems y totales). */
     private const ALTO_FILA_TABLA = 5.0;
@@ -46,8 +59,15 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
 
     private const COL_ABONADO = 24.0;
 
+    private const MEDIA_HOJA = 148.5;
+
+    /** Margen mínimo dentro de cada mitad si el talonario es más bajo que 148,5 mm. */
+    private const MARGEN_MIN_MITAD = 4.0;
+
     /** @var array<string, mixed> */
     private array $datos;
+
+    private bool $compacto = false;
 
     /**
      * @param  array<string, mixed>  $datos
@@ -96,25 +116,53 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
 
     private function dibujarDocumento(): void
     {
+        $lineas = (array) ($this->datos['lineas'] ?? []);
+        $esMultiple = (bool) ($this->datos['esMultiple'] ?? false) || count($lineas) > 1;
+        $duplicar = $this->debeDuplicarEnHoja($esMultiple, count($lineas));
+
+        if ($duplicar) {
+            $this->compacto = true;
+            $altura = $this->estimarAlturaCupon($esMultiple, count($lineas), compacto: true);
+            $margen = (self::MEDIA_HOJA - $altura) / 2;
+            if ($margen < self::MARGEN_MIN_MITAD) {
+                $margen = self::MARGEN_MIN_MITAD;
+            }
+            $this->dibujarCupon($margen);
+            $this->dibujarLineaCorte();
+            $this->dibujarCupon(self::MEDIA_HOJA + $margen);
+
+            return;
+        }
+
+        $this->compacto = false;
+        $this->dibujarCupon(self::MARGEN_SUP);
+    }
+
+    private function debeDuplicarEnHoja(bool $esMultiple, int $nLineas): bool
+    {
+        if (! tenantCuotasComprobanteImputacionDosCopiasPorHoja()) {
+            return false;
+        }
+
+        return $this->estimarAlturaCupon($esMultiple, $nLineas, compacto: true) <= (self::MEDIA_HOJA - 6.0);
+    }
+
+    private function dibujarCupon(float $yInicio): void
+    {
         $header = (array) ($this->datos['pdfHeader'] ?? []);
         $lineas = (array) ($this->datos['lineas'] ?? []);
         $esMultiple = (bool) ($this->datos['esMultiple'] ?? false) || count($lineas) > 1;
 
         TcpdfFuenteArial::aplicar($this, '', 6);
-        $this->Cell(160, 3, (string) ($this->datos['fechaImpresion'] ?? ''), 0, 1, 'R');
+        $this->SetXY(self::MARGEN_IZQ, $yInicio);
+        $this->Cell(160, 3, (string) ($this->datos['fechaImpresion'] ?? ''), 0, 0, 'R');
 
-        $y = $this->GetY() + 2;
+        $y = $yInicio + 3 + ($this->compacto ? 1.0 : 2.0);
         $y = $this->dibujarHeaderInstitucional($y, $header);
-        $y0 = $y + 4;
+        $y0 = $y + ($this->compacto ? 2.0 : 4.0);
 
-        $altoAlumno = self::ALTO_SECCION_ALUMNO;
-        // Título + encabezado + N ítems + fila totales + fecha.
-        $altoPago = $esMultiple
-            ? max(
-                self::ALTO_SECCION_PAGO,
-                self::ALTO_PAGO_MULTIPLE_BASE + ((count($lineas) + 2) * self::ALTO_FILA_TABLA) + 7.0,
-            )
-            : self::ALTO_SECCION_PAGO;
+        $altoAlumno = $this->altoSeccionAlumno();
+        $altoPago = $this->altoSeccionPago($esMultiple, count($lineas));
         $altoTotal = $altoAlumno + $altoPago;
 
         $this->Rect(self::ORIGEN_X, $y0, self::ANCHO_BLOQUE, $altoTotal, 'D');
@@ -125,34 +173,80 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
             $y0 + $altoAlumno,
         );
 
-        $this->dibujarSeccionAlumno($y0, $esMultiple);
-        $this->dibujarSeccionPago($y0, $esMultiple);
+        $this->dibujarSeccionAlumno($y0, $esMultiple, $altoAlumno);
+        $this->dibujarSeccionPago($y0, $esMultiple, $altoAlumno);
     }
 
-    private function dibujarSeccionAlumno(float $y0, bool $esMultiple): void
+    private function altoSeccionAlumno(): float
     {
-        $this->SetXY(self::MARGEN_IZQ, $y0 + 8);
+        return $this->compacto ? self::ALTO_SECCION_ALUMNO_COMPACTO : self::ALTO_SECCION_ALUMNO;
+    }
+
+    private function altoSeccionPago(bool $esMultiple, int $nLineas): float
+    {
+        $base = $this->compacto ? self::ALTO_SECCION_PAGO_COMPACTO : self::ALTO_SECCION_PAGO;
+        if (! $esMultiple) {
+            return $base;
+        }
+
+        $multipleBase = $this->compacto ? self::ALTO_PAGO_MULTIPLE_BASE_COMPACTO : self::ALTO_PAGO_MULTIPLE_BASE;
+        $extraFecha = $this->compacto ? 5.0 : 7.0;
+
+        return max(
+            $base,
+            $multipleBase + (($nLineas + 2) * self::ALTO_FILA_TABLA) + $extraFecha,
+        );
+    }
+
+    private function estimarAlturaCupon(bool $esMultiple, int $nLineas, bool $compacto): float
+    {
+        $prev = $this->compacto;
+        $this->compacto = $compacto;
+        $altoFecha = 3.0 + ($compacto ? 1.0 : 2.0);
+        $altoHeader = $compacto ? 26.0 : 30.0;
+        $gap = $compacto ? 2.0 : 4.0;
+        $altura = $altoFecha + $altoHeader + $gap + $this->altoSeccionAlumno() + $this->altoSeccionPago($esMultiple, $nLineas);
+        $this->compacto = $prev;
+
+        return $altura;
+    }
+
+    private function dibujarLineaCorte(): void
+    {
+        $this->SetLineStyle(['width' => 0.15, 'dash' => '1,2', 'color' => [150, 150, 150]]);
+        $this->Line(self::ORIGEN_X, self::MEDIA_HOJA, self::ORIGEN_X + self::ANCHO_BLOQUE, self::MEDIA_HOJA);
+        $this->SetLineStyle(['width' => 0.2, 'dash' => 0, 'color' => [0, 0, 0]]);
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+    }
+
+    private function dibujarSeccionAlumno(float $y0, bool $esMultiple, float $altoAlumno): void
+    {
+        $offsetNro = $this->compacto ? 5.0 : 8.0;
+        $this->SetXY(self::MARGEN_IZQ, $y0 + $offsetNro);
         TcpdfFuenteArial::aplicar($this, '', 6);
-        $this->Cell(150, 5, 'Comprobante Nº: '.(string) ($this->datos['nroComprobanteTexto'] ?? ''), 0, 0, 'R');
+        $this->Cell(150, $this->compacto ? 4.0 : 5.0, 'Comprobante Nº: '.(string) ($this->datos['nroComprobanteTexto'] ?? ''), 0, 0, 'R');
 
         $x = self::MARGEN_IZQ;
         $w = 90.0;
+        $altoLinea = $this->compacto ? 4.5 : 5.0;
         $lineas = [
-            ['texto' => 'APELLIDO Y NOMBRE: ', 'estilo' => '', 'size' => 7.0, 'alto' => 5.0],
-            ['texto' => (string) ($this->datos['apellidoNombre'] ?? ''), 'estilo' => 'BI', 'size' => 8.0, 'alto' => 5.0],
-            ['texto' => 'SALA / GRADO / CURSO: ', 'estilo' => '', 'size' => 7.0, 'alto' => 5.0],
-            ['texto' => (string) ($this->datos['cursec'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0],
-            ['texto' => (string) ($this->datos['nivel'] ?? ''), 'estilo' => '', 'size' => 8.0, 'alto' => 5.0],
+            ['texto' => 'APELLIDO Y NOMBRE: ', 'estilo' => '', 'size' => 7.0, 'alto' => $altoLinea],
+            ['texto' => (string) ($this->datos['apellidoNombre'] ?? ''), 'estilo' => 'BI', 'size' => 8.0, 'alto' => $altoLinea],
+            ['texto' => 'SALA / GRADO / CURSO: ', 'estilo' => '', 'size' => 7.0, 'alto' => $altoLinea],
+            ['texto' => (string) ($this->datos['cursec'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => $altoLinea],
+            ['texto' => (string) ($this->datos['nivel'] ?? ''), 'estilo' => '', 'size' => 8.0, 'alto' => $altoLinea],
         ];
 
         if (! $esMultiple) {
-            $lineas[] = ['texto' => (string) ($this->datos['cuotaNombre'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0];
+            $lineas[] = ['texto' => (string) ($this->datos['cuotaNombre'] ?? ''), 'estilo' => 'B', 'size' => 8.0, 'alto' => $altoLinea];
         } else {
-            $lineas[] = ['texto' => 'CUOTAS ABONADAS: VARIAS', 'estilo' => 'B', 'size' => 8.0, 'alto' => 5.0];
+            $lineas[] = ['texto' => 'CUOTAS ABONADAS: VARIAS', 'estilo' => 'B', 'size' => 8.0, 'alto' => $altoLinea];
         }
 
         $hContenido = array_sum(array_column($lineas, 'alto'));
-        $y = $y0 + (($hContenido < self::ALTO_SECCION_ALUMNO ? (self::ALTO_SECCION_ALUMNO - $hContenido) / 2 : 8));
+        $padMin = $this->compacto ? 4.0 : 8.0;
+        $y = $y0 + (($hContenido < $altoAlumno ? ($altoAlumno - $hContenido) / 2 : $padMin));
 
         foreach ($lineas as $linea) {
             $this->SetXY($x, $y);
@@ -162,23 +256,25 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         }
     }
 
-    private function dibujarSeccionPago(float $y0, bool $esMultiple): void
+    private function dibujarSeccionPago(float $y0, bool $esMultiple, float $altoAlumno): void
     {
-        $yTop = $y0 + self::ALTO_SECCION_ALUMNO;
+        $yTop = $y0 + $altoAlumno;
         $x = self::ORIGEN_X;
         $w = self::ANCHO_BLOQUE;
-        $padX = 6.0;
+        $padX = $this->compacto ? 5.0 : 6.0;
         $lineas = (array) ($this->datos['lineas'] ?? []);
+        $offsetTop = $this->compacto ? 3.0 : 6.0;
+        $gapTrasOriginal = $this->compacto ? 2.0 : 4.0;
+        $gapTrasTitulo = $this->compacto ? 1.0 : 2.0;
 
         $importeOriginal = trim((string) ($this->datos['importeOriginalFmt'] ?? ''));
         if (! $esMultiple && $importeOriginal !== '') {
-            $this->SetXY($x, $yTop + 6);
+            $this->SetXY($x, $yTop + $offsetTop);
             TcpdfFuenteArial::aplicar($this, '', 8);
             $this->Cell($w, 5, '(Importe Original: $ '.$importeOriginal.')', 0, 1, 'C');
-            $y = $this->GetY() + 4;
+            $y = $this->GetY() + $gapTrasOriginal;
         } else {
-            // Siempre debajo del separador alumno/pago (no usar GetY de la sección alumno).
-            $y = $yTop + 6;
+            $y = $yTop + $offsetTop;
         }
 
         $this->SetXY($x + $padX, $y);
@@ -187,7 +283,7 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, 'I', 8);
         $this->Cell($w - ($padX * 2) - 90, 5, (string) ($this->datos['medioPago'] ?? ''), 0, 1, 'R');
 
-        $yDetalle = $this->GetY() + 2;
+        $yDetalle = $this->GetY() + $gapTrasTitulo;
 
         if ($esMultiple && $lineas !== []) {
             $this->dibujarTablaDetalleMultiple($x + $padX, $yDetalle, $lineas);
@@ -323,7 +419,9 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
     {
         $x = self::ORIGEN_X;
         $w = self::ANCHO_BLOQUE;
-        $yTexto = $y + 3;
+        $yTexto = $y + ($this->compacto ? 2.0 : 3.0);
+        $logoAncho = $this->compacto ? self::LOGO_ANCHO_COMPACTO : self::LOGO_ANCHO;
+        $logoAlto = $this->compacto ? self::LOGO_ALTO_COMPACTO : self::LOGO_ALTO;
 
         $this->SetXY($x, $yTexto);
 
@@ -335,32 +433,32 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
         $ee = trim((string) ($header['ee'] ?? ''));
         $lineaIds = trim(($cue !== '' ? 'CUE: '.$cue : '').(($cue !== '' && $ee !== '') ? '   ' : '').($ee !== '' ? 'EE: '.$ee : ''));
 
-        TcpdfFuenteArial::aplicar($this, 'B', 10);
-        $this->Cell($w, 4.5, $insti !== '' ? $insti : 'Institución', 0, 2, 'C');
+        TcpdfFuenteArial::aplicar($this, 'B', $this->compacto ? 9 : 10);
+        $this->Cell($w, $this->compacto ? 4.0 : 4.5, $insti !== '' ? $insti : 'Institución', 0, 2, 'C');
 
         if ($lineaDir !== '') {
             TcpdfFuenteArial::aplicar($this, '', 7);
-            $this->Cell($w, 3.5, $lineaDir, 0, 2, 'C');
+            $this->Cell($w, $this->compacto ? 3.0 : 3.5, $lineaDir, 0, 2, 'C');
         }
 
         if ($lineaIds !== '') {
             TcpdfFuenteArial::aplicar($this, '', 5.5);
-            $this->Cell($w, 3, $lineaIds, 0, 2, 'C');
+            $this->Cell($w, $this->compacto ? 2.6 : 3, $lineaIds, 0, 2, 'C');
         }
 
         TcpdfFuenteArial::aplicar($this, 'B', 6);
-        $this->Cell($w, 3.5, 'IVA: Exento - Ing. Brutos: Exento', 0, 2, 'C');
-        TcpdfFuenteArial::aplicar($this, '', 5);
+        $this->Cell($w, $this->compacto ? 3.0 : 3.5, 'IVA: Exento - Ing. Brutos: Exento', 0, 2, 'C');
+        TcpdfFuenteArial::aplicar($this, '', $this->compacto ? 4.5 : 5);
         $this->MultiCell(
             $w,
-            3.2,
+            $this->compacto ? 2.8 : 3.2,
             'Entidad Exenta al cumplimiento de la RG (AFIP) 1415 y modificatorias, por aplicación del artículo 5 y del Anexo 1, apartado K de la citada norma',
             0,
             'C',
         );
 
         $yFin = $this->GetY();
-        $h = max(self::LOGO_ALTO + 4, $yFin - $y + 2);
+        $h = max($logoAlto + 4, $yFin - $y + ($this->compacto ? 1.0 : 2.0));
 
         $this->RoundedRect($x, $y, $w, $h, 2.0, '1111', 'D');
 
@@ -369,9 +467,9 @@ final class ComprobantePagoImputacionTcpdf extends TCPDF
             $this->Image(
                 $logo,
                 $x + 3,
-                $y + (($h - self::LOGO_ALTO) / 2),
-                self::LOGO_ANCHO,
-                self::LOGO_ALTO,
+                $y + (($h - $logoAlto) / 2),
+                $logoAncho,
+                $logoAlto,
                 '',
                 '',
                 '',

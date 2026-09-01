@@ -4,6 +4,7 @@ use App\Http\Controllers\EmailsMasivosAdjuntoDownloadController;
 use App\Http\Controllers\Alumnos\BoletinIpePrimarioPdfController;
 use App\Http\Controllers\Alumnos\BoletinPrimEpqFamiliaPdfController;
 use App\Http\Controllers\Alumnos\BoletinEpqSecundarioFamiliaPdfController;
+use App\Http\Controllers\Alumnos\BoletinInicialSfqFamiliaPdfController;
 use App\Http\Controllers\Alumnos\CalificacionesController;
 use App\Http\Controllers\Alumnos\DashboardController as AlumnosDashboardController;
 use App\Http\Controllers\Alumnos\ComprobanteAfipPdfController as AlumnosComprobanteAfipPdfController;
@@ -436,6 +437,9 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/informe-progreso-escolar/{etapa}', \App\Http\Controllers\Alumnos\InformeProgresoInicialPdfController::class)
         ->whereNumber('etapa')
         ->name('alumnos.informe-progreso-inicial');
+    Route::get('/informe-pedagogico-inicial/{tipo}', BoletinInicialSfqFamiliaPdfController::class)
+        ->where('tipo', implode('|', \App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqCatalogo::TIPOS_INFORME))
+        ->name('alumnos.informe-pedagogico-inicial');
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');

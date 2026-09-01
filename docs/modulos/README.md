@@ -19,6 +19,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Parte diario del preceptor | [parte-diario-preceptor.md](parte-diario-preceptor.md) |
 | Actualización de datos personales (familia) | [actualizacion-datos-personales.md](actualizacion-datos-personales.md) |
 | C.U.S. e I.S.A. (autogestión familia) | [cus-isa-autogestion.md](cus-isa-autogestion.md) |
+| Informes pedagógicos inicial (SFQ) | [informe-pedagogico-inicial-sfq.md](informe-pedagogico-inicial-sfq.md) |
 | Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
 | Bloqueos de matrícula | [bloqueos-matricula.md](bloqueos-matricula.md) |
 | Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |

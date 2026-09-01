@@ -45,6 +45,19 @@
             </svg>
         </x-alumno-nav-calificaciones-link>
     @endforeach
+@elseif (\App\Support\Alumnos\PortalFamiliaBoletinInicialSfq::habilitadoEnMenu())
+    @foreach (\App\Support\Alumnos\PortalFamiliaBoletinInicialSfq::items() as $itemInformeSfq)
+        <x-alumno-nav-calificaciones-link
+            :url="$itemInformeSfq['url']"
+            :titulo="$itemInformeSfq['titulo']"
+            :bloqueada="$verNotasOffAlumno"
+            :mensaje="$mensajeVerNotasOffAlumno">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+        </x-alumno-nav-calificaciones-link>
+    @endforeach
 @elseif (\App\Support\Alumnos\PortalFamiliaInformeProgresoInicial::habilitadoEnMenu())
     @foreach (\App\Support\Alumnos\PortalFamiliaInformeProgresoInicial::itemsEtapa() as $itemInformeInicial)
         <x-alumno-nav-calificaciones-link

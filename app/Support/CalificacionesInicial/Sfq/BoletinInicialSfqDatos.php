@@ -5,6 +5,7 @@ namespace App\Support\CalificacionesInicial\Sfq;
 use App\Models\Ento;
 use App\Models\Matricula;
 use App\Models\Terlec;
+use App\Support\CalificacionesPrimario\CalificacionesPrimarioDatos;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,6 +21,38 @@ final class BoletinInicialSfqDatos
         $mat = CalificacionesInicialSfqDatos::matriculaEnContexto($idMatricula);
         if ($mat === null) {
             return ['ok' => false, 'error' => 'Matrícula no encontrada en el contexto activo.'];
+        }
+
+        $meta = CalificacionesInicialSfqCatalogo::metaTipoInforme($tipoInforme);
+        if ($meta === null) {
+            return ['ok' => false, 'error' => 'Tipo de informe no válido.'];
+        }
+
+        try {
+            $data = ($meta['variante'] ?? '') === 'bellas_artes'
+                ? self::buildBellasArtes($mat)
+                : self::buildPedagogico($mat, (int) ($meta['etapaPedagogica'] ?? 1), $meta);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return ['ok' => false, 'error' => $e->getMessage() !== '' ? $e->getMessage() : 'No disponible.'];
+        }
+
+        return ['ok' => true, 'data' => $data];
+    }
+
+    /**
+     * Informe del estudiante autenticado (autogestión familia).
+     *
+     * @return array{ok: bool, error?: string, data?: array<string, mixed>}
+     */
+    public static function buildDatosParaAlumno(string $tipoInforme): array
+    {
+        $mat = CalificacionesPrimarioDatos::matriculaAlumnoEnSesion();
+        if ($mat === null) {
+            return ['ok' => false, 'error' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.'];
+        }
+
+        if ($mat->fechaBaja !== null) {
+            return ['ok' => false, 'error' => 'La matrícula no está activa en este ciclo lectivo.'];
         }
 
         $meta = CalificacionesInicialSfqCatalogo::metaTipoInforme($tipoInforme);
@@ -55,10 +88,12 @@ final class BoletinInicialSfqDatos
         $campoObs = (string) ($meta['campoObs'] ?? 'obs01');
 
         $matricula->loadMissing(['legajo', 'curso']);
-        $curso = CalificacionesInicialSfqDatos::cursoEnContexto((int) $matricula->idCursos);
+        $idNivel = (int) $matricula->idNivel;
+        $idTerlec = (int) $matricula->idTerlec;
+        $curso = CalificacionesInicialSfqDatos::cursoEnContexto((int) $matricula->idCursos, $idNivel, $idTerlec);
         abort_if($curso === null, 404);
 
-        $materia = CalificacionesInicialSfqDatos::materiaPrincipalCurso((int) $curso->Id);
+        $materia = CalificacionesInicialSfqDatos::materiaPrincipalCurso((int) $curso->Id, $idNivel, $idTerlec);
         abort_if($materia === null, 404);
 
         $fila = CalificacionesInicialSfqDatos::filaCalificaciones((int) $matricula->id, (int) $materia->ord);
@@ -80,7 +115,7 @@ final class BoletinInicialSfqDatos
             'tipoInforme' => (string) ($meta['etiqueta'] ?? ''),
             'etapa' => $etapa,
             'nombreEtapa' => CalificacionesInicialSfqCatalogo::etiquetaEtapaInforme($etapa),
-            'docente' => self::docenteCursoPorOrd((int) $curso->Id, 1),
+            'docente' => self::docenteCursoPorOrd((int) $curso->Id, 1, $idNivel, $idTerlec),
             'observaciones' => $obs,
             'gruposEdani' => self::agruparPorEdani($filasInd),
         ]);
@@ -95,10 +130,12 @@ final class BoletinInicialSfqDatos
         CalificacionesInicialSfqDatos::abortSiObservacionesBaInexistentes();
 
         $matricula->loadMissing(['legajo', 'curso']);
-        $curso = CalificacionesInicialSfqDatos::cursoEnContexto((int) $matricula->idCursos);
+        $idNivel = (int) $matricula->idNivel;
+        $idTerlec = (int) $matricula->idTerlec;
+        $curso = CalificacionesInicialSfqDatos::cursoEnContexto((int) $matricula->idCursos, $idNivel, $idTerlec);
         abort_if($curso === null, 404);
 
-        $materia = CalificacionesInicialSfqDatos::materiaPrincipalCurso((int) $curso->Id);
+        $materia = CalificacionesInicialSfqDatos::materiaPrincipalCurso((int) $curso->Id, $idNivel, $idTerlec);
         abort_if($materia === null, 404);
 
         $fila = CalificacionesInicialSfqDatos::filaCalificaciones((int) $matricula->id, (int) $materia->ord);
@@ -129,7 +166,7 @@ final class BoletinInicialSfqDatos
         return array_merge($comunes, [
             'variante' => 'bellas_artes',
             'tipoInforme' => 'Bellas Artes',
-            'docente' => self::docenteCursoPorOrd((int) $curso->Id, 2),
+            'docente' => self::docenteCursoPorOrd((int) $curso->Id, 2, $idNivel, $idTerlec),
             'secciones' => $secciones,
         ]);
     }
@@ -144,9 +181,8 @@ final class BoletinInicialSfqDatos
         $cursec = trim((string) ($curso->cursec ?? ''));
 
         $terlec = Terlec::query()->find((int) $matricula->idTerlec, ['ano']);
-        $ctx = schoolCtx();
         $ento = Ento::query()
-            ->where('idNivel', (int) $ctx->idNivel)
+            ->where('idNivel', (int) $matricula->idNivel)
             ->first(['insti']);
 
         $membreteRel = config('tenant.boletin_inicial.membrete');
@@ -170,23 +206,24 @@ final class BoletinInicialSfqDatos
             'apellido' => trim((string) ($legajo?->apellido ?? '')),
             'nombre' => trim((string) ($legajo?->nombre ?? '')),
             'cursec' => $cursec,
-            'anoLectivo' => (string) ($terlec?->ano ?? schoolCtx()->terlecAno()),
+            'anoLectivo' => (string) ($terlec?->ano ?? ''),
             'tituloInstitucion' => $tituloInst,
             'membrete' => $membrete,
         ];
     }
 
-    public static function docenteCursoPorOrd(int $idCurso, int $ordMateria): string
+    public static function docenteCursoPorOrd(int $idCurso, int $ordMateria, ?int $idNivel = null, ?int $idTerlec = null): string
     {
-        $ctx = schoolCtx();
+        $idNivel = $idNivel ?? (int) schoolCtx()->idNivel;
+        $idTerlec = $idTerlec ?? (int) schoolCtx()->idTerlec;
 
         $nombre = DB::table('profesores as p')
             ->join('ppc', 'ppc.idProfesor', '=', 'p.id')
             ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
             ->where('m.idCursos', $idCurso)
             ->where('m.ord', $ordMateria)
-            ->where('m.idNivel', (int) $ctx->idNivel)
-            ->where('m.idTerlec', (int) $ctx->idTerlec)
+            ->where('m.idNivel', $idNivel)
+            ->where('m.idTerlec', $idTerlec)
             ->selectRaw("TRIM(CONCAT(COALESCE(p.apellido, ''), ' ', COALESCE(p.nombre, ''))) as docente")
             ->value('docente');
 

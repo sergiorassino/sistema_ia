@@ -10,6 +10,7 @@ Registrar un pago (una o varias cuotas) sobre `cuotasgeneradas` del estudiante e
 - Interés de mora: `tenant.cuotas.interes_mora_modo` (`diario` / `total`) cuando `porcan` es `%`.
 - Tipos `porcan`: `%` (porcentaje), `$` (pesos fijos), `p` (% mensual acumulado desde el 1.er venc.), `m` ($ mensual acumulado).
 - CSC (y fórmulas tipo CSC): tramo 1 = `+ $ 0` (al día); tramos 2–4 = `+ p 10` (10 % mensual).
+- Comprobante PDF post-imputación: una copia por hoja (default). **SFQ y EPQ** (`cuotas.comprobante_imputacion.dos_copias_por_hoja`): dos talonarios idénticos en la misma hoja A4, con espacios compactados, para cortar y entregar la mitad al pagador. Si el detalle de muchas cuotas no cabe en media hoja, se imprime una sola copia.
 
 ## Actores y permisos
 
@@ -41,6 +42,8 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - `resources/views/livewire/cuotas/imputar-pago.blade.php`
 - `app/Support/Cuotas/ImputacionPagoCalculo.php`
 - `app/Support/Cuotas/ImputacionPagoService.php`
+- `app/Support/Cuotas/ComprobantePagoImputacionTcpdf.php` — maquetación del comprobante (dos copias en SFQ/EPQ)
+- `app/Http/Controllers/Cuotas/ComprobantePagoImputacionPdfController.php`
 
 ## Qué no hacer / reglas de negocio
 
@@ -56,3 +59,4 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - [ ] `nueVenc` no se usa como 1.er vencimiento; «después 3º» aplica `p`/`%`/`$` del tramo 4.
 - [ ] Cambio de fecha de pago no convierte un % de mora en pesos.
 - [ ] Filtro por `schoolCtx` / legajo de sesión; rate-limit al guardar.
+- [ ] SFQ/EPQ: dos copias del comprobante en la misma hoja A4 (`ComprobantePagoImputacionTcpdf`).

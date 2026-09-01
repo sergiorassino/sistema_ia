@@ -54,14 +54,15 @@ final class CalificacionesInicialSfqDatos
             ->first();
     }
 
-    public static function cursoEnContexto(int $idCurso): ?Curso
+    public static function cursoEnContexto(int $idCurso, ?int $idNivel = null, ?int $idTerlec = null): ?Curso
     {
-        $ctx = schoolCtx();
+        $idNivel = $idNivel ?? (int) schoolCtx()->idNivel;
+        $idTerlec = $idTerlec ?? (int) schoolCtx()->idTerlec;
 
         return Curso::query()
             ->where('Id', $idCurso)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->first(['Id', 'cursec', 'c', 's', 'orden', 'idTurnoClase']);
     }
 
@@ -70,14 +71,15 @@ final class CalificacionesInicialSfqDatos
      *
      * @return object{id: int, ord: int}|null
      */
-    public static function materiaPrincipalCurso(int $idCurso): ?object
+    public static function materiaPrincipalCurso(int $idCurso, ?int $idNivel = null, ?int $idTerlec = null): ?object
     {
-        $ctx = schoolCtx();
+        $idNivel = $idNivel ?? (int) schoolCtx()->idNivel;
+        $idTerlec = $idTerlec ?? (int) schoolCtx()->idTerlec;
 
         $row = DB::table('materias')
             ->where('idCursos', $idCurso)
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->orderBy('ord')
             ->orderBy('id')
             ->first(['id', 'ord']);

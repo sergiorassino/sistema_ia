@@ -58,6 +58,10 @@ return [
             'implementacion' => 'epq',
         ],
 
+        'comprobante_imputacion' => [
+            'dos_copias_por_hoja' => true,
+        ],
+
         'siro' => [
             'habilitado' => true,
             'qr_url' => null,

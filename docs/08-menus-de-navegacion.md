@@ -49,7 +49,7 @@ Implementación: `MenuSecretariaPerfil::muestraCalificaciones*()`, partials en `
 - **Antes se decía:** “autogestión”, “portal alumno”, “familia”, `layouts/alumno`.
 - **Rutas:** prefijo `/alumnos/…` · middleware `auth:alumno` + `student.context`.
 - **Contexto:** `studentCtx()`; ciclo desde `ento.idTerlecVerNotas`.
-- **Enlaces típicos:** consulta de calificaciones, informe de inasistencias, cuaderno de comunicados, push; aranceles externos si el tenant lo configura; C.U.S. e I.S.A. si el tenant los habilita (`autogestion.cus` / `autogestion.isa`).
+- **Enlaces típicos:** consulta de calificaciones, informe de inasistencias, cuaderno de comunicados, push; aranceles externos si el tenant lo configura; C.U.S. e I.S.A. si el tenant los habilita (`autogestion.cus` / `autogestion.isa`); informes pedagógicos inicial SFQ si el tenant los habilita (`autogestion.boletin_inicial_sfq`).
 
 Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcion-general.md)).
 
@@ -202,3 +202,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.
 - **2026-08-27:** Administración → Gestión de mora: **Estado de Deuda por Estudiante** (permiso IA orden 98), además de Estado de Deuda Familiar (63).
 - **2026-08-31:** Menú de Docentes (Caixal SF, nivel inicial): Carga de observaciones, Carga por Espacio Curricular e Informe de progreso escolar (`portal_docente.menu.inicial.*` en `config/tenants/caixalsf.php`).
+- **2026-09-01:** Menú de Alumnos (SFQ, nivel inicial): cuatro informes pedagógicos (diagnóstico, 1.º etapa, 2.º etapa, Bellas Artes) vía `autogestion.boletin_inicial_sfq`.

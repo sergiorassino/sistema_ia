@@ -176,6 +176,15 @@ return [
         ],
 
         /**
+         * Informes pedagógicos inicial SFQ (diagnóstico, 1º/2º etapa y Bellas Artes) en autogestión familia.
+         * Requiere `calificaciones_inicial.boletin.implementacion` = `sfq`.
+         * Default deshabilitado; activar en `config/tenants/{slug}.php`.
+         */
+        'boletin_inicial_sfq' => [
+            'habilitado' => false,
+        ],
+
+        /**
          * Consulta de calificaciones en autogestión (primario: boletín IPE; secundario: consulta PDF).
          * Default habilitado; desactivar en `config/tenants/{slug}.php` con `habilitado => false`.
          * `niveles_habilitados`: IDs de `niveles` con el módulo (p. ej. `[3]` solo secundario).
@@ -528,6 +537,14 @@ return [
          */
         'comprobante_pago' => [
             'implementacion' => 'sanfranciscoasis',
+        ],
+
+        /**
+         * Comprobante PDF tras imputar un pago (Gestión de aranceles).
+         * `dos_copias_por_hoja`: dos talonarios idénticos en A4 para cortar y entregar uno al pagador.
+         */
+        'comprobante_imputacion' => [
+            'dos_copias_por_hoja' => false,
         ],
 
         /**

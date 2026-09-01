@@ -5,6 +5,7 @@ namespace App\Support\Alumnos;
 use App\Support\Alumnos\PortalFamiliaBoletinIpe;
 use App\Support\Alumnos\PortalFamiliaBoletinPrimEpq;
 use App\Support\Alumnos\PortalFamiliaBoletinEpqSecundario;
+use App\Support\Alumnos\PortalFamiliaBoletinInicialSfq;
 use App\Support\Alumnos\PortalFamiliaInformeProgresoInicial;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Ento;
@@ -61,6 +62,17 @@ final class PortalFamiliaDashboard
                     'id' => 'boletin-ipe-etapa-'.$item['etapa'],
                     'titulo' => $item['titulo'],
                     'descripcion' => 'Boletín de calificaciones del ciclo lectivo activo.',
+                    'url' => $item['url'],
+                    'externo' => true,
+                    'icono' => 'calificaciones',
+                ], $bloqueoVerNotas);
+            }
+        } elseif (PortalFamiliaBoletinInicialSfq::habilitadoEnMenu()) {
+            foreach (PortalFamiliaBoletinInicialSfq::items() as $item) {
+                $accesos[] = EntoVerNotasOff::aplicarAvisoAAcceso([
+                    'id' => 'informe-pedagogico-inicial-sfq-'.$item['tipo'],
+                    'titulo' => $item['titulo'],
+                    'descripcion' => 'Informe pedagógico del ciclo lectivo activo.',
                     'url' => $item['url'],
                     'externo' => true,
                     'icono' => 'calificaciones',

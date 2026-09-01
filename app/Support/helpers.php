@@ -911,6 +911,16 @@ if (! function_exists('tenantCuotasComprobantePagoImplementacion')) {
     }
 }
 
+if (! function_exists('tenantCuotasComprobanteImputacionDosCopiasPorHoja')) {
+    /**
+     * Comprobante de cobro (imputación): dos copias idénticas por hoja A4 (SFQ/EPQ).
+     */
+    function tenantCuotasComprobanteImputacionDosCopiasPorHoja(): bool
+    {
+        return (bool) config('tenant.cuotas.comprobante_imputacion.dos_copias_por_hoja', false);
+    }
+}
+
 if (! function_exists('afipCertificadosDesdeEnto')) {
     /**
      * Rutas de certificado WSAA/WSFE declaradas en `ento` para el nivel activo.
@@ -2078,6 +2088,17 @@ if (! function_exists('tenantAutogestionInformeProgresoInicialHabilitada')) {
     function tenantAutogestionInformeProgresoInicialHabilitada(): bool
     {
         return (bool) config('tenant.autogestion.informe_progreso_inicial.habilitado', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionBoletinInicialSfqHabilitada')) {
+    /**
+     * Informes pedagógicos inicial SFQ (diagnóstico, etapas y Bellas Artes) en autogestión familia.
+     * Activar en `config/tenants/{slug}.php` → `autogestion.boletin_inicial_sfq.habilitado`.
+     */
+    function tenantAutogestionBoletinInicialSfqHabilitada(): bool
+    {
+        return (bool) config('tenant.autogestion.boletin_inicial_sfq.habilitado', false);
     }
 }
 

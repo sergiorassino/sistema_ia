@@ -60,6 +60,10 @@ return [
             'implementacion' => 'epq',
         ],
 
+        'comprobante_imputacion' => [
+            'dos_copias_por_hoja' => true,
+        ],
+
         'siro' => [
             'habilitado' => true,
             'qr_url' => null,
@@ -129,7 +133,7 @@ return [
     'autogestion' => [
         /*
          | Menú de Alumnos — primario (nivel 2): boletín EPQ, Gestión de Aranceles e Inicio.
-         | Inicial (nivel 1): aranceles e inicio; boletín/informe inicial SFQ cuando exista la variante.
+         | Inicial (nivel 1): informes pedagógicos SFQ (diagnóstico, etapas y Bellas Artes), aranceles e inicio.
          */
         'actualizacion_datos' => [
             'habilitado' => true,
@@ -151,6 +155,9 @@ return [
             'niveles_deshabilitados' => [2],
         ],
         'boletin_prim_epq' => [
+            'habilitado' => true,
+        ],
+        'boletin_inicial_sfq' => [
             'habilitado' => true,
         ],
         'consulta_calificaciones' => [

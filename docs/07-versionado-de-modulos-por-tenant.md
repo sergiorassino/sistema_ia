@@ -64,6 +64,10 @@ Consumir con `tenantAutogestionCusHabilitada()` / `tenantAutogestionIsaHabilitad
 
 Horario de clase en PDF (portal familia; default off): `autogestion.horario_clase` + `tenantAutogestionHorarioClaseHabilitada()`. La grilla es **`horarios26`**, no la tabla `horarios` de ScriptCase. Detalle: [modulos/horarios.md](modulos/horarios.md).
 
+Informes pedagógicos inicial SFQ en autogestión familia (default off; SFQ los activa): `autogestion.boletin_inicial_sfq` + `tenantAutogestionBoletinInicialSfqHabilitada()`, y `calificaciones_inicial.boletin.implementacion` = `sfq`. Detalle: [modulos/informe-pedagogico-inicial-sfq.md](modulos/informe-pedagogico-inicial-sfq.md).
+
+Comprobante de cobro tras imputar un pago — dos talonarios idénticos por hoja A4 (default off; SFQ y EPQ lo activan): `cuotas.comprobante_imputacion.dos_copias_por_hoja` + `tenantCuotasComprobanteImputacionDosCopiasPorHoja()`. Detalle: [modulos/imputar-pago.md](modulos/imputar-pago.md).
+
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
 
 Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.
