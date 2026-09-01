@@ -22,7 +22,7 @@
     <div class="se-card overflow-hidden">
         @if ($alumnos->isEmpty())
             <div class="px-5 py-10 text-center">
-                <p class="text-sm text-neutral-600">No hay alumnos matriculados en este curso para el año lectivo actual.</p>
+                <p class="text-sm text-neutral-600">No hay alumnos regulares matriculados en este curso para el año lectivo actual.</p>
             </div>
         @else
             <div class="w-full overflow-x-auto px-3 py-4 sm:px-4 se-grid-angosta-wrap">

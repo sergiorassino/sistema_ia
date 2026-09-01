@@ -2,6 +2,7 @@
 
 namespace App\Support\PortalDocente;
 
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -87,8 +88,16 @@ final class CuadernoSeguimientoAulicoDocente
         return $out;
     }
 
+    /** @return list<int> */
+    public static function idsCondicionesRegulares(): array
+    {
+        return ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
+    }
+
     /**
-     * Alumnos matriculados en el curso del contexto de sesión.
+     * Alumnos regulares matriculados en el curso del contexto de sesión.
      *
      * @return \Illuminate\Support\Collection<int, object>
      */
@@ -99,6 +108,7 @@ final class CuadernoSeguimientoAulicoDocente
             ->where('matricula.idNivel', schoolCtx()->idNivel)
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
+            ->whereIn('matricula.idCondiciones', self::idsCondicionesRegulares())
             ->orderBy('legajos.apellido')
             ->orderBy('legajos.nombre')
             ->get([

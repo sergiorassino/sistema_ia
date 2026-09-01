@@ -80,6 +80,7 @@ class SituacionAulicaAlumnoShow extends Component
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
             ->where('idCursos', $this->cursoId)
+            ->whereIn('idCondiciones', CuadernoSeguimientoAulicoDocente::idsCondicionesRegulares())
             ->findOrFail($this->matriculaId);
 
         return $m;
