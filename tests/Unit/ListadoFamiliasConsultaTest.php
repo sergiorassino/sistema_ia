@@ -36,14 +36,52 @@ class ListadoFamiliasConsultaTest extends TestCase
         );
     }
 
-    public function test_encabezados_export_tienen_diez_columnas(): void
+    public function test_etiqueta_curso_nivel_concatena_curso_seccion_y_abrev(): void
+    {
+        $curso = (object) ['c' => '4', 's' => 'A', 'cursec' => '4° A', 'idNivel' => 2];
+        $nivel = (object) ['id' => 2, 'nivel' => 'Primario', 'abrev' => 'P'];
+
+        $this->assertSame('4A (P)', ListadoFamiliasConsulta::etiquetaCursoNivel($curso, $nivel, 2));
+    }
+
+    public function test_etiqueta_curso_nivel_usa_letra_de_secundario(): void
+    {
+        $curso = (object) ['c' => '3', 's' => 'B', 'idNivel' => 3];
+        $nivel = (object) ['id' => 3, 'nivel' => 'Secundario', 'abrev' => ''];
+
+        $this->assertSame('3B (S)', ListadoFamiliasConsulta::etiquetaCursoNivel($curso, $nivel, 3));
+    }
+
+    public function test_etiqueta_curso_nivel_prioriza_nombre_del_curso_sobre_id_y_abrev(): void
+    {
+        $curso = (object) ['c' => '1', 's' => 'B', 'idNivel' => 2];
+        $nivel = (object) ['id' => 3, 'nivel' => 'Primario', 'abrev' => 'S'];
+
+        $this->assertSame('1B (P)', ListadoFamiliasConsulta::etiquetaCursoNivel($curso, $nivel, 3));
+    }
+
+    public function test_etiqueta_curso_nivel_inicial_por_nombre(): void
+    {
+        $curso = (object) ['c' => 'Sala 5', 's' => '', 'idNivel' => 3];
+        $nivel = (object) ['id' => 3, 'nivel' => 'Educación Inicial', 'abrev' => 'S'];
+
+        $this->assertSame('Sala 5 (I)', ListadoFamiliasConsulta::etiquetaCursoNivel($curso, $nivel, 3));
+    }
+
+    public function test_etiqueta_curso_nivel_inicial_por_id_si_no_hay_nombre(): void
+    {
+        $curso = (object) ['c' => 'Sala 5', 's' => '', 'idNivel' => 1];
+
+        $this->assertSame('Sala 5 (I)', ListadoFamiliasConsulta::etiquetaCursoNivel($curso, null, 1));
+    }
+
+    public function test_encabezados_export_tienen_nueve_columnas(): void
     {
         $encabezados = ListadoFamiliasExport::encabezados();
 
-        $this->assertCount(10, $encabezados);
+        $this->assertCount(9, $encabezados);
         $this->assertSame('Familia', $encabezados[1]);
         $this->assertSame('Apellido', $encabezados[5]);
         $this->assertSame('Curso', $encabezados[8]);
-        $this->assertSame('Sección', $encabezados[9]);
     }
 }

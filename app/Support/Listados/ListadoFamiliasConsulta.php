@@ -7,7 +7,6 @@ use App\Models\Familia;
 use App\Models\Legajo;
 use App\Support\NivelSistema;
 use App\Support\OrdenAlfabeticoEstudiante;
-use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -52,7 +51,11 @@ final class ListadoFamiliasConsulta
                         $m->where('idTerlec', $idTerlec);
                         self::aplicarFiltroNivelMatricula($m, $idNivel);
                         $m->with([
-                            'curso:Id,cursec,c,s,idNivel',
+                            'curso' => function ($c) {
+                                $c->select(['Id', 'cursec', 'c', 's', 'idNivel'])
+                                    ->with(['nivel:id,nivel,abrev']);
+                            },
+                            'nivel:id,nivel,abrev',
                         ]);
                     }]);
             }]);
@@ -111,14 +114,10 @@ final class ListadoFamiliasConsulta
     }
 
     /**
-     * En Secretaría el nivel lo fija la sesión; el filtro extra solo aplica en Administración.
+     * Filtro opcional de nivel. 0 = todos los pedagógicos (mismo listado en cualquier sesión).
      */
     public static function idNivelEfectivo(int $idNivel): int
     {
-        if (! schoolEsAdministracion()) {
-            return 0;
-        }
-
         return self::normalizarIdNivel($idNivel);
     }
 
@@ -131,6 +130,22 @@ final class ListadoFamiliasConsulta
         }
 
         return $cache;
+    }
+
+    /**
+     * Familia del listado (ciclo activo y alcance pedagógico), nunca el placeholder id = 1.
+     */
+    public static function familiaEnAlcance(int $id, int $idNivel = 0): ?Familia
+    {
+        if ($id < 1 || $id === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR) {
+            return null;
+        }
+
+        if (! self::consultar('', $idNivel)->whereKey($id)->exists()) {
+            return null;
+        }
+
+        return Familia::query()->whereKey($id)->first();
     }
 
     /**
@@ -155,6 +170,118 @@ final class ListadoFamiliasConsulta
             'curso' => $anio,
             'seccion' => $seccion,
         ];
+    }
+
+    /**
+     * Etiqueta compacta: `4A (P)` — curso+sección y letra de nivel (I/P/S).
+     * La letra sale del nombre/id del **curso**, no de `niveles.abrev` ni del idNivel de matrícula
+     * (ese último a menudo copia el nivel de sesión y deja todo en S).
+     */
+    public static function etiquetaCursoNivel(?object $curso, ?object $nivel = null, int $idNivel = 0): string
+    {
+        $partes = self::cursoYSeccion($curso);
+        $bloque = $partes['curso'].$partes['seccion'];
+        $abrev = self::letraNivel($idNivel, $nivel, $curso);
+
+        if ($bloque === '' && $abrev === '') {
+            return '';
+        }
+        if ($abrev === '') {
+            return $bloque;
+        }
+        if ($bloque === '') {
+            return '('.$abrev.')';
+        }
+
+        return $bloque.' ('.$abrev.')';
+    }
+
+    public static function etiquetaCursoNivelDeLegajo(Legajo $legajo): string
+    {
+        [$curso, $nivel, $idNivel] = self::cursoNivelDeLegajo($legajo);
+
+        return self::etiquetaCursoNivel($curso, $nivel, $idNivel);
+    }
+
+    public static function nombreNivelDeLegajo(Legajo $legajo): string
+    {
+        [, $nivel, $idNivel] = self::cursoNivelDeLegajo($legajo);
+        $nombre = trim((string) ($nivel?->nivel ?? ''));
+        if ($nombre !== '') {
+            return $nombre;
+        }
+
+        return match ($idNivel) {
+            NivelSistema::INICIAL => 'Inicial',
+            NivelSistema::PRIMARIO => 'Primario',
+            NivelSistema::SECUNDARIO => 'Secundario',
+            NivelSistema::TERCIARIO => 'Terciario',
+            NivelSistema::ADULTOS => 'Adultos',
+            default => '',
+        };
+    }
+
+    /**
+     * I inicial, P primario, S secundario. Primero el nombre del nivel del curso; el id es respaldo.
+     */
+    private static function letraNivel(int $idNivel, ?object $nivel, ?object $curso): string
+    {
+        $desdeNombre = self::letraDesdeNombreNivel((string) ($nivel?->nivel ?? ''));
+        if ($desdeNombre !== '') {
+            return $desdeNombre;
+        }
+
+        $id = $idNivel > 0 ? $idNivel : (int) ($nivel?->id ?? $curso?->idNivel ?? 0);
+
+        return match ($id) {
+            NivelSistema::INICIAL => 'I',
+            NivelSistema::PRIMARIO => 'P',
+            NivelSistema::SECUNDARIO => 'S',
+            NivelSistema::TERCIARIO => 'T',
+            NivelSistema::ADULTOS => 'A',
+            default => '',
+        };
+    }
+
+    private static function letraDesdeNombreNivel(string $nombre): string
+    {
+        $nombre = mb_strtolower(trim($nombre));
+        if ($nombre === '') {
+            return '';
+        }
+        if (str_contains($nombre, 'inicial')) {
+            return 'I';
+        }
+        if (str_contains($nombre, 'primar')) {
+            return 'P';
+        }
+        if (str_contains($nombre, 'secund') || str_contains($nombre, 'medio')) {
+            return 'S';
+        }
+        if (str_contains($nombre, 'terciar')) {
+            return 'T';
+        }
+        if (str_contains($nombre, 'adulto')) {
+            return 'A';
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array{0: ?object, 1: ?object, 2: int}
+     */
+    private static function cursoNivelDeLegajo(Legajo $legajo): array
+    {
+        $matricula = $legajo->relationLoaded('matriculas')
+            ? $legajo->matriculas->first()
+            : null;
+
+        $curso = $matricula?->curso;
+        $nivel = $curso?->nivel ?? $matricula?->nivel;
+        $idNivel = (int) ($curso?->idNivel ?? $matricula?->idNivel ?? $nivel?->id ?? 0);
+
+        return [$curso, $nivel, $idNivel];
     }
 
     /**
@@ -193,6 +320,9 @@ final class ListadoFamiliasConsulta
             return;
         }
 
-        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+        $query->where(function ($q) {
+            $q->where('idNivel', '<', NivelSistema::ADMINISTRACION)
+                ->orWhereNull('idNivel');
+        });
     }
 }

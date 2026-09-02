@@ -89,6 +89,87 @@
         @apply px-4 py-3 text-sm text-neutral-900;
     }
 
+    /* Listado de familias: grilla compacta; anchos en % (suman 100%) */
+    .se-listado-familias-tabla {
+        width: 100%;
+        min-width: 54rem;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border: 1px solid #6a7282;
+        font-size: 0.75rem;
+        line-height: 1.25;
+    }
+    .se-listado-familias-tabla .table-header,
+    .se-listado-familias-tabla .table-cell {
+        padding: 0.2rem 0.3rem;
+        overflow: hidden;
+        vertical-align: middle;
+        border: 1px solid #6a7282;
+        font-size: 0.75rem;
+        line-height: 1.25;
+    }
+    .se-listado-familias-tabla .table-header {
+        text-align: center;
+        padding-top: 0.28rem;
+        padding-bottom: 0.28rem;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+    }
+    .se-listado-familias-tabla col.se-lf-col-familia {
+        width: 20%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-responsable {
+        width: 22%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-dni-resp {
+        width: 8%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-email {
+        width: 16%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-apellido {
+        width: 12%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-nombre {
+        width: 11%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-dni {
+        width: 5%;
+    }
+    .se-listado-familias-tabla col.se-lf-col-curso {
+        width: 6%;
+    }
+    .se-listado-familias-tabla .form-input {
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+        border-radius: 0.35rem;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+    .se-listado-familias-tabla .se-lf-dni {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .se-listado-familias-tabla .table-cell.se-lf-dni {
+        overflow: visible;
+    }
+    .se-listado-familias-tabla .se-lf-curso {
+        white-space: nowrap;
+        text-align: center;
+    }
+    .se-listado-familias-tabla .se-lf-familia-grupo {
+        vertical-align: middle;
+    }
+    .se-listado-familias-tabla .form-error {
+        margin-top: 0.1rem;
+        font-size: 9px;
+        line-height: 1.15;
+    }
+
     /* Tablas con orden por clic en cabecera (estadística, etc.) */
     [data-se-tabla-ordenable] thead th.se-th-sortable {
         cursor: pointer;
@@ -4043,4 +4124,25 @@ html.se-pwa-can-install [data-se-pwa-install-wrap] {
     .se-cal-chip {
         font-size: 9px;
     }
+}
+
+/*
+ * Fuera de @layer: el plugin @tailwindcss/forms pinta .form-input con #6a7282
+ * y esa regla no está en componentes, así que pisa el borde claro si no se fuerza.
+ */
+.se-listado-familias-tabla .se-lf-campo {
+    border-color: #e5e5e5 !important;
+    padding-top: 0.12rem !important;
+    padding-bottom: 0.12rem !important;
+    min-width: 0 !important;
+    width: 100%;
+    min-height: 1.5rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+.se-listado-familias-tabla .se-lf-campo:focus {
+    border-color: var(--color-primary-500) !important;
+}
+.se-listado-familias-tabla .se-lf-campo.border-red-400 {
+    border-color: #f87171 !important;
 }

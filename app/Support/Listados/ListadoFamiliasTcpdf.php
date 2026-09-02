@@ -151,7 +151,7 @@ final class ListadoFamiliasTcpdf extends TCPDF
     {
         $hijos = array_values((array) ($grupo['hijos'] ?? []));
         if ($hijos === []) {
-            $hijos = [['', '', '', '', '']];
+            $hijos = [['', '', '', '']];
         }
 
         $familia = array_values((array) ($grupo['familia'] ?? []));
@@ -250,7 +250,7 @@ final class ListadoFamiliasTcpdf extends TCPDF
             $w = $anchos[$i] ?? 20.0;
             $align = match (true) {
                 $encabezado => 'C',
-                $esHijo && ($i === 3 || $i === 4) => 'C',
+                $esHijo && $i === 3 => 'C',
                 ! $esHijo && $i === 0 => 'C',
                 default => 'L',
             };

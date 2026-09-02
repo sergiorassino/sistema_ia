@@ -3,6 +3,7 @@
     use App\Support\Listados\ListadoFamiliasConsulta;
 @endphp
 
+<div>
 <div class="se-page max-w-[90rem] mx-auto">
     <section class="se-hero mb-6">
         <div class="se-hero-inner">
@@ -10,8 +11,21 @@
                 <p class="se-eyebrow">Estudiantes</p>
                 <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Listado de familias</h1>
                 <p class="text-sm text-white/80 max-w-2xl">
-                    Familias con estudiantes matriculados en el ciclo lectivo {{ schoolCtx()->terlecAno() }}@if (! $mostrarFiltroNivel) ({{ schoolCtx()->nivelNombre() }})@endif.
+                    @php
+                        $heroNivel = 'todos los niveles';
+                        if ($idNivel !== '') {
+                            $nivelFiltro = $niveles->firstWhere('id', (int) $idNivel);
+                            $nombreNivel = trim((string) ($nivelFiltro->nivel ?? ''));
+                            if ($nombreNivel !== '') {
+                                $heroNivel = $nombreNivel;
+                            }
+                        }
+                    @endphp
+                    Familias con estudiantes matriculados en el ciclo lectivo {{ schoolCtx()->terlecAno() }} ({{ $heroNivel }}).
                     Curso y sección del año en curso.
+                    @if ($puedeEditar)
+                        Familia, responsable, DNI e email se guardan al salir de cada campo.
+                    @endif
                 </p>
             </div>
             <div class="flex flex-wrap gap-2 shrink-0">
@@ -86,20 +100,31 @@
         <div class="se-card overflow-hidden p-0">
             <div class="w-full overflow-x-auto">
                 <div class="flex justify-start">
-                    <table class="min-w-[72rem] w-full border-collapse [&_td]:border-b [&_td]:border-accent-200">
+                    <table class="se-listado-familias-tabla">
+                        <colgroup>
+                            <col class="se-lf-col-familia">
+                            <col class="se-lf-col-responsable">
+                            @if ($tieneDniResp)
+                                <col class="se-lf-col-dni-resp">
+                            @endif
+                            <col class="se-lf-col-email">
+                            <col class="se-lf-col-apellido">
+                            <col class="se-lf-col-nombre">
+                            <col class="se-lf-col-dni">
+                            <col class="se-lf-col-curso">
+                        </colgroup>
                         <thead class="bg-accent-50">
                             <tr>
-                                <th class="table-header whitespace-nowrap">Familia</th>
-                                <th class="table-header whitespace-nowrap">Responsable</th>
+                                <th class="table-header">Familia</th>
+                                <th class="table-header">Responsable</th>
                                 @if ($tieneDniResp)
-                                    <th class="table-header whitespace-nowrap">DNI responsable</th>
+                                    <th class="table-header whitespace-nowrap">DNI resp.</th>
                                 @endif
                                 <th class="table-header">Email</th>
-                                <th class="table-header whitespace-nowrap">Apellido</th>
-                                <th class="table-header whitespace-nowrap">Nombre</th>
-                                <th class="table-header whitespace-nowrap">DNI</th>
-                                <th class="table-header whitespace-nowrap">Curso</th>
-                                <th class="table-header whitespace-nowrap">Sección</th>
+                                <th class="table-header">Apellido</th>
+                                <th class="table-header">Nombre</th>
+                                <th class="table-header se-lf-dni">DNI</th>
+                                <th class="table-header se-lf-curso" title="Curso, sección y nivel">Curso</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -117,33 +142,23 @@
                                 @endphp
                                 @forelse ($estudiantes as $estudiante)
                                     @php
-                                        $cursoSeccion = ListadoFamiliasConsulta::cursoYSeccionDeLegajo($estudiante);
+                                        $cursoEtiqueta = ListadoFamiliasConsulta::etiquetaCursoNivelDeLegajo($estudiante);
+                                        $cursoTitle = ListadoFamiliasConsulta::nombreNivelDeLegajo($estudiante);
                                         $dniEst = ArancelesEscolares::formatearDni($estudiante->dni);
                                     @endphp
-                                    <tr class="align-top {{ $fondoGrupo }}" wire:key="fam-{{ $familia->id }}-est-{{ $estudiante->id }}">
+                                    <tr class="{{ $fondoGrupo }}" wire:key="fam-{{ $familia->id }}-est-{{ $estudiante->id }}">
                                         @if ($loop->first)
-                                            <td rowspan="{{ $span }}" class="table-cell align-top font-medium text-neutral-900">{{ $etiquetaFamilia !== '' ? $etiquetaFamilia : '—' }}</td>
-                                            <td rowspan="{{ $span }}" class="table-cell align-top text-neutral-800">{{ $etiquetaResponsable !== '' ? $etiquetaResponsable : '—' }}</td>
-                                            @if ($tieneDniResp)
-                                                <td rowspan="{{ $span }}" class="table-cell align-top tabular-nums whitespace-nowrap text-neutral-700">{{ $dniResp !== '' ? $dniResp : '—' }}</td>
-                                            @endif
-                                            <td rowspan="{{ $span }}" class="table-cell align-top break-all text-neutral-700">{{ $email !== '' ? $email : '—' }}</td>
+                                            @include('listados::livewire.listados.partials.familia-celdas', ['span' => $span])
                                         @endif
                                         <td class="table-cell font-medium text-neutral-900">{{ trim((string) ($estudiante->apellido ?? '')) !== '' ? $estudiante->apellido : '—' }}</td>
                                         <td class="table-cell text-neutral-800">{{ trim((string) ($estudiante->nombre ?? '')) !== '' ? $estudiante->nombre : '—' }}</td>
-                                        <td class="table-cell tabular-nums whitespace-nowrap text-neutral-700">{{ $dniEst !== '' ? $dniEst : '—' }}</td>
-                                        <td class="table-cell whitespace-nowrap text-neutral-700">{{ $cursoSeccion['curso'] !== '' ? $cursoSeccion['curso'] : '—' }}</td>
-                                        <td class="table-cell whitespace-nowrap text-neutral-700">{{ $cursoSeccion['seccion'] !== '' ? $cursoSeccion['seccion'] : '—' }}</td>
+                                        <td class="table-cell se-lf-dni text-neutral-700">{{ $dniEst !== '' ? $dniEst : '—' }}</td>
+                                        <td class="table-cell se-lf-curso text-neutral-700 whitespace-nowrap" title="{{ $cursoTitle }}">{{ $cursoEtiqueta !== '' ? $cursoEtiqueta : '—' }}</td>
                                     </tr>
                                 @empty
-                                    <tr class="align-top {{ $fondoGrupo }}" wire:key="fam-{{ $familia->id }}-vacia">
-                                        <td class="table-cell align-top font-medium text-neutral-900">{{ $etiquetaFamilia !== '' ? $etiquetaFamilia : '—' }}</td>
-                                        <td class="table-cell align-top text-neutral-800">{{ $etiquetaResponsable !== '' ? $etiquetaResponsable : '—' }}</td>
-                                        @if ($tieneDniResp)
-                                            <td class="table-cell align-top tabular-nums whitespace-nowrap text-neutral-700">{{ $dniResp !== '' ? $dniResp : '—' }}</td>
-                                        @endif
-                                        <td class="table-cell align-top break-all text-neutral-700">{{ $email !== '' ? $email : '—' }}</td>
-                                        <td class="table-cell text-neutral-400 italic" colspan="5">Sin estudiantes en el ciclo activo</td>
+                                    <tr class="{{ $fondoGrupo }}" wire:key="fam-{{ $familia->id }}-vacia">
+                                        @include('listados::livewire.listados.partials.familia-celdas', ['span' => 1])
+                                        <td class="table-cell text-neutral-400 italic" colspan="4">Sin estudiantes en el ciclo activo</td>
                                     </tr>
                                 @endforelse
                             @endforeach
@@ -159,4 +174,15 @@
             @endif
         </div>
     @endif
+</div>
+
+@if ($puedeEditar)
+    @script
+    <script>
+        $wire.on('se-swal-error', (event) => {
+            window.seSwalError?.(event?.mensaje ?? event?.detail?.mensaje ?? 'No se pudo guardar.');
+        });
+    </script>
+    @endscript
+@endif
 </div>

@@ -28,7 +28,7 @@ final class ListadoFamiliasExport
             'fechaInforme' => Carbon::now()->format('d/m/Y'),
             'filtrosLinea' => $filtros->etiqueta(),
             'encabezados' => self::encabezados(),
-            'anchos' => [8.0, 22.0, 26.0, 18.0, 32.0, 22.0, 22.0, 18.0, 11.0, 11.0],
+            'anchos' => [8.0, 22.0, 26.0, 18.0, 32.0, 24.0, 24.0, 18.0, 18.0],
             'grupos' => self::gruposTexto($filtros),
         ];
     }
@@ -56,7 +56,7 @@ final class ListadoFamiliasExport
         foreach (self::grupos($filtros) as $grupo) {
             $hijos = $grupo['hijos'];
             if ($hijos === []) {
-                $hijos = [['', '', '', '', '']];
+                $hijos = [['', '', '', '']];
             }
 
             foreach ($hijos as $hijo) {
@@ -102,7 +102,6 @@ final class ListadoFamiliasExport
             'Nombre',
             'DNI',
             'Curso',
-            'Sección',
         ];
     }
 
@@ -119,13 +118,11 @@ final class ListadoFamiliasExport
             $nro++;
             $hijos = [];
             foreach ($familia->legajos as $estudiante) {
-                $cursoSeccion = ListadoFamiliasConsulta::cursoYSeccionDeLegajo($estudiante);
                 $hijos[] = [
                     trim((string) ($estudiante->apellido ?? '')),
                     trim((string) ($estudiante->nombre ?? '')),
                     ArancelesEscolares::formatearDni($estudiante->dni),
-                    $cursoSeccion['curso'],
-                    $cursoSeccion['seccion'],
+                    ListadoFamiliasConsulta::etiquetaCursoNivelDeLegajo($estudiante),
                 ];
             }
 

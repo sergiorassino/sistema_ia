@@ -2,8 +2,6 @@
 
 namespace App\Support\Listados;
 
-use App\Support\SchoolAlcancePedagogico;
-
 /**
  * Filtros del listado de familias para exportar PDF y Excel.
  */
@@ -54,7 +52,7 @@ final class ListadoFamiliasFiltros
             $nombre = trim((string) ($nivel?->nivel ?? ''));
             $partes[] = 'Nivel: '.($nombre !== '' ? $nombre : (string) $this->idNivel);
         } else {
-            $partes[] = 'Nivel: '.SchoolAlcancePedagogico::etiquetaNivelParaInformes();
+            $partes[] = 'Nivel: Todos los niveles';
         }
 
         if ($this->search !== '') {

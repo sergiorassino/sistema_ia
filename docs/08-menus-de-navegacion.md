@@ -202,5 +202,5 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.
 - **2026-08-27:** Administración → Gestión de mora: **Estado de Deuda por Estudiante** (permiso IA orden 98), además de Estado de Deuda Familiar (63).
 - **2026-08-31:** Menú de Docentes (Caixal SF, nivel inicial): Carga de observaciones, Carga por Espacio Curricular e Informe de progreso escolar (`portal_docente.menu.inicial.*` en `config/tenants/caixalsf.php`).
-- **2026-09-02:** Menú de Secretaría / Administración → Estudiantes: **Listado de familias** (`listados.familias` + PDF/Excel), familias con alumnos del ciclo activo.
+- **2026-09-02:** Menú de Secretaría / Administración → Estudiantes: **Listado de familias** (`listados.familias` + PDF/Excel). Familias con alumnos del ciclo activo en **todos** los niveles pedagógicos (no se recorta al nivel de sesión).
 - **2026-09-02:** Menú de Secretaría / Administración → DOCENTES / USUARIOS: **Libro de temas** (permiso IA 101, tabla `librodetemas`). Menú de Docentes por tenant (`modulos.libro_de_temas` + `portal_docente.menu.*.libro_de_temas`; iess).
