@@ -33,6 +33,7 @@ final class ListadoEstudiantesFormatoCalendarioTcpdf extends TCPDF
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->formatoInicializarTcpdf($datos, 'Listado con calendario');
+        $this->formatoFuentesListadoAmpliadas = true;
 
         $this->mes = ListadoEstudiantesFormatoMes::normalizarMes($datos['mes'] ?? 0);
         $this->ano = ListadoEstudiantesFormatoMes::normalizarAno($datos['ano'] ?? 0);
@@ -154,7 +155,7 @@ final class ListadoEstudiantesFormatoCalendarioTcpdf extends TCPDF
 
         $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NUM, $altura, (string) $numero, false, false, 'C');
         $x += self::FORMATO_ANCHO_NUM;
-        $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NOMBRE_CALENDARIO, $altura, $this->formatoNombreAlumno($alumno), false, false, 'L');
+        $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NOMBRE_CALENDARIO, $altura, $this->formatoNombreAlumno($alumno), false, false, 'L', 7.0);
         $x += self::FORMATO_ANCHO_NOMBRE_CALENDARIO;
 
         foreach ($this->diasMes as $diaInfo) {

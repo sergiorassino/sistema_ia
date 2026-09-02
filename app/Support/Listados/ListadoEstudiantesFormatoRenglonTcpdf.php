@@ -23,6 +23,7 @@ final class ListadoEstudiantesFormatoRenglonTcpdf extends TCPDF
     {
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->formatoInicializarTcpdf($datos, 'Listado con renglón');
+        $this->formatoFuentesListadoAmpliadas = true;
     }
 
     /**
@@ -113,7 +114,7 @@ final class ListadoEstudiantesFormatoRenglonTcpdf extends TCPDF
 
         $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NUM, $altura, (string) $numero, false, false, 'C');
         $x += self::FORMATO_ANCHO_NUM;
-        $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NOMBRE, $altura, $this->formatoNombreAlumno($alumno), false, false, 'L');
+        $this->formatoDibujarCelda($x, $y, self::FORMATO_ANCHO_NOMBRE, $altura, $this->formatoNombreAlumno($alumno), false, false, 'L', 7.0);
         $x += self::FORMATO_ANCHO_NOMBRE;
         $this->formatoDibujarCelda($x, $y, $this->anchoRenglon(), $altura, '', false);
 

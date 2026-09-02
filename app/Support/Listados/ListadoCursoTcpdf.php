@@ -37,6 +37,11 @@ final class ListadoCursoTcpdf extends TCPDF
 
     private const TAMANO_FUENTE_COND = 5.0;
 
+    /** Apellido y nombre del estudiante (1 pt más que el resto de datos). */
+    private const TAMANO_FUENTE_APELLIDO_NOMBRE = 7.0;
+
+    private const TAMANO_FUENTE_DNI = 7.0;
+
     private bool $apaisado;
 
     /** @var array<string, mixed> */
@@ -244,13 +249,13 @@ final class ListadoCursoTcpdf extends TCPDF
         $anoTxt = $ano !== null && $ano !== '' ? (string) $ano : '—';
         $condicion = (string) ($this->datos['modoEstudiantesPdf'] ?? '—');
 
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        TcpdfFuenteArial::aplicar($this, 'B', 9);
         $this->SetXY($x, $this->GetY());
-        $this->Cell($w, 4, 'LISTADO DE ESTUDIANTES', 0, 2, 'L');
+        $this->Cell($w, 4.5, 'LISTADO DE ESTUDIANTES', 0, 2, 'L');
 
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->Cell($w, 3.5, 'Nivel: '.$nivel.'   |   Año lectivo: '.$anoTxt, 0, 2, 'L');
-        $this->Cell($w, 3.5, 'Condición: '.$condicion.'   |   Curso: '.$cursoLabel, 0, 2, 'L');
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell($w, 4, 'Nivel: '.$nivel.'   |   Año lectivo: '.$anoTxt, 0, 2, 'L');
+        $this->Cell($w, 4, 'Condición: '.$condicion.'   |   Curso: '.$cursoLabel, 0, 2, 'L');
         $this->Ln(1);
     }
 
@@ -309,7 +314,7 @@ final class ListadoCursoTcpdf extends TCPDF
             $esNum = $i === 0;
             $esCond = ! $esNum && ($this->columnasMeta[$i - 1]['key'] ?? '') === 'condiciones.condicion';
             $align = $esNum ? 'C' : ($esCond ? 'R' : 'L');
-            $fontSize = $esCond && ! $encabezado ? self::TAMANO_FUENTE_COND : ($encabezado ? self::TAMANO_FUENTE_ENC_TABLA : self::TAMANO_FUENTE_DATOS);
+            $fontSize = $this->tamanoFuenteCelda($i, $encabezado);
 
             TcpdfFuenteArial::aplicar($this, $encabezado ? 'B' : '', $fontSize);
             $this->SetXY($x, $y);
@@ -347,14 +352,40 @@ final class ListadoCursoTcpdf extends TCPDF
 
         foreach ($valores as $i => $texto) {
             $ancho = $this->anchosMm[$i] ?? 0;
-            $esCond = $i > 0 && ($this->columnasMeta[$i - 1]['key'] ?? '') === 'condiciones.condicion';
-            $fontSize = $esCond && ! $encabezado ? self::TAMANO_FUENTE_COND : ($encabezado ? self::TAMANO_FUENTE_ENC_TABLA : self::TAMANO_FUENTE_DATOS);
+            $fontSize = $this->tamanoFuenteCelda($i, $encabezado);
             TcpdfFuenteArial::aplicar($this, $encabezado ? 'B' : '', $fontSize);
             $h = $this->getStringHeight(max(1, $ancho - 1.2), $texto);
             $max = max($max, $h + 0.6);
         }
 
         return $max;
+    }
+
+    private function tamanoFuenteCelda(int $indice, bool $encabezado): float
+    {
+        if ($encabezado) {
+            return self::TAMANO_FUENTE_ENC_TABLA;
+        }
+
+        $key = $indice > 0 ? (string) ($this->columnasMeta[$indice - 1]['key'] ?? '') : '';
+        if ($key === 'condiciones.condicion') {
+            return self::TAMANO_FUENTE_COND;
+        }
+        if ($this->esColumnaApellidoNombre($key)) {
+            return self::TAMANO_FUENTE_APELLIDO_NOMBRE;
+        }
+        if ($key === 'legajos.dni') {
+            return self::TAMANO_FUENTE_DNI;
+        }
+
+        return self::TAMANO_FUENTE_DATOS;
+    }
+
+    private function esColumnaApellidoNombre(string $key): bool
+    {
+        return $key === ListadoCursoPdfFieldCatalog::KEY_APELLIDO_NOMBRE
+            || $key === 'legajos.apellido'
+            || $key === 'legajos.nombre';
     }
 
     /**

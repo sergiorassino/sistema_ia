@@ -28,6 +28,12 @@ trait ListadoEstudiantesFormatoTcpdfComun
 
     protected const FORMATO_ANCHO_NOMBRE = 62.0;
 
+    /**
+     * Si es true (cuadriculado, renglón, calendario): título, nivel, año y curso +1 pt;
+     * apellido y nombre a 7 pt. El listado para registro de firmas deja esto en false.
+     */
+    protected bool $formatoFuentesListadoAmpliadas = false;
+
     /** @var array<string, mixed> */
     protected array $formatoDatos = [];
 
@@ -142,12 +148,17 @@ trait ListadoEstudiantesFormatoTcpdfComun
         $ano = $this->formatoDatos['ano'] ?? null;
         $anoTxt = $ano !== null && $ano !== '' ? (string) $ano : '—';
 
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->SetXY($x, $this->GetY());
-        $this->Cell($w, 4, mb_strtoupper($titulo), 0, 2, 'L');
+        $tamanoTitulo = $this->formatoFuentesListadoAmpliadas ? 9.0 : 8.0;
+        $tamanoContexto = $this->formatoFuentesListadoAmpliadas ? 8.0 : 7.0;
+        $altoTitulo = $this->formatoFuentesListadoAmpliadas ? 4.5 : 4.0;
+        $altoContexto = $this->formatoFuentesListadoAmpliadas ? 4.0 : 3.5;
 
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->Cell($w, 3.5, 'Nivel: '.$nivel.'   |   Año lectivo: '.$anoTxt, 0, 2, 'L');
+        TcpdfFuenteArial::aplicar($this, 'B', $tamanoTitulo);
+        $this->SetXY($x, $this->GetY());
+        $this->Cell($w, $altoTitulo, mb_strtoupper($titulo), 0, 2, 'L');
+
+        TcpdfFuenteArial::aplicar($this, '', $tamanoContexto);
+        $this->Cell($w, $altoContexto, 'Nivel: '.$nivel.'   |   Año lectivo: '.$anoTxt, 0, 2, 'L');
         $this->Ln(0.5);
     }
 
@@ -156,7 +167,9 @@ trait ListadoEstudiantesFormatoTcpdfComun
         $x = self::FORMATO_MARGEN_IZQ;
         $w = self::FORMATO_ANCHO_UTIL;
 
-        TcpdfFuenteArial::aplicar($this, 'B', 7.5);
+        $tamanoCurso = $this->formatoFuentesListadoAmpliadas ? 8.5 : 7.5;
+
+        TcpdfFuenteArial::aplicar($this, 'B', $tamanoCurso);
         $this->SetXY($x, $this->GetY());
         $linea = 'Curso: '.$cursoLabel;
         if ($detalleExtra !== null && $detalleExtra !== '') {
@@ -175,6 +188,7 @@ trait ListadoEstudiantesFormatoTcpdfComun
         bool $encabezado = false,
         bool $finDeSemana = false,
         string $align = 'C',
+        ?float $tamanoFuente = null,
     ): void {
         if ($encabezado) {
             $this->SetFillColor(193, 215, 218);
@@ -184,7 +198,11 @@ trait ListadoEstudiantesFormatoTcpdfComun
             $this->SetFillColor(255, 255, 255);
         }
 
-        TcpdfFuenteArial::aplicar($this, $encabezado ? 'B' : '', $encabezado ? 6.0 : 5.5);
+        TcpdfFuenteArial::aplicar(
+            $this,
+            $encabezado ? 'B' : '',
+            $tamanoFuente ?? ($encabezado ? 6.0 : 5.5)
+        );
         $this->SetTextColor(0, 0, 0);
         $this->SetXY($x, $y);
         $this->MultiCell(
