@@ -34,6 +34,23 @@ class PermisosIaReservadosAdminTest extends TestCase
         $this->assertStringNotContainsString($aviso, $porOrden[15] ?? '');
     }
 
+    public function test_listado_familias_esta_en_legajos_estudiantes(): void
+    {
+        $this->assertSame(102, PermisosIaCatalog::LISTADO_FAMILIAS);
+
+        $fila = null;
+        foreach (PermisosIaCatalog::definicionCatalogo() as $row) {
+            if ((int) $row['orden'] === PermisosIaCatalog::LISTADO_FAMILIAS) {
+                $fila = $row;
+                break;
+            }
+        }
+
+        $this->assertNotNull($fila);
+        $this->assertSame(102, $fila['id']);
+        $this->assertSame('LEGAJOS ESTUDIANTES', $fila['tema']);
+    }
+
     public function test_descripcion_con_aviso_no_duplica(): void
     {
         $una = PermisosIaCatalog::descripcionConAvisoAdmin('Términos lectivos.');

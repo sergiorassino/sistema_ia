@@ -145,6 +145,9 @@ final class PermisosIaCatalog
 
     public const LEGAJOS_FAMILIAS_GESTION = 46;
 
+    /** Menú de Secretaría / Administración — listado de familias (consulta, PDF y Excel). */
+    public const LISTADO_FAMILIAS = 102;
+
     /**
      * Nivel Administración: crear/editar/eliminar legajos y matrículas en cualquier nivel pedagógico (1–4).
      * Sin este permiso: solo consulta de legajos en Administración (sin alta/edición cross-nivel).
@@ -304,6 +307,7 @@ final class PermisosIaCatalog
             ['id' => 82, 'orden' => self::MATRICULA_WEB_BLOQUEOS, 'tema' => 'MATRÍCULA WEB', 'descripcion' => 'Bloqueos pedagógico y administrativo por matrícula: listado de alumnos regulares del ciclo activo y edición con un clic.'],
             ['id' => 45, 'orden' => self::SOLICITUDES_EVALUACION_GESTION, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Gestión de solicitudes de evaluación: listado por fecha, alta, edición y baja de evaluaciones programadas (tabla evaluac).'],
             ['id' => 46, 'orden' => self::LEGAJOS_FAMILIAS_GESTION, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Gestionar familias de estudiantes: crear, editar, eliminar y asignar o quitar vínculos con legajos (la consulta permanece disponible para todos).'],
+            ['id' => 102, 'orden' => self::LISTADO_FAMILIAS, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Listado de familias: consultar familias con estudiantes matriculados en el ciclo lectivo activo; exportar PDF y Excel.'],
             ['id' => 47, 'orden' => self::LEGAJOS_MODIFICAR_ADMIN, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Nivel Administración: crear, editar, eliminar legajos y matrículas en Inicial, Primario y Secundario (cualquier nivel pedagógico del ciclo activo).'],
             ['id' => 49, 'orden' => self::ADMIN_ARANCELES_ESTUDIANTE, 'tema' => 'GESTIÓN DE ARANCELES', 'descripcion' => 'Aranceles por estudiante: búsqueda, cuotas generadas, pagos, comprobantes y resumen de pagos.'],
             ['id' => 50, 'orden' => self::ADMIN_CUOTAS_PLANTILLAS, 'tema' => 'GESTIÓN MASIVA DE CUOTAS', 'descripcion' => 'Crear y editar plantillas de cuotas del año lectivo activo.'],

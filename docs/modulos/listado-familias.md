@@ -14,7 +14,7 @@ Ninguna por tenant. El listado es **el mismo** al entrar por Inicial, Primario, 
 
 Menú de Secretaría y Menú de Administración → Estudiantes → **Listado de familias**.
 
-- Consulta: personal con sesión (igual que los demás listados de estudiantes).
+- Consulta, PDF y Excel: permiso IA orden **102** (`LISTADO_FAMILIAS`). Sin ese permiso el ítem no aparece en el menú y las rutas responden 403.
 - Edición en grilla: permiso IA orden 46 (`LEGAJOS_FAMILIAS_GESTION`). Sin ese permiso las columnas se muestran de solo lectura.
 
 ## Tablas y campos críticos
@@ -54,6 +54,7 @@ Matrícula del ciclo activo (`schoolCtx()->idTerlec`) y `legajos.idFamilias`, **
 - No listar `familias.id` = 1.
 - No mostrar hijos sin matrícula en el ciclo activo.
 - No limitar el listado al nivel de sesión (Inicial / Primario / Secundario): el alcance es el ciclo, todos los niveles pedagógicos.
+- No mostrar el módulo ni exportar PDF/Excel sin permiso 102.
 - URLs de PDF/Excel con `{ref}` opaco, sin IDs de familia ni DNI.
 - No guardar una familia que no esté en el alcance del listado (ciclo activo; si hay filtro de nivel, ese nivel).
 - No mostrar éxito si la columna no existe o el valor no quedó persistido.
@@ -64,5 +65,6 @@ Matrícula del ciclo activo (`schoolCtx()->idTerlec`) y `legajos.idFamilias`, **
 - [ ] ¿PDF nuevo sigue en TCPDF (Arial), no DomPDF?
 - [ ] ¿Export incluye todos los filtros (búsqueda y nivel)?
 - [ ] ¿Administración y Secretaría listan todos los niveles del ciclo (salvo filtro opcional)?
+- [ ] ¿Consulta, PDF y Excel exigen permiso 102?
 - [ ] ¿La edición en grilla exige permiso 46 y revalida alcance?
 - [ ] ¿El guardado usa `PersistenciaColumnas` (sin falso éxito)?

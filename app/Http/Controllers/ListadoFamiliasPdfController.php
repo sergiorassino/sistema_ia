@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\Listados\ListadoFamiliasExport;
 use App\Support\Listados\ListadoFamiliasFiltros;
 use App\Support\Listados\ListadoFamiliasTcpdf;
+use App\Support\PermisosIaCatalog;
 use App\Support\Security\OpaqueRouteToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,7 +15,7 @@ class ListadoFamiliasPdfController extends Controller
 {
     public function __invoke(Request $request, string $ref)
     {
-        abort_unless(puedeConsultarLegajosEstudiantes(), 403);
+        abort_unless(tienePermiso(PermisosIaCatalog::LISTADO_FAMILIAS), 403);
         abort_unless((int) schoolCtx()->idTerlec > 0, 403);
 
         $payload = OpaqueRouteToken::decodePayload($ref, OpaqueRouteToken::PURPOSE_LISTADO_FAMILIAS_PDF);

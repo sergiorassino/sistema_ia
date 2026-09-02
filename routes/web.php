@@ -1631,13 +1631,15 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->name('listados.por-curso.pdf');
-    Route::get('/listados/familias', ListadoFamiliasIndex::class)->name('listados.familias');
-    Route::get('/listados/familias/pdf/{ref}', ListadoFamiliasPdfController::class)
-        ->where('ref', '[A-Za-z0-9_-]+')
-        ->name('listados.familias.pdf');
-    Route::get('/listados/familias/excel/{ref}', ListadoFamiliasExcelController::class)
-        ->where('ref', '[A-Za-z0-9_-]+')
-        ->name('listados.familias.excel');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LISTADO_FAMILIAS)->group(function () {
+        Route::get('/listados/familias', ListadoFamiliasIndex::class)->name('listados.familias');
+        Route::get('/listados/familias/pdf/{ref}', ListadoFamiliasPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('listados.familias.pdf');
+        Route::get('/listados/familias/excel/{ref}', ListadoFamiliasExcelController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('listados.familias.excel');
+    });
     Route::get('/listados/estudiantes-formato', ListadoEstudiantesFormato::class)->name('listados.estudiantes-formato');
     Route::get('/listados/estudiantes-formato/pdf', ListadoEstudiantesFormatoPdfController::class)
         ->name('listados.estudiantes-formato.pdf');

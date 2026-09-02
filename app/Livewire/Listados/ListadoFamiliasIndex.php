@@ -54,7 +54,7 @@ class ListadoFamiliasIndex extends Component
 
     public function mount(): void
     {
-        abort_unless(puedeConsultarLegajosEstudiantes(), 403);
+        abort_unless(tienePermiso(PermisosIaCatalog::LISTADO_FAMILIAS), 403);
         abort_unless((int) schoolCtx()->idTerlec > 0, 403);
     }
 
