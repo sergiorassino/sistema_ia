@@ -240,7 +240,7 @@ La clave **`montecristo`** en `implementacion` identifica la variante en código
 
 Helpers: `tenantCalificacionesPrimarioCargaEstudianteImplementacion()`, `tenantCalificacionesPrimarioCargaMateriaImplementacion()`, `tenantCalificacionesPrimarioPlanillaImplementacion()`.
 
-**Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`. Libro de temas exige `modulos.libro_de_temas` y `portal_docente.menu.{nivel}.libro_de_temas` (hoy iess).
+**Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`. Libro de temas exige `modulos.libro_de_temas` y `portal_docente.menu.{nivel}.libro_de_temas` (hoy iess). Cuaderno de seguimiento áulico exige `portal_docente.menu.secundario.cuaderno_seguimiento_aulico` (hoy iess, alfonsina, nocturna).
 
 Ítems de **inicial** (`observaciones`, `observaciones_materia`, `informe_progreso`, `indicadores`) se muestran solo con el flag de menú; no exigen `calificaciones_inicial.{modulo}.implementacion`. **Montecristo** y **Caixal SF** activan observaciones + espacio curricular + informe de progreso. El PDF del informe usa `calificaciones_inicial.informe_progreso.implementacion` (`estandar` por default; `montecristo` omite aprendizajes y cierre).
 

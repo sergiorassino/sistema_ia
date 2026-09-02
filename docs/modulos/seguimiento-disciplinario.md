@@ -12,10 +12,15 @@ Registrar, editar e imprimir sanciones del Cuaderno de Seguimiento; notificar a 
 - Troquel 1 (solicitud): totales **sin** la sanción que se imprime. Troquel 2 (notificación): totales **con** esa sanción. En ambos, solo sanciones con `fecha` **menor o igual** a la de la que se informa (reimprimir un comunicado viejo no incluye las posteriores). Etiqueta del tipo: singular si la cantidad es 1 (`1 Amonestación`), plural si es 0 o 2+ (`3 Amonestaciones`).
 - Notificación a padres (push y, si el tipo lo pide, email): el cuerpo actual se mantiene; el texto plano del acta se **anexa al final** solo si hay contenido.
 
+### Menú de Docentes — Cuaderno de seguimiento áulico (secundario)
+
+Registro de **situación áulica** desde el portal docente (materias `ppc` del profesor). Default **off**. Activo en **iess**, **alfonsina** y **nocturna** (`config/tenants/{slug}.php` → `portal_docente.menu.secundario.cuaderno_seguimiento_aulico`). El alta usa el tipo `sanciontipo.tipo` = `Registro de Situación Áulica` (debe existir en la BD del tenant; `enResumenComunicado = 0`) y avisa al preceptor del curso.
+
 ## Actores y permisos
 
 - Menú de Secretaría / Administración (staff): permiso orden **37** (`permiso:37` / `SEGUIMIENTO_DISCIPLINARIO`).
 - Tipos de sanción y remitente de notificación: parametrización aparte (`SANCION_TIPOS_CONFIG`).
+- Menú de Docentes / Autogestión Docente: flag de tenant, sin `permisos_ia`. Solo secundario y materias asignadas en `ppc`.
 
 ## Tablas y campos críticos
 
@@ -57,6 +62,7 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - `app/Livewire/Parametrizacion/SancionTipoIndex.php`
 - `app/Support/Seguimiento/NotificarFamiliaSancion.php`
 - `app/Support/Seguimiento/SancionActaHtmlSanitizer.php`
+- Portal docente: `app/Livewire/PortalDocente/CuadernoSeguimientoIndex.php`, `RegistroSituacionAulicaIndex.php`, `SituacionAulicaAlumnoShow.php`; `App\Support\PortalDocente\CuadernoSeguimientoAulicoDocente`; config `config/tenants/{iess,alfonsina,nocturna}.php`
 
 ## Qué no hacer / reglas de negocio
 
@@ -80,3 +86,4 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - [ ] ¿Esquema `enResumenComunicado` aplicado y tipos marcados en Parametrización?
 - [ ] ¿Botón «Comunicado» solo si `enResumenComunicado = 1` (y PDF 404 si no)?
 - [ ] ¿Resumen del comunicado cortado por `fecha <=` la de la sanción impresa?
+- [ ] ¿Portal docente: flag `cuaderno_seguimiento_aulico` solo en tenants que lo usan, y tipo `Registro de Situación Áulica` en `sanciontipo`?
