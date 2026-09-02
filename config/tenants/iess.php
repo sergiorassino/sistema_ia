@@ -20,10 +20,21 @@ return [
 
     'portal_docente' => [
         'menu' => [
+            'inicial' => [
+                'libro_de_temas' => true,
+            ],
+            'primario' => [
+                'libro_de_temas' => true,
+            ],
             'secundario' => [
                 'cuaderno_seguimiento_aulico' => true,
+                'libro_de_temas' => true,
             ],
         ],
+    ],
+
+    'modulos' => [
+        'libro_de_temas' => true,
     ],
 
     'secretaria' => [

@@ -362,6 +362,7 @@ return [
                 'recursos_didacticos_listado' => false,
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
+                'libro_de_temas' => false,
             ],
             'primario' => [
                 'carga_estudiante' => false,
@@ -374,6 +375,7 @@ return [
                 'recursos_didacticos_listado' => false,
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
+                'libro_de_temas' => false,
             ],
             'secundario' => [
                 'calificaciones' => true,
@@ -385,6 +387,7 @@ return [
                 'recursos_didacticos_listado' => false,
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
+                'libro_de_temas' => false,
             ],
         ],
         /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */
@@ -456,6 +459,8 @@ return [
      */
     'modulos' => [
         'solicitud_evaluacion' => false,
+        /** Libro de temas (tabla `librodetemas`). Default off; activar por tenant. */
+        'libro_de_temas' => false,
     ],
 
     /**

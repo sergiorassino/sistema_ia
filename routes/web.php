@@ -106,6 +106,8 @@ use App\Livewire\Docentes\Inasistencias\InasistenciasDocentesIndex;
 use App\Livewire\Docentes\Inasistencias\RankingInasistenciasMateriasCursos;
 use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosIndex;
 use App\Livewire\Docentes\Capacitacion\CapacitacionDocenteIndex;
+use App\Livewire\Docentes\LibroDeTemas\LibroDeTemasClases;
+use App\Livewire\Docentes\LibroDeTemas\LibroDeTemasIndex;
 use App\Livewire\ProyectosExtracurriculares\CalendarioEscolar;
 use App\Livewire\ProyectosExtracurriculares\GestionIndex as ProyectosExtracurricularesGestionIndex;
 use App\Livewire\ProyectosExtracurriculares\ProyectoForm as ProyectoExtracurricularForm;
@@ -575,6 +577,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/cuaderno-seguimiento/{curso}/{materia}/alumno', PortalDocenteSituacionAulicaAlumnoShow::class)
         ->whereNumber(['curso', 'materia'])
         ->name('portalDocente.cuadernoSeguimiento.alumno');
+
+    Route::get('/libro-de-temas', LibroDeTemasIndex::class)
+        ->name('portalDocente.libroDeTemas');
+    Route::get('/libro-de-temas/{materia}', LibroDeTemasClases::class)
+        ->whereNumber('materia')
+        ->name('portalDocente.libroDeTemas.clases');
 
     Route::get('/solicitud-evaluacion', SolicitudEvaluacionIndex::class)
         ->name('portalDocente.solicitudEvaluacion');
@@ -1609,6 +1617,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/certificado/{ref}', CapacitacionDocenteCertificadoController::class)
             ->where('ref', '[A-Za-z0-9_-]+')
             ->name('docentes.capacitacion.certificado');
+    });
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LIBRO_DE_TEMAS)->prefix('docentes/libro-de-temas')->group(function () {
+        Route::get('/', LibroDeTemasIndex::class)->name('docentes.libro-de-temas');
+        Route::get('/{materia}', LibroDeTemasClases::class)
+            ->whereNumber('materia')
+            ->name('docentes.libro-de-temas.clases');
     });
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');

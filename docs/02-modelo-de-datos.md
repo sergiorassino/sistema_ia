@@ -96,6 +96,10 @@ Tablas legacy (no crear con migración; existen en tenants que usan el módulo):
 
 Años/meses/días **no** se guardan: se calculan en `AntiguedadServiciosCalculator`. Baja vacía / `0000-00-00` = “Continúa” (en cálculo se usa la fecha de emisión). Columna de baja en BD: **`FechaBaja`** (F mayúscula; no `fechaBaja`).
 
+## 4.2 Libro de temas
+
+Tabla legacy `librodetemas` (IESS y colegios que activen el módulo). Una fila por clase; se agrupa por `idMateria` (`materias.id`). No tiene `idProfesor`. Detalle: [modulos/libro-de-temas.md](modulos/libro-de-temas.md).
+
 ---
 
 ## 5. Convenciones de Eloquent para tablas legacy

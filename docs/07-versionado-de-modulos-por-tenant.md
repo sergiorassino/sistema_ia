@@ -240,7 +240,7 @@ La clave **`montecristo`** en `implementacion` identifica la variante en código
 
 Helpers: `tenantCalificacionesPrimarioCargaEstudianteImplementacion()`, `tenantCalificacionesPrimarioCargaMateriaImplementacion()`, `tenantCalificacionesPrimarioPlanillaImplementacion()`.
 
-**Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`.
+**Menú docente** — catálogo en `PortalDocenteMenuCatalog`, filtro en `PortalDocenteMenu::itemsParaSesionActual()`. Ítems secundario usan `portal_docente.menu.secundario.*`; solicitud de evaluación exige además `modulos.solicitud_evaluacion`. Libro de temas exige `modulos.libro_de_temas` y `portal_docente.menu.{nivel}.libro_de_temas` (hoy iess).
 
 Ítems de **inicial** (`observaciones`, `observaciones_materia`, `informe_progreso`, `indicadores`) se muestran solo con el flag de menú; no exigen `calificaciones_inicial.{modulo}.implementacion`. **Montecristo** y **Caixal SF** activan observaciones + espacio curricular + informe de progreso. El PDF del informe usa `calificaciones_inicial.informe_progreso.implementacion` (`estandar` por default; `montecristo` omite aprendizajes y cierre).
 
@@ -268,6 +268,7 @@ Ver también [08-menus-de-navegacion.md](08-menus-de-navegacion.md) §3 (sidebar
 | **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |
 | **Calificaciones secundario** | `App\Livewire\Calificaciones\*` | `calificacionesSecundario.*` |
 | **Boletines secundario** | `App\Livewire\BoletinesSecundario\*`, `BoletinSecundarioPdfController` | `boletinesSecundario.index`, `boletinesSecundario.pdf` |
+| **Libro de temas** | `App\Livewire\Docentes\LibroDeTemas\*`, `LibroDeTemasService` | `docentes.libro-de-temas`, `portalDocente.libroDeTemas` |
 
 Los boletines de **primario** e **inicial** serán módulos aparte (rutas, menú y tooltips con nivel explícito). Ver sección 6 de [05-preferencias-y-convenciones.md](05-preferencias-y-convenciones.md).
 

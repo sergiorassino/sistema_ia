@@ -165,7 +165,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 | Comunicación institucional | |
 | **Gestión de cuotas** (solo nivel 5) | |
 | **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
-| **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes, certificación de servicios; según permisos 11, 48, 23 y 87) | |
+| **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes, certificación de servicios, capacitación, libro de temas si el tenant lo activa; según permisos 11, 48, 23, 87, 93 y **101**) | |
 | Configuración (incl. Permisos del sistema; sin planes/curplan ni cursos/materias del año) | **Gestión de planes y cursos modelo**; **Gestión de cursos y materias del año** |
 
 **Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
@@ -202,4 +202,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-08-27:** CERTIFICADOS: **Certificado Jardín** (inicial, sala de 5) y **Certificado Sexto Grado** (primario); permiso IA orden 97.
 - **2026-08-27:** Administración → Gestión de mora: **Estado de Deuda por Estudiante** (permiso IA orden 98), además de Estado de Deuda Familiar (63).
 - **2026-08-31:** Menú de Docentes (Caixal SF, nivel inicial): Carga de observaciones, Carga por Espacio Curricular e Informe de progreso escolar (`portal_docente.menu.inicial.*` en `config/tenants/caixalsf.php`).
-- **2026-09-01:** Menú de Alumnos (SFQ, nivel inicial): cuatro informes pedagógicos (diagnóstico, 1.º etapa, 2.º etapa, Bellas Artes) vía `autogestion.boletin_inicial_sfq`.
+- **2026-09-02:** Menú de Secretaría / Administración → DOCENTES / USUARIOS: **Libro de temas** (permiso IA 101, tabla `librodetemas`). Menú de Docentes por tenant (`modulos.libro_de_temas` + `portal_docente.menu.*.libro_de_temas`; iess).

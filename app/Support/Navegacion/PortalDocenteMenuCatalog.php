@@ -53,6 +53,19 @@ final class PortalDocenteMenuCatalog
                 'icon' => 'calendar',
             ],
             [
+                'id' => 'inicial.libro_de_temas',
+                'nivel' => NivelSistema::INICIAL,
+                'menu_config' => 'tenant.portal_docente.menu.inicial.libro_de_temas',
+                'route' => 'portalDocente.libroDeTemas',
+                'active_routes' => [
+                    'portalDocente.libroDeTemas',
+                    'portalDocente.libroDeTemas.clases',
+                ],
+                'label' => 'Libro de temas',
+                'title' => 'Registro de clases dictadas (temas, actividades y observaciones)',
+                'icon' => 'book',
+            ],
+            [
                 'id' => 'inicial.listado_estudiantes',
                 'nivel' => NivelSistema::INICIAL,
                 'menu_config' => 'tenant.portal_docente.menu.inicial.listado_estudiantes',
@@ -185,6 +198,19 @@ final class PortalDocenteMenuCatalog
                 'icon' => 'calendar',
             ],
             [
+                'id' => 'primario.libro_de_temas',
+                'nivel' => NivelSistema::PRIMARIO,
+                'menu_config' => 'tenant.portal_docente.menu.primario.libro_de_temas',
+                'route' => 'portalDocente.libroDeTemas',
+                'active_routes' => [
+                    'portalDocente.libroDeTemas',
+                    'portalDocente.libroDeTemas.clases',
+                ],
+                'label' => 'Libro de temas',
+                'title' => 'Registro de clases dictadas (temas, actividades y observaciones)',
+                'icon' => 'book',
+            ],
+            [
                 'id' => 'primario.carga_estudiante',
                 'nivel' => NivelSistema::PRIMARIO,
                 'modulo' => CalificacionesPrimarioModulos::CARGA_ESTUDIANTE,
@@ -287,6 +313,19 @@ final class PortalDocenteMenuCatalog
                 'label' => 'Calendario escolar',
                 'title' => 'Calendario de actividades extracurriculares aprobadas',
                 'icon' => 'calendar',
+            ],
+            [
+                'id' => 'secundario.libro_de_temas',
+                'nivel' => NivelSistema::SECUNDARIO,
+                'menu_config' => 'tenant.portal_docente.menu.secundario.libro_de_temas',
+                'route' => 'portalDocente.libroDeTemas',
+                'active_routes' => [
+                    'portalDocente.libroDeTemas',
+                    'portalDocente.libroDeTemas.clases',
+                ],
+                'label' => 'Libro de temas',
+                'title' => 'Registro de clases dictadas (temas, actividades y observaciones)',
+                'icon' => 'book',
             ],
             [
                 'id' => 'secundario.calificaciones',

@@ -132,6 +132,10 @@ final class PortalDocenteMenu
             return tenantSolicitudEvaluacionHabilitada();
         }
 
+        if (str_contains((string) $item['id'], '.libro_de_temas')) {
+            return tenantLibroDeTemasHabilitado();
+        }
+
         return true;
     }
 

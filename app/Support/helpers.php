@@ -1496,6 +1496,37 @@ if (! function_exists('tenantSolicitudEvaluacionHabilitada')) {
     }
 }
 
+if (! function_exists('tenantLibroDeTemasHabilitado')) {
+    /**
+     * Libro de temas (tabla `librodetemas`) en Secretaría y Menú de Docentes.
+     * Default false; activar en `config/tenants/{slug}.php` → `modulos.libro_de_temas`.
+     */
+    function tenantLibroDeTemasHabilitado(): bool
+    {
+        return (bool) config('tenant.modulos.libro_de_temas', false);
+    }
+}
+
+if (! function_exists('tenantPortalDocenteLibroDeTemas')) {
+    /**
+     * Ítem Libro de temas en el Menú de Docentes (nivel de sesión).
+     * Exige el flag de módulo y `portal_docente.menu.{nivel}.libro_de_temas`.
+     */
+    function tenantPortalDocenteLibroDeTemas(): bool
+    {
+        if (! tenantLibroDeTemasHabilitado()) {
+            return false;
+        }
+
+        $claveNivel = \App\Support\LibroDeTemas\LibroDeTemasService::claveNivelMenu();
+        if ($claveNivel === null) {
+            return false;
+        }
+
+        return (bool) config("tenant.portal_docente.menu.{$claveNivel}.libro_de_temas", false);
+    }
+}
+
 if (! function_exists('tenantProgramasExamenHabilitado')) {
     /**
      * Descarga pública de programas de examen (/programas-examen).

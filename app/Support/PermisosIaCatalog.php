@@ -226,6 +226,9 @@ final class PermisosIaCatalog
     /** Capacitación docente: registro de cursos, certificado PDF y resumen por año. */
     public const CAPACITACION_DOCENTE = 93;
 
+    /** Libro de temas: registro de clases por materia (tabla librodetemas). */
+    public const LIBRO_DE_TEMAS = 101;
+
     /** Recálculo masivo de promedio anual (`calif`) tras descarga CIDI (secundario estándar). */
     public const CALIF_RECALCULO_PROMEDIOS = 94;
 
@@ -340,6 +343,7 @@ final class PermisosIaCatalog
             ['id' => 90, 'orden' => self::REGISTRO_ASISTENCIA, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Registro de asistencia: impresión PDF mensual por curso(s) (con o sin datos) y administración de feriados del nivel.'],
             ['id' => 91, 'orden' => self::SANCION_TIPOS_CONFIG, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Tipos de sanción disciplinaria: alta, edición y baja de tipos; configurar texto de notificación a padres, remitente y refuerzo por correo.'],
             ['id' => 93, 'orden' => self::CAPACITACION_DOCENTE, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Capacitación docente: alta, edición y consulta de cursos realizados por docentes; certificado PDF y resumen por año.'],
+            ['id' => 101, 'orden' => self::LIBRO_DE_TEMAS, 'tema' => 'LIBRO DE TEMAS', 'descripcion' => 'Libro de temas: alta, edición y baja de clases por materia (fecha, unidad, carácter, temas, actividades y observaciones).'],
             ['id' => 94, 'orden' => self::CALIF_RECALCULO_PROMEDIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Recalcular promedios: completar el promedio final (calif) de todas las materias del ciclo a partir de Eval/JIS, tras la descarga CIDI.'],
             ['id' => 95, 'orden' => self::PRECEPTORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar preceptores por curso y año lectivo (tabla preceptoresporcurso).'],
             ['id' => 96, 'orden' => self::PROYECTOS_EXTRACURRICULARES_APROBAR, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Aprobar proyectos extracurriculares presentados por docentes y comunicar a los involucrados (organizadores, docentes del curso y preceptores).'],
