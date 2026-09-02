@@ -28,6 +28,8 @@ class SancionTipoIndex extends Component
 
     public bool $permiteNotifPadres = true;
 
+    public bool $enResumenComunicado = false;
+
     public function mount(): void
     {
         abort_unless(tienePermiso(PermisosConfiguracion::SANCION_TIPOS_CONFIG), 403, 'Sin permiso para administrar tipos de sanción.');
@@ -40,8 +42,9 @@ class SancionTipoIndex extends Component
             'tipo'             => ['required', 'string', 'max:120'],
             'textoNotifPadres' => ['nullable', 'string', 'max:2000'],
             'idProfesorNotif'  => ['nullable', 'integer', 'min:1'],
-            'refuerzoMail'       => ['boolean'],
-            'permiteNotifPadres' => ['boolean'],
+            'refuerzoMail'         => ['boolean'],
+            'permiteNotifPadres'   => ['boolean'],
+            'enResumenComunicado'  => ['boolean'],
         ];
     }
 
@@ -61,8 +64,9 @@ class SancionTipoIndex extends Component
         $this->tipo               = (string) $st->tipo;
         $this->textoNotifPadres   = (string) ($st->textoNotifPadres ?? '');
         $this->idProfesorNotif    = $st->idProfesorNotif ? (string) $st->idProfesorNotif : '';
-        $this->refuerzoMail       = (bool) ($st->refuerzoMail ?? false);
-        $this->permiteNotifPadres = isset($st->permiteNotifPadres) ? (bool) $st->permiteNotifPadres : true;
+        $this->refuerzoMail          = (bool) ($st->refuerzoMail ?? false);
+        $this->permiteNotifPadres    = isset($st->permiteNotifPadres) ? (bool) $st->permiteNotifPadres : true;
+        $this->enResumenComunicado   = (bool) ($st->enResumenComunicado ?? false);
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -87,6 +91,12 @@ class SancionTipoIndex extends Component
             'refuerzoMail'       => $this->refuerzoMail ? 1 : 0,
             'permiteNotifPadres' => $this->permiteNotifPadres ? 1 : 0,
         ];
+
+        if (Schema::hasColumn('sanciontipo', 'enResumenComunicado')) {
+            $payload['enResumenComunicado'] = $this->enResumenComunicado ? 1 : 0;
+        } elseif ($this->enResumenComunicado) {
+            $payload['enResumenComunicado'] = 1;
+        }
 
         $preparado = PersistenciaColumnas::prepararPayload('sanciontipo', $payload);
         if ($preparado['columnas_con_valor_sin_columna'] !== []) {
@@ -129,7 +139,7 @@ class SancionTipoIndex extends Component
         }
 
         $this->showModal = false;
-        $this->reset('tipo', 'textoNotifPadres', 'idProfesorNotif', 'refuerzoMail', 'permiteNotifPadres', 'editId');
+        $this->reset('tipo', 'textoNotifPadres', 'idProfesorNotif', 'refuerzoMail', 'permiteNotifPadres', 'enResumenComunicado', 'editId');
         $this->permiteNotifPadres = true; // default al limpiar
         $this->dispatch('se-swal-exito', mensaje: $msg);
     }

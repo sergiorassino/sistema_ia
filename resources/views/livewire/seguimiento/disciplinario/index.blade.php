@@ -111,13 +111,15 @@
                                     <td class="table-cell">{{ $s->solipor ?: ($s->profesor?->nombre_completo ?? '—') }}</td>
                                     <td class="table-cell whitespace-nowrap">
                                         <div class="flex flex-nowrap items-center justify-end gap-1">
+                                            @if ($s->tipo?->permiteComunicadoPdf())
                                             <a class="btn-secondary btn-sm shrink-0"
                                                target="_blank"
                                                rel="noopener noreferrer"
                                                title="Imprimir comunicado"
                                                href="{{ route('seguimiento.disciplinario.print', ['id' => $s->id]) }}">
-                                                Imprimir
+                                                Comunicado
                                             </a>
+                                            @endif
                                             @php
                                                 $tieneActa = ! \App\Support\Seguimiento\SancionActaHtmlSanitizer::estaVacio($s->acta ?? null);
                                             @endphp

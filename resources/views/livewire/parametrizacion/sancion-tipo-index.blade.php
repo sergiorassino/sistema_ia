@@ -6,7 +6,7 @@
                 <p class="se-eyebrow">Configuración</p>
                 <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Tipos de sanción disciplinaria</h2>
                 <p class="text-sm text-white/80">
-                    Editá cada tipo para configurar el texto de notificación a padres, el remitente y si requiere refuerzo por correo.
+                    Editá cada tipo para configurar el texto de notificación a padres, el remitente, si requiere refuerzo por correo, y si emite comunicado PDF.
                 </p>
             </div>
             <div></div>
@@ -15,13 +15,14 @@
 
     <div class="se-card overflow-hidden">
         <div class="w-full overflow-x-auto se-grid-angosta-wrap">
-            <div class="gf min-w-[40rem]">
+            <div class="gf min-w-[48rem]">
                 <div class="gf-head">
                     <div class="gf-th flex-1 min-w-[10rem]">Nombre</div>
                     <div class="gf-th w-28 text-center">Notif. padres</div>
                     <div class="gf-th w-36 text-center">Remitente notif.</div>
                     <div class="gf-th w-28 text-center">Texto config.</div>
                     <div class="gf-th w-28 text-center">Refuerzo mail</div>
+                    <div class="gf-th w-28 text-center">Comunicado</div>
                     <div class="gf-th-right w-36">Acciones</div>
                 </div>
 
@@ -56,6 +57,13 @@
                                 <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-200">Mail</span>
                             @else
                                 <span class="text-neutral-400 text-xs">Solo push</span>
+                            @endif
+                        </div>
+                        <div class="gf-td w-28 text-center">
+                            @if ($st->enResumenComunicado)
+                                <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-200">Sí</span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500 ring-1 ring-neutral-200">No</span>
                             @endif
                         </div>
                         <div class="gf-td-right w-36 flex items-center justify-end gap-1">
@@ -117,6 +125,20 @@
                         </select>
                         <p class="mt-1 text-xs text-neutral-500">Si no se configura, el botón «Notif. Padres» no estará disponible para este tipo.</p>
                         @error('idProfesorNotif') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="rounded-2xl border border-accent-200 bg-accent-50/50 px-4 py-3 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <input id="st-resumen" type="checkbox" wire:model="enResumenComunicado"
+                                   class="h-4 w-4 rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+                            <label for="st-resumen" class="text-sm font-medium text-neutral-700">
+                                Incluir en el comunicado
+                            </label>
+                        </div>
+                        <p class="-mt-1 text-xs text-neutral-500">
+                            Si está activo, las sanciones de este tipo muestran el botón «Comunicado» y el tipo entra en «Hasta la fecha registra un total de».
+                            Si está desactivado, no hay botón ni PDF de comunicado.
+                        </p>
                     </div>
 
                     <div class="rounded-2xl border border-accent-200 bg-accent-50/50 px-4 py-3 space-y-3">
