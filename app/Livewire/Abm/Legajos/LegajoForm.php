@@ -2014,7 +2014,9 @@ class LegajoForm extends Component
             $cursosQuery->where('idTerlec', $idTerlec);
         }
         \App\Support\SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($cursosQuery, 'idNivel');
-        $cursos = $cursosQuery->orderBy('Id')->get(['Id', 'cursec', 'idNivel']);
+        $cursos = Curso::ordenarColeccion(
+            $cursosQuery->get(['Id', 'cursec', 'idNivel', 'orden', 'c'])
+        );
 
         $condiciones = Condicion::query()
             ->orderBy('id')

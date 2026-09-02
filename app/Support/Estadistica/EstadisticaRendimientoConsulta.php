@@ -2,6 +2,7 @@
 
 namespace App\Support\Estadistica;
 
+use App\Models\Curso;
 use App\Models\Terlec;
 use App\Support\NivelSistema;
 use Illuminate\Support\Collection;
@@ -14,13 +15,11 @@ final class EstadisticaRendimientoConsulta
      */
     public static function cursos(int $idTerlec): Collection
     {
-        return DB::table('cursos')
+        return Curso::query()
             ->where('idTerlec', $idTerlec)
             ->where('idNivel', NivelSistema::SECUNDARIO)
-            ->orderBy('orden')
-            ->orderBy('cursec')
-            ->get(['Id as id', 'cursec'])
-            ->map(fn ($r) => ['id' => (int) $r->id, 'cursec' => (string) ($r->cursec ?? '')]);
+            ->get(['Id', 'cursec', 'orden', 'c', 'idNivel'])
+            ->map(fn (Curso $r) => ['id' => (int) $r->Id, 'cursec' => (string) ($r->cursec ?? '')]);
     }
 
     /**
@@ -35,11 +34,21 @@ final class EstadisticaRendimientoConsulta
                     ->where('c.idNivel', '=', NivelSistema::SECUNDARIO);
             })
             ->where('m.idTerlec', $idTerlec)
-            ->orderBy('c.orden')
-            ->orderBy('c.cursec')
-            ->orderBy('m.ord')
-            ->orderBy('m.materia')
-            ->get(['m.id as idMaterias', 'c.Id as idCursos', 'm.materia', 'c.cursec'])
+            ->get([
+                'm.id as idMaterias',
+                'c.Id as idCursos',
+                'm.materia',
+                'm.ord',
+                'c.cursec',
+                'c.c',
+                'c.orden',
+                'c.idNivel',
+            ])
+            ->sortBy(fn ($r) => array_merge(
+                Curso::clavesOrdenSelector($r),
+                [(int) ($r->ord ?? 0), mb_strtolower((string) ($r->materia ?? ''))]
+            ))
+            ->values()
             ->map(fn ($r) => [
                 'idMaterias' => (int) $r->idMaterias,
                 'idCursos' => (int) $r->idCursos,

@@ -2,6 +2,7 @@
 
 namespace App\Support\InasistenciasDocentes;
 
+use App\Models\Curso;
 use App\Models\Terlec;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -175,7 +176,7 @@ final class RankingMateriasCursos
     /** @return list<string> */
     private static function listarCursos(int $idNivel, int $idTerlec): array
     {
-        $q = DB::table('cursos')->orderBy('orden')->orderBy('cursec');
+        $q = Curso::query();
         if ($idTerlec > 0) {
             $q->where('idTerlec', $idTerlec);
         }
@@ -183,6 +184,9 @@ final class RankingMateriasCursos
             $q->where('idNivel', $idNivel);
         }
 
-        return $q->pluck('cursec')->map(fn ($c) => (string) $c)->all();
+        return $q->get(['cursec', 'c', 'orden', 'Id', 'idNivel'])
+            ->pluck('cursec')
+            ->map(fn ($c) => (string) $c)
+            ->all();
     }
 }
