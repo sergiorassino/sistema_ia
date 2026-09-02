@@ -69,7 +69,7 @@ No hay `idProfesor` en la tabla: el libro es **por materia**.
 ## Qué no hacer / reglas de negocio
 
 1. No ramificar por `tenantSlug() === 'iess'`; usar `tenantLibroDeTemasHabilitado()` / flags de menú.
-2. No listar ni mutar clases de una materia fuera del ciclo/nivel (ni fuera de `ppc` en el portal).
+2. No listar ni mutar clases de una materia fuera del ciclo/nivel (ni fuera de `ppc` en el portal). En el Menú de Docentes el alcance `ppc` se fija en `mount` (`modoPortalDocente` locked): no usar `request()->routeIs()` en `render` / acciones Livewire.
 3. No poner IDs de alumno/DNI en la URL; `idMateria` en ruta staff/portal es el mismo criterio que calificaciones.
 4. La copia inserta de inmediato; no abre el modal. Si no hay clases, avisar y no crear fila vacía.
 

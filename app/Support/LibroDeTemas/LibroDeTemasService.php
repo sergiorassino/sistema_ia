@@ -48,6 +48,39 @@ final class LibroDeTemasService
         return request()->routeIs('portalDocente.*');
     }
 
+    /** Id del profesor de sesión para filtrar `ppc`; 0 si no hay contexto usable. */
+    private static function idProfesorSesion(): int
+    {
+        return (int) (schoolCtx()->idProfesor ?? 0);
+    }
+
+    /**
+     * Cursos con al menos una materia asignada al profesor en `ppc` (ciclo y nivel de sesión).
+     *
+     * @return list<int>
+     */
+    public static function idsCursosAsignados(): array
+    {
+        $idProfesor = self::idProfesorSesion();
+        if ($idProfesor < 1) {
+            return [];
+        }
+
+        $ctx = schoolCtx();
+
+        return DB::table('ppc')
+            ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
+            ->where('ppc.idProfesor', $idProfesor)
+            ->where('m.idNivel', (int) ($ctx->idNivel ?? 0))
+            ->where('m.idTerlec', (int) ($ctx->idTerlec ?? 0))
+            ->pluck('m.idCursos')
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public static function claveNivelMenu(?int $idNivel = null): ?string
     {
         $id = $idNivel ?? (int) (schoolCtx()->idNivel ?? 0);
@@ -85,17 +118,18 @@ final class LibroDeTemasService
             ->where('m.id', $idMateria)
             ->where('m.idTerlec', $idTerlec);
 
-        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'm.idNivel');
-
         if ($soloPpcDelProfesor) {
-            $idProfesor = (int) ($ctx->idProfesor ?? 0);
+            $idProfesor = self::idProfesorSesion();
             if ($idProfesor < 1) {
                 return null;
             }
-            $query->join('ppc', function ($join) use ($idProfesor) {
-                $join->on('ppc.idMateria', '=', 'm.id')
-                    ->where('ppc.idProfesor', '=', $idProfesor);
-            });
+            $query->where('m.idNivel', (int) ($ctx->idNivel ?? 0))
+                ->join('ppc', function ($join) use ($idProfesor) {
+                    $join->on('ppc.idMateria', '=', 'm.id')
+                        ->where('ppc.idProfesor', '=', $idProfesor);
+                });
+        } else {
+            SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'm.idNivel');
         }
 
         $row = $query->first([
@@ -125,18 +159,15 @@ final class LibroDeTemasService
             ->orderByRaw('COALESCE(orden, 9999) asc')
             ->orderBy('Id');
 
-        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
-
         if ($soloPpcDelProfesor) {
-            $idProfesor = (int) ($ctx->idProfesor ?? 0);
-            $query->whereExists(function ($sub) use ($idProfesor, $idTerlec) {
-                $sub->select(DB::raw('1'))
-                    ->from('ppc')
-                    ->join('materias as m', 'm.id', '=', 'ppc.idMateria')
-                    ->whereColumn('m.idCursos', 'cursos.Id')
-                    ->where('m.idTerlec', $idTerlec)
-                    ->where('ppc.idProfesor', $idProfesor > 0 ? $idProfesor : -1);
-            });
+            $ids = self::idsCursosAsignados();
+            if ($ids === []) {
+                return collect();
+            }
+            $query->where('idNivel', (int) ($ctx->idNivel ?? 0))
+                ->whereIn('Id', $ids);
+        } else {
+            SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
         }
 
         return $query->get(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
@@ -160,19 +191,22 @@ final class LibroDeTemasService
             ->where('m.idCursos', $idCurso)
             ->where('m.idTerlec', $idTerlec);
 
-        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'm.idNivel');
-
         if ($soloPpcDelProfesor) {
-            $idProfesor = (int) ($ctx->idProfesor ?? 0);
-            $query->whereExists(function ($sub) use ($idProfesor) {
-                $sub->select(DB::raw('1'))
-                    ->from('ppc')
-                    ->whereColumn('ppc.idMateria', 'm.id')
-                    ->where('ppc.idProfesor', $idProfesor > 0 ? $idProfesor : -1);
-            });
+            $idProfesor = self::idProfesorSesion();
+            if ($idProfesor < 1) {
+                return collect();
+            }
+            $query->where('m.idNivel', (int) ($ctx->idNivel ?? 0))
+                ->join('ppc', function ($join) use ($idProfesor) {
+                    $join->on('ppc.idMateria', '=', 'm.id')
+                        ->where('ppc.idProfesor', '=', $idProfesor);
+                });
+        } else {
+            SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'm.idNivel');
         }
 
         return $query
+            ->distinct()
             ->orderBy('m.ord')
             ->orderBy('m.id')
             ->get(['m.id', 'm.materia', 'm.abrev', 'm.ord']);
