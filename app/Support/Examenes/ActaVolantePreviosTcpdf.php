@@ -171,11 +171,11 @@ final class ActaVolantePreviosTcpdf extends TCPDF
         $this->Cell(self::ANCHO_UTIL, 3, 'A continuación del último alumno deberá firmar el secretario', 0, 1, 'C');
 
         $yFirmas = $this->GetY() + 15;
-        $this->SetFont(self::FUENTE, '', 8);
-        $this->SetXY($x0, $yFirmas);
-        $this->Cell(self::ANCHO_UTIL * 0.36, 5, 'Presidente: .......................................', 0, 0, 'L');
-        $this->Cell(self::ANCHO_UTIL * 0.32, 5, 'Vocal: .......................................', 0, 0, 'L');
-        $this->Cell(self::ANCHO_UTIL * 0.32, 5, 'Vocal: .......................................', 0, 1, 'L');
+        $wPres = self::ANCHO_UTIL * 0.36;
+        $wVoc = self::ANCHO_UTIL * 0.32;
+        $this->dibujarBloqueFirmaTribunal($x0, $yFirmas, $wPres, 'Presidente (firma y aclaración)');
+        $this->dibujarBloqueFirmaTribunal($x0 + $wPres, $yFirmas, $wVoc, 'Vocal (firma y aclaración)');
+        $this->dibujarBloqueFirmaTribunal($x0 + $wPres + $wVoc, $yFirmas, $wVoc, 'Vocal (firma y aclaración)');
 
         $yPie = $yFirmas + 10;
         $this->SetFont(self::FUENTE, '', 8);
@@ -196,6 +196,20 @@ final class ActaVolantePreviosTcpdf extends TCPDF
             $yPie,
             true,
         );
+    }
+
+    private function dibujarBloqueFirmaTribunal(float $x, float $y, float $w, string $label): void
+    {
+        $pad = 3.0;
+        $this->SetDrawColor(0, 0, 0);
+        $this->SetLineWidth(0.2);
+        $this->SetLineStyle(['dash' => '1,1', 'color' => [0, 0, 0]]);
+        $this->Line($x + $pad, $y, $x + $w - $pad, $y);
+        $this->SetLineStyle(['dash' => 0, 'color' => [0, 0, 0]]);
+
+        $this->SetFont(self::FUENTE, '', 7);
+        $this->SetXY($x, $y + 1.0);
+        $this->Cell($w, 4, $label, 0, 0, 'C');
     }
 
     /**

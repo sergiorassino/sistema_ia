@@ -89,18 +89,26 @@
             width: 100%;
             margin: 15mm 0 0 0;
             border-collapse: collapse;
-            font-size: 8pt;
-            line-height: 1.3;
+            font-size: 7pt;
+            line-height: 1.2;
         }
         table.firmas td {
-            padding: 0 3mm 0 0;
+            padding: 0 3mm;
             border: none;
-            text-align: left;
-            vertical-align: bottom;
+            text-align: center;
+            vertical-align: top;
             white-space: nowrap;
         }
         table.firmas td.firma-pres { width: 36%; }
         table.firmas td.firma-voc { width: 32%; }
+        .firma-linea {
+            border-bottom: 0.6pt dotted #000;
+            height: 1mm;
+            margin: 0 0 1.2mm 0;
+            line-height: 1;
+            font-size: 1pt;
+        }
+        .firma-lbl { font-size: 7pt; }
         .pie-tabla { width: 100%; border-collapse: collapse; margin-top: 2mm; font-size: 8pt; }
         .pie-tabla td { border: none; padding: 0; vertical-align: top; line-height: 1.3; }
         .pie-fecha { width: 58%; }
@@ -185,9 +193,18 @@
 
         <table class="firmas" cellspacing="0" cellpadding="0">
             <tr>
-                <td class="firma-pres">Presidente: .......................................</td>
-                <td class="firma-voc">Vocal: .......................................</td>
-                <td class="firma-voc">Vocal: .......................................</td>
+                <td class="firma-pres">
+                    <div class="firma-linea">&nbsp;</div>
+                    <div class="firma-lbl">Presidente (firma y aclaración)</div>
+                </td>
+                <td class="firma-voc">
+                    <div class="firma-linea">&nbsp;</div>
+                    <div class="firma-lbl">Vocal (firma y aclaración)</div>
+                </td>
+                <td class="firma-voc">
+                    <div class="firma-linea">&nbsp;</div>
+                    <div class="firma-lbl">Vocal (firma y aclaración)</div>
+                </td>
             </tr>
         </table>
 
