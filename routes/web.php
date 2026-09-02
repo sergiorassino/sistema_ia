@@ -50,6 +50,8 @@ use App\Http\Controllers\ListadoCursoPdfController;
 use App\Http\Controllers\ListadoEstudiantesFormatoPdfController;
 use App\Http\Controllers\ListadoDocentesExcelController;
 use App\Http\Controllers\ListadoDocentesPdfController;
+use App\Http\Controllers\ListadoFamiliasExcelController;
+use App\Http\Controllers\ListadoFamiliasPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
@@ -307,6 +309,7 @@ use App\Livewire\Listados\FichaMatriculaSecretaria;
 use App\Livewire\Listados\LibroMatricula;
 use App\Livewire\Listados\ListadoDocentes;
 use App\Livewire\Listados\ListadoEstudiantesFormato;
+use App\Livewire\Listados\ListadoFamiliasIndex;
 use App\Livewire\Listados\ListadoPorCurso;
 use App\Livewire\Parametrizacion\CamposLegajoIndex;
 use App\Livewire\Parametrizacion\CamposProfesorIndex;
@@ -1628,6 +1631,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
     Route::get('/listados/por-curso', ListadoPorCurso::class)->name('listados.por-curso');
     Route::get('/listados/por-curso/listado', ListadoCursoPdfController::class)->name('listados.por-curso.pdf');
+    Route::get('/listados/familias', ListadoFamiliasIndex::class)->name('listados.familias');
+    Route::get('/listados/familias/pdf/{ref}', ListadoFamiliasPdfController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('listados.familias.pdf');
+    Route::get('/listados/familias/excel/{ref}', ListadoFamiliasExcelController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('listados.familias.excel');
     Route::get('/listados/estudiantes-formato', ListadoEstudiantesFormato::class)->name('listados.estudiantes-formato');
     Route::get('/listados/estudiantes-formato/pdf', ListadoEstudiantesFormatoPdfController::class)
         ->name('listados.estudiantes-formato.pdf');

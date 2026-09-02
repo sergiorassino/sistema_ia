@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Matricula;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -33,11 +34,14 @@ final class OrdenAlfabeticoEstudiante
     }
 
     /**
-     * @param  EloquentBuilder|QueryBuilder  $query
-     * @return EloquentBuilder|QueryBuilder
+     * @param  EloquentBuilder|QueryBuilder|Relation  $query
+     * @return EloquentBuilder|QueryBuilder|Relation
      */
-    public static function orderBy(EloquentBuilder|QueryBuilder $query, string $apellidoCol, string $nombreCol): EloquentBuilder|QueryBuilder
-    {
+    public static function orderBy(
+        EloquentBuilder|QueryBuilder|Relation $query,
+        string $apellidoCol,
+        string $nombreCol,
+    ): EloquentBuilder|QueryBuilder|Relation {
         return $query
             ->orderByRaw(self::sql($apellidoCol))
             ->orderByRaw(self::sql($nombreCol));

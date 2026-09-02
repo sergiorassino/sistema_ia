@@ -82,6 +82,10 @@ final class OpaqueRouteToken
 
     public const PURPOSE_EXT_ACTIVIDAD = 'ext.actividad';
 
+    public const PURPOSE_LISTADO_FAMILIAS_PDF = 'listados.familias.pdf';
+
+    public const PURPOSE_LISTADO_FAMILIAS_XLSX = 'listados.familias.excel';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -330,6 +334,22 @@ final class OpaqueRouteToken
         return self::encodePayload(self::PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO, [
             'c' => $ids,
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forListadoFamiliasPdf(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_LISTADO_FAMILIAS_PDF, $filtros);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
+    public static function forListadoFamiliasExcel(array $filtros): string
+    {
+        return self::encodePayload(self::PURPOSE_LISTADO_FAMILIAS_XLSX, $filtros);
     }
 
     /**
