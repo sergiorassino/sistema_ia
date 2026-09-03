@@ -1,4 +1,4 @@
-<div class="se-page max-w-6xl">
+<div class="se-page !max-w-none min-w-0">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"
              class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -87,16 +87,15 @@
             </div>
 
             <div class="w-full overflow-x-auto">
-                <div class="flex justify-start">
-                    <table class="min-w-[980px] border-collapse sm:min-w-full">
+                <table class="w-full min-w-[720px] table-fixed border-collapse">
                         <thead class="bg-accent-50">
                             <tr>
-                                <th class="table-header w-28">Fecha</th>
-                                <th class="table-header w-56">Tipo</th>
-                                <th class="table-header w-28">Cantidad</th>
+                                <th class="table-header w-[6.5rem]">Fecha</th>
+                                <th class="table-header w-[11rem]">Tipo</th>
+                                <th class="table-header w-[3.25rem] text-center">Cant</th>
                                 <th class="table-header">Motivo</th>
-                                <th class="table-header w-48">Solicitada por</th>
-                                <th class="table-header whitespace-nowrap text-right">Acciones</th>
+                                <th class="table-header w-[10.5rem]">Solicitada por</th>
+                                <th class="table-header w-[17.5rem] whitespace-nowrap text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-accent-200 bg-white">
@@ -104,9 +103,15 @@
                                 <tr class="transition-colors hover:bg-accent-50/60">
                                     <td class="table-cell font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
                                     <td class="table-cell">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
-                                    <td class="table-cell font-mono">{{ $s->cantidad ?? '—' }}</td>
-                                    <td class="table-cell">
-                                        <div class="line-clamp-2">{{ $s->motivo ?? '—' }}</div>
+                                    <td class="table-cell text-center font-mono">{{ $s->cantidad ?? '—' }}</td>
+                                    <td class="table-cell align-top">
+                                        @php
+                                            $motivoTexto = trim((string) ($s->motivo ?? ''));
+                                            $motivoMostrar = $motivoTexto === ''
+                                                ? '—'
+                                                : \Illuminate\Support\Str::limit($motivoTexto, 500);
+                                        @endphp
+                                        <div class="text-xs leading-relaxed text-neutral-700 break-words whitespace-pre-wrap">{{ $motivoMostrar }}</div>
                                     </td>
                                     <td class="table-cell">{{ $s->solipor ?: ($s->profesor?->nombre_completo ?? '—') }}</td>
                                     <td class="table-cell whitespace-nowrap">
@@ -115,9 +120,9 @@
                                             <a class="btn-secondary btn-sm shrink-0"
                                                target="_blank"
                                                rel="noopener noreferrer"
-                                               title="Imprimir comunicado"
+                                               title="Imprimir"
                                                href="{{ route('seguimiento.disciplinario.print', ['id' => $s->id]) }}">
-                                                Comunicado
+                                                Imprimir
                                             </a>
                                             @endif
                                             @php
@@ -175,7 +180,6 @@
                             @endforelse
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
     @else

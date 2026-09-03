@@ -151,6 +151,24 @@ return [
 
 Consumir con `tenantParteDiarioImplementacion()`. Detalle: [modulos/parte-diario-preceptor.md](modulos/parte-diario-preceptor.md).
 
+Comunicado de seguimiento disciplinario — modelo de PDF:
+
+- Default: **`estandar`** (DomPDF legacy, dos troqueles).
+- Alternativa **`iess`**: TCPDF A4 con textos y firmas del modelo IESS. Los totales siguen `sanciontipo.enResumenComunicado` (antes / después de la sanción).
+
+```php
+// config/tenants/iess.php
+return [
+    'seguimiento' => [
+        'comunicado' => [
+            'implementacion' => 'iess',
+        ],
+    ],
+];
+```
+
+Consumir con `tenantSeguimientoComunicadoImplementacion()`. Detalle: [modulos/seguimiento-disciplinario.md](modulos/seguimiento-disciplinario.md).
+
 Fórmulas al crear plantilla de cuota (bonificación/interés por vencimiento; default +0 % en los cuatro tramos):
 
 ```php

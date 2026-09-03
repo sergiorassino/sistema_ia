@@ -6,6 +6,7 @@ use App\Support\PermisosIaCatalog;
 use App\Models\Sancion;
 use App\Support\Seguimiento\ResumenComunicadoSancion;
 use App\Support\Seguimiento\SancionActaHtmlSanitizer;
+use App\Support\Seguimiento\SancionComunicadoIessTcpdf;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -103,7 +104,7 @@ class SancionComunicadoPdfController extends Controller
 
         $actaHtml = SancionActaHtmlSanitizer::paraPdf($sancion->acta ?? null);
 
-        $pdf = Pdf::loadView('pdf.sancion-comunicado', [
+        $payload = [
             'nombreInstitucion' => $nombreInstitucion,
             'alumnoNombre' => $alumnoNombre,
             'cursoLabel' => $cursoLabel,
@@ -112,11 +113,21 @@ class SancionComunicadoPdfController extends Controller
             'solicitadaPor' => $solicitadaPor,
             'cantidad' => $cantidad,
             'tipoSancion' => $tipoSancionEtiqueta,
+            'tipoSancionNombre' => $tipoSancion,
             'lineasResumenSinActual' => $lineasResumenSinActual,
             'lineasResumenConActual' => $lineasResumenConActual,
             'actaHtml' => $actaHtml,
+        ];
+
+        if (tenantSeguimientoComunicadoImplementacion() === 'iess') {
+            $pdf = SancionComunicadoIessTcpdf::generar($payload);
+
+            return SancionComunicadoIessTcpdf::respuestaHttp($pdf, $slug.'.pdf');
+        }
+
+        $pdf = Pdf::loadView('pdf.sancion-comunicado', array_merge($payload, [
             'pdfHeader' => schoolPdfHeaderData(),
-        ])->setPaper('a4', 'portrait');
+        ]))->setPaper('a4', 'portrait');
 
         return $pdf->stream($slug.'.pdf');
     }

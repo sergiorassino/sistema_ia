@@ -648,6 +648,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Seguimiento disciplinario — comunicado a la familia (PDF)
+    |--------------------------------------------------------------------------
+    |
+    | `implementacion`:
+    |   - `estandar` — DomPDF legacy (dos troqueles + acta en hoja aparte).
+    |   - `iess` — TCPDF A4: textos y firmas del modelo IESS (ScriptCase).
+    | El recuadro de totales (antes / después de la sanción) usa
+    | `sanciontipo.enResumenComunicado` en ambas variantes.
+    | Override solo en `config/tenants/{slug}.php` cuando difiere.
+    */
+    'seguimiento' => [
+        'comunicado' => [
+            'implementacion' => 'estandar',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ARCA — consultas al padrón tributario
     |--------------------------------------------------------------------------
     */

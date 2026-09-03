@@ -43,4 +43,10 @@ return [
             'implementacion' => 'iess',
         ],
     ],
+
+    'seguimiento' => [
+        'comunicado' => [
+            'implementacion' => 'iess',
+        ],
+    ],
 ];

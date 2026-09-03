@@ -1841,6 +1841,22 @@ if (! function_exists('tenantParteDiarioImplementacion')) {
     }
 }
 
+if (! function_exists('tenantSeguimientoComunicadoImplementacion')) {
+    /**
+     * Modelo de PDF del comunicado de seguimiento disciplinario: `estandar` | `iess`.
+     * Config: `tenant.seguimiento.comunicado.implementacion`.
+     */
+    function tenantSeguimientoComunicadoImplementacion(): string
+    {
+        $raw = strtolower(trim((string) config('tenant.seguimiento.comunicado.implementacion', 'estandar')));
+
+        return match ($raw) {
+            'iess' => 'iess',
+            default => 'estandar',
+        };
+    }
+}
+
 if (! function_exists('tenantTeaRegistroImplementacion')) {
     /**
      * Implementación TCPDF de impresos TEA del tenant (`montecristo` o `caixalsf` por defecto).

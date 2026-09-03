@@ -7,9 +7,12 @@ Registrar, editar e imprimir sanciones del Cuaderno de Seguimiento; notificar a 
 ## Modalidades / variantes
 
 - Listado por curso/alumno del contexto (`idNivel` / `idTerlec`).
-- Comunicado PDF (DomPDF legacy) con dos bloques en la misma hoja; si hay acta, se agrega en **hoja aparte**.
+- Comunicado PDF — dos implementaciones por tenant (`config('tenant.seguimiento.comunicado.implementacion')`, helper `tenantSeguimientoComunicadoImplementacion()`). No ramificar por `tenantSlug()`.
+  - **`estandar`** (default): DomPDF legacy; dos bloques en la misma hoja; membrete institucional.
+  - **`iess`**: TCPDF A4; recuadro con nombre de institución + título; textos y firmas del modelo ScriptCase IESS (solicitud: Solicitante + Directivo; cupón: Estudiante + Padre/Madre/Responsable + Directivo). Localidad desde `ento.localidad` (en IESS: Villa Carlos Paz). Intro distinto si el tipo se llama Entrevista o Registro de Situación Áulica (por nombre, no por id).
+- Si hay acta, se agrega en **hoja aparte** en ambas variantes.
 - El recuadro «Hasta la fecha registra un total de» lista solo los tipos con `sanciontipo.enResumenComunicado = 1` (cada colegio marca los propios en Parametrización → Tipos de sanción). Esos mismos tipos muestran el botón **Comunicado** en el listado; con valor 0 el botón no aparece y el PDF no se emite.
-- Troquel 1 (solicitud): totales **sin** la sanción que se imprime. Troquel 2 (notificación): totales **con** esa sanción. En ambos, solo sanciones con `fecha` **menor o igual** a la de la que se informa (reimprimir un comunicado viejo no incluye las posteriores). Etiqueta del tipo: singular si la cantidad es 1 (`1 Amonestación`), plural si es 0 o 2+ (`3 Amonestaciones`).
+- Troquel 1 (solicitud): totales **sin** la sanción que se imprime. Troquel 2 (notificación): totales **con** esa sanción. En ambos, solo sanciones con `fecha` **menor o igual** a la de la que se informa (reimprimir un comunicado viejo no incluye las posteriores). Etiqueta del tipo: singular si la cantidad es 1 (`1 Amonestación`), plural si es 0 o 2+ (`3 Amonestaciones`). En la variante `iess` ese recuadro (y el párrafo «aplíquese» / «ha sido sancionado») solo se imprime si el tipo no es Entrevista ni Registro de Situación Áulica.
 - Notificación a padres (push y, si el tipo lo pide, email): el cuerpo actual se mantiene; el texto plano del acta se **anexa al final** solo si hay contenido.
 
 ### Menú de Docentes — Cuaderno de seguimiento áulico (secundario)
@@ -58,7 +61,8 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - `app/Livewire/Seguimiento/Disciplinario/SancionActaForm.php`
 - `app/Http/Controllers/SancionComunicadoPdfController.php`
 - `app/Support/Seguimiento/ResumenComunicadoSancion.php`
-- `resources/views/pdf/sancion-comunicado.blade.php`
+- `app/Support/Seguimiento/SancionComunicadoIessTcpdf.php` (variante `iess`)
+- `resources/views/pdf/sancion-comunicado.blade.php` (variante `estandar`)
 - `app/Livewire/Parametrizacion/SancionTipoIndex.php`
 - `app/Support/Seguimiento/NotificarFamiliaSancion.php`
 - `app/Support/Seguimiento/SancionActaHtmlSanitizer.php`
@@ -69,7 +73,8 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - No exigir acta: vacío = PDF y notificación como antes.
 - No usar `{!! !!}` en el PDF sin pasar por `SancionActaHtmlSanitizer::paraPdf()`.
 - No omitir en silencio el guardado de `acta` si el usuario cargó texto y falta la columna (usar `PersistenciaColumnas`).
-- No migrar este PDF a TCPDF salvo pedido explícito (es DomPDF legacy).
+- No migrar el PDF **estándar** a TCPDF salvo pedido explícito (es DomPDF legacy). La variante `iess` sí es TCPDF (PDF nuevo).
+- No ramificar el comunicado por `tenantSlug() === 'iess'`; usar `tenantSeguimientoComunicadoImplementacion()`.
 - No listar en el resumen del comunicado todos los tipos ni filtrar por el nombre: solo `enResumenComunicado = 1`.
 - No mostrar el botón «Comunicado» ni emitir el PDF si `enResumenComunicado = 0`.
 - No usar forma con barra (`Firma/s`, `Amonestación/es`): singular si cantidad = 1, plural si 0 o ≥ 2.
@@ -85,5 +90,6 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - [ ] ¿Esquema `idProfesores` aplicado en el tenant (migrate o SQL)? Sin esa columna el alta de sanción falla.
 - [ ] ¿Esquema `enResumenComunicado` aplicado y tipos marcados en Parametrización?
 - [ ] ¿Botón «Comunicado» solo si `enResumenComunicado = 1` (y PDF 404 si no)?
+- [ ] ¿PDF: `estandar` (DomPDF) vs `iess` (TCPDF) según `tenantSeguimientoComunicadoImplementacion()`?
 - [ ] ¿Resumen del comunicado cortado por `fecha <=` la de la sanción impresa?
 - [ ] ¿Portal docente: flag `cuaderno_seguimiento_aulico` solo en tenants que lo usan, y tipo `Registro de Situación Áulica` en `sanciontipo`?
