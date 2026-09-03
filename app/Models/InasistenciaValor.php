@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class InasistenciaValor extends Model
 {
@@ -18,10 +19,12 @@ class InasistenciaValor extends Model
         'concepto',
         'texto_cidi',
         'cantidad',
+        'mostrarTotal',
     ];
 
     protected $casts = [
         'cantidad' => 'decimal:2',
+        'mostrarTotal' => 'integer',
     ];
 
     /**
@@ -38,6 +41,29 @@ class InasistenciaValor extends Model
                 ->map(fn (self $v) => (string) (int) $v->id)
                 ->values();
         });
+    }
+
+    /**
+     * Tipos que deben aparecer en el recuadro de totales (Gestión + informe PDF).
+     *
+     * @return list<array{id: int, concepto: string}>
+     */
+    public static function tiposParaMostrarTotal(): array
+    {
+        if (! Schema::hasTable('inasistencias_valores') || ! Schema::hasColumn('inasistencias_valores', 'mostrarTotal')) {
+            return [];
+        }
+
+        return static::query()
+            ->where('mostrarTotal', 1)
+            ->orderBy('concepto')
+            ->get(['id', 'concepto'])
+            ->map(fn (self $v) => [
+                'id' => (int) $v->id,
+                'concepto' => trim((string) ($v->concepto ?? '')),
+            ])
+            ->values()
+            ->all();
     }
 
     protected static function booted(): void

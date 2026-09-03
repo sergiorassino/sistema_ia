@@ -498,6 +498,7 @@ ON DUPLICATE KEY UPDATE
 -- 8. Inasistencias estudiantes — texto CIDI en catálogo de tipos
 -- =============================================================================
 CALL sp_add_column_if_missing('inasistencias_valores', 'texto_cidi', 'varchar(120) NULL DEFAULT NULL AFTER `concepto`');
+CALL sp_add_column_if_missing('inasistencias_valores', 'mostrarTotal', 'tinyint unsigned NOT NULL DEFAULT 0 AFTER `texto_cidi`');
 
 -- =============================================================================
 -- 10. Aspirantes (gestión de aspirantes + form público)

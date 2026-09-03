@@ -259,21 +259,25 @@ final class InformeInasistenciasTcpdf extends TCPDF
      */
     private function dibujarTotales(float $y, array $datos): float
     {
-        $resumen = $datos['resumen'] ?? null;
-        if (! $resumen instanceof InasistenciasResumen) {
+        /** @var list<array{id?: int, concepto?: string, total?: float}> $totales */
+        $totales = is_array($datos['totalesCatalogo'] ?? null) ? $datos['totalesCatalogo'] : [];
+        if ($totales === []) {
             return $y;
         }
 
         $this->SetXY(self::MARGEN_IZQ, $y);
-        $items = [
-            ['Inasistencias justificadas:', $resumen->formatear($resumen->justificadas)],
-            ['Inasistencias injustificadas:', $resumen->formatear($resumen->injustificadas)],
-            ['Llegadas tarde 1/4:', $resumen->formatear($resumen->llegadasTardeCuarto)],
-            ['Llegadas tarde 1/2:', $resumen->formatear($resumen->llegadasTardeMedio)],
-            ['Retiro anticipado:', $resumen->formatear($resumen->retirosAnticipados)],
-            ['Total de inasistencias:', $resumen->formatear($resumen->totalClase())],
-            ['Inasistencias a educación física:', $resumen->formatear($resumen->educacionFisica)],
-        ];
+        $items = [];
+        foreach ($totales as $item) {
+            $concepto = trim((string) ($item['concepto'] ?? ''));
+            if ($concepto === '') {
+                $id = (int) ($item['id'] ?? 0);
+                $concepto = $id > 0 ? 'Tipo '.$id : 'Tipo';
+            }
+            $items[] = [
+                $concepto.':',
+                InasistenciasResumen::formatearCantidad((float) ($item['total'] ?? 0)),
+            ];
+        }
 
         foreach ($items as [$etiqueta, $valor]) {
             TcpdfFuenteArial::aplicar($this, 'B', 7);

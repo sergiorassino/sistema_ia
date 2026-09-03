@@ -243,13 +243,13 @@ class InasistenciasIndex extends Component
 
         $matricula = $this->matriculaSeleccionada();
         $inasistencias = collect();
-        $resumen = null;
+        $totalesCatalogo = [];
         $teaPendientes = [];
         $teaPendientesPorMatricula = [];
 
         if ($matricula) {
             $inasistencias = $this->inasistenciasDeMatricula((int) $matricula->id);
-            $resumen = InasistenciasResumen::desdeColeccion($inasistencias);
+            $totalesCatalogo = InasistenciasResumen::totalesCatalogo($inasistencias);
             $teaPendientes = TeaInstanciasPendientes::deMatricula((int) $matricula->id);
         } elseif ((int) $this->idMatricula > 0) {
             $this->idMatricula = '';
@@ -282,7 +282,7 @@ class InasistenciasIndex extends Component
             'alumnos',
             'matricula',
             'inasistencias',
-            'resumen',
+            'totalesCatalogo',
             'tiposInasistencia',
             'tipoFiltroActivo',
             'etiquetaTipoFiltro',

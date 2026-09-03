@@ -7,7 +7,7 @@
     $fechaHasta = $fechaHasta ?? '';
     $filtroFechasActivo = $filtroFechasActivo ?? false;
     $inasistencias = $inasistencias ?? collect();
-    $resumen = $resumen ?? null;
+    $totalesCatalogo = $totalesCatalogo ?? [];
 @endphp
 <div class="cabecera-informe">
     @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
@@ -60,15 +60,14 @@
     </tbody>
 </table>
 
-@if ($resumen)
+@if ($totalesCatalogo !== [])
     <div class="totales">
-        <p><span class="label">Inasistencias justificadas:</span> {{ $resumen->formatear($resumen->justificadas) }}</p>
-        <p><span class="label">Inasistencias injustificadas:</span> {{ $resumen->formatear($resumen->injustificadas) }}</p>
-        <p><span class="label">Llegadas tarde 1/4:</span> {{ $resumen->formatear($resumen->llegadasTardeCuarto) }}</p>
-        <p><span class="label">Llegadas tarde 1/2:</span> {{ $resumen->formatear($resumen->llegadasTardeMedio) }}</p>
-        <p><span class="label">Retiro anticipado:</span> {{ $resumen->formatear($resumen->retirosAnticipados) }}</p>
-        <p><span class="label">Total de inasistencias:</span> {{ $resumen->formatear($resumen->totalClase()) }}</p>
-        <p><span class="label">Inasistencias a educación física:</span> {{ $resumen->formatear($resumen->educacionFisica) }}</p>
+        @foreach ($totalesCatalogo as $tarjeta)
+            <p>
+                <span class="label">{{ $tarjeta['concepto'] }}:</span>
+                {{ number_format((float) $tarjeta['total'], 2, ',', '') }}
+            </p>
+        @endforeach
     </div>
 @endif
 

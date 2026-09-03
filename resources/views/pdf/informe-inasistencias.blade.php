@@ -14,7 +14,7 @@
         'fechaHasta' => $fechaHasta,
         'filtroFechasActivo' => $filtroFechasActivo ?? false,
         'inasistencias' => $inasistencias,
-        'resumen' => $resumen,
+        'totalesCatalogo' => $totalesCatalogo ?? [],
         'pdfHeader' => $pdfHeader ?? null,
     ])
 </body>

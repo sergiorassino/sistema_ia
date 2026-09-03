@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Inasistencia;
+use App\Models\InasistenciaValor;
 use Illuminate\Support\Collection;
 
 /**
@@ -127,6 +128,54 @@ final class InasistenciasResumen
 
     public function formatear(float $valor): string
     {
+        return self::formatearCantidad($valor);
+    }
+
+    public static function formatearCantidad(float $valor): string
+    {
         return number_format($valor, 2, ',', '');
+    }
+
+    /**
+     * Totales por tipo de {@see InasistenciaValor} con {@see InasistenciaValor::$mostrarTotal} = 1.
+     * Independiente de los IDs CIDI ({@see self::TIPO_CLASE} etc.): cada colegio elige qué tipos mostrar.
+     *
+     * @param  Collection<int, Inasistencia>  $inasistencias
+     * @return list<array{id: int, concepto: string, total: float}>
+     */
+    public static function totalesCatalogo(Collection $inasistencias): array
+    {
+        $tipos = InasistenciaValor::tiposParaMostrarTotal();
+        if ($tipos === []) {
+            return [];
+        }
+
+        $sumas = [];
+        foreach ($inasistencias as $i) {
+            $tipo = trim((string) ($i->tipo ?? ''));
+            $tipoNorm = $tipo !== '' ? (string) (int) $tipo : '';
+            if ($tipoNorm === '') {
+                continue;
+            }
+
+            $sumas[$tipoNorm] = ($sumas[$tipoNorm] ?? 0.0) + (float) ($i->cantidad ?? 0);
+        }
+
+        $out = [];
+        foreach ($tipos as $tipo) {
+            $id = (int) ($tipo['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+
+            $concepto = trim((string) ($tipo['concepto'] ?? ''));
+            $out[] = [
+                'id' => $id,
+                'concepto' => $concepto !== '' ? $concepto : 'Tipo '.$id,
+                'total' => round($sumas[(string) $id] ?? 0.0, 2),
+            ];
+        }
+
+        return $out;
     }
 }

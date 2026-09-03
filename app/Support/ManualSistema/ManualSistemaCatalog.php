@@ -486,6 +486,7 @@ final class ManualSistemaCatalog
                         ],
                         [
                             'Las familias ven un informe similar en su portal.',
+                            'El recuadro de totales solo incluye los tipos del catálogo con mostrarTotal = 1 (inasistencias_valores). El resto se carga y lista, pero no suma ahí.',
                         ],
                         'Permiso de estudiantes (2)',
                     ),

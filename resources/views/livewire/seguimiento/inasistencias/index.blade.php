@@ -146,39 +146,15 @@
                 @endif
             </div>
 
-            @if ($resumen)
-                <div class="space-y-2 border-b border-accent-200 bg-accent-50/40 px-4 py-3 sm:px-5">
+            @if ($totalesCatalogo !== [])
+                <div class="border-b border-accent-200 bg-accent-50/40 px-4 py-3 sm:px-5">
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Justificadas</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-primary-700 sm:text-lg">{{ $resumen->formatear($resumen->justificadas) }}</p>
-                        </div>
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Injustificadas</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ $resumen->formatear($resumen->injustificadas) }}</p>
-                        </div>
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Lleg. tarde 1/4</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ $resumen->formatear($resumen->llegadasTardeCuarto) }}</p>
-                        </div>
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Lleg. tarde 1/2</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ $resumen->formatear($resumen->llegadasTardeMedio) }}</p>
-                        </div>
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Retiro anticipado</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ $resumen->formatear($resumen->retirosAnticipados) }}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 lg:max-w-md">
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Total</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-900 sm:text-lg">{{ $resumen->formatear($resumen->totalClase()) }}</p>
-                        </div>
-                        <div class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
-                            <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Educación física</p>
-                            <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ $resumen->formatear($resumen->educacionFisica) }}</p>
-                        </div>
+                        @foreach ($totalesCatalogo as $tarjeta)
+                            <div wire:key="inas-total-{{ $tarjeta['id'] }}" class="rounded-xl border border-accent-200 bg-white px-2.5 py-2 shadow-sm">
+                                <p class="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">{{ $tarjeta['concepto'] }}</p>
+                                <p class="mt-0.5 font-mono text-base font-bold text-neutral-800 sm:text-lg">{{ number_format($tarjeta['total'], 2, ',', '') }}</p>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             @endif

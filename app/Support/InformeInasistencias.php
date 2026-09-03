@@ -194,7 +194,8 @@ final class InformeInasistencias
      *     filtroFechasActivo: bool,
      *     etiquetaTipoFiltro: string,
      *     inasistencias: Collection<int, Inasistencia>,
-     *     resumen: array
+     *     resumen: InasistenciasResumen,
+     *     totalesCatalogo: list<array{id: int, concepto: string, total: float}>
      * }
      */
     public static function datosPdf(
@@ -229,6 +230,7 @@ final class InformeInasistencias
             'etiquetaTipoFiltro' => self::etiquetaFiltroTipos($idTipo),
             'inasistencias' => $inasistencias,
             'resumen' => InasistenciasResumen::desdeColeccion($inasistencias),
+            'totalesCatalogo' => InasistenciasResumen::totalesCatalogo($inasistencias),
         ];
     }
 
