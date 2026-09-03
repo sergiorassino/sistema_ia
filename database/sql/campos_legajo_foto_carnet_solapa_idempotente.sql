@@ -4,6 +4,8 @@
 --
 -- IESS (preferido): php artisan migrate
 --   database/migrations/2026_09_01_120000_seed_solapa_foto_carnet_iess.php
+-- Montecristo (preferido): php artisan migrate
+--   database/migrations/2026_09_03_120000_seed_solapa_foto_carnet_montecristo.php
 -- Este SQL es el equivalente para phpMyAdmin / HeidiSQL (cualquier tenant).
 --
 -- Requisitos para el ABM de legajos:
@@ -16,7 +18,7 @@
 -- `config/tenants/{slug}.php`. Sin esa llave el bloque no aparece en el
 -- Menú de Alumnos aunque la solapa exista.
 --
--- Uso: ejecutar en la BD del tenant (ej. ia_iess) en phpMyAdmin / HeidiSQL.
+-- Uso: ejecutar en la BD del tenant (ej. ia_montecristo, ia_iess) en phpMyAdmin / HeidiSQL.
 -- Equivalente de columna: database/sql/legajos_foto_carnet_idempotente.sql
 --
 -- ADVERTENCIA: inserta/actualiza parametrización de solapas y campos.

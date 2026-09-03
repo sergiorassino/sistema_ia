@@ -204,6 +204,21 @@ final class ManualSistemaCatalog
                         'Permiso de estudiantes (2)',
                     ),
                     self::mod(
+                        'Listados con formato (PDF)',
+                        'Menú Estudiantes → Listados de Estudiantes con Formato',
+                        'Hojas prearmadas por curso: cuadriculado, renglón, calendario, registro de firmas o fotos carnet.',
+                        [
+                            'Marque los cursos que desea incluir (un listado por curso).',
+                            'Elija el modelo de hoja. En Calendario, indique el mes. En Fotos (si aparece), el tamaño (2×2, 4×4 u 8×8 cm).',
+                            'Pulse Abrir PDF en pestaña nueva.',
+                            'En el listado de fotos, debajo de cada imagen figuran apellido y nombre, curso y sección, y el año lectivo.',
+                        ],
+                        [
+                            'El modelo Fotos solo aparece si el colegio tiene foto carnet en el legajo (solapa).',
+                        ],
+                        'Permiso de estudiantes (2)',
+                    ),
+                    self::mod(
                         'Libro de matrícula',
                         'Menú Estudiantes → Libro de Matrícula',
                         'Listado institucional amplio, con columnas configurables, en PDF multipágina.',

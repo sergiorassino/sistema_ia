@@ -36,6 +36,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Estado de Deuda Familiar | [estado-deuda-familiar.md](estado-deuda-familiar.md) |
 | Estado de Deuda por Estudiante | [estado-deuda-estudiante.md](estado-deuda-estudiante.md) |
 | Listado de familias | [listado-familias.md](listado-familias.md) |
+| Listados de estudiantes con formato | [listado-estudiantes-formato.md](listado-estudiantes-formato.md) |
 | Imputar pago | [imputar-pago.md](imputar-pago.md) |
 | Importes por curso | [cuotas-importes-por-curso.md](cuotas-importes-por-curso.md) |
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |

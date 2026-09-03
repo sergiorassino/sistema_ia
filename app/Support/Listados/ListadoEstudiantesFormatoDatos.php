@@ -3,10 +3,12 @@
 namespace App\Support\Listados;
 
 use App\Models\Ento;
+use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\NivelSistema;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -16,7 +18,7 @@ final class ListadoEstudiantesFormatoDatos
 {
     /**
      * @param  list<int>  $cursoIds
-     * @return list<array{cursoLabel: string, alumnos: Collection<int, object>}>
+     * @return list<array{cursoLabel: string, curso: string, seccion: string, alumnos: Collection<int, object>}>
      */
     public static function bloquesPorCursos(array $cursoIds): array
     {
@@ -43,17 +45,25 @@ final class ListadoEstudiantesFormatoDatos
 
         ListadoCursoConsulta::aplicarFiltroMatriculaNivel($query);
 
+        $columnas = [
+            'matricula.idCursos as __id_curso',
+            'legajos.apellido',
+            'legajos.nombre',
+            'legajos.nombremad',
+            'legajos.nombrepad',
+        ];
+        if (FotoCarnetLegajo::columnaDisponible()) {
+            $columnas[] = 'legajos.'.FotoCarnetLegajo::COLUMNA;
+        }
+        if (Schema::hasColumn('legajos', 'dni')) {
+            $columnas[] = 'legajos.dni';
+        }
+
         $filas = $query
             ->orderBy('matricula.idCursos')
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
-            ->get([
-                'matricula.idCursos as __id_curso',
-                'legajos.apellido',
-                'legajos.nombre',
-                'legajos.nombremad',
-                'legajos.nombrepad',
-            ]);
+            ->get($columnas);
 
         $porCurso = $filas->groupBy(fn ($r) => (int) $r->__id_curso);
 
@@ -63,8 +73,11 @@ final class ListadoEstudiantesFormatoDatos
             if (! in_array($id, $cursoIds, true)) {
                 continue;
             }
+            $partes = ListadoFamiliasConsulta::cursoYSeccion($curso);
             $bloques[] = [
                 'cursoLabel' => $curso->nombreParaListado(),
+                'curso' => $partes['curso'],
+                'seccion' => $partes['seccion'],
                 'alumnos' => $porCurso->get($id, collect()),
             ];
         }

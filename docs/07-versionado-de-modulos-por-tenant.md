@@ -62,6 +62,21 @@ return [
 
 Consumir con `tenantAutogestionCusHabilitada()` / `tenantAutogestionIsaHabilitada()`. Detalle: [modulos/cus-isa-autogestion.md](modulos/cus-isa-autogestion.md).
 
+Foto carnet en actualización de datos (portal familia; default off). La solapa del ABM es independiente (parametrización en BD). Caixal SF y Montecristo activan ambos:
+
+```php
+// config/tenants/montecristo.php (igual en caixalsf.php)
+return [
+    'autogestion' => [
+        'actualizacion_datos' => [
+            'foto_carnet' => true,
+        ],
+    ],
+];
+```
+
+Consumir con `tenantAutogestionActualizacionDatosFotoCarnetHabilitada()` / `FotoCarnetLegajo::habilitadaEnAutogestion()`. Detalle: [modulos/actualizacion-datos-personales.md](modulos/actualizacion-datos-personales.md).
+
 Horario de clase en PDF (portal familia; default off): `autogestion.horario_clase` + `tenantAutogestionHorarioClaseHabilitada()`. La grilla es **`horarios26`**, no la tabla `horarios` de ScriptCase. Detalle: [modulos/horarios.md](modulos/horarios.md).
 
 Informes pedagógicos inicial SFQ en autogestión familia (default off; SFQ los activa): `autogestion.boletin_inicial_sfq` + `tenantAutogestionBoletinInicialSfqHabilitada()`, y `calificaciones_inicial.boletin.implementacion` = `sfq`. Detalle: [modulos/informe-pedagogico-inicial-sfq.md](modulos/informe-pedagogico-inicial-sfq.md).

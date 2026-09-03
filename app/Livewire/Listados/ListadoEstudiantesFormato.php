@@ -5,6 +5,7 @@ namespace App\Livewire\Listados;
 use App\Support\Listados\ListadoCursoConsulta;
 use App\Support\Listados\ListadoEstudiantesFormatoCatalog;
 use App\Support\Listados\ListadoEstudiantesFormatoMes;
+use App\Support\Listados\ListadoEstudiantesFormatoTamanoFoto;
 use App\Support\PortalDocente\ListadoEstudiantesFormatoPortalDocente;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -20,6 +21,8 @@ class ListadoEstudiantesFormato extends Component
 
     public int $mes = 0;
 
+    public string $tamanoFoto = ListadoEstudiantesFormatoTamanoFoto::MEDIANO;
+
     public function mount(): void
     {
         $this->mes = (int) now()->month;
@@ -28,6 +31,11 @@ class ListadoEstudiantesFormato extends Component
     public function updatedModelo(mixed $value): void
     {
         $this->modelo = ListadoEstudiantesFormatoCatalog::normalize(is_string($value) ? $value : null);
+    }
+
+    public function updatedTamanoFoto(mixed $value): void
+    {
+        $this->tamanoFoto = ListadoEstudiantesFormatoTamanoFoto::normalize(is_string($value) ? $value : null);
     }
 
     public function quitarCurso(int $idCurso): void
@@ -83,6 +91,11 @@ class ListadoEstudiantesFormato extends Component
             return ListadoEstudiantesFormatoMes::normalizarMes($this->mes) > 0;
         }
 
+        if (ListadoEstudiantesFormatoCatalog::requiereTamanoFoto($this->modelo)
+            && ! ListadoEstudiantesFormatoCatalog::modeloFotosDisponible()) {
+            return false;
+        }
+
         return true;
     }
 
@@ -111,11 +124,17 @@ class ListadoEstudiantesFormato extends Component
             }
         }
 
+        if (ListadoEstudiantesFormatoCatalog::requiereTamanoFoto($this->modelo)) {
+            $params['tamano'] = ListadoEstudiantesFormatoTamanoFoto::normalize($this->tamanoFoto);
+        }
+
         return ListadoEstudiantesFormatoPortalDocente::routePdf($params);
     }
 
     public function render()
     {
+        $this->modelo = ListadoEstudiantesFormatoCatalog::normalize($this->modelo);
+
         $cursos = ListadoCursoConsulta::cursosPermitidosEnContexto();
 
         $filtro = mb_strtolower(trim($this->filtroCursos));
@@ -174,6 +193,7 @@ class ListadoEstudiantesFormato extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'modelos' => ListadoEstudiantesFormatoCatalog::paraUi(),
             'meses' => ListadoEstudiantesFormatoMes::opcionesSelector(),
+            'tamanosFoto' => ListadoEstudiantesFormatoTamanoFoto::paraUi(),
         ])->layout(ListadoEstudiantesFormatoPortalDocente::layout(), ['pageTitle' => 'Listados de Estudiantes con Formato']);
     }
 

@@ -4,6 +4,15 @@
  | Colegio Montecristo — personalización declarada en repo (no en .env).
  |
  | Requiere TENANT_SLUG=montecristo en el despliegue de ese colegio.
+ |
+ | Foto carnet (mismo criterio que Caixal SF):
+ | - Secretaría: solapa `foto_carnet` + campo `campos_legajo.fotoCarnet` en la BD
+ |   (migración 2026_09_03_120000_seed_solapa_foto_carnet_montecristo; SQL equivalente
+ |   database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql).
+ |   Habilita ABM de legajos, modal en carga de calificaciones (Secretaría/Docentes)
+ |   y el modelo Fotos de listados con formato.
+ | - Autogestión familia: `autogestion.actualizacion_datos.foto_carnet` (abajo).
+ |   Sin esa llave la familia no puede subir la foto aunque la solapa exista.
  */
 
 return [
@@ -64,6 +73,10 @@ return [
 
     'autogestion' => [
         'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
+        'actualizacion_datos' => [
+            // Familia puede subir foto carnet (la solapa del ABM de legajos no alcanza sola).
+            'foto_carnet' => true,
+        ],
         'comunicaciones' => [
             'habilitado' => false,
         ],

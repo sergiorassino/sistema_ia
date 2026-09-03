@@ -169,7 +169,7 @@
             <div class="border-b border-accent-200 bg-white px-5 py-4">
                 <p class="se-section-title">Modelo de listado</p>
                 <p class="mt-1 text-sm text-neutral-600">
-                    Elija un formato preconfigurado. El PDF incluye estudiantes regulares matriculados, ordenados por apellido y nombre.
+                    Elija un formato preconfigurado. El PDF incluye estudiantes regulares matriculados, ordenados por apellido y nombre. En fotos, elija además el tamaño (2×2, 4×4 u 8×8 cm).
                 </p>
             </div>
 
@@ -209,6 +209,33 @@
                             Año del ciclo lectivo activo: {{ schoolCtx()->terlecAno() ?? '—' }}.
                             Los sábados y domingos se marcan en gris en la grilla.
                         </p>
+                    </div>
+                @endif
+
+                @if ($modelo === \App\Support\Listados\ListadoEstudiantesFormatoCatalog::MODELO_FOTOS)
+                    <div class="rounded-2xl border border-accent-200 bg-accent-50/50 p-4">
+                        <p class="form-label">Tamaño de las fotos</p>
+                        <div class="mt-2 grid gap-2 sm:grid-cols-3">
+                            @foreach ($tamanosFoto as $tamano)
+                                <label @class([
+                                    'flex cursor-pointer flex-col gap-1 rounded-xl border p-3 transition-colors',
+                                    'border-primary-500 bg-white ring-1 ring-primary-200' => $tamanoFoto === $tamano['key'],
+                                    'border-accent-200 bg-white hover:border-accent-300' => $tamanoFoto !== $tamano['key'],
+                                ])>
+                                    <span class="flex items-start gap-2">
+                                        <input type="radio"
+                                               name="tamano-foto-listado-formato"
+                                               value="{{ $tamano['key'] }}"
+                                               wire:model.live="tamanoFoto"
+                                               class="mt-0.5 h-4 w-4 shrink-0 border-accent-300 text-primary-600 focus:ring-primary-500" />
+                                        <span class="min-w-0">
+                                            <span class="block text-sm font-semibold text-neutral-900">{{ $tamano['label'] }}</span>
+                                            <span class="mt-0.5 block text-xs text-neutral-600">{{ $tamano['descripcion'] }}</span>
+                                        </span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
             </div>

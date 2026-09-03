@@ -8,9 +8,11 @@ use App\Support\Listados\ListadoEstudiantesFormatoCalendarioTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoCatalog;
 use App\Support\Listados\ListadoEstudiantesFormatoCuadriculadoTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoDatos;
+use App\Support\Listados\ListadoEstudiantesFormatoFotosTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoMes;
 use App\Support\Listados\ListadoEstudiantesFormatoRegistroFirmasTcpdf;
 use App\Support\Listados\ListadoEstudiantesFormatoRenglonTcpdf;
+use App\Support\Listados\ListadoEstudiantesFormatoTamanoFoto;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,12 +36,14 @@ class ListadoEstudiantesFormatoPdfController extends Controller
                 'modelo' => $request->query('modelo'),
                 'mes' => $request->query('mes'),
                 'ano' => $request->query('ano'),
+                'tamano' => $request->query('tamano'),
             ],
             [
                 'cursos' => ['required', 'string', 'max:8000'],
-                'modelo' => ['required', 'string', Rule::in(ListadoEstudiantesFormatoCatalog::keys())],
+                'modelo' => ['required', 'string', Rule::in(ListadoEstudiantesFormatoCatalog::keysPermitidos())],
                 'mes' => ['nullable', 'integer', 'min:1', 'max:12'],
                 'ano' => ['nullable', 'integer', 'min:1900', 'max:2100'],
+                'tamano' => ['nullable', 'string', Rule::in(ListadoEstudiantesFormatoTamanoFoto::keys())],
             ]
         );
 
@@ -49,6 +53,10 @@ class ListadoEstudiantesFormatoPdfController extends Controller
 
         $data = $validated->validated();
         $modelo = ListadoEstudiantesFormatoCatalog::normalize($data['modelo']);
+        if ($modelo === ListadoEstudiantesFormatoCatalog::MODELO_FOTOS
+            && ! ListadoEstudiantesFormatoCatalog::modeloFotosDisponible()) {
+            abort(404);
+        }
 
         $cursosPermitidos = ListadoCursoConsulta::cursosPermitidosEnContexto();
         if ($cursosPermitidos->isEmpty()) {
@@ -76,16 +84,23 @@ class ListadoEstudiantesFormatoPdfController extends Controller
         $datosPdf['mes'] = $mes;
         $datosPdf['ano'] = $ano;
 
+        $tamanoFoto = ListadoEstudiantesFormatoTamanoFoto::normalize($data['tamano'] ?? null);
+        $datosPdf['tamanoFoto'] = $tamanoFoto;
+
         $pdf = match ($modelo) {
             ListadoEstudiantesFormatoCatalog::MODELO_CALENDARIO => ListadoEstudiantesFormatoCalendarioTcpdf::generar($datosPdf),
             ListadoEstudiantesFormatoCatalog::MODELO_RENGLON => ListadoEstudiantesFormatoRenglonTcpdf::generar($datosPdf),
             ListadoEstudiantesFormatoCatalog::MODELO_REGISTRO_FIRMAS => ListadoEstudiantesFormatoRegistroFirmasTcpdf::generar($datosPdf),
+            ListadoEstudiantesFormatoCatalog::MODELO_FOTOS => ListadoEstudiantesFormatoFotosTcpdf::generar($datosPdf),
             default => ListadoEstudiantesFormatoCuadriculadoTcpdf::generar($datosPdf),
         };
 
         $slugPartes = ['listado-estudiantes-formato', $modelo];
         if ($modelo === ListadoEstudiantesFormatoCatalog::MODELO_CALENDARIO && $mes > 0) {
             $slugPartes[] = $mes;
+        }
+        if ($modelo === ListadoEstudiantesFormatoCatalog::MODELO_FOTOS) {
+            $slugPartes[] = $tamanoFoto;
         }
         if ($ano > 0) {
             $slugPartes[] = $ano;
@@ -100,6 +115,7 @@ class ListadoEstudiantesFormatoPdfController extends Controller
             ListadoEstudiantesFormatoCatalog::MODELO_CALENDARIO => ListadoEstudiantesFormatoCalendarioTcpdf::class,
             ListadoEstudiantesFormatoCatalog::MODELO_RENGLON => ListadoEstudiantesFormatoRenglonTcpdf::class,
             ListadoEstudiantesFormatoCatalog::MODELO_REGISTRO_FIRMAS => ListadoEstudiantesFormatoRegistroFirmasTcpdf::class,
+            ListadoEstudiantesFormatoCatalog::MODELO_FOTOS => ListadoEstudiantesFormatoFotosTcpdf::class,
             default => ListadoEstudiantesFormatoCuadriculadoTcpdf::class,
         };
 
