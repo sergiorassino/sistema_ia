@@ -23,9 +23,11 @@ final class ProfesoresPresentesTcpdf extends TCPDF
 
     private const ALTURA_CABECERA_INST = 16.0;
 
-    private const W_DOCENTE = 90.0;
+    private const W_DOCENTE = 72.0;
 
-    private const W_HORARIO = 96.0;
+    private const W_CURSO = 42.0;
+
+    private const W_HORARIO = 72.0;
 
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $header;
@@ -166,7 +168,7 @@ final class ProfesoresPresentesTcpdf extends TCPDF
      */
     private function dibujarTabla(float $y, array $datos): void
     {
-        /** @var list<array{idProfesor: int, docente: string, horario: string}> $filas */
+        /** @var list<array{idProfesor: int, docente: string, curso: string, horario: string}> $filas */
         $filas = $datos['filas'] ?? [];
 
         $this->dibujarEncabezadoTabla($y);
@@ -186,9 +188,13 @@ final class ProfesoresPresentesTcpdf extends TCPDF
 
         foreach ($filas as $fila) {
             $docente = trim((string) ($fila['docente'] ?? ''));
+            $curso = trim((string) ($fila['curso'] ?? ''));
             $horario = trim((string) ($fila['horario'] ?? ''));
             if ($docente === '') {
                 $docente = '—';
+            }
+            if ($curso === '') {
+                $curso = '—';
             }
             if ($horario === '') {
                 $horario = '—';
@@ -198,6 +204,7 @@ final class ProfesoresPresentesTcpdf extends TCPDF
             $lineas = max(
                 1,
                 $this->getNumLines($docente, self::W_DOCENTE - 1.5),
+                $this->getNumLines($curso, self::W_CURSO - 1.5),
                 $this->getNumLines($horario, self::W_HORARIO - 1.5),
             );
             $alt = max(6.0, $lineas * $pad);
@@ -212,7 +219,8 @@ final class ProfesoresPresentesTcpdf extends TCPDF
             TcpdfFuenteArial::aplicar($this, '', 8);
             $this->SetXY($x, $yFila);
             $this->MultiCell(self::W_DOCENTE, $alt, $docente, 1, 'L', true, 0, $x, $yFila, true, 0, false, true, $alt, 'M');
-            $this->MultiCell(self::W_HORARIO, $alt, $horario, 1, 'L', true, 1, $x + self::W_DOCENTE, $yFila, true, 0, false, true, $alt, 'M');
+            $this->MultiCell(self::W_CURSO, $alt, $curso, 1, 'L', true, 0, $x + self::W_DOCENTE, $yFila, true, 0, false, true, $alt, 'M');
+            $this->MultiCell(self::W_HORARIO, $alt, $horario, 1, 'L', true, 1, $x + self::W_DOCENTE + self::W_CURSO, $yFila, true, 0, false, true, $alt, 'M');
         }
     }
 
@@ -225,6 +233,7 @@ final class ProfesoresPresentesTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, 'B', 8);
         $h = 6.5;
         $this->Cell(self::W_DOCENTE, $h, 'DOCENTE', 1, 0, 'L', true);
+        $this->Cell(self::W_CURSO, $h, 'CURSO', 1, 0, 'L', true);
         $this->Cell(self::W_HORARIO, $h, 'HORARIO PRESENTE', 1, 1, 'L', true);
         $this->SetTextColor(0, 0, 0);
     }

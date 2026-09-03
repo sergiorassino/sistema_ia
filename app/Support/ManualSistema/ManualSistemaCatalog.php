@@ -743,7 +743,7 @@ final class ManualSistemaCatalog
                         [
                             'Elija el día de la semana, el horario de inicio y el de fin.',
                             'Seleccione los cursos o secciones involucrados.',
-                            'Pulse Emitir listado: cada docente aparece una sola vez, ordenado por horario de presencia.',
+                            'Pulse Emitir listado: cada docente aparece una sola vez, con el curso y el horario de presencia.',
                             'Si lo necesita, abra Imprimir PDF (TCPDF) en una pestaña nueva.',
                         ],
                         [

@@ -29,6 +29,7 @@ final class ProfesoresPresentesConsulta
      *     filas: list<array{
      *         idProfesor: int,
      *         docente: string,
+     *         curso: string,
      *         horario: string
      *     }>
      * }
@@ -175,7 +176,7 @@ final class ProfesoresPresentesConsulta
 
         $ppcPorMateria = self::ppcPorMateria($idsMateria, $idNivel, $idTerlec);
 
-        /** @var array<int, array{idProfesor: int, docente: string, intervalos: list<array{0: int, 1: int}>}> $porDocente */
+        /** @var array<int, array{idProfesor: int, docente: string, intervalos: list<array{0: int, 1: int}>, cursos: array<int, string>}> $porDocente */
         $porDocente = [];
         $vistosSlot = [];
 
@@ -224,19 +225,21 @@ final class ProfesoresPresentesConsulta
 
             foreach ($elegidos as $prof) {
                 $idProf = (int) $prof['id'];
-                $claveSlot = $idProf.'|'.$idTurno.'|'.$slot;
-                if (isset($vistosSlot[$claveSlot])) {
-                    continue;
-                }
-                $vistosSlot[$claveSlot] = true;
-
                 if (! isset($porDocente[$idProf])) {
                     $porDocente[$idProf] = [
                         'idProfesor' => $idProf,
                         'docente' => (string) $prof['label'],
                         'intervalos' => [],
+                        'cursos' => [],
                     ];
                 }
+                $porDocente[$idProf]['cursos'][$idCursoFila] = $labelPorCurso[$idCursoFila];
+
+                $claveSlot = $idProf.'|'.$idTurno.'|'.$slot;
+                if (isset($vistosSlot[$claveSlot])) {
+                    continue;
+                }
+                $vistosSlot[$claveSlot] = true;
                 $porDocente[$idProf]['intervalos'][] = $rango;
             }
         }
@@ -247,6 +250,7 @@ final class ProfesoresPresentesConsulta
             $filas[] = [
                 'idProfesor' => $doc['idProfesor'],
                 'docente' => $doc['docente'],
+                'curso' => self::formatearCursosDocente($doc['cursos'], $labelPorCurso),
                 'horario' => self::formatearHorarioPresente($doc['intervalos']),
                 'ordenInicio' => (int) ($fusionados[0][0] ?? 0),
                 'ordenFin' => (int) ($fusionados[0][1] ?? 0),
@@ -267,6 +271,7 @@ final class ProfesoresPresentesConsulta
         $filas = array_map(static fn (array $f): array => [
             'idProfesor' => $f['idProfesor'],
             'docente' => $f['docente'],
+            'curso' => $f['curso'],
             'horario' => $f['horario'],
         ], $filas);
 
@@ -373,6 +378,27 @@ final class ProfesoresPresentesConsulta
     }
 
     /**
+     * Etiquetas de curso del docente, en el mismo orden que el selector (orden / cursec).
+     *
+     * @param  array<int, string>  $cursosDocente
+     * @param  array<int, string>  $labelPorCurso
+     */
+    public static function formatearCursosDocente(array $cursosDocente, array $labelPorCurso): string
+    {
+        $labels = [];
+        foreach ($labelPorCurso as $idCurso => $label) {
+            if (isset($cursosDocente[(int) $idCurso])) {
+                $txt = trim((string) $label);
+                if ($txt !== '') {
+                    $labels[] = $txt;
+                }
+            }
+        }
+
+        return $labels !== [] ? implode(' · ', $labels) : '—';
+    }
+
+    /**
      * @param  list<array{0: int, 1: int}>  $intervalos
      */
     public static function formatearHorarioPresente(array $intervalos): string
@@ -469,7 +495,7 @@ final class ProfesoresPresentesConsulta
      *     horaFin: string,
      *     cursosResumen: string,
      *     cantidadDocentes: int,
-     *     filas: list<array{idProfesor: int, docente: string, horario: string}>
+     *     filas: list<array{idProfesor: int, docente: string, curso: string, horario: string}>
      * }
      */
     private static function resultadoVacio(int $dia, string $horaInicio, string $horaFin): array

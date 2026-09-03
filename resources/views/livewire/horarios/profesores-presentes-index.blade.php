@@ -16,7 +16,7 @@
             <div class="border-b border-accent-200 bg-white px-5 py-4">
                 <p class="text-sm text-neutral-700">
                     Listado de docentes con hora cátedra en el día y franja elegidos, para los cursos y secciones
-                    seleccionados. Cada docente aparece una sola vez, con el horario en el que está presente ese día.
+                    seleccionados. Cada docente aparece una sola vez, con el curso y el horario en el que está presente ese día.
                 </p>
             </div>
 
@@ -140,6 +140,7 @@
                             <thead>
                                 <tr>
                                     <th scope="col" class="text-left">Docente</th>
+                                    <th scope="col" class="text-left">Curso</th>
                                     <th scope="col" class="text-left">Horario presente</th>
                                 </tr>
                             </thead>
@@ -147,11 +148,12 @@
                                 @forelse (($resultado['filas'] ?? []) as $i => $fila)
                                     <tr wire:key="ppres-fila-{{ $i }}">
                                         <td class="font-medium text-neutral-800">{{ $fila['docente'] }}</td>
+                                        <td class="text-neutral-700">{{ $fila['curso'] ?? '—' }}</td>
                                         <td class="tabular-nums text-neutral-700">{{ $fila['horario'] }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="2" class="py-8 text-center text-sm text-neutral-500">
+                                        <td colspan="3" class="py-8 text-center text-sm text-neutral-500">
                                             No hay docentes con clase en ese día, horario y cursos.
                                         </td>
                                     </tr>

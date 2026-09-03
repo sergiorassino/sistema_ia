@@ -30,7 +30,7 @@ La hora reloj se interpreta con textos tipo `08:00-08:40` o `8:00 a 8:40`. Un m�
 ## Flujo principal
 
 1. Elegir día de la semana, horario inicio/fin y uno o más cursos/secciones.
-2. **Emitir listado**: **un renglón por docente**, ordenado por **horario de presencia** (inicio del primer tramo; a igual hora, apellido), con el horario de ese día (módulos consecutivos unidos; si hay hueco, varios tramos: `08:00 a 09:20 · 11:00 a 11:40`).
+2. **Emitir listado**: **un renglón por docente**, ordenado por **horario de presencia** (inicio del primer tramo; a igual hora, apellido), con el **curso** (o cursos, unidos con ` · `) y el horario de ese día (módulos consecutivos unidos; si hay hueco, varios tramos: `08:00 a 09:20 · 11:00 a 11:40`).
 3. **Imprimir PDF** (TCPDF, A4 vertical, Arial): mismos filtros; se revalidan cursos del nivel/ciclo activos.
 
 ## Fuente de verdad
@@ -57,7 +57,7 @@ Si `horarios26.idProfesores` coincide con `ppc` para esa materia, se lista ese d
 
 ## Qué no hacer / reglas de negocio
 
-1. No calcular ni inventar presencia: solo hay docente si hay celda en `horarios26` cuyo reloj cae en la franja **y** hay asignación `ppc`. **Un docente = una fila**, con el horario fusionado de ese día.
+1. No calcular ni inventar presencia: solo hay docente si hay celda en `horarios26` cuyo reloj cae en la franja **y** hay asignación `ppc`. **Un docente = una fila**, con el curso (o cursos) y el horario fusionado de ese día.
 2. No listar cursos de otro nivel o ciclo que el de `schoolCtx()`.
 3. PDF nuevo: TCPDF + Arial; no DomPDF.
 4. No exigir permiso 13 (consistente con Impresión de horarios).
