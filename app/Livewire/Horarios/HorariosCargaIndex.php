@@ -20,11 +20,14 @@ class HorariosCargaIndex extends Component
 
     public ?string $avisoConflicto = null;
 
-    /** Panel «Consultas SQL» (referencia). Si está oculto no se llama a {@see HorariosProfesores::textoDepuracionSqlCargaHorarios}. */
-    public bool $mostrarPanelSqlDepuracion = false;
-
-    /** Fragmento de la última pulsación de celda; solo se actualiza con el panel visible. */
-    public ?string $diagnosticoUltimaCeldaSql = null;
+    /*
+     * Depuración SQL en pantalla — desactivada (docs/05-preferencias-y-convenciones.md §10).
+     * Reactivar: descomentar propiedades, updatedMostrarPanelSqlDepuracion, resets, bloques en
+     * alternarCelda/render() y el panel en horarios-carga-index.blade.php.
+     *
+     * public bool $mostrarPanelSqlDepuracion = false;
+     * public ?string $diagnosticoUltimaCeldaSql = null;
+     */
 
     public function mount(): void
     {
@@ -38,7 +41,7 @@ class HorariosCargaIndex extends Component
         $this->materiaId = null;
         $this->cursoId = null;
         $this->avisoConflicto = null;
-        $this->diagnosticoUltimaCeldaSql = null;
+        // $this->diagnosticoUltimaCeldaSql = null;
     }
 
     public function updatedMateriaId(): void
@@ -49,15 +52,15 @@ class HorariosCargaIndex extends Component
         );
         $this->cursoId = $asig ? (int) $asig->idCursos : null;
         $this->recargarGrilla();
-        $this->diagnosticoUltimaCeldaSql = null;
+        // $this->diagnosticoUltimaCeldaSql = null;
     }
 
-    public function updatedMostrarPanelSqlDepuracion(bool $value): void
-    {
-        if (! $value) {
-            $this->diagnosticoUltimaCeldaSql = null;
-        }
-    }
+    // public function updatedMostrarPanelSqlDepuracion(bool $value): void
+    // {
+    //     if (! $value) {
+    //         $this->diagnosticoUltimaCeldaSql = null;
+    //     }
+    // }
 
     protected function recargarGrilla(): void
     {
@@ -81,17 +84,17 @@ class HorariosCargaIndex extends Component
         $key = HorariosProfesores::celdaKeyLegacy($dia, $hora);
         $marcar = ! ($marcadas[$key] ?? false);
 
-        if ($this->mostrarPanelSqlDepuracion) {
-            $this->diagnosticoUltimaCeldaSql = HorariosProfesores::textoDepuracionSqlAlternarUltimaAccion(
-                (int) $this->profesorId,
-                (int) $this->materiaId,
-                (int) $this->cursoId,
-                $dia,
-                $hora,
-                $marcar,
-                max(0, min(1, $indiceBloqueHorario)),
-            );
-        }
+        // if ($this->mostrarPanelSqlDepuracion) {
+        //     $this->diagnosticoUltimaCeldaSql = HorariosProfesores::textoDepuracionSqlAlternarUltimaAccion(
+        //         (int) $this->profesorId,
+        //         (int) $this->materiaId,
+        //         (int) $this->cursoId,
+        //         $dia,
+        //         $hora,
+        //         $marcar,
+        //         max(0, min(1, $indiceBloqueHorario)),
+        //     );
+        // }
 
         $res = HorariosProfesores::alternarCelda(
             (int) $this->profesorId,
@@ -195,16 +198,16 @@ class HorariosCargaIndex extends Component
         );
 
         $consultaSqlDepuracion = '';
-        if ($this->mostrarPanelSqlDepuracion) {
-            $consultaSqlDepuracion = HorariosProfesores::textoDepuracionSqlCargaHorarios(
-                $this->profesorId,
-                $this->materiaId,
-                $this->cursoId,
-            );
-            if (($this->diagnosticoUltimaCeldaSql ?? '') !== '') {
-                $consultaSqlDepuracion .= "\n\n".$this->diagnosticoUltimaCeldaSql;
-            }
-        }
+        // if ($this->mostrarPanelSqlDepuracion) {
+        //     $consultaSqlDepuracion = HorariosProfesores::textoDepuracionSqlCargaHorarios(
+        //         $this->profesorId,
+        //         $this->materiaId,
+        //         $this->cursoId,
+        //     );
+        //     if (($this->diagnosticoUltimaCeldaSql ?? '') !== '') {
+        //         $consultaSqlDepuracion .= "\n\n".$this->diagnosticoUltimaCeldaSql;
+        //     }
+        // }
 
         return view('livewire.horarios.horarios-carga-index', [
             'profesores' => $this->profesores(),

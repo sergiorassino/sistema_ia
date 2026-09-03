@@ -24,6 +24,7 @@ final class GeneracionMasivaCuotasService
      */
     public static function vistaPrevia(array $cursoIds, int $idCuota): array
     {
+        CuotasImportesCatalog::sincronizarCursosFaltantes($idCuota);
         $cuota = CuotasImportesCatalog::cuotaDelCicloOrFail($idCuota);
         $cuotaNombre = trim((string) ($cuota->nombre ?? ''));
 
@@ -78,6 +79,7 @@ final class GeneracionMasivaCuotasService
      */
     public static function generarEnCursos(array $cursoIds, int $idCuota): array
     {
+        CuotasImportesCatalog::sincronizarCursosFaltantes($idCuota);
         $cuota = CuotasImportesCatalog::cuotaDelCicloOrFail($idCuota);
         $cuotaNombre = trim((string) ($cuota->nombre ?? ''));
 

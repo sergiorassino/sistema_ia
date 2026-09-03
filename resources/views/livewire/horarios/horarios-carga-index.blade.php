@@ -67,6 +67,10 @@
         @endif
     </div>
 
+    {{--
+    Panel depuración SQL — desactivado (docs/05-preferencias-y-convenciones.md §10).
+    Reactivar junto con propiedades y llamadas en HorariosCargaIndex.
+
     @if ($this->mostrarPanelSqlDepuracion)
         <div class="se-card overflow-hidden border-dashed border-primary-400/40 bg-accent-50/60">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-accent-200 px-4 py-2.5">
@@ -88,6 +92,7 @@
             </button>
         </div>
     @endif
+    --}}
 
     @if ($avisoConflicto)
         <div class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">

@@ -27,7 +27,7 @@ Menú de Administración / Secretaría. Gate: `PermisosCuotas::puedeImportesPorC
 
 ## Fuente de verdad
 
-`cuotasimportes` de la plantilla (`idCuotas`) del ciclo de sesión. Las filas se crean al alta de la plantilla o en la generación masiva.
+`cuotasimportes` de la plantilla (`idCuotas`) del ciclo de sesión. Las filas se crean al alta de la plantilla. Si después se agregan cursos al ciclo (p. ej. salas nuevas), al abrir el editor se **sincronizan automáticamente** los cursos faltantes (`CuotasImportesCatalog::sincronizarCursosFaltantes`); el importe queda en $0 y las fórmulas se copian de una fila existente de la misma plantilla.
 
 ## Archivos clave
 

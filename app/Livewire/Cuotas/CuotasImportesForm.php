@@ -175,6 +175,8 @@ class CuotasImportesForm extends Component
      */
     private function cargarFilas(): array
     {
+        CuotasImportesCatalog::sincronizarCursosFaltantes($this->idCuotas);
+
         $filas = [];
 
         $registros = CuotasImporte::query()

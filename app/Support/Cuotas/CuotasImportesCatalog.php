@@ -250,16 +250,12 @@ final class CuotasImportesCatalog
             ? self::formulasPorCursoDesdeCuotaModelo($idCuotaModelo, $idTerlec)
             : [];
 
-        $idCursos = Curso::query()
-            ->where('idTerlec', $idTerlec)
-            ->orderBy('Id')
-            ->pluck('Id');
-
-        if ($idCursos->isEmpty()) {
+        $idCursos = self::idsCursosDelCiclo($idTerlec);
+        if ($idCursos === []) {
             return;
         }
 
-        $filas = $idCursos->map(function (int $idCurso) use ($idCuotas, $formulasPorCurso, $defaults): array {
+        $filas = array_map(function (int $idCurso) use ($idCuotas, $formulasPorCurso, $defaults): array {
             $base = $formulasPorCurso[$idCurso] ?? $defaults;
 
             return array_merge($base, [
@@ -267,9 +263,85 @@ final class CuotasImportesCatalog
                 'idCursos' => $idCurso,
                 'importe' => 0.0,
             ]);
-        })->all();
+        }, $idCursos);
 
         CuotasImporte::query()->insert($filas);
+    }
+
+    /**
+     * Agrega filas en `cuotasimportes` para cursos del ciclo que aún no tienen registro en la plantilla.
+     * Ocurre cuando se dan de alta cursos (p. ej. salas nuevas) después de crear la cuota.
+     *
+     * @return int Cantidad de filas insertadas.
+     */
+    public static function sincronizarCursosFaltantes(int $idCuotas, ?int $idTerlec = null): int
+    {
+        $idTerlec = $idTerlec ?? self::idTerlecActivo();
+        $faltantes = self::idsCursosFaltantesEnCuota($idCuotas, $idTerlec);
+        if ($faltantes === []) {
+            return 0;
+        }
+
+        $base = self::valoresInicialesRegistro();
+        $referencia = CuotasImporte::query()->where('idCuotas', $idCuotas)->first();
+        if ($referencia !== null) {
+            $base = self::formulasDesdeRegistro($referencia);
+        }
+
+        $filas = array_map(fn (int $idCurso): array => array_merge($base, [
+            'idCuotas' => $idCuotas,
+            'idCursos' => $idCurso,
+            'importe' => 0.0,
+        ]), $faltantes);
+
+        CuotasImporte::query()->insert($filas);
+
+        return count($filas);
+    }
+
+    /**
+     * Sincroniza cursos faltantes en todas las plantillas del ciclo lectivo indicado.
+     */
+    public static function sincronizarCursosFaltantesEnCiclo(?int $idTerlec = null): void
+    {
+        $idTerlec = $idTerlec ?? self::idTerlecActivo();
+
+        Cuota::query()
+            ->where('idTerlec', $idTerlec)
+            ->orderBy('id')
+            ->pluck('id')
+            ->each(fn (int $idCuotas) => self::sincronizarCursosFaltantes($idCuotas, $idTerlec));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function idsCursosDelCiclo(int $idTerlec): array
+    {
+        return Curso::query()
+            ->where('idTerlec', $idTerlec)
+            ->orderBy('Id')
+            ->pluck('Id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function idsCursosFaltantesEnCuota(int $idCuotas, int $idTerlec): array
+    {
+        $existentes = CuotasImporte::query()
+            ->where('idCuotas', $idCuotas)
+            ->pluck('idCursos')
+            ->map(fn ($id) => (int) $id)
+            ->flip();
+
+        return array_values(array_filter(
+            self::idsCursosDelCiclo($idTerlec),
+            fn (int $idCurso): bool => ! $existentes->has($idCurso),
+        ));
     }
 
     private static function normalizarSigno(mixed $valor, string $fallback = '-'): string
