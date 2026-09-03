@@ -1,4 +1,4 @@
-<div class="se-page !max-w-none min-w-0">
+<div class="se-page se-page--ancho-completo min-w-0">
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"
              class="se-soft-card flex items-center gap-3 border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -87,35 +87,43 @@
             </div>
 
             <div class="w-full overflow-x-auto">
-                <table class="w-full min-w-[720px] table-fixed border-collapse">
-                        <thead class="bg-accent-50">
-                            <tr>
-                                <th class="table-header w-[6.5rem]">Fecha</th>
-                                <th class="table-header w-[11rem]">Tipo</th>
-                                <th class="table-header w-[3.25rem] text-center">Cant</th>
-                                <th class="table-header">Motivo</th>
-                                <th class="table-header w-[10.5rem]">Solicitada por</th>
-                                <th class="table-header w-[17.5rem] whitespace-nowrap text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-accent-200 bg-white">
-                            @forelse ($sanciones as $s)
-                                <tr class="transition-colors hover:bg-accent-50/60">
-                                    <td class="table-cell font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
-                                    <td class="table-cell">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
-                                    <td class="table-cell text-center font-mono">{{ $s->cantidad ?? '—' }}</td>
-                                    <td class="table-cell align-top">
-                                        @php
-                                            $motivoTexto = trim((string) ($s->motivo ?? ''));
-                                            $motivoMostrar = $motivoTexto === ''
-                                                ? '—'
-                                                : \Illuminate\Support\Str::limit($motivoTexto, 500);
-                                        @endphp
-                                        <div class="text-xs leading-relaxed text-neutral-700 break-words whitespace-pre-wrap">{{ $motivoMostrar }}</div>
-                                    </td>
-                                    <td class="table-cell">{{ $s->solipor ?: ($s->profesor?->nombre_completo ?? '—') }}</td>
-                                    <td class="table-cell whitespace-nowrap">
-                                        <div class="flex flex-nowrap items-center justify-end gap-1">
+                <table class="se-disc-sanciones-tabla">
+                    <colgroup>
+                        <col class="se-disc-col-fecha">
+                        <col class="se-disc-col-tipo">
+                        <col class="se-disc-col-cant">
+                        <col class="se-disc-col-motivo">
+                        <col class="se-disc-col-solipor">
+                        <col class="se-disc-col-acciones">
+                    </colgroup>
+                    <thead class="bg-accent-50">
+                        <tr>
+                            <th class="table-header">Fecha</th>
+                            <th class="table-header">Tipo</th>
+                            <th class="table-header se-disc-th-cant">Cant</th>
+                            <th class="table-header">Motivo</th>
+                            <th class="table-header">Solicitada por</th>
+                            <th class="table-header se-disc-th-acciones">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-accent-200 bg-white">
+                        @forelse ($sanciones as $s)
+                            <tr class="transition-colors hover:bg-accent-50/60">
+                                <td class="table-cell font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
+                                <td class="table-cell">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
+                                <td class="table-cell se-disc-col-cant font-mono">{{ $s->cantidad ?? '—' }}</td>
+                                <td class="table-cell se-disc-col-motivo">
+                                    @php
+                                        $motivoTexto = trim((string) ($s->motivo ?? ''));
+                                        $motivoMostrar = $motivoTexto === ''
+                                            ? '—'
+                                            : \Illuminate\Support\Str::limit($motivoTexto, 500);
+                                    @endphp
+                                    <div class="se-disc-motivo">{{ $motivoMostrar }}</div>
+                                </td>
+                                <td class="table-cell se-disc-col-solipor">{{ $s->solipor ?: ($s->profesor?->nombre_completo ?? '—') }}</td>
+                                <td class="table-cell se-disc-col-acciones">
+                                    <div class="se-disc-acciones-wrap">
                                             @if ($s->tipo?->permiteComunicadoPdf())
                                             <a class="btn-secondary btn-sm shrink-0"
                                                target="_blank"
@@ -178,8 +186,8 @@
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
+                    </tbody>
+                </table>
             </div>
         </div>
     @else

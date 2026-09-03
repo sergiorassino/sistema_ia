@@ -170,6 +170,73 @@
         line-height: 1.15;
     }
 
+    /* Seguimiento disciplinario — listado de sanciones (anchos en %; no depender de utilidades arbitrarias) */
+    .se-page.se-page--ancho-completo {
+        max-width: none !important;
+        width: 100%;
+        min-width: 0;
+    }
+    .se-disc-sanciones-tabla {
+        width: 100%;
+        min-width: 48rem;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-fecha {
+        width: 7%;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-tipo {
+        width: 14%;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-cant {
+        width: 4%;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-motivo {
+        width: 40%;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-solipor {
+        width: 14%;
+    }
+    .se-disc-sanciones-tabla col.se-disc-col-acciones {
+        width: 21%;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-cant {
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-motivo {
+        vertical-align: top;
+    }
+    .se-disc-sanciones-tabla .se-disc-motivo {
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #525252;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-solipor {
+        vertical-align: top;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-acciones {
+        vertical-align: top;
+    }
+    .se-disc-sanciones-tabla .se-disc-acciones-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    .se-disc-sanciones-tabla .table-header.se-disc-th-cant {
+        text-align: center;
+    }
+    .se-disc-sanciones-tabla .table-header.se-disc-th-acciones {
+        text-align: right;
+    }
+
     /* Tablas con orden por clic en cabecera (estadística, etc.) */
     [data-se-tabla-ordenable] thead th.se-th-sortable {
         cursor: pointer;
