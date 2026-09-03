@@ -11,6 +11,9 @@
  | database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql).
  | Autogestión familia queda off (default
  | autogestion.actualizacion_datos.foto_carnet = false). No activar esa llave.
+ |
+ | Actas volantes de previos: una sola acta por materia del plan + condición
+ | (reúne secciones del mismo curso). Default global es curso_seccion.
  */
 
 return [
@@ -48,5 +51,9 @@ return [
         'comunicado' => [
             'implementacion' => 'iess',
         ],
+    ],
+
+    'examenes' => [
+        'acta_volante_previos_modalidad' => 'curso',
     ],
 ];

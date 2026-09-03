@@ -15,6 +15,8 @@ use App\Http\Controllers\Alumnos\DocumentoEstudianteAutogestionPdfController;
 use App\Http\Controllers\Alumnos\FormularioDebitoAutomaticoPdfController;
 use App\Http\Controllers\Alumnos\FichaMatriculaPdfController;
 use App\Http\Controllers\Alumnos\CusIsaAutogestionPdfController;
+use App\Http\Controllers\Alumnos\LibreDeudaPdfController;
+use App\Livewire\Alumnos\LibreDeudaForm;
 use App\Http\Controllers\Alumnos\HorarioClasePdfController;
 use App\Http\Controllers\Alumnos\InformeInasistenciasController;
 use App\Http\Controllers\Alumnos\PushApiController;
@@ -448,6 +450,8 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
     Route::get('/ficha-matricula', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
+    Route::get('/libre-deuda', LibreDeudaForm::class)->name('alumnos.libre-deuda');
+    Route::get('/libre-deuda/pdf', LibreDeudaPdfController::class)->name('alumnos.libre-deuda.pdf');
     Route::get('/cus', [CusIsaAutogestionPdfController::class, 'cus'])->name('alumnos.cus');
     Route::get('/isa', [CusIsaAutogestionPdfController::class, 'isa'])->name('alumnos.isa');
     Route::get('/aranceles-escolares', tenantAutogestionArancelesEscolaresLivewireComponent())

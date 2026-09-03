@@ -13,6 +13,8 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Gestión de asignaturas del año | [materias-anio.md](materias-anio.md) |
 | Estadística de rendimiento escolar | [estadistica-rendimiento-escolar.md](estadistica-rendimiento-escolar.md) |
 | Ficha de matrícula (Secretaría) | [ficha-matricula-secretaria.md](ficha-matricula-secretaria.md) |
+| Deuda Áulica (cliente API) | [aulica-deuda-matricula.md](aulica-deuda-matricula.md) |
+| Libre Deuda (constancia PDF, familia) | [libre-deuda.md](libre-deuda.md) |
 | IPE / boletín primario | [boletin-ipe-primario.md](boletin-ipe-primario.md) |
 | Boletines (secundario) — informe de progreso | [boletines-secundario.md](boletines-secundario.md) |
 | Registro de Asistencia | [registro-asistencia.md](registro-asistencia.md) |

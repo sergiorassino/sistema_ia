@@ -71,8 +71,24 @@ return [
         ],
     ],
 
+    /*
+     | Deuda Áulica: credenciales AULICA_* en .env. Se usa al emitir Libre Deuda (portal familia).
+     | AULICA_AMBIENTE=test|produccion pisa `ambiente` si está definido.
+     */
+    'aulica_deuda' => [
+        'habilitado' => true,
+        'ambiente' => 'test',
+        'bloquear_autogestion' => false,
+    ],
+
     'autogestion' => [
         'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
+        'libre_deuda' => [
+            'habilitado' => true,
+            'lugar' => 'Monte Cristo',
+            'firma' => 'img/tenants/montecristo/libre-deuda-firma.png',
+            'sello' => 'img/tenants/montecristo/libre-deuda-sello.png',
+        ],
         'actualizacion_datos' => [
             // Familia puede subir foto carnet (la solapa del ABM de legajos no alcanza sola).
             'foto_carnet' => true,

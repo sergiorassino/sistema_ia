@@ -31,4 +31,19 @@ return [
         ],
     ],
 
+    /*
+     | Áulica External API (deuda / cuenta corriente).
+     | Credenciales solo en .env del despliegue (nunca en config/tenants).
+     | Activación por colegio: config('tenant.aulica_deuda.habilitado').
+     */
+    'aulica' => [
+        'username' => env('AULICA_USERNAME'),
+        'password' => env('AULICA_PASSWORD'),
+        'codigo' => env('AULICA_CODIGO'),
+        'ambiente' => env('AULICA_AMBIENTE'),
+        'timeout' => (int) env('AULICA_TIMEOUT', 15),
+        'ca_bundle' => env('AULICA_CA_BUNDLE', env('WEB_PUSH_CA_BUNDLE')),
+        'ssl_verify' => filter_var(env('AULICA_SSL_VERIFY', true), FILTER_VALIDATE_BOOLEAN),
+    ],
+
 ];

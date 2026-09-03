@@ -280,6 +280,21 @@
             </a>
         @endif
 
+        @if (tenantAutogestionLibreDeudaHabilitada())
+            <a href="{{ se_route_url('alumnos.libre-deuda') }}"
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                   'is-active shadow-sm' => str_starts_with($route ?? '', 'alumnos.libre-deuda'),
+               ])
+               title="Constancia de libre deuda">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span x-show="!sidebarCollapsed" x-cloak class="truncate">Libre Deuda</span>
+            </a>
+        @endif
+
         @if (tenantAutogestionComunicacionesHabilitada())
             <p x-show="!sidebarCollapsed" x-cloak class="se-sidebar-nav-label mt-3 mb-0.5 px-2.5">
                 Cuaderno de comunicados

@@ -1747,6 +1747,26 @@ if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
     }
 }
 
+if (! function_exists('tenantAulicaDeudaHabilitada')) {
+    /**
+     * Si el tenant consulta deuda en Áulica (flag + credenciales AULICA_* en .env).
+     */
+    function tenantAulicaDeudaHabilitada(): bool
+    {
+        return \App\Support\Aulica\AulicaConfig::habilitada();
+    }
+}
+
+if (! function_exists('tenantAulicaDeudaBloqueaAutogestion')) {
+    /**
+     * Si la deuda Áulica impide ficha y actualización de datos en el portal familia.
+     */
+    function tenantAulicaDeudaBloqueaAutogestion(): bool
+    {
+        return \App\Support\Aulica\AulicaConfig::bloquearAutogestion();
+    }
+}
+
 if (! function_exists('tenantAutogestionInformeInasistenciasHabilitada')) {
     /**
      * Si el portal familia incluye informe de inasistencias en PDF.
@@ -1993,6 +2013,21 @@ if (! function_exists('tenantAutogestionIsaHabilitada')) {
     function tenantAutogestionIsaHabilitada(): bool
     {
         return tenantAutogestionFlagPorNivel('isa', false);
+    }
+}
+
+if (! function_exists('tenantAutogestionLibreDeudaHabilitada')) {
+    /**
+     * Constancia de libre deuda en el Menú de Alumnos.
+     * Requiere flag del tenant y credenciales Áulica (para verificar que no hay deuda).
+     */
+    function tenantAutogestionLibreDeudaHabilitada(): bool
+    {
+        if (! tenantAutogestionFlagPorNivel('libre_deuda', false)) {
+            return false;
+        }
+
+        return tenantAulicaDeudaHabilitada();
     }
 }
 

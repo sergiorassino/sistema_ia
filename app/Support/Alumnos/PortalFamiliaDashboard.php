@@ -191,6 +191,17 @@ final class PortalFamiliaDashboard
             ];
         }
 
+        if (tenantAutogestionLibreDeudaHabilitada()) {
+            $accesos[] = [
+                'id' => 'libre-deuda',
+                'titulo' => 'Libre Deuda',
+                'descripcion' => 'Constancia de que no registra deuda.',
+                'url' => se_route_url('alumnos.libre-deuda'),
+                'externo' => false,
+                'icono' => 'libre-deuda',
+            ];
+        }
+
         if (tenantAutogestionHorarioClaseHabilitada()) {
             $accesos[] = [
                 'id' => 'horario-clase',

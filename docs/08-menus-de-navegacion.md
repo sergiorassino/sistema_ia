@@ -49,7 +49,7 @@ Implementación: `MenuSecretariaPerfil::muestraCalificaciones*()`, partials en `
 - **Antes se decía:** “autogestión”, “portal alumno”, “familia”, `layouts/alumno`.
 - **Rutas:** prefijo `/alumnos/…` · middleware `auth:alumno` + `student.context`.
 - **Contexto:** `studentCtx()`; ciclo desde `ento.idTerlecVerNotas`.
-- **Enlaces típicos:** consulta de calificaciones, informe de inasistencias, cuaderno de comunicados, push; aranceles externos si el tenant lo configura; C.U.S. e I.S.A. si el tenant los habilita (`autogestion.cus` / `autogestion.isa`); informes pedagógicos inicial SFQ si el tenant los habilita (`autogestion.boletin_inicial_sfq`).
+- **Enlaces típicos:** consulta de calificaciones, informe de inasistencias, cuaderno de comunicados, push; aranceles externos si el tenant lo configura; C.U.S. e I.S.A. si el tenant los habilita (`autogestion.cus` / `autogestion.isa`); **Libre Deuda** si el tenant lo habilita (`autogestion.libre_deuda`) y hay credenciales Áulica; informes pedagógicos inicial SFQ si el tenant los habilita (`autogestion.boletin_inicial_sfq`).
 
 Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcion-general.md)).
 

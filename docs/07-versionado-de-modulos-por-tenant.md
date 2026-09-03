@@ -106,7 +106,7 @@ Modalidad de actas volantes de previos (secundario):
 - Alternativa `curso`: reúne alumnos de distintas secciones del mismo `idMatPlan`.
 
 ```php
-// config/tenants/{slug}.php — solo si difiere del default
+// config/tenants/iess.php — solo si difiere del default
 return [
     'examenes' => [
         'acta_volante_previos_modalidad' => 'curso',
@@ -327,6 +327,12 @@ Antes de agregar comportamiento solo para un colegio en código compartido, conf
 1. Agregar clave en `config/tenants/montecristo.php`.
 2. Consumir con `config('tenant.autogestion.aranceles_aulica_url')` en el **Menú de Alumnos** (`layouts/alumno.blade.php`).
 3. En el servidor de Montecristo: `TENANT_SLUG=montecristo` y BD correspondiente.
+
+**Montecristo — Libre Deuda (portal familia):**
+
+1. `autogestion.libre_deuda.habilitado => true` y `aulica_deuda.habilitado => true` en `config/tenants/montecristo.php`.
+2. Credenciales en `.env`: `AULICA_USERNAME`, `AULICA_PASSWORD`, `AULICA_CODIGO`.
+3. Ítem **Libre Deuda** en el Menú de Alumnos; PDF solo si Áulica no informa deuda. Detalle: [modulos/libre-deuda.md](modulos/libre-deuda.md).
 
 **Colegio nuevo con legajo distinto:**
 

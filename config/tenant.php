@@ -19,6 +19,19 @@ return [
     'nombre' => 'Colegio',
 
     /**
+     * Consulta de deuda en Áulica (API externa) al imprimir ficha de matrícula
+     * o entrar a actualización de datos. Default off; Montecristo lo activa.
+     * Credenciales: AULICA_USERNAME / AULICA_PASSWORD / AULICA_CODIGO en .env.
+     * `ambiente`: test | produccion (AULICA_AMBIENTE en .env pisa este valor).
+     */
+    'aulica_deuda' => [
+        'habilitado' => false,
+        'ambiente' => 'test',
+        'bloquear_autogestion' => false,
+        'cache_saldos_segundos' => 300,
+    ],
+
+    /**
      * Logo institucional en sidebar, login y dashboard.
      * `horizontal`: apaisado (default). `emblema`: sello circular o cuadrado (EPQ, etc.).
      */
@@ -240,6 +253,21 @@ return [
             'habilitado' => false,
             'niveles_habilitados' => [],
             'niveles_deshabilitados' => [],
+        ],
+
+        /**
+         * Constancia de libre deuda (PDF) en el Menú de Alumnos.
+         * Consulta Áulica; solo se emite si no hay deuda del estudiante ni del grupo familiar.
+         * `lugar`: ciudad en el pie (p. ej. Monte Cristo). Vacío = localidad de `ento`.
+         * `firma` / `sello`: rutas relativas a `public/` (PNG/JPG). Si faltan, no se dibujan.
+         */
+        'libre_deuda' => [
+            'habilitado' => false,
+            'niveles_habilitados' => [],
+            'niveles_deshabilitados' => [],
+            'lugar' => '',
+            'firma' => null,
+            'sello' => null,
         ],
     ],
 
