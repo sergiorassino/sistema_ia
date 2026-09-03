@@ -170,7 +170,9 @@
         line-height: 1.15;
     }
 
-    /* Seguimiento disciplinario — listado de sanciones (anchos en %; no depender de utilidades arbitrarias) */
+    /* Seguimiento disciplinario — listado de sanciones.
+       Fecha/Tipo/Cant en rem (no %): con table-layout:fixed el % se aplasta
+       al expandir el sidebar y el texto de Fecha se superpone a Tipo. */
     .se-page.se-page--ancho-completo {
         max-width: none !important;
         width: 100%;
@@ -178,27 +180,40 @@
     }
     .se-disc-sanciones-tabla {
         width: 100%;
-        min-width: 48rem;
+        min-width: 60rem;
         table-layout: fixed;
         border-collapse: collapse;
+        flex-shrink: 0;
+    }
+    .se-disc-sanciones-tabla .table-header,
+    .se-disc-sanciones-tabla .table-cell {
+        overflow: hidden;
+        vertical-align: top;
     }
     .se-disc-sanciones-tabla col.se-disc-col-fecha {
-        width: 7%;
+        width: 8rem;
     }
     .se-disc-sanciones-tabla col.se-disc-col-tipo {
-        width: 14%;
+        width: 13rem;
     }
     .se-disc-sanciones-tabla col.se-disc-col-cant {
-        width: 4%;
+        width: 3.75rem;
     }
     .se-disc-sanciones-tabla col.se-disc-col-motivo {
-        width: 40%;
+        width: auto;
     }
     .se-disc-sanciones-tabla col.se-disc-col-solipor {
-        width: 14%;
+        width: 11rem;
     }
     .se-disc-sanciones-tabla col.se-disc-col-acciones {
-        width: 21%;
+        width: 16.5rem;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-fecha {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-disc-sanciones-tabla .se-disc-col-tipo {
+        overflow-wrap: anywhere;
     }
     .se-disc-sanciones-tabla .se-disc-col-cant {
         text-align: center;

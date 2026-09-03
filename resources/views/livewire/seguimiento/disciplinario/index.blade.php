@@ -87,7 +87,8 @@
             </div>
 
             <div class="w-full overflow-x-auto">
-                <table class="se-disc-sanciones-tabla">
+                <div class="flex justify-start">
+                    <table class="se-disc-sanciones-tabla">
                     <colgroup>
                         <col class="se-disc-col-fecha">
                         <col class="se-disc-col-tipo">
@@ -98,8 +99,8 @@
                     </colgroup>
                     <thead class="bg-accent-50">
                         <tr>
-                            <th class="table-header">Fecha</th>
-                            <th class="table-header">Tipo</th>
+                            <th class="table-header se-disc-col-fecha">Fecha</th>
+                            <th class="table-header se-disc-col-tipo">Tipo</th>
                             <th class="table-header se-disc-th-cant">Cant</th>
                             <th class="table-header">Motivo</th>
                             <th class="table-header">Solicitada por</th>
@@ -109,8 +110,8 @@
                     <tbody class="divide-y divide-accent-200 bg-white">
                         @forelse ($sanciones as $s)
                             <tr class="transition-colors hover:bg-accent-50/60">
-                                <td class="table-cell font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="table-cell">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
+                                <td class="table-cell se-disc-col-fecha font-mono">{{ $s->fecha?->format('d/m/Y') ?? '—' }}</td>
+                                <td class="table-cell se-disc-col-tipo">{{ $s->tipo?->tipo ?? ('#'.$s->idTipoSancion) }}</td>
                                 <td class="table-cell se-disc-col-cant font-mono">{{ $s->cantidad ?? '—' }}</td>
                                 <td class="table-cell se-disc-col-motivo">
                                     @php
@@ -187,7 +188,8 @@
                                 </tr>
                             @endforelse
                     </tbody>
-                </table>
+                    </table>
+                </div>
             </div>
         </div>
     @else
