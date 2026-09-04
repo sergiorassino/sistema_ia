@@ -277,7 +277,7 @@ final class PermisosIaCatalog
             ['id' => 76, 'orden' => self::CALIF_PLANILLA_RESUMEN, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Planilla resumen de calificaciones: selección de cursos e impresión PDF (secundario).'],
             ['id' => 77, 'orden' => self::CALIF_ACTAS_VOLANTES_COLOQUIO, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Actas volantes de coloquio: selección de curso, materias e impresión PDF (Dic / Feb, secundario).'],
             ['id' => 18, 'orden' => self::MATRIZ_ANALITICO, 'tema' => 'MATRÍZ Y ANALÍTICOS', 'descripcion' => 'Libro matriz, pase y certificado analítico: consulta y edición de calificaciones en matriz.'],
-            ['id' => 19, 'orden' => self::CERT_ALUMNO_REGULAR, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado escolar de alumno/a regular: listado de matriculados del año en curso y emisión de PDF.'],
+            ['id' => 19, 'orden' => self::CERT_ALUMNO_REGULAR, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de alumno/a regular (laboral o escolar): listado de matriculados del año en curso y emisión de PDF.'],
             ['id' => 20, 'orden' => self::CERT_ESTUDIOS_TRAMITE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de certificado de estudios en trámite: listado de matriculados y emisión de PDF.'],
             ['id' => 21, 'orden' => self::CERT_CONSTANCIA_DOCS, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de documentos: listado histórico de legajos del nivel y emisión de PDF.'],
             ['id' => 22, 'orden' => self::CERT_ASISTENCIA_PROF, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de asistencia del profesor: listado de personal del legajo y emisión de PDF.'],

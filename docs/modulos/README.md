@@ -34,6 +34,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Profesores presentes | [profesores-presentes.md](profesores-presentes.md) |
 | Preceptores por curso | [preceptores-por-curso.md](preceptores-por-curso.md) |
 | Proyectos extracurriculares | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |
+| Constancia de Alumno Regular | [certificado-alumno-regular.md](certificado-alumno-regular.md) |
 | Certificado Jardín / Sexto Grado | [certificado-jardin-sexto.md](certificado-jardin-sexto.md) |
 | Gestión de Morosos | [gestion-morosos.md](gestion-morosos.md) |
 | Estado de Deuda Familiar | [estado-deuda-familiar.md](estado-deuda-familiar.md) |

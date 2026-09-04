@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Certificados;
 use App\Http\Controllers\Controller;
 use App\Support\Certificados\CertificadoAlumnoRegular;
 use App\Support\Certificados\CertificadoAlumnoRegularDatos;
+use App\Support\Certificados\CertificadoAlumnoRegularEscolarTcpdf;
 use App\Support\Certificados\CertificadoAlumnoRegularTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,11 +23,19 @@ class CertificadoAlumnoRegularPdfController extends Controller
         $idNivel = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
 
+        $tipo = (string) $request->input('tipo', CertificadoAlumnoRegular::TIPO_LABORAL);
+        if (! CertificadoAlumnoRegular::esTipoValido($tipo)) {
+            abort(422, 'Tipo de certificado no válido.');
+        }
+
         $validator = Validator::make(
             $request->all(),
             array_merge(
-                ['idLegajos' => ['required', 'integer', 'min:1']],
-                CertificadoAlumnoRegular::reglasFormulario(),
+                [
+                    'idLegajos' => ['required', 'integer', 'min:1'],
+                    'tipo' => ['required', 'string', 'in:'.implode(',', CertificadoAlumnoRegular::tiposValidos())],
+                ],
+                CertificadoAlumnoRegular::reglasFormulario($tipo),
             ),
             CertificadoAlumnoRegular::mensajesValidacion(),
         );
@@ -37,7 +46,7 @@ class CertificadoAlumnoRegularPdfController extends Controller
 
         $validated = $validator->validated();
         $idLegajos = (int) $validated['idLegajos'];
-        unset($validated['idLegajos']);
+        unset($validated['idLegajos'], $validated['tipo']);
 
         if ($idNivel < 1 || $idTerlec < 1 || $idLegajos < 1) {
             abort(404);
@@ -47,33 +56,40 @@ class CertificadoAlumnoRegularPdfController extends Controller
             @set_time_limit(120);
         }
 
-        $key = 'cert-alu-reg-pdf:'.(auth()->id() ?? $request->ip()).':'.$idLegajos;
+        $key = 'cert-alu-reg-pdf:'.(auth()->id() ?? $request->ip()).':'.$tipo.':'.$idLegajos;
         if (RateLimiter::tooManyAttempts($key, 40)) {
             abort(429, 'Demasiadas solicitudes. Intente nuevamente en breve.');
         }
         RateLimiter::hit($key, 60);
 
-        /** @var array{iniFin: int, fechIniFin: string, prePor: string, prePorDni: string, preAnte: string, fechaEmision: string} $form */
-        $form = $validated;
-        $form['iniFin'] = (int) $form['iniFin'];
-        $form['prePor'] = trim((string) $form['prePor']);
-        $form['prePorDni'] = trim((string) $form['prePorDni']);
-        $form['preAnte'] = trim((string) $form['preAnte']);
+        $form = CertificadoAlumnoRegular::completarParaGuardar($validated, $tipo);
 
         $datos = CertificadoAlumnoRegularDatos::paraLegajo($idLegajos, $idNivel, $idTerlec, $form);
         if ($datos === null) {
             abort(404, 'Alumno no matriculado en el ciclo lectivo activo.');
         }
 
-        $pdf = CertificadoAlumnoRegularTcpdf::generar($datos);
+        $pdf = $tipo === CertificadoAlumnoRegular::TIPO_ESCOLAR
+            ? CertificadoAlumnoRegularEscolarTcpdf::generar($datos)
+            : CertificadoAlumnoRegularTcpdf::generar($datos);
 
         $leg = $datos['legajo'];
-        $slug = Str::slug(
-            'certificado-alumno-regular-'.($leg['apellido'] ?? '').'-'.($leg['nombre'] ?? '').'-'.$idLegajos,
-            '_',
-        );
-        if ($slug === '') {
-            $slug = 'certificado_alumno_regular_'.$idLegajos;
+        if ($tipo === CertificadoAlumnoRegular::TIPO_ESCOLAR) {
+            $slug = Str::slug(
+                'constancia-alumno-regular-escolar-'.($leg['apellido'] ?? '').'-'.($leg['nombre'] ?? ''),
+                '_',
+            );
+            if ($slug === '') {
+                $slug = 'constancia_alumno_regular_escolar';
+            }
+        } else {
+            $slug = Str::slug(
+                'certificado-alumno-regular-'.($leg['apellido'] ?? '').'-'.($leg['nombre'] ?? '').'-'.$idLegajos,
+                '_',
+            );
+            if ($slug === '') {
+                $slug = 'certificado_alumno_regular_'.$idLegajos;
+            }
         }
 
         $this->limpiarBuffersSalida();

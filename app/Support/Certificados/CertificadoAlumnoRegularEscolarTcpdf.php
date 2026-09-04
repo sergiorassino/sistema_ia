@@ -2,22 +2,24 @@
 
 namespace App\Support\Certificados;
 
+use App\Support\Pdf\TcpdfFuenteArial;
 use App\Support\Pdf\TcpdfImagenPng;
+use App\Support\Pdf\TcpdfMultiCellJustificado;
 use TCPDF;
 
 /**
- * Certificado de alumno/a regular — modelo laboral (A4, formato legacy FPDF → TCPDF).
+ * Constancia de alumno/a regular — modelo escolar (A4, TCPDF + Arial).
  */
-final class CertificadoAlumnoRegularTcpdf extends TCPDF
+final class CertificadoAlumnoRegularEscolarTcpdf extends TCPDF
 {
     private const MARGEN_IZQ = 20.0;
 
     private const ANCHO_UTIL = 180.0;
 
-    private const FUENTE = 'dejavusans';
-
     /** Separación entre el último párrafo del certificado y el bloque de firmas (3 cm). */
     private const ESPACIO_TEXTO_FIRMAS_MM = 30.0;
+
+    private const ALTO_LINEA_MM = 5.0;
 
     /** @var array<string, mixed> */
     private array $datos;
@@ -68,13 +70,13 @@ final class CertificadoAlumnoRegularTcpdf extends TCPDF
         }
 
         $this->SetXY(self::MARGEN_IZQ, $y0 + 5);
-        $this->SetFont(self::FUENTE, 'B', 12);
-        $this->Cell(self::ANCHO_UTIL, 7, $insti, 0, 2, 'C');
+        TcpdfFuenteArial::aplicar($this, 'B', 12);
+        $this->Cell(self::ANCHO_UTIL, 5, $insti, 0, 2, 'C');
 
-        $this->SetFont(self::FUENTE, '', 10);
-        $this->Cell(self::ANCHO_UTIL, 5, 'CERTIFICADO ESCOLAR', 0, 2, 'C');
+        TcpdfFuenteArial::aplicar($this, 'B', 10);
+        $this->Cell(self::ANCHO_UTIL, 5, 'CONSTANCIA DE ALUMNO/A REGULAR', 0, 2, 'C');
 
-        $this->SetFont(self::FUENTE, '', 7);
+        TcpdfFuenteArial::aplicar($this, '', 7);
         $cueLinea = $cue !== '' ? 'C.U.E.:  '.$cue : '';
         $this->Cell(self::ANCHO_UTIL, 5, $cueLinea, 0, 2, 'C');
     }
@@ -86,46 +88,41 @@ final class CertificadoAlumnoRegularTcpdf extends TCPDF
 
         $apellido = trim((string) ($leg['apellido'] ?? ''));
         $nombre = trim((string) ($leg['nombre'] ?? ''));
+        $estudiante = trim($apellido.' '.$nombre);
         $dni = trim((string) ($leg['dni'] ?? ''));
-        $verbo = trim((string) ($cert['verboIniFin'] ?? 'ha iniciado'));
-        $fechIniFin = trim((string) ($cert['fechIniFin'] ?? ''));
         $ano = (int) ($cert['anoLectivo'] ?? 0);
         $curso = trim((string) ($cert['curso'] ?? ''));
         $localidad = trim((string) (($this->datos['institucion'] ?? [])['localidad'] ?? ''));
-        $prePor = trim((string) ($cert['prePor'] ?? ''));
-        $prePorDni = trim((string) ($cert['prePorDni'] ?? ''));
         $preAnte = trim((string) ($cert['preAnte'] ?? ''));
         $diaEm = trim((string) ($cert['diaEmision'] ?? ''));
         $mesEm = trim((string) ($cert['mesEmision'] ?? ''));
         $anioEm = trim((string) ($cert['anioEmision'] ?? ''));
 
         $this->SetXY(self::MARGEN_IZQ, 41);
-        $this->SetFont(self::FUENTE, '', 10);
+        TcpdfFuenteArial::aplicar($this, '', 10);
 
-        $html1 = 'Certifica que el/la estudiante <b>'.$this->escapeHtml($apellido.' '.$nombre).'</b>'
-            .', D.N.I. Nº '.$this->escapeHtml($dni).' '.$verbo.' el '
-            .$this->escapeHtml($fechIniFin)
-            .' como alumno/a regular del ciclo lectivo normal, correspondiente al año '
-            .$ano.' en '.$this->escapeHtml($curso).' en este establecimiento educativo.';
+        $parrafo1 = 'Se hace constar que el/la estudiante '.$estudiante
+            .', DNI Nº '.$dni.', es alumno/a regular de '.$curso
+            .' en este establecimiento, en el presente ciclo lectivo normal, correspondiente al año '
+            .$ano.'.';
 
-        $this->writeHTMLCell(self::ANCHO_UTIL, 0, self::MARGEN_IZQ, 41, $html1, 0, 1, false, true, 'J', true);
+        TcpdfMultiCellJustificado::escribir($this, self::ANCHO_UTIL, self::ALTO_LINEA_MM, $parrafo1);
 
         $this->Ln(4);
+        $this->SetX(self::MARGEN_IZQ);
 
-        $html2 = 'Este certificado se extiende en '.$this->escapeHtml($localidad).', a los '
-            .$this->escapeHtml($diaEm).' días del mes de '.$this->escapeHtml($mesEm)
-            .' del año '.$this->escapeHtml($anioEm).', para ser presentado por el/la Sr/a '
-            .$this->escapeHtml($prePor).' D.N.I. Nº '.$this->escapeHtml($prePorDni)
-            .' ante '.$this->escapeHtml($preAnte).'.';
+        $parrafo2 = 'Este certificado se extiende en '.$localidad.', a los '
+            .$diaEm.' días del mes de '.$mesEm
+            .' del año '.$anioEm.', para ser presentado ante '.$preAnte.'.';
 
-        $this->writeHTMLCell(self::ANCHO_UTIL, 0, self::MARGEN_IZQ, $this->GetY(), $html2, 0, 1, false, true, 'J', true);
+        TcpdfMultiCellJustificado::escribir($this, self::ANCHO_UTIL, self::ALTO_LINEA_MM, $parrafo2);
     }
 
     private function dibujarFirmas(): void
     {
         $y = $this->GetY() + self::ESPACIO_TEXTO_FIRMAS_MM;
 
-        $this->SetFont(self::FUENTE, '', 8);
+        TcpdfFuenteArial::aplicar($this, '', 8);
         $this->SetXY(50, $y);
         $this->Cell(20, 5, 'Sello', 0, 0, 'C');
 
@@ -134,10 +131,5 @@ final class CertificadoAlumnoRegularTcpdf extends TCPDF
 
         $this->SetXY(120, $y + 3);
         $this->Cell(50, 5, 'Firma Autorizada', 0, 0, 'C');
-    }
-
-    private function escapeHtml(string $texto): string
-    {
-        return htmlspecialchars($texto, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }

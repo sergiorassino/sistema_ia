@@ -13,9 +13,33 @@ use Illuminate\Support\Facades\DB;
  */
 final class CertificadoAlumnoRegular
 {
+    public const TIPO_LABORAL = 'laboral';
+
+    public const TIPO_ESCOLAR = 'escolar';
+
     public const INI_FIN_INICIO = 1;
 
     public const INI_FIN_FIN = 2;
+
+    /** @return list<string> */
+    public static function tiposValidos(): array
+    {
+        return [self::TIPO_LABORAL, self::TIPO_ESCOLAR];
+    }
+
+    public static function esTipoValido(string $tipo): bool
+    {
+        return in_array($tipo, self::tiposValidos(), true);
+    }
+
+    public static function etiquetaTipo(string $tipo): string
+    {
+        return match ($tipo) {
+            self::TIPO_LABORAL => 'Certificado de Alumno Regular (LABORAL)',
+            self::TIPO_ESCOLAR => 'Certificado de Alumno Regular (ESCOLAR)',
+            default => '',
+        };
+    }
 
     /**
      * Matrículas activas del ciclo lectivo y nivel del contexto.
@@ -225,52 +249,93 @@ final class CertificadoAlumnoRegular
     }
 
     /**
-     * @param  array{
+     * Completa columnas de `certalureg` cuando el modelo escolar no las pide en el formulario.
+     *
+     * @param  array<string, mixed>  $datos
+     * @return array{
      *     iniFin: int,
      *     fechIniFin: string,
      *     prePor: string,
      *     prePorDni: string,
      *     preAnte: string,
      *     fechaEmision: string
-     * }  $datos
+     * }
      */
+    public static function completarParaGuardar(array $datos, string $tipo): array
+    {
+        if ($tipo === self::TIPO_ESCOLAR) {
+            $fechaEmision = (string) ($datos['fechaEmision'] ?? now()->format('Y-m-d'));
+
+            return [
+                'iniFin' => self::INI_FIN_INICIO,
+                'fechIniFin' => $fechaEmision,
+                'prePor' => '',
+                'prePorDni' => '',
+                'preAnte' => trim((string) ($datos['preAnte'] ?? '')),
+                'fechaEmision' => $fechaEmision,
+            ];
+        }
+
+        return [
+            'iniFin' => (int) ($datos['iniFin'] ?? self::INI_FIN_INICIO),
+            'fechIniFin' => (string) ($datos['fechIniFin'] ?? now()->format('Y-m-d')),
+            'prePor' => trim((string) ($datos['prePor'] ?? '')),
+            'prePorDni' => trim((string) ($datos['prePorDni'] ?? '')),
+            'preAnte' => trim((string) ($datos['preAnte'] ?? '')),
+            'fechaEmision' => (string) ($datos['fechaEmision'] ?? now()->format('Y-m-d')),
+        ];
+    }
+
     /**
      * @param  array{
-     *     iniFin: int,
-     *     fechIniFin: string,
-     *     prePor: string,
-     *     prePorDni: string,
+     *     iniFin?: int,
+     *     fechIniFin?: string,
+     *     prePor?: string,
+     *     prePorDni?: string,
      *     preAnte: string,
      *     fechaEmision: string
      * }  $datos
      * @return array{action: string, fields: array<string, mixed>}
      */
-    public static function pdfPost(int $idLegajos, array $datos): array
+    public static function pdfPost(int $idLegajos, array $datos, string $tipo = self::TIPO_LABORAL): array
     {
-        return \App\Support\Pdf\PdfPost::datos(route('certificados.alumnoRegular.pdf'), [
+        $fields = [
             'idLegajos' => $idLegajos,
-            'iniFin' => (int) $datos['iniFin'],
-            'fechIniFin' => $datos['fechIniFin'],
-            'prePor' => $datos['prePor'],
-            'prePorDni' => $datos['prePorDni'],
+            'tipo' => $tipo,
             'preAnte' => $datos['preAnte'],
             'fechaEmision' => $datos['fechaEmision'],
-        ]);
+        ];
+
+        if ($tipo !== self::TIPO_ESCOLAR) {
+            $fields['iniFin'] = (int) ($datos['iniFin'] ?? self::INI_FIN_INICIO);
+            $fields['fechIniFin'] = $datos['fechIniFin'] ?? now()->format('Y-m-d');
+            $fields['prePor'] = $datos['prePor'] ?? '';
+            $fields['prePorDni'] = $datos['prePorDni'] ?? '';
+        }
+
+        return \App\Support\Pdf\PdfPost::datos(route('certificados.alumnoRegular.pdf'), $fields);
     }
 
     /**
      * @return array<string, list<string>>
      */
-    public static function reglasFormulario(): array
+    public static function reglasFormulario(string $tipo = self::TIPO_LABORAL): array
     {
-        return [
+        $comunes = [
+            'preAnte' => ['required', 'string', 'max:300'],
+            'fechaEmision' => ['required', 'date'],
+        ];
+
+        if ($tipo === self::TIPO_ESCOLAR) {
+            return $comunes;
+        }
+
+        return array_merge([
             'iniFin' => ['required', 'integer', 'in:'.self::INI_FIN_INICIO.','.self::INI_FIN_FIN],
             'fechIniFin' => ['required', 'date'],
             'prePor' => ['required', 'string', 'max:300'],
             'prePorDni' => ['required', 'string', 'max:10'],
-            'preAnte' => ['required', 'string', 'max:300'],
-            'fechaEmision' => ['required', 'date'],
-        ];
+        ], $comunes);
     }
 
     /**

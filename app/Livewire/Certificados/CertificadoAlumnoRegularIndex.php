@@ -8,11 +8,15 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Certificado de alumno/a regular — listado y emisión.
+ * Certificado de alumno/a regular — elección de modelo, listado y emisión.
  */
 class CertificadoAlumnoRegularIndex extends Component
 {
     use WithPagination;
+
+    public const POR_PAGINA = 50;
+
+    public string $tipoModelo = '';
 
     public string $buscar = '';
 
@@ -51,6 +55,25 @@ class CertificadoAlumnoRegularIndex extends Component
         }
     }
 
+    public function elegirTipo(string $tipo): void
+    {
+        if (! CertificadoAlumnoRegular::esTipoValido($tipo)) {
+            return;
+        }
+
+        $this->tipoModelo = $tipo;
+        $this->cerrarModal();
+        $this->resetPage();
+    }
+
+    public function cambiarTipo(): void
+    {
+        $this->tipoModelo = '';
+        $this->buscar = '';
+        $this->cerrarModal();
+        $this->resetPage();
+    }
+
     public function updatedBuscar(): void
     {
         $this->resetPage();
@@ -58,6 +81,10 @@ class CertificadoAlumnoRegularIndex extends Component
 
     public function abrirModal(int $idLegajos): void
     {
+        if (! $this->tipoElegido()) {
+            return;
+        }
+
         $ctx = schoolCtx();
         $alumno = CertificadoAlumnoRegular::alumnoMatriculado(
             $idLegajos,
@@ -104,7 +131,7 @@ class CertificadoAlumnoRegularIndex extends Component
             return;
         }
 
-        session()->flash('success', 'Datos del certificado guardados.');
+        $this->dispatch('se-swal-exito', mensaje: 'Datos del certificado guardados.');
     }
 
     public function emitirPdf(): void
@@ -115,54 +142,71 @@ class CertificadoAlumnoRegularIndex extends Component
         }
 
         if ($this->guardarAlEmitir) {
-            CertificadoAlumnoRegular::guardar($this->idLegajosModal, $validated);
+            CertificadoAlumnoRegular::guardar(
+                $this->idLegajosModal,
+                CertificadoAlumnoRegular::completarParaGuardar($validated, $this->tipoModelo),
+            );
         }
 
-        $this->dispatch('abrir-pdf-post', ...CertificadoAlumnoRegular::pdfPost($this->idLegajosModal, $validated));
+        $this->dispatch(
+            'abrir-pdf-post',
+            ...CertificadoAlumnoRegular::pdfPost($this->idLegajosModal, $validated, $this->tipoModelo),
+        );
     }
 
     public function render()
     {
         $ctx = schoolCtx();
-        $alumnos = CertificadoAlumnoRegular::paginarAlumnos(
-            (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
-            $this->buscar,
-            50,
-        );
+        $alumnos = $this->tipoElegido()
+            ? CertificadoAlumnoRegular::paginarAlumnos(
+                (int) $ctx->idNivel,
+                (int) $ctx->idTerlec,
+                $this->buscar,
+                self::POR_PAGINA,
+            )
+            : CertificadoAlumnoRegular::paginarAlumnos(0, 0, null, self::POR_PAGINA);
 
         return view('livewire.certificados.certificado-alumno-regular-index', [
             'alumnos' => $alumnos,
             'anoLectivo' => (int) ($ctx->terlecAno() ?? 0),
+            'tipoElegido' => $this->tipoElegido(),
+            'esEscolar' => $this->tipoModelo === CertificadoAlumnoRegular::TIPO_ESCOLAR,
+            'etiquetaTipo' => CertificadoAlumnoRegular::etiquetaTipo($this->tipoModelo),
         ])
             ->layout(layoutMenuStaff(), ['pageTitle' => 'Constancia de Alumno Regular']);
     }
 
     /**
      * @return array{
-     *     iniFin: int,
-     *     fechIniFin: string,
-     *     prePor: string,
-     *     prePorDni: string,
+     *     iniFin?: int,
+     *     fechIniFin?: string,
+     *     prePor?: string,
+     *     prePorDni?: string,
      *     preAnte: string,
      *     fechaEmision: string
      * }|null
      */
     private function validarFormulario(): ?array
     {
-        if ($this->idLegajosModal === null) {
+        if ($this->idLegajosModal === null || ! $this->tipoElegido()) {
             return null;
         }
 
         $validated = $this->validate(
-            CertificadoAlumnoRegular::reglasFormulario(),
+            CertificadoAlumnoRegular::reglasFormulario($this->tipoModelo),
             CertificadoAlumnoRegular::mensajesValidacion(),
         );
 
-        $validated['iniFin'] = (int) $validated['iniFin'];
-        $validated['prePor'] = trim($validated['prePor']);
-        $validated['prePorDni'] = trim($validated['prePorDni']);
         $validated['preAnte'] = trim($validated['preAnte']);
+        if (isset($validated['iniFin'])) {
+            $validated['iniFin'] = (int) $validated['iniFin'];
+        }
+        if (isset($validated['prePor'])) {
+            $validated['prePor'] = trim($validated['prePor']);
+        }
+        if (isset($validated['prePorDni'])) {
+            $validated['prePorDni'] = trim($validated['prePorDni']);
+        }
 
         return $validated;
     }
@@ -178,7 +222,15 @@ class CertificadoAlumnoRegularIndex extends Component
             return false;
         }
 
-        return CertificadoAlumnoRegular::guardar($this->idLegajosModal, $validated);
+        return CertificadoAlumnoRegular::guardar(
+            $this->idLegajosModal,
+            CertificadoAlumnoRegular::completarParaGuardar($validated, $this->tipoModelo),
+        );
+    }
+
+    private function tipoElegido(): bool
+    {
+        return CertificadoAlumnoRegular::esTipoValido($this->tipoModelo);
     }
 
     private function ejecutarConLimite(): bool
