@@ -19,7 +19,8 @@ Despacho: `BoletinIpePrimarioGenerador`.
 
 ## Actores y permisos
 
-- Secretaría / docentes: permiso carga calificaciones (IA 71), rutas `calificacionesPrimario.boletinIpe*`.
+- Secretaría: autenticado con contexto escolar; **no** requiere permiso IA 71 (carga). Rutas `calificacionesPrimario.boletinIpe*`.
+- Docentes: portal docente si el tenant habilita el ítem (sin `permisos_ia`).
 - Autogestión familia: `autogestion.boletin_ipe_primario.habilitado` + nivel primario.
 
 ## Tablas y campos críticos

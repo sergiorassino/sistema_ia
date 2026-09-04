@@ -22,7 +22,8 @@ No ramificar por `tenantSlug() === 'sfq'` en Blade ni en el controlador.
 
 ## Actores y permisos
 
-- Secretaría / Docentes: permiso IA 71 (carga de calificaciones); rutas `calificacionesInicialSfq.boletin*`.
+- Secretaría: autenticado con contexto escolar; **no** requiere permiso IA 71 (carga). Rutas `calificacionesInicialSfq.boletin*`.
+- Docentes: portal docente si el tenant habilita el ítem (sin `permisos_ia`).
 - Autogestión familia: flag del tenant + nivel inicial + implementación `sfq`. Guard `alumno`, `student.context`.
 - `ento.verNotasOff` del nivel inicial bloquea menú y PDF en familia (`EntoVerNotasOff`).
 

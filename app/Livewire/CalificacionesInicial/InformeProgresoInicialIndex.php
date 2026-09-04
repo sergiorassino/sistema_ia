@@ -9,9 +9,7 @@ use App\Support\CalificacionesInicial\CalificacionesInicialObservacionesDatos;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\OrdenAlfabeticoEstudiante;
-use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -36,11 +34,6 @@ class InformeProgresoInicialIndex extends Component
 
         if ($this->modoPortalDocente) {
             CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_INFORME_PROGRESO);
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para informes de calificaciones.',
-            );
         }
 
         CalificacionesInicialPortalDocente::abortSiNoEsInicial();

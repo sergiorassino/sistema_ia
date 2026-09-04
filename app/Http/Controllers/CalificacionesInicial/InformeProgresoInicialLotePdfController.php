@@ -7,9 +7,7 @@ use App\Support\BoletinSecundarioLoteParams;
 use App\Support\CalificacionesInicial\InformeProgresoInicialDatos;
 use App\Support\CalificacionesInicial\InformeProgresoInicialGenerador;
 use App\Support\NivelSistema;
-use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -23,8 +21,6 @@ class InformeProgresoInicialLotePdfController extends Controller
     {
         if (CalificacionesInicialPortalDocente::esPortalDocente()) {
             CalificacionesInicialPortalDocente::abortSiMenuInactivo(CalificacionesInicialPortalDocente::MENU_INFORME_PROGRESO);
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(PermisosIaCatalog::CALIF_CARGA);
         }
 
         abort_unless(

@@ -7,7 +7,6 @@ use App\Support\CalificacionesSecundario\CalificacionesSecundarioModulos;
 use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo;
 use App\Support\CalificacionesSecundario\Epq\PlanillaCalificacionesEpqSecundarioDatos;
 use App\Support\NivelSistema;
-use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesDocenteSecundario;
 use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
@@ -36,11 +35,6 @@ class PlanillaCalificacionesEpqSecundario extends Component
 
         if ($this->modoPortalDocente) {
             CalificacionesDocenteSecundario::abortSiNoEsSecundario();
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para generar planillas.',
-            );
         }
 
         abort_unless(

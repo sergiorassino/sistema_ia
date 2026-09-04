@@ -17,7 +17,7 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 
 ## Actores y permisos
 
-- Secretaría / staff: rutas `boletinesSecundario.*` con auth y contexto escolar.
+- Secretaría / staff: rutas `boletinesSecundario.*` (o EPQ `calificacionesSecundarioEpq.boletin*`) con auth y contexto escolar. **No** requieren permiso IA 71 (carga).
 
 ## Tablas y campos críticos
 

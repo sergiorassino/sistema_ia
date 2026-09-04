@@ -10,7 +10,6 @@ use App\Support\CalificacionesPrimario\Epq\CalificacionesEpqCatalogo;
 use App\Support\NivelSistema;
 use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -42,11 +41,6 @@ class BoletinPrimEpqIndex extends Component
             abort_unless(
                 (bool) config('tenant.portal_docente.menu.primario.boletin_ipe', false),
                 404,
-            );
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                \App\Support\PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para boletines de calificaciones.',
             );
         }
 

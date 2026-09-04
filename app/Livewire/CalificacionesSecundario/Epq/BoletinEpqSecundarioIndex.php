@@ -10,8 +10,6 @@ use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\NivelSistema;
 use App\Support\OrdenAlfabeticoEstudiante;
-use App\Support\PermisosIaCatalog;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -30,11 +28,6 @@ class BoletinEpqSecundarioIndex extends Component
         CalificacionesSecundarioModulos::abortSiImplementacionInactiva(
             CalificacionesSecundarioModulos::BOLETIN,
             CalificacionesEpqSecundarioCatalogo::IMPLEMENTACION,
-        );
-
-        PortalDocenteContext::abortSiStaffSinPermisoIa(
-            PermisosIaCatalog::CALIF_CARGA,
-            'Sin permiso para boletines de calificaciones.',
         );
 
         abort_unless(

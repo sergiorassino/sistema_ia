@@ -8,7 +8,6 @@ use App\Support\CalificacionesPrimario\Epq\CalificacionesEpqCatalogo;
 use App\Support\CalificacionesPrimario\Epq\PlanillaCalificacionesEpqDatos;
 use App\Support\NivelSistema;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -37,11 +36,6 @@ class PlanillaCalificacionesEpq extends Component
             abort_unless(
                 (bool) config('tenant.portal_docente.menu.primario.planilla', false),
                 404,
-            );
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                \App\Support\PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para generar planillas.',
             );
         }
 

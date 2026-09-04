@@ -9,9 +9,7 @@ use App\Support\CalificacionesInicial\CalificacionesInicialModulos;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqCatalogo;
 use App\Support\CalificacionesInicial\Sfq\CalificacionesInicialSfqDatos;
 use App\Support\NivelSistema;
-use App\Support\PermisosIaCatalog;
 use App\Support\PortalDocente\CalificacionesInicialSfqPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -41,11 +39,6 @@ class BoletinInicialSfqIndex extends Component
 
         if ($this->modoPortalDocente) {
             CalificacionesInicialSfqPortalDocente::abortSiMenuBoletinInactivo();
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para informes de calificaciones.',
-            );
         }
 
         abort_unless(

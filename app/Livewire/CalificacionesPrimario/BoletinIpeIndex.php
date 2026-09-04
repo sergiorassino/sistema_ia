@@ -9,7 +9,6 @@ use App\Support\CalificacionesPrimario\BoletinIpePrimarioGenerador;
 use App\Support\NivelSistema;
 use App\Support\OrdenAlfabeticoEstudiante;
 use App\Support\PortalDocente\CalificacionesPrimarioPortalDocente;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -34,11 +33,6 @@ class BoletinIpeIndex extends Component
 
         if ($this->modoPortalDocente) {
             CalificacionesPrimarioPortalDocente::abortSiPortalBoletinIpeInactivo();
-        } else {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                \App\Support\PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para boletines de calificaciones.',
-            );
         }
 
         abort_unless(

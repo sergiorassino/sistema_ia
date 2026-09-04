@@ -63,8 +63,7 @@
             <span class="truncate">Carga de calificaciones</span>
         </a>
         @endif
-        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA)
-            && \App\Support\CalificacionesInicial\CalificacionesInicialModulos::moduloActivo(
+        @if (\App\Support\CalificacionesInicial\CalificacionesInicialModulos::moduloActivo(
                 \App\Support\CalificacionesInicial\CalificacionesInicialModulos::BOLETIN,
             ))
         <a href="{{ route(\App\Support\CalificacionesInicial\CalificacionesInicialModulos::rutaStaff(\App\Support\CalificacionesInicial\CalificacionesInicialModulos::BOLETIN)) }}"
@@ -72,7 +71,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesInicialSfq.boletin'),
            ])
-           title="{{ seSidebarTooltip('Informes pedagógicos (inicial SFQ)', 71) }}">
+           title="{{ seSidebarTooltip('Informes pedagógicos (inicial SFQ)') }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>

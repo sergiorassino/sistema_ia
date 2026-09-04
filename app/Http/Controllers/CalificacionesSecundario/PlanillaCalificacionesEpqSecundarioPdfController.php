@@ -8,8 +8,6 @@ use App\Support\CalificacionesSecundario\Epq\CalificacionesEpqSecundarioCatalogo
 use App\Support\CalificacionesSecundario\Epq\PlanillaCalificacionesEpqSecundarioDatos;
 use App\Support\CalificacionesSecundario\Epq\PlanillaCalificacionesEpqSecundarioTcpdf;
 use App\Support\NivelSistema;
-use App\Support\PermisosIaCatalog;
-use App\Support\PortalDocente\PortalDocenteContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -29,13 +27,6 @@ class PlanillaCalificacionesEpqSecundarioPdfController extends Controller
             403,
             'Esta planilla corresponde al nivel secundario.',
         );
-
-        if (! request()->routeIs('portalDocente.*')) {
-            PortalDocenteContext::abortSiStaffSinPermisoIa(
-                PermisosIaCatalog::CALIF_CARGA,
-                'Sin permiso para generar planillas.',
-            );
-        }
 
         @ini_set('memory_limit', '512M');
 

@@ -85,36 +85,34 @@
             <span class="truncate">Carga por Espacio Curricular</span>
         </a>
         @endif
-        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA))
-            @if (\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::BOLETIN_PRIM))
+        @if (\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::BOLETIN_PRIM))
         <a href="{{ route(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::rutaStaff(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::BOLETIN_PRIM)) }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesPrimarioEpq.boletin'),
            ])
-           title="{{ seSidebarTooltip(tenantBoletinPrimarioMenuEtiquetaBoletinIpe(), 71) }}">
+           title="{{ seSidebarTooltip(tenantBoletinPrimarioMenuEtiquetaBoletinIpe()) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span class="truncate">{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}</span>
         </a>
-            @else
+        @else
         <a href="{{ route('calificacionesPrimario.boletinIpe') }}"
            @class([
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', 'calificacionesPrimario.boletinIpe'),
            ])
-           title="{{ seSidebarTooltip(tenantBoletinPrimarioMenuEtiquetaBoletinIpe(), 71) }}">
+           title="{{ seSidebarTooltip(tenantBoletinPrimarioMenuEtiquetaBoletinIpe()) }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span class="truncate">{{ tenantBoletinPrimarioMenuEtiquetaBoletinIpe() }}</span>
         </a>
-            @endif
         @endif
-        @if (tienePermiso(\App\Support\PermisosIaCatalog::CALIF_CARGA) && \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA))
+        @if (\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::moduloActivo(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA))
         @php
             $rutaPlanillaStaff = \App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::rutaStaff(\App\Support\CalificacionesPrimario\CalificacionesPrimarioModulos::PLANILLA);
             $prefijoPlanillaStaff = str_contains($rutaPlanillaStaff, 'Epq') ? 'calificacionesPrimarioEpq.planilla' : 'calificacionesPrimario.planilla';
@@ -124,7 +122,7 @@
                'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
                'is-active shadow-sm' => str_starts_with($route ?? '', $prefijoPlanillaStaff),
            ])
-           title="{{ seSidebarTooltip('Planilla de calificaciones (primario)', 71) }}">
+           title="{{ seSidebarTooltip('Planilla de calificaciones (primario)') }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
