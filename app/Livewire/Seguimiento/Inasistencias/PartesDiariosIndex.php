@@ -14,7 +14,7 @@ class PartesDiariosIndex extends Component
     /** @var list<array{id:int, label:string}> */
     public array $cursosSeleccionados = [];
 
-    /** ID de turnos_clase; solo aplica si hay un único curso seleccionado */
+    /** ID de turnos_clase; vacío = todos los turnos de cada curso. */
     public ?int $turnoElegido = null;
 
     /** Fecha del impreso y base para el día de la semana del horario (Y-m-d) */
@@ -88,9 +88,6 @@ class PartesDiariosIndex extends Component
             }
         }
         $this->cursosSeleccionados = $out;
-        if (count($this->cursosSeleccionados) !== 1) {
-            $this->turnoElegido = null;
-        }
         $this->modalCursoAbierto = false;
     }
 
@@ -117,15 +114,11 @@ class PartesDiariosIndex extends Component
         $this->cursosSeleccionados = array_values(
             array_filter($this->cursosSeleccionados, fn (array $c) => (int) $c['id'] !== $id)
         );
-        if (count($this->cursosSeleccionados) !== 1) {
-            $this->turnoElegido = null;
-        }
     }
 
     public function quitarTodosCursos(): void
     {
         $this->cursosSeleccionados = [];
-        $this->turnoElegido = null;
     }
 
     /** Etiqueta del día de la semana según {@see $fecha} (ISO, mismo criterio que el PDF). */
@@ -161,7 +154,46 @@ class PartesDiariosIndex extends Component
 
     public function puedeGenerarPdf(): bool
     {
-        return $this->cursosSeleccionados !== [] && $this->fechaValidaParaPdf();
+        if ($this->cursosSeleccionados === [] || ! $this->fechaValidaParaPdf()) {
+            return false;
+        }
+
+        return $this->cantidadHojasPdf() > 0;
+    }
+
+    /**
+     * Hojas que saldrían con la selección actual (curso × jornada).
+     */
+    public function cantidadHojasPdf(): int
+    {
+        $turno = $this->turnoElegido !== null && $this->turnoElegido > 0 ? $this->turnoElegido : null;
+        $n = 0;
+        foreach ($this->cursosConTurnoParaPdf() as $curso) {
+            $n += count(HorariosProfesores::turnosParaParteDiario($curso, $turno));
+        }
+
+        return $n;
+    }
+
+    /**
+     * Cursos seleccionados que tienen al menos un turno a imprimir.
+     *
+     * @return Collection<int, Curso>
+     */
+    private function cursosConTurnoParaPdf(): Collection
+    {
+        $ids = array_flip(array_map(fn (array $c) => (int) $c['id'], $this->cursosSeleccionados));
+        $turno = $this->turnoElegido !== null && $this->turnoElegido > 0 ? $this->turnoElegido : null;
+
+        return $this->cursosDelContexto()
+            ->filter(function (Curso $c) use ($ids, $turno) {
+                if (! isset($ids[(int) $c->Id])) {
+                    return false;
+                }
+
+                return HorariosProfesores::turnosParaParteDiario($c, $turno) !== [];
+            })
+            ->values();
     }
 
     /** @return Collection<int, Curso> */
@@ -176,32 +208,13 @@ class PartesDiariosIndex extends Component
     }
 
     /**
-     * Turnos de clase aplicables al único curso seleccionado (selector opcional).
+     * Turnos de clase del establecimiento (selector de filtro del parte).
      *
      * @return list<int>
      */
-    private function turnosParaUnicoCursoSeleccionado(): array
+    private function turnosParaSelector(): array
     {
-        if (count($this->cursosSeleccionados) !== 1) {
-            return [];
-        }
-
-        $id = (int) ($this->cursosSeleccionados[0]['id'] ?? 0);
-        if ($id <= 0) {
-            return [];
-        }
-
-        $curso = Curso::query()
-            ->where('idNivel', schoolCtx()->idNivel)
-            ->where('idTerlec', schoolCtx()->idTerlec)
-            ->where('Id', $id)
-            ->first(['Id', 'cursec', 'orden', 'idCurPlan', 'idTurnoClase', 'c', 's']);
-
-        if (! $curso) {
-            return [];
-        }
-
-        return HorariosProfesores::turnosParaImpresionCurso($curso);
+        return HorariosProfesores::turnosActivos();
     }
 
     private function recargarModalCursoLista(): void
@@ -225,10 +238,14 @@ class PartesDiariosIndex extends Component
     public function render()
     {
         $cursos = $this->cursosDelContexto();
-        $turnosCurso = $this->turnosParaUnicoCursoSeleccionado();
-        $mostrarSelectorTurno = count($this->cursosSeleccionados) === 1 && count($turnosCurso) > 1;
-
+        $turnosSelector = $this->turnosParaSelector();
+        $mostrarSelectorTurno = count($turnosSelector) > 1;
         $cantidadSeleccionados = count($this->cursosSeleccionados);
+        $cantidadHojas = $this->cantidadHojasPdf();
+        $cursosOmitidosPorTurno = 0;
+        if ($this->turnoElegido !== null && $this->turnoElegido > 0 && $cantidadSeleccionados > 0) {
+            $cursosOmitidosPorTurno = $cantidadSeleccionados - $this->cursosConTurnoParaPdf()->count();
+        }
 
         $pdfUrl = null;
         if ($this->puedeGenerarPdf()) {
@@ -241,7 +258,7 @@ class PartesDiariosIndex extends Component
             $pdfUrl = route('seguimiento.partes-diarios.pdf', array_filter([
                 'cursos' => $ids->implode(','),
                 'fecha' => $this->fecha !== '' ? $this->fecha : null,
-                'turnoElegido' => $mostrarSelectorTurno && $this->turnoElegido !== null && $this->turnoElegido > 0
+                'turnoElegido' => $this->turnoElegido !== null && $this->turnoElegido > 0
                     ? $this->turnoElegido
                     : null,
             ]));
@@ -249,11 +266,13 @@ class PartesDiariosIndex extends Component
 
         return view('livewire.seguimiento.inasistencias.partes-diarios-index', [
             'cursos' => $cursos,
-            'turnosCurso' => $turnosCurso,
+            'turnosSelector' => $turnosSelector,
             'mostrarSelectorTurno' => $mostrarSelectorTurno,
             'etiquetaDiaFecha' => $this->etiquetaDiaDesdeFecha(),
             'puedeGenerarPdf' => $this->puedeGenerarPdf(),
             'cantidadSeleccionados' => $cantidadSeleccionados,
+            'cantidadHojas' => $cantidadHojas,
+            'cursosOmitidosPorTurno' => $cursosOmitidosPorTurno,
             'pdfUrl' => $pdfUrl,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parte diario del preceptor']);
     }

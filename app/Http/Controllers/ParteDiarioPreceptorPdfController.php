@@ -82,6 +82,9 @@ class ParteDiarioPreceptorPdfController extends Controller
 
         $turnoElegido = (int) $request->query('turnoElegido', 0);
         $turnoElegido = $turnoElegido > 0 ? $turnoElegido : null;
+        if ($turnoElegido !== null && ! in_array($turnoElegido, HorariosProfesores::turnosActivos(), true)) {
+            $turnoElegido = null;
+        }
 
         if (tenantParteDiarioImplementacion() === 'sanfranciscoasis') {
             return $this->pdfSanfranciscoasis($ordenados, $fechaReferencia, $turnoElegido);
@@ -125,30 +128,34 @@ class ParteDiarioPreceptorPdfController extends Controller
         $nombreDia = HorariosProfesores::DIAS[$dia] ?? '';
         $lineaDia = $nombreDia !== '' ? 'Día: '.$nombreDia : '';
 
-        $unSoloCurso = count($ordenados) === 1;
+        $ctx = schoolCtx();
 
         $paginas = [];
         foreach ($ordenados as $curso) {
             $cursoId = (int) $curso->Id;
-            $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
-            if ($unSoloCurso && $turnoElegido !== null && $turnoElegido > 0 && in_array($turnoElegido, $turnos, true)) {
-                $idTurnoClase = $turnoElegido;
-            } else {
-                $idTurnoClase = (int) ($turnos[0] ?? 1);
-            }
-            if ($idTurnoClase <= 0) {
-                $idTurnoClase = 1;
-            }
+            $turnos = HorariosProfesores::turnosParaParteDiario($curso, $turnoElegido);
+            foreach ($turnos as $idTurnoClase) {
+                $idTurnoClase = (int) $idTurnoClase;
+                if ($idTurnoClase <= 0) {
+                    $idTurnoClase = 1;
+                }
 
-            $filas = HorariosProfesores::filasParteDiarioCursoDia($cursoId, $dia, $idTurnoClase);
+                $filas = HorariosProfesores::filasParteDiarioCursoDia(
+                    $cursoId,
+                    $dia,
+                    $idTurnoClase,
+                    (int) $ctx->idNivel,
+                    (int) $ctx->idTerlec,
+                );
 
-            $paginas[] = [
-                'subtitulo' => 'PARTE DIARIO DEL PRECEPTOR — '.$curso->nombreParaListado(),
-                'lineaDia' => $lineaDia,
-                'fechaTexto' => $fechaTexto,
-                'turnoTitulo' => HorariosProfesores::nombreTurnoClase($idTurnoClase),
-                'filasHorario' => $filas,
-            ];
+                $paginas[] = [
+                    'subtitulo' => 'PARTE DIARIO DEL PRECEPTOR — '.$curso->nombreParaListado(),
+                    'lineaDia' => $lineaDia,
+                    'fechaTexto' => $fechaTexto,
+                    'turnoTitulo' => HorariosProfesores::nombreTurnoClase($idTurnoClase),
+                    'filasHorario' => $filas,
+                ];
+            }
         }
 
         if ($paginas === []) {

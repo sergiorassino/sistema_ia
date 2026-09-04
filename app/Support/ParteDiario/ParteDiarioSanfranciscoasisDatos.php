@@ -30,8 +30,8 @@ final class ParteDiarioSanfranciscoasisDatos
             $dia = 1;
         }
         $fechaTexto = $fecha->format('d/m/Y');
-        $unSoloCurso = count($cursos) === 1;
         $paginas = [];
+        $ctx = schoolCtx();
 
         foreach ($cursos as $curso) {
             if (! $curso instanceof Curso) {
@@ -43,22 +43,34 @@ final class ParteDiarioSanfranciscoasisDatos
                 continue;
             }
 
-            $turnos = HorariosProfesores::turnosParaImpresionCurso($curso);
-            if ($unSoloCurso && $turnoElegido !== null && $turnoElegido > 0 && in_array($turnoElegido, $turnos, true)) {
-                $idTurnoClase = $turnoElegido;
-            } else {
-                $idTurnoClase = (int) ($turnos[0] ?? 1);
-            }
-            if ($idTurnoClase <= 0) {
-                $idTurnoClase = 1;
-            }
+            $turnos = HorariosProfesores::turnosParaParteDiario($curso, $turnoElegido);
+            $alumnos = self::alumnosRegulares($cursoId);
 
-            $paginas[] = [
-                'cursoLabel' => $curso->nombreParaListado(),
-                'fechaTexto' => $fechaTexto,
-                'alumnos' => self::alumnosRegulares($cursoId),
-                'filasFirma' => self::filasFirma($cursoId, $dia, $idTurnoClase),
-            ];
+            foreach ($turnos as $idTurnoClase) {
+                $idTurnoClase = (int) $idTurnoClase;
+                if ($idTurnoClase <= 0) {
+                    $idTurnoClase = 1;
+                }
+
+                $cursoLabel = $curso->nombreParaListado();
+                $nombreTurno = HorariosProfesores::nombreTurnoClase($idTurnoClase);
+                if ($nombreTurno !== '' && (count($turnos) > 1 || ($turnoElegido !== null && $turnoElegido > 0))) {
+                    $cursoLabel .= ' · '.$nombreTurno;
+                }
+
+                $paginas[] = [
+                    'cursoLabel' => $cursoLabel,
+                    'fechaTexto' => $fechaTexto,
+                    'alumnos' => $alumnos,
+                    'filasFirma' => self::filasFirma(
+                        $cursoId,
+                        $dia,
+                        $idTurnoClase,
+                        (int) $ctx->idNivel,
+                        (int) $ctx->idTerlec,
+                    ),
+                ];
+            }
         }
 
         return $paginas;
@@ -104,9 +116,20 @@ final class ParteDiarioSanfranciscoasisDatos
      *
      * @return list<array{etiqueta:string, espacio:string}>
      */
-    public static function filasFirma(int $idCurso, int $diaSemana1a7, int $idTurnoClase): array
-    {
-        $filas = HorariosProfesores::filasParteDiarioCursoDia($idCurso, $diaSemana1a7, $idTurnoClase);
+    public static function filasFirma(
+        int $idCurso,
+        int $diaSemana1a7,
+        int $idTurnoClase,
+        ?int $idNivel = null,
+        ?int $idTerlec = null,
+    ): array {
+        $filas = HorariosProfesores::filasParteDiarioCursoDia(
+            $idCurso,
+            $diaSemana1a7,
+            $idTurnoClase,
+            $idNivel,
+            $idTerlec,
+        );
         $out = [];
 
         for ($h = 1; $h <= self::HORAS_MARCADO; $h++) {

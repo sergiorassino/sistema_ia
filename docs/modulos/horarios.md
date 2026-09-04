@@ -91,7 +91,7 @@ Cátedra compartida: dos docentes de la misma materia pueden tildar la misma cel
 
 ### 3. Impresión de horarios
 
-PDF de la grilla **solo desde `horarios26`** (misma fuente que Carga).
+PDF de la grilla **solo desde `horarios26`** (misma fuente que Carga). El nombre del docente en cada celda es el de esa fila (`idProfesores`), no la lista `ppc` de la materia.
 
 1. Modo **por curso** o **por docente**; uno o varios.
 2. Turno opcional (si no, el del curso / los que tengan horas).

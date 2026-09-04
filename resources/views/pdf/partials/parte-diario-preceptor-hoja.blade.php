@@ -36,7 +36,7 @@
         + $altoBloqueManualMm + $gapMm + $altoThMm;
     // Holgura: el render DomPDF suele superar un poco las estimaciones de cabecera/meta.
     $holguraMm = 3.0;
-    $altoCuerpoFirmasMm = max($nFirmas * 5.5, $altoUtilMm - $altoFijoMm - $holguraMm);
+    $altoCuerpoFirmasMm = max($nFirmas * 8.0, $altoUtilMm - $altoFijoMm - $holguraMm);
     $altoFilaFirmaMm = round(($altoCuerpoFirmasMm / $nFirmas) * 0.98, 2);
 
     $hManual = number_format($altoFilaManualMm, 2, '.', '');
@@ -168,7 +168,7 @@
             <td class="celda-hora" style="width:{{ $pH }}%;min-width:0;max-width:{{ $pH }}%;height:{{ $hFirma }}mm;overflow:hidden;">
                 {{ $fila['etiquetaReloj'] }}
             </td>
-            <td class="celda-espacio" style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;height:{{ $hFirma }}mm;overflow:hidden;">
+            <td class="celda-espacio" style="width:{{ $pE }}%;min-width:0;max-width:{{ $pE }}%;height:{{ $hFirma }}mm;">
                 @php $lineasEsp = preg_split("/\r\n|\n|\r/", (string) ($fila['espacio'] ?? '')) ?: []; @endphp
                 @foreach ($lineasEsp as $ln)
                     @if (trim($ln) !== '')

@@ -988,13 +988,18 @@ final class HorariosProfesores
      *
      * @return list<array{hora:int, espacio:string, etiquetaReloj:string}>
      */
-    public static function filasParteDiarioCursoDia(int $idCurso, int $diaSemana1a7, int $idTurnoClase): array
-    {
+    public static function filasParteDiarioCursoDia(
+        int $idCurso,
+        int $diaSemana1a7,
+        int $idTurnoClase,
+        ?int $idNivel = null,
+        ?int $idTerlec = null,
+    ): array {
         if ($diaSemana1a7 < 1 || $diaSemana1a7 > 7) {
             return [];
         }
 
-        $grilla = self::grillaCurso($idCurso, $idTurnoClase);
+        $grilla = self::grillaCurso($idCurso, $idTurnoClase, $idNivel, $idTerlec);
         $reloj = $grilla['reloj'];
         $celdas = $grilla['celdas'];
         $filas = [];
@@ -1002,7 +1007,7 @@ final class HorariosProfesores
         foreach ($grilla['horas'] as $h) {
             $key = self::celdaKey($diaSemana1a7, $h);
             $lineas = $celdas[$key] ?? [];
-            $espacio = $lineas !== [] ? implode("\n", $lineas) : '';
+            $espacio = self::formatearEspacioParteDiario($lineas);
 
             $txtReloj = trim((string) ($reloj[$h] ?? ''));
             if ($txtReloj !== '') {
@@ -1019,6 +1024,45 @@ final class HorariosProfesores
         }
 
         return $filas;
+    }
+
+    /**
+     * Parte diario: materia y docente en renglones distintos (filas bajas; no recortar el nombre).
+     *
+     * @param  list<string>  $lineas  Textos de {@see grillaCurso} («MATERIA — Docente»).
+     */
+    private static function formatearEspacioParteDiario(array $lineas): string
+    {
+        $porMateria = [];
+        foreach ($lineas as $linea) {
+            $linea = trim((string) $linea);
+            if ($linea === '') {
+                continue;
+            }
+            $sep = ' — ';
+            $pos = mb_strpos($linea, $sep, 0, 'UTF-8');
+            if ($pos === false) {
+                $porMateria[$linea] ??= [];
+
+                continue;
+            }
+            $mat = trim(mb_substr($linea, 0, $pos, 'UTF-8'));
+            $prof = trim(mb_substr($linea, $pos + mb_strlen($sep, 'UTF-8'), null, 'UTF-8'));
+            if ($mat === '') {
+                $mat = $linea;
+            }
+            $porMateria[$mat] ??= [];
+            if ($prof !== '' && ! in_array($prof, $porMateria[$mat], true)) {
+                $porMateria[$mat][] = $prof;
+            }
+        }
+
+        $bloques = [];
+        foreach ($porMateria as $mat => $profs) {
+            $bloques[] = $profs === [] ? $mat : $mat."\n".implode(' / ', $profs);
+        }
+
+        return implode("\n", $bloques);
     }
 
     /**
@@ -1476,6 +1520,26 @@ final class HorariosProfesores
         }
 
         return array_values(array_filter($activos, fn (int $t) => $t === $idNorm)) ?: [$idNorm];
+    }
+
+    /**
+     * Turnos a imprimir en el parte diario.
+     * Sin filtro: todas las jornadas del curso (doble jornada → mañana y tarde).
+     * Con turno pedido: solo esa jornada, o vacío si el curso no la tiene.
+     *
+     * @return list<int>
+     */
+    public static function turnosParaParteDiario(Curso $curso, ?int $turnoElegido = null, ?int $idNivel = null): array
+    {
+        $turnos = self::turnosParaImpresionCurso($curso, $idNivel);
+        if ($turnos === []) {
+            return $turnoElegido !== null && $turnoElegido > 0 ? [] : [1];
+        }
+        if ($turnoElegido !== null && $turnoElegido > 0) {
+            return in_array($turnoElegido, $turnos, true) ? [$turnoElegido] : [];
+        }
+
+        return $turnos;
     }
 
     /**
@@ -2401,35 +2465,13 @@ TXT;
     }
 
     /**
-     * Nombre docente junto al texto de materia en grilla por curso: sólo muestra profesor cargado si está en ppc;
-     * si no, cae la lista sólo‑ppc para esa materia (alineado con el módulo de asignación).
+     * Docente de la celda en PDF por curso: el cargado en {@see horarios26} (misma fuente que Carga).
+     * La lista ppc de la materia solo se usa si la fila no tiene docente.
      *
      * @param  object{apellido?: string|null, nombre?: string|null}  $r
      */
     private static function nombreProfesorFilaImpresionCurso(object $r, int $idMateria, int $idProfesor, int $idCurso): string
     {
-        if ($idMateria <= 0 || $idCurso <= 0) {
-            return self::nombreProfesorFila($r, $idMateria, $idProfesor);
-        }
-
-        $delJoin = trim(((string) ($r->apellido ?? '')).', '.((string) ($r->nombre ?? '')));
-        $delJoin = trim($delJoin, ', ');
-
-        if ($idProfesor > 0) {
-            if (! self::profesorTieneAsignacion($idProfesor, $idMateria, $idCurso)) {
-                return self::nombresProfesoresMateria($idMateria);
-            }
-            if ($delJoin !== '') {
-                return $delJoin;
-            }
-            $p = DB::table('profesores')->where('id', $idProfesor)->first(['apellido', 'nombre']);
-            if ($p) {
-                return trim(((string) $p->apellido).', '.((string) $p->nombre));
-            }
-
-            return self::nombresProfesoresMateria($idMateria);
-        }
-
         return self::nombreProfesorFila($r, $idMateria, $idProfesor);
     }
 

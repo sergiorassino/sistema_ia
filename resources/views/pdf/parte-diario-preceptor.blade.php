@@ -148,21 +148,24 @@
             padding: 0 2px;
             vertical-align: middle;
         }
-        .celda-hora {
+        table.grid td.celda-hora,
+        table.grid td.celda-espacio,
+        table.grid td.celda-firma {
+            vertical-align: middle;
+        }
+        table.grid td.celda-hora {
             text-align: center;
             font-size: 5.8pt;
             font-weight: 700;
             padding: 1px 2px;
-            vertical-align: middle;
         }
-        .celda-espacio {
+        table.grid td.celda-espacio {
             text-align: left;
             font-size: 6pt;
-            line-height: 1.1;
-            vertical-align: middle;
+            line-height: 1.15;
         }
-        .celda-firma {
-            vertical-align: middle;
+        table.grid td.celda-espacio div {
+            line-height: 1.15;
         }
     </style>
 </head>

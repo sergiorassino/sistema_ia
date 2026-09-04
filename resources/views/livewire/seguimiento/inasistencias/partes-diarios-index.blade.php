@@ -18,8 +18,8 @@
         <div class="border-b border-accent-200 bg-white px-5 py-4">
             <p class="text-sm text-neutral-700">
                 Genere el impreso en PDF por uno, varios o todos los cursos de la misma fecha. El día de la semana y el
-                horario mostrado se toman de esa fecha. Los espacios curriculares y docentes provienen del horario cargado
-                para el ciclo lectivo actual.
+                horario mostrado se toman de esa fecha. Elegí el turno para imprimir solo esa jornada (por ejemplo solo tarde);
+                si dejás todos, un curso de doble jornada genera una hoja por cada turno.
             </p>
         </div>
 
@@ -78,18 +78,25 @@
             <div class="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                 @if ($mostrarSelectorTurno)
                     <div>
-                        <label for="se-partes-turno" class="form-label">Turno</label>
+                        <label for="se-partes-turno" class="form-label">Turno a imprimir</label>
                         <select id="se-partes-turno"
                                 wire:model.live="turnoElegido"
                                 class="form-select mt-1.5">
-                            <option value="">— Primer turno (predeterminado) —</option>
-                            @foreach ($turnosCurso as $tid)
+                            <option value="">Todos los turnos</option>
+                            @foreach ($turnosSelector as $tid)
                                 <option value="{{ $tid }}">{{ HorariosProfesores::nombreTurnoClase($tid) }}</option>
                             @endforeach
                         </select>
                         <p class="mt-1 text-xs text-neutral-500">
-                            Solo aplica al único curso seleccionado.
+                            Si elegís un turno, solo se imprimen los partes de esa jornada.
                         </p>
+                        @if ($cursosOmitidosPorTurno > 0)
+                            <p class="mt-1 text-xs text-amber-800">
+                                Se omiten {{ $cursosOmitidosPorTurno }}
+                                {{ $cursosOmitidosPorTurno === 1 ? 'curso' : 'cursos' }}
+                                que no tienen ese turno.
+                            </p>
+                        @endif
                     </div>
                 @endif
                 <div class="{{ $mostrarSelectorTurno ? '' : 'md:col-span-2' }}">
@@ -116,8 +123,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
-                        @if ($cantidadSeleccionados > 1)
-                            Imprimir {{ $cantidadSeleccionados }} partes (PDF)
+                        @if ($cantidadHojas > 1)
+                            Imprimir {{ $cantidadHojas }} partes (PDF)
                         @else
                             Descargar / ver PDF
                         @endif
@@ -147,7 +154,21 @@
                         </div>
 
                         <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">
-                            <label for="pd-modal-curso-filtro" class="form-label">Filtrar por nombre</label>
+                            @if ($mostrarSelectorTurno)
+                                <label for="pd-modal-curso-turno" class="form-label">Turno a imprimir</label>
+                                <select id="pd-modal-curso-turno"
+                                        wire:model.live="turnoElegido"
+                                        class="form-select mt-1.5">
+                                    <option value="">Todos los turnos</option>
+                                    @foreach ($turnosSelector as $tid)
+                                        <option value="{{ $tid }}">{{ HorariosProfesores::nombreTurnoClase($tid) }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-[11px] text-neutral-500">
+                                    Solo se imprimen los partes de este turno. Los cursos que no lo tienen se omiten.
+                                </p>
+                            @endif
+                            <label for="pd-modal-curso-filtro" class="form-label {{ $mostrarSelectorTurno ? 'mt-2.5' : '' }}">Filtrar por nombre</label>
                             <input id="pd-modal-curso-filtro"
                                    type="text"
                                    wire:model.live.debounce.300ms="modalCursoFiltro"
