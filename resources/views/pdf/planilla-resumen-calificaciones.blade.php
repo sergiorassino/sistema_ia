@@ -103,6 +103,7 @@
         }
         .pie-linea { line-height: 1.15; }
         .pie-lbl { font-weight: 700; }
+        .pie-rep-rojo { color: #c00 !important; }
     </style>
 </head>
 <body>

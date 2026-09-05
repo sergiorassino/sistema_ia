@@ -152,7 +152,7 @@
 
                 @endif
 
-                Gris = recuperatorio; rojo = nota &lt; 7.
+                Gris = recuperatorio; rojo = nota &lt; 7. Nº Rep. = materias con al menos un módulo 1-8 en rojo.
 
             </p>
 

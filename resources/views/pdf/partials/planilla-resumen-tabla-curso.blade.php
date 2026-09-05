@@ -67,7 +67,9 @@
             $matCells = $est['materias'] ?? [];
             $res = $est['resumen'] ?? [];
             $partesPie = [];
-            $partesPie[] = '<span class="pie-lbl">Nº Rep:</span> '.(int) ($res['numRep'] ?? 0);
+            $numRep = (int) ($res['numRep'] ?? 0);
+            $clsRep = $numRep > 0 ? 'pie-rep-rojo' : '';
+            $partesPie[] = '<span class="'.$clsRep.'"><span class="pie-lbl">Nº Rep:</span> '.$numRep.'</span>';
             if (trim((string) ($res['inas'] ?? '')) !== '') {
                 $partesPie[] = '<span class="pie-lbl">Inas:</span> '.e($res['inas']);
             }

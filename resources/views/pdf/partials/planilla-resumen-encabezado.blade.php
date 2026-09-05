@@ -15,5 +15,5 @@
 <p class="leyenda">
     Líneas 1 y 2: módulos 1 a 8. Línea 3: JIS 1, JIS 2 y promedio anual. Línea 4: coloquios dic. y feb.
     Fondo gris: módulo aprobado con recuperatorio. Texto rojo: mejor nota inferior a 7.
-    Línea 5: Nº Rep., Inas., Amon., Ed.Fi. (inas. a educación física), Prom.Gral. (solo si hay promedio en todas las materias), Previas.
+    Línea 5: Nº Rep. (materias con al menos un módulo 1-8 con mejor nota inferior a 7), Inas., Amon., Ed.Fi. (inas. a educación física), Prom.Gral. (solo si hay promedio en todas las materias), Previas.
 </p>

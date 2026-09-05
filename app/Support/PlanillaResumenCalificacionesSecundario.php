@@ -220,12 +220,14 @@ final class PlanillaResumenCalificacionesSecundario
 
             $porMateria = [];
             $promediosMateria = [];
+            $filasMateria = [];
 
             foreach ($materiasLista as $matDef) {
                 $idMateria = (int) $matDef['id'];
                 $row = $prep['califsPorLegajo'][$idLegajo][$idMateria] ?? self::filaCalificacionVacia();
                 $porMateria[$idMateria] = self::celdasMateria($row);
                 $promediosMateria[] = trim((string) ($row['calif'] ?? ''));
+                $filasMateria[] = $row;
             }
 
             $estudiantes[] = [
@@ -233,6 +235,7 @@ final class PlanillaResumenCalificacionesSecundario
                 'alumno' => trim(((string) ($legajo?->apellido ?? '')).', '.((string) ($legajo?->nombre ?? ''))),
                 'materias' => $porMateria,
                 'resumen' => self::resumenEstudiante(
+                    $filasMateria,
                     $promediosMateria,
                     count($materiasLista),
                     $prep['inasPorMatricula'][$idMatricula] ?? null,
@@ -338,6 +341,7 @@ final class PlanillaResumenCalificacionesSecundario
     }
 
     /**
+     * @param  list<array<string, string>>  $filasMateria  Una fila `ic01`…`ic24` por materia del curso
      * @param  list<string>  $promediosMateria
      * @param  list<object{etiqueta: string, fuente: string, total: float}>  $items
      * @return array{
@@ -350,6 +354,7 @@ final class PlanillaResumenCalificacionesSecundario
      * }
      */
     private static function resumenEstudiante(
+        array $filasMateria,
         array $promediosMateria,
         int $totalMateriasAnio,
         ?InasistenciasResumen $inasResumen,
@@ -372,7 +377,7 @@ final class PlanillaResumenCalificacionesSecundario
         }
 
         return [
-            'numRep' => self::contarReprobadas($promediosMateria),
+            'numRep' => self::contarReprobadas($filasMateria),
             'inas' => $inas,
             'amon' => $amon,
             'edFi' => $edFi,
@@ -434,23 +439,41 @@ final class PlanillaResumenCalificacionesSecundario
     }
 
     /**
-     * @param  list<string>  $promediosMateria
+     * Materias con al menos un módulo 1–8 cuya mejor nota (incl. recuperatorio) es inferior a 7.
+     * Igual criterio que el texto rojo de la grilla; no usa el promedio anual (`calif`).
+     *
+     * @param  list<array<string, string>>  $filasMateria
      */
-    private static function contarReprobadas(array $promediosMateria): int
+    public static function contarReprobadas(array $filasMateria): int
     {
         $n = 0;
-        foreach ($promediosMateria as $p) {
-            $s = trim($p);
-            if ($s === '') {
-                continue;
-            }
-            $v = str_replace(',', '.', $s);
-            if (is_numeric($v) && (float) $v < PromedioAnualCalificacionesSecundario::DEFAULT_NOTA_MINIMA_APROBACION) {
+        foreach ($filasMateria as $row) {
+            if (self::materiaTieneModuloDesaprobado($row)) {
                 $n++;
             }
         }
 
         return $n;
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     */
+    private static function materiaTieneModuloDesaprobado(array $row): bool
+    {
+        for ($n = 1; $n <= 8; $n++) {
+            $base = ($n - 1) * 3 + 1;
+            $campos = [
+                sprintf('ic%02d', $base),
+                sprintf('ic%02d', $base + 1),
+                sprintf('ic%02d', $base + 2),
+            ];
+            if (PromedioAnualCalificacionesSecundario::bloqueDesaprobado($campos, $row)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

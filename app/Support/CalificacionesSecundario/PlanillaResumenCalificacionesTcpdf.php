@@ -43,7 +43,7 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
 
     private const ANCHO_LOGO = 14.0;
 
-    private const LEYENDA = 'Líneas 1 y 2: módulos 1 a 8. Línea 3: JIS 1, JIS 2 y promedio anual. Línea 4: coloquios dic. y feb. Fondo gris: módulo aprobado con recuperatorio. Texto rojo: mejor nota inferior a 7. Línea 5: Nº Rep., Inas., Amon., Ed.Fi. (inas. a educación física), Prom.Gral. (solo si hay promedio en todas las materias), Previas.';
+    private const LEYENDA = 'Líneas 1 y 2: módulos 1 a 8. Línea 3: JIS 1, JIS 2 y promedio anual. Línea 4: coloquios dic. y feb. Fondo gris: módulo aprobado con recuperatorio. Texto rojo: mejor nota inferior a 7. Línea 5: Nº Rep. (materias con al menos un módulo 1-8 con mejor nota inferior a 7), Inas., Amon., Ed.Fi. (inas. a educación física), Prom.Gral. (solo si hay promedio en todas las materias), Previas.';
 
     /** @var array{insti: string, direccion: string, localidad: string, cue: string, ee: string, logo_file: ?string} */
     private array $pdfHeader;
@@ -478,11 +478,12 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
         $this->Rect($x, $y, $w, $h, 'D');
 
         $partes = [];
-        $partes[] = ['Nº Rep:', (string) (int) ($res['numRep'] ?? 0)];
+        $numRep = (int) ($res['numRep'] ?? 0);
+        $partes[] = ['Nº Rep:', (string) $numRep, $numRep > 0];
         foreach (['inas' => 'Inas:', 'amon' => 'Amon:', 'edFi' => 'Ed.Fi:', 'promGral' => 'Prom.Gral:', 'previas' => 'Previas:'] as $key => $lbl) {
             $val = trim((string) ($res[$key] ?? ''));
             if ($val !== '') {
-                $partes[] = [$lbl, $val];
+                $partes[] = [$lbl, $val, false];
             }
         }
 
@@ -490,7 +491,8 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
         $maxX = $x + $w - 0.5;
         $textY = $y + max(0.15, ($h - ($fontPt * 0.35)) / 2);
 
-        foreach ($partes as $i => [$lbl, $val]) {
+        foreach ($partes as $i => [$lbl, $val, $rojo]) {
+            $color = $rojo ? self::COLOR_ROJO : [0, 0, 0];
             if ($i > 0) {
                 $sep = ' — ';
                 TcpdfFuenteArial::aplicar($this, '', $fontPt);
@@ -505,7 +507,7 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
             }
 
             TcpdfFuenteArial::aplicar($this, 'B', $fontPt);
-            $this->SetTextColor(0, 0, 0);
+            $this->SetTextColor(...$color);
             $swL = $this->GetStringWidth($lbl.' ');
             if ($cursorX + $swL > $maxX) {
                 break;
@@ -515,6 +517,7 @@ final class PlanillaResumenCalificacionesTcpdf extends TCPDF
             $cursorX += $swL;
 
             TcpdfFuenteArial::aplicar($this, '', $fontPt);
+            $this->SetTextColor(...$color);
             $restante = $maxX - $cursorX;
             if ($restante < 1.5) {
                 break;
