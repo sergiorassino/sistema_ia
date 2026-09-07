@@ -76,6 +76,8 @@ use App\Livewire\Examenes\MateriasAdeudadasGestionIndex;
 use App\Livewire\Examenes\MateriasAdeudadasListadoIndex;
 use App\Livewire\Examenes\TercerMateriaIndex;
 use App\Http\Controllers\SancionComunicadoPdfController;
+use App\Http\Controllers\GabineteActaPdfController;
+use App\Http\Controllers\GabineteHistorialPdfController;
 use App\Livewire\Abm\Curplan\CurplanForm;
 use App\Livewire\Aspirantes\AspirantesIndex;
 use App\Livewire\Aspirantes\CursosModeloIndex as AspirantesCursosModeloIndex;
@@ -336,6 +338,9 @@ use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionActaForm;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
+use App\Livewire\Seguimiento\Gabinete\GabineteAlumnoIndex;
+use App\Livewire\Seguimiento\Gabinete\GabineteForm;
+use App\Livewire\Seguimiento\Gabinete\GabineteIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
 use App\Livewire\Horarios\HorariosCargaIndex;
 use App\Livewire\Horarios\HorariosConfigIndex;
@@ -1500,6 +1505,25 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
 
         Route::post('/seguimiento/disciplinario/antecedentes/pdf', AntecedentesDisciplinariosPdfController::class)
             ->name('seguimiento.disciplinario.antecedentes.pdf');
+    });
+
+    // Seguimiento de gabinete de orientación (permiso orden 103)
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::SEGUIMIENTO_GABINETE)->group(function () {
+        Route::get('/seguimiento/gabinete', GabineteIndex::class)
+            ->name('seguimiento.gabinete');
+        Route::get('/seguimiento/gabinete/alumno', GabineteAlumnoIndex::class)
+            ->name('seguimiento.gabinete.alumno');
+        Route::get('/seguimiento/gabinete/nuevo', GabineteForm::class)
+            ->name('seguimiento.gabinete.create');
+        Route::get('/seguimiento/gabinete/acta/{ref}', GabineteActaPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('seguimiento.gabinete.acta');
+        Route::get('/seguimiento/gabinete/historial/{ref}', GabineteHistorialPdfController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('seguimiento.gabinete.historial');
+        Route::get('/seguimiento/gabinete/{id}/editar', GabineteForm::class)
+            ->whereNumber('id')
+            ->name('seguimiento.gabinete.edit');
     });
 
     // Gestión de inasistencias (permiso orden 38)

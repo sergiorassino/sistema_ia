@@ -10,7 +10,7 @@ Bandeja de comunicados entre personal y familias (y entre roles de personal), co
 |------------|------------------|----------|
 | **Menú de Secretaría / Administración** | Permiso IA **3** bandeja; **4** nuevo comunicado y grupos | Mismos Livewire que docentes |
 | **Menú de Docentes** | Portal docente (sin permiso 4 extra) | Bandeja, nuevo, **Mis grupos** |
-| **Menú de Alumnos** | Autogestión familia | Bandeja y nuevo hacia personal; **sin grupos** (un destinatario por envío) |
+| **Menú de Alumnos** | Autogestión familia (`tenantAutogestionComunicacionesHabilitada()`) | Bandeja, nuevo hacia personal y push; **sin grupos**. Default on; un tenant puede ocultarlo con `autogestion.comunicaciones.habilitado` o `niveles_deshabilitados`. **SFQ:** visible en inicial y primario. **EPQ:** oculto en primario (`[2]`). |
 
 ## Actores y permisos
 

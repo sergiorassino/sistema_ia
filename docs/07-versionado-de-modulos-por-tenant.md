@@ -81,6 +81,8 @@ Horario de clase en PDF (portal familia; default off): `autogestion.horario_clas
 
 Informes pedagógicos inicial SFQ en autogestión familia (default off; SFQ los activa): `autogestion.boletin_inicial_sfq` + `tenantAutogestionBoletinInicialSfqHabilitada()`, y `calificaciones_inicial.boletin.implementacion` = `sfq`. Detalle: [modulos/informe-pedagogico-inicial-sfq.md](modulos/informe-pedagogico-inicial-sfq.md).
 
+Comunicación institucional en autogestión familia (default on; helper `tenantAutogestionComunicacionesHabilitada()`). Ocultar por nivel con `autogestion.comunicaciones.niveles_deshabilitados`. **EPQ** oculta primario (`[2]`); **SFQ** lo muestra en inicial y primario (sin override). Detalle: [modulos/comunicacion-institucional.md](modulos/comunicacion-institucional.md).
+
 Comprobante de cobro tras imputar un pago — dos talonarios idénticos por hoja A4 (default off; SFQ y EPQ lo activan): `cuotas.comprobante_imputacion.dos_copias_por_hoja` + `tenantCuotasComprobanteImputacionDosCopiasPorHoja()`. Detalle: [modulos/imputar-pago.md](modulos/imputar-pago.md).
 
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
@@ -299,6 +301,7 @@ Ver también [08-menus-de-navegacion.md](08-menus-de-navegacion.md) §3 (sidebar
 | **Listados con formato** | `App\Livewire\Listados\ListadoEstudiantesFormato`, `ListadoEstudiantesFormatoPdfController`, `App\Support\Listados\ListadoEstudiantesFormato*` | `listados.estudiantes-formato`, `portalDocente.listados.estudiantesFormato` |
 | **Legajos** | `App\Livewire\Abm\Legajos\*`, `LegajoForm` + `solapas_legajo` / `campos_legajo` | `abm.legajos`, `param.campos-listado-alumnos`, `param.solapas-legajo` |
 | **Seguimiento disciplinario** | `App\Livewire\Seguimiento\Disciplinario\*` | `seguimiento.disciplinario` |
+| **Seguimiento de gabinete** | `App\Livewire\Seguimiento\Gabinete\*`, `GabineteActaPdfController`, `GabineteHistorialPdfController` | `seguimiento.gabinete` |
 | **Calificaciones secundario** | `App\Livewire\Calificaciones\*` | `calificacionesSecundario.*` |
 | **Boletines secundario** | `App\Livewire\BoletinesSecundario\*`, `BoletinSecundarioPdfController` | `boletinesSecundario.index`, `boletinesSecundario.pdf` |
 | **Libro de temas** | `App\Livewire\Docentes\LibroDeTemas\*`, `LibroDeTemasService` | `docentes.libro-de-temas`, `portalDocente.libroDeTemas` |

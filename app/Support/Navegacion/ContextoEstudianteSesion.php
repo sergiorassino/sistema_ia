@@ -15,6 +15,8 @@ final class ContextoEstudianteSesion
 
     public const SEGUIMIENTO_DISCIPLINARIO_ANTECEDENTES = 'seguimiento_disciplinario_antecedentes';
 
+    public const SEGUIMIENTO_GABINETE = 'seguimiento_gabinete';
+
     public const PORTAL_DOCENTE_CUADERNO = 'portal_docente_cuaderno';
 
     public const MATRIZ_ANALITICOS = 'matriz_analiticos';

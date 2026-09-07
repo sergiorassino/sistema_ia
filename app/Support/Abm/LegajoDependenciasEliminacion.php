@@ -25,6 +25,7 @@ final class LegajoDependenciasEliminacion
         'cuotasgeneradas' => 'Cuotas generadas',
         'inasistencias' => 'Inasistencias',
         'sanciones' => 'Sanciones / seguimiento disciplinario',
+        'gabinete' => 'Seguimiento de gabinete',
         'infoxobse' => 'Observaciones de informe',
         'calificaciones_obs' => 'Observaciones de calificaciones',
     ];
@@ -43,6 +44,7 @@ final class LegajoDependenciasEliminacion
         'ief' => 'Registros IEF',
         'apf' => 'Vínculos familiares',
         'variosalumnos' => 'Datos varios',
+        'gabinetemarca' => 'Marca de gabinete',
     ];
 
     /**
@@ -54,6 +56,8 @@ final class LegajoDependenciasEliminacion
         'cuotasgeneradas' => 'cuotas generadas',
         'inasistencias' => 'inasistencias',
         'sanciones' => 'sanciones / seguimiento disciplinario',
+        'gabinete' => 'seguimiento de gabinete',
+        'gabinetemarca' => 'marca de gabinete',
         'calificaciones' => 'calificaciones',
         'matricula' => 'matrículas',
         'ief' => 'registros IEF',

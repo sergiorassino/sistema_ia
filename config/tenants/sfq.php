@@ -132,8 +132,12 @@ return [
 
     'autogestion' => [
         /*
-         | Menú de Alumnos — primario (nivel 2): boletín EPQ, Gestión de Aranceles e Inicio.
-         | Inicial (nivel 1): informes pedagógicos SFQ (diagnóstico, etapas y Bellas Artes), aranceles e inicio.
+         | Menú de Alumnos — primario (nivel 2): boletín EPQ, Gestión de Aranceles, Inicio
+         | y comunicación institucional (bandeja, nuevo comunicado, push).
+         | Inicial (nivel 1): informes pedagógicos SFQ (diagnóstico, etapas y Bellas Artes),
+         | aranceles, inicio y comunicación institucional.
+         | Comunicaciones: default del tenant (habilitado en todos los niveles); no copiar
+         | el `niveles_deshabilitados => [2]` de EPQ.
          */
         'actualizacion_datos' => [
             'habilitado' => true,
@@ -150,9 +154,6 @@ return [
             'boton_pagos' => [
                 'url' => 'https://siropagos.bancoroela.com.ar',
             ],
-        ],
-        'comunicaciones' => [
-            'niveles_deshabilitados' => [2],
         ],
         'boletin_prim_epq' => [
             'habilitado' => true,

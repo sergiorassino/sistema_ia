@@ -86,6 +86,10 @@ final class OpaqueRouteToken
 
     public const PURPOSE_LISTADO_FAMILIAS_XLSX = 'listados.familias.excel';
 
+    public const PURPOSE_GABINETE_ACTA = 'seguimiento.gabinete.acta';
+
+    public const PURPOSE_GABINETE_HISTORIAL = 'seguimiento.gabinete.historial';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -350,6 +354,21 @@ final class OpaqueRouteToken
     public static function forListadoFamiliasExcel(array $filtros): string
     {
         return self::encodePayload(self::PURPOSE_LISTADO_FAMILIAS_XLSX, $filtros);
+    }
+
+    public static function forGabineteActa(int $idGabinete, int $idLegajo): string
+    {
+        return self::encodePayload(self::PURPOSE_GABINETE_ACTA, [
+            'g' => $idGabinete,
+            'l' => $idLegajo,
+        ]);
+    }
+
+    public static function forGabineteHistorial(int $idLegajo): string
+    {
+        return self::encodePayload(self::PURPOSE_GABINETE_HISTORIAL, [
+            'l' => $idLegajo,
+        ]);
     }
 
     /**

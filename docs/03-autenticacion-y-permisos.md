@@ -203,6 +203,7 @@ permisos_ia = "111111111111111..."
 - Helper global: `tienePermiso(int $orden)` (lee `profesores.permisos_ia`).
 - Configuración granular (órdenes 25–36): `tienePermisoConfig($orden)` → alias de `tienePermiso`.
 - Seguimiento disciplinario: orden **37** (`PermisosIaCatalog::SEGUIMIENTO_DISCIPLINARIO`).
+- Seguimiento de gabinete de orientación: orden **103** (`PermisosIaCatalog::SEGUIMIENTO_GABINETE`).
 - Gestión de inasistencias del estudiante: orden **38** (`PermisosIaCatalog::INASISTENCIAS_ESTUDIANTES_GESTION`).
 - Gestión de TEA por inasistencias: orden **85** (`PermisosIaCatalog::TEA_ESTUDIANTES_GESTION`).
 - Recalcular promedios (secundario): orden **94** (`PermisosIaCatalog::CALIF_RECALCULO_PROMEDIOS`).

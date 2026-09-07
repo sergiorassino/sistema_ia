@@ -252,6 +252,78 @@
         text-align: right;
     }
 
+    .se-gabinete-nombre--verde {
+        background-color: #86efac;
+        color: #333333;
+    }
+    .se-gabinete-nombre--amarillo {
+        background-color: #facc15;
+        color: #333333;
+    }
+    .se-gabinete-nombre--rojo {
+        background-color: #fca5a5;
+        color: #333333;
+    }
+    .se-gabinete-chip {
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        box-shadow: inset 0 0 0 1px rgba(51, 51, 51, 0.15);
+        cursor: pointer;
+    }
+    .se-gabinete-chip--verde { background-color: #34d399; }
+    .se-gabinete-chip--amarillo { background-color: #fbbf24; }
+    .se-gabinete-chip--rojo { background-color: #f87171; }
+    .se-gabinete-chip.is-active {
+        border-color: #40848D;
+        box-shadow: 0 0 0 2px rgba(64, 132, 141, 0.25);
+    }
+    .se-gabinete-registros-tabla {
+        width: 100%;
+        min-width: 64rem;
+        table-layout: fixed;
+        border-collapse: collapse;
+        flex-shrink: 0;
+    }
+    .se-gabinete-registros-tabla .table-header,
+    .se-gabinete-registros-tabla .table-cell {
+        overflow: hidden;
+        vertical-align: top;
+    }
+    .se-gabinete-registros-tabla col.se-gab-col-fecha { width: 7.5rem; }
+    .se-gabinete-registros-tabla col.se-gab-col-tipo { width: 12rem; }
+    .se-gabinete-registros-tabla col.se-gab-col-soli { width: 11rem; }
+    .se-gabinete-registros-tabla col.se-gab-col-motivo { width: auto; }
+    .se-gabinete-registros-tabla col.se-gab-col-acciones { width: 21rem; }
+    .se-gabinete-registros-tabla .se-gab-col-fecha {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+    .se-gabinete-registros-tabla .se-gab-col-tipo,
+    .se-gabinete-registros-tabla .se-gab-col-soli {
+        overflow-wrap: anywhere;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+    }
+    .se-gabinete-registros-tabla .se-gab-motivo {
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #525252;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+    .se-gabinete-registros-tabla .se-gab-acciones-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    .se-gabinete-registros-tabla .table-header.se-gab-th-acciones {
+        text-align: right;
+    }
+
     /* Tablas con orden por clic en cabecera (estadística, etc.) */
     [data-se-tabla-ordenable] thead th.se-th-sortable {
         cursor: pointer;

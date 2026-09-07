@@ -128,6 +128,9 @@ final class PermisosIaCatalog
 
     public const SEGUIMIENTO_DISCIPLINARIO = 37;
 
+    /** Seguimiento de gabinete de orientación (tablas gabinete / gabinetetipo). */
+    public const SEGUIMIENTO_GABINETE = 103;
+
     public const INASISTENCIAS_ESTUDIANTES_GESTION = 38;
 
     public const ASPIRANTES_GESTION = 39;
@@ -301,6 +304,7 @@ final class PermisosIaCatalog
             ['id' => 37, 'orden' => PermisosConfiguracion::CURSOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de cursos / grados / salas del año.')],
             ['id' => 38, 'orden' => PermisosConfiguracion::MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Gestión de asignaturas del año.')],
             ['id' => 39, 'orden' => self::SEGUIMIENTO_DISCIPLINARIO, 'tema' => 'SEGUIMIENTO DISCIPLINARIO', 'descripcion' => 'Registro de sanciones, antecedentes disciplinarios e impresión de comunicados.'],
+            ['id' => 103, 'orden' => self::SEGUIMIENTO_GABINETE, 'tema' => 'SEGUIMIENTO DE GABINETE', 'descripcion' => 'Seguimiento de gabinete de orientación: listado de estudiantes, alta/edición/baja de registros, marcas de color e impresión de actas e historial PDF.'],
             ['id' => 40, 'orden' => self::INASISTENCIAS_ESTUDIANTES_GESTION, 'tema' => 'ASISTENCIA ESTUDIANTES', 'descripcion' => 'Gestión de inasistencias del estudiante: alta, edición, baja e informe individual en PDF.'],
             ['id' => 41, 'orden' => self::ASPIRANTES_GESTION, 'tema' => 'ASPIRANTES', 'descripcion' => 'Gestión de aspirantes: parametrización de la instancia de registro, cursos disponibles y listado de inscriptos.'],
             ['id' => 42, 'orden' => self::ASPIRANTES_CAMPOS, 'tema' => 'CONFIGURACIÓN', 'descripcion' => 'Campos activos del formulario público de aspirantes.'],

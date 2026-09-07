@@ -24,6 +24,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | C.U.S. e I.S.A. (autogestión familia) | [cus-isa-autogestion.md](cus-isa-autogestion.md) |
 | Informes pedagógicos inicial (SFQ) | [informe-pedagogico-inicial-sfq.md](informe-pedagogico-inicial-sfq.md) |
 | Seguimiento disciplinario | [seguimiento-disciplinario.md](seguimiento-disciplinario.md) |
+| Seguimiento de gabinete de orientación | [seguimiento-gabinete.md](seguimiento-gabinete.md) |
 | Bloqueos de matrícula | [bloqueos-matricula.md](bloqueos-matricula.md) |
 | Capacitación docente | [capacitacion-docente.md](capacitacion-docente.md) |
 | Comunicación institucional | [comunicacion-institucional.md](comunicacion-institucional.md) |

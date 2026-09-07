@@ -77,6 +77,11 @@ class Matricula extends Model
         return $this->hasMany(Sancion::class, 'idMatricula');
     }
 
+    public function gabinete()
+    {
+        return $this->hasMany(Gabinete::class, 'idMatricula');
+    }
+
     public function inasistencias()
     {
         return $this->hasMany(Inasistencia::class, 'idMatricula');
