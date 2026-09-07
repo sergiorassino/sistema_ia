@@ -28,7 +28,9 @@ Registrar, editar, borrar e imprimir eventos del gabinete de orientación por es
 | `gabinetemarca` | `idLegajos`, `color` | Tabla **nueva**. `color`: 0 sin marca, 1 verde, 2 amarillo, 3 rojo. Una fila por legajo. |
 | `matricula` / `legajos` / `cursos` | Alcance por contexto | Selector: condiciones 1–4. |
 
-Migración marca: `database/migrations/2026_09_07_120000_create_gabinetemarca_table.php`.  
+SQL tablas (colegios sin esquema): `database/sql/gabinete_tablas_idempotente.sql` (`gabinetetipo` + `gabinete` + `gabinetemarca`; CREATE IF NOT EXISTS + columnas faltantes).  
+Migración tablas: `database/migrations/2026_09_07_122000_create_gabinete_tables_if_missing.php`.  
+Migración marca (solo `gabinetemarca`): `database/migrations/2026_09_07_120000_create_gabinetemarca_table.php`.  
 SQL marca: `database/sql/gabinetemarca.sql`.  
 Migración permiso: `database/migrations/2026_09_07_121000_add_permiso_ia_orden_103_seguimiento_gabinete.php`.  
 SQL permiso: `database/sql/permiso_ia_orden_103_seguimiento_gabinete.sql`.
@@ -78,6 +80,6 @@ SQL permiso: `database/sql/permiso_ia_orden_103_seguimiento_gabinete.sql`.
 - [ ] ¿Acta e historial revalidan que el legajo tiene matrícula en el contexto actual?
 - [ ] ¿Historial por `idLegajos` (todos los ciclos), alta en la matrícula del año actual?
 - [ ] ¿PDF con token opaco y rate-limit?
-- [ ] ¿Esquema `gabinetemarca` y permiso 103 aplicados en el tenant?
+- [ ] ¿Esquema `gabinete` / `gabinetetipo` / `gabinetemarca` y permiso 103 aplicados en el tenant?
 - [ ] ¿Compartir usa canales (`puede_iniciar` + `mediosPermitidos`) y no inventa destinatarios fuera del nivel?
 - [ ] ¿La lista incluye directivos, preceptores y gabinete, y el atajo de curso valida el curso del contexto?
