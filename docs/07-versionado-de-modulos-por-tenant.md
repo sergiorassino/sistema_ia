@@ -203,6 +203,21 @@ return [
 
 Consumir con `tenantCuotasInteresMoraEsDiario()` o `tenantCuotasInteresMoraModo()`. Afecta imputación, PDF morosos y cupón de pago.
 
+Porcentaje de aporte estatal en el PDF de factura AFIP (`ento.aporteEstatal` del **nivel pedagógico del alumno**, no del contexto de facturación). Default off; solo Instituto Ramallo lo imprime (secundario 100% / terciario 50%):
+
+```php
+// config/tenants/institutoramallo.php
+return [
+    'cuotas' => [
+        'facturacion_afip' => [
+            'mostrar_aporte_estatal' => true,
+        ],
+    ],
+];
+```
+
+Consumir con `tenantCuotasFacturacionAfipMuestraAporteEstatal()`. El valor se carga en Parámetros del sistema (por nivel) y se formatea en el PDF.
+
 Facturación AFIP en modo `devengamiento` — importe a emitir (todos los colegios): neto con beca (`cuotasgeneradas.importe`); si la fórmula del 1.er vencimiento es bonificación (`cuotasimportes.signo1v = '-'` con valor > 0), neto − bonificación. Lógica en `FacturacionAfipComun::importeAFacturarDevengamiento()`. La leyenda de beca del PDF usa el neto **sin** beca (o ese neto − bonificación): `importeOriginalLeyendaBeca()`.
 
 Correo de recibos cooperadora (origen estudiantes), distinto del cuaderno de comunicados:

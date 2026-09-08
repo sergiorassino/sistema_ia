@@ -165,12 +165,13 @@ final class ComprobanteAfipDatos
         $nombreInstitucion = trim((string) ($comprobante->nombreInstitucion ?? ''));
         $condicionIvaInstitucion = trim((string) ($comprobante->condicionIvaInstitucion ?? ''));
         $telefonoInstitucion = trim((string) ($comprobante->telefonoInstitucion ?? ''));
-        $aporteEstatal = trim((string) ($comprobante->aporteEstatal ?? ''));
         $cursoTexto = mb_strtoupper(trim((string) ($comprobante->cursoAlumno ?? '')));
         $registroCuota = self::registroCuotaAsociado($comprobante);
+        $muestraAporteEstatal = tenantCuotasFacturacionAfipMuestraAporteEstatal();
+        $aporteEstatal = '';
 
         $ento = null;
-        if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '' || $aporteEstatal === '') {
+        if ($nombreInstitucion === '' || $condicionIvaInstitucion === '' || $telefonoInstitucion === '') {
             $ento = self::entoParaComprobantePdf();
             if ($nombreInstitucion === '') {
                 $nombreInstitucion = trim((string) ($ento?->insti ?? ''));
@@ -181,9 +182,23 @@ final class ComprobanteAfipDatos
             if ($telefonoInstitucion === '') {
                 $telefonoInstitucion = trim((string) ($ento?->telefono ?? ''));
             }
-            if ($aporteEstatal === '') {
-                $aporteEstatal = self::aporteEstatalDesdeEnto($ento);
+        }
+
+        if ($muestraAporteEstatal) {
+            $desdeNivelAlumno = self::aporteEstatalDesdeNivelCuota($registroCuota);
+            $desdeSnapshot = trim((string) ($comprobante->aporteEstatal ?? ''));
+            $desdeSesion = '';
+            if ($desdeNivelAlumno === '' && $desdeSnapshot === '') {
+                if ($ento === null) {
+                    $ento = self::entoParaComprobantePdf();
+                }
+                $desdeSesion = self::aporteEstatalDesdeEnto($ento);
             }
+            $aporteEstatal = self::resolverAporteEstatalParaPdf(
+                $desdeNivelAlumno,
+                $desdeSnapshot,
+                $desdeSesion,
+            );
         }
 
         $cursoTexto = FacturacionAfipComun::cursoTextoConNivel($cursoTexto, $registroCuota);
@@ -410,13 +425,43 @@ final class ComprobanteAfipDatos
             return '';
         }
 
-        $idNivel = 0;
-        if ($registroCuota !== null) {
-            if (! $registroCuota->relationLoaded('curso')) {
-                $registroCuota->load(['curso:Id,idNivel']);
-            }
-            $idNivel = (int) ($registroCuota->curso?->idNivel ?? 0);
+        $idNivel = self::idNivelPedagogicoDesdeCuota($registroCuota);
+        if ($idNivel <= 0) {
+            return '';
         }
+
+        return trim((string) (Ento::query()->where('idNivel', $idNivel)->value('obsFactura') ?? ''));
+    }
+
+    /**
+     * Aporte estatal de `ento` del nivel pedagógico del alumno (curso de la cuota).
+     */
+    private static function aporteEstatalDesdeNivelCuota(?CuotaGenerada $registroCuota): string
+    {
+        return FacturacionAfipComun::aporteEstatalDesdeRegistro($registroCuota);
+    }
+
+    /**
+     * Prioridad: nivel del alumno → snapshot guardado → `ento` del contexto de sesión.
+     */
+    public static function resolverAporteEstatalParaPdf(
+        string $aporteNivelAlumno,
+        string $aporteSnapshot,
+        string $aporteEntoSesion,
+    ): string {
+        foreach ([$aporteNivelAlumno, $aporteSnapshot, $aporteEntoSesion] as $valor) {
+            $fmt = self::formatearAporteEstatalParaPdf($valor);
+            if ($fmt !== '') {
+                return $fmt;
+            }
+        }
+
+        return '';
+    }
+
+    private static function idNivelPedagogicoDesdeCuota(?CuotaGenerada $registroCuota): int
+    {
+        $idNivel = FacturacionAfipComun::idNivelPedagogicoDesdeRegistro($registroCuota);
 
         if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
             $idNivel = (int) (studentCtx()->idNivel ?? 0);
@@ -430,10 +475,10 @@ final class ComprobanteAfipDatos
         }
 
         if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
-            return '';
+            return 0;
         }
 
-        return trim((string) (Ento::query()->where('idNivel', $idNivel)->value('obsFactura') ?? ''));
+        return $idNivel;
     }
 
     public static function condIvaInstDesdeEnto(?Ento $ento): string
@@ -452,6 +497,35 @@ final class ComprobanteAfipDatos
         }
 
         return trim((string) ($ento->aporteEstatal ?? ''));
+    }
+
+    /**
+     * Normaliza el valor de `ento.aporteEstatal` a porcentaje de factura (p. ej. 100% / 50%).
+     */
+    public static function formatearAporteEstatalParaPdf(string $valor): string
+    {
+        $raw = trim($valor);
+        if ($raw === '') {
+            return '';
+        }
+
+        $normalizado = str_replace(["\u{00A0}", ' '], '', $raw);
+        $normalizado = str_replace(',', '.', $normalizado);
+        $tienePorcentaje = str_ends_with($normalizado, '%');
+        $numero = $tienePorcentaje ? substr($normalizado, 0, -1) : $normalizado;
+
+        if (is_numeric($numero)) {
+            $float = (float) $numero;
+            if (abs($float - round($float)) < 0.001) {
+                return ((int) round($float)).'%';
+            }
+
+            $fmt = rtrim(rtrim(number_format($float, 2, ',', ''), '0'), ',');
+
+            return $fmt.'%';
+        }
+
+        return $tienePorcentaje ? $raw : $raw.'%';
     }
 
     /**

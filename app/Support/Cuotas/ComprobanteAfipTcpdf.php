@@ -161,15 +161,39 @@ final class ComprobanteAfipTcpdf extends TCPDF
     /** @return list<array{0: string, 1: string}> */
     private function filasColumnaComprobante(): array
     {
-        return [
-            ['Punto de Venta:', (string) ($this->datos['puntoVentaTexto'] ?? '')],
-            ['Comp. Nro.:', (string) ($this->datos['numeroComprobanteSolo'] ?? '')],
+        $filas = [
+            ['Comp. Nro.:', $this->numeroComprobanteEncabezado()],
             ['Fecha de Emisión:', (string) ($this->datos['fechaEmision'] ?? '')],
             ['CUIT:', (string) ($this->datos['cuitInstitucion'] ?? '')],
             ['Ingresos Brutos:', (string) ($this->datos['ingresosBrutos'] ?? '')],
             ['Fecha de Inicio de Actividades:', (string) ($this->datos['fechaInicioActividades'] ?? '')],
-            ['Aporte Estatal:', (string) ($this->datos['aporteEstatal'] ?? '')],
         ];
+
+        $aporteEstatal = trim((string) ($this->datos['aporteEstatal'] ?? ''));
+        if ($aporteEstatal !== '') {
+            $filas[] = ['Aporte Estatal:', $aporteEstatal];
+        }
+
+        return $filas;
+    }
+
+    /**
+     * Punto de venta (5 dígitos) + número (8 dígitos), p. ej. 00005-00099999.
+     */
+    private function numeroComprobanteEncabezado(): string
+    {
+        $combinado = trim((string) ($this->datos['numeroComprobanteTexto'] ?? ''));
+        if ($combinado !== '') {
+            return $combinado;
+        }
+
+        $puntoVenta = trim((string) ($this->datos['puntoVentaTexto'] ?? ''));
+        $numero = trim((string) ($this->datos['numeroComprobanteSolo'] ?? ''));
+        if ($puntoVenta !== '' && $numero !== '') {
+            return $puntoVenta.'-'.$numero;
+        }
+
+        return $numero;
     }
 
     private function alturaFilaColumnaDerecha(string $etiqueta, string $valor, float $anchoCol): float

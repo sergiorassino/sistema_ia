@@ -147,7 +147,7 @@ final class FacturacionAfipImputacionPago
         $dniResp = (string) $destinatario['dniResp'];
         $concepto = mb_strtoupper(trim((string) ($registro->cuota?->nombre ?? 'CUOTA')));
         $nombreAlumno = mb_strtoupper(trim(($legajo->apellido ?? '').' '.($legajo->nombre ?? '')));
-        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
+        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento, $registro);
         $cursoAlumno = FacturacionAfipComun::cursoTextoDesdeRegistro($registro);
 
         try {
@@ -407,7 +407,7 @@ final class FacturacionAfipImputacionPago
         $primerRegistro = $registros[0];
         $subConceptos = implode('|', $conceptos);
         $importeSubConceptos = implode('|', $importesLinea);
-        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
+        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento, $primerRegistro);
         $cursoAlumno = FacturacionAfipComun::cursoTextoDesdeRegistro($primerRegistro);
 
         try {
@@ -654,7 +654,8 @@ final class FacturacionAfipImputacionPago
                     'domicilioComercial' => trim((string) ($factura->domicilioComercial ?? '')),
                     'condicionIvaInstitucion' => trim((string) ($factura->condicionIvaInstitucion ?? '')),
                     'telefonoInstitucion' => trim((string) ($factura->telefonoInstitucion ?? '')),
-                    'aporteEstatal' => trim((string) ($factura->aporteEstatal ?? '')),
+                    'aporteEstatal' => FacturacionAfipComun::aporteEstatalDesdeRegistro($registro)
+                        ?: trim((string) ($factura->aporteEstatal ?? '')),
                     'puntoVenta' => (int) ($factura->puntoVenta ?? 0),
                     'ingresosBrutos' => trim((string) ($factura->ingresosBrutos ?? '')),
                     'fechaInicioActividades' => trim((string) ($factura->fechaInicioActividades ?? '')),

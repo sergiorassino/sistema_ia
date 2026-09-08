@@ -1141,6 +1141,17 @@ if (! function_exists('tenantCuotasFacturacionAfipMuestraEnImputacionPago')) {
     }
 }
 
+if (! function_exists('tenantCuotasFacturacionAfipMuestraAporteEstatal')) {
+    /**
+     * Si el PDF de factura AFIP imprime el % de aporte estatal (`ento.aporteEstatal` del nivel del alumno).
+     * Default off; solo Instituto Ramallo lo activa.
+     */
+    function tenantCuotasFacturacionAfipMuestraAporteEstatal(): bool
+    {
+        return (bool) config('tenant.cuotas.facturacion_afip.mostrar_aporte_estatal', false);
+    }
+}
+
 if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
     /**
      * Configuración AFIP del tenant para imputación de pagos.
@@ -1173,17 +1184,12 @@ if (! function_exists('tenantCuotasFacturacionAfipConfig')) {
         $cfg['cbte_tipo_asociado'] = (int) ($cfg['cbte_tipo_asociado'] ?? $cfg['cbte_tipo']);
         $cfg['produccion'] = (bool) ($cfg['produccion'] ?? true);
 
-        // `simular => false` explícito en el tenant desactiva simulación también en APP_ENV=local.
-        // `simular_local` solo aplica si no se fijó simular en false de forma explícita.
-        $simularExplicitamenteFalse = array_key_exists('simular', $cfg) && $cfg['simular'] === false;
-        if ($simularExplicitamenteFalse) {
-            $cfg['simular'] = false;
-        } else {
-            $simularExplicito = (bool) ($cfg['simular'] ?? false);
-            $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
-            $cfg['simular'] = $simularExplicito
-                || (app()->environment('local') && $simularEnLocal);
-        }
+        // `simular => true`: nunca llama a AFIP. En APP_ENV=local también simula
+        // (aunque el tenant tenga simular => false) salvo `simular_local => false`.
+        $simularExplicito = (bool) ($cfg['simular'] ?? false);
+        $simularEnLocal = (bool) ($cfg['simular_local'] ?? true);
+        $cfg['simular'] = $simularExplicito
+            || (app()->environment('local') && $simularEnLocal);
 
         return $cfg;
     }

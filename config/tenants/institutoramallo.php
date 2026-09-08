@@ -26,7 +26,11 @@ return [
             'nota_credito_tipo' => 12,
             'cbte_tipo_asociado' => 15,
             'produccion' => true,
+            // Emisión real en el servidor del colegio. En APP_ENV=local se simula
+            // (CAE ficticio, sin certificado) salvo `simular_local => false`.
             'simular' => false,
+            /** Porcentaje de aporte estatal en el PDF (ento del nivel del alumno). */
+            'mostrar_aporte_estatal' => true,
         ],
     ],
 

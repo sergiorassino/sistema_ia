@@ -11,6 +11,7 @@ use App\Models\Legajo;
 use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\DniInput;
+use App\Support\NivelSistema;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;
@@ -201,16 +202,64 @@ final class FacturacionAfipComun
     }
 
     /**
+     * Datos de `ento` para el PDF. El aporte estatal es el del **nivel del alumno**
+     * (curso de la cuota), no el de Administración ni el contexto de facturación.
+     *
      * @return array{telefonoInstitucion: string, aporteEstatal: string}
      */
-    public static function snapshotInstitucionalPdf(Ento $ento): array
+    public static function snapshotInstitucionalPdf(Ento $ento, ?CuotaGenerada $registro = null): array
     {
+        $aporte = Schema::hasColumn('ento', 'aporteEstatal')
+            ? trim((string) ($ento->aporteEstatal ?? ''))
+            : '';
+        $aporteAlumno = self::aporteEstatalDesdeRegistro($registro);
+        if ($aporteAlumno !== '') {
+            $aporte = $aporteAlumno;
+        }
+
         return [
             'telefonoInstitucion' => trim((string) ($ento->telefono ?? '')),
-            'aporteEstatal' => Schema::hasColumn('ento', 'aporteEstatal')
-                ? trim((string) ($ento->aporteEstatal ?? ''))
-                : '',
+            'aporteEstatal' => $aporte,
         ];
+    }
+
+    /**
+     * `ento.aporteEstatal` del nivel pedagógico del curso de la cuota.
+     */
+    public static function aporteEstatalDesdeRegistro(?CuotaGenerada $registro): string
+    {
+        if ($registro === null || ! Schema::hasColumn('ento', 'aporteEstatal')) {
+            return '';
+        }
+
+        $idNivel = self::idNivelPedagogicoDesdeRegistro($registro);
+        if ($idNivel <= 0) {
+            return '';
+        }
+
+        return trim((string) (Ento::query()->where('idNivel', $idNivel)->value('aporteEstatal') ?? ''));
+    }
+
+    /**
+     * Nivel del curso de la cuota (inicial/primario/secundario/terciario/adultos).
+     * No usa el contexto de sesión: Administración no es nivel pedagógico.
+     */
+    public static function idNivelPedagogicoDesdeRegistro(?CuotaGenerada $registro): int
+    {
+        if ($registro === null) {
+            return 0;
+        }
+
+        if (! $registro->relationLoaded('curso')) {
+            $registro->load(['curso:Id,idNivel']);
+        }
+
+        $idNivel = (int) ($registro->curso?->idNivel ?? 0);
+        if ($idNivel <= 0 || ! NivelSistema::esNivelPedagogico($idNivel)) {
+            return 0;
+        }
+
+        return $idNivel;
     }
 
     /**

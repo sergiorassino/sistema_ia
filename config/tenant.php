@@ -636,13 +636,18 @@ return [
             'nota_credito_tipo' => 12,
             'cbte_tipo_asociado' => 15,
             'produccion' => true,
-            /** Si true, no llama a AFIP (cualquier entorno). Para pruebas en un tenant concreto. */
+            /** Si true, no llama a AFIP en ningún entorno (CAE ficticio). */
             'simular' => false,
-            /** En local, simula salvo que el tenant declare `simular => false` explícito. */
+            /** En APP_ENV=local simula aunque `simular` sea false. Para homologar con certificado local: false. */
             'simular_local' => true,
             'condicion_iva_alumno' => 'Consumidor Final',
             'condicion_iva_receptor_id' => 5,
             'condicion_venta' => 'contado',
+            /**
+             * Imprime `ento.aporteEstatal` del nivel pedagógico del alumno en el PDF AFIP.
+             * Default off; Instituto Ramallo lo activa (secundario 100% / terciario 50%).
+             */
+            'mostrar_aporte_estatal' => false,
         ],
     ],
 

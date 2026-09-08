@@ -351,13 +351,15 @@
                     @error('condIvaInst') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div>
-                    <label class="form-label">Aporte estatal</label>
-                    <input wire:model="aporteEstatal" type="text" maxlength="10"
-                           class="form-input mt-1.5 font-mono @error('aporteEstatal') border-red-400 @enderror"
-                           placeholder="Ej. 0,00">
-                    @error('aporteEstatal') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
+                @if ($muestraAporteEstatal ?? false)
+                    <div>
+                        <label class="form-label">Aporte estatal</label>
+                        <input wire:model="aporteEstatal" type="text" maxlength="10"
+                               class="form-input mt-1.5 font-mono @error('aporteEstatal') border-red-400 @enderror"
+                               placeholder="Ej. 100%">
+                        @error('aporteEstatal') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                @endif
 
                 <div>
                     <label class="form-label">Condición frente a IVA del destinatario</label>

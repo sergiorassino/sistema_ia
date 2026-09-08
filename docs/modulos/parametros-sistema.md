@@ -20,6 +20,7 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 | `ento` | `cargaNotasOff`, `verNotasOff`, `verBimesOff`, `imprBoleOff` | Flags 1/0 del **nivel activo**, no de toda la escuela. |
 | `ento` | `verDatosFicha`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. |
 | `ento` | `cuitFact`, `PtoVta`, certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. |
+| `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo** (formulario). En la factura AFIP se imprime el de **nivel del alumno** (curso de la cuota), no el de Administración. Flag: `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` (Instituto Ramallo). |
 | `ento` | `ctaEnvioMail`, `passEnvioMail` | Solapa Correo institucional (guardado aparte). |
 
 ## Flujo principal

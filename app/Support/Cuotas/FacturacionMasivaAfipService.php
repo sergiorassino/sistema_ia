@@ -796,7 +796,7 @@ final class FacturacionMasivaAfipService
         );
 
         $primerRegistro = $registros[0];
-        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento);
+        $snapshotInst = FacturacionAfipComun::snapshotInstitucionalPdf($ento, $primerRegistro);
         $cursoAlumno = FacturacionAfipComun::cursoTextoDesdeRegistro($primerRegistro);
 
         DB::transaction(function () use (
