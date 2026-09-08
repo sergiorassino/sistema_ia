@@ -11,6 +11,7 @@
     'notasPermitidasLista' => [],
     'incluirOpcionVacia' => true,
     'soloLectura' => false,
+    'menuClass' => '',
 ])
 
 @php
@@ -45,7 +46,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
-            <div class="se-calif-prim-nota-picker-menu hidden"
+            <div class="se-calif-prim-nota-picker-menu hidden {{ $menuClass }}"
                  role="listbox"
                  aria-label="Notas permitidas"
                  data-se-calif-prim-nota-menu-for="{{ $id }}"

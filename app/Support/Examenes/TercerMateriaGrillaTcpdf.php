@@ -25,7 +25,7 @@ final class TercerMateriaGrillaTcpdf extends TCPDF
     private const ALTURA_CAJA_ENCABEZADO = 22.0;
 
     /** Ancho total de columnas (mm). */
-    private const ANCHO_GRILLA = 227.0;
+    private const ANCHO_GRILLA = 244.0;
 
     /** @var array{
      *     instiNombre: string,
@@ -187,10 +187,14 @@ final class TercerMateriaGrillaTcpdf extends TCPDF
             ];
 
             $x = $x0;
+            $this->SetFillColor($fill ? 248 : 255, $fill ? 248 : 255, $fill ? 248 : 255);
+            $this->SetDrawColor(51, 51, 51);
+            $this->SetLineWidth(0.2);
+            $this->SetFont(self::FUENTE, '', 6);
             foreach ($cols as $i => $col) {
                 $this->SetXY($x, $y);
                 $align = $i === 0 || $i >= 12 ? 'L' : 'C';
-                $this->Cell($col['w'], self::ALTURA_FILA, $this->truncar($valores[$i], $col['w']), 1, 0, $align, $fill);
+                $this->Cell($col['w'], self::ALTURA_FILA, $this->truncar($valores[$i], $col['w']), 1, 0, $align, true);
                 $x += $col['w'];
             }
             $y += self::ALTURA_FILA;
@@ -208,6 +212,8 @@ final class TercerMateriaGrillaTcpdf extends TCPDF
     {
         $this->SetFillColor(241, 245, 246);
         $this->SetFont(self::FUENTE, 'B', 6);
+        $this->SetDrawColor(51, 51, 51);
+        $this->SetLineWidth(0.2);
         $x = $x0;
         foreach ($cols as $col) {
             $this->SetXY($x, $y);
@@ -222,17 +228,17 @@ final class TercerMateriaGrillaTcpdf extends TCPDF
     private function columnas(): array
     {
         return [
-            ['w' => 38.0, 'h' => 'Estudiante'],
+            ['w' => 36.0, 'h' => 'Estudiante'],
             ['w' => 10.0, 'h' => 'Año'],
             ['w' => 22.0, 'h' => 'Curso'],
             ['w' => 32.0, 'h' => 'Materia'],
-            ['w' => 9.0, 'h' => 'TM1'],
-            ['w' => 9.0, 'h' => 'TM2'],
-            ['w' => 9.0, 'h' => 'TM3'],
-            ['w' => 9.0, 'h' => 'TM4'],
-            ['w' => 9.0, 'h' => 'TM5'],
-            ['w' => 9.0, 'h' => 'TM6'],
-            ['w' => 11.0, 'h' => 'Nota'],
+            ['w' => 12.0, 'h' => 'TM1'],
+            ['w' => 12.0, 'h' => 'TM2'],
+            ['w' => 12.0, 'h' => 'TM3'],
+            ['w' => 12.0, 'h' => 'TM4'],
+            ['w' => 12.0, 'h' => 'TM5'],
+            ['w' => 12.0, 'h' => 'TM6'],
+            ['w' => 12.0, 'h' => 'Nota'],
             ['w' => 22.0, 'h' => 'Curso actual'],
             ['w' => 38.0, 'h' => 'Profesor'],
         ];

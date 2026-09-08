@@ -15,6 +15,8 @@ La misma clase TCPDF sirve a la **consulta de calificaciones** (Secretaría y po
 
 Textos compartidos con el boletín (también en consulta): línea `Apellido y Nombre: …    D.N.I.: …    Curso: …` y encabezado de columna **Calific. Final**. Las firmas (Preceptor/a y Directivo) **no** se dibujan en consulta.
 
+Si el tenant muestra tercer materia, el pie dibuja TM1–TM6 (10 mm) y **Nota** (celda 7, 22 mm) con fondo `#C1D7DA` y el mismo borde que las parciales (sin línea extra de separación). Texto centrado (**a** / **Aprob** / **Reprob** o nota numérica).
+
 ## Actores y permisos
 
 - Secretaría / staff: rutas `boletinesSecundario.*` (o EPQ `calificacionesSecundarioEpq.boletin*`) con auth y contexto escolar. **No** requieren permiso IA 71 (carga).
@@ -59,3 +61,4 @@ Textos compartidos con el boletín (también en consulta): línea `Apellido y No
 - [ ] Consulta muestra las mismas etiquetas de alumno y «Calific. Final» que el boletín, **sin** bloque de firmas.
 - [ ] Con `verNotasOff` en el nivel secundario, el portal familia no abre la consulta (estándar ni EPQ): aviso + PDF 403.
 - [ ] El listado del curso (y el lote) ordena con `OrdenAlfabeticoEstudiante` (Cáceres con las C).
+- [ ] El recuadro de tercer materia (si el tenant lo muestra) deja **a** / **Aprob** / **Reprob** centrados; la celda 7 (Nota) es más ancha.

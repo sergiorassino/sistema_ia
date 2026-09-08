@@ -194,7 +194,8 @@
         }
         .tm-boletin-grid { width: auto; table-layout: fixed; }
         .tm-boletin-celdas { padding-left: 3mm; }
-        .tm-boletin-celda { overflow: hidden; height: 10pt; }
+        .tm-boletin-celda { overflow: hidden; height: 11pt; white-space: nowrap; text-align: center; }
+        .tm-boletin-celda--final { font-weight: 700; background: #C1D7DA; }
         /* Pie: texto (previas / Ã­tems) a la izquierda; firmas a la derecha en la misma franja vertical */
         .pie-footer { width: 100%; margin-top: 1.5mm; }
         .pie-footer-tabla {

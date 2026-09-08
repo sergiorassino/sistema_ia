@@ -3858,6 +3858,77 @@
         height: 22px;
     }
 
+    .se-tm-nota-picker-menu.se-calif-prim-nota-picker-menu {
+        min-width: 4.75rem;
+        max-width: 6.5rem;
+    }
+    table.se-tm-grid {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+    table.se-tm-grid th,
+    table.se-tm-grid td {
+        overflow: hidden;
+        vertical-align: middle;
+    }
+    table.se-tm-grid .se-tm-col-est,
+    table.se-tm-grid .se-tm-col-curso,
+    table.se-tm-grid .se-tm-col-mat,
+    table.se-tm-grid .se-tm-col-curso-act,
+    table.se-tm-grid .se-tm-col-prof {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    table.se-tm-grid .se-tm-col-est {
+        width: 14%;
+    }
+    table.se-tm-grid .se-tm-col-ano {
+        width: 4%;
+        white-space: nowrap;
+    }
+    table.se-tm-grid .se-tm-col-curso,
+    table.se-tm-grid .se-tm-col-curso-act {
+        width: 8%;
+    }
+    table.se-tm-grid .se-tm-col-mat {
+        width: 10%;
+    }
+    table.se-tm-grid .se-tm-col-prof {
+        width: 11%;
+    }
+    table.se-tm-grid .se-tm-col-acta {
+        width: 3.6%;
+    }
+    table.se-tm-grid .se-tm-col-nota {
+        width: 5.6%;
+        box-sizing: border-box;
+    }
+    table.se-tm-grid .se-tm-col-nota-final {
+        width: 5.6%;
+        box-sizing: border-box;
+        background-color: rgb(244 248 249);
+    }
+    table.se-tm-grid .se-calif-prim-nota-combo {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+    table.se-tm-grid .se-calif-prim-nota-input {
+        min-width: 0;
+        width: 0;
+        flex: 1 1 0%;
+        text-align: center;
+    }
+    table.se-tm-grid .se-calif-prim-nota-picker-btn {
+        width: 1.1rem;
+        min-width: 1.1rem;
+        height: 1.7rem;
+        min-height: 1.7rem;
+        border-top-right-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+
     /* Módulo Listados (por curso): checkbox sin borde (UI más limpia) */
     .se-page fieldset input[type="checkbox"] {
         border-width: 0 !important;

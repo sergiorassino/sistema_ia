@@ -48,6 +48,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |
 | Libro de temas | [libro-de-temas.md](libro-de-temas.md) |
 | Parámetros del sistema | [parametros-sistema.md](parametros-sistema.md) |
+| Gestión de tercer materia | [tercer-materia.md](tercer-materia.md) |
 
 ## Plantilla
 

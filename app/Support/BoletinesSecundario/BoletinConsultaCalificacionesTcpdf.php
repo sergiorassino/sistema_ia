@@ -604,17 +604,13 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
     private function dibujarTercerMateria(float $y, array $tm, float $x, float $wMax): float
     {
         $gapTm = 3.0;
-        /** Anchos alineados al partial DomPDF (17pt / 34pt). */
-        $wCelTm = 6.0;
-        $wCelNota = 12.0;
-        $hCel = 3.5;
+        $wCelTm = 10.0;
+        $wCelNota = 22.0;
+        $hCel = 3.8;
         $campos = ['tm1', 'tm2', 'tm3', 'tm4', 'tm5', 'tm6', 'tmNota'];
         $xMax = $x + $wMax;
 
-        $anchoGrilla = 0.0;
-        foreach ($campos as $campo) {
-            $anchoGrilla += $campo === 'tmNota' ? $wCelNota : $wCelTm;
-        }
+        $anchoGrilla = ($wCelTm * 6) + $wCelNota;
 
         $this->SetFont(self::FUENTE, 'B', 6.8);
         $lbl = 'Tercer Materia:';
@@ -641,14 +637,36 @@ final class BoletinConsultaCalificacionesTcpdf extends TCPDF
                 break;
             }
             $v = trim((string) ($tm[$campo] ?? ''));
-            $this->Rect($xCeldas, $yCeldas, $wCel, $hCel, 'D');
-            $this->SetFont(self::FUENTE, '', 6);
-            $this->SetXY($xCeldas, $yCeldas + 0.6);
-            $this->Cell($wCel, 2.5, $v !== '' ? $v : self::BLANK, 0, 0, 'C');
+            $this->dibujarCeldaTm($xCeldas, $yCeldas, $wCel, $hCel, $v, $campo === 'tmNota');
             $xCeldas += $wCel;
         }
 
         return $yCeldas + $hCel + 1;
+    }
+
+    private function dibujarCeldaTm(float $x, float $y, float $w, float $h, string $valor, bool $destacar = false): void
+    {
+        if ($destacar) {
+            $this->SetFillColor(193, 215, 218);
+            $this->SetDrawColor(51, 51, 51);
+            $this->SetLineWidth(0.26);
+            $this->Rect($x, $y, $w, $h, 'DF');
+        } else {
+            $this->SetDrawColor(51, 51, 51);
+            $this->SetLineWidth(0.26);
+            $this->Rect($x, $y, $w, $h, 'D');
+        }
+        $texto = $valor !== '' ? $valor : self::BLANK;
+        $size = $destacar ? 6.5 : 6.0;
+        $this->SetFont(self::FUENTE, $destacar ? 'B' : '', $size);
+        while ($size > 4.5 && $this->GetStringWidth($texto) > $w - 0.8) {
+            $size -= 0.3;
+            $this->SetFont(self::FUENTE, $destacar ? 'B' : '', $size);
+        }
+        $this->SetXY($x, $y);
+        $this->Cell($w, $h, $texto, 0, 0, 'C');
+        $this->SetDrawColor(51, 51, 51);
+        $this->SetLineWidth(0.26);
     }
 
     /**

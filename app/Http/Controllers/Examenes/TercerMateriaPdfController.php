@@ -34,7 +34,13 @@ class TercerMateriaPdfController extends Controller
 
         $idNivel = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
-        $filas = TercerMateriaGestor::filas($idNivel, $idTerlec);
+        $todas = TercerMateriaGestor::filas($idNivel, $idTerlec);
+        $filas = TercerMateriaGestor::filtrarFilasListado(
+            $todas,
+            mb_substr(trim((string) $request->query('q', '')), 0, 80),
+            mb_substr(trim((string) $request->query('curso', '')), 0, 120),
+            mb_substr(trim((string) $request->query('curso_actual', '')), 0, 120),
+        );
 
         if ($filas === []) {
             abort(404);

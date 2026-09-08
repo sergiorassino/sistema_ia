@@ -2,7 +2,10 @@
 
 namespace App\Support\Examenes;
 
+use App\Models\Curso;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,6 +16,91 @@ final class TercerMateriaGestor
 {
     /** @var list<string> */
     public const CAMPOS_TM = ['tm1', 'tm2', 'tm3', 'tm4', 'tm5', 'tm6', 'tmNota'];
+
+    /** Textos cualitativos admitidos en TM1–TM6 y Nota (además de notas numéricas). */
+    /** @var list<string> */
+    public const TEXTOS_TM = ['Aprob', 'Reprob', 'a'];
+
+    /**
+     * Opciones del desplegable de carga: 1 a 10, a (ausente), Aprob y Reprob.
+     *
+     * @return list<string>
+     */
+    public static function opcionesSelector(): array
+    {
+        $notas = [];
+        for ($n = 1; $n <= 10; $n++) {
+            $notas[] = (string) $n;
+        }
+
+        return array_merge($notas, ['a', 'Aprob', 'Reprob']);
+    }
+
+    /**
+     * Filtra el listado de gestión por alumno, curso de la materia adeudada y curso actual.
+     *
+     * @param  list<array<string, mixed>>  $filas
+     * @return list<array<string, mixed>>
+     */
+    public static function filtrarFilasListado(array $filas, string $busqueda, string $curso, string $cursoActual): array
+    {
+        $busqueda = trim($busqueda);
+        $curso = trim($curso);
+        $cursoActual = trim($cursoActual);
+        $tokens = $busqueda === ''
+            ? []
+            : (preg_split('/\s+/u', self::plegarTextoBusqueda($busqueda)) ?: []);
+
+        $out = [];
+        foreach ($filas as $fila) {
+            if ($curso !== '' && trim((string) ($fila['curso'] ?? '')) !== $curso) {
+                continue;
+            }
+            if ($cursoActual !== '' && trim((string) ($fila['curso_actual'] ?? '')) !== $cursoActual) {
+                continue;
+            }
+            if ($tokens !== []) {
+                $haystack = self::plegarTextoBusqueda((string) ($fila['estudiante'] ?? ''));
+                foreach ($tokens as $token) {
+                    if ($token !== '' && ! str_contains($haystack, $token)) {
+                        continue 2;
+                    }
+                }
+            }
+            $out[] = $fila;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Valores únicos no vacíos de un campo del listado, para los desplegables de filtro.
+     *
+     * @param  list<array<string, mixed>>  $filas
+     * @return list<string>
+     */
+    public static function opcionesFiltro(array $filas, string $campo): array
+    {
+        $vistos = [];
+        foreach ($filas as $fila) {
+            $valor = trim((string) ($fila[$campo] ?? ''));
+            if ($valor !== '') {
+                $vistos[$valor] = true;
+            }
+        }
+        $opciones = array_keys($vistos);
+        usort($opciones, static function (string $a, string $b): int {
+            $cmp = Curso::claveOrdenPedagogicoDesdeAtributos('', $a)
+                <=> Curso::claveOrdenPedagogicoDesdeAtributos('', $b);
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            return strnatcasecmp($a, $b);
+        });
+
+        return array_values($opciones);
+    }
 
     /**
      * @return list<array{
@@ -307,7 +395,7 @@ final class TercerMateriaGestor
             if (! array_key_exists($campo, $campos)) {
                 continue;
             }
-            $valor = trim((string) $campos[$campo]);
+            $valor = self::normalizarValorTm((string) $campos[$campo]);
             if (mb_strlen($valor) > 20) {
                 return ['ok' => false, 'error' => 'El valor de '.$campo.' no puede superar 20 caracteres.'];
             }
@@ -318,9 +406,44 @@ final class TercerMateriaGestor
             return ['ok' => false, 'error' => 'No hay campos para actualizar.'];
         }
 
-        DB::table('calificaciones')
-            ->where('id', $idCalificacion)
-            ->update($update);
+        $preparado = PersistenciaColumnas::prepararPayload('calificaciones', $update);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'calificaciones',
+                    $preparado['columnas_con_valor_sin_columna']
+                ),
+            ];
+        }
+
+        $payload = PersistenciaColumnas::reemplazarNulosExplicitos('calificaciones', $preparado['payload']);
+
+        try {
+            DB::table('calificaciones')
+                ->where('id', $idCalificacion)
+                ->update($payload);
+        } catch (QueryException $e) {
+            $desdeEx = PersistenciaColumnas::mensajeDesdeQueryException($e);
+
+            return ['ok' => false, 'error' => $desdeEx ?? 'No se pudo guardar.'];
+        }
+
+        $esperados = [];
+        foreach ($payload as $campo => $valor) {
+            $esperados[$campo] = $valor === null ? '' : (string) $valor;
+        }
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'calificaciones',
+            ['id' => $idCalificacion],
+            $esperados,
+        );
+        if ($noPersistidas !== []) {
+            return [
+                'ok' => false,
+                'error' => PersistenciaColumnas::mensajeColumnasNoPersistidas('calificaciones', $noPersistidas),
+            ];
+        }
 
         $refrescada = self::calificacionTm($idCalificacion, $idNivel, $idTerlecActual);
 
@@ -328,6 +451,27 @@ final class TercerMateriaGestor
             'ok' => true,
             'fila' => $refrescada ?? [],
         ];
+    }
+
+    /**
+     * Recorta, y canónica «Aprob» / «Reprob» / «a» (ausente) sin importar mayúsculas.
+     * El resto de valores (notas numéricas u otros textos cortos) se conservan.
+     */
+    public static function normalizarValorTm(mixed $v): string
+    {
+        $valor = trim((string) $v);
+        if ($valor === '') {
+            return '';
+        }
+
+        $clave = mb_strtolower($valor, 'UTF-8');
+        foreach (self::TEXTOS_TM as $canonico) {
+            if (mb_strtolower($canonico, 'UTF-8') === $clave) {
+                return $canonico;
+            }
+        }
+
+        return $valor;
     }
 
     /**
@@ -590,12 +734,30 @@ final class TercerMateriaGestor
             .$idTurnoClase;
     }
 
+    private static function plegarTextoBusqueda(string $texto): string
+    {
+        $t = mb_strtolower(trim($texto), 'UTF-8');
+        if ($t === '') {
+            return '';
+        }
+
+        return strtr($t, [
+            'á' => 'a', 'à' => 'a', 'ä' => 'a', 'â' => 'a', 'ã' => 'a', 'å' => 'a',
+            'é' => 'e', 'è' => 'e', 'ë' => 'e', 'ê' => 'e',
+            'í' => 'i', 'ì' => 'i', 'ï' => 'i', 'î' => 'i',
+            'ó' => 'o', 'ò' => 'o', 'ö' => 'o', 'ô' => 'o', 'õ' => 'o',
+            'ú' => 'u', 'ù' => 'u', 'ü' => 'u', 'û' => 'u',
+            'ý' => 'y', 'ÿ' => 'y',
+            'ç' => 'c',
+        ]);
+    }
+
     private static function valorTm(mixed $v): string
     {
         if ($v === null) {
             return '';
         }
 
-        return trim((string) $v);
+        return self::normalizarValorTm($v);
     }
 }

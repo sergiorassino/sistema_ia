@@ -3,8 +3,8 @@
     $conFirmas = $conFirmas ?? false;
     $blank = $blank ?? "\u{00A0}";
     $camposTm = ['tm1', 'tm2', 'tm3', 'tm4', 'tm5', 'tm6', 'tmNota'];
-    $wCelTm = '17pt';
-    $wCelNota = '34pt';
+    $wCelTm = '28pt';
+    $wCelNota = '62pt';
 @endphp
 @foreach ($tercerMateria as $tm)
     <div @class(['tm-boletin-wrap', 'tm-boletin-wrap--firmas' => $conFirmas])>
@@ -23,9 +23,10 @@
                                 @php
                                     $v = trim((string) ($tm[$campo] ?? ''));
                                     $w = $campo === 'tmNota' ? $wCelNota : $wCelTm;
+                                    $esFinal = $campo === 'tmNota';
                                 @endphp
-                                <td class="tm-boletin-celda"
-                                    style="width:{{ $w }};border:0.55pt solid #333;text-align:center;vertical-align:middle;font-size:6pt;padding:1px 1px;height:10pt;line-height:1;">{{ $v !== '' ? $v : $blank }}</td>
+                                <td class="tm-boletin-celda{{ $esFinal ? ' tm-boletin-celda--final' : '' }}"
+                                    style="width:{{ $w }};min-width:{{ $w }};max-width:{{ $w }};overflow:hidden;border:0.55pt solid #333;text-align:center;vertical-align:middle;font-size:{{ $esFinal ? '6.5pt' : '6pt' }};font-weight:{{ $esFinal ? '700' : '400' }};background:{{ $esFinal ? '#C1D7DA' : 'transparent' }};padding:1px 2px;height:11pt;line-height:1;white-space:nowrap;">{{ $v !== '' ? $v : $blank }}</td>
                             @endforeach
                         </tr>
                     </table>

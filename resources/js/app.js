@@ -1650,6 +1650,193 @@ function bindCalifCargaTablas() {
     );
 }
 
+const SETM_INPUT_ID = /^se-tm-(\d+)-(tm[1-6]|tmNota)$/;
+
+function seTmCallSaveCampo(root, idCalificacion, campo, value) {
+    const c = root && root.__livewire;
+    if (!c || !c.$wire) {
+        return false;
+    }
+    const w = c.$wire;
+    if (typeof w.call === 'function') {
+        w.call('guardarCampoTm', idCalificacion, campo, value);
+        return true;
+    }
+    if (typeof w.guardarCampoTm === 'function') {
+        w.guardarCampoTm(idCalificacion, campo, value);
+        return true;
+    }
+    return false;
+}
+
+function seTmBuildNavMatrix(tbody) {
+    const matrix = [];
+    tbody.querySelectorAll(':scope > tr').forEach((tr) => {
+        const row = [];
+        tr.querySelectorAll('input[id^="se-tm-"]').forEach((inp) => {
+            if (inp.type === 'checkbox') {
+                return;
+            }
+            if (!SETM_INPUT_ID.test(String(inp.id || ''))) {
+                return;
+            }
+            row.push(inp);
+        });
+        if (row.length) {
+            matrix.push(row);
+        }
+    });
+    return matrix;
+}
+
+function bindTercerMateriaTablas() {
+    document.querySelectorAll('[data-se-tm-tbody]').forEach((tbody) => {
+        seCalifPrimBindNotaPickerCombo(tbody);
+    });
+
+    if (window._seTmDocBound) {
+        return;
+    }
+    window._seTmDocBound = true;
+
+    document.addEventListener(
+        'focusin',
+        (e) => {
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            if (!el.closest('[data-se-tm-tbody]')) {
+                return;
+            }
+            if (!SETM_INPUT_ID.test(String(el.id || ''))) {
+                return;
+            }
+            el.dataset.seTmLast = el.value ?? '';
+        },
+        true,
+    );
+
+    document.addEventListener(
+        'focusout',
+        (e) => {
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            const tbody = el.closest('[data-se-tm-tbody]');
+            if (!tbody) {
+                return;
+            }
+            if (el.readOnly || el.disabled) {
+                return;
+            }
+            const m = String(el.id || '').match(SETM_INPUT_ID);
+            if (!m) {
+                return;
+            }
+            const related = e.relatedTarget;
+            if (
+                related
+                && related.closest
+                && related.closest(
+                    '.se-calif-prim-nota-picker, .se-calif-prim-nota-picker-menu, .se-calif-prim-nota-picker-btn, .se-calif-prim-nota-picker-option',
+                )
+            ) {
+                return;
+            }
+            const val = String(el.value ?? '').trim();
+            const last = String(el.dataset.seTmLast ?? '').trim();
+            if (val === last) {
+                return;
+            }
+            const root = el.closest('[wire\\:id]');
+            if (!root) {
+                return;
+            }
+            seTmCallSaveCampo(root, parseInt(m[1], 10), m[2], el.value);
+            el.dataset.seTmLast = el.value ?? '';
+        },
+        true,
+    );
+
+    document.addEventListener(
+        'keydown',
+        (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) {
+                return;
+            }
+            if (typeof seCalifPrimNotaPickerOpen !== 'undefined' && seCalifPrimNotaPickerOpen) {
+                return;
+            }
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT' || el.type === 'checkbox') {
+                return;
+            }
+            const tbody = el.closest('[data-se-tm-tbody]');
+            if (!tbody) {
+                return;
+            }
+            if (!SETM_INPUT_ID.test(String(el.id || ''))) {
+                return;
+            }
+            const navKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+            if (!navKeys.includes(e.key)) {
+                return;
+            }
+
+            const matrix = seTmBuildNavMatrix(tbody);
+            const pos = seCalifFindNavPos(matrix, el);
+            if (!pos) {
+                return;
+            }
+
+            const nrows = matrix.length;
+            const ncols = matrix[0] ? matrix[0].length : 0;
+            if (!nrows || !ncols) {
+                return;
+            }
+
+            const { row, col } = pos;
+            let nr = row;
+            let nc = col;
+
+            if (e.key === 'ArrowLeft') {
+                nc = col - 1;
+            } else if (e.key === 'ArrowRight') {
+                nc = col + 1;
+            } else if (e.key === 'ArrowUp') {
+                nr = row - 1;
+            } else if (e.key === 'ArrowDown') {
+                nr = row + 1;
+            } else if (e.key === 'Enter') {
+                if (row + 1 < nrows) {
+                    nr = row + 1;
+                    nc = col;
+                } else if (col + 1 < ncols) {
+                    nr = 0;
+                    nc = col + 1;
+                } else {
+                    return;
+                }
+            }
+
+            if (nr < 0 || nr >= nrows || nc < 0 || nc >= ncols) {
+                return;
+            }
+
+            const next = matrix[nr][nc];
+            if (!next || next === el || next.disabled) {
+                return;
+            }
+
+            e.preventDefault();
+            seCalifFocusNavCell(next);
+        },
+        true,
+    );
+}
+
 function seCiiCallCommitCell(root, key, field, value) {
     const c = root && root.__livewire;
     if (!c || !c.$wire) {
@@ -2157,6 +2344,7 @@ document.addEventListener('DOMContentLoaded', () => {
     queueMicrotask(bindCalifPrimarioTablas);
     queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCalifInicialObsMateriaTablas);
+    queueMicrotask(bindTercerMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindMatrizEditarTabla);
     queueMicrotask(bindCierreAnualGrillas);
@@ -2235,6 +2423,7 @@ document.addEventListener('livewire:navigated', () => {
     queueMicrotask(bindCalifPrimarioTablas);
     queueMicrotask(bindCalifPrimarioMateriaTablas);
     queueMicrotask(bindCalifInicialObsMateriaTablas);
+    queueMicrotask(bindTercerMateriaTablas);
     queueMicrotask(bindCuotasImportesForm);
     queueMicrotask(bindMatrizEditarTabla);
     queueMicrotask(bindCierreAnualGrillas);
@@ -2252,11 +2441,12 @@ document.addEventListener('livewire:init', () => {
             if (document.querySelector('body > .se-calif-prim-nota-picker-menu')) {
                 seCalifPrimRepatriateAllNotaPickerMenus();
             }
-            if (document.querySelector('[data-se-calif-prim-mat-tbody], [data-se-calif-prim-tbody], [data-se-calif-tbody], [data-se-calif-inicial-obs-mat-tbody]')) {
+            if (document.querySelector('[data-se-calif-prim-mat-tbody], [data-se-calif-prim-tbody], [data-se-calif-tbody], [data-se-calif-inicial-obs-mat-tbody], [data-se-tm-tbody]')) {
                 queueMicrotask(bindCalifCargaTablas);
                 queueMicrotask(bindCalifPrimarioTablas);
                 queueMicrotask(bindCalifPrimarioMateriaTablas);
                 queueMicrotask(bindCalifInicialObsMateriaTablas);
+                queueMicrotask(bindTercerMateriaTablas);
             }
             if (document.querySelector('[data-se-matriz-tbody]')) {
                 queueMicrotask(bindMatrizEditarTabla);
