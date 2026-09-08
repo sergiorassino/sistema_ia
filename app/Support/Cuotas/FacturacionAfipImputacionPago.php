@@ -22,13 +22,15 @@ use Throwable;
 final class FacturacionAfipImputacionPago
 {
     /**
-     * @return array{ok: bool, mensaje: string}
+     * @param  array{responsable?: string, dniResp?: string}|null  $destinatarioOverride
+     * @return array{ok: bool, mensaje: string, idComprobanteAfip?: int}
      */
     public static function facturar(
         CuotaPago $pago,
         CuotaGenerada $registro,
         int $idLegajo,
         float $importeFacturar,
+        ?array $destinatarioOverride = null,
     ): array {
         if (! tenantCuotasFacturacionAfipHabilitada()) {
             return ['ok' => false, 'mensaje' => 'La facturación AFIP no está habilitada para este colegio.'];
@@ -86,7 +88,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
+        $destinatario = self::resolverDestinatario($legajo, $destinatarioOverride);
         if (! $destinatario['valido']) {
             return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
         }
@@ -238,9 +240,10 @@ final class FacturacionAfipImputacionPago
      * Emite un único comprobante AFIP por varias cuotas imputadas en el mismo cobro.
      *
      * @param  list<array{pago: CuotaPago, registro: CuotaGenerada, importe: float}>  $items
+     * @param  array{responsable?: string, dniResp?: string, valido?: bool}|null  $destinatarioOverride
      * @return array{ok: bool, mensaje: string, idComprobanteAfip?: int}
      */
-    public static function facturarLote(array $items, int $idLegajo): array
+    public static function facturarLote(array $items, int $idLegajo, ?array $destinatarioOverride = null): array
     {
         if ($items === []) {
             return ['ok' => false, 'mensaje' => 'No hay cuotas para facturar en AFIP.'];
@@ -254,6 +257,7 @@ final class FacturacionAfipImputacionPago
                 $item['registro'],
                 $idLegajo,
                 (float) $item['importe'],
+                $destinatarioOverride,
             );
         }
 
@@ -336,7 +340,7 @@ final class FacturacionAfipImputacionPago
             return ['ok' => false, 'mensaje' => 'Falta configurar el punto de venta AFIP en parámetros del sistema.'];
         }
 
-        $destinatario = FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
+        $destinatario = self::resolverDestinatario($legajo, $destinatarioOverride);
         if (! $destinatario['valido']) {
             return ['ok' => false, 'mensaje' => (string) $destinatario['motivo']];
         }
@@ -800,5 +804,21 @@ final class FacturacionAfipImputacionPago
         } catch (Throwable) {
             return $raw;
         }
+    }
+
+    /**
+     * @param  array{responsable?: string, dniResp?: string, valido?: bool}|null  $override
+     * @return array{idFamilia: int, responsable: string, dniResp: string, valido: bool, motivo: string}
+     */
+    private static function resolverDestinatario(Legajo $legajo, ?array $override): array
+    {
+        if (is_array($override)) {
+            return FacturacionAfipComun::destinatarioDesdeNombreYDni(
+                (string) ($override['responsable'] ?? ''),
+                (string) ($override['dniResp'] ?? ''),
+            );
+        }
+
+        return FacturacionAfipComun::destinatarioFacturaDesdeLegajo($legajo, asegurarFamilia: true);
     }
 }

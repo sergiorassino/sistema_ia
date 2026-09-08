@@ -4,6 +4,7 @@
     use App\Support\Security\OpaqueRouteToken;
 @endphp
 
+<div>
 <div class="se-page max-w-5xl mx-auto">
     <section class="se-hero mb-4">
         <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -36,7 +37,10 @@
     </section>
 
     @if (tenantCuotasFacturacionAfipEnPago() || ($enDevengamiento ?? false))
-    <section class="se-card mb-4 p-4">
+    <section class="se-card mb-4 p-4 space-y-4">
+        @if (tenantCuotasFacturacionAfipEnPago())
+            @include('livewire.cuotas.partials.imputar-pago-responsables-afip')
+        @endif
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center se-toolbar-pocos-campos">
             @if (tenantCuotasFacturacionAfipEnPago())
                 @if ($puedeGenerarFactura)
@@ -176,4 +180,5 @@
         })();
     </script>
     @endscript
+</div>
 </div>

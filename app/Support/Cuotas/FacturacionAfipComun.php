@@ -10,8 +10,10 @@ use App\Models\Familia;
 use App\Models\Legajo;
 use App\Support\Cooperadora\ResponsablesLegajoCooperadora;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\DniInput;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -311,6 +313,291 @@ final class FacturacionAfipComun
             'valido' => $motivo === null,
             'motivo' => $motivo ?? '',
         ];
+    }
+
+    /**
+     * Guarda `legajos.respAdmiNom` / `respAdmiDni` (destinatario AFIP).
+     *
+     * @return array{ok: bool, mensaje: string}
+     */
+    public static function persistirDestinatarioEnLegajo(int $idLegajo, string $nombre, string $dni): array
+    {
+        $nombre = trim($nombre);
+        if ($nombre === '' || $nombre === '-') {
+            return ['ok' => false, 'mensaje' => 'Indique el nombre del destinatario de facturación AFIP.'];
+        }
+
+        $dniDigits = DniInput::digitsOnly($dni);
+        $len = strlen($dniDigits);
+        if ($dniDigits === '' || $dniDigits === '0' || $len < 7 || $len > DniInput::MAX_LENGTH) {
+            return ['ok' => false, 'mensaje' => 'Indique el DNI del destinatario de facturación AFIP (7 a 11 dígitos).'];
+        }
+
+        $payload = [
+            'respAdmiNom' => mb_substr($nombre, 0, 100),
+            'respAdmiDni' => $dniDigits,
+        ];
+        $preparado = PersistenciaColumnas::prepararPayload('legajos', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'legajos',
+                    $preparado['columnas_con_valor_sin_columna'],
+                ),
+            ];
+        }
+
+        if ($preparado['payload'] === []) {
+            return ['ok' => false, 'mensaje' => 'No hay datos para guardar.'];
+        }
+
+        try {
+            Legajo::query()->whereKey($idLegajo)->update($preparado['payload']);
+
+            $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+                'legajos',
+                ['id' => $idLegajo],
+                $preparado['payload'],
+            );
+            if ($noPersistidas !== []) {
+                return [
+                    'ok' => false,
+                    'mensaje' => PersistenciaColumnas::mensajeColumnasNoPersistidas('legajos', $noPersistidas),
+                ];
+            }
+        } catch (QueryException $e) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el destinatario de facturación AFIP. Intente nuevamente.',
+            ];
+        } catch (Throwable) {
+            return ['ok' => false, 'mensaje' => 'No se pudo guardar el destinatario de facturación AFIP. Intente nuevamente.'];
+        }
+
+        return ['ok' => true, 'mensaje' => 'Destinatario de facturación AFIP actualizado.'];
+    }
+
+    /**
+     * Nombre y DNI a emitir, sin exigir que estén en `respAdmiNom`.
+     *
+     * @return array{
+     *     idFamilia: int,
+     *     responsable: string,
+     *     dniResp: string,
+     *     valido: bool,
+     *     motivo: string
+     * }
+     */
+    public static function destinatarioDesdeNombreYDni(string $nombre, string $dni): array
+    {
+        $responsable = trim($nombre);
+        if ($responsable === '' || $responsable === '-') {
+            $responsable = '';
+        }
+
+        $dniResp = DniInput::digitsOnly($dni);
+        if ($dniResp === '0') {
+            $dniResp = '';
+        }
+
+        $motivo = self::motivoDestinatarioInvalido(0, $responsable, $dniResp);
+
+        return [
+            'idFamilia' => 0,
+            'responsable' => $responsable,
+            'dniResp' => $dniResp,
+            'valido' => $motivo === null,
+            'motivo' => $motivo ?? '',
+        ];
+    }
+
+    public static function nombreEstudianteParaFactura(Legajo $legajo): string
+    {
+        return trim((string) ($legajo->apellido ?? '').' '.(string) ($legajo->nombre ?? ''));
+    }
+
+    /**
+     * Filas del cobro legacy: madre, padre, responsable administrativo y estudiante.
+     *
+     * @return array<string, array{etiqueta: string, nombre: string, dni: string, editable: bool}>
+     */
+    public static function opcionesDestinatarioImputacion(Legajo $legajo): array
+    {
+        $dniEstudiante = DniInput::digitsOnly((string) ($legajo->dni ?? ''));
+
+        return [
+            'madre' => [
+                'etiqueta' => 'Madre',
+                'nombre' => trim((string) ($legajo->nombremad ?? '')),
+                'dni' => DniInput::digitsOnly((string) ($legajo->dnimad ?? '')),
+                'editable' => true,
+            ],
+            'padre' => [
+                'etiqueta' => 'Padre',
+                'nombre' => trim((string) ($legajo->nombrepad ?? '')),
+                'dni' => DniInput::digitsOnly((string) ($legajo->dnipad ?? '')),
+                'editable' => true,
+            ],
+            'resp_admin' => [
+                'etiqueta' => 'Responsable Administrativo',
+                'nombre' => self::nombreDestinatarioAfipDesdeLegajo($legajo),
+                'dni' => self::dniDestinatarioAfipDesdeLegajo($legajo),
+                'editable' => true,
+            ],
+            'estudiante' => [
+                'etiqueta' => 'Estudiante',
+                'nombre' => self::nombreEstudianteParaFactura($legajo),
+                'dni' => $dniEstudiante === '0' ? '' : $dniEstudiante,
+                'editable' => false,
+            ],
+        ];
+    }
+
+    /**
+     * Primera fila con nombre y DNI válidos, en el orden de la pantalla legacy.
+     *
+     * @param  array<string, array{nombre?: string, dni?: string}>  $filas
+     */
+    public static function claveDestinatarioPorDefecto(array $filas): string
+    {
+        foreach (['madre', 'padre', 'resp_admin', 'estudiante'] as $clave) {
+            $fila = $filas[$clave] ?? null;
+            if (! is_array($fila)) {
+                continue;
+            }
+            $destinatario = self::destinatarioDesdeNombreYDni(
+                (string) ($fila['nombre'] ?? ''),
+                (string) ($fila['dni'] ?? ''),
+            );
+            if ($destinatario['valido']) {
+                return $clave;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Persiste madre / padre / responsable administrativo en el legajo (no el estudiante).
+     *
+     * @param  array{
+     *     nombremad?: string,
+     *     dnimad?: string,
+     *     nombrepad?: string,
+     *     dnipad?: string,
+     *     respAdmiNom?: string,
+     *     respAdmiDni?: string
+     * }  $datos
+     * @return array{ok: bool, mensaje: string}
+     */
+    public static function persistirResponsablesImputacion(int $idLegajo, array $datos): array
+    {
+        if ($idLegajo < 1) {
+            return ['ok' => false, 'mensaje' => 'No se pudo validar el estudiante.'];
+        }
+
+        $payload = [
+            'nombremad' => mb_substr(trim((string) ($datos['nombremad'] ?? '')), 0, 50),
+            'dnimad' => self::dniResponsableParaPersistir((string) ($datos['dnimad'] ?? '')),
+            'nombrepad' => mb_substr(trim((string) ($datos['nombrepad'] ?? '')), 0, 50),
+            'dnipad' => self::dniResponsableParaPersistir((string) ($datos['dnipad'] ?? '')),
+            'respAdmiNom' => mb_substr(trim((string) ($datos['respAdmiNom'] ?? '')), 0, 100),
+            'respAdmiDni' => self::dniResponsableParaPersistir((string) ($datos['respAdmiDni'] ?? '')),
+        ];
+        $payload = PersistenciaColumnas::adaptarEnterosVacios('legajos', $payload);
+        $preparado = PersistenciaColumnas::prepararPayload('legajos', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'legajos',
+                    $preparado['columnas_con_valor_sin_columna'],
+                ),
+            ];
+        }
+
+        if ($preparado['payload'] === []) {
+            return ['ok' => true, 'mensaje' => ''];
+        }
+
+        try {
+            Legajo::query()->whereKey($idLegajo)->update($preparado['payload']);
+
+            $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+                'legajos',
+                ['id' => $idLegajo],
+                $preparado['payload'],
+            );
+            $noPersistidas = self::filtrarFalsosPositivosCharPadding(
+                $idLegajo,
+                $preparado['payload'],
+                $noPersistidas,
+            );
+            if ($noPersistidas !== []) {
+                return [
+                    'ok' => false,
+                    'mensaje' => PersistenciaColumnas::mensajeColumnasNoPersistidas('legajos', $noPersistidas),
+                ];
+            }
+        } catch (QueryException $e) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudieron guardar los responsables en el legajo. Intente nuevamente.',
+            ];
+        } catch (Throwable) {
+            return ['ok' => false, 'mensaje' => 'No se pudieron guardar los responsables en el legajo. Intente nuevamente.'];
+        }
+
+        return ['ok' => true, 'mensaje' => ''];
+    }
+
+    /**
+     * Igual que el ABM de legajo: DNI vacío queda string vacío (INT → 0 vía adaptarEnterosVacios).
+     */
+    private static function dniResponsableParaPersistir(string $dni): int|string
+    {
+        $digits = DniInput::digitsOnly($dni);
+
+        return $digits === '' ? $digits : (int) $digits;
+    }
+
+    /**
+     * CHAR legacy rellena con espacios: el UPDATE sí escribió, pero la comparación cruda falla.
+     *
+     * @param  array<string, mixed>  $esperado
+     * @param  list<string>  $columnas
+     * @return list<string>
+     */
+    private static function filtrarFalsosPositivosCharPadding(int $idLegajo, array $esperado, array $columnas): array
+    {
+        if ($columnas === []) {
+            return [];
+        }
+
+        $fila = DB::table('legajos')->where('id', $idLegajo)->first($columnas);
+        if ($fila === null) {
+            return $columnas;
+        }
+
+        $siguen = [];
+        foreach ($columnas as $columna) {
+            $valorEsperado = $esperado[$columna] ?? null;
+            $actual = $fila->{$columna} ?? null;
+            if (is_numeric($valorEsperado) && ($actual === null || $actual === '' || is_numeric($actual))) {
+                if ((int) $actual === (int) $valorEsperado) {
+                    continue;
+                }
+            }
+            if (rtrim((string) $valorEsperado) === rtrim((string) $actual)) {
+                continue;
+            }
+            $siguen[] = $columna;
+        }
+
+        return $siguen;
     }
 
     /**

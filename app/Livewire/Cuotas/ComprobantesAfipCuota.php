@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaResponsablesFacturacionImputacion;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Navegacion\ContextoEstudianteSesion;
@@ -15,6 +16,8 @@ use Livewire\Component;
  */
 class ComprobantesAfipCuota extends Component
 {
+    use ManejaResponsablesFacturacionImputacion;
+
     public int $idLegajo;
 
     public int $idCuotaGenerada;
@@ -51,6 +54,10 @@ class ComprobantesAfipCuota extends Component
         $this->idLegajo = $idLegajo;
         $this->idCuotaGenerada = $idCuotaGenerada;
         $this->idCuotaPago = (int) ($idCuotaPago ?? 0);
+
+        if (tenantCuotasFacturacionAfipEnPago()) {
+            $this->cargarResponsablesFacturacion($this->idLegajo);
+        }
     }
 
     public function generarFactura(): void
@@ -65,10 +72,33 @@ class ComprobantesAfipCuota extends Component
         }
         RateLimiter::hit($key, 60);
 
+        if (tenantCuotasFacturacionAfipEnPago()) {
+            $persistido = $this->persistirResponsablesFacturacion($this->idLegajo);
+            if (! $persistido['ok']) {
+                $this->dispatch('se-swal-error', mensaje: $persistido['mensaje']);
+
+                return;
+            }
+
+            if ($this->facturarA === '') {
+                $this->addError('facturarA', 'Seleccione a quién facturar.');
+
+                return;
+            }
+
+            $destinatario = $this->destinatarioAfipSeleccionado();
+            if (! $destinatario['valido']) {
+                $this->addError('facturarA', 'La persona seleccionada debe tener nombre y DNI válidos (7 a 11 dígitos).');
+
+                return;
+            }
+        }
+
         $resultado = ComprobantesAfipCuotaService::generarFactura(
             $this->idCuotaPago,
             $this->idLegajo,
             $this->idCuotaGenerada,
+            tenantCuotasFacturacionAfipEnPago() ? $this->destinatarioAfipSeleccionado() : null,
         );
         if (! $resultado['ok']) {
             $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);

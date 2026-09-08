@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaResponsablesFacturacionImputacion;
 use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
@@ -24,6 +25,8 @@ use Livewire\Component;
  */
 class ImputarPagoForm extends Component
 {
+    use ManejaResponsablesFacturacionImputacion;
+
     public int $idLegajo;
 
     /** @var list<int> */
@@ -80,6 +83,9 @@ class ImputarPagoForm extends Component
 
         $this->fechaPago = ImputacionPagoService::ahoraParaInput();
         $this->tipoComprobanteImputacion = tenantCuotasFacturacionAfipMuestraEnImputacionPago() ? 'afip' : 'interno';
+        if (tenantCuotasFacturacionAfipMuestraEnImputacionPago()) {
+            $this->cargarResponsablesFacturacion($this->idLegajo);
+        }
 
         if (! in_array($this->idCuotastipopago, GestionAranceles::idsMediosPagoImputacion(), true)) {
             $this->idCuotastipopago = GestionAranceles::IDS_MEDIOS_PAGO_IMPUTACION[0];
@@ -222,6 +228,10 @@ class ImputarPagoForm extends Component
             return;
         }
 
+        if ($this->bloquearSiFaltaDestinatarioAfip((string) $validated['tipoComprobanteImputacion'])) {
+            return;
+        }
+
         $pago = ImputacionPagoService::registrar($registro, [
             'idCuotastipopago' => (int) $validated['idCuotastipopago'],
             'saldoAPagar' => $saldo,
@@ -306,6 +316,10 @@ class ImputarPagoForm extends Component
             ];
         }
 
+        if ($this->bloquearSiFaltaDestinatarioAfip((string) $validated['tipoComprobanteImputacion'])) {
+            return;
+        }
+
         $pagos = ImputacionPagoService::registrarLote($items);
 
         $this->finalizarGuardado(
@@ -345,7 +359,11 @@ class ImputarPagoForm extends Component
                 ];
             }
 
-            $resultadoAfip = FacturacionAfipImputacionPago::facturarLote($itemsAfip, $this->idLegajo);
+            $resultadoAfip = FacturacionAfipImputacionPago::facturarLote(
+                $itemsAfip,
+                $this->idLegajo,
+                $this->destinatarioAfipSeleccionado(),
+            );
 
             session()->flash('afip_swal_tipo', $resultadoAfip['ok'] ? 'exito' : 'error');
             session()->flash('afip_swal_mensaje', $resultadoAfip['mensaje']);
@@ -379,9 +397,39 @@ class ImputarPagoForm extends Component
         $this->redirectRoute('cuotas.estudiante', navigate: true);
     }
 
-    /**
-     * Sugiere el porcentaje según la fórmula de la cuota solo al abrir el formulario.
-     */
+    private function bloquearSiFaltaDestinatarioAfip(string $tipoComprobante): bool
+    {
+        if (! tenantCuotasFacturacionAfipMuestraEnImputacionPago()) {
+            return false;
+        }
+
+        $persistido = $this->persistirResponsablesFacturacion($this->idLegajo);
+        if (! $persistido['ok']) {
+            $this->dispatch('se-swal-error', mensaje: $persistido['mensaje']);
+
+            return true;
+        }
+
+        if ($tipoComprobante !== 'afip') {
+            return false;
+        }
+
+        if ($this->facturarA === '') {
+            $this->addError('facturarA', 'Seleccione a quién facturar.');
+
+            return true;
+        }
+
+        $destinatario = $this->destinatarioAfipSeleccionado();
+        if (! $destinatario['valido']) {
+            $this->addError('facturarA', 'La persona seleccionada debe tener nombre y DNI válidos (7 a 11 dígitos).');
+
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * @param  Collection<int, CuotaGenerada>  $registros
      */
@@ -583,6 +631,7 @@ class ImputarPagoForm extends Component
     {
         $registro = $this->registro();
         $esUnaCuota = $this->esUnaCuota();
+        $muestraOpcionesComprobante = tenantCuotasFacturacionAfipMuestraEnImputacionPago();
 
         return view('livewire.cuotas.imputar-pago', [
             'registro' => $registro,
@@ -591,7 +640,7 @@ class ImputarPagoForm extends Component
             'resumenMultiples' => $esUnaCuota ? null : $this->resumenMultiples(),
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'mediosPago' => GestionAranceles::mediosDePagoImputacion(),
-            'muestraOpcionesComprobante' => tenantCuotasFacturacionAfipMuestraEnImputacionPago(),
+            'muestraOpcionesComprobante' => $muestraOpcionesComprobante,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Imputar pago']);
     }
 }

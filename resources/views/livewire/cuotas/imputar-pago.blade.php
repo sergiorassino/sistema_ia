@@ -2,7 +2,8 @@
     use App\Support\Cuotas\CuotasFormato;
 @endphp
 
-<div class="se-page {{ $esUnaCuota ? 'max-w-xl' : 'max-w-5xl' }} mx-auto"
+<div>
+<div class="se-page {{ $esUnaCuota ? ($muestraOpcionesComprobante ? 'max-w-2xl' : 'max-w-xl') : 'max-w-5xl' }} mx-auto"
      x-on:cuotas-imputar-pago-abrir-comprobante.window="window.open($event.detail.url, '_blank')"
      x-data="{
         showDatosCuota: false,
@@ -50,6 +51,10 @@
     </section>
 
     <form wire:submit="guardar" class="se-card overflow-hidden p-4 sm:p-5 space-y-5">
+        @if ($muestraOpcionesComprobante)
+            @include('livewire.cuotas.partials.imputar-pago-responsables-afip')
+        @endif
+
         <div class="space-y-2.5">
             <p class="se-section-title text-center">Medio de pago</p>
 
@@ -284,4 +289,26 @@
             </button>
         </div>
     </form>
+</div>
+
+    @script
+    <script>
+        (function () {
+            function mensajeDeEvento(event, fallback) {
+                return event?.mensaje ?? event?.detail?.mensaje ?? fallback;
+            }
+
+            $wire.on('se-swal-exito', (event) => {
+                if (typeof window.seSwalExito === 'function') {
+                    window.seSwalExito(mensajeDeEvento(event, 'Operación realizada correctamente.'));
+                }
+            });
+            $wire.on('se-swal-error', (event) => {
+                if (typeof window.seSwalError === 'function') {
+                    window.seSwalError(mensajeDeEvento(event, 'No se pudo completar la operación.'));
+                }
+            });
+        })();
+    </script>
+    @endscript
 </div>

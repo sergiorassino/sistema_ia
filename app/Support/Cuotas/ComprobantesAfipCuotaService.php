@@ -333,10 +333,15 @@ final class ComprobantesAfipCuotaService
     }
 
     /**
+     * @param  array{responsable?: string, dniResp?: string}|null  $destinatarioOverride
      * @return array{ok: bool, mensaje: string, idComprobanteAfip?: int}
      */
-    public static function generarFactura(int $idCuotaPago, int $idLegajo, int $idCuotaGenerada): array
-    {
+    public static function generarFactura(
+        int $idCuotaPago,
+        int $idLegajo,
+        int $idCuotaGenerada,
+        ?array $destinatarioOverride = null,
+    ): array {
         $validacion = self::puedeGenerarFactura($idCuotaPago, $idLegajo, $idCuotaGenerada);
         if (! $validacion['ok']) {
             return $validacion;
@@ -359,6 +364,7 @@ final class ComprobantesAfipCuotaService
             $registro,
             $idLegajo,
             self::importeFacturable($pago),
+            $destinatarioOverride,
         );
     }
 

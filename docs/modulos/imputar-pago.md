@@ -11,6 +11,7 @@ Registrar un pago (una o varias cuotas) sobre `cuotasgeneradas` del estudiante e
 - Tipos `porcan`: `%` (porcentaje), `$` (pesos fijos), `p` (% mensual acumulado desde el 1.er venc.), `m` ($ mensual acumulado).
 - CSC (y fórmulas tipo CSC): tramo 1 = `+ $ 0` (al día); tramos 2–4 = `+ p 10` (10 % mensual).
 - Comprobante PDF post-imputación: una copia por hoja (default). **SFQ y EPQ** (`cuotas.comprobante_imputacion.dos_copias_por_hoja`): dos talonarios idénticos en la misma hoja A4, con espacios compactados, para cortar y entregar la mitad al pagador. Si el detalle de muchas cuotas no cabe en media hoja, se imprime una sola copia.
+- **Factura AFIP (modo `pago`, hoy solo Instituto Ramallo):** el bloque “Facturar a” en el cobro **no** se muestra en colegios con modo `devengamiento` (SFQ, EPQ, CSC, etc.). Madre/padre/responsable se guardan en el legajo **al salir del campo**. El comprobante AFIP usa la persona con el interruptor activo (nombre + DNI válidos). Recuperación: Historial de pagos → Comp. AFIP → misma grilla → Generar factura.
 
 ## Actores y permisos
 
@@ -24,6 +25,7 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 | `cuotas` | `venc1` | Plantilla: 1.er vencimiento real si la generada tiene `venc1` = `nueVenc`. |
 | `cuotasimportes` | `signoNv`, `valorNv`, `porcanNv` (N=1..4) | Fórmula por cuota+curso. `porcan` vacío se normaliza a `%`. |
 | `cuotaspagos` | importe, interés, bonificación, fecha | Alta del pago. |
+| `legajos` | `nombremad`, `dnimad`, `nombrepad`, `dnipad`, `respAdmiNom`, `respAdmiDni` | Responsables del cobro AFIP. El interruptor elige a quién facturar (también puede ser el estudiante, sin pisar el legajo). |
 
 ## Flujo principal
 
@@ -39,7 +41,9 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 ## Archivos clave
 
 - `app/Livewire/Cuotas/ImputarPagoForm.php`
+- `app/Livewire/Cuotas/Concerns/ManejaResponsablesFacturacionImputacion.php`
 - `resources/views/livewire/cuotas/imputar-pago.blade.php`
+- `resources/views/livewire/cuotas/partials/imputar-pago-responsables-afip.blade.php`
 - `app/Support/Cuotas/ImputacionPagoCalculo.php`
 - `app/Support/Cuotas/ImputacionPagoService.php`
 - `app/Support/Cuotas/ComprobantePagoImputacionTcpdf.php` — maquetación del comprobante (dos copias en SFQ/EPQ)
@@ -51,6 +55,8 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - Si en `cuotasgeneradas` el campo `venc1` quedó copiado igual a `nueVenc` y es posterior a venc2/venc3, el cálculo debe tomar el 1.er vencimiento de la **plantilla** (`cuotas.venc1`), no el actualizado.
 - No tratar el número del campo **% INTERÉS** como pesos cuando el tramo actual es `$ 0` (al día) y el usuario trae un % de mora (p. ej. 10 → debe ser 10 % del saldo, no $ 10).
 - No calcular el % de `p`/`m` sin los meses desde el **1.er vencimiento real** (`mesesMoraAcumuladaDesdeVenc1`).
+- No facturar AFIP en modo `pago` sin una persona seleccionada con nombre y DNI válidos; no registrar el pago primero y fallar después.
+- No usar el estudiante como destino de persistencia: su nombre/DNI en el cobro son de lectura.
 - URLs de comprobante con `{ref}` opaco.
 
 ## Checklist al modificar
@@ -59,4 +65,5 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - [ ] `nueVenc` no se usa como 1.er vencimiento; «después 3º» aplica `p`/`%`/`$` del tramo 4.
 - [ ] Cambio de fecha de pago no convierte un % de mora en pesos.
 - [ ] Filtro por `schoolCtx` / legajo de sesión; rate-limit al guardar.
+- [ ] Modo `pago`: interruptor de destinatario; madre/padre/resp. admin. se persisten **al salir del campo**.
 - [ ] SFQ/EPQ: dos copias del comprobante en la misma hoja A4 (`ComprobantePagoImputacionTcpdf`).

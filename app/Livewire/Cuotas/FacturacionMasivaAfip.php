@@ -2,28 +2,25 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaDestinatarioFacturacionAfip;
 use App\Models\Cuota;
-use App\Models\Legajo;
 use App\Support\Cuotas\ConsultaAfipComprobanteService;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
-use App\Support\Cuotas\FacturacionAfipComun;
 use App\Support\Cuotas\FacturacionMasivaAfipService;
 use App\Support\Cuotas\GeneracionMasivaCuotasConsulta;
 use App\Support\Cuotas\GestionAranceles;
-use App\Support\Database\PersistenciaColumnas;
-use App\Support\DniInput;
 use App\Support\PermisosCuotas;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
-use Throwable;
 
 /**
  * Facturación masiva AFIP por devengamiento (manual).
  */
 class FacturacionMasivaAfip extends Component
 {
+    use ManejaDestinatarioFacturacionAfip;
+
     /** 1 = cuotas + tipo, 2 = alumnos + vista previa, 3 = resultado */
     public int $paso = 1;
 
@@ -48,24 +45,28 @@ class FacturacionMasivaAfip extends Component
     /** @var array<string, mixed> */
     public array $resultado = [];
 
-    public bool $modalRespAdmiAbierto = false;
-
-    public ?int $respAdmiIdLegajo = null;
-
-    public string $respAdmiNombre = '';
-
-    public string $respAdmiDni = '';
-
-    public string $respAdmiVinculo = '';
-
-    /** @var array<string, array{apellido: string, nombrePila: string, nombre: string, dni: string, email: string, tieneDatos: bool}> */
-    public array $respAdmiVinculos = [];
-
-    public string $respAdmiEstudianteEtiqueta = '';
-
     public function mount(): void
     {
         abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
+    }
+
+    protected function autorizarEdicionDestinatarioAfip(int $idLegajo): bool
+    {
+        abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
+
+        return $this->legajoEnAlcance($idLegajo);
+    }
+
+    protected function afterGuardarDestinatarioAfip(): void
+    {
+        if ($this->vistaPrevia !== []) {
+            $this->armarVistaPrevia();
+        }
+    }
+
+    protected function idLegajoDestinatarioAfipPorDefecto(): int
+    {
+        return 0;
     }
 
     public function continuarAAlumnos(): void
@@ -204,155 +205,6 @@ class FacturacionMasivaAfip extends Component
         );
         $this->paso = 3;
         $this->vistaPrevia = [];
-    }
-
-    public function abrirModalRespAdmi(int $idLegajo): void
-    {
-        abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
-
-        if (! $this->legajoEnAlcance($idLegajo)) {
-            $this->dispatch('se-swal-error', mensaje: 'El estudiante no pertenece al alcance seleccionado.');
-
-            return;
-        }
-
-        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
-        if ($legajo === null) {
-            $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante.');
-
-            return;
-        }
-
-        $this->respAdmiIdLegajo = $idLegajo;
-        $this->respAdmiNombre = FacturacionAfipComun::nombreDestinatarioAfipDesdeLegajo($legajo);
-        $this->respAdmiDni = FacturacionAfipComun::dniDestinatarioAfipDesdeLegajo($legajo);
-        $this->respAdmiVinculos = FacturacionAfipComun::vinculosResponsableEconomico($legajo);
-        $this->respAdmiVinculo = '';
-        $this->respAdmiEstudianteEtiqueta = trim(($legajo->apellido ?? '').', '.($legajo->nombre ?? ''));
-        $this->resetValidation(['respAdmiNombre', 'respAdmiDni', 'respAdmiVinculo']);
-        $this->modalRespAdmiAbierto = true;
-    }
-
-    public function cerrarModalRespAdmi(): void
-    {
-        $this->modalRespAdmiAbierto = false;
-        $this->respAdmiIdLegajo = null;
-        $this->respAdmiNombre = '';
-        $this->respAdmiDni = '';
-        $this->respAdmiVinculo = '';
-        $this->respAdmiVinculos = [];
-        $this->respAdmiEstudianteEtiqueta = '';
-        $this->resetValidation(['respAdmiNombre', 'respAdmiDni', 'respAdmiVinculo']);
-    }
-
-    public function seleccionarRespAdmiVinculo(string $vinculo): void
-    {
-        if (! in_array($vinculo, ['padre', 'madre', 'tutor'], true)) {
-            return;
-        }
-
-        $fila = $this->respAdmiVinculos[$vinculo] ?? ['nombre' => '', 'dni' => ''];
-        $this->respAdmiVinculo = $vinculo;
-        $this->respAdmiNombre = trim((string) ($fila['nombre'] ?? ''));
-        $this->respAdmiDni = (string) ($fila['dni'] ?? '');
-        $this->resetValidation(['respAdmiNombre', 'respAdmiDni']);
-    }
-
-    public function guardarRespAdmi(): void
-    {
-        abort_unless(PermisosCuotas::puedeFacturacionMasivaAfip(), 403);
-
-        $idLegajo = (int) ($this->respAdmiIdLegajo ?? 0);
-
-        if ($idLegajo < 1 || ! $this->legajoEnAlcance($idLegajo)) {
-            $this->dispatch('se-swal-error', mensaje: 'No se pudo validar el estudiante seleccionado.');
-
-            return;
-        }
-
-        $rateKey = 'cuotas:facturacion-afip:resp-admi:'.(auth()->id() ?? 'guest');
-        if (RateLimiter::tooManyAttempts($rateKey, 20)) {
-            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
-
-            return;
-        }
-        RateLimiter::hit($rateKey, 60);
-
-        $this->respAdmiDni = DniInput::digitsOnly($this->respAdmiDni);
-        $this->validate([
-            'respAdmiNombre' => ['required', 'string', 'max:100'],
-            'respAdmiDni' => ['required', 'digits_between:7,11'],
-        ], [
-            'respAdmiNombre.required' => 'Indique el nombre del destinatario de facturación AFIP.',
-            'respAdmiNombre.max' => 'El destinatario no puede superar los 100 caracteres.',
-            'respAdmiDni.required' => 'Indique el DNI del destinatario de facturación AFIP.',
-            'respAdmiDni.digits_between' => 'El DNI del destinatario debe tener entre 7 y 11 dígitos.',
-        ]);
-
-        $legajo = GestionAranceles::legajoParaFacturacionAfip($idLegajo);
-        if ($legajo === null) {
-            $this->dispatch('se-swal-error', mensaje: 'No se encontró el estudiante.');
-
-            return;
-        }
-
-        $payloadLegajo = [
-            'respAdmiNom' => trim($this->respAdmiNombre),
-            'respAdmiDni' => $this->respAdmiDni,
-        ];
-        $preparadoLegajo = PersistenciaColumnas::prepararPayload('legajos', $payloadLegajo);
-        if ($preparadoLegajo['columnas_con_valor_sin_columna'] !== []) {
-            $this->dispatch(
-                'se-swal-error',
-                mensaje: PersistenciaColumnas::mensajeColumnasInexistentes('legajos', $preparadoLegajo['columnas_con_valor_sin_columna']),
-            );
-
-            return;
-        }
-
-        if ($preparadoLegajo['payload'] === []) {
-            $this->dispatch('se-swal-error', mensaje: 'No hay datos para guardar.');
-
-            return;
-        }
-
-        try {
-            Legajo::query()->whereKey($idLegajo)->update($preparadoLegajo['payload']);
-
-            $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
-                'legajos',
-                ['id' => $idLegajo],
-                $preparadoLegajo['payload'],
-            );
-            if ($noPersistidas !== []) {
-                $this->dispatch(
-                    'se-swal-error',
-                    mensaje: PersistenciaColumnas::mensajeColumnasNoPersistidas('legajos', $noPersistidas),
-                );
-
-                return;
-            }
-        } catch (QueryException $e) {
-            $this->dispatch(
-                'se-swal-error',
-                mensaje: PersistenciaColumnas::mensajeDesdeQueryException($e)
-                    ?? 'No se pudo guardar el destinatario de facturación AFIP. Intente nuevamente.',
-            );
-
-            return;
-        } catch (Throwable) {
-            $this->dispatch('se-swal-error', mensaje: 'No se pudo guardar el destinatario de facturación AFIP. Intente nuevamente.');
-
-            return;
-        }
-
-        $this->cerrarModalRespAdmi();
-
-        if ($this->vistaPrevia !== []) {
-            $this->armarVistaPrevia();
-        }
-
-        $this->dispatch('se-swal-exito', mensaje: 'Destinatario de facturación AFIP actualizado.');
     }
 
     public function quitarAlumno(int $idLegajo): void
