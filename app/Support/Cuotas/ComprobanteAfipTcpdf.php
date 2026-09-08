@@ -3,6 +3,7 @@
 namespace App\Support\Cuotas;
 
 use App\Support\Pdf\TcpdfFuenteArial;
+use App\Support\Pdf\TcpdfLogoInstitucional;
 use TCPDF;
 
 /**
@@ -50,6 +51,18 @@ final class ComprobanteAfipTcpdf extends TCPDF
     /** Sangría interna de las columnas emisor y comprobante (separación del borde). */
     private const MARGEN_INTERNO_COL_IZQ = 1.5;
 
+    /** Caja del logo en el margen izquierdo del encabezado (mm). */
+    private const LOGO_MAX = 22.0;
+
+    /** Aire entre el borde del recuadro y el logo. */
+    private const PADDING_LOGO = 2.8;
+
+    /** Separación entre el logo y los datos del emisor. */
+    private const LOGO_GAP = 3.0;
+
+    /** Aire entre el bloque marca (logo + nombre) y los datos fiscales. */
+    private const ESPACIO_MARCA_DATOS = 1.6;
+
     private const ESPACIO_ANTES_SEPARADOR_NOMBRE = 0.6;
 
     private const ESPACIO_DESPUES_SEPARADOR_NOMBRE = 0.8;
@@ -58,6 +71,10 @@ final class ComprobanteAfipTcpdf extends TCPDF
     private array $datos;
 
     private float $yCursor = 12.0;
+
+    private ?string $logoArchivo = null;
+
+    private bool $logoArchivoResuelto = false;
 
     /**
      * @param  array<string, mixed>  $datos
@@ -118,8 +135,12 @@ final class ComprobanteAfipTcpdf extends TCPDF
     {
         $yContent = self::Y_HEADER_TOP;
         $yFinCaja = $this->yFinCajaTipoComprobante($yContent);
+        $logo = $this->archivoLogo();
+        $tieneLogo = $logo !== null;
 
-        $alturaIzq = $this->alturaTituloEmisor() + $this->alturaDatosEmisor();
+        $alturaMarca = $this->alturaBloqueMarca();
+        $espacioMarcaDatos = $tieneLogo ? self::ESPACIO_MARCA_DATOS : 0.0;
+        $alturaIzq = $alturaMarca + $espacioMarcaDatos + $this->alturaDatosEmisor();
         $alturaDer = $this->alturaTituloComprobante() + $this->alturaDatosComprobante();
         $alturaCols = max($alturaIzq, $alturaDer);
 
@@ -134,7 +155,25 @@ final class ComprobanteAfipTcpdf extends TCPDF
         $this->Rect(self::MARGEN_IZQ, $yContent, self::ANCHO_UTIL, $altoHeader);
         $this->dibujarColumnaCentral($yContent, $altoHeader);
 
-        $yDatosIzq = $this->dibujarTituloEmisor($yStart);
+        if ($tieneLogo) {
+            TcpdfLogoInstitucional::dibujarAjustado(
+                $this,
+                $this->xLogo(),
+                $yStart,
+                self::LOGO_MAX,
+                self::LOGO_MAX,
+                $logo,
+            );
+        }
+
+        $alturaNombre = $this->alturaTituloEmisor();
+        $yNombre = $tieneLogo
+            ? $yStart + max(0.0, ($alturaMarca - $alturaNombre) / 2.0)
+            : $yStart;
+        $yDatosIzq = $this->dibujarTituloEmisor($yNombre);
+        if ($tieneLogo) {
+            $yDatosIzq = $yStart + $alturaMarca + $espacioMarcaDatos;
+        }
         $this->dibujarDatosEmisor($yDatosIzq);
 
         $yDatosDer = $this->dibujarTituloComprobante($yStart);
@@ -219,8 +258,38 @@ final class ComprobanteAfipTcpdf extends TCPDF
         return $this->xCentroEncabezado() - (self::ANCHO_CAJA_C / 2.0);
     }
 
+    private function archivoLogo(): ?string
+    {
+        if ($this->logoArchivoResuelto) {
+            return $this->logoArchivo;
+        }
+
+        $this->logoArchivoResuelto = true;
+
+        $desdeDatos = $this->datos['logo_file'] ?? null;
+        if (is_string($desdeDatos) && $desdeDatos !== '' && is_file($desdeDatos)) {
+            return $this->logoArchivo = $desdeDatos;
+        }
+
+        $resuelto = pdfHeaderLogoAbsolutePath();
+        if (is_string($resuelto) && $resuelto !== '' && is_file($resuelto)) {
+            return $this->logoArchivo = $resuelto;
+        }
+
+        return $this->logoArchivo = null;
+    }
+
+    private function xLogo(): float
+    {
+        return self::MARGEN_IZQ + self::PADDING_LOGO;
+    }
+
     private function xTextoColIzq(): float
     {
+        if ($this->archivoLogo() !== null) {
+            return $this->xLogo() + self::LOGO_MAX + self::LOGO_GAP;
+        }
+
         return self::MARGEN_IZQ + self::MARGEN_INTERNO_COL_IZQ;
     }
 
@@ -244,14 +313,29 @@ final class ComprobanteAfipTcpdf extends TCPDF
         return $this->anchoTextoColIzq();
     }
 
+    private function xTextoColIzqInferior(): float
+    {
+        return self::MARGEN_IZQ + self::MARGEN_INTERNO_COL_IZQ;
+    }
+
     private function xFinTextoColIzqInferior(): float
     {
-        return $this->xFinTextoColIzq();
+        return $this->xCentroDivisorEncabezado() - self::MARGEN_RESERVA_CAJA;
     }
 
     private function anchoTextoColIzqInferior(): float
     {
-        return $this->anchoTextoColIzq();
+        return max(10.0, $this->xFinTextoColIzqInferior() - $this->xTextoColIzqInferior());
+    }
+
+    private function alturaBloqueMarca(): float
+    {
+        $alturaNombre = $this->alturaTituloEmisor();
+        if ($this->archivoLogo() === null) {
+            return $alturaNombre;
+        }
+
+        return max(self::LOGO_MAX, $alturaNombre);
     }
 
     /** Inicio del texto en la columna derecha (después de la caja del tipo de comprobante). */
@@ -295,7 +379,7 @@ final class ComprobanteAfipTcpdf extends TCPDF
         }
 
         return $this->alturaFilaNombreInstitucion($nombreInstitucion, $this->anchoTextoColIzqSuperior())
-            + $this->alturaSeparacionNombreInstitucion();
+            + ($this->archivoLogo() === null ? $this->alturaSeparacionNombreInstitucion() : 0.0);
     }
 
     private function alturaDatosEmisor(): float
@@ -429,12 +513,16 @@ final class ComprobanteAfipTcpdf extends TCPDF
             'L',
         );
 
+        if ($this->archivoLogo() !== null) {
+            return $this->GetY();
+        }
+
         return $this->dibujarSeparacionNombreInstitucion($this->GetY(), $ancho);
     }
 
     private function dibujarDatosEmisor(float $y): float
     {
-        $x = $this->xTextoColIzq();
+        $x = $this->xTextoColIzqInferior();
         $ancho = $this->anchoTextoColIzqInferior();
 
         $this->SetXY($x, $y);

@@ -11,7 +11,7 @@ Registrar un pago (una o varias cuotas) sobre `cuotasgeneradas` del estudiante e
 - Tipos `porcan`: `%` (porcentaje), `$` (pesos fijos), `p` (% mensual acumulado desde el 1.er venc.), `m` ($ mensual acumulado).
 - CSC (y fórmulas tipo CSC): tramo 1 = `+ $ 0` (al día); tramos 2–4 = `+ p 10` (10 % mensual).
 - Comprobante PDF post-imputación: una copia por hoja (default). **SFQ y EPQ** (`cuotas.comprobante_imputacion.dos_copias_por_hoja`): dos talonarios idénticos en la misma hoja A4, con espacios compactados, para cortar y entregar la mitad al pagador. Si el detalle de muchas cuotas no cabe en media hoja, se imprime una sola copia.
-- **Factura AFIP (modo `pago`, hoy solo Instituto Ramallo):** el bloque “Facturar a” en el cobro **no** se muestra en colegios con modo `devengamiento` (SFQ, EPQ, CSC, etc.). Madre/padre/responsable se guardan en el legajo **al salir del campo**. El comprobante AFIP usa la persona con el interruptor activo (nombre + DNI válidos). Recuperación: Historial de pagos → Comp. AFIP → misma grilla → Generar factura. En `APP_ENV=local` la emisión es **simulada** (CAE ficticio, sin certificado); en el servidor del colegio sigue siendo real (`simular => false`). El PDF imprime el **aporte estatal del nivel del alumno** (`ento.aporteEstatal` del curso, p. ej. terciario 50% / secundario 100%), no el de Administración ni el contexto de facturación (`mostrar_aporte_estatal`). En el encabezado, `Comp. Nro.` une punto de venta y número (`00005-00099999`); no hay línea aparte de punto de venta.
+- **Factura AFIP (modo `pago`, hoy solo Instituto Ramallo):** el bloque “Facturar a” en el cobro **no** se muestra en colegios con modo `devengamiento` (SFQ, EPQ, CSC, etc.). Madre/padre/responsable se guardan en el legajo **al salir del campo**. El comprobante AFIP usa la persona con el interruptor activo (nombre + DNI válidos). Recuperación: Historial de pagos → Comp. AFIP → misma grilla → Generar factura. En `APP_ENV=local` la emisión es **simulada** (CAE ficticio, sin certificado); en el servidor del colegio sigue siendo real (`simular => false`). El PDF imprime el **aporte estatal del nivel del alumno** (`ento.aporteEstatal` del curso, p. ej. terciario 50% / secundario 100%), no el de Administración ni el contexto de facturación (`mostrar_aporte_estatal`). En el encabezado, el logo institucional va al margen izquierdo, el nombre del colegio a su derecha y los datos fiscales del emisor debajo (ancho completo de la columna). `Comp. Nro.` une punto de venta y número (`00005-00099999`); no hay línea aparte de punto de venta.
 
 ## Actores y permisos
 
@@ -48,6 +48,7 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - `app/Support/Cuotas/ImputacionPagoService.php`
 - `app/Support/Cuotas/ComprobantePagoImputacionTcpdf.php` — maquetación del comprobante (dos copias en SFQ/EPQ)
 - `app/Http/Controllers/Cuotas/ComprobantePagoImputacionPdfController.php`
+- `app/Support/Cuotas/ComprobanteAfipTcpdf.php` — factura/NC AFIP (logo a la izquierda del encabezado)
 
 ## Qué no hacer / reglas de negocio
 

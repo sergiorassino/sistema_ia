@@ -262,6 +262,7 @@ final class ComprobanteAfipDatos
 
         return [
             'nombreInstitucion' => $nombreInstitucion,
+            'logo_file' => pdfHeaderLogoAbsolutePath(),
             'razonSocial' => trim((string) ($comprobante->razonSocial ?? '')),
             'telefonoInstitucion' => $telefonoInstitucion,
             'tipoComprobante' => $tipoComprobante,
