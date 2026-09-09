@@ -384,13 +384,18 @@ final class ComprobanteAfipTcpdf extends TCPDF
 
     private function alturaDatosEmisor(): float
     {
-        $ancho = $this->anchoTextoColIzqInferior();
-        $altura = $this->alturaFilaEmisorValor(22, (string) ($this->datos['razonSocial'] ?? ''), true, $ancho);
-        $altura += $this->alturaFilaEmisorValor(28, (string) ($this->datos['domicilioComercial'] ?? ''), false, $ancho);
-        $altura += self::ALTO_FILA;
-        $altura += $this->alturaFilaEmisorValor(32, (string) ($this->datos['condicionIvaInstitucion'] ?? ''), false, $ancho);
+        return self::ALTO_FILA * count($this->filasColumnaEmisor());
+    }
 
-        return $altura;
+    /** @return list<array{0: string, 1: string}> */
+    private function filasColumnaEmisor(): array
+    {
+        return [
+            ['Razón Social:', (string) ($this->datos['razonSocial'] ?? '')],
+            ['Domicilio Comercial:', (string) ($this->datos['domicilioComercial'] ?? '')],
+            ['Teléfono:', (string) ($this->datos['telefonoInstitucion'] ?? '')],
+            ['Condición frente al IVA:', (string) ($this->datos['condicionIvaInstitucion'] ?? '')],
+        ];
     }
 
     private function alturaTituloComprobante(): float
@@ -421,19 +426,6 @@ final class ComprobanteAfipTcpdf extends TCPDF
     private function alturaSeparacionNombreInstitucion(): float
     {
         return self::ESPACIO_ANTES_SEPARADOR_NOMBRE + self::ESPACIO_DESPUES_SEPARADOR_NOMBRE;
-    }
-
-    private function alturaFilaEmisorValor(float $anchoEtiqueta, string $valor, bool $forzarMinimoFila, float $anchoCol): float
-    {
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $anchoValor = $anchoCol - $anchoEtiqueta;
-        $altura = $this->getStringHeight($anchoValor, $valor);
-
-        if ($forzarMinimoFila) {
-            $altura = max(self::ALTO_FILA, $altura);
-        }
-
-        return $altura;
     }
 
     private function letraTipoComprobante(int $tipo): string
@@ -524,35 +516,29 @@ final class ComprobanteAfipTcpdf extends TCPDF
     {
         $x = $this->xTextoColIzqInferior();
         $ancho = $this->anchoTextoColIzqInferior();
+        $anchoEtiqueta = $this->anchoColumnaEtiquetaEmisor($ancho);
 
-        $this->SetXY($x, $y);
+        foreach ($this->filasColumnaEmisor() as [$etiqueta, $valor]) {
+            $this->SetXY($x, $y);
+            TcpdfFuenteArial::aplicar($this, 'B', 7);
+            $this->Cell($anchoEtiqueta, self::ALTO_FILA, $etiqueta, 0, 0, 'L');
+            TcpdfFuenteArial::aplicar($this, '', 7);
+            $this->Cell($ancho - $anchoEtiqueta, self::ALTO_FILA, $valor, 0, 0, 'L');
+            $y += self::ALTO_FILA;
+        }
+
+        return $y;
+    }
+
+    private function anchoColumnaEtiquetaEmisor(float $anchoCol): float
+    {
         TcpdfFuenteArial::aplicar($this, 'B', 7);
-        $this->Cell(22, self::ALTO_FILA, 'Razón Social:', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->MultiCell($ancho - 22, self::ALTO_FILA, (string) ($this->datos['razonSocial'] ?? ''), 0, 'L');
+        $ancho = 0.0;
+        foreach ($this->filasColumnaEmisor() as [$etiqueta]) {
+            $ancho = max($ancho, $this->GetStringWidth($etiqueta) + 1.2);
+        }
 
-        $y = $this->GetY();
-        $this->SetXY($x, $y);
-        TcpdfFuenteArial::aplicar($this, 'B', 7);
-        $this->Cell(28, self::ALTO_FILA, 'Domicilio Comercial:', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->MultiCell($ancho - 28, self::ALTO_FILA, (string) ($this->datos['domicilioComercial'] ?? ''), 0, 'L');
-
-        $y = $this->GetY();
-        $this->SetXY($x, $y);
-        TcpdfFuenteArial::aplicar($this, 'B', 7);
-        $this->Cell(14, self::ALTO_FILA, 'Teléfono:', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->Cell($ancho - 14, self::ALTO_FILA, (string) ($this->datos['telefonoInstitucion'] ?? ''), 0, 1, 'L');
-
-        $y = $this->GetY();
-        $this->SetXY($x, $y);
-        TcpdfFuenteArial::aplicar($this, 'B', 7);
-        $this->Cell(32, self::ALTO_FILA, 'Condición frente al IVA:', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 7);
-        $this->MultiCell($ancho - 32, self::ALTO_FILA, (string) ($this->datos['condicionIvaInstitucion'] ?? ''), 0, 'L');
-
-        return $this->GetY();
+        return min($ancho, max(16.0, $anchoCol - 18.0));
     }
 
     private function dibujarTituloComprobante(float $y): float
