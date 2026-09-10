@@ -253,6 +253,15 @@ final class PermisosIaCatalog
     /** Menú Administración — estado de deuda por estudiante. */
     public const ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE = 98;
 
+    /** Configuración: copiar cursos, materias y horarios de un año lectivo a otro. */
+    public const COPIAR_CURSOS_MATERIAS_ANIO = 104;
+
+    /** Configuración: copiar asignaciones de profesores (ppc) y preceptores por curso entre años. */
+    public const COPIAR_ASIGNACIONES_PROF_PRECEP = 105;
+
+    /** Configuración: promover alumnos regulares de un año lectivo a otro (matrícula + calificaciones). */
+    public const PROMOVER_ALUMNOS_ANIO = 106;
+
     /** @return list<array{id: int, orden: int, tema: string, descripcion: string}> */
     public static function definicionCatalogo(): array
     {
@@ -283,7 +292,7 @@ final class PermisosIaCatalog
             ['id' => 19, 'orden' => self::CERT_ALUMNO_REGULAR, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de alumno/a regular (laboral o escolar): listado de matriculados del año en curso y emisión de PDF.'],
             ['id' => 20, 'orden' => self::CERT_ESTUDIOS_TRAMITE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de certificado de estudios en trámite: listado de matriculados y emisión de PDF.'],
             ['id' => 21, 'orden' => self::CERT_CONSTANCIA_DOCS, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Constancia de documentos: listado histórico de legajos del nivel y emisión de PDF.'],
-            ['id' => 22, 'orden' => self::CERT_ASISTENCIA_PROF, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de asistencia del profesor: listado de personal del legajo y emisión de PDF.'],
+            ['id' => 22, 'orden' => self::CERT_ASISTENCIA_PROF, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Certificado de asistencia del profesor: listado de personal del nivel de sesión y emisión de PDF.'],
             ['id' => 23, 'orden' => self::CERT_PASE_PARCIAL, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Pase parcial: listado de legajos de nivel medio, solicitud y emisión de PDF.'],
             ['id' => 24, 'orden' => self::CERT_SOLICITUD_PASE, 'tema' => 'CERTIFICADOS', 'descripcion' => 'Solicitud de pase: listado de legajos de nivel medio, datos en paseprovisorio y emisión de PDF.'],
             ['id' => 66, 'orden' => self::CERT_CUS_ISA_VOZ_IMAGEN, 'tema' => 'CERTIFICADOS', 'descripcion' => 'C.U.S., I.S.A. y autorización de uso de imagen y voz: selección por curso y emisión de PDF.'],
@@ -358,6 +367,9 @@ final class PermisosIaCatalog
             ['id' => 94, 'orden' => self::CALIF_RECALCULO_PROMEDIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Recalcular promedios: completar el promedio final (calif) de todas las materias del ciclo a partir de Eval/JIS, tras la descarga CIDI.'],
             ['id' => 95, 'orden' => self::PRECEPTORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar preceptores por curso y año lectivo (tabla preceptoresporcurso).'],
             ['id' => 96, 'orden' => self::PROYECTOS_EXTRACURRICULARES_APROBAR, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Aprobar proyectos extracurriculares presentados por docentes y comunicar a los involucrados (organizadores, docentes del curso y preceptores).'],
+            ['id' => 104, 'orden' => self::COPIAR_CURSOS_MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar cursos, materias y horarios de un año lectivo de origen a un año de destino (por nivel).')],
+            ['id' => 105, 'orden' => self::COPIAR_ASIGNACIONES_PROF_PRECEP, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar asignación de profesores por curso (ppc) y de preceptores por curso de un año lectivo de origen a un año de destino (por nivel).')],
+            ['id' => 106, 'orden' => self::PROMOVER_ALUMNOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Promover a todos los alumnos: crear matrícula y calificaciones en el año de destino a partir de los cursos marcados del año de origen.')],
         ];
     }
 
@@ -385,6 +397,9 @@ final class PermisosIaCatalog
             PermisosConfiguracion::CURSOS_MATERIAS_PLAN,
             PermisosConfiguracion::CURSOS_ANIO,
             PermisosConfiguracion::MATERIAS_ANIO,
+            self::COPIAR_CURSOS_MATERIAS_ANIO,
+            self::COPIAR_ASIGNACIONES_PROF_PRECEP,
+            self::PROMOVER_ALUMNOS_ANIO,
             self::CALIF_CIERRE_ANUAL_LOTES,
         ];
     }

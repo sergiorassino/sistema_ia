@@ -210,7 +210,10 @@ permisos_ia = "111111111111111..."
 - Preceptores por curso: orden **95** (`PermisosIaCatalog::PRECEPTORES_POR_CURSO`).
 - Permisos por Tarea: orden **99** (`PermisosIaCatalog::PERMISOS_POR_TAREA`). Consulta de usuarios habilitados por módulo o función (inverso de Permisos por Usuario, orden 14).
 - Listado de familias: orden **102** (`PermisosIaCatalog::LISTADO_FAMILIAS`). Consulta, PDF y Excel; aparece en el grupo **LEGAJOS ESTUDIANTES**. La edición en grilla sigue siendo orden **46** (`LEGAJOS_FAMILIAS_GESTION`).
-- Órdenes **25, 26, 33, 34, 35, 36 y 100**: en asignación y consulta aparecen con aviso destacado `NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR` (`PermisosIaCatalog::ordenesReservadosAdministrador()`).
+- Órdenes **25, 26, 33, 34, 35, 36, 104, 105, 106 y 100**: en asignación y consulta aparecen con aviso destacado `NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR` (`PermisosIaCatalog::ordenesReservadosAdministrador()`).
+- Copiar cursos, materias y horarios (año origen → año destino): orden **104** (`PermisosIaCatalog::COPIAR_CURSOS_MATERIAS_ANIO`).
+- Copiar asignación de profesores y preceptores (año origen → año destino): orden **105** (`PermisosIaCatalog::COPIAR_ASIGNACIONES_PROF_PRECEP`).
+- Promover a todos los alumnos (año origen → año destino): orden **106** (`PermisosIaCatalog::PROMOVER_ALUMNOS_ANIO`).
 - Legajos docentes (ABM + listado PDF/Excel): orden **11** (`PermisosIaCatalog::LEGAJOS_DOCENTES`, `puedeModificarLegajosDocentes()`). Con permiso: alta/edición/baja y datos completos. Sin permiso: solo consulta e impresión de apellido, nombre y DNI (`puedeConsultarLegajosDocentes()`).
 - Rutas: middleware `permiso:N` o `permiso-config:N`.
 - Livewire / controladores: `abort_unless(tienePermiso(N), 403)` en `mount()` y acciones sensibles.

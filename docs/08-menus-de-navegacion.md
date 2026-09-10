@@ -166,7 +166,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 | **Gestión de cuotas** (solo nivel 5) | |
 | **Becas** (solo nivel 5; p. ej. Tipos de Beca) | |
 | **DOCENTES / USUARIOS** (mismo bloque que Secretaría: legajos docente, ppc, inasistencias docentes, certificación de servicios, capacitación, libro de temas si el tenant lo activa; según permisos 11, 48, 23, 87, 93 y **101**) | |
-| Configuración (incl. Permisos del sistema; sin planes/curplan ni cursos/materias del año) | **Gestión de planes y cursos modelo**; **Gestión de cursos y materias del año** |
+| Configuración (incl. Permisos del sistema, **Copiar cursos, materias y horarios** y **Copiar asignación de profesores y preceptores**; sin planes/curplan ni ABM de cursos/materias del año) | **Gestión de planes y cursos modelo**; **Gestión de cursos y materias del año** (ABM) |
 
 **Legajos:** consulta y listados para **todos** los usuarios del menú. En sesión Administración se ven alumnos de **Inicial, Primario y Secundario** del ciclo activo (sin selector de nivel en el sidebar).
 
@@ -206,3 +206,6 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-09-02:** Menú de Secretaría / Administración → DOCENTES / USUARIOS: **Libro de temas** (permiso IA 101, tabla `librodetemas`). Menú de Docentes por tenant (`modulos.libro_de_temas` + `portal_docente.menu.*.libro_de_temas`; iess).
 - **2026-09-07:** Menú de Secretaría: **Seguimiento de gabinete de orientación** (`seguimiento.gabinete*`; permiso IA orden **103**, tablas `gabinete` / `gabinetetipo` / `gabinetemarca`).
 - **2026-09-07:** Menú de Alumnos (SFQ): comunicación institucional visible en inicial y primario (se quita el `niveles_deshabilitados => [2]` copiado de EPQ).
+- **2026-09-10:** Configuración: **Copiar cursos, materias y horarios** (permiso IA orden **104**, reservado al administrador). Visible en Menú de Administración y Menú de Secretaría, después de Gestión de cursos y materias del año.
+- **2026-09-10:** Configuración: **Copiar asignación de profesores y preceptores** (permiso IA orden **105**, reservado al administrador). Visible en ambos menús, después de Copiar cursos, materias y horarios.
+- **2026-09-10:** Configuración: **Promover a todos los alumnos** (permiso IA orden **106**, reservado al administrador). Visible en ambos menús, después de Copiar asignación de profesores y preceptores.

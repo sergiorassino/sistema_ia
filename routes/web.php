@@ -131,6 +131,9 @@ use App\Livewire\Abm\Terlec\TerlecIndex;
 use App\Livewire\Administracion\Permisos\PermisosPorTareaIndex;
 use App\Livewire\Administracion\Permisos\PermisosPorUsuarioIndex;
 use App\Livewire\Administracion\Permisos\PermisosUsuariosIndex;
+use App\Livewire\Administracion\Configuracion\CopiarAsignacionesProfPrecepIndex;
+use App\Livewire\Administracion\Configuracion\CopiarCursosMateriasIndex;
+use App\Livewire\Administracion\Configuracion\PromoverAlumnosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Http\Controllers\Alumnos\AbrirHiloComunicacionFamiliaController;
@@ -1014,6 +1017,15 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/abm/curplan/nuevo', CurplanForm::class)->middleware('permiso-config:34')->name('abm.curplan.create');
     Route::get('/abm/curplan/{id}/editar', CurplanForm::class)->whereNumber('id')->middleware('permiso-config:34')->name('abm.curplan.edit');
     Route::get('/abm/materias-anio', MateriasAnioIndex::class)->middleware('permiso-config:36')->name('abm.materias-anio');
+    Route::get('/configuracion/copiar-cursos-materias', CopiarCursosMateriasIndex::class)
+        ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::COPIAR_CURSOS_MATERIAS_ANIO)
+        ->name('config.copiar-cursos-materias');
+    Route::get('/configuracion/copiar-asignaciones-profesores-preceptores', CopiarAsignacionesProfPrecepIndex::class)
+        ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::COPIAR_ASIGNACIONES_PROF_PRECEP)
+        ->name('config.copiar-asignaciones-profesores-preceptores');
+    Route::get('/configuracion/promover-alumnos', PromoverAlumnosIndex::class)
+        ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::PROMOVER_ALUMNOS_ANIO)
+        ->name('config.promover-alumnos');
     Route::get('/parametrizacion/parametros-sistema', ParametrosSistemaForm::class)
         ->middleware('permiso-config:31')
         ->name('param.parametros-sistema');

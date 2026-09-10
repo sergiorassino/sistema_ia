@@ -1,0 +1,294 @@
+{{-- Promover alumnos regulares: matrícula + calificaciones del año origen al destino. --}}
+<div class="se-page mx-auto w-full max-w-5xl space-y-6">
+    <section class="se-hero">
+        <div class="se-hero-inner">
+            <div class="min-w-0 space-y-2">
+                <p class="se-eyebrow">Configuración</p>
+                <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Promover a todos los alumnos</h2>
+                <p class="max-w-2xl text-sm text-white/80">
+                    Crea la matrícula y las calificaciones en el año de destino para los alumnos regulares de los cursos marcados. El último año de secundario ({{ $ultimoCursoSecundario }}.º) no se incluye. Esta operación no se deshace sola.
+                </p>
+            </div>
+            <a href="{{ route('dashboard') }}"
+               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Volver al panel
+            </a>
+        </div>
+    </section>
+
+    @error('copia')
+        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+            {{ $message }}
+        </div>
+    @enderror
+
+    <div class="se-card space-y-6 p-5 sm:p-6">
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+                <label for="tl-origen-prom" class="form-label">Año de origen</label>
+                <select id="tl-origen-prom" wire:model.live="idTerlecOrigen" class="form-select">
+                    <option value="">— Seleccione año —</option>
+                    @foreach ($terlecs as $t)
+                        <option value="{{ (int) $t->id }}">{{ $t->ano }}</option>
+                    @endforeach
+                </select>
+                @error('idTerlecOrigen')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label for="tl-destino-prom" class="form-label">Año de destino</label>
+                <select id="tl-destino-prom" wire:model.live="idTerlecDestino" class="form-select">
+                    <option value="">— Seleccione año —</option>
+                    @foreach ($terlecs as $t)
+                        <option value="{{ (int) $t->id }}">{{ $t->ano }}</option>
+                    @endforeach
+                </select>
+                @error('idTerlecDestino')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <div>
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p class="form-label mb-0">Niveles a procesar</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" wire:click="seleccionarTodosNiveles"
+                            class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                        Marcar todos
+                    </button>
+                    <button type="button" wire:click="quitarTodosNiveles"
+                            class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm transition hover:border-accent-300 hover:bg-accent-50">
+                        Desmarcar todos
+                    </button>
+                </div>
+            </div>
+            <div class="grid gap-2 sm:grid-cols-2">
+                @foreach ($niveles as $nivel)
+                    <label class="flex items-center gap-3 rounded-xl border border-accent-200 bg-accent-50/40 px-3 py-2.5 text-sm text-neutral-800">
+                        <input type="checkbox"
+                               value="{{ (int) $nivel->id }}"
+                               wire:model.live="idNiveles"
+                               class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                        <span>{{ $nivel->nivel }}@if (trim((string) $nivel->abrev) !== '') <span class="text-neutral-500">({{ $nivel->abrev }})</span>@endif</span>
+                    </label>
+                @endforeach
+            </div>
+            @error('idNiveles')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+            @error('idNiveles.*')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        @if ($cursos !== [])
+            <div class="space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="form-label mb-0">Cursos y secciones a promover</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" wire:click="seleccionarTodosCursos"
+                                class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                            Marcar todos
+                        </button>
+                        <button type="button" wire:click="quitarTodosCursos"
+                                class="rounded-xl border border-accent-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-600 shadow-sm transition hover:border-accent-300 hover:bg-accent-50">
+                            Desmarcar todos
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full overflow-x-auto">
+                    <div class="flex justify-start">
+                        <table class="min-w-[40rem] w-full table-auto text-sm">
+                            <thead>
+                                <tr class="border-b border-accent-200 bg-accent-50">
+                                    <th scope="col" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                                        <span class="sr-only">Seleccionar</span>
+                                    </th>
+                                    <th scope="col" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Curso</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Nivel</th>
+                                    <th scope="col" class="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Regulares</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Destino</th>
+                                    <th scope="col" class="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500">A crear</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($cursos as $fila)
+                                    <tr class="border-b border-accent-100 hover:bg-accent-50/60">
+                                        <td class="px-3 py-2">
+                                            <input type="checkbox"
+                                                   value="{{ (int) $fila['id'] }}"
+                                                   wire:model.live="idCursos"
+                                                   class="rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                                        </td>
+                                        <td class="px-3 py-2 font-medium text-neutral-800">{{ $fila['nombre'] }}</td>
+                                        <td class="px-3 py-2 text-neutral-700">{{ $fila['nivel'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-neutral-800">{{ (int) $fila['regulares'] }}</td>
+                                        <td class="px-3 py-2 text-neutral-700">
+                                            @if ($fila['sin_destino'])
+                                                <span class="text-xs font-semibold text-amber-800">Sin curso en destino</span>
+                                            @else
+                                                {{ $fila['destino_nombre'] ?? '—' }}
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-primary-700">{{ (int) $fila['a_crear'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @error('idCursos')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+                @error('idCursos.*')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-sm font-semibold text-neutral-800">Previsualización</p>
+                <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Cursos marcados</dt>
+                        <dd class="mt-1 text-lg font-semibold tabular-nums text-primary-700">{{ $preview['marcados'] }}</dd>
+                    </div>
+                    <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">A crear</dt>
+                        <dd class="mt-1 text-lg font-semibold tabular-nums text-primary-700">{{ $preview['a_crear'] }}</dd>
+                    </div>
+                    <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Ya matriculados</dt>
+                        <dd class="mt-1 text-lg font-semibold tabular-nums text-neutral-800">{{ $preview['existentes'] }}</dd>
+                    </div>
+                    <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Sin curso destino</dt>
+                        <dd class="mt-1 text-lg font-semibold tabular-nums text-neutral-800">{{ $preview['sin_curso'] }}</dd>
+                    </div>
+                </dl>
+            </div>
+        @elseif ((int) $idTerlecOrigen > 0 && (int) $idTerlecDestino > 0 && (int) $idTerlecOrigen !== (int) $idTerlecDestino && $idNiveles !== [])
+            <p class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2 text-sm text-neutral-600">
+                No hay cursos promovibles en el origen para los niveles elegidos (el último año de secundario no se lista).
+            </p>
+        @endif
+
+        <div>
+            <button type="button"
+                    class="btn-primary"
+                    wire:loading.attr="disabled"
+                    wire:target="ejecutar"
+                    @disabled($cursos === [] || $preview['marcados'] === 0)
+                    x-on:click="window.seSwalConfirmar(
+                        '¿Está seguro de promover a los alumnos del año {{ $origenAno ?? 'origen' }} al año {{ $destinoAno ?? 'destino' }}? Se crearán matrículas y calificaciones. Esta operación no puede deshacerse.',
+                        'Promover alumnos',
+                        { confirmButtonText: 'Sí, promover', icon: 'warning' }
+                    ).then(ok => ok && $wire.ejecutar())">
+                <span wire:loading.remove wire:target="ejecutar">Promover al año de destino</span>
+                <span wire:loading wire:target="ejecutar">Procesando…</span>
+            </button>
+        </div>
+    </div>
+
+    @if (! empty($informe))
+        <div class="se-card space-y-3 p-5 sm:p-6" role="status">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0 space-y-1">
+                    <p class="text-sm font-semibold text-neutral-800">Informe de la promoción</p>
+                    <p class="text-xs text-neutral-500">
+                        {{ $origenAno ?? '—' }} → {{ $destinoAno ?? '—' }}
+                    </p>
+                </div>
+                <button type="button" wire:click="cerrarInforme" class="btn-secondary text-xs">Cerrar</button>
+            </div>
+            <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                    <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Matrículas creadas</dt>
+                    <dd class="text-lg font-semibold tabular-nums text-primary-700">{{ (int) $informe['matriculas']['a_crear'] }}</dd>
+                    <dd class="text-xs text-neutral-500">de {{ (int) $informe['matriculas']['origen'] }} regulares</dd>
+                </div>
+                <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                    <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Calificaciones</dt>
+                    <dd class="text-lg font-semibold tabular-nums text-primary-700">{{ (int) $informe['calificaciones']['a_crear'] }}</dd>
+                    <dd class="text-xs text-neutral-500">registros nuevos</dd>
+                </div>
+                <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                    <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Ya existían</dt>
+                    <dd class="text-lg font-semibold tabular-nums text-neutral-800">{{ (int) $informe['matriculas']['existentes'] }}</dd>
+                </div>
+                <div class="rounded-xl border border-accent-200 bg-accent-50/60 px-3 py-2">
+                    <dt class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Sin curso destino</dt>
+                    <dd class="text-lg font-semibold tabular-nums text-neutral-800">{{ (int) $informe['matriculas']['sin_curso'] }}</dd>
+                </div>
+            </dl>
+
+            @if (! empty($informe['por_nivel']))
+                <div class="space-y-2 pt-1">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Creados por nivel de origen</p>
+                    <div class="w-full overflow-x-auto se-grid-angosta-wrap">
+                        <table class="w-max table-auto text-sm se-grid-pocos-campos">
+                            <thead>
+                                <tr class="border-b border-accent-200 bg-accent-50">
+                                    <th scope="col" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Nivel</th>
+                                    <th scope="col" class="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Matrículas</th>
+                                    <th scope="col" class="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Calificaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($informe['por_nivel'] as $filaNivel)
+                                    <tr class="border-b border-accent-100">
+                                        <td class="px-3 py-2 font-medium text-neutral-800">{{ $filaNivel['nombre'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-neutral-800">{{ (int) $filaNivel['matriculas'] }}</td>
+                                        <td class="px-3 py-2 text-right tabular-nums text-neutral-800">{{ (int) $filaNivel['calificaciones'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="border-t border-accent-200">
+                                    <th scope="row" class="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Total</th>
+                                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-primary-700">{{ (int) $informe['matriculas']['a_crear'] }}</td>
+                                    <td class="px-3 py-2 text-right font-semibold tabular-nums text-primary-700">{{ (int) $informe['calificaciones']['a_crear'] }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
+
+    @script
+    <script>
+        (function () {
+            function mensajeDeEvento(event, fallback) {
+                return event?.mensaje ?? event?.detail?.mensaje ?? fallback;
+            }
+
+            $wire.on('se-swal-exito', (event) => {
+                const mensaje = mensajeDeEvento(event, 'Promoción completada.');
+                if (typeof window.seSwalExito === 'function') {
+                    window.seSwalExito(mensaje);
+                }
+            });
+
+            $wire.on('se-swal-error', (event) => {
+                const mensaje = mensajeDeEvento(event, 'No se pudo completar la promoción.');
+                if (typeof window.seSwalError === 'function') {
+                    window.seSwalError(mensaje);
+                }
+            });
+
+            $wire.on('se-swal-aviso', (event) => {
+                const mensaje = mensajeDeEvento(event, 'No había alumnos nuevos para promover.');
+                if (typeof window.seSwalAviso === 'function') {
+                    window.seSwalAviso(mensaje);
+                }
+            });
+        })();
+    </script>
+    @endscript
+</div>

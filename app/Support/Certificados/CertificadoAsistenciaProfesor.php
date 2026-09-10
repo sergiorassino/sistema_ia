@@ -8,7 +8,11 @@ namespace App\Support\Certificados;
 
 use App\Models\CertAsistProf;
 
+use App\Support\SchoolAlcancePedagogico;
+
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+use Illuminate\Database\Query\Builder;
 
 use Illuminate\Support\Facades\DB;
 
@@ -28,7 +32,7 @@ final class CertificadoAsistenciaProfesor
 
     /**
 
-     * Personal del legajo con rol distinto de «Sin Rol» (IdTipoProf = 1).
+     * Personal del nivel de sesión con rol distinto de «Sin Rol» (IdTipoProf = 1).
 
      *
 
@@ -54,9 +58,11 @@ final class CertificadoAsistenciaProfesor
 
         $q = DB::table('profesores as p')
 
-            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf');
 
-            ->where(function ($w) {
+        self::aplicarFiltroNivel($q);
+
+        $q->where(function ($w) {
 
                 $w->whereNull('p.IdTipoProf')->orWhere('p.IdTipoProf', '<>', 1);
 
@@ -162,11 +168,13 @@ final class CertificadoAsistenciaProfesor
 
 
 
-        $row = DB::table('profesores as p')
+        $q = DB::table('profesores as p')
 
-            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf')
+            ->leftJoin('profesortipo as pt', 'pt.id', '=', 'p.IdTipoProf');
 
-            ->where('p.id', $idProfesores)
+        self::aplicarFiltroNivel($q);
+
+        $row = $q->where('p.id', $idProfesores)
 
             ->where(function ($w) {
 
@@ -541,6 +549,22 @@ final class CertificadoAsistenciaProfesor
     }
 
 
+
+    /**
+     * Solo personal del nivel de sesión (`profesores.nivel`).
+     * Un mismo docente puede tener un legajo por nivel.
+     */
+    private static function aplicarFiltroNivel(Builder $query): void
+    {
+        $idNivel = SchoolAlcancePedagogico::idNivelLegajosDocente();
+        if ($idNivel === null) {
+            $query->whereRaw('0 = 1');
+
+            return;
+        }
+
+        $query->where('p.nivel', $idNivel);
+    }
 
     public static function normalizarBusqueda(?string $buscar): string
 

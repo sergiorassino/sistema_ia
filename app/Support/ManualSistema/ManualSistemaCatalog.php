@@ -953,6 +953,51 @@ final class ManualSistemaCatalog
                         'Permiso de parametrización (1)',
                     ),
                     self::mod(
+                        'Copiar cursos, materias y horarios',
+                        'Configuración → Copiar cursos, materias y horarios',
+                        'Copia la estructura (cursos, materias y horarios) de un año lectivo a otro, por los niveles elegidos.',
+                        [
+                            'Elija el año de origen y el año de destino (deben ser distintos).',
+                            'Marque los niveles a procesar (todos, uno o varios).',
+                            'Revise la previsualización y confirme. Lo que ya existe en el destino no se duplica.',
+                        ],
+                        [
+                            'Permiso reservado al administrador (orden 104). No copia matrículas ni calificaciones.',
+                        ],
+                        'Permiso 104',
+                    ),
+                    self::mod(
+                        'Copiar asignación de profesores y preceptores',
+                        'Configuración → Copiar asignación de profesores y preceptores',
+                        'Copia las asignaciones de docentes por materia (ppc) y de preceptores por curso de un año lectivo a otro, por los niveles elegidos.',
+                        [
+                            'Asegúrese de que el año de destino ya tenga cursos y materias (por ejemplo con Copiar cursos, materias y horarios).',
+                            'Elija el año de origen y el año de destino (deben ser distintos).',
+                            'Marque los niveles a procesar (todos, uno o varios).',
+                            'Revise la previsualización y confirme. Lo que ya existe en el destino no se duplica.',
+                        ],
+                        [
+                            'Permiso reservado al administrador (orden 105). Si falta la materia o el curso en el destino, esa fila se omite.',
+                        ],
+                        'Permiso 105',
+                    ),
+                    self::mod(
+                        'Promover a todos los alumnos',
+                        'Configuración → Promover a todos los alumnos',
+                        'Crea la matrícula y las calificaciones de los alumnos regulares en el año de destino, a partir de los cursos marcados del año de origen.',
+                        [
+                            'Asegúrese de que el año de destino ya tenga cursos y materias (por ejemplo con Copiar cursos, materias y horarios).',
+                            'Elija el año de origen y el año de destino (deben ser distintos).',
+                            'Marque los niveles a procesar (todos, uno o varios).',
+                            'Marque los cursos a promover. El último año de secundario no aparece (egresados).',
+                            'Revise la previsualización y confirme. Quien ya tenga matrícula en el destino no se duplica.',
+                        ],
+                        [
+                            'Permiso reservado al administrador (orden 106). Operación irreversible desde la pantalla.',
+                        ],
+                        'Permiso 106',
+                    ),
+                    self::mod(
                         'Notificaciones push (personal de gestión)',
                         'Menú Comunicación institucional → Notificaciones Push',
                         'Permite recibir alertas en el navegador cuando hay novedades (por ejemplo comunicados).',

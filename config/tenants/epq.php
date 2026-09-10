@@ -50,6 +50,10 @@ return [
         'niveles_ids' => [2, 3, 5],
     ],
 
+    'promocion' => [
+        'ultimo_curso_secundario' => 5,
+    ],
+
     'cuotas' => [
         // Legacy EPQ: recargo % fijo por tramo (sin multiplicar por días).
         'interes_mora_modo' => 'total',

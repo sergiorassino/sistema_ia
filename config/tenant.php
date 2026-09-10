@@ -699,6 +699,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Promoción masiva de alumnos (Configuración)
+    |--------------------------------------------------------------------------
+    |
+    | `ultimo_curso_secundario`: valor de `cursos.c` del último año de medio
+    | que NO se promociona (egresados). Default 6. EPQ usa 5.
+    | `ultimo_curso_adultos`: último año de Adultos (`niveles.id` = 6); default 3.
+    */
+    'promocion' => [
+        'ultimo_curso_secundario' => 6,
+        'ultimo_curso_adultos' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ARCA — consultas al padrón tributario
     |--------------------------------------------------------------------------
     */

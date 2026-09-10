@@ -87,6 +87,19 @@ Comprobante de cobro tras imputar un pago — dos talonarios idénticos por hoja
 
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
 
+Promoción masiva de alumnos (Configuración): último año de secundario que no se promociona. Default **6**; **EPQ** usa **5**:
+
+```php
+// config/tenants/epq.php
+return [
+    'promocion' => [
+        'ultimo_curso_secundario' => 5,
+    ],
+];
+```
+
+Consumir con `App\Support\Configuracion\PromoverAlumnosAnio::ultimoCursoSecundario()` / `config('tenant.promocion.ultimo_curso_secundario')`. Detalle: [modulos/promover-alumnos.md](modulos/promover-alumnos.md).
+
 Usos típicos: URLs de terceros, flags de comportamiento, textos o límites que no convenga guardar en BD.
 
 Ejemplo (tercer materia en boletín / consulta de calificaciones — solo colegios que lo usan):

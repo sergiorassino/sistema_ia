@@ -7,7 +7,7 @@
                     <p class="se-eyebrow !text-[10px]">Certificados</p>
                     <h2 class="font-bold tracking-tight">Certificado de Asistencia del Profesor</h2>
                     <p class="text-xs text-white/80 truncate">
-                        Personal del legajo con rol asignado (excluye «Sin Rol»)
+                        {{ schoolCtx()->nivelNombre() }} · Personal con rol asignado (excluye «Sin Rol»)
                     </p>
                 </div>
                 <a href="{{ route('dashboard') }}"

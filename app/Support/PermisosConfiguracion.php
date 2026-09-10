@@ -3,11 +3,14 @@
 namespace App\Support;
 
 /**
- * Permisos granulares del menú Configuración (secretaría).
+ * Permisos granulares del menú Configuración (secretaría / administración).
  *
- * Cada ítem del menú Configuración usa su orden 25–36 (salvo orden 32,
- * «Notificaciones Push», que está en Comunicación institucional). Los órdenes
- * 14 y 99 son consulta (Permisos por Usuario / Permisos por Tarea).
+ * Cada ítem del menú Configuración usa su orden (25–36, 104 copiar
+ * cursos/materias/horarios, 105 copiar asignaciones de profesores/preceptores
+ * y 106 promover alumnos).
+ * El orden 32, «Notificaciones Push», está en
+ * Comunicación institucional. Los órdenes 14 y 99 son consulta
+ * (Permisos por Usuario / Permisos por Tarea).
  */
 final class PermisosConfiguracion
 {
@@ -34,6 +37,15 @@ final class PermisosConfiguracion
     public const CURSOS_ANIO = 35;
 
     public const MATERIAS_ANIO = 36;
+
+    /** Copiar cursos, materias y horarios entre años lectivos. */
+    public const COPIAR_CURSOS_MATERIAS_ANIO = PermisosIaCatalog::COPIAR_CURSOS_MATERIAS_ANIO;
+
+    /** Copiar asignación de profesores (ppc) y preceptores por curso entre años lectivos. */
+    public const COPIAR_ASIGNACIONES_PROF_PRECEP = PermisosIaCatalog::COPIAR_ASIGNACIONES_PROF_PRECEP;
+
+    /** Promover alumnos regulares (matrícula + calificaciones) entre años lectivos. */
+    public const PROMOVER_ALUMNOS_ANIO = PermisosIaCatalog::PROMOVER_ALUMNOS_ANIO;
 
     public const ASPIRANTES_CAMPOS = PermisosIaCatalog::ASPIRANTES_CAMPOS;
 
@@ -69,6 +81,9 @@ final class PermisosConfiguracion
             self::CURSOS_MATERIAS_PLAN,
             self::CURSOS_ANIO,
             self::MATERIAS_ANIO,
+            self::COPIAR_CURSOS_MATERIAS_ANIO,
+            self::COPIAR_ASIGNACIONES_PROF_PRECEP,
+            self::PROMOVER_ALUMNOS_ANIO,
             self::ASPIRANTES_CAMPOS,
             self::SANCION_TIPOS_CONFIG,
         ];

@@ -71,4 +71,4 @@ Migración (`php artisan se:migrate-legacy --force`, no ejecutar desde el asiste
 - [ ] Exclusión de «Sin Rol» y rol Profesor/a (`Profesor::elegiblesParaPermisosIa()`).
 - [ ] Catálogo y `maxOrden` alineados si se agrega un orden nuevo (el editor de asignación rellena la cadena).
 - [ ] Vista de consulta: sin `alert` nativo ni formularios de guardado.
-- [ ] Órdenes reservados (25, 26, 33–36, 100) muestran el aviso destacado «NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR» (catálogo + asignación + por tarea / por usuario).
+- [ ] Órdenes reservados (25, 26, 33–36, 104, 105, 106, 100) muestran el aviso destacado «NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR» (catálogo + asignación + por tarea / por usuario).
