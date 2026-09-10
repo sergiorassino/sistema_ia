@@ -14,7 +14,7 @@
         ! empty($turnoTitulo) ? 'Turno: '.$turnoTitulo : '',
     ])->map(fn ($v) => trim((string) $v))->filter()->implode(' · ');
 
-    // Impreso sobre media A4 vertical / A5 (148 × 210 mm), centrada en bandeja A4.
+    // PDF A4; el impreso real es media hoja oficio vertical en la impresora.
     $altoImpresoMm = 210.0;
     $padTopMm = 8.0;
     $padBottomMm = 6.0;
@@ -27,6 +27,8 @@
     // Filas de título de ambas grillas: compactas para no desbordar la media hoja.
     $altoThMm = 3.0;
     $altoFilaManualMm = 4.0;
+    // 0,5 mm menos por hora (profesores / firmas) para que la 10.ª no se corte.
+    $reduccionFilaFirmaMm = 0.5;
 
     $filasHorario = is_array($filasHorario ?? null) ? $filasHorario : [];
     $nFirmas = max(1, count($filasHorario));
@@ -37,7 +39,7 @@
     // Holgura: el render DomPDF suele superar un poco las estimaciones de cabecera/meta.
     $holguraMm = 3.0;
     $altoCuerpoFirmasMm = max($nFirmas * 8.0, $altoUtilMm - $altoFijoMm - $holguraMm);
-    $altoFilaFirmaMm = round(($altoCuerpoFirmasMm / $nFirmas) * 0.98, 2);
+    $altoFilaFirmaMm = round(($altoCuerpoFirmasMm / $nFirmas) * 0.98, 2) - $reduccionFilaFirmaMm;
 
     $hManual = number_format($altoFilaManualMm, 2, '.', '');
     $hTh = number_format($altoThMm, 2, '.', '');

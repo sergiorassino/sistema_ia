@@ -1,5 +1,5 @@
 {{--
-  Parte diario — PDF A4; impreso útil = media A4 vertical / A5 (148 × 210 mm).
+  Parte diario — PDF A4; se imprime en media hoja oficio vertical.
   Una o más páginas (un curso por hoja).
 --}}
 <!DOCTYPE html>

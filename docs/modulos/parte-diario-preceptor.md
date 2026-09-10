@@ -10,7 +10,7 @@ Config por tenant: `config/tenant.php` → `parte_diario.implementacion`.
 
 | Clave | PDF | Comportamiento |
 |-------|-----|----------------|
-| `estandar` (default) | DomPDF A4 / media hoja | Filas manuales vacías + firmas por hora del día (`HorariosProfesores`). |
+| `estandar` (default) | DomPDF A4; impreso en **media hoja oficio vertical** | Filas manuales vacías + firmas por hora del día (`HorariosProfesores`). Cada fila de hora/firma es 0,5 mm más baja para que las 10 horas entren en esa hoja. |
 | `sanfranciscoasis` | TCPDF **Legal** | Listado de alumnos **regulares** (`idCondiciones = 1`) con columnas 1ºh–10ºh vacías + bloque de firmas docentes por hora. |
 
 Override documentado: `config/tenants/sanfranciscoasis.php` → `sanfranciscoasis`.
@@ -49,6 +49,7 @@ Helper: `tenantParteDiarioImplementacion()`.
 - PDF nuevo SFA: TCPDF + Arial (no DomPDF).
 - No reemplazar el docente de la celda por la lista `ppc` de la materia: si está cargado en `horarios26`, sale ese nombre.
 - No imprimir solo el primer turno de un curso doble jornada: una hoja por mañana y otra por tarde, salvo que el usuario filtre un turno.
+- Modelo `estandar`: no agrandar las filas de profesores/firmas; con 10 horas el pie se corta en media oficio si cada fila no baja 0,5 mm.
 
 ## Checklist al modificar
 

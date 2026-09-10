@@ -139,7 +139,7 @@ Consumir con `tenantRegistroAsistenciaImplementacion()`. Detalle: [modulos/regis
 
 Parte diario del preceptor — modelo de PDF:
 
-- Default: **`estandar`** (DomPDF A4 / media hoja).
+- Default: **`estandar`** (DomPDF A4; impreso en media hoja oficio vertical).
 - Alternativa **`sanfranciscoasis`**: TCPDF Legal con listado de regulares y firmas por hora.
 
 ```php

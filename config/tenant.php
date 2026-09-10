@@ -671,7 +671,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | `implementacion`:
-    |   - `estandar` — DomPDF A4 / media hoja (default).
+    |   - `estandar` — DomPDF A4; impreso en media hoja oficio vertical (default).
     |   - `sanfranciscoasis` — TCPDF Legal: listado de alumnos regulares + firmas por hora.
     | Override solo en `config/tenants/{slug}.php` cuando difiere.
     */
