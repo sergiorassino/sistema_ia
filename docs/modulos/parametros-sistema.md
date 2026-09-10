@@ -19,13 +19,13 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 | `ento` | `insti`, CUE, dirección, logos, SIRO, AFIP | Una fila por `idNivel`. |
 | `ento` | `cargaNotasOff`, `verNotasOff`, `verBimesOff`, `imprBoleOff` | Flags 1/0 del **nivel activo**, no de toda la escuela. |
 | `ento` | `verDatosFicha`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. |
-| `ento` | `cuitFact`, `PtoVta`, certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. |
+| `ento` | `cuitFact`, `PtoVta` (legacy; no `ptoVta`), certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. Eloquent lee/escribe ambos nombres. |
 | `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo** (formulario). En la factura AFIP se imprime el de **nivel del alumno** (curso de la cuota), no el de Administración. Flag: `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` (Instituto Ramallo). |
 | `ento` | `ctaEnvioMail`, `passEnvioMail` | Solapa Correo institucional (guardado aparte). |
 
 ## Flujo principal
 
-1. Solapa **Datos de la institución**: nombre, domicilio, logos, AFIP/SIRO si aplica.
+1. Solapa **Datos de la institución**: nombre, domicilio, logos, AFIP/SIRO si aplica. Permanece en el DOM (oculta) para que el punto de venta y el resto de campos lleguen al Guardar.
 2. Solapa **Parámetros**: ciclo de autogestión y bloqueos. La solapa permanece en el DOM (oculta) para que los checkboxes lleguen al Guardar.
 3. **Guardar** persiste la fila de `ento` del nivel activo y verifica columnas con `PersistenciaColumnas`.
 4. Solapa **Correo institucional**: `saveMailConfig()` independiente.
@@ -48,7 +48,7 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 
 - No exigir `cuitFact` para guardar bloqueos u otros campos: en varios colegios solo Administración tiene CUIT de facturación; inicial/primario/secundario lo tienen vacío.
 - No tratar `UPDATE` con 0 filas afectadas como “no existe el registro”: si los flags no cambiaron, MySQL no cuenta filas.
-- No destruir la solapa Parámetros con `@elseif`: Livewire no envía los checkboxes al Guardar.
+- No destruir la solapa Datos de la institución ni Parámetros con `@if`/`@elseif`: Livewire no envía punto de venta ni checkboxes al Guardar. Usar `hidden`.
 - Errores de guardado: SweetAlert y cambiar a la solapa del campo. No dejar el error solo en un input de otra solapa.
 
 ## Checklist al modificar
@@ -57,3 +57,4 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 - [ ] Toggle de `cargaNotasOff` / `verNotasOff` desde la solapa Parámetros queda en `ento` al recargar.
 - [ ] Con `verNotasOff` en el nivel activo, el portal familia no abre ninguna consulta de calificaciones (aviso + PDF 403), en todos los niveles y variantes.
 - [ ] Si falla validación o persistencia, hay mensaje visible (`se-swal-error`).
+- [ ] Punto de venta (`ento.PtoVta`) queda en la fila del nivel activo al recargar; no mostrar éxito si no persistió.

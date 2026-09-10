@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 
@@ -31,6 +32,7 @@ class Ento extends Model
         'condIvaInst',
         'aporteEstatal',
         'ptoVta',
+        'PtoVta', // legacy ScriptCase / AFIP (P mayúscula; no ptoVta)
         'afipCertCarpeta',
         'afipCertKey',
         'afipCertCrt',
@@ -84,14 +86,65 @@ class Ento extends Model
         'mensajeBloqAdmi',
     ];
 
+    /** @var array<string, string> */
+    private static array $columnaPuntoVentaCache = [];
+
     protected $casts = [
-        'ptoVta' => 'integer',
         'cargaNotasOff' => 'integer',
         'verNotasOff' => 'integer',
         'verBimesOff' => 'integer',
         'imprBoleOff' => 'integer',
         'verDatosFicha' => 'integer',
     ];
+
+    /**
+     * Nombre real de la columna de punto de venta en este tenant (`PtoVta` o `ptoVta`).
+     */
+    public static function columnaPuntoVenta(): string
+    {
+        $schema = Schema::getConnection()->getDatabaseName();
+        if (isset(self::$columnaPuntoVentaCache[$schema])) {
+            return self::$columnaPuntoVentaCache[$schema];
+        }
+
+        $nombre = 'ptoVta';
+        if (Schema::hasTable('ento')) {
+            foreach (Schema::getColumnListing('ento') as $columna) {
+                if (strcasecmp((string) $columna, 'ptovta') === 0) {
+                    $nombre = (string) $columna;
+                    break;
+                }
+            }
+        }
+
+        return self::$columnaPuntoVentaCache[$schema] = $nombre;
+    }
+
+    /**
+     * Punto de venta AFIP. En varios tenants la columna legacy es `PtoVta` (no `ptoVta`).
+     */
+    protected function ptoVta(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes): mixed {
+                foreach ($attributes as $key => $attrValue) {
+                    if (strcasecmp((string) $key, 'ptovta') === 0) {
+                        return $attrValue === null || $attrValue === '' ? null : (int) $attrValue;
+                    }
+                }
+
+                return $value === null || $value === '' ? null : (int) $value;
+            },
+            set: function (mixed $value): array {
+                $columna = self::columnaPuntoVenta();
+                if ($value === null || $value === '') {
+                    return [$columna => null];
+                }
+
+                return [$columna => (int) $value];
+            },
+        );
+    }
 
     /**
      * CUIT emisor para WSFE / comprobantes AFIP (`ento.cuitFact`).

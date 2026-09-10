@@ -153,10 +153,10 @@ final class PersistenciaColumnas
                 continue;
             }
 
-            $existe = Schema::hasTable($tabla) && Schema::hasColumn($tabla, $columna);
+            $nombreReal = self::nombreColumnaEsquema($tabla, (string) $columna);
             $vacio = self::valorVacioParaPersistencia($valor);
 
-            if (! $existe) {
+            if ($nombreReal === null) {
                 if (! $vacio) {
                     $columnasConValorSinColumna[] = $columna;
                 }
@@ -164,7 +164,7 @@ final class PersistenciaColumnas
                 continue;
             }
 
-            $preparado[$columna] = $valor;
+            $preparado[$nombreReal] = $valor;
         }
 
         sort($columnasConValorSinColumna);
@@ -219,10 +219,16 @@ final class PersistenciaColumnas
         }
 
         $columnas = array_keys($valoresEsperados);
-        $columnasExistentes = array_values(array_filter(
-            $columnas,
-            static fn (string $columna): bool => Schema::hasColumn($tabla, $columna)
-        ));
+        $claveANombreReal = [];
+        foreach ($columnas as $columna) {
+            $nombreReal = self::nombreColumnaEsquema($tabla, $columna);
+            if ($nombreReal === null) {
+                continue;
+            }
+            $claveANombreReal[$columna] = $nombreReal;
+        }
+
+        $columnasExistentes = array_values(array_unique(array_values($claveANombreReal)));
 
         if ($columnasExistentes === []) {
             return [];
@@ -240,11 +246,12 @@ final class PersistenciaColumnas
 
         $noPersistidas = [];
         foreach ($valoresEsperados as $columna => $esperado) {
-            if (! in_array($columna, $columnasExistentes, true)) {
+            $nombreReal = $claveANombreReal[$columna] ?? null;
+            if ($nombreReal === null) {
                 continue;
             }
 
-            if (! self::valoresEquivalentes($esperado, $fila->{$columna} ?? null)) {
+            if (! self::valoresEquivalentes($esperado, self::valorColumnaFila($fila, $nombreReal))) {
                 $noPersistidas[] = $columna;
             }
         }
@@ -327,6 +334,33 @@ final class PersistenciaColumnas
         }
 
         return self::$metaColumnas[$tabla];
+    }
+
+    private static function nombreColumnaEsquema(string $tabla, string $columna): ?string
+    {
+        foreach (self::metaColumnas($tabla) as $col) {
+            if (strcasecmp($col['name'], $columna) === 0) {
+                return $col['name'];
+            }
+        }
+
+        return null;
+    }
+
+    private static function valorColumnaFila(object $fila, string $columna): mixed
+    {
+        $vars = get_object_vars($fila);
+        if (array_key_exists($columna, $vars)) {
+            return $vars[$columna];
+        }
+
+        foreach ($vars as $key => $value) {
+            if (strcasecmp((string) $key, $columna) === 0) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private static function tipoColumna(string $tabla, string $columna): string

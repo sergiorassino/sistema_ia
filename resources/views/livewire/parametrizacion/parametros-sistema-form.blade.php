@@ -55,8 +55,8 @@
             </nav>
         </div>
 
-        @if ($activeTab === 'institucion')
-        <div class="p-6 sm:p-7" wire:key="param-tab-institucion">
+        {{-- Solapa en el DOM (hidden): si se destruye con @if, los campos AFIP no llegan al Guardar. --}}
+        <div class="p-6 sm:p-7" wire:key="param-tab-institucion" @if ($activeTab !== 'institucion') hidden @endif>
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div class="md:col-span-2">
                 <label class="form-label">Institución</label>
@@ -329,7 +329,7 @@
 
                 <div>
                     <label class="form-label">Punto de venta</label>
-                    <input wire:model="ptoVta" type="number" min="1" max="9999" step="1"
+                    <input wire:model="ptoVta" type="text" inputmode="numeric" maxlength="4"
                            class="form-input mt-1.5 font-mono @error('ptoVta') border-red-400 @enderror"
                            placeholder="Ej. 5">
                     @error('ptoVta') <p class="form-error">{{ $message }}</p> @enderror
@@ -452,7 +452,6 @@
             </div>
         @endif
         </div>
-        @endif
         {{-- Solapa siempre en el DOM: si se destruye con @elseif, los checkboxes no llegan al Guardar. --}}
         <div class="space-y-8 p-6 sm:p-7" wire:key="param-tab-parametros" @if ($activeTab !== 'parametros') hidden @endif>
             <div>

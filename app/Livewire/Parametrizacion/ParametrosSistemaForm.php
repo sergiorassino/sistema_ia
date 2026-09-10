@@ -515,6 +515,7 @@ class ParametrosSistemaForm extends Component
         $entoGuardado = Ento::query()->where('idNivel', $idNivel)->first();
         if ($entoGuardado) {
             $this->cargarParametrosOperativosDesdeEnto($entoGuardado);
+            $this->ptoVta = (string) ((int) ($entoGuardado->ptoVta ?? 0) ?: '');
         }
 
         $this->currentLogoUrl = schoolLogoUrl();
@@ -1089,6 +1090,7 @@ class ParametrosSistemaForm extends Component
     {
         return match ($columna) {
             'idTerlecVerNotas' => 'idTerlecVerNotas',
+            'PtoVta', 'ptoVta' => 'ptoVta',
             'logo_path', 'logo_original_name' => 'logo',
             'logo_login_path', 'logo_login_original_name' => 'logoLogin',
             default => $columna,
