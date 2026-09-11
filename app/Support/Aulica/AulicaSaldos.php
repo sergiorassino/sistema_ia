@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * POST /alumnos/ctacte/saldos — deuda del DNI y, si es tutor, de los alumnos a cargo.
+ *
+ * Áulica responde `{ "items": [ { idPersona, saldo, nroDoc, tipoDoc, nombre, apellido } ] }`.
  */
 final class AulicaSaldos
 {
@@ -27,7 +29,7 @@ final class AulicaSaldos
             $tipoDoc = 'DNI';
         }
 
-        $clave = 'aulica:'.AulicaConfig::slugCache().':saldos:'.$tipoDoc.':'.$nroDoc;
+        $clave = 'aulica:'.AulicaConfig::slugCache().':saldos:v2:'.$tipoDoc.':'.$nroDoc;
         $cacheado = Cache::get($clave);
         if (is_array($cacheado)) {
             return $this->hidratarCache($cacheado);
@@ -75,17 +77,8 @@ final class AulicaSaldos
             throw new AulicaClienteException('Áulica devolvió HTTP '.$response->status().' al consultar saldos.');
         }
 
-        $json = $response->json();
-        if (! is_array($json)) {
-            return [];
-        }
-
-        if ($this->esObjetoAsociativo($json)) {
-            $json = [$json];
-        }
-
         $out = [];
-        foreach ($json as $fila) {
+        foreach ($this->filasDesdeJson($response->json()) as $fila) {
             if (! is_array($fila)) {
                 continue;
             }
@@ -93,6 +86,48 @@ final class AulicaSaldos
         }
 
         return $out;
+    }
+
+    /**
+     * @param  mixed  $json
+     * @return list<mixed>
+     */
+    private function filasDesdeJson(mixed $json): array
+    {
+        if (! is_array($json)) {
+            return [];
+        }
+
+        foreach (['items', 'data', 'saldos', 'result'] as $clave) {
+            if (isset($json[$clave]) && is_array($json[$clave])) {
+                $json = $json[$clave];
+                break;
+            }
+        }
+
+        if ($json === []) {
+            return [];
+        }
+
+        if ($this->esObjetoAsociativo($json)) {
+            return $this->parecePersona($json) ? [$json] : [];
+        }
+
+        return array_values($json);
+    }
+
+    /**
+     * @param  array<string, mixed>  $fila
+     */
+    private function parecePersona(array $fila): bool
+    {
+        foreach (['idPersona', 'IdPersona', 'nroDoc', 'NroDoc', 'nombre', 'Nombre', 'apellido', 'Apellido', 'saldo', 'Saldo'] as $clave) {
+            if (array_key_exists($clave, $fila)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

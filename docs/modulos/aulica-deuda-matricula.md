@@ -24,7 +24,7 @@ Ambientes (OpenAPI):
 ## Flujo de la API
 
 1. `POST /externalauth/authenticate` `{ username, password, codigo }` → `accessToken` (header `x-access-token`).
-2. `POST /alumnos/ctacte/saldos` `{ TipoDoc: "DNI", NroDoc }` → array de `{ idPersona, saldo, nroDoc, nombre, apellido }`.
+2. `POST /alumnos/ctacte/saldos` `{ TipoDoc: "DNI", NroDoc }` → `{ items: [ { idPersona, saldo, nroDoc, tipoDoc, nombre, apellido } ] }`. El cliente también acepta un array plano de personas.
 3. Si el DNI es de un **tutor**, Áulica también devuelve el saldo de los alumnos a cargo (hermanos).
 4. 404 = persona no encontrada = sin deuda.
 

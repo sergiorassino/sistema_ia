@@ -150,6 +150,8 @@ final class AulicaDeudaResultado
      *     consultas: list<array{rol: string, tipo_doc: string, nro_doc: string, origen: string}>,
      *     consulta_ok: bool,
      *     error: string,
+     *     encontrado_estudiante: bool,
+     *     encontrado_grupo: bool,
      *     estudiante: list<array<string, mixed>>,
      *     grupo_familiar: list<array<string, mixed>>,
      *     saldo_estudiante: float,
@@ -190,6 +192,9 @@ final class AulicaDeudaResultado
             && ! $this->tieneDeuda()
             && $this->dniEstudiante !== '';
 
+        $encontradoEstudiante = $this->estudiante !== [];
+        $encontradoGrupo = $this->grupoFamiliar !== [];
+
         $mensaje = '';
         if (! $this->consultaOk) {
             $mensaje = $this->error !== ''
@@ -199,8 +204,15 @@ final class AulicaDeudaResultado
             $mensaje = 'El legajo no tiene DNI para consultar Áulica.';
         } elseif ($this->tieneDeuda()) {
             $mensaje = $this->mensajeVisible();
+        } elseif ($encontradoEstudiante) {
+            $nombres = array_values(array_filter(array_map(
+                fn (AulicaSaldoPersona $p) => $p->nombreCompleto(),
+                $this->estudiante,
+            )));
+            $quien = $nombres !== [] ? implode('; ', $nombres) : 'DNI '.$this->dniEstudiante;
+            $mensaje = 'Áulica encontró al estudiante ('.$quien.') y no informa deuda. Puede emitir la constancia.';
         } else {
-            $mensaje = 'Áulica no informa deuda. Puede emitir la constancia.';
+            $mensaje = 'Áulica no encontró al estudiante con DNI '.$this->dniEstudiante.'. No informa deuda. Puede emitir la constancia.';
         }
 
         return [
@@ -210,6 +222,8 @@ final class AulicaDeudaResultado
             'consultas' => $consultas,
             'consulta_ok' => $this->consultaOk,
             'error' => $this->error,
+            'encontrado_estudiante' => $encontradoEstudiante,
+            'encontrado_grupo' => $encontradoGrupo,
             'estudiante' => array_map(
                 fn (AulicaSaldoPersona $p) => $p->aArray(),
                 $this->estudiante,

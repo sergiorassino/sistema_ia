@@ -151,7 +151,8 @@
                             <table class="min-w-full text-left text-sm">
                                 <thead class="bg-accent-50 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
                                     <tr>
-                                        <th class="px-3 py-2">Persona</th>
+                                        <th class="px-3 py-2">Apellido</th>
+                                        <th class="px-3 py-2">Nombre</th>
                                         <th class="px-3 py-2">DNI</th>
                                         <th class="px-3 py-2 text-right">Saldo</th>
                                     </tr>
@@ -159,14 +160,15 @@
                                 <tbody>
                                     @forelse (($detalle['estudiante'] ?? []) as $persona)
                                         <tr class="border-t border-accent-100">
-                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['nombre_completo'] ?? '') !== '' ? $persona['nombre_completo'] : '—' }}</td>
+                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['apellido'] ?? '') !== '' ? $persona['apellido'] : '—' }}</td>
+                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['nombre'] ?? '') !== '' ? $persona['nombre'] : '—' }}</td>
                                             <td class="px-3 py-2 tabular-nums text-neutral-700">{{ $persona['nro_doc'] ?? '' }}</td>
                                             <td class="px-3 py-2 text-right font-semibold tabular-nums text-neutral-900">{{ $persona['saldo_texto'] ?? '' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="px-3 py-3 text-sm text-neutral-500">
-                                                Sin personas (Áulica 404 o saldo vacío). Total {{ $detalle['saldo_estudiante_texto'] ?? '$ 0,00' }}.
+                                            <td colspan="4" class="px-3 py-3 text-sm text-neutral-500">
+                                                Áulica no encontró al estudiante con ese DNI. Total {{ $detalle['saldo_estudiante_texto'] ?? '$ 0,00' }}.
                                             </td>
                                         </tr>
                                     @endforelse
@@ -179,7 +181,8 @@
                             <table class="min-w-full text-left text-sm">
                                 <thead class="bg-accent-50 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
                                     <tr>
-                                        <th class="px-3 py-2">Persona</th>
+                                        <th class="px-3 py-2">Apellido</th>
+                                        <th class="px-3 py-2">Nombre</th>
                                         <th class="px-3 py-2">DNI</th>
                                         <th class="px-3 py-2 text-right">Saldo</th>
                                     </tr>
@@ -187,14 +190,15 @@
                                 <tbody>
                                     @forelse (($detalle['grupo_familiar'] ?? []) as $persona)
                                         <tr class="border-t border-accent-100">
-                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['nombre_completo'] ?? '') !== '' ? $persona['nombre_completo'] : '—' }}</td>
+                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['apellido'] ?? '') !== '' ? $persona['apellido'] : '—' }}</td>
+                                            <td class="px-3 py-2 text-neutral-800">{{ ($persona['nombre'] ?? '') !== '' ? $persona['nombre'] : '—' }}</td>
                                             <td class="px-3 py-2 tabular-nums text-neutral-700">{{ $persona['nro_doc'] ?? '' }}</td>
                                             <td class="px-3 py-2 text-right font-semibold tabular-nums text-neutral-900">{{ $persona['saldo_texto'] ?? '' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="px-3 py-3 text-sm text-neutral-500">
-                                                Sin personas en el grupo familiar. Total {{ $detalle['saldo_grupo_texto'] ?? '$ 0,00' }}.
+                                            <td colspan="4" class="px-3 py-3 text-sm text-neutral-500">
+                                                Áulica no encontró personas en el grupo familiar. Total {{ $detalle['saldo_grupo_texto'] ?? '$ 0,00' }}.
                                             </td>
                                         </tr>
                                     @endforelse

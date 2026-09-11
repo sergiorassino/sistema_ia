@@ -56,12 +56,44 @@ class AulicaConsultarDeudaCommand extends Command
         }
 
         $this->line('Estudiante DNI '.$resultado->dniEstudiante.': '.$resultado->etiquetaCorta());
+        $this->imprimirPersonas('Estudiante', $resultado->estudiante);
+        $this->imprimirPersonas('Grupo familiar', $resultado->grupoFamiliar);
+
         if ($resultado->mensajeVisible() !== '') {
             $this->line($resultado->mensajeVisible());
+        } elseif ($resultado->estudiante === []) {
+            $this->warn('Áulica no encontró al estudiante con ese DNI.');
         } else {
             $this->info('Sin deuda en Áulica.');
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  list<\App\Support\Aulica\AulicaSaldoPersona>  $personas
+     */
+    private function imprimirPersonas(string $titulo, array $personas): void
+    {
+        if ($personas === []) {
+            $this->line($titulo.': no encontrado.');
+
+            return;
+        }
+
+        $this->info($titulo.': '.count($personas).' persona(s).');
+        $this->table(
+            ['Id', 'Apellido', 'Nombre', 'DNI', 'Saldo'],
+            array_map(
+                fn ($p) => [
+                    $p->idPersona,
+                    $p->apellido,
+                    $p->nombre,
+                    $p->nroDoc,
+                    $p->saldoFormateado(),
+                ],
+                $personas,
+            ),
+        );
     }
 }

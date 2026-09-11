@@ -79,6 +79,48 @@ class AulicaDeudaConsultaTest extends TestCase
         $this->assertTrue($modal['tiene_deuda']);
         $this->assertFalse($modal['puede_emitir']);
         $this->assertSame('$ 1.500,50', $modal['estudiante'][0]['saldo_texto']);
+        $this->assertTrue($modal['encontrado_estudiante']);
+        $this->assertSame('Perez', $modal['estudiante'][0]['apellido']);
+        $this->assertSame('Juan', $modal['estudiante'][0]['nombre']);
+    }
+
+    public function test_respuesta_con_envoltorio_items(): void
+    {
+        Http::fake([
+            'pau-develop-authserver.aulicatest.com.ar/externalauth/authenticate' => Http::response([
+                'accessToken' => 'tok',
+                'refreshToken' => 'ref',
+                'expirationDate' => (string) (time() + 3600),
+            ]),
+            'pau-develop-externalapi.aulicatest.com.ar/alumnos/ctacte/saldos' => Http::response([
+                'items' => [
+                    [
+                        'idPersona' => 331896,
+                        'saldo' => 1237000.0,
+                        'nroDoc' => '52054290',
+                        'tipoDoc' => 'DNI',
+                        'nombre' => 'JOAQUIN',
+                        'apellido' => 'MOLINA',
+                    ],
+                ],
+            ]),
+        ]);
+
+        $resultado = (new AulicaDeudaConsulta)->paraDnis('52054290', '27296626');
+
+        $this->assertTrue($resultado->consultaOk);
+        $this->assertTrue($resultado->tieneDeuda());
+        $this->assertCount(1, $resultado->estudiante);
+        $this->assertSame('MOLINA', $resultado->estudiante[0]->apellido);
+        $this->assertSame('JOAQUIN', $resultado->estudiante[0]->nombre);
+        $this->assertSame('52054290', $resultado->estudiante[0]->nroDoc);
+        $this->assertEqualsWithDelta(1237000.0, $resultado->saldoEstudiante(), 0.01);
+
+        $modal = $resultado->paraModal();
+        $this->assertTrue($modal['encontrado_estudiante']);
+        $this->assertFalse($modal['puede_emitir']);
+        $this->assertSame('MOLINA', $modal['estudiante'][0]['apellido']);
+        $this->assertSame('JOAQUIN', $modal['estudiante'][0]['nombre']);
     }
 
     public function test_404_significa_sin_deuda(): void
@@ -100,8 +142,10 @@ class AulicaDeudaConsultaTest extends TestCase
 
         $modal = $resultado->paraModal();
         $this->assertTrue($modal['puede_emitir']);
+        $this->assertFalse($modal['encontrado_estudiante']);
         $this->assertSame([], $modal['estudiante']);
         $this->assertSame([], $modal['grupo_familiar']);
+        $this->assertStringContainsString('no encontró al estudiante', $modal['mensaje']);
     }
 
     public function test_saldo_cero_no_es_deuda(): void
@@ -116,6 +160,25 @@ class AulicaDeudaConsultaTest extends TestCase
 
         $this->assertFalse($persona->tieneDeuda());
         $this->assertSame('$ 0,00', $persona->saldoFormateado());
+    }
+
+    public function test_mapea_campos_en_pascal_case(): void
+    {
+        $persona = AulicaSaldoPersona::desdeRespuesta([
+            'IdPersona' => 9,
+            'Saldo' => '250,50',
+            'NroDoc' => '30111222',
+            'TipoDoc' => 'DNI',
+            'Nombre' => 'LUCIA',
+            'Apellido' => 'GARCIA',
+        ]);
+
+        $this->assertSame(9, $persona->idPersona);
+        $this->assertEqualsWithDelta(250.50, $persona->saldo, 0.01);
+        $this->assertSame('30111222', $persona->nroDoc);
+        $this->assertSame('LUCIA', $persona->nombre);
+        $this->assertSame('GARCIA', $persona->apellido);
+        $this->assertSame('GARCIA, LUCIA', $persona->nombreCompleto());
     }
 
     /**

@@ -24,7 +24,7 @@ Guard `alumno`, `student.context`. Sin permiso IA. Datos de `studentCtx()` (sin 
 
 1. Familia abre **Libre Deuda** (formulario en el portal).
 2. Pulsa **Consultar deuda**. Se llama a Áulica (DNI del estudiante y del responsable familiar).
-3. Un modal muestra lo **enviado** (`TipoDoc` / `NroDoc`) y lo **recibido** (saldos por persona).
+3. Un modal muestra lo **enviado** (`TipoDoc` / `NroDoc`) y lo **recibido** (apellido, nombre, DNI y saldo de cada persona encontrada). Si Áulica no encuentra el DNI, el modal lo dice explícitamente.
 4. Si no hay deuda: el modal ofrece **Abrir constancia PDF**. Si hay deuda o la API falla: no se emite la constancia.
 
 ## Fuente de verdad

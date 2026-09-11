@@ -21,13 +21,15 @@ final class AulicaSaldoPersona
      */
     public static function desdeRespuesta(array $fila): self
     {
+        $tipoDoc = trim((string) self::campo($fila, ['tipoDoc', 'TipoDoc', 'tipo_doc']));
+
         return new self(
-            idPersona: (int) ($fila['idPersona'] ?? 0),
-            saldo: self::aFloat($fila['saldo'] ?? 0),
-            nroDoc: trim((string) ($fila['nroDoc'] ?? '')),
-            tipoDoc: trim((string) ($fila['tipoDoc'] ?? 'DNI')),
-            nombre: trim((string) ($fila['nombre'] ?? '')),
-            apellido: trim((string) ($fila['apellido'] ?? '')),
+            idPersona: (int) self::campo($fila, ['idPersona', 'IdPersona', 'id_persona'], 0),
+            saldo: self::aFloat(self::campo($fila, ['saldo', 'Saldo'], 0)),
+            nroDoc: trim((string) self::campo($fila, ['nroDoc', 'NroDoc', 'nro_doc'])),
+            tipoDoc: $tipoDoc !== '' ? $tipoDoc : 'DNI',
+            nombre: trim((string) self::campo($fila, ['nombre', 'Nombre'])),
+            apellido: trim((string) self::campo($fila, ['apellido', 'Apellido'])),
         );
     }
 
@@ -75,6 +77,32 @@ final class AulicaSaldoPersona
             'saldo' => $this->saldo,
             'saldo_texto' => $this->saldoFormateado(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $fila
+     * @param  list<string>  $claves
+     */
+    private static function campo(array $fila, array $claves, mixed $default = null): mixed
+    {
+        foreach ($claves as $clave) {
+            if (array_key_exists($clave, $fila)) {
+                return $fila[$clave];
+            }
+        }
+
+        $porMinuscula = [];
+        foreach ($fila as $clave => $valor) {
+            $porMinuscula[strtolower((string) $clave)] = $valor;
+        }
+        foreach ($claves as $clave) {
+            $minuscula = strtolower($clave);
+            if (array_key_exists($minuscula, $porMinuscula)) {
+                return $porMinuscula[$minuscula];
+            }
+        }
+
+        return $default;
     }
 
     private static function aFloat(mixed $valor): float
