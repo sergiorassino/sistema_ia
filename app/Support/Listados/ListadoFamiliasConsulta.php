@@ -28,22 +28,55 @@ final class ListadoFamiliasConsulta
         return NivelSistema::nivelesPedagogicosParaSelector();
     }
 
+    public static function esSinAsignar(mixed $familia): bool
+    {
+        $id = $familia instanceof Familia ? (int) $familia->id : (int) $familia;
+
+        return $id === LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR;
+    }
+
+    /**
+     * Etiqueta de listado: el placeholder id = 1 no se muestra como familia real.
+     */
+    public static function etiquetaApellidoFamilia(?Familia $familia): string
+    {
+        if ($familia === null || self::esSinAsignar($familia)) {
+            return 'Sin familia';
+        }
+
+        return trim((string) ($familia->apellido ?? ''));
+    }
+
     /**
      * @return Builder<Familia>
      */
-    public static function consultar(string $termino = '', int $idNivel = 0): Builder
+    public static function consultar(string $termino = '', int $idNivel = 0, bool $soloSinFamilia = false): Builder
     {
         $idNivel = self::idNivelEfectivo($idNivel);
 
-        $query = Familia::query()
-            ->whereKeyNot(LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR)
-            ->whereHas('legajos', function ($q) use ($idNivel) {
+        $query = Familia::query();
+        if ($soloSinFamilia) {
+            $query->whereKey(LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR);
+        } else {
+            $query->whereKeyNot(LegajoFamilia::ID_FAMILIA_SIN_ASIGNAR);
+        }
+
+        $termino = trim($termino);
+
+        $query
+            ->whereHas('legajos', function ($q) use ($idNivel, $termino, $soloSinFamilia) {
                 self::aplicarFiltroLegajosMatriculados($q, $idNivel);
+                if ($soloSinFamilia && $termino !== '') {
+                    $q->buscar($termino);
+                }
             })
-            ->with(['legajos' => function ($q) use ($idNivel) {
+            ->with(['legajos' => function ($q) use ($idNivel, $termino, $soloSinFamilia) {
                 $idTerlec = (int) schoolCtx()->idTerlec;
 
                 self::aplicarFiltroLegajosMatriculados($q, $idNivel);
+                if ($soloSinFamilia && $termino !== '') {
+                    $q->buscar($termino);
+                }
                 OrdenAlfabeticoEstudiante::orderBy($q, 'apellido', 'nombre');
                 $q->orderBy('id')
                     ->select(['id', 'apellido', 'nombre', 'dni', 'idFamilias'])
@@ -60,8 +93,7 @@ final class ListadoFamiliasConsulta
                     }]);
             }]);
 
-        $termino = trim($termino);
-        if ($termino !== '') {
+        if ($termino !== '' && ! $soloSinFamilia) {
             $query->where(function (Builder $sub) use ($termino, $idNivel) {
                 $sub->where('apellido', 'like', '%'.$termino.'%')
                     ->orWhere('responsable', 'like', '%'.$termino.'%')
@@ -87,9 +119,13 @@ final class ListadoFamiliasConsulta
     /**
      * @return LengthAwarePaginator<int, Familia>
      */
-    public static function listar(string $termino = '', int $idNivel = 0, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
-    {
-        return self::consultar($termino, $idNivel)
+    public static function listar(
+        string $termino = '',
+        int $idNivel = 0,
+        int $porPagina = self::POR_PAGINA,
+        bool $soloSinFamilia = false,
+    ): LengthAwarePaginator {
+        return self::consultar($termino, $idNivel, $soloSinFamilia)
             ->paginate($porPagina)
             ->withQueryString();
     }
@@ -97,9 +133,9 @@ final class ListadoFamiliasConsulta
     /**
      * @return Collection<int, Familia>
      */
-    public static function coleccion(string $termino = '', int $idNivel = 0): Collection
+    public static function coleccion(string $termino = '', int $idNivel = 0, bool $soloSinFamilia = false): Collection
     {
-        return self::consultar($termino, $idNivel)->get();
+        return self::consultar($termino, $idNivel, $soloSinFamilia)->get();
     }
 
     public static function normalizarIdNivel(int $idNivel): int

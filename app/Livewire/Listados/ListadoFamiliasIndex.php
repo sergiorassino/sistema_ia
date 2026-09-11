@@ -29,6 +29,9 @@ class ListadoFamiliasIndex extends Component
     /** Vacío = todos los niveles del alcance (en Administración). */
     public string $idNivel = '';
 
+    /** Estudiantes con `legajos.idFamilias` = 1 (placeholder sin asignar). */
+    public bool $soloSinFamilia = false;
+
     /**
      * Borrador por familia de la página visible.
      *
@@ -50,6 +53,7 @@ class ListadoFamiliasIndex extends Component
     protected $queryString = [
         'search' => ['except' => '', 'as' => 'buscar'],
         'idNivel' => ['except' => '', 'as' => 'filtro_nivel'],
+        'soloSinFamilia' => ['except' => false, 'as' => 'sin_familia'],
     ];
 
     public function mount(): void
@@ -68,6 +72,13 @@ class ListadoFamiliasIndex extends Component
     public function updatedIdNivel(): void
     {
         $this->idNivel = $this->idNivelNormalizadoParaVista();
+        $this->filas = [];
+        $this->ultimoGuardadoHashes = [];
+        $this->resetPage();
+    }
+
+    public function updatedSoloSinFamilia(): void
+    {
         $this->filas = [];
         $this->ultimoGuardadoHashes = [];
         $this->resetPage();
@@ -199,7 +210,12 @@ class ListadoFamiliasIndex extends Component
     {
         $this->idNivel = $this->idNivelNormalizadoParaVista();
         $idNivel = $this->idNivel === '' ? 0 : (int) $this->idNivel;
-        $familias = ListadoFamiliasConsulta::listar($this->search, $idNivel);
+        $familias = ListadoFamiliasConsulta::listar(
+            $this->search,
+            $idNivel,
+            ListadoFamiliasConsulta::POR_PAGINA,
+            $this->soloSinFamilia,
+        );
         $puedeEditar = $this->puedeEditar();
         $tieneDniResp = ListadoFamiliasConsulta::tieneDniResp();
 
@@ -241,6 +257,10 @@ class ListadoFamiliasIndex extends Component
     private function hidratarFilas(Collection $familias, bool $tieneDniResp): void
     {
         foreach ($familias as $familia) {
+            if (ListadoFamiliasConsulta::esSinAsignar($familia)) {
+                continue;
+            }
+
             $key = (string) $familia->id;
             if (isset($this->filas[$key])) {
                 continue;
@@ -254,7 +274,7 @@ class ListadoFamiliasIndex extends Component
 
     private function filtrosExportacion(): ListadoFamiliasFiltros
     {
-        return ListadoFamiliasFiltros::desdeLivewire($this->search, $this->idNivel);
+        return ListadoFamiliasFiltros::desdeLivewire($this->search, $this->idNivel, $this->soloSinFamilia);
     }
 
     private function idNivelNormalizadoParaVista(): string

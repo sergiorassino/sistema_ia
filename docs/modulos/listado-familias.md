@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Listar **familias** con estudiantes matriculados en el ciclo lectivo activo, con apellido, nombre, DNI y curso de cada hijo (`4A (P)`). Exportar el listado filtrado a PDF (A4 **vertical**, TCPDF) y Excel. No incluye la familia legacy «sin asignar» (`familias.id` = 1).
+Listar **familias** con estudiantes matriculados en el ciclo lectivo activo, con apellido, nombre, DNI y curso de cada hijo (`4A (P)`). Exportar el listado filtrado a PDF (A4 **vertical**, TCPDF) y Excel. Por defecto **no** incluye la familia legacy «sin asignar» (`familias.id` = 1). La casilla **Solo sin familia asignada** muestra únicamente esos estudiantes (etiqueta **Sin familia**; no se editan los datos del placeholder).
 
 Quien tiene permiso de **gestionar familias** también puede editar en la grilla **Familia**, **Responsable**, **DNI responsable** y **Email**, sin abrir el legajo de cada estudiante.
 
@@ -30,9 +30,10 @@ Menú de Secretaría y Menú de Administración → Estudiantes → **Listado de
 
 1. Búsqueda por apellido de familia, responsable, email, DNI del responsable, o apellido/nombre/DNI del estudiante.
 2. Filtro opcional de nivel (por defecto todos).
-3. Orden: familias por apellido y responsable (collation española); hijos por apellido y nombre.
-4. En pantalla y PDF, la familia se muestra **una sola vez** (campos de familia centrados en vertical si hay varios hijos) y cada hijo usa su renglón. El curso se muestra compacto (`4A (P)` = curso+sección y nivel: I inicial, P primario, S secundario). La letra de nivel se toma del **curso** (nombre de `niveles.nivel`, no `abrev` ni el `idNivel` de la matrícula, que suele copiar el nivel de sesión). En Excel, una fila por hijo **con los datos de familia repetidos** (sin celdas combinadas). El export incluye **todos** los registros que coinciden, no solo la página. URLs con `{ref}` opaco.
-5. Con permiso de gestión: al salir de Familia / Responsable / DNI / Email se valida y se guarda esa familia. Si el valor no cambió, no hay escritura. Un apellido nuevo no reordena la página hasta buscar o paginar. El DNI del responsable se muestra con separador de miles (`30.111.222`) y se persiste solo con dígitos.
+3. Casilla **Solo sin familia asignada**: lista los matriculados del ciclo con `legajos.idFamilias` = 1. La búsqueda, en ese modo, filtra por apellido/nombre/DNI del estudiante. PDF y Excel respetan el filtro.
+4. Orden: familias por apellido y responsable (collation española); hijos por apellido y nombre.
+5. En pantalla y PDF, la familia se muestra **una sola vez** (campos de familia centrados en vertical si hay varios hijos) y cada hijo usa su renglón. El curso se muestra compacto (`4A (P)` = curso+sección y nivel: I inicial, P primario, S secundario). La letra de nivel se toma del **curso** (nombre de `niveles.nivel`, no `abrev` ni el `idNivel` de la matrícula, que suele copiar el nivel de sesión). En Excel, una fila por hijo **con los datos de familia repetidos** (sin celdas combinadas). El export incluye **todos** los registros que coinciden, no solo la página. URLs con `{ref}` opaco.
+6. Con permiso de gestión: al salir de Familia / Responsable / DNI / Email se valida y se guarda esa familia. Si el valor no cambió, no hay escritura. Un apellido nuevo no reordena la página hasta buscar o paginar. El DNI del responsable se muestra con separador de miles (`30.111.222`) y se persiste solo con dígitos. La familia `id` = 1 no es editable.
 
 ## Fuente de verdad
 
@@ -51,7 +52,8 @@ Matrícula del ciclo activo (`schoolCtx()->idTerlec`) y `legajos.idFamilias`, **
 
 ## Qué no hacer / reglas de negocio
 
-- No listar `familias.id` = 1.
+- No listar `familias.id` = 1 **salvo** con la casilla «Solo sin familia asignada».
+- No editar ni persistir el placeholder `familias.id` = 1 desde la grilla.
 - No mostrar hijos sin matrícula en el ciclo activo.
 - No limitar el listado al nivel de sesión (Inicial / Primario / Secundario): el alcance es el ciclo, todos los niveles pedagógicos.
 - No mostrar el módulo ni exportar PDF/Excel sin permiso 102.
@@ -63,7 +65,7 @@ Matrícula del ciclo activo (`schoolCtx()->idTerlec`) y `legajos.idFamilias`, **
 
 - [ ] ¿El orden alfabético usa `OrdenAlfabeticoEstudiante`?
 - [ ] ¿PDF nuevo sigue en TCPDF (Arial), no DomPDF?
-- [ ] ¿Export incluye todos los filtros (búsqueda y nivel)?
+- [ ] ¿Export incluye todos los filtros (búsqueda, nivel y «Solo sin familia asignada»)?
 - [ ] ¿Administración y Secretaría listan todos los niveles del ciclo (salvo filtro opcional)?
 - [ ] ¿Consulta, PDF y Excel exigen permiso 102?
 - [ ] ¿La edición en grilla exige permiso 46 y revalida alcance?

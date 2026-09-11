@@ -23,7 +23,10 @@
                     @endphp
                     Familias con estudiantes matriculados en el ciclo lectivo {{ schoolCtx()->terlecAno() }} ({{ $heroNivel }}).
                     Curso y sección del año en curso.
-                    @if ($puedeEditar)
+                    @if ($soloSinFamilia)
+                        Se listan solo estudiantes sin familia asignada.
+                    @endif
+                    @if ($puedeEditar && ! $soloSinFamilia)
                         Familia, responsable, DNI e email se guardan al salir de cada campo.
                     @endif
                 </p>
@@ -83,14 +86,36 @@
                 </select>
             </div>
         @endif
+        <label for="listado-familias-sin-asignar" class="inline-flex items-center gap-2 cursor-pointer sm:pb-0.5">
+            <input id="listado-familias-sin-asignar"
+                   type="checkbox"
+                   wire:model.live="soloSinFamilia"
+                   class="rounded border-accent-300 text-primary-600 focus:ring-primary-500" />
+            <span class="text-sm font-semibold text-neutral-700">Solo sin familia asignada</span>
+        </label>
         <p class="shrink-0 text-xs font-medium tabular-nums text-neutral-500 sm:pb-2">
-            {{ $familias->total() }} familia{{ $familias->total() === 1 ? '' : 's' }}
+            @if ($soloSinFamilia)
+                @php
+                    $cantidadSinFamilia = $familias->isEmpty()
+                        ? 0
+                        : (int) $familias->first()->legajos->count();
+                @endphp
+                {{ $cantidadSinFamilia }} estudiante{{ $cantidadSinFamilia === 1 ? '' : 's' }}
+            @else
+                {{ $familias->total() }} familia{{ $familias->total() === 1 ? '' : 's' }}
+            @endif
         </p>
     </div>
 
     @if ($familias->isEmpty())
         <div class="se-card p-8 text-center text-sm text-neutral-600">
-            @if (trim($search) !== '' || $idNivel !== '')
+            @if ($soloSinFamilia)
+                @if (trim($search) !== '' || $idNivel !== '')
+                    No hay estudiantes sin familia asignada con ese criterio.
+                @else
+                    No hay estudiantes sin familia asignada en el ciclo lectivo activo.
+                @endif
+            @elseif (trim($search) !== '' || $idNivel !== '')
                 No se encontraron familias con ese criterio.
             @else
                 No hay familias con estudiantes matriculados en el ciclo lectivo activo.
@@ -133,8 +158,10 @@
                                     $estudiantes = $familia->legajos;
                                     $span = max(1, $estudiantes->count());
                                     $fondoGrupo = $loop->even ? 'bg-white' : 'bg-accent-50';
-                                    $etiquetaFamilia = trim((string) ($familia->apellido ?? ''));
-                                    $etiquetaResponsable = trim((string) ($familia->responsable ?? ''));
+                                    $etiquetaFamilia = ListadoFamiliasConsulta::etiquetaApellidoFamilia($familia);
+                                    $etiquetaResponsable = ListadoFamiliasConsulta::esSinAsignar($familia)
+                                        ? ''
+                                        : trim((string) ($familia->responsable ?? ''));
                                     $dniResp = $tieneDniResp
                                         ? ArancelesEscolares::formatearDni($familia->dniResp ?? '')
                                         : '';

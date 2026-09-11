@@ -2,8 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Models\Familia;
 use App\Support\Listados\ListadoFamiliasConsulta;
 use App\Support\Listados\ListadoFamiliasExport;
+use App\Support\Listados\ListadoFamiliasFiltros;
 use PHPUnit\Framework\TestCase;
 
 class ListadoFamiliasConsultaTest extends TestCase
@@ -83,5 +85,41 @@ class ListadoFamiliasConsultaTest extends TestCase
         $this->assertSame('Familia', $encabezados[1]);
         $this->assertSame('Apellido', $encabezados[5]);
         $this->assertSame('Curso', $encabezados[8]);
+    }
+
+    public function test_etiqueta_apellido_placeholder_es_sin_familia(): void
+    {
+        $familia = new Familia;
+        $familia->id = 1;
+        $familia->apellido = ' Sin Registro de Familia';
+
+        $this->assertTrue(ListadoFamiliasConsulta::esSinAsignar($familia));
+        $this->assertTrue(ListadoFamiliasConsulta::esSinAsignar(1));
+        $this->assertFalse(ListadoFamiliasConsulta::esSinAsignar(88));
+        $this->assertSame('Sin familia', ListadoFamiliasConsulta::etiquetaApellidoFamilia($familia));
+        $this->assertSame('Sin familia', ListadoFamiliasConsulta::etiquetaApellidoFamilia(null));
+    }
+
+    public function test_etiqueta_apellido_familia_real_usa_apellido(): void
+    {
+        $familia = new Familia;
+        $familia->id = 12;
+        $familia->apellido = ' Acosta ';
+
+        $this->assertSame('Acosta', ListadoFamiliasConsulta::etiquetaApellidoFamilia($familia));
+    }
+
+    public function test_payload_de_filtros_incluye_solo_sin_familia_y_acepta_tokens_viejos(): void
+    {
+        $filtros = new ListadoFamiliasFiltros('perez', 0, true);
+
+        $this->assertSame(['b' => 'perez', 'n' => 0, 's' => 1], $filtros->aPayload());
+
+        $desde = ListadoFamiliasFiltros::desdePayload(['b' => 'perez', 'n' => 0, 's' => 1]);
+        $this->assertTrue($desde->soloSinFamilia);
+        $this->assertSame('perez', $desde->search);
+
+        $legacy = ListadoFamiliasFiltros::desdePayload(['b' => '', 'n' => 0]);
+        $this->assertFalse($legacy->soloSinFamilia);
     }
 }

@@ -110,7 +110,11 @@ final class ListadoFamiliasExport
      */
     public static function grupos(ListadoFamiliasFiltros $filtros): array
     {
-        $familias = ListadoFamiliasConsulta::coleccion($filtros->search, $filtros->idNivel);
+        $familias = ListadoFamiliasConsulta::coleccion(
+            $filtros->search,
+            $filtros->idNivel,
+            $filtros->soloSinFamilia,
+        );
         $grupos = [];
         $nro = 0;
 
@@ -129,7 +133,7 @@ final class ListadoFamiliasExport
             $grupos[] = [
                 'familia' => [
                     $nro,
-                    trim((string) ($familia->apellido ?? '')),
+                    ListadoFamiliasConsulta::etiquetaApellidoFamilia($familia),
                     trim((string) ($familia->responsable ?? '')),
                     ListadoFamiliasConsulta::tieneDniResp()
                         ? ArancelesEscolares::formatearDni($familia->dniResp ?? '')

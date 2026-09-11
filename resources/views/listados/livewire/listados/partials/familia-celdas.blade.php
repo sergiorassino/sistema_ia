@@ -1,8 +1,9 @@
 @php
     $idFamilia = (int) $familia->id;
     $keyFila = (string) $idFamilia;
+    $esSinAsignar = \App\Support\Listados\ListadoFamiliasConsulta::esSinAsignar($familia);
 @endphp
-@if ($puedeEditar)
+@if ($puedeEditar && ! $esSinAsignar)
     <td @if ($span > 1) rowspan="{{ $span }}" @endif class="table-cell se-lf-familia-grupo">
         <input wire:model.blur="filas.{{ $keyFila }}.apellido"
                wire:blur="guardarFamilia({{ $idFamilia }})"
@@ -63,7 +64,13 @@
         @enderror
     </td>
 @else
-    <td @if ($span > 1) rowspan="{{ $span }}" @endif class="table-cell se-lf-familia-grupo font-medium text-neutral-900">{{ $etiquetaFamilia !== '' ? $etiquetaFamilia : '—' }}</td>
+    <td @if ($span > 1) rowspan="{{ $span }}" @endif class="table-cell se-lf-familia-grupo font-medium text-neutral-900">
+        @if ($esSinAsignar)
+            <span class="italic font-normal normal-case text-neutral-500">Sin familia</span>
+        @else
+            {{ $etiquetaFamilia !== '' ? $etiquetaFamilia : '—' }}
+        @endif
+    </td>
     <td @if ($span > 1) rowspan="{{ $span }}" @endif class="table-cell se-lf-familia-grupo text-neutral-800">{{ $etiquetaResponsable !== '' ? $etiquetaResponsable : '—' }}</td>
     @if ($tieneDniResp)
         <td @if ($span > 1) rowspan="{{ $span }}" @endif class="table-cell se-lf-familia-grupo se-lf-dni text-neutral-700">{{ $dniResp !== '' ? $dniResp : '—' }}</td>
