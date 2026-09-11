@@ -2,16 +2,22 @@
 
 namespace App\Support\Aulica;
 
+use App\Models\Familia;
 use App\Models\Legajo;
 use App\Support\InformeInasistencias;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
- * Consulta deuda Áulica del estudiante (por DNI) y del grupo familiar (DNI del responsable).
+ * Consulta deuda Áulica del estudiante (por DNI) y del grupo familiar (`familias.dniResp`).
  */
 final class AulicaDeudaConsulta
 {
+    private const FAMILIA_SIN_ASIGNAR = 1;
+
+    private const ETIQUETA_DNI_FAMILIA = 'DNI del responsable de la familia (familias.dniResp)';
+
     public function __construct(private readonly AulicaSaldos $saldos = new AulicaSaldos) {}
 
     public static function habilitada(): bool
@@ -26,7 +32,7 @@ final class AulicaDeudaConsulta
             return AulicaDeudaResultado::deshabilitado();
         }
 
-        $legajo = Legajo::query()->where('id', (int) $ctx->idLegajo)->first();
+        $legajo = self::legajoConFamilia((int) $ctx->idLegajo);
         if ($legajo === null) {
             return AulicaDeudaResultado::deshabilitado();
         }
@@ -54,7 +60,7 @@ final class AulicaDeudaConsulta
     }
 
     /**
-     * Fila de listado Secretaría (`EstudiantesDatosConsulta`) u objeto con dni / dnitut / etc.
+     * Fila de listado Secretaría u objeto con dni / dniResp / idFamilias.
      */
     public function paraFilaListado(object $fila): AulicaDeudaResultado
     {
@@ -142,41 +148,92 @@ final class AulicaDeudaConsulta
     }
 
     /**
+     * Grupo familiar en Áulica: `familias.dniResp` (no tutor, padre, madre ni respAdmiDni).
+     *
      * @return array{campo: string, dni: string, etiqueta: string}|null
      */
     public static function origenResponsableDesdeLegajo(Legajo $legajo): ?array
     {
-        $campos = [
-            'dnitut' => 'DNI del tutor',
-            'respAdmiDni' => 'DNI del responsable administrativo',
-            'dnipad' => 'DNI del padre',
-            'dnimad' => 'DNI de la madre',
-        ];
-
-        foreach ($campos as $campo => $etiqueta) {
-            $dni = AulicaDni::normalizar($legajo->{$campo} ?? null);
-            if ($dni !== null) {
-                return [
-                    'campo' => $campo,
-                    'dni' => $dni,
-                    'etiqueta' => $etiqueta,
-                ];
-            }
+        $idFamilia = (int) ($legajo->idFamilias ?? 0);
+        if ($idFamilia <= self::FAMILIA_SIN_ASIGNAR) {
+            return null;
         }
 
-        return null;
+        if (! self::tablaFamiliasTieneDniResp()) {
+            return null;
+        }
+
+        $dniRaw = null;
+        if ($legajo->relationLoaded('familia')) {
+            $dniRaw = $legajo->familia?->dniResp ?? null;
+        } else {
+            $dniRaw = Familia::query()->whereKey($idFamilia)->value('dniResp');
+        }
+
+        return self::origenDesdeDniResp($dniRaw);
     }
 
     public static function dniResponsableDesdeFila(object $fila): ?string
     {
-        foreach (['dnitut', 'respAdmiDni', 'dnipad', 'dnimad'] as $campo) {
-            $dni = AulicaDni::normalizar($fila->{$campo} ?? null);
-            if ($dni !== null) {
-                return $dni;
-            }
+        $origen = self::origenResponsableDesdeFila($fila);
+
+        return $origen['dni'] ?? null;
+    }
+
+    /**
+     * @return array{campo: string, dni: string, etiqueta: string}|null
+     */
+    public static function origenResponsableDesdeFila(object $fila): ?array
+    {
+        if ($fila instanceof Legajo) {
+            return self::origenResponsableDesdeLegajo($fila);
         }
 
-        return null;
+        $desdeFila = self::origenDesdeDniResp($fila->dniResp ?? null);
+        if ($desdeFila !== null) {
+            return $desdeFila;
+        }
+
+        $idFamilia = (int) ($fila->idFamilias ?? 0);
+        if ($idFamilia <= self::FAMILIA_SIN_ASIGNAR || ! self::tablaFamiliasTieneDniResp()) {
+            return null;
+        }
+
+        return self::origenDesdeDniResp(
+            Familia::query()->whereKey($idFamilia)->value('dniResp')
+        );
+    }
+
+    /**
+     * @return array{campo: string, dni: string, etiqueta: string}|null
+     */
+    private static function origenDesdeDniResp(mixed $valor): ?array
+    {
+        $dni = AulicaDni::normalizar($valor);
+        if ($dni === null) {
+            return null;
+        }
+
+        return [
+            'campo' => 'dniResp',
+            'dni' => $dni,
+            'etiqueta' => self::ETIQUETA_DNI_FAMILIA,
+        ];
+    }
+
+    private static function tablaFamiliasTieneDniResp(): bool
+    {
+        return Schema::hasTable('familias') && Schema::hasColumn('familias', 'dniResp');
+    }
+
+    private static function legajoConFamilia(int $idLegajo): ?Legajo
+    {
+        $query = Legajo::query()->where('id', $idLegajo);
+        if (self::tablaFamiliasTieneDniResp()) {
+            $query->with('familia');
+        }
+
+        return $query->first();
     }
 
     /**

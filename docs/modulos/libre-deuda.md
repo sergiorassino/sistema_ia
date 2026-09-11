@@ -23,7 +23,7 @@ Guard `alumno`, `student.context`. Sin permiso IA. Datos de `studentCtx()` (sin 
 ## Flujo principal
 
 1. Familia abre **Libre Deuda** (formulario en el portal).
-2. Pulsa **Consultar deuda**. Se llama a Áulica (DNI del estudiante y del responsable familiar).
+2. Pulsa **Consultar deuda**. Se llama a Áulica (DNI del estudiante y, si hay, `familias.dniResp`).
 3. Un modal muestra lo **enviado** (`TipoDoc` / `NroDoc`) y lo **recibido** (apellido, nombre, DNI y saldo de cada persona encontrada). Si Áulica no encuentra el DNI, el modal lo dice explícitamente.
 4. Si no hay deuda: el modal ofrece **Abrir constancia PDF**. Si hay deuda o la API falla: no se emite la constancia.
 
@@ -43,7 +43,7 @@ Deuda: `AulicaDeudaConsulta` (External API). Datos del certificado: matrícula d
 
 ## Qué no hacer / reglas de negocio
 
-- No emitir la constancia si Áulica informa saldo > 0 (alumno o hermanos del tutor).
+- No emitir la constancia si Áulica informa saldo > 0 (alumno o hermanos del responsable de la familia).
 - No emitirla si Áulica no responde, o si el legajo no tiene DNI (fail-closed).
 - No consultar Áulica en ficha de matrícula ni en actualización de datos.
 - No poner IDs en la URL.

@@ -15,6 +15,7 @@ use App\Models\Terlec;
 use App\Support\Abm\LegajoDependenciasEliminacion;
 use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\DniInput;
 use App\Support\PermisosIaCatalog;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Database\QueryException;
@@ -1692,7 +1693,7 @@ class LegajoForm extends Component
             'teletut' => $this->teletut,
             'emailtut' => $this->emailtut,
             'respAdmiNom' => $this->respAdmiNom,
-            'respAdmiDni' => $this->respAdmiDni !== '' ? (int) $this->respAdmiDni : null,
+            'respAdmiDni' => ($dniRespAdmi = DniInput::digitsOnly($this->respAdmiDni)) !== '' ? $dniRespAdmi : null,
             'escori' => $this->escori,
             'destino' => $this->destino,
             'obs' => $this->obs,

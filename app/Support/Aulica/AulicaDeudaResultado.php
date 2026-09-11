@@ -152,6 +152,7 @@ final class AulicaDeudaResultado
      *     error: string,
      *     encontrado_estudiante: bool,
      *     encontrado_grupo: bool,
+     *     consulto_grupo: bool,
      *     estudiante: list<array<string, mixed>>,
      *     grupo_familiar: list<array<string, mixed>>,
      *     saldo_estudiante: float,
@@ -182,7 +183,14 @@ final class AulicaDeudaResultado
                 'nro_doc' => $this->dniResponsable,
                 'origen' => $origenResponsable !== ''
                     ? $origenResponsable
-                    : 'DNI del responsable familiar',
+                    : 'DNI del responsable de la familia (familias.dniResp)',
+            ];
+        } else {
+            $consultas[] = [
+                'rol' => 'Grupo familiar',
+                'tipo_doc' => 'DNI',
+                'nro_doc' => '',
+                'origen' => 'No enviado: la familia no tiene DNI de responsable (familias.dniResp)',
             ];
         }
 
@@ -224,6 +232,7 @@ final class AulicaDeudaResultado
             'error' => $this->error,
             'encontrado_estudiante' => $encontradoEstudiante,
             'encontrado_grupo' => $encontradoGrupo,
+            'consulto_grupo' => $this->dniResponsable !== '',
             'estudiante' => array_map(
                 fn (AulicaSaldoPersona $p) => $p->aArray(),
                 $this->estudiante,

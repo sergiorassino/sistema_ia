@@ -198,7 +198,11 @@
                                     @empty
                                         <tr>
                                             <td colspan="4" class="px-3 py-3 text-sm text-neutral-500">
-                                                Áulica no encontró personas en el grupo familiar. Total {{ $detalle['saldo_grupo_texto'] ?? '$ 0,00' }}.
+                                                @if (empty($detalle['consulto_grupo']))
+                                                    No se consultó el grupo familiar: la familia no tiene DNI de responsable (familias.dniResp).
+                                                @else
+                                                    Áulica no encontró personas en el grupo familiar. Total {{ $detalle['saldo_grupo_texto'] ?? '$ 0,00' }}.
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforelse

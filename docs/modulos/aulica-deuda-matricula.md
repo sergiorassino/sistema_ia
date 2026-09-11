@@ -25,10 +25,10 @@ Ambientes (OpenAPI):
 
 1. `POST /externalauth/authenticate` `{ username, password, codigo }` → `accessToken` (header `x-access-token`).
 2. `POST /alumnos/ctacte/saldos` `{ TipoDoc: "DNI", NroDoc }` → `{ items: [ { idPersona, saldo, nroDoc, tipoDoc, nombre, apellido } ] }`. El cliente también acepta un array plano de personas.
-3. Si el DNI es de un **tutor**, Áulica también devuelve el saldo de los alumnos a cargo (hermanos).
+3. Si el DNI es de un **responsable de familia** (`familias.dniResp`), Áulica también devuelve el saldo de los alumnos a cargo (hermanos).
 4. 404 = persona no encontrada = sin deuda.
 
-DNI del responsable familiar (en este orden): `dnitut`, `respAdmiDni`, `dnipad`, `dnimad`.
+DNI del grupo familiar: **`familias.dniResp`** (vía `legajos.idFamilias`). No se usa `respAdmiDni`, tutor, padre ni madre. Familia `id` = 1 (sin asignar) o `dniResp` vacío: no se consulta el grupo.
 
 ## Archivos clave
 

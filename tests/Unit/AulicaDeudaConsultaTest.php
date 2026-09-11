@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use App\Models\Familia;
+use App\Models\Legajo;
 use App\Support\Aulica\AulicaDeudaConsulta;
 use App\Support\Aulica\AulicaDni;
 use App\Support\Aulica\AulicaSaldoPersona;
@@ -143,6 +145,7 @@ class AulicaDeudaConsultaTest extends TestCase
         $modal = $resultado->paraModal();
         $this->assertTrue($modal['puede_emitir']);
         $this->assertFalse($modal['encontrado_estudiante']);
+        $this->assertTrue($modal['consulto_grupo']);
         $this->assertSame([], $modal['estudiante']);
         $this->assertSame([], $modal['grupo_familiar']);
         $this->assertStringContainsString('no encontró al estudiante', $modal['mensaje']);
@@ -179,6 +182,90 @@ class AulicaDeudaConsultaTest extends TestCase
         $this->assertSame('LUCIA', $persona->nombre);
         $this->assertSame('GARCIA', $persona->apellido);
         $this->assertSame('GARCIA, LUCIA', $persona->nombreCompleto());
+    }
+
+    public function test_responsable_familiar_usa_dni_resp_de_familia(): void
+    {
+        $fila = (object) [
+            'dni' => '30111222',
+            'dnitut' => '11111111',
+            'dnipad' => '22222222',
+            'dnimad' => '33333333',
+            'respAdmiDni' => '30444555',
+            'dniResp' => '30.645.920',
+        ];
+
+        $origen = AulicaDeudaConsulta::origenResponsableDesdeFila($fila);
+        $this->assertNotNull($origen);
+        $this->assertSame('dniResp', $origen['campo']);
+        $this->assertSame('30645920', $origen['dni']);
+        $this->assertSame('DNI del responsable de la familia (familias.dniResp)', $origen['etiqueta']);
+        $this->assertSame('30645920', AulicaDeudaConsulta::dniResponsableDesdeFila($fila));
+    }
+
+    public function test_sin_dni_resp_no_cae_a_tutor_padre_madre_ni_resp_admi(): void
+    {
+        $fila = (object) [
+            'dni' => '30111222',
+            'dnitut' => '11111111',
+            'dnipad' => '22222222',
+            'dnimad' => '33333333',
+            'respAdmiDni' => '30444555',
+            'dniResp' => '',
+        ];
+
+        $this->assertNull(AulicaDeudaConsulta::origenResponsableDesdeFila($fila));
+        $this->assertNull(AulicaDeudaConsulta::dniResponsableDesdeFila($fila));
+    }
+
+    public function test_familia_sin_asignar_no_usa_dni_resp(): void
+    {
+        $familia = new Familia(['dniResp' => '33645920']);
+        $familia->id = 1;
+        $legajo = new Legajo;
+        $legajo->idFamilias = 1;
+        $legajo->setRelation('familia', $familia);
+
+        $this->assertNull(AulicaDeudaConsulta::origenResponsableDesdeLegajo($legajo));
+    }
+
+    public function test_legajo_lee_dni_resp_de_la_familia_relacionada(): void
+    {
+        $familia = new Familia(['dniResp' => '33.645.920']);
+        $familia->id = 88;
+        $legajo = new Legajo;
+        $legajo->idFamilias = 88;
+        $legajo->dni = '54574265';
+        $legajo->respAdmiDni = 0;
+        $legajo->dnipad = '11111111';
+        $legajo->setRelation('familia', $familia);
+
+        $origen = AulicaDeudaConsulta::origenResponsableDesdeLegajo($legajo);
+        $this->assertNotNull($origen);
+        $this->assertSame('33645920', $origen['dni']);
+        $this->assertSame('dniResp', $origen['campo']);
+    }
+
+    public function test_sin_dni_responsable_el_modal_aclara_que_no_consulto_grupo(): void
+    {
+        $this->fakeAulica([
+            [
+                'idPersona' => 10,
+                'saldo' => 100,
+                'nroDoc' => '30111222',
+                'nombre' => 'Juan',
+                'apellido' => 'Perez',
+            ],
+        ]);
+
+        $resultado = (new AulicaDeudaConsulta)->paraDnis('30111222', null);
+        $modal = $resultado->paraModal();
+
+        $this->assertFalse($modal['consulto_grupo']);
+        $this->assertCount(2, $modal['consultas']);
+        $this->assertSame('', $modal['consultas'][1]['nro_doc']);
+        $this->assertStringContainsString('familias.dniResp', $modal['consultas'][1]['origen']);
+        $this->assertSame([], $modal['grupo_familiar']);
     }
 
     /**

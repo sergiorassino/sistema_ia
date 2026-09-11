@@ -42,7 +42,7 @@ class LibreDeudaForm extends Component
             return;
         }
 
-        $legajo = Legajo::query()->where('id', (int) $ctx->idLegajo)->first();
+        $legajo = Legajo::query()->with('familia')->where('id', (int) $ctx->idLegajo)->first();
         if ($legajo === null) {
             $this->detalle = AulicaDeudaResultado::error('No se encontró el legajo.')->paraModal();
             $this->modalAbierto = true;
