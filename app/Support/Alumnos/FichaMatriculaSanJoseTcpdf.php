@@ -28,6 +28,9 @@ final class FichaMatriculaSanJoseTcpdf extends TCPDF
 
     private const FOTO_GAP = 4.0;
 
+    /** Ancho de «Grupo sanguíneo» a la derecha del nombre (misma medida que IESS). */
+    private const ANCHO_GRUPO_SANGUINEO = 48.0;
+
     /** @var array<string, mixed> */
     private array $datos;
 
@@ -275,7 +278,17 @@ final class FichaMatriculaSanJoseTcpdf extends TCPDF
         $this->Cell(self::ANCHO_BLOQUE, self::ALTURA_FILA, 'DATOS DEL/DE LA ESTUDIANTE', 1, 1, 'C', true);
         $this->Ln(3);
 
-        $this->filaSubrayada('APELLIDO Y NOMBRES (completos): ', trim($d['apellido'].' '.$d['nombre']), 55, 100);
+        $grupsang = trim((string) ($d['grupsang'] ?? ''));
+        $textoGs = 'Grupo sanguíneo: '.($grupsang !== '' ? $grupsang : '............');
+        $wEtiquetaNombre = 55.0;
+        $wNombre = self::ANCHO_BLOQUE - $wEtiquetaNombre - self::ANCHO_GRUPO_SANGUINEO;
+
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell($wEtiquetaNombre, 3, 'APELLIDO Y NOMBRES (completos): ', 0, 0, 'L');
+        $this->celdaValorSubrayada($wNombre, trim($d['apellido'].' '.$d['nombre']));
+        TcpdfFuenteArial::aplicar($this, '', 8);
+        $this->Cell(self::ANCHO_GRUPO_SANGUINEO, 3, $textoGs, 0, 0, 'R');
+        $this->Ln(5);
 
         TcpdfFuenteArial::aplicar($this, '', 8);
         $this->Cell(30, 3, 'Lugar de Nacimiento; ', 0, 0, 'L');

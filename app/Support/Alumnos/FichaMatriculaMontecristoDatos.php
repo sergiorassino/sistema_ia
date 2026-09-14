@@ -8,6 +8,7 @@ use App\Models\Nivel;
 use App\Models\Terlec;
 use App\Support\Alumnos\FotoCarnetLegajo;
 use App\Support\InformeInasistencias;
+use App\Support\Listados\EstudiantesDatosConsulta;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +148,7 @@ final class FichaMatriculaMontecristoDatos
             'nombreNivelAnterior' => trim((string) ($cursoAnterior['nivel'] ?? '')),
             'apellido' => trim((string) ($row->apellido ?? '')),
             'nombre' => trim((string) ($row->nombre ?? '')),
+            'grupsang' => EstudiantesDatosConsulta::valorGrupoSanguineo($row),
             'dni' => trim((string) ($row->dni ?? '')),
             'fechnaci' => $fechnaci,
             'edad' => $edad,
@@ -207,6 +209,12 @@ final class FichaMatriculaMontecristoDatos
 
         foreach (self::COLUMNAS_LEGAJO_OPCIONALES as $columna) {
             if (Schema::hasColumn('legajos', $columna)) {
+                $columnas[] = $columna;
+            }
+        }
+
+        foreach (EstudiantesDatosConsulta::columnasGrupoSanguineoExistentes() as $columna) {
+            if (! in_array($columna, $columnas, true)) {
                 $columnas[] = $columna;
             }
         }
