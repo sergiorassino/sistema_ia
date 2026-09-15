@@ -100,6 +100,8 @@ class ParametrosSistemaForm extends Component
 
     public bool $verDatosFicha = true;
 
+    public bool $verLibreDeuda = true;
+
     public string $mensajeBloqPeda = '';
 
     public string $mensajeBloqAdmi = '';
@@ -202,6 +204,7 @@ class ParametrosSistemaForm extends Component
             'bimesOffMensaje' => ['nullable', 'string', 'max:500'],
             'imprBoleOff' => ['boolean'],
             'verDatosFicha' => ['boolean'],
+            'verLibreDeuda' => ['boolean'],
             'mensajeBloqPeda' => ['nullable', 'string', 'max:500'],
             'mensajeBloqAdmi' => ['nullable', 'string', 'max:500'],
         ];
@@ -897,6 +900,9 @@ class ParametrosSistemaForm extends Component
         $this->verDatosFicha = Schema::hasColumn('ento', 'verDatosFicha')
             ? self::entoFlagActivo($attrs['verDatosFicha'] ?? 1)
             : true;
+        $this->verLibreDeuda = Schema::hasColumn('ento', 'verLibreDeuda')
+            ? self::entoFlagActivo($attrs['verLibreDeuda'] ?? 1)
+            : true;
         $this->mensajeBloqPeda = (string) ($attrs['mensajeBloqPeda'] ?? '');
         $this->mensajeBloqAdmi = (string) ($attrs['mensajeBloqAdmi'] ?? '');
     }
@@ -918,6 +924,7 @@ class ParametrosSistemaForm extends Component
         $this->asignarTextoPayload($payload, 'bimesOffMensaje', $this->bimesOffMensaje);
         $this->asignarFlagPayload($payload, 'imprBoleOff', $this->imprBoleOff);
         $this->asignarFlagPayload($payload, 'verDatosFicha', $this->verDatosFicha);
+        $this->asignarFlagPayload($payload, 'verLibreDeuda', $this->verLibreDeuda);
         $this->asignarTextoPayload($payload, 'mensajeBloqPeda', $this->mensajeBloqPeda);
         $this->asignarTextoPayload($payload, 'mensajeBloqAdmi', $this->mensajeBloqAdmi);
 
@@ -1006,6 +1013,7 @@ class ParametrosSistemaForm extends Component
             'verBimesOff' => $this->verBimesOff,
             'imprBoleOff' => $this->imprBoleOff,
             'verDatosFicha' => $this->verDatosFicha,
+            'verLibreDeuda' => $this->verLibreDeuda,
         ] as $columna => $activo) {
             if (! $this->entoTieneColumna($columna)) {
                 if ($activo) {
@@ -1079,7 +1087,7 @@ class ParametrosSistemaForm extends Component
             'cargaNotasOff', 'notasOffMensaje',
             'verNotasOff', 'verOffMensaje',
             'verBimesOff', 'bimesOffMensaje',
-            'imprBoleOff', 'verDatosFicha',
+            'imprBoleOff', 'verDatosFicha', 'verLibreDeuda',
             'mensajeBloqPeda', 'mensajeBloqAdmi' => 'parametros',
             'mailGmailUser', 'mailGmailPassword' => 'correo',
             default => 'institucion',

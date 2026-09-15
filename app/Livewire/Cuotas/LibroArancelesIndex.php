@@ -177,6 +177,7 @@ class LibroArancelesIndex extends Component
             'cursosSeleccionadosResumen' => $cursosSeleccionadosResumen,
             'pdfUrl' => $this->pdfUrl,
             'ano' => $ano,
+            'soloRegulares' => tenantCuotasLibroArancelesSoloRegulares(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => "Libro de aranceles — {$ano}"]);
     }
 }

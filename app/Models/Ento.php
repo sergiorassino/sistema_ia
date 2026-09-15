@@ -81,6 +81,9 @@ class Ento extends Model
         // Menú de Alumnos — Actualización de Datos + Ficha de Matrícula (mismo flag)
         'verDatosFicha',
 
+        // Menú de Alumnos — Libre Deuda (por nivel)
+        'verLibreDeuda',
+
         // Bloqueos de matrícula — mensajes por nivel
         'mensajeBloqPeda',
         'mensajeBloqAdmi',
@@ -95,6 +98,7 @@ class Ento extends Model
         'verBimesOff' => 'integer',
         'imprBoleOff' => 'integer',
         'verDatosFicha' => 'integer',
+        'verLibreDeuda' => 'integer',
     ];
 
     /**

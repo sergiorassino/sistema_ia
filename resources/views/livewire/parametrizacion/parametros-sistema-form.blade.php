@@ -556,6 +556,22 @@
             </div>
 
             <div class="border-t border-accent-200 pt-6">
+                <p class="se-section-title mb-1">Menú de Alumnos — Libre Deuda</p>
+                <p class="mb-4 text-xs text-neutral-500">
+                    Parámetro del nivel activo: muestra u oculta Libre Deuda en autogestión del estudiante.
+                </p>
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                    <input type="checkbox" wire:model="verLibreDeuda"
+                           class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                    <span>
+                        <span class="block text-sm font-semibold text-neutral-800">Mostrar Libre Deuda</span>
+                        <span class="mt-0.5 block text-xs text-neutral-500">Corresponde a <span class="font-mono">verLibreDeuda</span>. El ítem solo aparece si el colegio tiene el módulo y Áulica configurados.</span>
+                    </span>
+                </label>
+                @error('verLibreDeuda') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="border-t border-accent-200 pt-6">
                 <p class="se-section-title mb-1">Bloqueos de matrícula — autogestión</p>
                 <p class="mb-4 text-xs text-neutral-500">
                     Si el alumno tiene bloqueo pedagógico y/o administrativo, no puede entrar a Actualización de Datos Personales ni a Imprimir Ficha de Matrícula. Se muestra el mensaje del nivel correspondiente.

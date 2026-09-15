@@ -258,6 +258,7 @@ return [
         /**
          * Constancia de libre deuda (PDF) en el Menú de Alumnos.
          * Consulta Áulica; solo se emite si no hay deuda del estudiante ni del grupo familiar.
+         * Visibilidad por nivel: `ento.verLibreDeuda` (Parametrización → Parámetros).
          * `lugar`: ciudad en el pie (p. ej. Monte Cristo). Vacío = localidad de `ento`.
          * `firma` / `sello`: rutas relativas a `public/` (PNG/JPG). Si faltan, no se dibujan.
          */
@@ -578,6 +579,15 @@ return [
          */
         'comprobante_imputacion' => [
             'dos_copias_por_hoja' => false,
+        ],
+
+        /**
+         * Libro de aranceles (PDF).
+         * Default: matrículas con idCondiciones 1 a 4 (regular, pase y demás).
+         * `solo_regulares`: solo condición Regular (id 1). Activar por colegio.
+         */
+        'libro_aranceles' => [
+            'solo_regulares' => false,
         ],
 
         /**

@@ -46,6 +46,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Listados de estudiantes con formato | [listado-estudiantes-formato.md](listado-estudiantes-formato.md) |
 | Imputar pago | [imputar-pago.md](imputar-pago.md) |
 | Importes por curso | [cuotas-importes-por-curso.md](cuotas-importes-por-curso.md) |
+| Libro de aranceles | [libro-aranceles.md](libro-aranceles.md) |
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |
 | Libro de temas | [libro-de-temas.md](libro-de-temas.md) |
 | Parámetros del sistema | [parametros-sistema.md](parametros-sistema.md) |

@@ -85,6 +85,7 @@ return [
         'aranceles_aulica_url' => 'https://familia.aulica.com.ar/login?idCompany=953',
         'libre_deuda' => [
             'habilitado' => true,
+            // Visibilidad por nivel: ento.verLibreDeuda (Parametrización → Parámetros).
             'lugar' => 'Monte Cristo',
             'firma' => 'img/tenants/montecristo/libre-deuda-firma.png',
             'sello' => 'img/tenants/montecristo/libre-deuda-sello.png',

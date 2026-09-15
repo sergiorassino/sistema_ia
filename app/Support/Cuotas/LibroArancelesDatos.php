@@ -5,12 +5,16 @@ namespace App\Support\Cuotas;
 use App\Models\CuotasBeca;
 use App\Models\Curso;
 use App\Models\Ento;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
  * Datos para el PDF «Libro de aranceles» (legacy FPDF apaisado).
+ *
+ * Condiciones de matrícula: 1 a 4 por defecto; solo Regular (id 1) si el tenant
+ * activa `cuotas.libro_aranceles.solo_regulares`.
  */
 final class LibroArancelesDatos
 {
@@ -76,6 +80,20 @@ final class LibroArancelesDatos
     }
 
     /**
+     * Condiciones de matrícula a incluir según el tenant.
+     *
+     * @return list<int>
+     */
+    public static function idsCondicionesParaQuery(): array
+    {
+        $filtro = tenantCuotasLibroArancelesSoloRegulares()
+            ? ListadoCursoCondicionFiltro::REGULARES
+            : ListadoCursoCondicionFiltro::TODOS;
+
+        return ListadoCursoCondicionFiltro::idCondicionesParaQuery($filtro);
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private static function seccionCurso(Curso $curso, int $idTerlec): ?array
@@ -83,11 +101,15 @@ final class LibroArancelesDatos
         $idCurso = (int) $curso->Id;
         $idNivel = (int) ($curso->idNivel ?? 0);
 
+        $idsCondiciones = self::idsCondicionesParaQuery();
+
         $matriculas = DB::table('matricula as m')
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
+            ->join('condiciones as c', 'c.id', '=', 'm.idCondiciones')
             ->where('m.idCursos', $idCurso)
             ->where('m.idTerlec', $idTerlec)
-            ->where('m.idCondiciones', '<', 5)
+            ->whereIn('m.idCondiciones', $idsCondiciones)
+            ->where('c.proteg', '!=', 99)
             ->whereNull('m.fechaBaja')
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
@@ -129,6 +151,10 @@ final class LibroArancelesDatos
                 'matricula' => self::celdaMatricula($cuotas),
                 'meses' => self::celdasMeses($cuotas),
             ];
+        }
+
+        if ($alumnos === []) {
+            return null;
         }
 
         $nivelNombre = trim((string) ($curso->nivel?->nivel ?? ''));

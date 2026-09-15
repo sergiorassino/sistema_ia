@@ -8,11 +8,11 @@ Constancia PDF de que el estudiante **no registra deuda** en Áulica, desde el M
 
 Default off: `config/tenant.php` → `autogestion.libre_deuda`. Montecristo lo activa.
 
-El ítem **solo aparece** si además hay credenciales Áulica (`tenantAulicaDeudaHabilitada()`).
+El ítem **solo aparece** si además hay credenciales Áulica (`tenantAulicaDeudaHabilitada()`) y el nivel tiene `ento.verLibreDeuda = 1` (Parametrización → Parámetros; por nivel).
 
 | Clave | Efecto |
 |-------|--------|
-| `habilitado` | Muestra el ítem (sidebar y escritorio). |
+| `habilitado` | Habilita el módulo en el tenant (hace falta también `verLibreDeuda` del nivel). |
 | `lugar` | Ciudad del pie (`Monte Cristo, dd/mm/aaaa`). Vacío = `ento.localidad`. |
 | `firma` / `sello` | Rutas relativas a `public/` (PNG/JPG). Si el archivo no existe, no se dibujan. |
 
@@ -38,7 +38,8 @@ Deuda: `AulicaDeudaConsulta` (External API). Datos del certificado: matrícula d
 - `app/Support/Alumnos/LibreDeudaDatos.php`
 - `app/Support/Alumnos/LibreDeudaTcpdf.php`
 - `config/tenants/montecristo.php` → `autogestion.libre_deuda`
-- Helper: `tenantAutogestionLibreDeudaHabilitada()`
+- Helper: `tenantAutogestionLibreDeudaHabilitada()` (tenant + `ento.verLibreDeuda` + Áulica)
+- Parametrización: `ParametrosSistemaForm` solapa Parámetros (`ento.verLibreDeuda` del nivel activo)
 - Cliente Áulica: [aulica-deuda-matricula.md](aulica-deuda-matricula.md)
 
 ## Qué no hacer / reglas de negocio
@@ -52,6 +53,7 @@ Deuda: `AulicaDeudaConsulta` (External API). Datos del certificado: matrícula d
 ## Checklist al modificar
 
 - [ ] Flag del tenant + Áulica configurada.
+- [ ] `ento.verLibreDeuda` del nivel del alumno: 1 muestra, 0 oculta (sidebar, escritorio y rutas 404).
 - [ ] Rate-limit en el controlador.
 - [ ] Fecha `d/m/Y`.
 - [ ] Otro colegio no ve el ítem sin `habilitado => true`.

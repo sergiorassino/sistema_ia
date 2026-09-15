@@ -18,7 +18,7 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 |-------|--------|--------|
 | `ento` | `insti`, CUE, dirección, logos, SIRO, AFIP | Una fila por `idNivel`. |
 | `ento` | `cargaNotasOff`, `verNotasOff`, `verBimesOff`, `imprBoleOff` | Flags 1/0 del **nivel activo**, no de toda la escuela. |
-| `ento` | `verDatosFicha`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. |
+| `ento` | `verDatosFicha`, `verLibreDeuda`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. |
 | `ento` | `cuitFact`, `PtoVta` (legacy; no `ptoVta`), certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. Eloquent lee/escribe ambos nombres. |
 | `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo** (formulario). En la factura AFIP se imprime el de **nivel del alumno** (curso de la cuota), no el de Administración. Flag: `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` (Instituto Ramallo). |
 | `ento` | `ctaEnvioMail`, `passEnvioMail` | Solapa Correo institucional (guardado aparte). |
@@ -35,6 +35,8 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 `ento` del `idNivel` de contexto. Los bloqueos de notas se leen con `EntoCargaNotas` / `EntoVerNotasOff` de esa misma fila.
 
 `verNotasOff` (del nivel del estudiante) bloquea **toda** consulta de calificaciones en autogestión familia: menú, escritorio y PDF. Aplica a inicial (informe de progreso), primario (IPE y EPQ) y secundario (consulta estándar y EPQ). El controlador debe devolver 403 con `verOffMensaje`; no alcanza con ocultar el ítem.
+
+`verLibreDeuda` (del nivel del estudiante) muestra u oculta Libre Deuda en autogestión: menú, escritorio y rutas (404 si está en 0). El checkbox vive en la solapa Parámetros del nivel activo.
 
 ## Archivos clave
 
@@ -54,7 +56,8 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 ## Checklist al modificar
 
 - [ ] Guardar con AFIP habilitado y `cuitFact` vacío (niveles pedagógicos) sigue persistiendo flags.
-- [ ] Toggle de `cargaNotasOff` / `verNotasOff` desde la solapa Parámetros queda en `ento` al recargar.
+- [ ] Toggle de `cargaNotasOff` / `verNotasOff` / `verLibreDeuda` desde la solapa Parámetros queda en `ento` al recargar.
 - [ ] Con `verNotasOff` en el nivel activo, el portal familia no abre ninguna consulta de calificaciones (aviso + PDF 403), en todos los niveles y variantes.
+- [ ] Con `verLibreDeuda` en 0, el portal familia no muestra Libre Deuda (sidebar, escritorio) y las rutas responden 404.
 - [ ] Si falla validación o persistencia, hay mensaje visible (`se-swal-error`).
 - [ ] Punto de venta (`ento.PtoVta`) queda en la fila del nivel activo al recargar; no mostrar éxito si no persistió.

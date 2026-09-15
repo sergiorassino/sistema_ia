@@ -16,6 +16,10 @@ return [
             'habilitado' => false,
         ],
 
+        'libro_aranceles' => [
+            'solo_regulares' => true,
+        ],
+
         'facturacion_afip' => [
             'habilitado' => true,
             /** Factura al imputar pago (legacy Ramallo). */

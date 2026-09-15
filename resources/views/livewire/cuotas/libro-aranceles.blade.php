@@ -6,6 +6,9 @@
                 <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Libro de aranceles</h1>
                 <p class="text-xs text-white/75">
                     Ciclo lectivo {{ $ano }} · Impresión por curso en A4 apaisado
+                    @if ($soloRegulares)
+                        · Solo alumnos regulares
+                    @endif
                 </p>
             </div>
         </div>
@@ -20,7 +23,10 @@
             <div class="border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:px-5">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-sm text-neutral-700">
-                        Elija los cursos a incluir en el libro. Cada curso comenzará en una página nueva.
+                        Elija los cursos a incluir. Cada curso comienza en una página nueva.
+                        @if ($soloRegulares)
+                            Solo se listan alumnos con condición Regular.
+                        @endif
                     </p>
                     <span class="se-pill shrink-0 tabular-nums">
                         {{ $cantidadSeleccionados }} de {{ $cursos->count() }} seleccionados

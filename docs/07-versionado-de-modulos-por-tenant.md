@@ -85,6 +85,21 @@ Comunicación institucional en autogestión familia (default on; helper `tenantA
 
 Comprobante de cobro tras imputar un pago — dos talonarios idénticos por hoja A4 (default off; SFQ y EPQ lo activan): `cuotas.comprobante_imputacion.dos_copias_por_hoja` + `tenantCuotasComprobanteImputacionDosCopiasPorHoja()`. Detalle: [modulos/imputar-pago.md](modulos/imputar-pago.md).
 
+Libro de aranceles — alumnos incluidos (default condiciones 1 a 4; Instituto Ramallo solo regulares):
+
+```php
+// config/tenants/institutoramallo.php
+return [
+    'cuotas' => [
+        'libro_aranceles' => [
+            'solo_regulares' => true,
+        ],
+    ],
+];
+```
+
+Consumir con `tenantCuotasLibroArancelesSoloRegulares()`. Detalle: [modulos/libro-aranceles.md](modulos/libro-aranceles.md).
+
 **Regla:** en `config/tenants/{slug}.php` declarar **solo** lo que difiere del default. Si coincide con `config/tenant.php`, no repetirlo.
 
 Promoción masiva de alumnos (Configuración): último año de secundario que no se promociona. Default **6**; **EPQ** usa **5**:
@@ -363,7 +378,8 @@ Antes de agregar comportamiento solo para un colegio en código compartido, conf
 
 1. `autogestion.libre_deuda.habilitado => true` y `aulica_deuda.habilitado => true` en `config/tenants/montecristo.php`.
 2. Credenciales en `.env`: `AULICA_USERNAME`, `AULICA_PASSWORD`, `AULICA_CODIGO`.
-3. Ítem **Libre Deuda** en el Menú de Alumnos; PDF solo si Áulica no informa deuda. Detalle: [modulos/libre-deuda.md](modulos/libre-deuda.md).
+3. Por nivel: `ento.verLibreDeuda = 1` (Parametrización → Parámetros).
+4. Ítem **Libre Deuda** en el Menú de Alumnos; PDF solo si Áulica no informa deuda. Detalle: [modulos/libre-deuda.md](modulos/libre-deuda.md).
 
 **Colegio nuevo con legajo distinto:**
 

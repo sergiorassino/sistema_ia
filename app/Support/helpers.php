@@ -921,6 +921,17 @@ if (! function_exists('tenantCuotasComprobanteImputacionDosCopiasPorHoja')) {
     }
 }
 
+if (! function_exists('tenantCuotasLibroArancelesSoloRegulares')) {
+    /**
+     * Libro de aranceles: solo alumnos regulares (`idCondiciones` = 1).
+     * Default false (condiciones 1 a 4). Activar en `config/tenants/{slug}.php`.
+     */
+    function tenantCuotasLibroArancelesSoloRegulares(): bool
+    {
+        return (bool) config('tenant.cuotas.libro_aranceles.solo_regulares', false);
+    }
+}
+
 if (! function_exists('afipCertificadosDesdeEnto')) {
     /**
      * Rutas de certificado WSAA/WSFE declaradas en `ento` para el nivel activo.
@@ -2022,14 +2033,47 @@ if (! function_exists('tenantAutogestionIsaHabilitada')) {
     }
 }
 
+if (! function_exists('entoAutogestionVerLibreDeudaHabilitada')) {
+    /**
+     * Si el nivel muestra Libre Deuda en el Menú de Alumnos.
+     * Flag `ento.verLibreDeuda` (Parametrización → Parámetros). Default visible si falta columna/fila.
+     */
+    function entoAutogestionVerLibreDeudaHabilitada(?int $idNivel = null): bool
+    {
+        $idNivel ??= (int) (studentCtx()->idNivel ?? 0);
+        if ($idNivel <= 0) {
+            return false;
+        }
+
+        if (! Schema::hasTable('ento') || ! Schema::hasColumn('ento', 'verLibreDeuda')) {
+            return true;
+        }
+
+        $valor = Ento::query()
+            ->where('idNivel', $idNivel)
+            ->value('verLibreDeuda');
+
+        if ($valor === null) {
+            return true;
+        }
+
+        return (int) $valor === 1;
+    }
+}
+
 if (! function_exists('tenantAutogestionLibreDeudaHabilitada')) {
     /**
      * Constancia de libre deuda en el Menú de Alumnos.
-     * Requiere flag del tenant y credenciales Áulica (para verificar que no hay deuda).
+     * Requiere flag del tenant, `ento.verLibreDeuda` del nivel del alumno
+     * y credenciales Áulica (para verificar que no hay deuda).
      */
     function tenantAutogestionLibreDeudaHabilitada(): bool
     {
         if (! tenantAutogestionFlagPorNivel('libre_deuda', false)) {
+            return false;
+        }
+
+        if (! entoAutogestionVerLibreDeudaHabilitada()) {
             return false;
         }
 
