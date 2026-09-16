@@ -13,11 +13,15 @@
  |   y el modelo Fotos de listados con formato.
  | - Autogestión familia: `autogestion.actualizacion_datos.foto_carnet` (abajo).
  |   Sin esa llave la familia no puede subir la foto aunque la solapa exista.
+ |
+ | Login: sin nivel Administración (5). Los aranceles van por Áulica, no por el
+ | menú interno de cuotas; el destinatario ARCA no aparece en Actualización de datos.
  */
 
 return [
     'login' => [
-        'niveles_ids' => [1, 2, 3, 5],
+        // Sin Administración (5): aranceles en Áulica, no sistema interno de cuotas.
+        'niveles_ids' => [1, 2, 3],
     ],
 
     'boletin_primario' => [
