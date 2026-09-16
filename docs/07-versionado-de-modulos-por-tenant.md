@@ -62,10 +62,10 @@ return [
 
 Consumir con `tenantAutogestionCusHabilitada()` / `tenantAutogestionIsaHabilitada()`. Detalle: [modulos/cus-isa-autogestion.md](modulos/cus-isa-autogestion.md).
 
-Foto carnet en actualización de datos (portal familia; default off). La solapa del ABM es independiente (parametrización en BD). Caixal SF y Montecristo activan ambos:
+Foto carnet en actualización de datos (portal familia; default off). La solapa del ABM es independiente (parametrización en BD). Caixal SF, Montecristo y San José activan ambos:
 
 ```php
-// config/tenants/montecristo.php (igual en caixalsf.php)
+// config/tenants/montecristo.php (igual en caixalsf.php y sanjose.php)
 return [
     'autogestion' => [
         'actualizacion_datos' => [

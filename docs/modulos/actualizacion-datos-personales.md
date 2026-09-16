@@ -81,6 +81,10 @@ Para la solapa (ABM):
   `2026_09_03_120000_seed_solapa_foto_carnet_montecristo`). En otros tenants esa
   migración no hace nada. Equivalente SQL:
   `database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql`.
+- **San José:** `php artisan migrate` con `TENANT_SLUG=sanjose` (migración
+  `2026_09_16_120000_seed_solapa_foto_carnet_sanjose`). En otros tenants esa
+  migración no hace nada. Equivalente SQL:
+  `database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql`.
 - **Otros colegios (p. ej. Caixal SF):** ejecutar
   `database/sql/campos_legajo_foto_carnet_solapa_idempotente.sql` en la BD del tenant
   (o crear la solapa y asignar el campo en Parametrización → Solapas del legajo /
@@ -90,6 +94,7 @@ Tenants:
 
 - **Caixal SF:** Secretaría (solapa) + autogestión (`foto_carnet => true`) + modal de foto en carga de calificaciones (Secretaría y Menú de Docentes, secundario).
 - **Montecristo:** igual que Caixal SF (solapa + autogestión + modal en carga + modelo Fotos de listados con formato). Activar `foto_carnet` en `config/tenants/montecristo.php`.
+- **San José:** igual que Caixal SF (solapa + autogestión). Activar `foto_carnet` en `config/tenants/sanjose.php`. Solapa: migración `2026_09_16_120000_seed_solapa_foto_carnet_sanjose` o el SQL idempotente.
 - **IESS:** Secretaría + mismo modal en carga de calificaciones si la solapa está activa. No activar `foto_carnet` en `config/tenants/iess.php`.
 
 Para que la familia también pueda subirla, además:

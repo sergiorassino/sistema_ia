@@ -6,6 +6,8 @@
 --   database/migrations/2026_09_01_120000_seed_solapa_foto_carnet_iess.php
 -- Montecristo (preferido): php artisan migrate
 --   database/migrations/2026_09_03_120000_seed_solapa_foto_carnet_montecristo.php
+-- San José (preferido): php artisan migrate
+--   database/migrations/2026_09_16_120000_seed_solapa_foto_carnet_sanjose.php
 -- Este SQL es el equivalente para phpMyAdmin / HeidiSQL (cualquier tenant).
 --
 -- Requisitos para el ABM de legajos:

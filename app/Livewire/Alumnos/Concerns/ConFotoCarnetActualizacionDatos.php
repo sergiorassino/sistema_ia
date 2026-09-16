@@ -182,9 +182,10 @@ trait ConFotoCarnetActualizacionDatos
         $url = null;
 
         if ($habilitada && ! $this->removeFotoCarnet) {
-            $url = FotoCarnetLegajo::dataUrlPreview(
-                $this->fotoCarnetPath !== '' ? $this->fotoCarnetPath : null
-            );
+            $url = FotoCarnetLegajo::dataUrlDesdeLegajo((object) [
+                FotoCarnetLegajo::COLUMNA => $this->fotoCarnetPath,
+                'dni' => $this->dni ?? null,
+            ]);
         }
 
         return [
