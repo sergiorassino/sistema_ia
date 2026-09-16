@@ -17,7 +17,7 @@ final class MateriasAdeudadasFiltros
     public const ALUMNOS_TODOS = 'todos';
 
     /** @var list<string> */
-    public const CONDICIONES = ['PR', 'EQ', 'TM'];
+    public const CONDICIONES = ['PR', 'RE', 'EQ', 'TM'];
 
     public const INSCRI_SI = 'si';
 
@@ -87,19 +87,21 @@ final class MateriasAdeudadasFiltros
 
         return match ($cond) {
             'PR' => 'Previa',
+            'RE' => 'Regular',
             'EQ' => 'Equivalencias',
             'TM' => 'Regular (Tercer Materia)',
             default => $cond !== '' ? $cond : 'Examen',
         };
     }
 
-    /** Condición de examen (PR/EQ/LI/TM) → valor persistido en `calificaciones.cond` al aprobar. */
+    /** Condición de examen (PR/RE/EQ/LI/TM) → valor persistido en `calificaciones.cond` al aprobar. */
     public static function condCalificacionDesdeExamen(?string $condExamen): string
     {
         $codigo = strtoupper(trim((string) $condExamen));
 
         return match ($codigo) {
             'PR' => 'Prev.',
+            'RE' => 'Regular',
             'EQ' => 'Equiv.',
             'LI' => 'Libre',
             'TM' => 'Regular',

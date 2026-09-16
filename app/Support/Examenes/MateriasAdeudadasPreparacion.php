@@ -225,6 +225,17 @@ final class MateriasAdeudadasPreparacion
         return $nombre !== '' ? $nombre : 'Turno #'.$idTurno;
     }
 
+    /** `turno` + `nturno` para clasificar el período (feb/abr/jul/sep vs diciembre). */
+    public static function textoTurnoParaClasificar(int $idTurno): string
+    {
+        $row = DB::table('turnos')->where('id', $idTurno)->first(['turno', 'nturno']);
+        if ($row === null) {
+            return '';
+        }
+
+        return trim((string) ($row->turno ?? '').' '.(string) ($row->nturno ?? ''));
+    }
+
     public static function anoTerlec(int $idTerlec): ?int
     {
         $ano = DB::table('terlec')->where('id', $idTerlec)->value('ano');

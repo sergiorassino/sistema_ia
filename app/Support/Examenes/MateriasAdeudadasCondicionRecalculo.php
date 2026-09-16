@@ -2,11 +2,15 @@
 
 namespace App\Support\Examenes;
 
+use App\Support\Configuracion\PromoverAlumnosAnio;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Recalcula condAdeuda e inscri en calificaciones adeudadas (apro = 1),
- * portando la lógica legacy de anaCond().
+ * Recalcula condAdeuda e inscri en calificaciones adeudadas (apro = 1).
+ *
+ * Rama principal (EQ/TM intactas; regulares → PR): portación de anaCond() legado.
+ * Rama RE: egresados del último año de medio, turnos feb/abr/jul/sep del año posterior.
  */
 final class MateriasAdeudadasCondicionRecalculo
 {
@@ -19,7 +23,8 @@ final class MateriasAdeudadasCondicionRecalculo
         int $idTerlecTurno,
         int $idTurno,
     ): array {
-        if ($idTurno <= 0 || MateriasAdeudadasPreparacion::anoTerlec($idTerlecTurno) === null) {
+        $anoTurno = MateriasAdeudadasPreparacion::anoTerlec($idTerlecTurno);
+        if ($idTurno <= 0 || $anoTurno === null) {
             return ['procesados' => 0, 'actualizados' => 0, 'omitidos' => 0];
         }
 
@@ -33,6 +38,12 @@ final class MateriasAdeudadasCondicionRecalculo
             ->pluck('idLegajos')
             ->map(fn ($id) => (int) $id)
             ->flip();
+
+        $turnoHastaSeptiembre = self::turnoEsVentanaRegularEgresado(
+            MateriasAdeudadasPreparacion::textoTurnoParaClasificar($idTurno),
+        );
+
+        $egresadosUltimoAnio = self::legajosEgresadosUltimoAnioAnterior($idNivel, $anoTurno);
 
         $procesados = 0;
         $actualizados = 0;
@@ -50,6 +61,8 @@ final class MateriasAdeudadasCondicionRecalculo
             ->orderBy('c.id')
             ->chunk(250, function ($filas) use (
                 $regulares,
+                $egresadosUltimoAnio,
+                $turnoHastaSeptiembre,
                 $examTodosInscri,
                 &$procesados,
                 &$actualizados,
@@ -57,10 +70,13 @@ final class MateriasAdeudadasCondicionRecalculo
             ) {
                 foreach ($filas as $fila) {
                     $procesados++;
+                    $idLegajo = (int) $fila->idLegajos;
                     $cambio = self::analizarYActualizarFila(
                         (int) $fila->id,
                         (string) ($fila->condAdeuda ?? ''),
-                        $regulares->has((int) $fila->idLegajos),
+                        $regulares->has($idLegajo),
+                        $egresadosUltimoAnio->has($idLegajo),
+                        $turnoHastaSeptiembre,
                         $examTodosInscri,
                     );
                     if ($cambio) {
@@ -79,32 +95,86 @@ final class MateriasAdeudadasCondicionRecalculo
     }
 
     /**
-     * Equivalente a anaCond() del sistema anterior (rama visible del script legacy).
+     * Null = no tocar (EQ/TM). PR o RE en el resto.
+     */
+    public static function decidirCondicion(
+        string $condAdeuda,
+        bool $esRegularAnioActual,
+        bool $esEgresadoUltimoAnioAnterior,
+        bool $turnoHastaSeptiembre,
+    ): ?string {
+        $cond = strtoupper(trim($condAdeuda));
+
+        if ($cond === 'EQ' || $cond === 'TM') {
+            return null;
+        }
+
+        if ($esRegularAnioActual) {
+            return 'PR';
+        }
+
+        if ($esEgresadoUltimoAnioAnterior && $turnoHastaSeptiembre) {
+            return 'RE';
+        }
+
+        return 'PR';
+    }
+
+    /**
+     * Febrero, abril, julio o septiembre (setiembre). Diciembre y nombres no reconocidos: no.
+     */
+    public static function turnoEsVentanaRegularEgresado(string $etiquetaTurno): bool
+    {
+        $tokens = self::tokensTurno($etiquetaTurno);
+        if ($tokens === []) {
+            return false;
+        }
+
+        foreach ($tokens as $token) {
+            if (in_array($token, ['diciembre', 'dic'], true)) {
+                return false;
+            }
+        }
+
+        foreach ($tokens as $token) {
+            if (in_array($token, [
+                'febrero', 'feb',
+                'abril', 'abr',
+                'julio', 'jul',
+                'setiembre', 'septiembre', 'sept', 'sep',
+            ], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Equivalente a anaCond() + rama RE de egresados de último año.
      */
     private static function analizarYActualizarFila(
         int $idCalificacion,
         string $condAdeuda,
         bool $esRegularAnioActual,
+        bool $esEgresadoUltimoAnioAnterior,
+        bool $turnoHastaSeptiembre,
         string $examTodosInscri,
     ): bool {
-        $cond = strtoupper(trim($condAdeuda));
+        $nuevaCond = self::decidirCondicion(
+            $condAdeuda,
+            $esRegularAnioActual,
+            $esEgresadoUltimoAnioAnterior,
+            $turnoHastaSeptiembre,
+        );
 
-        if ($cond === 'EQ' || $cond === 'TM') {
+        if ($nuevaCond === null) {
             return false;
         }
 
-        $nuevaCond = 'PR';
-        $inscri = $esRegularAnioActual ? 1 : 0;
-
-        if ($esRegularAnioActual) {
-            if ($examTodosInscri === 'T') {
-                return self::actualizar($idCalificacion, [
-                    'inscri' => $inscri,
-                    'condAdeuda' => $nuevaCond,
-                ]);
-            }
-
+        if ($esRegularAnioActual && $examTodosInscri === 'T') {
             return self::actualizar($idCalificacion, [
+                'inscri' => 1,
                 'condAdeuda' => $nuevaCond,
             ]);
         }
@@ -112,6 +182,75 @@ final class MateriasAdeudadasCondicionRecalculo
         return self::actualizar($idCalificacion, [
             'condAdeuda' => $nuevaCond,
         ]);
+    }
+
+    /**
+     * Legajos que cursaron como regulares el último año de medio en el ciclo
+     * lectivo anterior al año del turno de examen (por `terlec.ano`, no por id).
+     *
+     * @return Collection<int, int>
+     */
+    private static function legajosEgresadosUltimoAnioAnterior(int $idNivel, int $anoTurno): Collection
+    {
+        $vacio = collect();
+
+        if ($idNivel < 1 || $anoTurno < 2 || ! self::nivelEsSecundario($idNivel)) {
+            return $vacio;
+        }
+
+        $idTerlecAnterior = (int) (DB::table('terlec')
+            ->where('ano', $anoTurno - 1)
+            ->orderByDesc('id')
+            ->value('id') ?? 0);
+
+        if ($idTerlecAnterior < 1) {
+            return $vacio;
+        }
+
+        $ultimoCurso = PromoverAlumnosAnio::ultimoCursoSecundario();
+        $filas = DB::table('matricula as m')
+            ->join('cursos as cu', 'cu.Id', '=', 'm.idCursos')
+            ->where('m.idTerlec', $idTerlecAnterior)
+            ->where('m.idCondiciones', 1)
+            ->where('m.idNivel', $idNivel)
+            ->get(['m.idLegajos', 'cu.c']);
+
+        $ids = [];
+        foreach ($filas as $fila) {
+            if (PromoverAlumnosAnio::cursoNumero($fila->c) !== $ultimoCurso) {
+                continue;
+            }
+            $ids[(int) $fila->idLegajos] = (int) $fila->idLegajos;
+        }
+
+        return collect($ids);
+    }
+
+    private static function nivelEsSecundario(int $idNivel): bool
+    {
+        $nombre = mb_strtolower(trim((string) DB::table('niveles')->where('id', $idNivel)->value('nivel')));
+
+        return str_contains($nombre, 'secundari');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function tokensTurno(string $etiqueta): array
+    {
+        $texto = mb_strtolower(trim($etiqueta));
+        if ($texto === '') {
+            return [];
+        }
+
+        $texto = strtr($texto, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+            'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u',
+        ]);
+
+        $partes = preg_split('/[^a-z0-9]+/', $texto, -1, PREG_SPLIT_NO_EMPTY);
+
+        return is_array($partes) ? array_values($partes) : [];
     }
 
     /**

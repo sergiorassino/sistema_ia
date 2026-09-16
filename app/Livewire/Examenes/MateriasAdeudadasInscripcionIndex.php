@@ -64,7 +64,7 @@ class MateriasAdeudadasInscripcionIndex extends Component
 
         match ($resultado) {
             'ok' => session()->flash('success', 'Condición actualizada.'),
-            'condicion_invalida' => $this->addError('inscripcion', 'Condición no válida. Use PR, EQ o TM.'),
+            'condicion_invalida' => $this->addError('inscripcion', 'Condición no válida. Use PR, RE, EQ o TM.'),
             default => $this->addError('inscripcion', 'No se encontró la calificación o no pertenece a este alumno.'),
         };
     }

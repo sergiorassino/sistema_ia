@@ -138,7 +138,7 @@ class MateriasAdeudadasNotasIndex extends Component
                 );
                 $this->cerrarModal();
             })(),
-            'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, EQ o TM.'),
+            'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, RE, EQ o TM.'),
             default => $this->addError('notas', 'No se pudo registrar la nota. Verifique los datos y la materia seleccionada.'),
         };
     }

@@ -153,7 +153,7 @@ class HistorialExamenesIndex extends Component
                 );
                 $this->cerrarModales();
             })(),
-            'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, EQ o TM.'),
+            'condicion_invalida' => $this->addError('condExamen', 'Condición no válida. Use PR, RE, EQ o TM.'),
             default => $this->addError('historial', 'No se pudo actualizar el registro.'),
         };
     }
