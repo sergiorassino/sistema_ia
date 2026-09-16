@@ -222,7 +222,9 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
         return array_merge(
             $data,
-            ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state)
+            ActualizacionDatosPersonalesComun::destinatarioFacturacionAfipHabilitado()
+                ? ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state)
+                : []
         );
     }
 
@@ -300,9 +302,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'emailtut' => self::reglaEmailOpcional(),
             'lugtratut' => $opc,
             'telltt' => $opc,
-            'respAdmiNom' => ActualizacionDatosPersonalesComun::reglaNombreDestinatarioFacturacionAfip(),
-            'respAdmiDni' => ActualizacionDatosPersonalesComun::reglaDniDestinatarioFacturacionAfip(),
-        ];
+        ] + ActualizacionDatosPersonalesComun::reglasDestinatarioFacturacionAfip();
 
         if (studentEsNivelSecundario()) {
             $rules['telefono'] = $req;

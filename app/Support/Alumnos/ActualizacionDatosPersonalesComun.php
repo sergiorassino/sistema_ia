@@ -7,6 +7,7 @@ use App\Models\Matricula;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\DniInput;
 use App\Support\InformeInasistencias;
+use App\Support\NivelSistema;
 use App\Support\MatriculaBloqueos;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -215,6 +216,29 @@ final class ActualizacionDatosPersonalesComun
     }
 
     /**
+     * Destinatario ARCA/AFIP solo si el colegio tiene nivel Administración (cuotas).
+     */
+    public static function destinatarioFacturacionAfipHabilitado(): bool
+    {
+        return NivelSistema::tieneNivelAdministracion();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function reglasDestinatarioFacturacionAfip(): array
+    {
+        if (! self::destinatarioFacturacionAfipHabilitado()) {
+            return [];
+        }
+
+        return [
+            'respAdmiNom' => self::reglaNombreDestinatarioFacturacionAfip(),
+            'respAdmiDni' => self::reglaDniDestinatarioFacturacionAfip(),
+        ];
+    }
+
+    /**
      * Nombre del destinatario de facturación AFIP (obligatorio; no admite guión).
      *
      * @return list<mixed>
@@ -292,6 +316,10 @@ final class ActualizacionDatosPersonalesComun
      */
     public static function etiquetasDestinatarioFacturacionAfip(): array
     {
+        if (! self::destinatarioFacturacionAfipHabilitado()) {
+            return [];
+        }
+
         return [
             'respAdmiNom' => 'Facturación AFIP — Nombre y apellido',
             'respAdmiDni' => 'Facturación AFIP — DNI',
@@ -303,6 +331,10 @@ final class ActualizacionDatosPersonalesComun
      */
     public static function mensajesValidacionDestinatarioFacturacionAfip(): array
     {
+        if (! self::destinatarioFacturacionAfipHabilitado()) {
+            return [];
+        }
+
         return [
             'respAdmiNom.required' => 'Indique el nombre y apellido del destinatario de facturación AFIP.',
             'respAdmiNom.max' => 'El nombre del destinatario no puede superar los 100 caracteres.',

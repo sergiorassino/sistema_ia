@@ -43,6 +43,8 @@ return [
      * Login de Secretaría / Docentes (`/loginUsuario`).
      * `niveles_ids`: IDs de `niveles` visibles en el desplegable. `null` = todos los registros de la tabla.
      * Override en `config/tenants/{slug}.php` (ej. `[1, 2, 3, 5]` sin terciario; agregar `6` si el colegio usa Adultos).
+     * Sin el id 5 (Administración) el colegio no usa cuotas: se oculta el destinatario ARCA
+     * en Actualización de datos personales.
      */
     'login' => [
         'niveles_ids' => null,

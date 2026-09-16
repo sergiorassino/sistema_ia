@@ -101,7 +101,9 @@ final class ActualizacionDatosPersonalesEstandar
             'emailtut' => ActualizacionDatosPersonalesComun::normalizarEmailInput($state['emailtut'] ?? ''),
             'ocupactut' => self::trimCampo($state['ocupactut'] ?? ''),
             'fechActDatos' => now()->format('Y-m-d H:i:s'),
-        ], ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state));
+        ], ActualizacionDatosPersonalesComun::destinatarioFacturacionAfipHabilitado()
+            ? ActualizacionDatosPersonalesComun::datosDestinatarioFacturacionAfipParaGuardar($state)
+            : []);
     }
 
     public static function guardar(Legajo $legajo, array $state): void
@@ -156,9 +158,7 @@ final class ActualizacionDatosPersonalesEstandar
             'teletut' => $req,
             'emailtut' => $reqEmail,
             'ocupactut' => $req,
-            'respAdmiNom' => ActualizacionDatosPersonalesComun::reglaNombreDestinatarioFacturacionAfip(),
-            'respAdmiDni' => ActualizacionDatosPersonalesComun::reglaDniDestinatarioFacturacionAfip(),
-        ];
+        ] + ActualizacionDatosPersonalesComun::reglasDestinatarioFacturacionAfip();
     }
 
     /**

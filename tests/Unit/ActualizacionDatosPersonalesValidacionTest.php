@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
+use App\Support\Alumnos\ActualizacionDatosPersonalesEstandar;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -80,5 +81,18 @@ class ActualizacionDatosPersonalesValidacionTest extends TestCase
 
         $this->assertSame('García Juan', $datos['respAdmiNom']);
         $this->assertSame('30111222', $datos['respAdmiDni']);
+    }
+
+    public function test_sin_nivel_administracion_omite_destinatario_afip(): void
+    {
+        config(['tenant.login.niveles_ids' => [1, 2, 3]]);
+
+        $this->assertFalse(ActualizacionDatosPersonalesComun::destinatarioFacturacionAfipHabilitado());
+        $this->assertSame([], ActualizacionDatosPersonalesComun::reglasDestinatarioFacturacionAfip());
+        $this->assertSame([], ActualizacionDatosPersonalesComun::etiquetasDestinatarioFacturacionAfip());
+
+        $datos = ActualizacionDatosPersonalesEstandar::datosParaGuardar([]);
+        $this->assertArrayNotHasKey('respAdmiNom', $datos);
+        $this->assertArrayNotHasKey('respAdmiDni', $datos);
     }
 }

@@ -77,6 +77,8 @@ return [
 
 Consumir con `tenantAutogestionActualizacionDatosFotoCarnetHabilitada()` / `FotoCarnetLegajo::habilitadaEnAutogestion()`. Detalle: [modulos/actualizacion-datos-personales.md](modulos/actualizacion-datos-personales.md).
 
+Destinatario de facturación ARCA en Actualización de datos personales: solo si el colegio tiene nivel Administración (`niveles.id = 5` y, con filtro de login, incluido en `login.niveles_ids`). San José no usa cuotas: `login.niveles_ids` sin el `5`. Helper: `nivelSistemaTieneAdministracion()`.
+
 Horario de clase en PDF (portal familia; default off): `autogestion.horario_clase` + `tenantAutogestionHorarioClaseHabilitada()`. La grilla es **`horarios26`**, no la tabla `horarios` de ScriptCase. Detalle: [modulos/horarios.md](modulos/horarios.md).
 
 Informes pedagógicos inicial SFQ en autogestión familia (default off; SFQ los activa): `autogestion.boletin_inicial_sfq` + `tenantAutogestionBoletinInicialSfqHabilitada()`, y `calificaciones_inicial.boletin.implementacion` = `sfq`. Detalle: [modulos/informe-pedagogico-inicial-sfq.md](modulos/informe-pedagogico-inicial-sfq.md).

@@ -1271,6 +1271,17 @@ if (! function_exists('tenantLoginNivelesIds')) {
     }
 }
 
+if (! function_exists('nivelSistemaTieneAdministracion')) {
+    /**
+     * Si el colegio tiene el nivel Administración (`niveles.id = 5`) configurado.
+     * Sin ese nivel no hay sistema de cuotas ni destinatario de facturación ARCA en autogestión.
+     */
+    function nivelSistemaTieneAdministracion(): bool
+    {
+        return NivelSistema::tieneNivelAdministracion();
+    }
+}
+
 if (! function_exists('tenantBoletinMuestraTercerMateria')) {
     /**
      * Si el colegio muestra el bloque de tercer materia en boletín y consulta de calificaciones.

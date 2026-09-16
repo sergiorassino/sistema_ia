@@ -12,9 +12,18 @@
  |   Habilita ABM de legajos y modal en carga de calificaciones (Secretaría/Docentes).
  | - Autogestión familia: `autogestion.actualizacion_datos.foto_carnet` (abajo).
  |   Sin esa llave la familia no ve ni puede subir la foto aunque la solapa exista.
+ |
+ | Login: sin nivel Administración (5). No usan el sistema de cuotas; el destinatario
+ | ARCA no aparece en Actualización de datos personales.
  */
 
 return [
+    'login' => [
+        // Sin Administración (5): no usan el sistema de cuotas ni destinatario ARCA.
+        // IDs pedagógicos: si un nivel no existe en `niveles`, no aparece en el login.
+        'niveles_ids' => [1, 2, 3, 4, 6],
+    ],
+
     'boletin_primario' => [
         'ipe_implementacion' => 'sanjose',
         'menu_etiqueta_boletin_ipe' => 'IPE (Informe de Progreso Escolar)',

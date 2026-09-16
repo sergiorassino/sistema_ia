@@ -48,6 +48,20 @@ final class NivelSistema
         return $idNivel === self::ADMINISTRACION;
     }
 
+    /**
+     * True si el colegio tiene el nivel Administración (sistema de cuotas).
+     * Debe existir `niveles.id = 5` y, si el tenant filtra login, ese ID tiene que estar en `login.niveles_ids`.
+     */
+    public static function tieneNivelAdministracion(): bool
+    {
+        $idsLogin = self::idsNivelesLoginConfigurados();
+        if ($idsLogin !== null && ! in_array(self::ADMINISTRACION, $idsLogin, true)) {
+            return false;
+        }
+
+        return Nivel::query()->whereKey(self::ADMINISTRACION)->exists();
+    }
+
     public static function esNivelPedagogico(int $idNivel): bool
     {
         return $idNivel > 0 && ! self::esAdministracion($idNivel);

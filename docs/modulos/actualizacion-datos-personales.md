@@ -111,7 +111,7 @@ Para que la familia también pueda subirla, además:
 ## Tablas y campos críticos
 
 - `legajos` (datos editables según variante; `fechActDatos`; opcional `fotoCarnet`)
-- **Destinatario de facturación ARCA** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión)
+- **Destinatario de facturación ARCA** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión). **Solo si el colegio tiene nivel Administración** (`niveles.id = 5` y, con filtro de login, incluido en `tenant.login.niveles_ids`). Sin ese nivel no hay sistema de cuotas: el bloque no se muestra y no se valida ni se pisa al guardar. Helper: `NivelSistema::tieneNivelAdministracion()` / `nivelSistemaTieneAdministracion()`.
 - **Variante `sanfranciscoasis` (además):** `reglamApenom`, `reglamDni`, `reglamEmail`, `ec_padres`, `contacto1`, `contacto2`, `contacto3`, `retira1`, `obs_web`. Si faltan, el guardado se aborta (sin falso éxito). SQL: `database/sql/legajos_sfa_autogestion_columnas_idempotente.sql`. Tenants que usan esta variante: `sanfranciscoasis`, `epq`, `sfq`.
 - `matricula` (bloqueos / aceptaciones SFA)
 - `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
@@ -134,6 +134,7 @@ Para que la familia también pueda subirla, además:
 ## Qué no hacer / trampas
 
 - No mostrar documentos institucionales en un tenant SFA con `requiere_documentos => false` (EPQ). No cambiar a `estandar` solo para ocultarlos: se pierde el resto del formulario.
+- No mostrar destinatario ARCA si el colegio no tiene nivel Administración (cuotas). No ramificar por `tenantSlug() === 'sanjose'`: usar `NivelSistema::tieneNivelAdministracion()`. Sin ese nivel, no validar ni pisar `respAdmiNom` / `respAdmiDni` al guardar.
 - No mostrar foto carnet en autogestión solo porque está en solapas: hace falta `foto_carnet` del tenant.
 - No mostrar foto carnet en Secretaría (ABM ni modal de carga) ni en el portal docente si no está en solapas (aunque la columna exista).
 - No poner IDs de legajo en URLs de la foto en carga de calificaciones; Secretaría y docentes usan `OpaqueRouteToken`.
