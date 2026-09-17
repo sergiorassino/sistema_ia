@@ -51,6 +51,7 @@
             && ($route ?? '') !== 'cuotas.listado-pagos-por-fecha.pdf'
             && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota'
             && ($route ?? '') !== 'cuotas.listado-estudiantes-por-cuota.pdf'
+            && ($route ?? '') !== 'cuotas.estadistica-pago'
             && ($route ?? '') !== 'cuotas.consulta-afip-comprobante'
             && ($route ?? '') !== 'cuotas.siro-subida'
             && ($route ?? '') !== 'cuotas.siro-subida.archivo'
@@ -66,6 +67,7 @@
             'cuotas.listado-pagos-por-fecha.pdf',
             'cuotas.listado-estudiantes-por-cuota',
             'cuotas.listado-estudiantes-por-cuota.pdf',
+            'cuotas.estadistica-pago',
         ], true) ? 'true' : 'false' }},
         gestionMora: {{ str_starts_with($route ?? '', 'mora.') ? 'true' : 'false' }},
         mediosPago: {{ \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null) ? 'true' : 'false' }},

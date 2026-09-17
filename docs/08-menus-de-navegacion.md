@@ -177,7 +177,7 @@ Usuario distinto en tabla `profesores` (`profesores.nivel = 5`) respecto de Inic
 
 En cada colegio se activa o no el orden **47** en el usuario de Administración según si ese tenant permite que administración modifique legajos. Sin el 47: solo consulta (todos los niveles).
 
-**Gestión de aranceles / masiva / resúmenes / becas / mora:** cada ítem del sidebar tiene su propio orden en `permisos_ia` (49–64 y **98** estado de deuda por estudiante). El grupo del menú solo se muestra si el usuario tiene al menos un ítem habilitado de ese bloque; no hay un permiso único por grupo.
+**Gestión de aranceles / masiva / resúmenes / becas / mora:** cada ítem del sidebar tiene su propio orden en `permisos_ia` (49–64, **98** estado de deuda por estudiante y **107** estadística de pago de cuotas). El grupo del menú solo se muestra si el usuario tiene al menos un ítem habilitado de ese bloque; no hay un permiso único por grupo.
 
 **Viajes / salidas educativas (Excel):** solo en el **Menú de Secretaría** (`layouts/app`) para usuarios con portal secretaría en nivel pedagógico (Inicial, Primario o Secundario). No en Administración, Menú de Docentes ni Menú de Alumnos (`MenuSecretariaPerfil::muestraViajesSalidasEducativas()` + rutas `menu.portal:secretaria`).
 
@@ -209,3 +209,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-09-10:** Configuración: **Copiar cursos, materias y horarios** (permiso IA orden **104**, reservado al administrador). Visible en Menú de Administración y Menú de Secretaría, después de Gestión de cursos y materias del año.
 - **2026-09-10:** Configuración: **Copiar asignación de profesores y preceptores** (permiso IA orden **105**, reservado al administrador). Visible en ambos menús, después de Copiar cursos, materias y horarios.
 - **2026-09-10:** Configuración: **Promover a todos los alumnos** (permiso IA orden **106**, reservado al administrador). Visible en ambos menús, después de Copiar asignación de profesores y preceptores.
+- **2026-09-17:** Administración → Resúmenes: **Estadística de pago de cuotas** (`cuotas.estadistica-pago`; permiso IA orden **107**). Gráficos de % pagadas / no pagadas por plantilla del ciclo activo.

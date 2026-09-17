@@ -163,6 +163,7 @@ use App\Livewire\Cuotas\EliminacionMasivaCuotas;
 use App\Livewire\Cuotas\GeneracionMasivaCuotas;
 use App\Livewire\Cuotas\FacturacionMasivaAfip;
 use App\Livewire\Cuotas\LibroArancelesIndex;
+use App\Livewire\Cuotas\EstadisticaPagoCuotasIndex;
 use App\Livewire\Cuotas\ListadoEstudiantesPorCuotaIndex;
 use App\Livewire\Cuotas\ListadoPagosPorFechaIndex;
 use App\Livewire\Cuotas\GenerarCuotaEstudiante;
@@ -761,6 +762,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/listado-estudiantes-por-cuota/pdf', ListadoEstudiantesPorCuotaPdfController::class)
             ->middleware('permiso:'.$pi::ADMIN_LISTADO_ESTUDIANTES_CUOTA)
             ->name('cuotas.listado-estudiantes-por-cuota.pdf');
+        Route::get('/estadistica-pago', EstadisticaPagoCuotasIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ESTADISTICA_PAGO_CUOTAS)
+            ->name('cuotas.estadistica-pago');
         Route::get('/consulta-afip-comprobante', ConsultaAfipComprobanteIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.consulta-afip-comprobante');

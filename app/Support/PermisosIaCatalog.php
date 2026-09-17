@@ -190,6 +190,9 @@ final class PermisosIaCatalog
     /** Menú Administración — listado de estudiantes por cuota (PDF). */
     public const ADMIN_LISTADO_ESTUDIANTES_CUOTA = 58;
 
+    /** Menú Administración — estadística de pago de cuotas (gráficos pagadas / no pagadas). */
+    public const ADMIN_ESTADISTICA_PAGO_CUOTAS = 107;
+
     /** Menú Administración — tipos de beca. */
     public const ADMIN_BECAS_TIPOS = 59;
 
@@ -335,6 +338,7 @@ final class PermisosIaCatalog
             ['id' => 56, 'orden' => self::ADMIN_LIBRO_ARANCELES, 'tema' => 'RESÚMENES DE ARANCELES', 'descripcion' => 'Libro de aranceles por curso (PDF apaisado).'],
             ['id' => 57, 'orden' => self::ADMIN_LISTADO_PAGOS_FECHA, 'tema' => 'RESÚMENES DE ARANCELES', 'descripcion' => 'Listado de pagos recibidos entre dos fechas (PDF).'],
             ['id' => 58, 'orden' => self::ADMIN_LISTADO_ESTUDIANTES_CUOTA, 'tema' => 'RESÚMENES DE ARANCELES', 'descripcion' => 'Listado de estudiantes con cuotas generadas (PDF apaisado).'],
+            ['id' => 107, 'orden' => self::ADMIN_ESTADISTICA_PAGO_CUOTAS, 'tema' => 'RESÚMENES DE ARANCELES', 'descripcion' => 'Estadística de pago de cuotas: gráficos de porcentaje pagado y no pagado por plantilla del ciclo activo.'],
             ['id' => 59, 'orden' => self::ADMIN_BECAS_TIPOS, 'tema' => 'BECAS', 'descripcion' => 'Tipos de beca y porcentaje de descuento.'],
             ['id' => 60, 'orden' => self::ADMIN_BECAS_ASIGNACION, 'tema' => 'BECAS', 'descripcion' => 'Asignar beca a alumnos por curso o búsqueda individual.'],
             ['id' => 61, 'orden' => self::ADMIN_BECAS_RESUMEN_NIVEL, 'tema' => 'BECAS', 'descripcion' => 'Resumen de becas otorgadas por tipo y nivel pedagógico.'],
