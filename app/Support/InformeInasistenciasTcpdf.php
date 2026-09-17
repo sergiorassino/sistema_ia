@@ -259,14 +259,20 @@ final class InformeInasistenciasTcpdf extends TCPDF
      */
     private function dibujarTotales(float $y, array $datos): float
     {
-        /** @var list<array{id?: int, concepto?: string, total?: float}> $totales */
-        $totales = is_array($datos['totalesCatalogo'] ?? null) ? $datos['totalesCatalogo'] : [];
-        if ($totales === []) {
-            return $y;
+        $items = [];
+
+        /** @var list<array{etiqueta?: string, texto?: string}> $pie */
+        $pie = is_array($datos['totalesPieInforme'] ?? null) ? $datos['totalesPieInforme'] : [];
+        foreach ($pie as $item) {
+            $etiqueta = trim((string) ($item['etiqueta'] ?? ''));
+            if ($etiqueta === '') {
+                continue;
+            }
+            $items[] = [$etiqueta.':', (string) ($item['texto'] ?? '')];
         }
 
-        $this->SetXY(self::MARGEN_IZQ, $y);
-        $items = [];
+        /** @var list<array{id?: int, concepto?: string, total?: float}> $totales */
+        $totales = is_array($datos['totalesCatalogo'] ?? null) ? $datos['totalesCatalogo'] : [];
         foreach ($totales as $item) {
             $concepto = trim((string) ($item['concepto'] ?? ''));
             if ($concepto === '') {
@@ -279,11 +285,21 @@ final class InformeInasistenciasTcpdf extends TCPDF
             ];
         }
 
+        if ($items === []) {
+            return $y;
+        }
+
+        $alto = (count($items) * 3.2) + 2;
+        if ($y + $alto > $this->getPageHeight() - self::MARGEN_INF) {
+            $this->AddPage();
+            $y = max($this->GetY(), self::MARGEN_SUP);
+        }
+
+        $this->SetXY(self::MARGEN_IZQ, $y);
+        TcpdfFuenteArial::aplicar($this, '', 7);
         foreach ($items as [$etiqueta, $valor]) {
-            TcpdfFuenteArial::aplicar($this, 'B', 7);
-            $this->Cell(70, 3.2, $etiqueta, 0, 0, 'L');
-            TcpdfFuenteArial::aplicar($this, '', 7);
-            $this->Cell(0, 3.2, $valor, 0, 1, 'L');
+            $linea = $valor !== '' ? $etiqueta.' '.$valor : $etiqueta;
+            $this->Cell(0, 3.2, $linea, 0, 1, 'L');
         }
 
         return $this->GetY() + 1;

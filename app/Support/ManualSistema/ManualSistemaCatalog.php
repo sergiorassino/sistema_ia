@@ -482,11 +482,11 @@ final class ManualSistemaCatalog
                             'Busque al alumno o navegue por curso según la pantalla.',
                             'Nuevo registro: indique fecha, tipo de falta y observación.',
                             'Guarde. Puede editar registros recientes si hubo error.',
-                            'Informe PDF: desde el alumno, genere el informe de inasistencias para entregar o archivar.',
+                            'Informe PDF: desde el alumno, genere el informe de inasistencias para entregar o archivar. Al pie figuran total, justificadas, injustificadas y educación física.',
                         ],
                         [
                             'Las familias ven un informe similar en su portal.',
-                            'El recuadro de totales solo incluye los tipos del catálogo con mostrarTotal = 1 (inasistencias_valores). El resto se carga y lista, pero no suma ahí.',
+                            'El recuadro de la pantalla solo incluye los tipos del catálogo con mostrarTotal = 1 (inasistencias_valores). El resto se carga y lista, pero no suma ahí.',
                         ],
                         'Permiso de estudiantes (2)',
                     ),

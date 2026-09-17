@@ -8,6 +8,7 @@
     $filtroFechasActivo = $filtroFechasActivo ?? false;
     $inasistencias = $inasistencias ?? collect();
     $totalesCatalogo = $totalesCatalogo ?? [];
+    $totalesPieInforme = $totalesPieInforme ?? [];
 @endphp
 <div class="cabecera-informe">
     @include('pdf.partials.header', ['header' => $pdfHeader ?? null])
@@ -60,8 +61,14 @@
     </tbody>
 </table>
 
-@if ($totalesCatalogo !== [])
+@if ($totalesPieInforme !== [] || $totalesCatalogo !== [])
     <div class="totales">
+        @foreach ($totalesPieInforme as $linea)
+            <p>
+                <span class="label">{{ $linea['etiqueta'] }}:</span>
+                {{ $linea['texto'] }}
+            </p>
+        @endforeach
         @foreach ($totalesCatalogo as $tarjeta)
             <p>
                 <span class="label">{{ $tarjeta['concepto'] }}:</span>

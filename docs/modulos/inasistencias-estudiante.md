@@ -25,10 +25,23 @@ El **catálogo de tipos** (`inasistencias_valores`) es por colegio: IDs y concep
 
 ### `inasistencias_valores.mostrarTotal`
 
-- `1`: el recuadro de totales (pantalla e informe PDF) muestra una tarjeta con la **suma de `inasistencias.cantidad`** de ese tipo.
+- `1`: el recuadro de totales **de la pantalla de Gestión** muestra una tarjeta con la **suma de `inasistencias.cantidad`** de ese tipo. Si hay tipos marcados, el PDF los lista también debajo del pie legacy.
 - `0` (default): ese tipo no aparece en el recuadro (sí puede cargarse y listarse en la grilla).
 
 Los IDs CIDI históricos (clase = 2, tarde 1/4 = 3, tarde 1/2 = 4, EF = 5, retiro = 6) **solo** siguen usándose en TEA y planilla de calificaciones (`InasistenciasResumen::desdeColeccion`), no en este recuadro.
+
+### Pie del informe PDF (sistema legacy)
+
+Siempre, al final del detalle (antes de las firmas), el PDF replica el pie del ScriptCase:
+
+| Línea | Cálculo |
+|-------|---------|
+| Total de Inasistencias | Suma de `cantidad` de todos los tipos **salvo** educación física |
+| Inasistencias Justificadas | Misma suma con `just = J` |
+| Inasistencias Injustificadas | El resto (`just` distinto de J) |
+| Inasistencias a Educación Física | Cantidad de **registros** cuyo concepto es educación física |
+
+Educación física se detecta por el **concepto** del catálogo (`InasistenciaValor::conceptoEsEducacionFisica`), no por ID fijo (CIDI usa 5, EPQ usa 8, etc.).
 
 ## Flujo principal
 
@@ -36,7 +49,7 @@ Los IDs CIDI históricos (clase = 2, tarde 1/4 = 3, tarde 1/2 = 4, EF = 5, retir
 2. Filtrar por fechas y/o tipo si hace falta.
 3. Ver listado; el recuadro suma según `mostrarTotal` sobre las filas filtradas.
 4. Nueva / editar / borrar inasistencia.
-5. Informe PDF (misma lista de totales de catálogo).
+5. Informe PDF: detalle + pie legacy (total / justificadas / injustificadas / educación física). Si hay tipos con `mostrarTotal`, se listan debajo.
 
 ## Fuente de verdad
 
@@ -53,13 +66,14 @@ Los IDs CIDI históricos (clase = 2, tarde 1/4 = 3, tarde 1/2 = 4, EF = 5, retir
 | Livewire listado | `app/Livewire/Seguimiento/Inasistencias/InasistenciasIndex.php` |
 | Vista | `resources/views/livewire/seguimiento/inasistencias/index.blade.php` |
 | Formulario | `InasistenciaForm` + `form.blade.php` |
-| Totales catálogo | `InasistenciasResumen::totalesCatalogo()` / `InasistenciaValor::tiposParaMostrarTotal()` |
+| Totales catálogo (pantalla) | `InasistenciasResumen::totalesCatalogo()` / `InasistenciaValor::tiposParaMostrarTotal()` |
+| Pie PDF legacy | `InasistenciasResumen::totalesPieInforme()` |
 | PDF | `InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController` |
 | Migración | `database/migrations/2026_09_03_180000_add_mostrar_total_to_inasistencias_valores.php` |
 
 ## Qué no hacer / reglas de negocio
 
-1. No hardcodear IDs de tipo en el recuadro de Gestión ni en el informe PDF de inasistencias del estudiante.
+1. No hardcodear IDs de tipo en el recuadro de Gestión ni para detectar educación física en el informe PDF.
 2. No usar `mostrarTotal` para TEA, boletines o planilla de resumen: ahí sigue `InasistenciasResumen::desdeColeccion()` (tipos CIDI).
 3. No mostrar éxito de guardado si falla la persistencia (formulario: `PersistenciaColumnas` cuando se toque el catálogo).
 4. Tras crear la columna, hay que marcar `mostrarTotal = 1` en **cada colegio** (los IDs no se copian entre tenants).
@@ -67,7 +81,8 @@ Los IDs CIDI históricos (clase = 2, tarde 1/4 = 3, tarde 1/2 = 4, EF = 5, retir
 ## Checklist al modificar
 
 - [ ] ¿Queries de matrícula filtradas por `schoolCtx()->idNivel` / `idTerlec`?
-- [ ] ¿Totales de la pantalla/PDF leen `mostrarTotal`, no constantes `TIPO_*`?
+- [ ] ¿Totales de la pantalla leen `mostrarTotal`, no constantes `TIPO_*`?
+- [ ] ¿El PDF incluye el pie legacy (total / just / injust / EF) además del recuadro de catálogo si aplica?
 - [ ] ¿TEA / planilla secundaria intactos (`desdeColeccion`)?
 - [ ] ¿PDF TCPDF + Arial (no plantilla Blade nueva)?
 - [ ] ¿Columna `mostrarTotal` presente en el tenant antes de probar el recuadro?

@@ -137,6 +137,86 @@ final class InasistenciasResumen
     }
 
     /**
+     * Pie del informe PDF (sistema legacy ScriptCase).
+     *
+     * Educación física se detecta por el concepto del catálogo, no por ID fijo.
+     * Total / justificadas / injustificadas suman `cantidad` de todos los tipos salvo EF.
+     * Educación física informa la cantidad de registros (como el impreso viejo).
+     *
+     * @param  Collection<int, Inasistencia>  $inasistencias
+     * @return list<array{etiqueta: string, texto: string}>
+     */
+    public static function totalesPieInforme(Collection $inasistencias): array
+    {
+        $idsEf = null;
+        $total = 0.0;
+        $justificadas = 0.0;
+        $injustificadas = 0.0;
+        $educacionFisica = 0;
+
+        foreach ($inasistencias as $i) {
+            if (self::esEducacionFisica($i, $idsEf)) {
+                $educacionFisica++;
+
+                continue;
+            }
+
+            $cant = (float) ($i->cantidad ?? 0);
+            $total += $cant;
+            if (strtoupper(trim((string) ($i->just ?? ''))) === 'J') {
+                $justificadas += $cant;
+            } else {
+                $injustificadas += $cant;
+            }
+        }
+
+        return [
+            [
+                'etiqueta' => 'Total de Inasistencias',
+                'texto' => self::formatearCantidad(round($total, 2)),
+            ],
+            [
+                'etiqueta' => 'Inasistencias Justificadas',
+                'texto' => self::formatearCantidad(round($justificadas, 2)),
+            ],
+            [
+                'etiqueta' => 'Inasistencias Injustificadas',
+                'texto' => self::formatearCantidad(round($injustificadas, 2)),
+            ],
+            [
+                'etiqueta' => 'Inasistencias a Educación Física',
+                'texto' => (string) $educacionFisica,
+            ],
+        ];
+    }
+
+    /**
+     * @param  Collection<int, string>|null  $idsEf
+     */
+    private static function esEducacionFisica(Inasistencia $i, ?Collection &$idsEf): bool
+    {
+        $concepto = trim((string) ($i->valorTipo?->concepto ?? ''));
+        if ($concepto === '') {
+            $etiqueta = $i->etiquetaTipo();
+            $concepto = $etiqueta === '—' ? '' : $etiqueta;
+        }
+
+        if ($concepto !== '' && InasistenciaValor::conceptoEsEducacionFisica($concepto)) {
+            return true;
+        }
+
+        $tipo = trim((string) ($i->tipo ?? ''));
+        $tipoNorm = $tipo !== '' ? (string) (int) $tipo : '';
+        if ($tipoNorm === '') {
+            return false;
+        }
+
+        $idsEf ??= InasistenciaValor::idsEducacionFisica();
+
+        return $idsEf->contains($tipoNorm);
+    }
+
+    /**
      * Totales por tipo de {@see InasistenciaValor} con {@see InasistenciaValor::$mostrarTotal} = 1.
      * Independiente de los IDs CIDI ({@see self::TIPO_CLASE} etc.): cada colegio elige qué tipos mostrar.
      *

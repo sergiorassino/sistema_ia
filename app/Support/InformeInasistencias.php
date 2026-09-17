@@ -195,7 +195,8 @@ final class InformeInasistencias
      *     etiquetaTipoFiltro: string,
      *     inasistencias: Collection<int, Inasistencia>,
      *     resumen: InasistenciasResumen,
-     *     totalesCatalogo: list<array{id: int, concepto: string, total: float}>
+     *     totalesCatalogo: list<array{id: int, concepto: string, total: float}>,
+     *     totalesPieInforme: list<array{etiqueta: string, texto: string}>
      * }
      */
     public static function datosPdf(
@@ -231,6 +232,7 @@ final class InformeInasistencias
             'inasistencias' => $inasistencias,
             'resumen' => InasistenciasResumen::desdeColeccion($inasistencias),
             'totalesCatalogo' => InasistenciasResumen::totalesCatalogo($inasistencias),
+            'totalesPieInforme' => InasistenciasResumen::totalesPieInforme($inasistencias),
         ];
     }
 
