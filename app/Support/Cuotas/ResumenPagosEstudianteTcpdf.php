@@ -125,16 +125,17 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
     {
         $x = self::MARGEN_IZQ;
         $wAno = 11.0;
-        $wCuota = 40.0;
-        $wFecha = 30.0;
+        $wCuota = 32.0;
+        $wFecha = 22.0;
         $wMp = 12.0;
-        $wImp = 23.0;
+        $wImp = 20.0;
         $wBon = 23.0;
-        $wInt = 23.0;
-        $wAbo = 24.0;
+        $wInt = 20.0;
+        $wAbo = 22.0;
+        $wComp = 24.0;
 
         $this->SetXY($x, $y);
-        $this->dibujarEncabezadoTabla($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo);
+        $this->dibujarEncabezadoTabla($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo, $wComp);
 
         /** @var list<array<string, string>> $filas */
         $filas = $this->datos['filas'] ?? [];
@@ -149,21 +150,22 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
         foreach ($filas as $fila) {
             if ($this->GetY() + self::ALTURA_FILA > $this->getPageHeight() - self::MARGEN_INF - 14) {
                 $this->AddPage();
-                $this->dibujarEncabezadoTabla($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo);
+                $this->dibujarEncabezadoTabla($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo, $wComp);
             }
 
             $this->SetX($x);
             $this->Cell($wAno, self::ALTURA_FILA, $this->truncar((string) ($fila['ano'] ?? ''), 4), 1, 0, 'C');
             $this->Cell($wCuota, self::ALTURA_FILA, $this->truncar((string) ($fila['cuota'] ?? ''), 24), 1, 0, 'L');
-            $this->Cell($wFecha, self::ALTURA_FILA, (string) ($fila['fechaHora'] ?? ''), 1, 0, 'C');
+            $this->Cell($wFecha, self::ALTURA_FILA, (string) ($fila['fechaPago'] ?? ''), 1, 0, 'C');
             $this->Cell($wMp, self::ALTURA_FILA, $this->truncar((string) ($fila['medioPago'] ?? ''), 6), 1, 0, 'C');
             $this->Cell($wImp, self::ALTURA_FILA, (string) ($fila['importe'] ?? ''), 1, 0, 'R');
             $this->Cell($wBon, self::ALTURA_FILA, (string) ($fila['bonificacion'] ?? ''), 1, 0, 'R');
             $this->Cell($wInt, self::ALTURA_FILA, (string) ($fila['interes'] ?? ''), 1, 0, 'R');
-            $this->Cell($wAbo, self::ALTURA_FILA, (string) ($fila['abonado'] ?? ''), 1, 1, 'R');
+            $this->Cell($wAbo, self::ALTURA_FILA, (string) ($fila['abonado'] ?? ''), 1, 0, 'R');
+            $this->Cell($wComp, self::ALTURA_FILA, (string) ($fila['nroComp'] ?? ''), 1, 1, 'C');
         }
 
-        $this->dibujarFilaTotales($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo);
+        $this->dibujarFilaTotales($x, $wAno, $wCuota, $wFecha, $wMp, $wImp, $wBon, $wInt, $wAbo, $wComp);
     }
 
     private function dibujarEncabezadoTabla(
@@ -176,18 +178,20 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
         float $wBon,
         float $wInt,
         float $wAbo,
+        float $wComp,
     ): void {
         $this->SetX($x);
         $this->SetFillColor(220, 220, 220);
         TcpdfFuenteArial::aplicar($this, 'B', 6.5);
         $this->Cell($wAno, self::ALTURA_ENC_TABLA, 'Año', 1, 0, 'C', true);
         $this->Cell($wCuota, self::ALTURA_ENC_TABLA, 'Cuota', 1, 0, 'C', true);
-        $this->Cell($wFecha, self::ALTURA_ENC_TABLA, 'Fecha y hora del Pago', 1, 0, 'C', true);
+        $this->Cell($wFecha, self::ALTURA_ENC_TABLA, 'Fecha de Pago', 1, 0, 'C', true);
         $this->Cell($wMp, self::ALTURA_ENC_TABLA, 'M.P.', 1, 0, 'C', true);
         $this->Cell($wImp, self::ALTURA_ENC_TABLA, 'Importe', 1, 0, 'C', true);
         $this->Cell($wBon, self::ALTURA_ENC_TABLA, 'Bonificación', 1, 0, 'C', true);
         $this->Cell($wInt, self::ALTURA_ENC_TABLA, 'Interés', 1, 0, 'C', true);
-        $this->Cell($wAbo, self::ALTURA_ENC_TABLA, 'Abonado', 1, 1, 'C', true);
+        $this->Cell($wAbo, self::ALTURA_ENC_TABLA, 'Abonado', 1, 0, 'C', true);
+        $this->Cell($wComp, self::ALTURA_ENC_TABLA, 'Comprob. Nº', 1, 1, 'C', true);
         TcpdfFuenteArial::aplicar($this, '', 6.5);
     }
 
@@ -201,6 +205,7 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
         float $wBon,
         float $wInt,
         float $wAbo,
+        float $wComp,
     ): void {
         if ($this->GetY() + self::ALTURA_FILA > $this->getPageHeight() - self::MARGEN_INF) {
             $this->AddPage();
@@ -217,7 +222,8 @@ final class ResumenPagosEstudianteTcpdf extends TCPDF
         $this->Cell($wImp, self::ALTURA_FILA, (string) ($totales['importe'] ?? ''), 1, 0, 'R', true);
         $this->Cell($wBon, self::ALTURA_FILA, (string) ($totales['bonificacion'] ?? ''), 1, 0, 'R', true);
         $this->Cell($wInt, self::ALTURA_FILA, (string) ($totales['interes'] ?? ''), 1, 0, 'R', true);
-        $this->Cell($wAbo, self::ALTURA_FILA, (string) ($totales['abonado'] ?? ''), 1, 1, 'R', true);
+        $this->Cell($wAbo, self::ALTURA_FILA, (string) ($totales['abonado'] ?? ''), 1, 0, 'R', true);
+        $this->Cell($wComp, self::ALTURA_FILA, '', 1, 1, 'C', true);
     }
 
     /**

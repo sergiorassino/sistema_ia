@@ -132,6 +132,11 @@ class Legajo extends Authenticatable
                 ->orWhereRaw("CONCAT(apellido, ' ', nombre) LIKE ?", ["%{$termino}%"])
                 ->orWhereRaw("CONCAT(apellido, ', ', nombre) LIKE ?", ["%{$termino}%"]);
 
+            // Coincidencia exacta con legajos.id (idLegajos en el resto del sistema).
+            if (ctype_digit($termino)) {
+                $q->orWhere($q->qualifyColumn('id'), (int) $termino);
+            }
+
             if (count($palabras) >= 2) {
                 $apellido = $palabras[0];
                 $nombre = implode(' ', array_slice($palabras, 1));

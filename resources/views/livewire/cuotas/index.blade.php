@@ -25,7 +25,7 @@
                    type="search"
                    x-ref="cuotasBuscar"
                    autofocus
-                   placeholder="Apellido y nombre, apellido, nombre o DNI..."
+                   placeholder="Apellido y nombre, apellido, nombre, DNI o ID..."
                    class="form-input pl-9"
                    autocomplete="off">
         </div>
@@ -44,6 +44,7 @@
             <div class="w-full overflow-x-auto">
                 <div class="gf gf-vcenter gf-cuotas-busqueda">
                     <div class="gf-head">
+                        <div class="gf-th w-20 shrink-0" title="idLegajos">ID</div>
                         <div class="gf-th gf-th-nombre">Apellido y nombre</div>
                         <div class="gf-th w-28">DNI</div>
                         <div class="gf-th w-16 text-center">Año lect.</div>
@@ -63,6 +64,9 @@
                             'gf-row gf-row-hover',
                             'gf-row--sin-matricula-actual' => ! $datos['tieneMatriculaActual'],
                         ]) wire:key="legajo-{{ $l->id }}">
+                            <div class="gf-td w-20 shrink-0 tabular-nums whitespace-nowrap">
+                                {!! CuotasFormato::resaltarTerminoBusqueda((string) $l->id, $search) !!}
+                            </div>
                             <div class="gf-td gf-td-nombre font-medium">
                                 <x-nav-contexto-estudiante
                                     destino="cuotas.estudiante"

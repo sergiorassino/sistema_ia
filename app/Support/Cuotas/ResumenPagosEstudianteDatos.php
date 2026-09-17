@@ -77,12 +77,13 @@ final class ResumenPagosEstudianteDatos
      * @return list<array{
      *     ano: string,
      *     cuota: string,
-     *     fechaHora: string,
+     *     fechaPago: string,
      *     medioPago: string,
      *     importe: string,
      *     bonificacion: string,
      *     interes: string,
-     *     abonado: string
+     *     abonado: string,
+     *     nroComp: string
      * }>
      */
     private static function filasPagos(int $idLegajo): array
@@ -102,12 +103,13 @@ final class ResumenPagosEstudianteDatos
                 return [
                     'ano' => (string) ($pago->cuotaGenerada?->terlec?->ano ?? ''),
                     'cuota' => mb_strtoupper(trim((string) ($pago->cuotaGenerada?->cuota?->nombre ?? ''))),
-                    'fechaHora' => CuotasFormato::formatearFechaHora($pago->fechhora),
+                    'fechaPago' => CuotasFormato::formatearFecha($pago->fechhora),
                     'medioPago' => mb_strtoupper($medioPago),
                     'importe' => CuotasFormato::formatearImporte($importe),
                     'bonificacion' => CuotasFormato::formatearImporte($bonificacion),
                     'interes' => CuotasFormato::formatearImporte($interes),
                     'abonado' => CuotasFormato::formatearImporte($abonado),
+                    'nroComp' => self::textoNumeroComprobante($pago->cuotaGenerada?->nroComp, (int) $pago->id),
                     '_importe' => $importe,
                     '_bonificacion' => $bonificacion,
                     '_interes' => $interes,
@@ -116,6 +118,16 @@ final class ResumenPagosEstudianteDatos
             })
             ->values()
             ->all();
+    }
+
+    private static function textoNumeroComprobante(mixed $nroComp, int $idPago): string
+    {
+        $nro = (int) ($nroComp ?? 0);
+        if ($nro <= 0) {
+            $nro = $idPago;
+        }
+
+        return '00001-'.str_pad((string) $nro, 8, '0', STR_PAD_LEFT);
     }
 
     /**
