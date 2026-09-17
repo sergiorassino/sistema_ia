@@ -91,4 +91,19 @@ class EstadisticaPagoCuotasDatosTest extends TestCase
         $this->assertSame(['Pagadas', 'No pagadas'], $dona['labels']);
         $this->assertSame([75.0, 25.0], $dona['datasets'][0]['data']);
     }
+
+    public function test_ordenar_ids_sigue_el_campo_orden_de_la_cuota(): void
+    {
+        $this->assertSame(
+            [30, 10, 20],
+            EstadisticaPagoCuotasDatos::ordenarIdsPorCampoOrden(
+                [20, 30, 10],
+                [10 => 2, 20 => 5, 30 => 1],
+            ),
+        );
+        $this->assertSame(
+            [2, 8],
+            EstadisticaPagoCuotasDatos::ordenarIdsPorCampoOrden([8, 2], [2 => 4, 8 => 4]),
+        );
+    }
 }

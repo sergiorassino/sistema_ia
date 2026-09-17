@@ -51,7 +51,7 @@ Los gráficos de barras apiladas y las tortas usan **% pago / % no pagadas** (su
 
 1. Usuario con permiso 107 entra al **Menú de Administración** → **Resúmenes** → **Estadística de pago de cuotas**.
 2. Elige nivel (Todos / Inicial / Primario / Secundario) y marca una o más plantillas. «Todas» / «Ninguna» y buscador local no consultan la BD de generadas.
-3. **Graficar** agrega `cuotasgeneradas` y muestra tabla + gráfico comparativo + una torta por cuota.
+3. **Graficar** agrega `cuotasgeneradas` y muestra tabla + gráfico comparativo + una torta por cuota, **en el orden de `cuotas.orden`** (no el de tildado).
 4. Cambiar selección o nivel oculta los resultados hasta volver a graficar (no se consulta al entrar ni al tildar).
 5. «Limpiar» vacía selección, nivel y gráficos.
 
@@ -92,4 +92,4 @@ Los gráficos de barras apiladas y las tortas usan **% pago / % no pagadas** (su
 - [ ] ¿Filtro de nivel con `SchoolAlcancePedagogico` / selector de niveles pedagógicos?
 - [ ] ¿Permiso 107 en ruta, Livewire (`mount` / acciones) y sidebar?
 - [ ] ¿Gráficos probados tras morph Livewire (cambio de selección + Graficar) con assets Vite?
-- [ ] ¿Tabla ancha con scroll `justify-start` (no centrar bajo sidebar)?
+- [ ] ¿Tabla, barras y tortas siguen `cuotas.orden` (no el orden de tildado)?

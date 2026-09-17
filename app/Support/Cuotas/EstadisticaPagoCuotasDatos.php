@@ -97,17 +97,22 @@ final class EstadisticaPagoCuotasDatos
         $permitidas = self::cuotasDelCicloParaSelector()
             ->keyBy(fn (Cuota $cuota) => (int) $cuota->id);
 
-        $ids = [];
+        $idsElegidos = [];
         foreach ($idsCuotas as $id) {
             $id = (int) $id;
             if ($id > 0 && $permitidas->has($id)) {
-                $ids[$id] = $id;
+                $idsElegidos[$id] = $id;
             }
         }
-        $ids = array_values($ids);
-        if ($ids === []) {
+        if ($idsElegidos === []) {
             return [];
         }
+
+        $ordenPorId = [];
+        foreach ($permitidas as $plantilla) {
+            $ordenPorId[(int) $plantilla->id] = (int) ($plantilla->orden ?? 0);
+        }
+        $ids = self::ordenarIdsPorCampoOrden(array_values($idsElegidos), $ordenPorId);
 
         $agregados = self::consultarAgregados($idTerlec, $ids, $idNivel);
         $filas = [];
@@ -132,6 +137,29 @@ final class EstadisticaPagoCuotasDatos
         }
 
         return $filas;
+    }
+
+    /**
+     * IDs de plantilla ordenados por `cuotas.orden` y, en empate, por id.
+     *
+     * @param  list<int>  $ids
+     * @param  array<int, int>  $ordenPorId
+     * @return list<int>
+     */
+    public static function ordenarIdsPorCampoOrden(array $ids, array $ordenPorId): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        usort($ids, function (int $a, int $b) use ($ordenPorId): int {
+            $oa = $ordenPorId[$a] ?? PHP_INT_MAX;
+            $ob = $ordenPorId[$b] ?? PHP_INT_MAX;
+            if ($oa === $ob) {
+                return $a <=> $b;
+            }
+
+            return $oa <=> $ob;
+        });
+
+        return $ids;
     }
 
     /**
