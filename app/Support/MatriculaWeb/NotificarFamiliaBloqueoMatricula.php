@@ -15,14 +15,21 @@ use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
 use App\Support\Mail\MailInstitucionalConfig;
+use App\Support\MatriculaBloqueos;
 use App\Support\SchoolAlcancePedagogico;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
  * Envía un comunicado institucional a la familia avisando el bloqueo o desbloqueo
  * de matrícula (botones «Notif. Bloqueo» / «Notif. Desbloqueo»).
+ *
+ * El cuerpo sale de `ento.mensajeComBloqMatricula` / `ento.mensajeComDesbloqMatricula`
+ * del nivel del alumno (mismo texto en cuaderno y mail de refuerzo). Vacío = texto
+ * institucional por defecto. Distinto de `mensajeBloqPeda` / `mensajeBloqAdmi`
+ * (cartel en autogestión).
  *
  * Remitente: profesor logueado. Medios: push (si el canal lo permite) + email de refuerzo.
  * Correo de refuerzo: a diferencia del resto del módulo de comunicaciones (un solo mail
@@ -34,6 +41,19 @@ final class NotificarFamiliaBloqueoMatricula
     public const TIPO_BLOQUEO = 'bloqueo';
 
     public const TIPO_DESBLOQUEO = 'desbloqueo';
+
+    public const COLUMNA_CUERPO_BLOQUEO = 'mensajeComBloqMatricula';
+
+    public const COLUMNA_CUERPO_DESBLOQUEO = 'mensajeComDesbloqMatricula';
+
+    public const CUERPO_BLOQUEO_DEFAULT = "Estimada Familia:\n"
+        .'Les informamos que la Matrícula para el año próximo del/la estudiante se encuentra bloqueada por motivos {motivos}. Por favor, comunicarse a la brevedad con {contacto}.'
+        ."\nAtte.\nEquipo Directivo";
+
+    public const CUERPO_DESBLOQUEO_DEFAULT = "Estimada Familia:\n"
+        .'Les informamos que, habiendo cumplimentado los requisitos {requisitos} pendientes, la matrícula para el próximo año lectivo del/la estudiante se encuentra desbloqueada.'
+        ."\nPor lo tanto, ya están en condiciones de continuar con el trámite correspondiente de matriculación."
+        ."\nAtte.\nEquipo Directivo";
 
     /**
      * @return array{
@@ -141,8 +161,17 @@ final class NotificarFamiliaBloqueoMatricula
         }
 
         $cuerpo = $tipo === self::TIPO_DESBLOQUEO
-            ? self::armarCuerpoDesbloqueo($bloqPeda, $bloqAdmi)
-            : self::armarCuerpo($bloqPeda, $bloqAdmi, $nombreNivel);
+            ? self::armarCuerpoDesbloqueo(
+                $bloqPeda,
+                $bloqAdmi,
+                self::plantillaDesdeEnto($idNivelAlumno, self::COLUMNA_CUERPO_DESBLOQUEO),
+            )
+            : self::armarCuerpo(
+                $bloqPeda,
+                $bloqAdmi,
+                $nombreNivel,
+                self::plantillaDesdeEnto($idNivelAlumno, self::COLUMNA_CUERPO_BLOQUEO),
+            );
 
         $lineas = [$cuerpo, ''];
         if ($alumno !== ', ') {
@@ -200,7 +229,7 @@ final class NotificarFamiliaBloqueoMatricula
         ];
     }
 
-    public static function armarCuerpo(bool $bloqPeda, bool $bloqAdmi, string $nombreNivel): string
+    public static function armarCuerpo(bool $bloqPeda, bool $bloqAdmi, string $nombreNivel, string $plantilla = ''): string
     {
         $textoMotivos = match (true) {
             $bloqPeda && $bloqAdmi => 'PEDAGÓGICOS y/o ADMINISTRATIVOS',
@@ -223,12 +252,13 @@ final class NotificarFamiliaBloqueoMatricula
             default => $secretariaNivel,
         };
 
-        return "Estimada Familia:\n"
-            .'Les informamos que la Matrícula para el año próximo del/la estudiante se encuentra bloqueada por motivos '
-            .$textoMotivos
-            .'. Por favor, comunicarse a la brevedad con '
-            .$textoContacto
-            .".\nAtte.\nEquipo Directivo";
+        return self::aplicarMarcadores(
+            $plantilla !== '' ? $plantilla : self::CUERPO_BLOQUEO_DEFAULT,
+            [
+                '{motivos}' => $textoMotivos,
+                '{contacto}' => $textoContacto,
+            ],
+        );
     }
 
     /**
@@ -250,7 +280,7 @@ final class NotificarFamiliaBloqueoMatricula
      * Texto de desbloqueo. Los flags indican el estado actual (deben estar en false
      * al notificar desbloqueo total); el tipo de requisitos refleja lo liberado.
      */
-    public static function armarCuerpoDesbloqueo(bool $bloqPeda, bool $bloqAdmi): string
+    public static function armarCuerpoDesbloqueo(bool $bloqPeda, bool $bloqAdmi, string $plantilla = ''): string
     {
         $librePeda = ! $bloqPeda;
         $libreAdmi = ! $bloqAdmi;
@@ -261,12 +291,39 @@ final class NotificarFamiliaBloqueoMatricula
             default => 'pedagógicos',
         };
 
-        return "Estimada Familia:\n"
-            .'Les informamos que, habiendo cumplimentado los requisitos '
-            .$textoRequisitos
-            .' pendientes, la matrícula para el próximo año lectivo del/la estudiante se encuentra desbloqueada.'
-            ."\nPor lo tanto, ya están en condiciones de continuar con el trámite correspondiente de matriculación."
-            ."\nAtte.\nEquipo Directivo";
+        return self::aplicarMarcadores(
+            $plantilla !== '' ? $plantilla : self::CUERPO_DESBLOQUEO_DEFAULT,
+            [
+                '{requisitos}' => $textoRequisitos,
+            ],
+        );
+    }
+
+    /**
+     * Plantilla de `ento` del nivel del alumno. Vacío = usar el texto institucional por defecto.
+     */
+    public static function plantillaDesdeEnto(int $idNivel, string $columna): string
+    {
+        if ($idNivel < 1 || ! Schema::hasTable('ento') || ! Schema::hasColumn('ento', $columna)) {
+            return '';
+        }
+
+        $valor = DB::table('ento')->where('idNivel', $idNivel)->value($columna);
+
+        return MatriculaBloqueos::normalizarMensaje((string) ($valor ?? ''));
+    }
+
+    /**
+     * @param  array<string, string>  $marcadores
+     */
+    private static function aplicarMarcadores(string $plantilla, array $marcadores): string
+    {
+        $texto = MatriculaBloqueos::normalizarMensaje($plantilla);
+        if ($texto === '') {
+            return '';
+        }
+
+        return strtr($texto, $marcadores);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Livewire\Parametrizacion;
 use App\Livewire\Concerns\RequiresPermisoConfiguracion;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\Mail\MailInstitucionalConfig;
+use App\Support\MatriculaWeb\NotificarFamiliaBloqueoMatricula;
 use App\Support\PermisosConfiguracion;
 use App\Models\Ento;
 use App\Models\Terlec;
@@ -105,6 +106,10 @@ class ParametrosSistemaForm extends Component
     public string $mensajeBloqPeda = '';
 
     public string $mensajeBloqAdmi = '';
+
+    public string $mensajeComBloqMatricula = '';
+
+    public string $mensajeComDesbloqMatricula = '';
 
     public function setTab(string $tab): void
     {
@@ -207,6 +212,8 @@ class ParametrosSistemaForm extends Component
             'verLibreDeuda' => ['boolean'],
             'mensajeBloqPeda' => ['nullable', 'string', 'max:500'],
             'mensajeBloqAdmi' => ['nullable', 'string', 'max:500'],
+            'mensajeComBloqMatricula' => ['nullable', 'string', 'max:2000'],
+            'mensajeComDesbloqMatricula' => ['nullable', 'string', 'max:2000'],
         ];
 
         if ($this->puedeEditarCamposSiro()) {
@@ -841,6 +848,8 @@ class ParametrosSistemaForm extends Component
             'puedeEditarCamposSiro' => $this->puedeEditarCamposSiro(),
             'logoPreviewUrl' => $this->logoPreviewUrl,
             'logoLoginPreviewUrl' => $this->logoLoginPreviewUrl,
+            'cuerpoComBloqDefault' => NotificarFamiliaBloqueoMatricula::CUERPO_BLOQUEO_DEFAULT,
+            'cuerpoComDesbloqDefault' => NotificarFamiliaBloqueoMatricula::CUERPO_DESBLOQUEO_DEFAULT,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Parámetros del sistema']);
     }
 
@@ -905,6 +914,8 @@ class ParametrosSistemaForm extends Component
             : true;
         $this->mensajeBloqPeda = (string) ($attrs['mensajeBloqPeda'] ?? '');
         $this->mensajeBloqAdmi = (string) ($attrs['mensajeBloqAdmi'] ?? '');
+        $this->mensajeComBloqMatricula = (string) ($attrs['mensajeComBloqMatricula'] ?? '');
+        $this->mensajeComDesbloqMatricula = (string) ($attrs['mensajeComDesbloqMatricula'] ?? '');
     }
 
     /**
@@ -927,6 +938,8 @@ class ParametrosSistemaForm extends Component
         $this->asignarFlagPayload($payload, 'verLibreDeuda', $this->verLibreDeuda);
         $this->asignarTextoPayload($payload, 'mensajeBloqPeda', $this->mensajeBloqPeda);
         $this->asignarTextoPayload($payload, 'mensajeBloqAdmi', $this->mensajeBloqAdmi);
+        $this->asignarTextoPayload($payload, 'mensajeComBloqMatricula', $this->mensajeComBloqMatricula);
+        $this->asignarTextoPayload($payload, 'mensajeComDesbloqMatricula', $this->mensajeComDesbloqMatricula);
 
         return $payload;
     }
@@ -1088,7 +1101,8 @@ class ParametrosSistemaForm extends Component
             'verNotasOff', 'verOffMensaje',
             'verBimesOff', 'bimesOffMensaje',
             'imprBoleOff', 'verDatosFicha', 'verLibreDeuda',
-            'mensajeBloqPeda', 'mensajeBloqAdmi' => 'parametros',
+            'mensajeBloqPeda', 'mensajeBloqAdmi',
+            'mensajeComBloqMatricula', 'mensajeComDesbloqMatricula' => 'parametros',
             'mailGmailUser', 'mailGmailPassword' => 'correo',
             default => 'institucion',
         };

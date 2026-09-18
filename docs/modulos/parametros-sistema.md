@@ -18,7 +18,8 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 |-------|--------|--------|
 | `ento` | `insti`, CUE, dirección, logos, SIRO, AFIP | Una fila por `idNivel`. |
 | `ento` | `cargaNotasOff`, `verNotasOff`, `verBimesOff`, `imprBoleOff` | Flags 1/0 del **nivel activo**, no de toda la escuela. |
-| `ento` | `verDatosFicha`, `verLibreDeuda`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. |
+| `ento` | `verDatosFicha`, `verLibreDeuda`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. Carteles en pantalla si hay bloqueo (ficha / datos). |
+| `ento` | `mensajeComBloqMatricula`, `mensajeComDesbloqMatricula` | Cuerpo de Notif. Bloqueo / Notif. Desbloqueo (cuaderno + mail). Vacío = texto institucional por defecto. |
 | `ento` | `cuitFact`, `PtoVta` (legacy; no `ptoVta`), certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. Eloquent lee/escribe ambos nombres. |
 | `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo** (formulario). En la factura AFIP se imprime el de **nivel del alumno** (curso de la cuota), no el de Administración. Flag: `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` (Instituto Ramallo). |
 | `ento` | `ctaEnvioMail`, `passEnvioMail` | Solapa Correo institucional (guardado aparte). |
@@ -59,5 +60,6 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 - [ ] Toggle de `cargaNotasOff` / `verNotasOff` / `verLibreDeuda` desde la solapa Parámetros queda en `ento` al recargar.
 - [ ] Con `verNotasOff` en el nivel activo, el portal familia no abre ninguna consulta de calificaciones (aviso + PDF 403), en todos los niveles y variantes.
 - [ ] Con `verLibreDeuda` en 0, el portal familia no muestra Libre Deuda (sidebar, escritorio) y las rutas responden 404.
+- [ ] En PARÁMETROS se distinguen carteles de autogestión (`mensajeBloqPeda` / `mensajeBloqAdmi`) del cuerpo de Notif. Bloqueo / Desbloqueo (`mensajeComBloqMatricula` / `mensajeComDesbloqMatricula`).
 - [ ] Si falla validación o persistencia, hay mensaje visible (`se-swal-error`).
 - [ ] Punto de venta (`ento.PtoVta`) queda en la fila del nivel activo al recargar; no mostrar éxito si no persistió.

@@ -54,6 +54,7 @@ Tenants:
   impide **entrar** a este módulo y a Imprimir Ficha de Matrícula.
   El mensaje es el de `ento.mensajeBloqPeda` / `ento.mensajeBloqAdmi` del nivel del alumno
   (`MatriculaBloqueos::impideFichaYDatosAutogestion()`). Si hay ambos bloqueos, se muestran los dos textos.
+  Ese cartel es solo de autogestión; no es el cuerpo de Notif. Bloqueo / Desbloqueo.
   En el menú: SweetAlert al clic (no navega). Si se abre la URL: solo el aviso, sin formulario.
 
 ## Foto carnet

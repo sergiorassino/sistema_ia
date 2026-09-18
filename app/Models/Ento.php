@@ -84,9 +84,13 @@ class Ento extends Model
         // Menú de Alumnos — Libre Deuda (por nivel)
         'verLibreDeuda',
 
-        // Bloqueos de matrícula — mensajes por nivel
+        // Bloqueos de matrícula — cartel en autogestión (ficha / datos)
         'mensajeBloqPeda',
         'mensajeBloqAdmi',
+
+        // Bloqueos de matrícula — cuerpo del comunicado (cuaderno + mail)
+        'mensajeComBloqMatricula',
+        'mensajeComDesbloqMatricula',
     ];
 
     /** @var array<string, string> */

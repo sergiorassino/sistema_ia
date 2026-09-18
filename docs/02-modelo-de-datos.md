@@ -59,10 +59,10 @@ La tabla `ento` almacena la configuración institucional, con **un registro por 
 | `idTerlecVerNotas` | int (FK) | **Campo crítico**: ciclo lectivo activo para autogestión  |
 | `verDatosFicha`    | tinyint  | Menú de Alumnos: mostrar Actualización de Datos + Ficha de Matrícula (1/0) |
 | `verLibreDeuda`    | tinyint  | Menú de Alumnos: mostrar Libre Deuda (1/0), por nivel |
-| `mensajeBloqPeda`  | varchar  | Mensaje de autogestión si `matricula.bloqmatr` (nivel correspondiente) |
-| `mensajeBloqAdmi`  | varchar  | Mensaje de autogestión si `matricula.bloqadmi` (nivel correspondiente) |
-| `mensajeBloqPeda`  | varchar  | Mensaje de bloqueo pedagógico de matrícula (por nivel)                    |
-| `mensajeBloqAdmi`  | varchar  | Mensaje de bloqueo administrativo de matrícula (por nivel)                |
+| `mensajeBloqPeda`  | varchar  | Cartel en autogestión si `matricula.bloqmatr` (ficha / datos; no es el comunicado) |
+| `mensajeBloqAdmi`  | varchar  | Cartel en autogestión si `matricula.bloqadmi` (ficha / datos; no es el comunicado) |
+| `mensajeComBloqMatricula` | varchar | Cuerpo de Notif. Bloqueo (cuaderno + mail). Vacío = texto institucional por defecto |
+| `mensajeComDesbloqMatricula` | varchar | Cuerpo de Notif. Desbloqueo (cuaderno + mail). Vacío = texto institucional por defecto |
 
 ### Comportamiento de `idTerlecVerNotas`
 

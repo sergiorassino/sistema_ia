@@ -572,27 +572,76 @@
             </div>
 
             <div class="border-t border-accent-200 pt-6">
-                <p class="se-section-title mb-1">Bloqueos de matrícula — autogestión</p>
+                <p class="se-section-title mb-1">Bloqueos de matrícula</p>
                 <p class="mb-4 text-xs text-neutral-500">
-                    Si el alumno tiene bloqueo pedagógico y/o administrativo, no puede entrar a Actualización de Datos Personales ni a Imprimir Ficha de Matrícula. Se muestra el mensaje del nivel correspondiente.
+                    Dos usos distintos: el cartel que ve el padre en autogestión, y el cuerpo del aviso que se envía con Notif. Bloqueo / Notif. Desbloqueo.
                 </p>
-                <div class="space-y-5">
-                    <div class="space-y-1.5 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
-                        <label class="form-label" for="param-mensajeBloqPeda">Mensaje de bloqueo pedagógico</label>
+
+                <div class="space-y-5 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-4">
+                    <div>
+                        <p class="text-sm font-semibold text-neutral-800">Cartel en autogestión (Menú de Alumnos)</p>
+                        <p class="mt-1 text-xs text-neutral-500">
+                            Lo ve el padre en pantalla si el alumno está bloqueado e intenta entrar a Actualización de Datos Personales o Imprimir Ficha de Matrícula.
+                            <strong class="font-semibold text-neutral-700">No se envía</strong> como comunicación ni por mail.
+                        </p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="form-label" for="param-mensajeBloqPeda">Cartel — bloqueo pedagógico</label>
                         <textarea id="param-mensajeBloqPeda" wire:model="mensajeBloqPeda" rows="3" maxlength="500"
                                   class="form-input @error('mensajeBloqPeda') border-red-400 @enderror"
-                                  placeholder="Mensaje visible ante bloqueo pedagógico."></textarea>
-                        <p class="text-xs text-neutral-500">Corresponde a <span class="font-mono">mensajeBloqPeda</span>. Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                                  placeholder="Texto en pantalla ante bloqueo pedagógico."></textarea>
+                        <p class="text-xs text-neutral-500">Columna <span class="font-mono">mensajeBloqPeda</span>. Salto de línea: <span class="font-mono">&lt;br&gt;</span>.</p>
                         @error('mensajeBloqPeda') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-
-                    <div class="space-y-1.5 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
-                        <label class="form-label" for="param-mensajeBloqAdmi">Mensaje de bloqueo administrativo</label>
+                    <div class="space-y-1.5">
+                        <label class="form-label" for="param-mensajeBloqAdmi">Cartel — bloqueo administrativo</label>
                         <textarea id="param-mensajeBloqAdmi" wire:model="mensajeBloqAdmi" rows="3" maxlength="500"
                                   class="form-input @error('mensajeBloqAdmi') border-red-400 @enderror"
-                                  placeholder="Mensaje visible ante bloqueo administrativo."></textarea>
-                        <p class="text-xs text-neutral-500">Corresponde a <span class="font-mono">mensajeBloqAdmi</span>. Para salto de línea use <span class="font-mono">&lt;br&gt;</span>.</p>
+                                  placeholder="Texto en pantalla ante bloqueo administrativo."></textarea>
+                        <p class="text-xs text-neutral-500">Columna <span class="font-mono">mensajeBloqAdmi</span>. Salto de línea: <span class="font-mono">&lt;br&gt;</span>.</p>
                         @error('mensajeBloqAdmi') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-5 space-y-5 rounded-2xl border border-primary-200 bg-white px-4 py-4">
+                    <div>
+                        <p class="text-sm font-semibold text-neutral-800">Comunicado de aviso a la familia</p>
+                        <p class="mt-1 text-xs text-neutral-500">
+                            Cuerpo de <strong class="font-semibold text-neutral-700">Notif. Bloqueo</strong> y <strong class="font-semibold text-neutral-700">Notif. Desbloqueo</strong>
+                            en Bloqueos de matrícula: el mismo texto va al cuaderno institucional y al mail de refuerzo.
+                            <strong class="font-semibold text-neutral-700">No aparece</strong> como cartel en autogestión.
+                            Vacío = texto institucional por defecto. Al final se agregan Estudiante, Curso y Nivel.
+                        </p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="form-label" for="param-mensajeComBloqMatricula">Texto del comunicado de bloqueo</label>
+                        <textarea id="param-mensajeComBloqMatricula" wire:model="mensajeComBloqMatricula" rows="6" maxlength="2000"
+                                  class="form-input @error('mensajeComBloqMatricula') border-red-400 @enderror"
+                                  placeholder="Vacío: se usa el texto institucional por defecto."></textarea>
+                        <p class="text-xs text-neutral-500">
+                            Columna <span class="font-mono">mensajeComBloqMatricula</span>.
+                            Marcadores opcionales: <span class="font-mono">{motivos}</span> (PEDAGÓGICOS / ADMINISTRATIVOS) y <span class="font-mono">{contacto}</span> (Secretaría de Nivel y/o Administración).
+                        </p>
+                        <details class="text-xs text-neutral-500">
+                            <summary class="cursor-pointer font-medium text-neutral-600">Ver texto por defecto</summary>
+                            <pre class="mt-2 whitespace-pre-wrap rounded-xl bg-accent-50 px-3 py-2 font-sans text-neutral-600">{{ $cuerpoComBloqDefault }}</pre>
+                        </details>
+                        @error('mensajeComBloqMatricula') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="form-label" for="param-mensajeComDesbloqMatricula">Texto del comunicado de desbloqueo</label>
+                        <textarea id="param-mensajeComDesbloqMatricula" wire:model="mensajeComDesbloqMatricula" rows="6" maxlength="2000"
+                                  class="form-input @error('mensajeComDesbloqMatricula') border-red-400 @enderror"
+                                  placeholder="Vacío: se usa el texto institucional por defecto."></textarea>
+                        <p class="text-xs text-neutral-500">
+                            Columna <span class="font-mono">mensajeComDesbloqMatricula</span>.
+                            Marcador opcional: <span class="font-mono">{requisitos}</span> (pedagógicos / administrativos).
+                        </p>
+                        <details class="text-xs text-neutral-500">
+                            <summary class="cursor-pointer font-medium text-neutral-600">Ver texto por defecto</summary>
+                            <pre class="mt-2 whitespace-pre-wrap rounded-xl bg-accent-50 px-3 py-2 font-sans text-neutral-600">{{ $cuerpoComDesbloqDefault }}</pre>
+                        </details>
+                        @error('mensajeComDesbloqMatricula') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>
