@@ -85,7 +85,9 @@ return [
             'nota_credito_tipo' => 12,
             'cbte_tipo_asociado' => 11,
             'produccion' => true,
-            'simular' => true,
+            // Emisión real en el servidor del colegio. En APP_ENV=local se simula
+            // (CAE ficticio) salvo `simular_local => false`.
+            'simular' => false,
         ],
     ],
 
