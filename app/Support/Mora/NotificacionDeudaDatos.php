@@ -54,7 +54,7 @@ final class NotificacionDeudaDatos
 
                 'legajo:id,apellido,nombre,dni,idFamilias',
 
-                'legajo.familia:id,apellido,responsable',
+                'legajo.familia:id,apellido,responsable,email',
 
                 'cuota:id,nombre,orden',
 
@@ -123,6 +123,10 @@ final class NotificacionDeudaDatos
             $familiaLinea = GestionMorososAgrupacion::familiaLinea($items);
 
             $tituloFamilia = GestionMorososAgrupacion::tituloSeccion($items);
+
+            $claveGrupo = (string) $clave;
+
+            $contacto = NotificacionDeudaCorreo::contactoDesdeGrupo($items, $claveGrupo, (int) ($filtros['idNivel'] ?? 0));
 
 
 
@@ -249,6 +253,18 @@ final class NotificacionDeudaDatos
 
 
             $paginas[] = [
+
+                'clave' => $claveGrupo,
+
+                'idFamilia' => $contacto['idFamilia'],
+
+                'idNivel' => $contacto['idNivel'],
+
+                'apellido' => $contacto['apellido'],
+
+                'nombre' => $contacto['nombre'],
+
+                'email' => $contacto['email'],
 
                 'familiaLinea' => $familiaLinea !== '' ? $familiaLinea : '—',
 

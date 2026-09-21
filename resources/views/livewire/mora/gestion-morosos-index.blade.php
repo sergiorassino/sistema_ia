@@ -1,3 +1,4 @@
+<div>
 <div class="se-page max-w-5xl mx-auto"
      x-data
      x-on:mora-gestion-morosos-abrir-pdf.window="window.open($event.detail.url, '_blank')">
@@ -7,7 +8,7 @@
                 <p class="se-eyebrow">Administración · Gestión de mora</p>
                 <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Gestión de Morosos</h1>
                 <p class="text-sm text-white/80 max-w-2xl">
-                    Filtre el listado de deuda y genere el PDF. Ciclo de contexto {{ $anoContexto }}.
+                    Filtre el listado de deuda, genere el PDF o envíe la notificación por mail. Ciclo de contexto {{ $anoContexto }}.
                 </p>
             </div>
         </div>
@@ -67,6 +68,32 @@
             </button>
         @endif
 
+        @if ($puedeGenerarPdf)
+            <button type="button"
+                    wire:click="abrirPreviewMailNotificacion"
+                    wire:loading.attr="disabled"
+                    wire:target="abrirPreviewMailNotificacion"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-60">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span wire:loading.remove wire:target="abrirPreviewMailNotificacion">Enviar notificación por mail</span>
+                <span wire:loading wire:target="abrirPreviewMailNotificacion">Armando lista…</span>
+            </button>
+        @else
+            <button type="button"
+                    disabled
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-500 cursor-not-allowed"
+                    title="Revise los filtros activos">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Enviar notificación por mail
+            </button>
+        @endif
+
         <a href="{{ route('mora.gestion-morosos.textos-notificacion') }}"
            wire:navigate
            class="inline-flex items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
@@ -82,7 +109,7 @@
         <div class="border-b border-accent-200 bg-accent-50/80 px-4 py-3 sm:px-5">
             <p class="text-sm text-neutral-700">
                 Active cada filtro con su casilla. La <strong>fecha de cálculo</strong> define intereses y total a pagar en el PDF.
-                Si no activa ningún filtro opcional, el listado y la notificación incluyen familias con cuotas adeudadas <strong>vencidas al 2.º vencimiento</strong> (según la fecha de cálculo), con saldo mayor a cero.
+                Si no activa ningún filtro opcional, el listado, la notificación y el envío por mail incluyen familias con cuotas adeudadas <strong>vencidas al 2.º vencimiento</strong> (según la fecha de cálculo), con saldo mayor a cero.
             </p>
         </div>
 
@@ -284,9 +311,141 @@
             </div>
         @endif
     </div>
+</div>
+
+    @teleport('body')
+        <div>
+            @if ($modalMailAbierto)
+                <div class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto px-4 py-3 sm:px-6 sm:py-4"
+                     role="dialog" aria-modal="true" aria-labelledby="mora-mail-titulo">
+                    <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarModalMail"></div>
+                    <div class="relative z-10 my-auto flex w-full max-w-4xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),44rem)]">
+                        <div class="shrink-0 border-b border-accent-200 px-5 py-4">
+                            <h3 id="mora-mail-titulo" class="text-lg font-semibold text-neutral-900">Enviar notificación por mail</h3>
+                            <p class="mt-1 text-sm text-neutral-600">
+                                Responsable administrativo (<span class="font-mono text-xs">familias.email</span>).
+                                El texto es el mismo de la notificación (carta, deuda y cierre).
+                            </p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <span class="se-pill">{{ $destinatariosMailTotal }} destinatario(s)</span>
+                                <span class="se-pill">{{ $destinatariosMailListos }} listos para enviar</span>
+                                @if ($destinatariosMailIncompletos > 0)
+                                    <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                                        {{ $destinatariosMailIncompletos }} con datos faltantes
+                                    </span>
+                                @endif
+                            </div>
+                            @if ($cuentasSmtpMail !== [])
+                                <p class="mt-2 text-xs text-neutral-600">
+                                    Remitente institucional:
+                                    @foreach ($cuentasSmtpMail as $cta)
+                                        <span class="font-semibold text-primary-700">{{ $cta['cuenta'] !== '' ? $cta['cuenta'] : '—' }}</span>
+                                        @if ($cta['nivel'] !== '')
+                                            <span class="text-neutral-500">({{ $cta['nivel'] }})</span>
+                                        @endif
+                                        @if (! $loop->last) · @endif
+                                    @endforeach
+                                </p>
+                            @endif
+                            @if ($avisosSmtpMail !== [])
+                                <p class="mt-2 text-xs font-semibold text-amber-800">
+                                    {{ implode(' · ', $avisosSmtpMail) }}. Cargá usuario y contraseña en Parametrización → Correo institucional Gmail.
+                                </p>
+                            @endif
+                            @if ($mailLocalLog)
+                                <p class="mt-2 text-xs text-sky-800">Entorno local: el correo no sale por SMTP (queda en el log).</p>
+                            @endif
+                        </div>
+                        <div class="min-h-0 flex-1 overflow-y-auto">
+                            <table class="se-matriz-list-tabla w-full">
+                                <thead>
+                                    <tr>
+                                        <th class="w-10">#</th>
+                                        <th>Apellido</th>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($destinatariosMail as $i => $dest)
+                                        <tr wire:key="mora-mail-{{ $dest['clave'] }}"
+                                            @class(['bg-amber-50/80' => $dest['incompleto']])>
+                                            <td class="tabular-nums">{{ $i + 1 }}</td>
+                                            <td class="text-sm">
+                                                {{ $dest['apellido'] !== '' ? $dest['apellido'] : '—' }}
+                                            </td>
+                                            <td class="text-sm">
+                                                {{ $dest['nombre'] !== '' ? $dest['nombre'] : '—' }}
+                                            </td>
+                                            <td class="font-mono text-xs break-all">
+                                                {{ $dest['email'] !== '' ? $dest['email'] : '—' }}
+                                            </td>
+                                            <td class="text-xs">
+                                                @if ($dest['puedeEnviar'] && ! $dest['incompleto'])
+                                                    <span class="font-semibold text-primary-700">Listo</span>
+                                                @elseif ($dest['puedeEnviar'])
+                                                    <span class="font-semibold text-amber-800">Se envía · faltan datos</span>
+                                                @else
+                                                    <span class="font-semibold text-red-700">No se envía</span>
+                                                @endif
+                                                @if ($dest['sinFamilia'])
+                                                    <span class="block text-neutral-500">Sin familia asignada</span>
+                                                @endif
+                                                @if ($dest['faltantes'] !== [])
+                                                    <span class="block text-amber-800">Falta: {{ implode(', ', $dest['faltantes']) }}</span>
+                                                @endif
+                                                @if ($dest['avisoSmtp'] !== '')
+                                                    <span class="block text-amber-800">{{ $dest['avisoSmtp'] }}</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="py-8 text-center text-sm text-neutral-500">No hay destinatarios.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-accent-100 bg-accent-50 px-5 py-4">
+                            <button type="button"
+                                    wire:click="cerrarModalMail"
+                                    wire:loading.attr="disabled"
+                                    wire:target="enviarMailNotificacion"
+                                    class="rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm hover:bg-accent-50">
+                                Cancelar
+                            </button>
+                            <button type="button"
+                                    @disabled($destinatariosMailListos < 1)
+                                    wire:loading.attr="disabled"
+                                    wire:target="enviarMailNotificacion"
+                                    x-data
+                                    x-on:click="seSwalConfirmar('¿Enviar la notificación a {{ $destinatariosMailListos }} destinatario(s) con email válido? Quienes no tienen correo no reciben el mensaje.', 'Enviar notificación').then(ok => ok && $wire.enviarMailNotificacion())"
+                                    class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">
+                                <span wire:loading.remove wire:target="enviarMailNotificacion">Enviar a {{ $destinatariosMailListos }} destinatario(s)</span>
+                                <span wire:loading wire:target="enviarMailNotificacion">Enviando…</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <div wire:loading.flex
+                 wire:target="enviarMailNotificacion"
+                 class="fixed inset-0 z-[100] items-center justify-center bg-neutral-900/45 backdrop-blur-sm px-4">
+                <div class="max-w-md rounded-2xl bg-white px-6 py-5 text-center shadow-xl ring-1 ring-black/5">
+                    <div class="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600"></div>
+                    <p class="text-sm font-semibold text-neutral-800">Enviando notificación de deuda</p>
+                    <p class="mt-2 text-sm text-neutral-600">{{ $destinatariosMailListos }} destinatario(s). No cierre esta ventana.</p>
+                </div>
+            </div>
+        </div>
+    @endteleport
 
     @script
     <script>
+        $wire.on('se-swal-exito', ({ mensaje, titulo }) => window.seSwalExito(mensaje, titulo ?? 'Listo'));
         $wire.on('se-swal-aviso', ({ mensaje, titulo }) => window.seSwalAviso(mensaje, titulo ?? 'Atención'));
         $wire.on('se-swal-error', ({ mensaje, titulo }) => window.seSwalError(mensaje, titulo ?? 'Error'));
     </script>

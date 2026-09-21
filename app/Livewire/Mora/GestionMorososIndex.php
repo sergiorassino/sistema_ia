@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Mora;
 
+use App\Support\Mail\MailDesarrollo;
 use App\Support\Mora\GestionMorososConsulta;
 use App\Support\Mora\GestionMorososFiltros;
 use App\Support\Mora\GestionMorososPdfPedido;
+use App\Support\Mora\NotificacionDeudaCorreo;
 use App\Support\Mora\PermisosMora;
 use Carbon\Carbon;
 use Livewire\Component;
@@ -67,6 +69,26 @@ class GestionMorososIndex extends Component
     /** @var list<int> */
     public array $idsBecas = [];
 
+    public bool $modalMailAbierto = false;
+
+    /** @var list<array<string, mixed>> */
+    public array $destinatariosMail = [];
+
+    public int $destinatariosMailTotal = 0;
+
+    public int $destinatariosMailListos = 0;
+
+    public int $destinatariosMailIncompletos = 0;
+
+    /** @var list<array{idNivel: int, nivel: string, cuenta: string}> */
+    public array $cuentasSmtpMail = [];
+
+    /** @var list<string> */
+    public array $avisosSmtpMail = [];
+
+    /** @var array<string, mixed> */
+    public array $filtrosMailSnapshot = [];
+
     public function mount(): void
     {
         abort_unless(PermisosMora::puedeGestionMorosos(), 403);
@@ -112,6 +134,96 @@ class GestionMorososIndex extends Component
     public function abrirPdfNotificacion(): void
     {
         $this->abrirPdf('mora.gestion-morosos.notificacion', GestionMorososPdfPedido::TIPO_NOTIFICACION);
+    }
+
+    public function abrirPreviewMailNotificacion(): void
+    {
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
+
+        if (! $this->puedeGenerarPdf()) {
+            $this->dispatch('se-swal-error', mensaje: 'Revise los filtros activos antes de armar el envío.');
+
+            return;
+        }
+
+        $filtros = GestionMorososFiltros::normalizarDesdeLivewire($this->filtrosCrudos());
+
+        if (! GestionMorososConsulta::tieneCuotasAdeudadas($filtros)) {
+            $this->dispatch('se-swal-aviso', mensaje: 'No hay registros.');
+
+            return;
+        }
+
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(120);
+        }
+
+        $lista = NotificacionDeudaCorreo::listarDestinatarios($filtros);
+        if ($lista['total'] < 1) {
+            $this->dispatch('se-swal-aviso', mensaje: 'No hay destinatarios para los filtros indicados.');
+
+            return;
+        }
+
+        $this->filtrosMailSnapshot = $filtros;
+        $this->destinatariosMail = $lista['destinatarios'];
+        $this->destinatariosMailTotal = $lista['total'];
+        $this->destinatariosMailListos = $lista['listos'];
+        $this->destinatariosMailIncompletos = $lista['incompletos'];
+        $this->cuentasSmtpMail = $lista['cuentasSmtp'];
+        $this->avisosSmtpMail = $lista['avisosSmtp'];
+        $this->modalMailAbierto = true;
+    }
+
+    public function cerrarModalMail(): void
+    {
+        $this->modalMailAbierto = false;
+        $this->destinatariosMail = [];
+        $this->destinatariosMailTotal = 0;
+        $this->destinatariosMailListos = 0;
+        $this->destinatariosMailIncompletos = 0;
+        $this->cuentasSmtpMail = [];
+        $this->avisosSmtpMail = [];
+        $this->filtrosMailSnapshot = [];
+    }
+
+    public function enviarMailNotificacion(): void
+    {
+        abort_unless(PermisosMora::puedeGestionMorosos(), 403);
+
+        if (! $this->modalMailAbierto) {
+            return;
+        }
+
+        if ($this->destinatariosMailListos < 1) {
+            $this->dispatch('se-swal-error', mensaje: 'No hay destinatarios listos para enviar.');
+
+            return;
+        }
+
+        $filtros = $this->filtrosMailSnapshot;
+        if ($filtros === []) {
+            $this->dispatch('se-swal-error', mensaje: 'Vuelva a armar la lista de destinatarios.');
+
+            return;
+        }
+
+        $resultado = NotificacionDeudaCorreo::enviar($filtros, (int) schoolCtx()->idProfesor);
+        $this->cerrarModalMail();
+
+        if ($resultado['enviados'] > 0 && $resultado['errores'] === 0) {
+            $this->dispatch('se-swal-exito', mensaje: $resultado['mensaje']);
+
+            return;
+        }
+
+        if ($resultado['enviados'] > 0) {
+            $this->dispatch('se-swal-aviso', mensaje: $resultado['mensaje']);
+
+            return;
+        }
+
+        $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);
     }
 
     private function abrirPdf(string $ruta, string $tipo): void
@@ -210,6 +322,7 @@ class GestionMorososIndex extends Component
             'etiquetaCurso' => fn ($curso) => mb_strtoupper(trim((string) ($curso->cursec ?? $curso->nombreParaListado() ?? ''))),
             'puedeGenerarPdf' => $this->puedeGenerarPdf(),
             'anoContexto' => schoolCtx()->terlecAno(),
+            'mailLocalLog' => MailDesarrollo::bloquearSmtp(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de Morosos']);
     }
 }
