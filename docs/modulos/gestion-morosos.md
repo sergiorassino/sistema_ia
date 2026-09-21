@@ -26,6 +26,7 @@ Menú de Administración (`layouts/administracion`). Permiso `permisos_ia` orden
 1. Fecha de cálculo (intereses y total a pagar en el PDF).
 2. Activar cada filtro opcional con su casilla (**nivel**, familia, estudiante, vencimientos, excluir cuotas, cursos, cantidad de cuotas, fuera de colegio, año lectivo, becados).
 3. Generar **Listado de Deuda** o **Notificación de Deuda**. Si no hay registros: aviso SweetAlert, no se abre el PDF.
+   La notificación termina con el texto parametrizado (`textoFinalNotDeuda` / `textoFinalNotDeudaBec`); no incluye bloque ni leyenda de firma.
 
 Sin filtros opcionales: familias con cuotas vencidas al 2.º vencimiento y saldo > 0.
 
@@ -47,13 +48,14 @@ Consulta: `GestionMorososConsulta` + `GestionMorososFiltros::aplicarAConsulta`. 
 - `app/Support/Mora/GestionMorososConsulta.php`
 - `resources/views/livewire/mora/gestion-morosos-index.blade.php`
 - PDF listado: `ListadoMorososPdfController` + `ListadoMorososTcpdf`
-- PDF notificación: `NotificacionDeudaPdfController`
+- PDF notificación: `NotificacionDeudaPdfController` + `NotificacionDeudaTcpdf`
 
 ## Qué no hacer / reglas de negocio
 
 - No filtrar mora por `venc2` como si fuera el rango «1º venc.» (ese rango es `venc1`).
 - No calcular promedios (módulo de cuotas).
 - URLs de PDF con `{ref}` opaco, no IDs de familia/legajo.
+- No dibujar bloque ni leyenda de firma (p. ej. «Representante Legal») al pie de la notificación.
 
 ## Checklist al modificar
 

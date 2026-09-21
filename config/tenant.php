@@ -51,18 +51,6 @@ return [
     ],
 
     /**
-     * Gestión de mora — notificación de deuda (PDF).
-     * Personalizar en `config/tenants/{slug}.php` (imagen bajo `public/`).
-     */
-    'mora' => [
-        'notificacion_deuda' => [
-            'firma_imagen' => null,
-            'firma_nombre' => null,
-            'firma_cargo' => 'Representante Legal',
-        ],
-    ],
-
-    /**
      * Portal alumno / familia — enlaces y módulos opcionales.
      * Activar solo en `config/tenants/{slug}.php` cuando corresponda.
      */

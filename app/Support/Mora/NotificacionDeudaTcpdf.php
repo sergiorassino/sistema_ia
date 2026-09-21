@@ -275,8 +275,6 @@ final class NotificacionDeudaTcpdf extends TCPDF
 
         $this->dibujarTextoFinal($pagina);
 
-        $this->dibujarFirma();
-
     }
 
 
@@ -597,84 +595,5 @@ final class NotificacionDeudaTcpdf extends TCPDF
         $this->MultiCell(self::ANCHO_BLOQUE, self::ALTO_LINEA_TEXTO, $texto, 0, 'L');
         $this->yActual = $this->GetY();
     }
-
-
-
-    private function dibujarFirma(): void
-
-    {
-
-        $nombre = trim((string) config('tenant.mora.notificacion_deuda.firma_nombre', ''));
-
-        $cargo = trim((string) config('tenant.mora.notificacion_deuda.firma_cargo', 'Representante Legal'));
-
-        $imagenRel = config('tenant.mora.notificacion_deuda.firma_imagen');
-
-        $imagen = null;
-
-        if (is_string($imagenRel) && $imagenRel !== '') {
-
-            $abs = public_path($imagenRel);
-
-            if (is_file($abs)) {
-
-                $imagen = $abs;
-
-            }
-
-        }
-
-
-
-        $y = $this->yActual;
-
-        if ($imagen !== null) {
-
-            $this->Image($imagen, 120.0, $y, 35.0, 20.0, '', '', '', false, 300);
-
-            $y += 20.0;
-
-        } else {
-
-            $y += 12.0;
-
-        }
-
-
-
-        if ($nombre === '' && $cargo === '') {
-
-            return;
-
-        }
-
-
-
-        $this->SetLeftMargin(110.0);
-
-        $this->SetXY(110.0, $y);
-
-        if ($nombre !== '') {
-
-            TcpdfFuenteArial::aplicar($this, '', 6);
-
-            $this->Cell(50, 3, $nombre, 0, 2, 'C', true);
-
-        }
-
-        if ($cargo !== '') {
-
-            TcpdfFuenteArial::aplicar($this, '', 5);
-
-            $this->Cell(50, 3, $cargo, 0, 2, 'C', true);
-
-        }
-
-        $this->SetLeftMargin(self::MARGEN_IZQ);
-
-    }
-
-
-
 }
 
