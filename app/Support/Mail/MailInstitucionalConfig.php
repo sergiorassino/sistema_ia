@@ -57,9 +57,17 @@ final class MailInstitucionalConfig
 
     public static function estaConfigurado(?int $idNivel = null): bool
     {
-        $c = self::leer($idNivel);
+        return self::credencialesCompletas(self::leer($idNivel));
+    }
 
-        return $c['username'] !== '' && trim($c['password']) !== '';
+    /**
+     * Usuario y contraseña presentes (apto para SMTP).
+     *
+     * @param  array{username?: string, password?: string}  $c
+     */
+    public static function credencialesCompletas(array $c): bool
+    {
+        return trim((string) ($c['username'] ?? '')) !== '' && trim((string) ($c['password'] ?? '')) !== '';
     }
 
     /**

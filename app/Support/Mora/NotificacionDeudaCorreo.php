@@ -171,7 +171,29 @@ final class NotificacionDeudaCorreo
         $omitidos = 0;
         $errores = 0;
         $detalleErrores = [];
-        $smtpAplicado = 0;
+
+        $cfg = self::aplicarSmtpAdministracion();
+        if ($cfg === null) {
+            return [
+                'ok' => false,
+                'mensaje' => 'No hay cuenta de envío en Administración (ento.ctaEnvioMail). Cargala en Parametrización → Correo institucional Gmail, con el nivel Administración.',
+                'enviados' => 0,
+                'omitidos' => 0,
+                'errores' => 0,
+            ];
+        }
+
+        $fromAddress = trim((string) ($cfg['username'] ?? ''));
+        $fromName = trim((string) ($cfg['from_name'] ?? ''));
+        if ($fromAddress === '' || ! self::emailValido($fromAddress)) {
+            return [
+                'ok' => false,
+                'mensaje' => 'La cuenta de Administración no es un email válido para remitente.',
+                'enviados' => 0,
+                'omitidos' => 0,
+                'errores' => 0,
+            ];
+        }
 
         $header = (array) ($datos['pdfHeader'] ?? []);
 
@@ -185,28 +207,7 @@ final class NotificacionDeudaCorreo
                 $etiqueta = trim((string) ($pagina['familiaLinea'] ?? 'Destinatario'));
             }
 
-            $idNivel = (int) ($pagina['idNivel'] ?? 0);
-            if (! self::emailValido($email) || $idNivel < 1 || ! MailInstitucionalConfig::estaConfigurado($idNivel)) {
-                $omitidos++;
-
-                continue;
-            }
-
-            if ($smtpAplicado !== $idNivel) {
-                $cfg = self::aplicarSmtpNivel($idNivel);
-                if ($cfg === null) {
-                    $omitidos++;
-
-                    continue;
-                }
-                $smtpAplicado = $idNivel;
-            } else {
-                $cfg = MailInstitucionalConfig::leer($idNivel);
-            }
-
-            $fromAddress = trim((string) ($cfg['username'] ?? ''));
-            $fromName = trim((string) ($cfg['from_name'] ?? ''));
-            if ($fromAddress === '' || ! self::emailValido($fromAddress)) {
+            if (! self::emailValido($email)) {
                 $omitidos++;
 
                 continue;
@@ -243,14 +244,14 @@ final class NotificacionDeudaCorreo
 
             return [
                 'ok' => false,
-                'mensaje' => 'No hay destinatarios con email válido y cuenta institucional de envío configurada.'.$extraLocal,
+                'mensaje' => 'No hay destinatarios con email válido.'.($extraLocal !== '' ? $extraLocal : ''),
                 'enviados' => 0,
                 'omitidos' => $omitidos,
                 'errores' => 0,
             ];
         }
 
-        $mensaje = "Correos enviados: {$enviados}. Omitidos (sin email o sin cuenta de envío): {$omitidos}. Fallos: {$errores}.";
+        $mensaje = "Correos enviados: {$enviados}. Omitidos (sin email válido): {$omitidos}. Fallos: {$errores}.";
         if (MailDesarrollo::bloquearSmtp()) {
             $mensaje .= ' Entorno local: el envío quedó registrado en el log (no salió por SMTP).';
         }
@@ -288,18 +289,20 @@ final class NotificacionDeudaCorreo
             }
         }
 
+        $idAdmin = NivelSistema::ADMINISTRACION;
+        $idsNivel[$idAdmin] = true;
+
         $nombresNivel = Nivel::query()
             ->whereIn('id', array_keys($idsNivel))
             ->get(['id', 'nivel'])
             ->keyBy('id');
 
-        $smtpPorNivel = [];
-        foreach (array_keys($idsNivel) as $idNivel) {
-            $cfg = MailInstitucionalConfig::leer((int) $idNivel);
-            $smtpPorNivel[(int) $idNivel] = [
-                'ok' => MailInstitucionalConfig::estaConfigurado((int) $idNivel),
-                'cuenta' => trim((string) ($cfg['username'] ?? '')),
-            ];
+        $cfgAdmin = MailInstitucionalConfig::leer($idAdmin);
+        $smtpOk = MailInstitucionalConfig::estaConfigurado($idAdmin);
+        $cuentaAdmin = trim((string) ($cfgAdmin['username'] ?? ''));
+        $nombreAdmin = trim((string) ($nombresNivel->get($idAdmin)?->nivel ?? ''));
+        if ($nombreAdmin === '') {
+            $nombreAdmin = 'Administración';
         }
 
         $destinatarios = [];
@@ -309,7 +312,6 @@ final class NotificacionDeudaCorreo
             $nombre = trim((string) ($row['nombre'] ?? ''));
             $email = trim((string) ($row['email'] ?? ''));
             $emailOk = self::emailValido($email);
-            $smtp = $smtpPorNivel[$idNivel] ?? ['ok' => false, 'cuenta' => ''];
             $nivelNombre = trim((string) ($nombresNivel->get($idNivel)?->nivel ?? ''));
             if ($nivelNombre === '' && $idNivel > 0) {
                 $nivelNombre = 'Nivel '.$idNivel;
@@ -326,14 +328,9 @@ final class NotificacionDeudaCorreo
                 $faltantes[] = $email === '' ? 'Email' : 'Email inválido';
             }
 
-            $avisoSmtp = '';
-            if ($idNivel < 1) {
-                $avisoSmtp = 'Sin nivel para la cuenta de envío';
-            } elseif (! ($smtp['ok'] ?? false)) {
-                $avisoSmtp = 'Sin cuenta institucional (ento.ctaEnvioMail)';
-            }
+            $avisoSmtp = $smtpOk ? '' : 'Sin cuenta institucional de Administración (ento.ctaEnvioMail)';
 
-            $puedeEnviar = $emailOk && $idNivel > 0 && (bool) ($smtp['ok'] ?? false);
+            $puedeEnviar = $emailOk && $smtpOk;
             $incompleto = $faltantes !== [] || $avisoSmtp !== '';
 
             $destinatarios[] = [
@@ -359,28 +356,27 @@ final class NotificacionDeudaCorreo
 
         $listos = 0;
         $incompletos = 0;
-        $cuentasSmtp = [];
         $avisosSmtp = [];
         foreach ($ordenados as $d) {
             if ($d['puedeEnviar']) {
                 $listos++;
-                $idNivel = (int) $d['idNivel'];
-                if (! isset($cuentasSmtp[$idNivel])) {
-                    $cuentasSmtp[$idNivel] = [
-                        'idNivel' => $idNivel,
-                        'nivel' => (string) $d['nivel'],
-                        'cuenta' => (string) ($smtpPorNivel[$idNivel]['cuenta'] ?? ''),
-                    ];
-                }
             }
             if ($d['incompleto']) {
                 $incompletos++;
             }
             $aviso = trim((string) $d['avisoSmtp']);
             if ($aviso !== '') {
-                $claveAviso = $aviso.'|'.(string) $d['nivel'];
-                $avisosSmtp[$claveAviso] = $d['nivel'] !== '' ? $aviso.' · '.$d['nivel'] : $aviso;
+                $avisosSmtp[$aviso] = $aviso;
             }
+        }
+
+        $cuentasSmtp = [];
+        if ($smtpOk) {
+            $cuentasSmtp[] = [
+                'idNivel' => $idAdmin,
+                'nivel' => $nombreAdmin,
+                'cuenta' => $cuentaAdmin,
+            ];
         }
 
         return [
@@ -388,7 +384,7 @@ final class NotificacionDeudaCorreo
             'total' => count($ordenados),
             'listos' => $listos,
             'incompletos' => $incompletos,
-            'cuentasSmtp' => array_values($cuentasSmtp),
+            'cuentasSmtp' => $cuentasSmtp,
             'avisosSmtp' => array_values($avisosSmtp),
         ];
     }
@@ -422,20 +418,22 @@ final class NotificacionDeudaCorreo
     /**
      * @return array{username: string, password: string, from_name: string, fuente: string}|null
      */
-    private static function aplicarSmtpNivel(int $idNivel): ?array
+    private static function aplicarSmtpAdministracion(): ?array
     {
-        if ($idNivel < 1 || ! MailInstitucionalConfig::estaConfigurado($idNivel)) {
+        $idAdmin = NivelSistema::ADMINISTRACION;
+        if (! MailInstitucionalConfig::estaConfigurado($idAdmin)) {
             return null;
         }
 
-        MailInstitucionalConfig::aplicarParaNivel($idNivel);
+        $cfg = MailInstitucionalConfig::leer($idAdmin);
+        MailInstitucionalConfig::aplicar($cfg, $idAdmin);
         try {
             Mail::purge('smtp');
             Mail::purge('log');
         } catch (Throwable) {
         }
 
-        return MailInstitucionalConfig::leer($idNivel);
+        return $cfg;
     }
 
     /**

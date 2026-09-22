@@ -349,7 +349,7 @@
                             @endif
                             @if ($avisosSmtpMail !== [])
                                 <p class="mt-2 text-xs font-semibold text-amber-800">
-                                    {{ implode(' · ', $avisosSmtpMail) }}. Cargá usuario y contraseña en Parametrización → Correo institucional Gmail.
+                                    {{ implode(' · ', $avisosSmtpMail) }}. Cargá usuario y contraseña en Parametrización → Correo institucional Gmail, con el nivel Administración.
                                 </p>
                             @endif
                             @if ($mailLocalLog)
