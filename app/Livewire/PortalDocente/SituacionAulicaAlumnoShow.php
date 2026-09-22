@@ -140,6 +140,7 @@ class SituacionAulicaAlumnoShow extends Component
             'idTipoSancion' => SituacionAulicaTipo::idTipo(),
             'idProfesores' => $idProfesor,
             'fecha' => $this->fecha ?: null,
+            'fechaRegistro' => now()->format('Y-m-d H:i:s'),
             'cantidad' => null,
             'motivo' => trim($this->motivo),
             'solipor' => null,

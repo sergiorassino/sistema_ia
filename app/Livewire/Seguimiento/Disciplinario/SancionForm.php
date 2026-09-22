@@ -6,9 +6,12 @@ use App\Livewire\Seguimiento\Disciplinario\Concerns\RequiresPermisoSeguimientoDi
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Models\SancionTipo;
+use App\Support\Database\PersistenciaColumnas;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
@@ -21,6 +24,8 @@ class SancionForm extends Component
 
     public int|string $idTipoSancion = '';
     public string $fecha = '';
+    /** Solo lectura en UI: alta = ahora; edición = valor persistido. */
+    public string $fechaRegistroMostrar = '';
     public int|string $cantidad = '';
     public string $motivo = '';
     public string $solipor = '';
@@ -43,6 +48,9 @@ class SancionForm extends Component
             $this->idMatricula = (string) $s->idMatricula;
             $this->idTipoSancion = (string) ($s->idTipoSancion ?? '');
             $this->fecha = $s->fecha ? $s->fecha->format('Y-m-d') : '';
+            $this->fechaRegistroMostrar = $s->fechaRegistro
+                ? $s->fechaRegistro->format('d/m/Y H:i')
+                : '—';
             $this->cantidad = $s->cantidad ?? '';
             $this->motivo = (string) ($s->motivo ?? '');
             $this->solipor = (string) ($s->solipor ?? '');
@@ -54,6 +62,7 @@ class SancionForm extends Component
         abort_if($id === null, 404);
         $this->idMatricula = (string) $id;
         $this->fecha = now()->format('Y-m-d');
+        $this->fechaRegistroMostrar = now()->format('d/m/Y H:i');
     }
 
     protected function rules(): array
@@ -124,19 +133,67 @@ class SancionForm extends Component
             'solipor' => trim($this->solipor) !== '' ? trim($this->solipor) : null,
         ];
 
-        if ($this->id) {
-            $s = Sancion::findOrFail($this->id);
-            // Revalidar alcance de la sanción
-            if ((int) ($s->matricula?->idNivel ?? 0) !== (int) schoolCtx()->idNivel
-                || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec) {
-                abort(404);
-            }
-            $s->update($payload);
-            session()->flash('success', 'Sanción actualizada.');
-        } else {
-            Sancion::create($payload);
-            session()->flash('success', 'Sanción creada.');
+        if (! $this->id) {
+            $payload['fechaRegistro'] = now()->format('Y-m-d H:i:s');
         }
+
+        $payload = PersistenciaColumnas::adaptarEnterosVacios('sanciones', $payload);
+        $payload = PersistenciaColumnas::reemplazarNulosExplicitos('sanciones', $payload);
+        $preparado = PersistenciaColumnas::prepararPayload('sanciones', $payload);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            $mensaje = PersistenciaColumnas::mensajeColumnasInexistentes(
+                'sanciones',
+                $preparado['columnas_con_valor_sin_columna']
+            );
+            $this->addError('fechaRegistroMostrar', $mensaje);
+            $this->dispatch('se-swal-error', mensaje: $mensaje);
+
+            return null;
+        }
+
+        try {
+            if ($this->id) {
+                $s = Sancion::findOrFail($this->id);
+                // Revalidar alcance de la sanción
+                if ((int) ($s->matricula?->idNivel ?? 0) !== (int) schoolCtx()->idNivel
+                    || (int) ($s->matricula?->idTerlec ?? 0) !== (int) schoolCtx()->idTerlec) {
+                    abort(404);
+                }
+                $s->update($preparado['payload']);
+                $idGuardado = (int) $s->id;
+                $mensajeExito = 'Sanción actualizada.';
+            } else {
+                $s = Sancion::create($preparado['payload']);
+                $idGuardado = (int) $s->id;
+                $mensajeExito = 'Sanción creada.';
+            }
+        } catch (QueryException $e) {
+            Log::warning('sancion-form: error al guardar', [
+                'id' => $this->id,
+                'code' => $e->getCode(),
+            ]);
+            $mensaje = PersistenciaColumnas::mensajeDesdeQueryException($e)
+                ?? 'No se pudo guardar la sanción. Intente nuevamente.';
+            $this->addError('fecha', $mensaje);
+            $this->dispatch('se-swal-error', mensaje: $mensaje);
+
+            return null;
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'sanciones',
+            ['id' => $idGuardado],
+            array_diff_key($preparado['payload'], array_flip(['fecha']))
+        );
+        if ($noPersistidas !== []) {
+            $mensaje = PersistenciaColumnas::mensajeColumnasNoPersistidas('sanciones', $noPersistidas);
+            $this->addError('fecha', $mensaje);
+            $this->dispatch('se-swal-error', mensaje: $mensaje);
+
+            return null;
+        }
+
+        session()->flash('success', $mensajeExito);
 
         ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO, [
             'curso' => (int) $m->idCursos,
@@ -199,4 +256,3 @@ class SancionForm extends Component
             ->layout(layoutMenuStaff(), ['pageTitle' => $this->id ? 'Editar sanción' : 'Nueva sanción']);
     }
 }
-

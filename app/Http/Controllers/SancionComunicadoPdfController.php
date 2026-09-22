@@ -117,6 +117,7 @@ class SancionComunicadoPdfController extends Controller
             'lineasResumenSinActual' => $lineasResumenSinActual,
             'lineasResumenConActual' => $lineasResumenConActual,
             'actaHtml' => $actaHtml,
+            'lineaFechaRegistro' => $sancion->lineaFechaRegistroImpreso(),
         ];
 
         if (tenantSeguimientoComunicadoImplementacion() === 'iess') {

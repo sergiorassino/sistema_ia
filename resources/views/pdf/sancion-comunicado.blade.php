@@ -28,6 +28,7 @@
         .hr { border-top: 1px solid #111; margin: 16px 0; }
         .muted { color: #333; }
         .mt-3mm { margin-top: 3mm; }
+        .fecha-registro { font-size: 7pt; line-height: 1.2; color: #333; margin: 1px 0 0 0; }
         .acta-pagina { page-break-before: always; }
         .acta-titulo { font-weight: 700; font-size: 10.5pt; text-transform: uppercase; text-align: center; margin: 2px 0 10px 0; }
         .acta-cuerpo { font-size: 10pt; line-height: 1.35; text-align: justify; }
@@ -53,6 +54,9 @@
         <p>Solicito que al/a la mencionado/a estudiante se le aplique una medida disciplinaria por:</p>
         <p class="motivo-cuerpo"><strong>{{ $motivo }}</strong></p>
         <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+        @if (($lineaFechaRegistro ?? '') !== '')
+            <p class="fecha-registro">{{ $lineaFechaRegistro }}</p>
+        @endif
     </div>
 
     <div class="totales">
@@ -96,6 +100,9 @@
         </p>
         <p class="motivo-cuerpo"><strong>{{ $motivo }}</strong></p>
         <p>Solicitada por: <strong>{{ $solicitadaPor !== '' ? $solicitadaPor : '—' }}</strong></p>
+        @if (($lineaFechaRegistro ?? '') !== '')
+            <p class="fecha-registro">{{ $lineaFechaRegistro }}</p>
+        @endif
     </div>
 
     <div class="totales">

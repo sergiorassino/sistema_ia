@@ -83,6 +83,20 @@
                 @error('fecha') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
+            <div>
+                <label class="form-label">Fecha de registro</label>
+                <input type="text"
+                       value="{{ $this->fechaRegistroMostrar }}"
+                       readonly
+                       tabindex="-1"
+                       aria-readonly="true"
+                       class="form-input mt-1.5 bg-accent-50 text-neutral-700">
+                @error('fechaRegistroMostrar') <p class="form-error">{{ $message }}</p> @enderror
+                @if (! $this->id)
+                    <p class="mt-1.5 text-xs text-neutral-500">Se guarda automáticamente al crear el registro. No es la fecha del hecho.</p>
+                @endif
+            </div>
+
             <div x-data="{ tipo: @entangle('idTipoSancion').live }">
                 <label class="form-label">Cantidad</label>
                 <input x-show="true"

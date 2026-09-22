@@ -342,6 +342,7 @@ use App\Livewire\Seguimiento\Disciplinario\AntecedentesIndex;
 use App\Livewire\Seguimiento\Disciplinario\DisciplinarioIndex;
 use App\Livewire\Seguimiento\Disciplinario\SancionActaForm;
 use App\Livewire\Seguimiento\Disciplinario\SancionForm;
+use App\Livewire\Seguimiento\Disciplinario\SancionRegistroMultiple;
 use App\Livewire\Seguimiento\Gabinete\GabineteAlumnoIndex;
 use App\Livewire\Seguimiento\Gabinete\GabineteForm;
 use App\Livewire\Seguimiento\Gabinete\GabineteIndex;
@@ -1504,6 +1505,8 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
             ->name('seguimiento.disciplinario');
         Route::get('/seguimiento/disciplinario/nuevo', SancionForm::class)
             ->name('seguimiento.disciplinario.create');
+        Route::get('/seguimiento/disciplinario/registro-multiple', SancionRegistroMultiple::class)
+            ->name('seguimiento.disciplinario.registro-multiple');
         Route::get('/seguimiento/disciplinario/{id}/editar', SancionForm::class)
             ->whereNumber('id')
             ->name('seguimiento.disciplinario.edit');

@@ -26,6 +26,10 @@
                     {{ schoolCtx()->nivelNombre() }} · Año lectivo {{ schoolCtx()->terlecAno() }}
                 </p>
             </div>
+            <a href="{{ route('seguimiento.disciplinario.registro-multiple') }}"
+               class="inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
+                Registro Múltiple
+            </a>
         </div>
     </section>
 

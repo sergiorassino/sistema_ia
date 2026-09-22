@@ -71,7 +71,8 @@ final class SancionComunicadoIessTcpdf extends TCPDF
      *   tipoSancionNombre: string,
      *   lineasResumenSinActual: list<array{tipo: string, total: int}>,
      *   lineasResumenConActual: list<array{tipo: string, total: int}>,
-     *   actaHtml: string
+     *   actaHtml: string,
+     *   lineaFechaRegistro: string
      * }  $datos
      */
     public static function generar(array $datos): self
@@ -152,6 +153,7 @@ final class SancionComunicadoIessTcpdf extends TCPDF
 
         $this->dibujarMotivo();
         $this->dibujarSolicitadaPor();
+        $this->dibujarFechaRegistro();
         $this->lineaBajoYActual(5);
 
         if ($esMedida) {
@@ -220,6 +222,17 @@ final class SancionComunicadoIessTcpdf extends TCPDF
         $this->celda(5, 'Solicitada por:  '.$quien, 'L');
     }
 
+    private function dibujarFechaRegistro(): void
+    {
+        $linea = trim((string) ($this->datos['lineaFechaRegistro'] ?? ''));
+        if ($linea === '') {
+            return;
+        }
+
+        $this->fuente('', 6);
+        $this->celda(4, $linea, 'L');
+    }
+
     /**
      * @param  list<array{tipo?: string, total?: int}>  $lineas
      */
@@ -269,6 +282,7 @@ final class SancionComunicadoIessTcpdf extends TCPDF
 
         $this->dibujarMotivo();
         $this->dibujarSolicitadaPor();
+        $this->dibujarFechaRegistro();
 
         if ($esMedida) {
             $this->Ln(3);

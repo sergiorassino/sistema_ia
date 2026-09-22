@@ -15,6 +15,7 @@ class Sancion extends Model
         'idTipoSancion',
         'idProfesores',
         'fecha',
+        'fechaRegistro',
         'cantidad',
         'motivo',
         'acta',
@@ -25,6 +26,7 @@ class Sancion extends Model
 
     protected $casts = [
         'fecha' => 'date',
+        'fechaRegistro' => 'datetime',
         'publicada' => 'boolean',
         'comunicadaPadres' => 'boolean',
     ];
@@ -42,6 +44,16 @@ class Sancion extends Model
     public function profesor()
     {
         return $this->belongsTo(Profesor::class, 'idProfesores');
+    }
+
+    /** Texto del impreso: "Fecha de Registro: dd/mm/aaaa hh:mm" o vacío si no hay dato. */
+    public function lineaFechaRegistroImpreso(): string
+    {
+        if ($this->fechaRegistro === null) {
+            return '';
+        }
+
+        return 'Fecha de Registro: '.$this->fechaRegistro->format('d/m/Y H:i');
     }
 }
 
