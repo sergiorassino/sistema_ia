@@ -14,6 +14,8 @@
  |
  | Actas volantes de previos: una sola acta por materia del plan + condición
  | (reúne secciones del mismo curso). Default global es curso_seccion.
+ |
+ | Egresados de último año (ventana feb–sep del año siguiente): Regular (`RE`).
  */
 
 return [
@@ -55,5 +57,6 @@ return [
 
     'examenes' => [
         'acta_volante_previos_modalidad' => 'curso',
+        'egresados_ventana_condicion' => 'RE',
     ],
 ];

@@ -28,6 +28,22 @@ class MateriasAdeudadasCondicionRecalculoTest extends TestCase
         $this->assertSame('RE', MateriasAdeudadasCondicionRecalculo::decidirCondicion('', false, true, true));
     }
 
+    public function test_egresado_en_ventana_queda_previo_si_el_tenant_lo_configura(): void
+    {
+        $this->assertSame('PR', MateriasAdeudadasCondicionRecalculo::decidirCondicion('RE', false, true, true, 'PR'));
+        $this->assertSame('PR', MateriasAdeudadasCondicionRecalculo::decidirCondicion('', false, true, true, 'pr'));
+        $this->assertSame('RE', MateriasAdeudadasCondicionRecalculo::decidirCondicion('PR', false, true, true, 'OTRO'));
+        $this->assertSame('PR', MateriasAdeudadasCondicionRecalculo::decidirCondicion('RE', false, true, false, 'PR'));
+    }
+
+    public function test_normaliza_condicion_ventana_egresado(): void
+    {
+        $this->assertSame('RE', MateriasAdeudadasCondicionRecalculo::normalizarCondicionVentanaEgresado('RE'));
+        $this->assertSame('PR', MateriasAdeudadasCondicionRecalculo::normalizarCondicionVentanaEgresado('pr'));
+        $this->assertSame('RE', MateriasAdeudadasCondicionRecalculo::normalizarCondicionVentanaEgresado(''));
+        $this->assertSame('RE', MateriasAdeudadasCondicionRecalculo::normalizarCondicionVentanaEgresado('EQ'));
+    }
+
     public function test_egresado_fuera_de_ventana_o_diciembre_queda_previa(): void
     {
         $this->assertSame('PR', MateriasAdeudadasCondicionRecalculo::decidirCondicion('RE', false, true, false));
@@ -82,6 +98,14 @@ class MateriasAdeudadasCondicionRecalculoTest extends TestCase
         $this->assertSame(
             ['condAdeuda' => 'RE'],
             MateriasAdeudadasCondicionRecalculo::payloadActualizacion('RE', false, 'F'),
+        );
+        $this->assertSame(
+            ['condAdeuda' => 'PR', 'inscri' => 1],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('PR', false, 'T', true),
+        );
+        $this->assertSame(
+            ['condAdeuda' => 'PR'],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('PR', false, 'T', false),
         );
     }
 }

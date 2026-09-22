@@ -1308,6 +1308,20 @@ if (! function_exists('tenantExamenesActaVolantePreviosModalidad')) {
     }
 }
 
+if (! function_exists('tenantExamenesEgresadosVentanaCondicion')) {
+    /**
+     * Condición de examen para egresados del último año de medio en turnos
+     * febrero/abril/julio/septiembre del año posterior al egreso.
+     * Valores: `RE` (default, Regular) | `PR` (Previo).
+     */
+    function tenantExamenesEgresadosVentanaCondicion(): string
+    {
+        $valor = strtoupper(trim((string) config('tenant.examenes.egresados_ventana_condicion', 'RE')));
+
+        return $valor === 'PR' ? 'PR' : 'RE';
+    }
+}
+
 if (! function_exists('tenantBoletinPrimarioIpeImplementacion')) {
     /**
      * Variante del informe de progreso escolar (primario).

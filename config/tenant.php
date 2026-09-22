@@ -317,14 +317,19 @@ return [
     ],
 
     /**
-     * Exámenes (previas) — actas volantes.
+     * Exámenes (previas) — actas volantes y recálculo de condiciones adeudadas.
      * `acta_volante_previos_modalidad`:
      * - `curso_seccion`: una acta por materia del plan + condición + curso/sección (`cursos.Id`).
      * - `curso`: una acta por materia del plan + condición (reúne secciones del mismo año de plan).
+     * `egresados_ventana_condicion`:
+     * - `RE` (default): egresados de último año de medio rinden Regular hasta septiembre
+     *   inclusive del año posterior al egreso.
+     * - `PR`: mismo criterio de ventana, pero la condición escrita es Previo.
      * Override en `config/tenants/{slug}.php` cuando el colegio use otra modalidad.
      */
     'examenes' => [
         'acta_volante_previos_modalidad' => 'curso_seccion',
+        'egresados_ventana_condicion' => 'RE',
     ],
 
     /**

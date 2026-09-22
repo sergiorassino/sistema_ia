@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\DB;
  * Recalcula condAdeuda e inscri en calificaciones adeudadas (apro = 1).
  *
  * Rama principal (EQ/TM intactas; regulares → PR): portación de anaCond() legado.
-     * Rama RE: egresados del último año de medio, turnos feb/abr/jul/sep del año posterior
-     * (todas las materias adeudadas, no solo las del último curso).
+ * Rama egresados: último año de medio, turnos feb/abr/jul/sep del año posterior
+ * (todas las materias adeudadas, no solo las del último curso).
+ * Condición de esa ventana: `RE` por default; `PR` si el tenant lo configura.
  */
 final class MateriasAdeudadasCondicionRecalculo
 {
@@ -44,6 +45,7 @@ final class MateriasAdeudadasCondicionRecalculo
             MateriasAdeudadasPreparacion::textoTurnoParaClasificar($idTurno),
         );
 
+        $condicionVentanaEgresado = self::condicionVentanaEgresado();
         $egresadosUltimoAnio = self::legajosEgresadosUltimoAnioAnterior($idNivel, $anoTurno);
 
         $procesados = 0;
@@ -64,6 +66,7 @@ final class MateriasAdeudadasCondicionRecalculo
                 $regulares,
                 $egresadosUltimoAnio,
                 $turnoHastaSeptiembre,
+                $condicionVentanaEgresado,
                 $examTodosInscri,
                 &$procesados,
                 &$actualizados,
@@ -78,6 +81,7 @@ final class MateriasAdeudadasCondicionRecalculo
                         $regulares->has($idLegajo),
                         $egresadosUltimoAnio->has($idLegajo),
                         $turnoHastaSeptiembre,
+                        $condicionVentanaEgresado,
                         $examTodosInscri,
                     );
                     if ($cambio) {
@@ -96,6 +100,24 @@ final class MateriasAdeudadasCondicionRecalculo
     }
 
     /**
+     * Condición escrita a egresados en la ventana feb/abr/jul/sep.
+     * Default `RE`; `PR` si el tenant lo configura. Cualquier otro valor → `RE`.
+     */
+    public static function condicionVentanaEgresado(): string
+    {
+        $valor = function_exists('tenantExamenesEgresadosVentanaCondicion')
+            ? tenantExamenesEgresadosVentanaCondicion()
+            : 'RE';
+
+        return self::normalizarCondicionVentanaEgresado((string) $valor);
+    }
+
+    public static function normalizarCondicionVentanaEgresado(string $valor): string
+    {
+        return strtoupper(trim($valor)) === 'PR' ? 'PR' : 'RE';
+    }
+
+    /**
      * Null = no tocar (EQ/TM). PR o RE en el resto.
      */
     public static function decidirCondicion(
@@ -103,6 +125,7 @@ final class MateriasAdeudadasCondicionRecalculo
         bool $esRegularAnioActual,
         bool $esEgresadoUltimoAnioAnterior,
         bool $turnoHastaSeptiembre,
+        string $condicionVentanaEgresado = 'RE',
     ): ?string {
         $cond = strtoupper(trim($condAdeuda));
 
@@ -115,7 +138,7 @@ final class MateriasAdeudadasCondicionRecalculo
         }
 
         if ($esEgresadoUltimoAnioAnterior && $turnoHastaSeptiembre) {
-            return 'RE';
+            return self::normalizarCondicionVentanaEgresado($condicionVentanaEgresado);
         }
 
         return 'PR';
@@ -153,8 +176,8 @@ final class MateriasAdeudadasCondicionRecalculo
 
     /**
      * Inscribe a mesa (`inscri = 1`) si el colegio inscribe a todos: regulares del
-     * ciclo (PR) y egresados de último año en ventana RE (todas las materias adeudadas,
-     * no solo las de 6.º).
+     * ciclo (PR) y egresados de último año en la ventana feb–sep (todas las materias
+     * adeudadas, no solo las de 6.º), aunque el tenant asigne `PR` en vez de `RE`.
      *
      * @return array{condAdeuda: string, inscri?: int}
      */
@@ -162,13 +185,14 @@ final class MateriasAdeudadasCondicionRecalculo
         string $nuevaCond,
         bool $esRegularAnioActual,
         string $examTodosInscri,
+        bool $esEgresadoEnVentana = false,
     ): array {
         $datos = ['condAdeuda' => $nuevaCond];
         if ($examTodosInscri !== 'T') {
             return $datos;
         }
 
-        if ($esRegularAnioActual || $nuevaCond === 'RE') {
+        if ($esRegularAnioActual || $nuevaCond === 'RE' || $esEgresadoEnVentana) {
             $datos['inscri'] = 1;
         }
 
@@ -176,7 +200,7 @@ final class MateriasAdeudadasCondicionRecalculo
     }
 
     /**
-     * Equivalente a anaCond() + rama RE de egresados de último año.
+     * Equivalente a anaCond() + rama de egresados de último año (RE o PR según tenant).
      */
     private static function analizarYActualizarFila(
         int $idCalificacion,
@@ -184,13 +208,16 @@ final class MateriasAdeudadasCondicionRecalculo
         bool $esRegularAnioActual,
         bool $esEgresadoUltimoAnioAnterior,
         bool $turnoHastaSeptiembre,
+        string $condicionVentanaEgresado,
         string $examTodosInscri,
     ): bool {
+        $esEgresadoEnVentana = $esEgresadoUltimoAnioAnterior && $turnoHastaSeptiembre;
         $nuevaCond = self::decidirCondicion(
             $condAdeuda,
             $esRegularAnioActual,
             $esEgresadoUltimoAnioAnterior,
             $turnoHastaSeptiembre,
+            $condicionVentanaEgresado,
         );
 
         if ($nuevaCond === null) {
@@ -199,7 +226,12 @@ final class MateriasAdeudadasCondicionRecalculo
 
         return self::actualizar(
             $idCalificacion,
-            self::payloadActualizacion($nuevaCond, $esRegularAnioActual, $examTodosInscri),
+            self::payloadActualizacion(
+                $nuevaCond,
+                $esRegularAnioActual,
+                $examTodosInscri,
+                $esEgresadoEnVentana,
+            ),
         );
     }
 
