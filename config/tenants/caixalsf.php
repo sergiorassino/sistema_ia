@@ -8,7 +8,8 @@
  | Autogestión familia (inicial / primario): mismas opciones de menú que San José.
  | Menú de Docentes (nivel inicial): carga de observaciones, por espacio curricular e informe de progreso.
  |
- | Egresados de último año (ventana feb–sep del año siguiente): Regular (`RE`).
+ | Egresados de último año (ventana feb–sep del año siguiente): Previo (`PR`).
+ | Default global es Regular (`RE`).
  */
 
 return [
@@ -59,6 +60,6 @@ return [
     ],
 
     'examenes' => [
-        'egresados_ventana_condicion' => 'RE',
+        'egresados_ventana_condicion' => 'PR',
     ],
 ];

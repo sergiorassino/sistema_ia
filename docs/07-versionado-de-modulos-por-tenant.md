@@ -150,20 +150,11 @@ Consumir con `tenantExamenesActaVolantePreviosModalidad()`.
 
 Condición de examen de egresados de último año de medio (ventana febrero/abril/julio/septiembre del año posterior al egreso):
 
-- Default en `config/tenant.php`: `RE` (Regular). IESS y Caixal SF lo declaran explícito.
-- Alternativa `PR`: mismo criterio de ventana (todas las materias adeudadas), pero se escribe Previo. Si `ento.examTodosInscri = T`, se sigue inscribiendo a mesa.
+- Default en `config/tenant.php`: `RE` (Regular).
+- Alternativa `PR`: mismo criterio de ventana (todas las materias adeudadas), pero se escribe Previo. Si `ento.examTodosInscri = T`, se sigue inscribiendo a mesa. Activo en IESS y Caixal SF.
 
 ```php
 // config/tenants/iess.php y config/tenants/caixalsf.php
-return [
-    'examenes' => [
-        'egresados_ventana_condicion' => 'RE',
-    ],
-];
-```
-
-```php
-// config/tenants/{slug}.php — solo si el colegio rinde como previo
 return [
     'examenes' => [
         'egresados_ventana_condicion' => 'PR',

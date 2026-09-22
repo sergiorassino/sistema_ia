@@ -17,10 +17,11 @@ El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')`
 
 Variante por tenant: `config('tenant.examenes.egresados_ventana_condicion')` (`RE` default | `PR`). Helper: `tenantExamenesEgresadosVentanaCondicion()`.
 
-- **Regular (`RE`):** default, y explícito en IESS y Caixal SF (`config/tenants/iess.php`, `config/tenants/caixalsf.php`).
-- **Previo (`PR`):** en `config/tenants/{slug}.php` solo si el colegio rinde como previo:
+- **Regular (`RE`):** default para todos los colegios.
+- **Previo (`PR`):** IESS y Caixal SF.
 
 ```php
+// config/tenants/iess.php y config/tenants/caixalsf.php
 return [
     'examenes' => [
         'egresados_ventana_condicion' => 'PR',
@@ -61,7 +62,7 @@ return [
 - `app/Livewire/Examenes/Concerns/PreparaMateriasAdeudadasExamenes.php`
 - `app/Support/helpers.php` (`tenantExamenesEgresadosVentanaCondicion`)
 - `config/tenant.php` (`examenes.egresados_ventana_condicion`)
-- `config/tenants/iess.php` / `config/tenants/caixalsf.php` (`RE`)
+- `config/tenants/iess.php` / `config/tenants/caixalsf.php` (`PR`)
 - `tests/Unit/MateriasAdeudadasCondicionRecalculoTest.php`
 
 ## Qué no hacer / reglas de negocio
