@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
  * - `curso_seccion`: idMatPlan + condAdeuda + sección estructural (letra/turno).
  * - `curso`: idMatPlan + condAdeuda (reúne secciones del mismo año de plan).
  *
- * La materia se agrupa siempre por `idMatPlan` (nunca por el texto de `matPlanMateria`,
- * que puede cambiar de sintaxis entre años). En `curso_seccion` tampoco se usa el Id
- * interno de `cursos`: se reúnen cursos de distintos años lectivos con la misma sección.
+ * El idMatPlan se resuelve como en listado/permiso: `materias.idMatPlan` si existe,
+ * si no `calificaciones.idMatPlan`. Las deudas de años anteriores (p. ej. Matemática
+ * de 4.º de una egresada de 6.º) suelen tener el plan solo en `materias`.
  */
 final class ActaVolantePrevios
 {
@@ -43,6 +43,7 @@ final class ActaVolantePrevios
      * @return Collection<int, object{
      *     clave: string,
      *     idMatPlan: int,
+     *     idMaterias: int,
      *     condAdeuda: string,
      *     idCurPlan: int,
      *     seccionKey: string|null,
@@ -59,121 +60,24 @@ final class ActaVolantePrevios
         }
 
         $porSeccion = self::esModalidadCursoSeccion();
-
-        $query = DB::table('calificaciones as c')
-            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
-            ->join('matplan as mp', 'mp.id', '=', 'c.idMatPlan')
-            ->join('curplan as cp', 'cp.id', '=', 'mp.idCurPlan')
-            ->join('planes as pl', 'pl.id', '=', 'cp.idPlan')
-            ->where('c.inscri', 1)
-            ->where('c.apro', 1)
-            ->where('cu.idNivel', $idNivel)
-            ->where('pl.idNivel', $idNivel)
-            ->where('c.idMatPlan', '>', 0);
-
-        if ($porSeccion) {
-            $filas = $query
-                ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
-                ->orderBy('cp.id')
-                ->orderBy('cu.orden')
-                ->orderBy('cu.Id')
-                ->orderBy('mp.ord')
-                ->orderBy('mp.id')
-                ->orderBy('c.condAdeuda')
-                ->get([
-                    'c.idMatPlan',
-                    'c.condAdeuda',
-                    'c.idCursos',
-                    'mp.idCurPlan',
-                    'mp.matPlanMateria',
-                    'mp.ord as matplan_ord',
-                    'cp.curPlanCurso',
-                    'cp.id as curplan_id',
-                    'cu.idCurPlan as curso_idCurPlan',
-                    'cu.cursec',
-                    'cu.c',
-                    'cu.s',
-                    'cu.orden as curso_orden',
-                    'cu.idTurnoClase',
-                    'tc.nombre as turnoClaseNombre',
-                ]);
-        } else {
-            $filas = $query
-                ->orderBy('cp.id')
-                ->orderBy('mp.ord')
-                ->orderBy('mp.id')
-                ->orderBy('c.condAdeuda')
-                ->select([
-                    'c.idMatPlan',
-                    'c.condAdeuda',
-                    'mp.idCurPlan',
-                    'mp.matPlanMateria',
-                    'mp.ord as matplan_ord',
-                    'cp.curPlanCurso',
-                    'cp.id as curplan_id',
-                ])
-                ->distinct()
-                ->get();
-        }
+        $filas = self::filasAdeudadasInscriptas($idNivel, $porSeccion);
 
         $conteoPorClave = [];
-        if ($porSeccion) {
-            foreach ($filas as $r) {
-                $idMatPlan = (int) $r->idMatPlan;
-                $cond = strtoupper(trim((string) ($r->condAdeuda ?? '')));
-                $seccionKey = self::seccionKeyDesdeFilaCurso($r);
-                if ($seccionKey === '') {
-                    continue;
-                }
-                $clave = self::claveActa($idMatPlan, $cond, $seccionKey);
-                $conteoPorClave[$clave] = ($conteoPorClave[$clave] ?? 0) + 1;
-            }
-        } else {
-            $conteo = DB::table('calificaciones as c')
-                ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
-                ->where('c.inscri', 1)
-                ->where('c.apro', 1)
-                ->where('cu.idNivel', $idNivel)
-                ->where('c.idMatPlan', '>', 0)
-                ->groupBy('c.idMatPlan', 'c.condAdeuda')
-                ->select([
-                    'c.idMatPlan',
-                    'c.condAdeuda',
-                    DB::raw('COUNT(*) as total'),
-                ])
-                ->get()
-                ->keyBy(fn (object $r) => self::claveActa(
-                    (int) $r->idMatPlan,
-                    (string) ($r->condAdeuda ?? ''),
-                ));
-
-            foreach ($conteo as $clave => $row) {
-                $conteoPorClave[$clave] = (int) ($row->total ?? 0);
-            }
-        }
-
-        $out = collect();
-        $clavesVistas = [];
+        $metas = [];
 
         foreach ($filas as $r) {
-            $idMatPlan = (int) $r->idMatPlan;
-            $cond = strtoupper(trim((string) ($r->condAdeuda ?? '')));
-            $seccionKey = null;
-
-            if ($porSeccion) {
-                $seccionKey = self::seccionKeyDesdeFilaCurso($r);
-                if ($seccionKey === '') {
-                    continue;
-                }
-            }
-
-            $clave = self::claveActa($idMatPlan, $cond, $seccionKey);
-            if (isset($clavesVistas[$clave])) {
+            $agrupacion = self::agrupacionDesdeFila($r, $porSeccion);
+            if ($agrupacion === null) {
                 continue;
             }
-            $clavesVistas[$clave] = true;
 
-            $materia = mb_strtoupper(trim((string) ($r->matPlanMateria ?? '')), 'UTF-8');
+            $clave = $agrupacion['clave'];
+            $conteoPorClave[$clave] = ($conteoPorClave[$clave] ?? 0) + 1;
+
+            if (isset($metas[$clave])) {
+                continue;
+            }
+
             $cursoLabel = $porSeccion
                 ? mb_strtoupper(MateriasAdeudadasExporter::cursoLabelDesdeFila($r), 'UTF-8')
                 : mb_strtoupper(trim((string) ($r->curPlanCurso ?? '')), 'UTF-8');
@@ -181,20 +85,33 @@ final class ActaVolantePrevios
             if ($cursoLabel === '') {
                 $cursoLabel = $porSeccion
                     ? 'CURSO'
-                    : ('CURPLAN '.(int) $r->idCurPlan);
+                    : ('CURPLAN '.(int) ($r->idCurPlan ?? 0));
             }
 
-            $out->push((object) [
+            $materia = self::materiaLabelDesdeFila($r);
+            $idMatPlan = $agrupacion['idMatPlan'];
+            $idMaterias = $agrupacion['idMaterias'];
+
+            $metas[$clave] = (object) [
                 'clave' => $clave,
                 'idMatPlan' => $idMatPlan,
-                'condAdeuda' => $cond,
-                'idCurPlan' => (int) $r->idCurPlan,
-                'seccionKey' => $seccionKey,
-                'materiaLabel' => $materia !== '' ? $materia : ('MATPLAN '.$idMatPlan),
+                'idMaterias' => $idMaterias,
+                'condAdeuda' => $agrupacion['condAdeuda'],
+                'idCurPlan' => (int) ($r->idCurPlan ?? 0),
+                'seccionKey' => $agrupacion['seccionKey'],
+                'materiaLabel' => $materia !== ''
+                    ? $materia
+                    : ($idMatPlan > 0 ? ('MATPLAN '.$idMatPlan) : ('MATERIA '.$idMaterias)),
                 'cursoLabel' => $cursoLabel,
-                'condicionLabel' => MateriasAdeudadasFiltros::tituloCondicionActa($cond),
-                'cantidadAlumnos' => (int) ($conteoPorClave[$clave] ?? 0),
-            ]);
+                'condicionLabel' => MateriasAdeudadasFiltros::tituloCondicionActa($agrupacion['condAdeuda']),
+                'cantidadAlumnos' => 0,
+            ];
+        }
+
+        $out = collect();
+        foreach ($metas as $clave => $meta) {
+            $meta->cantidadAlumnos = (int) ($conteoPorClave[$clave] ?? 0);
+            $out->push($meta);
         }
 
         return $out;
@@ -202,7 +119,7 @@ final class ActaVolantePrevios
 
     /**
      * @param  Collection<int, object{clave: string}>  $actasPermitidas
-     * @return list<array{clave: string, idMatPlan: int, condAdeuda: string, seccionKey: string|null}>
+     * @return list<array{clave: string, idMatPlan: int, idMaterias: int, condAdeuda: string, seccionKey: string|null}>
      */
     public static function resolverClavesActas(string $actasParam, Collection $actasPermitidas): array
     {
@@ -221,6 +138,7 @@ final class ActaVolantePrevios
                 $out[] = [
                     'clave' => $clave,
                     'idMatPlan' => (int) $meta->idMatPlan,
+                    'idMaterias' => (int) ($meta->idMaterias ?? 0),
                     'condAdeuda' => (string) $meta->condAdeuda,
                     'seccionKey' => isset($meta->seccionKey) && $meta->seccionKey !== null && $meta->seccionKey !== ''
                         ? (string) $meta->seccionKey
@@ -248,7 +166,7 @@ final class ActaVolantePrevios
     }
 
     /**
-     * @param  list<array{clave: string, idMatPlan: int, condAdeuda: string, seccionKey?: string|null}>  $actasSeleccionadas
+     * @param  list<array{clave: string, idMatPlan: int, idMaterias?: int, condAdeuda: string, seccionKey?: string|null}>  $actasSeleccionadas
      * @return array{
      *     actas: list<array{
      *         cursoLabel: string,
@@ -286,20 +204,17 @@ final class ActaVolantePrevios
             }
 
             $idMatPlan = (int) $sel['idMatPlan'];
+            $idMaterias = (int) ($sel['idMaterias'] ?? 0);
             $cond = strtoupper(trim((string) $sel['condAdeuda']));
             $seccionKey = isset($sel['seccionKey']) && $sel['seccionKey'] !== null && $sel['seccionKey'] !== ''
                 ? (string) $sel['seccionKey']
                 : null;
 
             $alumnosQuery = DB::table('calificaciones as c')
-                ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
-                ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
-                ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
-                ->where('c.idMatPlan', $idMatPlan)
-                ->whereRaw('UPPER(TRIM(COALESCE(c.condAdeuda, ""))) = ?', [$cond])
-                ->where('c.inscri', 1)
-                ->where('c.apro', 1)
-                ->where('cu.idNivel', $idNivel);
+                ->join('legajos as l', 'l.id', '=', 'c.idLegajos');
+            self::aplicarJoinsAdeudadasInscriptas($alumnosQuery, $idNivel, true);
+            $alumnosQuery->whereRaw('UPPER(TRIM(COALESCE(c.condAdeuda, ""))) = ?', [$cond]);
+            self::aplicarFiltroMateriaAgrupada($alumnosQuery, $idMatPlan, $idMaterias);
 
             if ($porSeccion) {
                 if ($seccionKey === null || $seccionKey === '') {
@@ -416,10 +331,16 @@ final class ActaVolantePrevios
         return $cache[$idNivel][$seccionKey] ?? [];
     }
 
-    public static function claveActa(int $idMatPlan, string $condAdeuda, ?string $seccionKey = null): string
-    {
+    public static function claveActa(
+        int $idMatPlan,
+        string $condAdeuda,
+        ?string $seccionKey = null,
+        int $idMaterias = 0,
+    ): string {
         $cond = strtoupper(trim($condAdeuda));
-        $base = $idMatPlan.':'.($cond !== '' ? $cond : '_');
+        $base = $idMatPlan > 0
+            ? $idMatPlan.':'.($cond !== '' ? $cond : '_')
+            : 'm'.$idMaterias.':'.($cond !== '' ? $cond : '_');
 
         if ($seccionKey !== null && $seccionKey !== '') {
             return $base.':'.$seccionKey;
@@ -429,7 +350,7 @@ final class ActaVolantePrevios
     }
 
     /**
-     * @return array{idMatPlan: int, condAdeuda: string, seccionKey: string|null}|null
+     * @return array{idMatPlan: int, idMaterias: int, condAdeuda: string, seccionKey: string|null}|null
      */
     public static function parseClaveActa(string $clave): ?array
     {
@@ -443,9 +364,19 @@ final class ActaVolantePrevios
             return null;
         }
 
-        $idMatPlan = (int) $parts[0];
-        if ($idMatPlan < 1) {
-            return null;
+        $idMatPlan = 0;
+        $idMaterias = 0;
+        $cabeza = trim((string) $parts[0]);
+        if (preg_match('/^m(\d+)$/i', $cabeza, $m)) {
+            $idMaterias = (int) $m[1];
+            if ($idMaterias < 1) {
+                return null;
+            }
+        } else {
+            $idMatPlan = (int) $cabeza;
+            if ($idMatPlan < 1) {
+                return null;
+            }
         }
 
         $cond = strtoupper(trim((string) $parts[1]));
@@ -467,8 +398,155 @@ final class ActaVolantePrevios
 
         return [
             'idMatPlan' => $idMatPlan,
+            'idMaterias' => $idMaterias,
             'condAdeuda' => $cond,
             'seccionKey' => $seccionKey,
         ];
+    }
+
+    /**
+     * @return Collection<int, object>
+     */
+    private static function filasAdeudadasInscriptas(int $idNivel, bool $conTurnoClase): Collection
+    {
+        $query = DB::table('calificaciones as c');
+        self::aplicarJoinsAdeudadasInscriptas($query, $idNivel, $conTurnoClase);
+
+        $query
+            ->orderBy('cp.id')
+            ->orderBy('cu.orden')
+            ->orderBy('cu.Id')
+            ->orderBy('mp.ord')
+            ->orderBy('mp.id')
+            ->orderBy('m.ord')
+            ->orderBy('c.condAdeuda');
+
+        $columnas = [
+            'c.idMatPlan',
+            'c.idMaterias',
+            'c.condAdeuda',
+            'c.idCursos',
+            'm.materia',
+            'm.ord as materia_ord',
+            'mp.id as matplan_id',
+            'mp.matPlanMateria',
+            'mp.ord as matplan_ord',
+            'cp.curPlanCurso',
+            'cp.id as curplan_id',
+            'cu.idCurPlan as curso_idCurPlan',
+            'cu.cursec',
+            'cu.c',
+            'cu.s',
+            'cu.orden as curso_orden',
+            'cu.idTurnoClase',
+            DB::raw(self::sqlIdMatPlanResuelto().' as idMatPlanResuelto'),
+            DB::raw('COALESCE(NULLIF(mp.idCurPlan, 0), NULLIF(m.idCurPlan, 0), NULLIF(cu.idCurPlan, 0), 0) as idCurPlan'),
+        ];
+
+        if ($conTurnoClase) {
+            $columnas[] = 'tc.nombre as turnoClaseNombre';
+        }
+
+        return $query->get($columnas);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Query\Builder  $query
+     */
+    private static function aplicarJoinsAdeudadasInscriptas($query, int $idNivel, bool $conTurnoClase): void
+    {
+        $query
+            ->join('materias as m', function ($join) {
+                $join->on('m.id', '=', 'c.idMaterias')
+                    ->on('m.idTerlec', '=', 'c.idTerlec');
+            })
+            ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
+            ->leftJoin('matplan as mp', function ($join) {
+                $join->whereRaw(
+                    'mp.id = IF(COALESCE(m.idMatPlan, 0) > 0, m.idMatPlan, NULLIF(COALESCE(c.idMatPlan, 0), 0))'
+                );
+            })
+            ->leftJoin('curplan as cp', function ($join) {
+                $join->whereRaw(
+                    'cp.id = COALESCE(NULLIF(mp.idCurPlan, 0), NULLIF(m.idCurPlan, 0), NULLIF(cu.idCurPlan, 0))'
+                );
+            })
+            ->where('c.inscri', 1)
+            ->where('c.apro', 1)
+            ->where('cu.idNivel', $idNivel);
+
+        if ($conTurnoClase) {
+            $query->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase');
+        }
+    }
+
+    /**
+     * @param  \Illuminate\Database\Query\Builder  $query
+     */
+    private static function aplicarFiltroMateriaAgrupada($query, int $idMatPlan, int $idMaterias): void
+    {
+        if ($idMatPlan > 0) {
+            $query->whereRaw(self::sqlIdMatPlanResuelto().' = ?', [$idMatPlan]);
+
+            return;
+        }
+
+        $query->where('c.idMaterias', $idMaterias);
+    }
+
+    /**
+     * @return array{clave: string, idMatPlan: int, idMaterias: int, condAdeuda: string, seccionKey: string|null}|null
+     */
+    private static function agrupacionDesdeFila(object $r, bool $porSeccion): ?array
+    {
+        $idMatPlan = self::idMatPlanDesdeFila($r);
+        $idMaterias = (int) ($r->idMaterias ?? 0);
+        if ($idMatPlan < 1 && $idMaterias < 1) {
+            return null;
+        }
+
+        $cond = strtoupper(trim((string) ($r->condAdeuda ?? '')));
+        $seccionKey = null;
+        if ($porSeccion) {
+            $seccionKey = self::seccionKeyDesdeFilaCurso($r);
+            if ($seccionKey === '') {
+                return null;
+            }
+        }
+
+        return [
+            'clave' => self::claveActa($idMatPlan, $cond, $seccionKey, $idMaterias),
+            'idMatPlan' => $idMatPlan,
+            'idMaterias' => $idMaterias,
+            'condAdeuda' => $cond,
+            'seccionKey' => $seccionKey,
+        ];
+    }
+
+    public static function sqlIdMatPlanResuelto(string $aliasMateria = 'm', string $aliasCalif = 'c'): string
+    {
+        return "IF(COALESCE({$aliasMateria}.idMatPlan, 0) > 0, {$aliasMateria}.idMatPlan, COALESCE({$aliasCalif}.idMatPlan, 0))";
+    }
+
+    public static function idMatPlanDesdeFila(object $r): int
+    {
+        foreach ([$r->idMatPlanResuelto ?? 0, $r->matplan_id ?? 0] as $candidato) {
+            $id = (int) $candidato;
+            if ($id > 0) {
+                return $id;
+            }
+        }
+
+        return (int) ($r->idMatPlan ?? 0);
+    }
+
+    public static function materiaLabelDesdeFila(object $r): string
+    {
+        $plan = mb_strtoupper(trim((string) ($r->matPlanMateria ?? '')), 'UTF-8');
+        if ($plan !== '') {
+            return $plan;
+        }
+
+        return mb_strtoupper(trim((string) ($r->materia ?? '')), 'UTF-8');
     }
 }

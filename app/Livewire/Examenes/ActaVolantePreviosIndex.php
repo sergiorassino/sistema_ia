@@ -15,7 +15,7 @@ class ActaVolantePreviosIndex extends Component
 {
     use RequiresPermisoExamenes;
 
-    /** Claves de acta (`idMatPlan:condAdeuda`) marcadas para imprimir. */
+    /** Claves de acta (`idMatPlan:condAdeuda` o `m{idMaterias}:condAdeuda`) marcadas para imprimir. */
     public array $actasSeleccionadas = [];
 
     public int $prepTick = 0;

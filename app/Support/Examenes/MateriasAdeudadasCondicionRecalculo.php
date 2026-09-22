@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
  * Recalcula condAdeuda e inscri en calificaciones adeudadas (apro = 1).
  *
  * Rama principal (EQ/TM intactas; regulares → PR): portación de anaCond() legado.
- * Rama RE: egresados del último año de medio, turnos feb/abr/jul/sep del año posterior.
+     * Rama RE: egresados del último año de medio, turnos feb/abr/jul/sep del año posterior
+     * (todas las materias adeudadas, no solo las del último curso).
  */
 final class MateriasAdeudadasCondicionRecalculo
 {
@@ -151,6 +152,30 @@ final class MateriasAdeudadasCondicionRecalculo
     }
 
     /**
+     * Inscribe a mesa (`inscri = 1`) si el colegio inscribe a todos: regulares del
+     * ciclo (PR) y egresados de último año en ventana RE (todas las materias adeudadas,
+     * no solo las de 6.º).
+     *
+     * @return array{condAdeuda: string, inscri?: int}
+     */
+    public static function payloadActualizacion(
+        string $nuevaCond,
+        bool $esRegularAnioActual,
+        string $examTodosInscri,
+    ): array {
+        $datos = ['condAdeuda' => $nuevaCond];
+        if ($examTodosInscri !== 'T') {
+            return $datos;
+        }
+
+        if ($esRegularAnioActual || $nuevaCond === 'RE') {
+            $datos['inscri'] = 1;
+        }
+
+        return $datos;
+    }
+
+    /**
      * Equivalente a anaCond() + rama RE de egresados de último año.
      */
     private static function analizarYActualizarFila(
@@ -172,16 +197,10 @@ final class MateriasAdeudadasCondicionRecalculo
             return false;
         }
 
-        if ($esRegularAnioActual && $examTodosInscri === 'T') {
-            return self::actualizar($idCalificacion, [
-                'inscri' => 1,
-                'condAdeuda' => $nuevaCond,
-            ]);
-        }
-
-        return self::actualizar($idCalificacion, [
-            'condAdeuda' => $nuevaCond,
-        ]);
+        return self::actualizar(
+            $idCalificacion,
+            self::payloadActualizacion($nuevaCond, $esRegularAnioActual, $examTodosInscri),
+        );
     }
 
     /**

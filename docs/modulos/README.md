@@ -52,6 +52,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Libro de temas | [libro-de-temas.md](libro-de-temas.md) |
 | Parámetros del sistema | [parametros-sistema.md](parametros-sistema.md) |
 | Recálculo de condiciones de examen | [examenes-condiciones-adeudadas.md](examenes-condiciones-adeudadas.md) |
+| Actas volantes de examen | [examenes-actas-volantes.md](examenes-actas-volantes.md) |
 | Gestión de tercer materia | [tercer-materia.md](tercer-materia.md) |
 | Copiar cursos, materias y horarios | [copiar-cursos-materias-anio.md](copiar-cursos-materias-anio.md) |
 | Copiar asignación de profesores y preceptores | [copiar-asignaciones-prof-precep.md](copiar-asignaciones-prof-precep.md) |

@@ -9,7 +9,7 @@ Al entrar a Exámenes (listado, gestión, actas volantes, permiso) y confirmar t
 - **EQ / TM:** no se tocan.
 - **Regular del ciclo del contexto** (`matricula.idCondiciones = 1`): `condAdeuda = PR`. Si `ento.examTodosInscri = T`, también `inscri = 1`.
 - **Egresado de último año de medio** (no regular ahora; el año anterior al turno cursó el último `cursos.c` como regular):
-  - Turnos **febrero, abril, julio, septiembre** del **año posterior al egreso** → `RE`.
+  - Turnos **febrero, abril, julio, septiembre** del **año posterior al egreso** → `RE` en **todas** las materias adeudadas (6.º y también 4.º, 5.º, etc.). Si `ento.examTodosInscri = T`, también `inscri = 1`.
   - **Diciembre** de ese año y **cualquier turno de años posteriores** → `PR`.
 - **Resto de no regulares:** `PR`. No se modifica `inscri`.
 
@@ -24,7 +24,7 @@ El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')`
 
 | Tabla | Campos | Notas |
 |-------|--------|--------|
-| `calificaciones` | `apro`, `condAdeuda`, `inscri` | Recálculo escribe condición; `inscri` solo en regulares con `examTodosInscri = T`. |
+| `calificaciones` | `apro`, `condAdeuda`, `inscri` | Recálculo escribe condición; `inscri` si `examTodosInscri = T` en regulares (PR) y en egresados en ventana RE. |
 | `matricula` | `idCondiciones`, `idTerlec`, `idNivel` | Regular = 1. Egreso = regular del ciclo `ano_turno - 1` en último curso. |
 | `cursos` | `c`, `idNivel` | Año de cursado. |
 | `terlec` | `ano` | El ciclo anterior se busca por año, no por `id - 1`. |
@@ -35,7 +35,7 @@ El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')`
 
 1. Elegir turno de examen y año lectivo; confirmar.
 2. Recorrer `apro = 1` del nivel.
-3. EQ/TM: omitir. Regular: PR. Egresado + feb/abr/jul/sep del año siguiente: RE. Resto: PR.
+3. EQ/TM: omitir. Regular: PR. Egresado + feb/abr/jul/sep del año siguiente: RE (todas las deudas). Resto: PR.
 
 ## Fuente de verdad
 
@@ -51,7 +51,8 @@ El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')`
 ## Qué no hacer / reglas de negocio
 
 - No pisar EQ/TM.
-- No borrar `inscri` de no regulares (mesas cargadas a mano).
+- No borrar `inscri` de no regulares (mesas cargadas a mano). En ventana RE sí se puede **poner** `inscri = 1` si `examTodosInscri = T` (no se pone 0).
+- Actas volantes: no exigir `calificaciones.idMatPlan`; resolver el plan como listado/permiso (`materias.idMatPlan` o, si falta, `calificaciones.idMatPlan`). Si no hay plan, agrupar por `idMaterias`. Detalle: [examenes-actas-volantes.md](examenes-actas-volantes.md).
 - No usar `idTerlec - 1` ni IDs fijos de turno.
 - No aplicar la rama RE en primario (sexto grado) ni en adultos.
 
@@ -62,3 +63,4 @@ El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')`
 - [ ] ¿Egresados: RE hasta septiembre del año siguiente y PR desde diciembre?
 - [ ] ¿El ciclo anterior se resuelve por `terlec.ano`?
 - [ ] ¿`RE` está en filtros, inscripción, notas y etiquetas de acta?
+- [ ] ¿Las deudas de cursos anteriores (p. ej. Matemática 4.º) de un egresado de 6.º quedan en `RE` y salen en el acta Regular de esa materia?

@@ -64,4 +64,24 @@ class MateriasAdeudadasCondicionRecalculoTest extends TestCase
         $this->assertSame('Equiv.', MateriasAdeudadasFiltros::condCalificacionDesdeExamen('EQ'));
         $this->assertSame('Regular', MateriasAdeudadasFiltros::condCalificacionDesdeExamen('TM'));
     }
+
+    public function test_exam_todos_inscribe_regular_y_egresado_re_en_todas_las_materias(): void
+    {
+        $this->assertSame(
+            ['condAdeuda' => 'PR', 'inscri' => 1],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('PR', true, 'T'),
+        );
+        $this->assertSame(
+            ['condAdeuda' => 'RE', 'inscri' => 1],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('RE', false, 'T'),
+        );
+        $this->assertSame(
+            ['condAdeuda' => 'PR'],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('PR', false, 'T'),
+        );
+        $this->assertSame(
+            ['condAdeuda' => 'RE'],
+            MateriasAdeudadasCondicionRecalculo::payloadActualizacion('RE', false, 'F'),
+        );
+    }
 }
