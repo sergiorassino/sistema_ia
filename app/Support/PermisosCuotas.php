@@ -105,6 +105,11 @@ final class PermisosCuotas
         return self::tiene(PermisosIaCatalog::ADMIN_ESTADISTICA_PAGO_CUOTAS);
     }
 
+    public static function puedeEstadisticaPagoPorCurso(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_ESTADISTICA_PAGO_POR_CURSO);
+    }
+
     public static function puedeTiposBeca(): bool
     {
         return self::tiene(PermisosIaCatalog::ADMIN_BECAS_TIPOS);
@@ -149,7 +154,8 @@ final class PermisosCuotas
         return self::puedeLibroAranceles()
             || self::puedeListadoPagosPorFecha()
             || self::puedeListadoEstudiantesPorCuota()
-            || self::puedeEstadisticaPagoCuotas();
+            || self::puedeEstadisticaPagoCuotas()
+            || self::puedeEstadisticaPagoPorCurso();
     }
 
     /** Grupo sidebar «Becas». */

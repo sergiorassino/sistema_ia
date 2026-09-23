@@ -48,6 +48,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Importes por curso | [cuotas-importes-por-curso.md](cuotas-importes-por-curso.md) |
 | Libro de aranceles | [libro-aranceles.md](libro-aranceles.md) |
 | Estadística de pago de cuotas | [estadistica-pago-cuotas.md](estadistica-pago-cuotas.md) |
+| Estadística de pago por curso y cuota | [estadistica-pago-por-curso.md](estadistica-pago-por-curso.md) |
 | Permisos por Tarea | [permisos-por-tarea.md](permisos-por-tarea.md) |
 | Libro de temas | [libro-de-temas.md](libro-de-temas.md) |
 | Parámetros del sistema | [parametros-sistema.md](parametros-sistema.md) |

@@ -151,6 +151,7 @@ use App\Http\Controllers\Cuotas\ResumenBecasPorNivelCsvController;
 use App\Http\Controllers\Cuotas\SiroCuponesVencidosArchivoController;
 use App\Http\Controllers\Cuotas\SiroDescargaRendicionPlanillaPdfController;
 use App\Http\Controllers\Cuotas\SiroSubidaBaseDeudaArchivoController;
+use App\Http\Controllers\Cuotas\EstadisticaPagoPorCursoPdfController;
 use App\Http\Controllers\Cuotas\ListadoEstudiantesPorCuotaPdfController;
 use App\Http\Controllers\Cuotas\ListadoPagosPorFechaPdfController;
 use App\Http\Controllers\Cuotas\CuotasAdeudadasEstudiantePdfController;
@@ -164,6 +165,7 @@ use App\Livewire\Cuotas\GeneracionMasivaCuotas;
 use App\Livewire\Cuotas\FacturacionMasivaAfip;
 use App\Livewire\Cuotas\LibroArancelesIndex;
 use App\Livewire\Cuotas\EstadisticaPagoCuotasIndex;
+use App\Livewire\Cuotas\EstadisticaPagoPorCursoIndex;
 use App\Livewire\Cuotas\ListadoEstudiantesPorCuotaIndex;
 use App\Livewire\Cuotas\ListadoPagosPorFechaIndex;
 use App\Livewire\Cuotas\GenerarCuotaEstudiante;
@@ -766,6 +768,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/estadistica-pago', EstadisticaPagoCuotasIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ESTADISTICA_PAGO_CUOTAS)
             ->name('cuotas.estadistica-pago');
+        Route::get('/estadistica-pago-por-curso', EstadisticaPagoPorCursoIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_ESTADISTICA_PAGO_POR_CURSO)
+            ->name('cuotas.estadistica-pago-por-curso');
+        Route::get('/estadistica-pago-por-curso/pdf', EstadisticaPagoPorCursoPdfController::class)
+            ->middleware('permiso:'.$pi::ADMIN_ESTADISTICA_PAGO_POR_CURSO)
+            ->name('cuotas.estadistica-pago-por-curso.pdf');
         Route::get('/consulta-afip-comprobante', ConsultaAfipComprobanteIndex::class)
             ->middleware('permiso:'.$pi::ADMIN_ARANCELES_ESTUDIANTE)
             ->name('cuotas.consulta-afip-comprobante');

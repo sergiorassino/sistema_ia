@@ -554,6 +554,20 @@
                     <span class="truncate">Estadística de pago de cuotas</span>
                 </a>
                 @endif
+                @if (\App\Support\PermisosCuotas::puedeEstadisticaPagoPorCurso())
+                <a href="{{ route('cuotas.estadistica-pago-por-curso') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', ['cuotas.estadistica-pago-por-curso', 'cuotas.estadistica-pago-por-curso.pdf'], true),
+                   ])
+                   title="{{ seSidebarTooltip('Estadística de pago por curso y cuota v1.0', \App\Support\PermisosIaCatalog::ADMIN_ESTADISTICA_PAGO_POR_CURSO) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 10h18M3 6h18M3 14h18M3 18h18"/>
+                    </svg>
+                    <span class="truncate">Estadística de pago por curso</span>
+                </a>
+                @endif
             </div>
             @endif
 
