@@ -12,8 +12,8 @@
  | Autogestión familia queda off (default
  | autogestion.actualizacion_datos.foto_carnet = false). No activar esa llave.
  |
- | Actas volantes de previos: una sola acta por materia del plan + condición
- | (reúne secciones del mismo curso). Default global es curso_seccion.
+ | Actas volantes de previos: usa el default global `curso_seccion`
+ | (una acta por materia del plan + condición + curso/sección).
  |
  | Egresados de último año (ventana feb–sep del año siguiente): Previo (`PR`).
  | Default global es Regular (`RE`).
@@ -57,7 +57,6 @@ return [
     ],
 
     'examenes' => [
-        'acta_volante_previos_modalidad' => 'curso',
         'egresados_ventana_condicion' => 'PR',
     ],
 ];

@@ -138,7 +138,7 @@ Modalidad de actas volantes de previos (secundario):
 - Alternativa `curso`: reúne alumnos de distintas secciones del mismo `idMatPlan`.
 
 ```php
-// config/tenants/iess.php — solo si difiere del default
+// config/tenants/{slug}.php — solo si difiere del default
 return [
     'examenes' => [
         'acta_volante_previos_modalidad' => 'curso',

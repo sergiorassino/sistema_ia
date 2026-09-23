@@ -6,8 +6,8 @@ Armar e imprimir actas volantes de materias adeudadas inscriptas a examen (`apro
 
 ## Modalidades / variantes
 
-- **`curso_seccion`** (default): una acta por `idMatPlan` + `condAdeuda` + sección estructural (letra/turno). Reúne el mismo espacio de distintos años lectivos.
-- **`curso`** (p. ej. IESS): una acta por `idMatPlan` + `condAdeuda` (junta secciones del mismo año de plan).
+- **`curso_seccion`** (default, IESS y el resto salvo override): una acta por `idMatPlan` + `condAdeuda` + sección estructural (letra/turno). Reúne el mismo espacio de distintos años lectivos.
+- **`curso`**: una acta por `idMatPlan` + `condAdeuda` (junta secciones del mismo año de plan). Override en `config/tenants/{slug}.php` si un colegio lo pide.
 
 El `idMatPlan` se resuelve igual que en listado/permiso: `materias.idMatPlan` si existe; si no, `calificaciones.idMatPlan`. Si no hay plan, se agrupa por `idMaterias`.
 
@@ -53,4 +53,4 @@ Menú de Secretaría, grupo Exámenes. Permiso IA 12. Contexto `schoolCtx()`.
 
 - [ ] ¿Una deuda de 4.º de una egresada de 6.º aparece en un acta Regular de esa materia?
 - [ ] ¿EQ/TM/PR/RE siguen en el encabezado de condición?
-- [ ] ¿IESS (`curso`) y el default (`curso_seccion`) siguen agrupando como antes, ahora con el plan resuelto?
+- [ ] ¿El default (`curso_seccion`) y la alternativa (`curso`) siguen agrupando como antes, ahora con el plan resuelto?
