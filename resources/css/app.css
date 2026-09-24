@@ -1007,6 +1007,14 @@
         color: #333333;
         white-space: normal;
     }
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-bonif-hoy {
+        color: #15803d;
+        font-weight: 700;
+    }
+    .gf.gf-cuotas-estudiante .gf-td.gf-td-interes-hoy {
+        color: #b91c1c;
+        font-weight: 700;
+    }
     .gf.gf-cuotas-estudiante .gf-td.gf-td-total-importe {
         color: #333333;
         font-size: 11px;

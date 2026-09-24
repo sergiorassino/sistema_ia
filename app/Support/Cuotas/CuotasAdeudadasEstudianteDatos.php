@@ -46,7 +46,7 @@ final class CuotasAdeudadasEstudianteDatos
             'terlecAno' => (string) ($encabezado['terlecAno'] ?? schoolCtx()->terlecAno()),
             'becaResumen' => (string) ($encabezado['becaResumen'] ?? ''),
             'codigoPagoElectronico' => '',
-            'filas' => self::filasAdministracion($cuotas),
+            'filas' => self::filasAdministracion($cuotas, $totales['porCuota']),
             'totales' => [
                 'neto' => CuotasFormato::formatearImporte($totales['neto']),
                 'conIntereses' => CuotasFormato::formatearImporte($totales['conIntereses']),
@@ -108,10 +108,13 @@ final class CuotasAdeudadasEstudianteDatos
     }
 
     /**
+     * Bonificación, interés y saldo al día de hoy, igual que la grilla de Gestión de aranceles.
+     *
      * @param  Collection<int, CuotaGenerada>  $cuotas
-     * @return list<array<string, string>>
+     * @param  array<int, array{interes: float, bonificacion: float, aPagar: float}>  $porCuota
+     * @return list<array<string, string|bool>>
      */
-    private static function filasAdministracion(Collection $cuotas): array
+    private static function filasAdministracion(Collection $cuotas, array $porCuota): array
     {
         $filas = [];
 
@@ -119,6 +122,12 @@ final class CuotasAdeudadasEstudianteDatos
             $nivelTexto = mb_strtoupper(trim((string) ($registro->curso?->nivel?->nivel ?? '')));
             [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
             $nivel = trim($nivelLinea1.' '.($nivelLinea2 !== '' ? $nivelLinea2 : ''));
+            $ajuste = $porCuota[(int) $registro->id] ?? null;
+            $bonificacion = $ajuste !== null ? (float) $ajuste['bonificacion'] : (float) ($registro->bonificacion ?? 0);
+            $interes = $ajuste !== null ? (float) $ajuste['interes'] : (float) ($registro->interes ?? 0);
+            $saldo = $ajuste !== null
+                ? round((float) ($registro->faltapa ?? 0) + $interes, 2)
+                : (float) ($registro->faltapa ?? 0);
 
             $filas[] = [
                 'ano' => (string) ($registro->terlec?->ano ?? ''),
@@ -130,10 +139,13 @@ final class CuotasAdeudadasEstudianteDatos
                 'venc2' => CuotasFormato::formatearFecha($registro->venc2),
                 'vencAct' => CuotasFormato::formatearFecha($registro->nueVenc),
                 'importe' => CuotasFormato::formatearImporte($registro->importe),
-                'bonificacion' => CuotasFormato::formatearImporte($registro->bonificacion),
-                'interes' => CuotasFormato::formatearImporte($registro->interes),
+                'bonificacion' => CuotasFormato::formatearImporte($bonificacion),
+                'interes' => CuotasFormato::formatearImporte($interes),
                 'pagado' => CuotasFormato::formatearImporte($registro->pagado),
-                'saldo' => CuotasFormato::formatearImporte($registro->faltapa),
+                'saldo' => CuotasFormato::formatearImporte($saldo),
+                'bonificacionColor' => $bonificacion > 0,
+                'interesColor' => $interes > 0,
+                'saldoColor' => $interes > 0,
             ];
         }
 

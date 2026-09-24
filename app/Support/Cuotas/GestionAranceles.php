@@ -359,7 +359,7 @@ final class GestionAranceles
      *     neto: float,
      *     interes: float,
      *     conIntereses: float,
-     *     porCuota: array<int, array{interes: float, aPagar: float}>
+     *     porCuota: array<int, array{interes: float, bonificacion: float, aPagar: float}>
      * }
      */
     public static function totalizarSaldosAdeudados(iterable $registros): array
@@ -397,11 +397,13 @@ final class GestionAranceles
                 null,
             );
             $interesFila = round((float) $calc['interes'], 2);
+            $bonificacionFila = round((float) $calc['bonificacion'], 2);
             $aPagarFila = round((float) $calc['aPagar'], 2);
             $interesTotal += $interesFila;
             $conIntereses += $aPagarFila;
             $porCuota[(int) $registro->id] = [
                 'interes' => $interesFila,
+                'bonificacion' => $bonificacionFila,
                 'aPagar' => $aPagarFila,
             ];
         }

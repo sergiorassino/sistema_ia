@@ -30,6 +30,18 @@ final class CuotasAdeudadasEstudianteTcpdf extends TCPDF
 
     private const TAMANO_FUENTE = 6;
 
+    /** Columnas de importe en el listado de Administración. */
+    private const COL_BONIF = 9;
+
+    private const COL_INTERES = 10;
+
+    private const COL_SALDO = 12;
+
+    /** Verde de la grilla (#15803d) y rojo de interés (#b91c1c). */
+    private const COLOR_BONIF = [21, 128, 61];
+
+    private const COLOR_INTERES = [185, 28, 28];
+
     /** @var list<float> */
     private const ANCHOS_ADMIN = [
         10, 18, 38, 48, 16, 16, 16, 16, 18, 15, 15, 15, 26,
@@ -230,7 +242,7 @@ final class CuotasAdeudadasEstudianteTcpdf extends TCPDF
                     (string) ($fila['saldo'] ?? ''),
                 ];
 
-            $this->dibujarFilaTabla($y, $valores, false, $indice % 2 === 1);
+            $this->dibujarFilaTabla($y, $valores, false, $indice % 2 === 1, false, false, false, $this->coloresFila($fila));
             $y += self::ALTURA_FILA;
             $indice++;
         }
@@ -275,7 +287,32 @@ final class CuotasAdeudadasEstudianteTcpdf extends TCPDF
     }
 
     /**
+     * @param  array<string, mixed>  $fila
+     * @return array<int, array{0: int, 1: int, 2: int}>
+     */
+    private function coloresFila(array $fila): array
+    {
+        if ($this->esAutogestion()) {
+            return [];
+        }
+
+        $colores = [];
+        if (! empty($fila['bonificacionColor'])) {
+            $colores[self::COL_BONIF] = self::COLOR_BONIF;
+        }
+        if (! empty($fila['interesColor'])) {
+            $colores[self::COL_INTERES] = self::COLOR_INTERES;
+        }
+        if (! empty($fila['saldoColor'])) {
+            $colores[self::COL_SALDO] = self::COLOR_INTERES;
+        }
+
+        return $colores;
+    }
+
+    /**
      * @param  list<string>  $valores
+     * @param  array<int, array{0: int, 1: int, 2: int}>  $coloresTexto
      */
     private function dibujarFilaTabla(
         float $y,
@@ -285,6 +322,7 @@ final class CuotasAdeudadasEstudianteTcpdf extends TCPDF
         bool $importeDestacado = false,
         bool $esEncabezadoTabla = false,
         bool $esFilaTotales = false,
+        array $coloresTexto = [],
     ): void {
         $anchos = $this->anchosColumnas();
         $x = self::MARGEN_IZQ;
@@ -316,13 +354,21 @@ final class CuotasAdeudadasEstudianteTcpdf extends TCPDF
                 default => 'L',
             };
 
-            if ($importeDestacado && $i === $ultimoIndice) {
-                $this->SetTextColor(185, 28, 28);
+            $colorCelda = $coloresTexto[$i] ?? null;
+            if ($colorCelda !== null) {
+                $this->SetTextColor($colorCelda[0], $colorCelda[1], $colorCelda[2]);
+                TcpdfFuenteArial::aplicar($this, 'B', self::TAMANO_FUENTE);
+            } elseif ($importeDestacado && $i === $ultimoIndice) {
+                $this->SetTextColor(self::COLOR_INTERES[0], self::COLOR_INTERES[1], self::COLOR_INTERES[2]);
             } else {
                 $this->SetTextColor(0, 0, 0);
             }
 
             $this->Cell($ancho, self::ALTURA_FILA, $texto, 1, 0, $align, true);
+
+            if ($colorCelda !== null) {
+                TcpdfFuenteArial::aplicar($this, $negrita ? 'B' : '', self::TAMANO_FUENTE);
+            }
         }
 
         $this->SetTextColor(0, 0, 0);

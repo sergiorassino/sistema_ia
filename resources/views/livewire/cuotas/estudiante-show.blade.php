@@ -131,10 +131,10 @@
                             <div class="gf-th gf-th-fecha">Venc 2</div>
                             <div class="gf-th gf-th-fecha">Venc. act.</div>
                             <div class="gf-th gf-th-right w-[5.25rem]">Importe</div>
-                            <div class="gf-th gf-th-right w-[4.75rem]">Bonif.</div>
-                            <div class="gf-th gf-th-right w-[4.75rem]">Interés</div>
+                            <div class="gf-th gf-th-right w-[4.75rem]" title="En cuotas adeudadas: bonificación que corresponde al día de hoy">Bonif.</div>
+                            <div class="gf-th gf-th-right w-[4.75rem]" title="En cuotas adeudadas: interés que corresponde al día de hoy">Interés</div>
                             <div class="gf-th gf-th-right w-[4.75rem]">Pagado</div>
-                            <div class="gf-th gf-th-right w-[4.75rem]">Saldo</div>
+                            <div class="gf-th gf-th-right w-[4.75rem]" title="En cuotas adeudadas: saldo neto más el interés al día de hoy">Saldo</div>
                             <div class="gf-th gf-th-accion" title="Imputar pago"></div>
                             <div class="gf-th gf-th-accion gf-th-accion-cupon" title="Cupón de pago">Cupón</div>
                             @if ($muestraComprobanteAfip)
@@ -153,6 +153,12 @@
                                 [$nivelLinea1, $nivelLinea2] = CuotasFormato::nivelEnDosLineas($nivelTexto);
                                 $facturaAfip = $facturasAfipPorCuota[(int) $c->id] ?? null;
                                 $tieneComprobantesAfip = isset($cuotasConComprobanteAfip[(int) $c->id]);
+                                $ajusteHoy = $pagada ? null : ($totalesAdeudados['porCuota'][(int) $c->id] ?? null);
+                                $bonifCelda = $ajusteHoy !== null ? (float) $ajusteHoy['bonificacion'] : (float) ($c->bonificacion ?? 0);
+                                $interesCelda = $ajusteHoy !== null ? (float) $ajusteHoy['interes'] : (float) ($c->interes ?? 0);
+                                $saldoCelda = $ajusteHoy !== null
+                                    ? round((float) ($c->faltapa ?? 0) + $interesCelda, 2)
+                                    : (float) ($c->faltapa ?? 0);
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
                                 <div class="gf-td gf-td-accion w-8 !py-1">
@@ -212,10 +218,13 @@
                                 <div class="gf-td gf-td-fecha tabular-nums">{{ CuotasFormato::formatearFecha($c->venc2) }}</div>
                                 <div class="gf-td gf-td-fecha tabular-nums">{{ CuotasFormato::formatearFecha($c->nueVenc) }}</div>
                                 <div class="gf-td gf-th-right w-[5.25rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->importe) }}</div>
-                                <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->bonificacion) }}</div>
-                                <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->interes) }}</div>
+                                <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap {{ $ajusteHoy !== null && $bonifCelda > 0 ? 'gf-td-bonif-hoy' : '' }}"
+                                     @if ($ajusteHoy !== null) title="Bonificación al día de hoy" @endif>{{ CuotasFormato::formatearImporte($bonifCelda) }}</div>
+                                <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap {{ $ajusteHoy !== null && $interesCelda > 0 ? 'gf-td-interes-hoy' : '' }}"
+                                     @if ($ajusteHoy !== null) title="Interés al día de hoy" @endif>{{ CuotasFormato::formatearImporte($interesCelda) }}</div>
                                 <div class="gf-td gf-th-right w-[4.75rem] tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->pagado) }}</div>
-                                <div class="gf-td gf-th-right w-[4.75rem] font-bold tabular-nums whitespace-nowrap">{{ CuotasFormato::formatearImporte($c->faltapa) }}</div>
+                                <div class="gf-td gf-th-right w-[4.75rem] font-bold tabular-nums whitespace-nowrap {{ $ajusteHoy !== null && $interesCelda > 0 ? 'gf-td-interes-hoy' : '' }}"
+                                     @if ($ajusteHoy !== null) title="Saldo neto más interés al día de hoy" @endif>{{ CuotasFormato::formatearImporte($saldoCelda) }}</div>
                                 <div class="gf-td gf-td-accion !py-1">
                                     @if ((float) $c->faltapa > 0)
                                         <x-nav-contexto-estudiante
