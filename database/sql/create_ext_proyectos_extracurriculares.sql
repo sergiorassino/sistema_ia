@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `ext_actividades` (
   `horario` VARCHAR(255) NULL,
   `descripcion` TEXT NULL,
   `evaluacion` TEXT NULL,
+  `presupuesto` TEXT NULL,
   `tipo_grupo` VARCHAR(20) NOT NULL DEFAULT 'cursos',
   `estado` VARCHAR(20) NOT NULL DEFAULT 'pendiente',
   `aprobado_por` INT UNSIGNED NULL,

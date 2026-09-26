@@ -39,7 +39,7 @@
         cursosMateriasAno: {{ (str_starts_with($route ?? '', 'abm.cursos') || str_starts_with($route ?? '', 'abm.materias-anio')) ? 'true' : 'false' }},
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         viajesSalidas: {{ request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf', 'viajes.salidas', 'viajes.salidas.create', 'viajes.salidas.edit', 'viajes.salidas.imprimir', 'viajes.salidas.pdf') ? 'true' : 'false' }},
-        proyectosExtracurriculares: {{ request()->routeIs('calendarioEscolar', 'proyectosExtracurriculares.gestion') ? 'true' : 'false' }},
+        proyectosExtracurriculares: {{ request()->routeIs('calendarioEscolar', 'proyectosExtracurriculares.gestion', 'proyectosExtracurriculares.proponer', 'proyectosExtracurriculares.create', 'proyectosExtracurriculares.edit', 'proyectosExtracurriculares.autorizaciones', 'proyectosExtracurriculares.autorizaciones.alumnos', 'proyectosExtracurriculares.notificaciones.alumnos') ? 'true' : 'false' }},
         materialDidactico: {{ request()->routeIs('material-didactico.*') ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
         calificacionesInicial: {{ str_starts_with($route ?? '', 'calificacionesInicial.') && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicial() ? 'true' : 'false' }},
@@ -521,6 +521,20 @@
                  x-show="groups.proyectosExtracurriculares && !sidebarCollapsed"
                  x-collapse
                  x-cloak>
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER))
+                <a href="{{ route('proyectosExtracurriculares.proponer') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => request()->routeIs('proyectosExtracurriculares.proponer', 'proyectosExtracurriculares.create', 'proyectosExtracurriculares.edit'),
+                   ])
+                   title="{{ seSidebarTooltip('Proponer proyectos extracurriculares a dirección', \App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="truncate">Proyectos extracurriculares</span>
+                </a>
+                @endif
                 <a href="{{ route('calendarioEscolar') }}"
                    @class([
                        'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
@@ -545,6 +559,20 @@
                                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span class="truncate">Aprobar proyectos</span>
+                    </a>
+                @endif
+                @if (tienePermiso(\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS))
+                    <a href="{{ route('proyectosExtracurriculares.autorizaciones') }}"
+                       @class([
+                           'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                           'is-active shadow-sm' => request()->routeIs('proyectosExtracurriculares.autorizaciones', 'proyectosExtracurriculares.autorizaciones.alumnos', 'proyectosExtracurriculares.notificaciones.alumnos'),
+                       ])
+                       title="{{ seSidebarTooltip('Autorizaciones y notificaciones de actividades extracurriculares', \App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS) }}">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="truncate">Autorizaciones y notificaciones</span>
                     </a>
                 @endif
             </div>

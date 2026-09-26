@@ -253,6 +253,12 @@ final class PermisosIaCatalog
     /** Aprobar proyectos extracurriculares y comunicar a los involucrados. */
     public const PROYECTOS_EXTRACURRICULARES_APROBAR = 96;
 
+    /** Ver y presentar proyectos extracurriculares propios en el Menú de Secretaría. */
+    public const PROYECTOS_EXTRACURRICULARES_VER = 109;
+
+    /** Ver actividades aprobadas e imprimir autorizaciones de padres o tutores. */
+    public const PROYECTOS_EXTRACURRICULARES_DOCUMENTOS = 110;
+
     /** Certificado de Jardín (inicial, sala de 5) y Certificado de Sexto Grado (primario). */
     public const CERT_JARDIN_SEXTO_GRADO = 97;
 
@@ -375,6 +381,8 @@ final class PermisosIaCatalog
             ['id' => 94, 'orden' => self::CALIF_RECALCULO_PROMEDIOS, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Recalcular promedios: completar el promedio final (calif) de todas las materias del ciclo a partir de Eval/JIS, tras la descarga CIDI.'],
             ['id' => 95, 'orden' => self::PRECEPTORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar preceptores por curso y año lectivo (tabla preceptoresporcurso).'],
             ['id' => 96, 'orden' => self::PROYECTOS_EXTRACURRICULARES_APROBAR, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Aprobar proyectos extracurriculares presentados por docentes y comunicar a los involucrados (organizadores, docentes del curso y preceptores).'],
+            ['id' => 109, 'orden' => self::PROYECTOS_EXTRACURRICULARES_VER, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Ver y presentar proyectos extracurriculares propios en el Menú de Secretaría (listado, alta y edición).'],
+            ['id' => 110, 'orden' => self::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS, 'tema' => 'PROYECTOS EXTRACURRICULARES', 'descripcion' => 'Ver actividades extracurriculares aprobadas e imprimir autorizaciones de padres o tutores para los alumnos involucrados.'],
             ['id' => 104, 'orden' => self::COPIAR_CURSOS_MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar cursos, materias y horarios de un año lectivo de origen a un año de destino (por nivel).')],
             ['id' => 105, 'orden' => self::COPIAR_ASIGNACIONES_PROF_PRECEP, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar asignación de profesores por curso (ppc) y de preceptores por curso de un año lectivo de origen a un año de destino (por nivel).')],
             ['id' => 106, 'orden' => self::PROMOVER_ALUMNOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Promover a todos los alumnos: crear matrícula y calificaciones en el año de destino a partir de los cursos marcados del año de origen.')],

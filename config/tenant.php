@@ -37,6 +37,12 @@ return [
      */
     'institucional' => [
         'logo_forma' => 'horizontal',
+        /**
+         * Membrete de autorizaciones de viaje. Vacío: la segunda línea usa `ento.categoria`.
+         * La leyenda de adscripción solo se imprime si el colegio la define.
+         */
+        'membrete_subtitulo' => '',
+        'membrete_adscripcion' => '',
     ],
 
     /**
@@ -387,6 +393,7 @@ return [
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
                 'libro_de_temas' => false,
+                'horario' => false,
             ],
             'primario' => [
                 'carga_estudiante' => false,
@@ -400,6 +407,7 @@ return [
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
                 'libro_de_temas' => false,
+                'horario' => false,
             ],
             'secundario' => [
                 'calificaciones' => true,
@@ -412,6 +420,7 @@ return [
                 'proyectos_extracurriculares' => true,
                 'calendario_escolar' => true,
                 'libro_de_temas' => false,
+                'horario' => false,
             ],
         ],
         /** @deprecated Preferir `menu.secundario.cuaderno_seguimiento_aulico`. Se mantiene como fallback. */

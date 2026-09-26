@@ -7,6 +7,25 @@
  */
 
 return [
+    'institucional' => [
+        'membrete_subtitulo' => 'DE ENSEÑANZA PRIVADA',
+        'membrete_adscripcion' => 'Adscripto a la Provincia Ley Nacional Nº 24049/91 y Provincial Nº 8253/92',
+    ],
+
+    'portal_docente' => [
+        'menu' => [
+            'inicial' => [
+                'horario' => true,
+            ],
+            'primario' => [
+                'horario' => true,
+            ],
+            'secundario' => [
+                'horario' => true,
+            ],
+        ],
+    ],
+
     'cuotas' => [
         'facturacion_afip' => [
             'habilitado' => true,

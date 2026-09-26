@@ -42,6 +42,7 @@ return new class extends Migration
                 $table->string('horario', 255)->nullable();
                 $table->text('descripcion')->nullable();
                 $table->text('evaluacion')->nullable();
+                $table->text('presupuesto')->nullable();
                 $table->string('tipo_grupo', 20)->default('cursos'); // cursos | alumnos
                 $table->string('estado', 20)->default('pendiente'); // pendiente | aprobado
                 $table->unsignedInteger('aprobado_por')->nullable();

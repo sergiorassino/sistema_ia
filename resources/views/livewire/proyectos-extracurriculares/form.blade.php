@@ -3,20 +3,21 @@
         <section class="se-hero">
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
-                    <p class="se-eyebrow">Autogestión docente</p>
+                    <p class="se-eyebrow">{{ $eyebrow }}</p>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
                         {{ $actividadId ? ($soloLectura ? 'Ver proyecto' : 'Editar proyecto') : 'Nuevo proyecto' }}
                     </h2>
                     <p class="text-sm text-white/80">Presentación a dirección · {{ schoolCtx()->nivelNombre() }}</p>
                 </div>
-                <a href="{{ route('portalDocente.proyectosExtracurriculares.index') }}"
+                <a href="{{ route($rutaListado) }}"
                    class="inline-flex items-center justify-center rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25">
                     Volver al listado
                 </a>
             </div>
         </section>
 
-        <form id="ext-proyecto-form" wire:submit.prevent="guardar()" novalidate class="space-y-6">
+        <form novalidate class="space-y-6"
+              onsubmit="event.preventDefault(); const root = this.querySelector('[data-ext-fechas]'); if (root &amp;&amp; window.Alpine) { window.Alpine.$data(root).presentar(); } return false;">
             @if ($errors->any())
                 <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                     <p class="font-semibold">No se pudo presentar el proyecto</p>
@@ -43,42 +44,106 @@
                     @error('nombre') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div>
+                @error('fechas') <p class="mb-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                <div wire:ignore
+                     data-ext-fechas
+                     x-data="{
+                        dias: {{ \Illuminate\Support\Js::from($fechasAlpine) }},
+                        soloLectura: {{ $soloLectura ? 'true' : 'false' }},
+                        guardando: false,
+                        nuevaClave() {
+                            if (window.crypto &amp;&amp; window.crypto.randomUUID) {
+                                return 'd' + window.crypto.randomUUID().replace(/-/g, '');
+                            }
+                            return 'd' + Date.now().toString(16) + Math.random().toString(16).slice(2, 10);
+                        },
+                        filaVacia() {
+                            const hoy = new Date();
+                            const y = hoy.getFullYear();
+                            const m = String(hoy.getMonth() + 1).padStart(2, '0');
+                            const d = String(hoy.getDate()).padStart(2, '0');
+                            return { clave: this.nuevaClave(), fecha: y + '-' + m + '-' + d, hora_inicio: '08:00', hora_fin: '12:00' };
+                        },
+                        agregar() {
+                            if (this.soloLectura) return;
+                            if (this.dias.length >= 40) {
+                                window.seSwalError &amp;&amp; window.seSwalError('Puede cargar hasta 40 días.');
+                                return;
+                            }
+                            this.dias.push(this.filaVacia());
+                        },
+                        quitar(clave) {
+                            if (this.soloLectura) return;
+                            if (this.dias.length <= 1) {
+                                window.seSwalError &amp;&amp; window.seSwalError('Tiene que quedar al menos un día.');
+                                return;
+                            }
+                            this.dias = this.dias.filter((dia) => dia.clave !== clave);
+                        },
+                        async presentar() {
+                            if (this.soloLectura || this.guardando) return;
+                            const form = this.$el.closest('form');
+                            const btn = form ? form.querySelector('button[type=submit]') : null;
+                            const label = form ? form.querySelector('.ext-btn-guardar-label') : null;
+                            const hint = form ? form.querySelector('.ext-btn-guardando') : null;
+                            const labelOriginal = label ? label.textContent : '';
+                            this.guardando = true;
+                            if (btn) btn.disabled = true;
+                            if (label) label.textContent = 'Guardando…';
+                            if (hint) hint.classList.remove('hidden');
+                            try {
+                                const json = JSON.stringify(this.dias);
+                                if (typeof window.extProyectoGuardar === 'function') {
+                                    await window.extProyectoGuardar(json);
+                                } else {
+                                    const host = this.$el.closest('[wire\\:id]');
+                                    const id = host ? host.getAttribute('wire:id') : null;
+                                    const wire = id &amp;&amp; window.Livewire ? window.Livewire.find(id) : null;
+                                    if (!wire) {
+                                        window.seSwalError &amp;&amp; window.seSwalError('No se pudo enviar el formulario. Recargue la página.');
+                                        return;
+                                    }
+                                    await wire.guardar(json);
+                                }
+                            } catch (e) {
+                            } finally {
+                                this.guardando = false;
+                                if (btn) btn.disabled = false;
+                                if (label) label.textContent = labelOriginal;
+                                if (hint) hint.classList.add('hidden');
+                            }
+                        }
+                     }">
                     <p class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Fechas y horarios</p>
                     <p class="mb-3 text-xs text-neutral-500">Un renglón por cada día. Puede agregar más de uno.</p>
-                    @error('fechas') <p class="mb-2 text-xs text-red-600">{{ $message }}</p> @enderror
                     <div class="space-y-3">
-                        @foreach ($fechas as $i => $fila)
-                            <div class="grid gap-2 rounded-2xl border border-accent-200 bg-accent-50/40 p-3 sm:grid-cols-[1fr_7rem_7rem_auto]" wire:key="fecha-{{ $i }}">
+                        <template x-for="dia in dias" :key="dia.clave">
+                            <div class="grid gap-2 rounded-2xl border border-accent-200 bg-accent-50/40 p-3 sm:grid-cols-[1fr_7rem_7rem_auto]">
                                 <div>
                                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Fecha</label>
-                                    <input type="date" wire:model="fechas.{{ $i }}.fecha" @disabled($soloLectura) class="form-input w-full">
+                                    <input type="date" x-model="dia.fecha" :disabled="soloLectura" class="form-input w-full">
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Inicio</label>
-                                    <input type="time" wire:model="fechas.{{ $i }}.hora_inicio" step="60" @disabled($soloLectura) class="form-input w-full">
+                                    <input type="time" x-model="dia.hora_inicio" step="60" :disabled="soloLectura" class="form-input w-full">
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Fin</label>
-                                    <input type="time" wire:model="fechas.{{ $i }}.hora_fin" step="60" @disabled($soloLectura) class="form-input w-full">
+                                    <input type="time" x-model="dia.hora_fin" step="60" :disabled="soloLectura" class="form-input w-full">
                                 </div>
-                                @if (! $soloLectura)
-                                    <div class="flex items-end">
-                                        <button type="button" wire:click="quitarFecha({{ $i }})"
-                                                class="inline-flex h-10 items-center rounded-xl bg-white px-3 text-xs font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
-                                            Quitar
-                                        </button>
-                                    </div>
-                                @endif
+                                <div class="flex items-end" x-show="!soloLectura">
+                                    <button type="button" @click="quitar(dia.clave)"
+                                            class="inline-flex h-10 items-center rounded-xl bg-white px-3 text-xs font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50">
+                                        Quitar
+                                    </button>
+                                </div>
                             </div>
-                        @endforeach
+                        </template>
                     </div>
-                    @if (! $soloLectura)
-                        <button type="button" wire:click="agregarFecha()"
-                                class="mt-3 inline-flex items-center rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
-                            Agregar día
-                        </button>
-                    @endif
+                    <button type="button" x-show="!soloLectura" @click="agregar()"
+                            class="mt-3 inline-flex items-center rounded-xl bg-white px-3 py-2 text-xs font-semibold text-primary-700 ring-1 ring-accent-200 hover:bg-accent-50 cursor-pointer">
+                        Agregar día
+                    </button>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -220,6 +285,12 @@
                     <textarea wire:model="evaluacion" rows="4" @disabled($soloLectura)
                               class="form-input w-full leading-relaxed"></textarea>
                 </div>
+                <div>
+                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Presupuesto de la actividad</label>
+                    <textarea wire:model="presupuesto" rows="4" maxlength="4000" @disabled($soloLectura)
+                              class="form-input w-full leading-relaxed"></textarea>
+                    @error('presupuesto') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             @if (! $soloLectura)
@@ -237,20 +308,15 @@
                         </div>
                     @endif
                     <div class="flex flex-wrap items-center justify-end gap-2">
-                        <a href="{{ route('portalDocente.proyectosExtracurriculares.index') }}"
+                        <a href="{{ route($rutaListado) }}"
                            class="btn-secondary">
                             Cancelar
                         </a>
-                        <button type="button"
-                                class="btn-primary"
-                                wire:click="guardar()"
-                                wire:loading.attr="disabled"
-                                wire:target="guardar">
-                            <span wire:loading.remove wire:target="guardar">{{ $actividadId ? 'Guardar cambios' : 'Presentar a dirección' }}</span>
-                            <span wire:loading wire:target="guardar">Guardando…</span>
+                        <button type="submit" class="btn-primary">
+                            <span class="ext-btn-guardar-label">{{ $actividadId ? 'Guardar cambios' : 'Presentar a dirección' }}</span>
                         </button>
                     </div>
-                    <p wire:loading.delay wire:target="guardar" class="text-xs font-semibold text-primary-700">
+                    <p class="ext-btn-guardando hidden text-xs font-semibold text-primary-700">
                         Presentando el proyecto a dirección…
                     </p>
                 </div>
@@ -299,6 +365,8 @@
 
     @script
     <script>
+        window.extProyectoGuardar = (json) => $wire.guardar(json);
+
         $wire.on('se-swal-exito', (event) => {
             window.seSwalExito?.(event?.mensaje ?? event?.detail?.mensaje ?? 'Guardado.');
         });

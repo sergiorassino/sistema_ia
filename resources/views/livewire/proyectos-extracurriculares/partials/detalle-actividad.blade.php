@@ -72,6 +72,10 @@
         <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Evaluación</p>
         <p class="mt-1 whitespace-pre-wrap leading-relaxed text-neutral-700">{{ $act->evaluacion ?: '—' }}</p>
     </div>
+    <div>
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Presupuesto de la actividad</p>
+        <p class="mt-1 whitespace-pre-wrap leading-relaxed text-neutral-700">{{ $act->presupuesto ?: '—' }}</p>
+    </div>
     @if ($act->proponente)
         <p class="text-xs text-neutral-500">Presentado por {{ $act->proponente->nombre_completo }}</p>
     @endif

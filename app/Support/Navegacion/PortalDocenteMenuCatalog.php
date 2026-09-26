@@ -22,12 +22,14 @@ final class PortalDocenteMenuCatalog
      *     route: string,
      *     active_routes: list<string>,
      *     modulo?: string,
-     *     menu_config?: string
+     *     menu_config?: string,
+     *     blank?: bool
      * }>
      */
     public static function items(): array
     {
         return [
+            self::itemHorario(NivelSistema::INICIAL, 'inicial'),
             [
                 'id' => 'inicial.proyectos_extracurriculares',
                 'nivel' => NivelSistema::INICIAL,
@@ -173,6 +175,7 @@ final class PortalDocenteMenuCatalog
                 'title' => 'Informe de progreso escolar (inicial)',
                 'icon' => 'print',
             ],
+            self::itemHorario(NivelSistema::PRIMARIO, 'primario'),
             [
                 'id' => 'primario.proyectos_extracurriculares',
                 'nivel' => NivelSistema::PRIMARIO,
@@ -290,6 +293,7 @@ final class PortalDocenteMenuCatalog
                 'title' => 'Listados de Estudiantes con Formato',
                 'icon' => 'rows',
             ],
+            self::itemHorario(NivelSistema::SECUNDARIO, 'secundario'),
             [
                 'id' => 'secundario.proyectos_extracurriculares',
                 'nivel' => NivelSistema::SECUNDARIO,
@@ -395,6 +399,36 @@ final class PortalDocenteMenuCatalog
                 'title' => 'Listados de Estudiantes con Formato',
                 'icon' => 'rows',
             ],
+        ];
+    }
+
+    /**
+     * Horario de las horas cátedra del docente de la sesión (PDF, sin IDs en la URL).
+     *
+     * @return array{
+     *     id: string,
+     *     nivel: int,
+     *     label: string,
+     *     title: string,
+     *     icon: string,
+     *     route: string,
+     *     active_routes: list<string>,
+     *     menu_config: string,
+     *     blank: bool
+     * }
+     */
+    private static function itemHorario(int $nivel, string $prefijo): array
+    {
+        return [
+            'id' => $prefijo.'.horario',
+            'nivel' => $nivel,
+            'menu_config' => "tenant.portal_docente.menu.{$prefijo}.horario",
+            'route' => 'portalDocente.horario',
+            'active_routes' => ['portalDocente.horario'],
+            'label' => 'Mi horario',
+            'title' => 'Horario de sus horas cátedra (se abre en una nueva pestaña)',
+            'icon' => 'clock',
+            'blank' => true,
         ];
     }
 }

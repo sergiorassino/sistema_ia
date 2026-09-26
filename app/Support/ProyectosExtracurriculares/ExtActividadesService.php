@@ -132,6 +132,7 @@ final class ExtActividadesService
      *   horario: string,
      *   descripcion: string,
      *   evaluacion: string,
+     *   presupuesto: string,
      *   tipo_grupo: string,
      *   fechas: list<array{fecha: string, hora_inicio: string, hora_fin: string}>,
      *   ids_cursos: list<int>,
@@ -169,6 +170,7 @@ final class ExtActividadesService
                 'horario' => $horario !== '' ? $horario : null,
                 'descripcion' => $datos['descripcion'],
                 'evaluacion' => $datos['evaluacion'] !== '' ? $datos['evaluacion'] : null,
+                'presupuesto' => trim((string) ($datos['presupuesto'] ?? '')) !== '' ? trim((string) $datos['presupuesto']) : null,
                 'tipo_grupo' => $datos['tipo_grupo'],
             ];
             if ($id === null || $id <= 0) {
@@ -203,7 +205,7 @@ final class ExtActividadesService
                 ));
             }
 
-            $act->fechas()->delete();
+            ExtFecha::query()->where('id_actividad', $act->id)->delete();
             foreach ($datos['fechas'] as $fila) {
                 ExtFecha::query()->create([
                     'id_actividad' => $act->id,
@@ -260,7 +262,7 @@ final class ExtActividadesService
         abort_unless($act->estaPendiente(), 403, 'Solo se puede eliminar un proyecto pendiente de aprobación.');
 
         DB::transaction(function () use ($act) {
-            $act->fechas()->delete();
+            ExtFecha::query()->where('id_actividad', $act->id)->delete();
             $act->cursos()->delete();
             $act->alumnos()->delete();
             $act->docentes()->delete();
@@ -1032,6 +1034,11 @@ final class ExtActividadesService
             $lineas[] = '';
             $lineas[] = 'Evaluación:';
             $lineas[] = trim((string) $act->evaluacion);
+        }
+        if (trim((string) ($act->presupuesto ?? '')) !== '') {
+            $lineas[] = '';
+            $lineas[] = 'Presupuesto de la actividad:';
+            $lineas[] = trim((string) $act->presupuesto);
         }
 
         return implode("\n", $lineas);

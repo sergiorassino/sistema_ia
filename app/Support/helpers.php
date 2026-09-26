@@ -1569,6 +1569,30 @@ if (! function_exists('tenantPortalDocenteLibroDeTemas')) {
     }
 }
 
+if (! function_exists('tenantPortalDocenteHorarioHabilitado')) {
+    /**
+     * Si el Menú de Docentes incluye el horario del propio docente (nivel de sesión).
+     * Default false; activar en `config/tenants/{slug}.php`.
+     */
+    function tenantPortalDocenteHorarioHabilitado(): bool
+    {
+        $idNivel = (int) (schoolCtx()->idNivel ?? 0);
+
+        $claveNivel = match ($idNivel) {
+            NivelSistema::INICIAL => 'inicial',
+            NivelSistema::PRIMARIO => 'primario',
+            NivelSistema::SECUNDARIO => 'secundario',
+            default => null,
+        };
+
+        if ($claveNivel === null) {
+            return false;
+        }
+
+        return (bool) config("tenant.portal_docente.menu.{$claveNivel}.horario", false);
+    }
+}
+
 if (! function_exists('tenantProgramasExamenHabilitado')) {
     /**
      * Descarga pública de programas de examen (/programas-examen).

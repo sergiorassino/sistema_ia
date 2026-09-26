@@ -761,21 +761,22 @@ final class ManualSistemaCatalog
                 'descripcion' => 'Propuestas de docentes, aprobación de dirección y calendario escolar compartido.',
                 'modulos'     => [
                     self::mod(
-                        'Proponer un proyecto (Menú de Docentes)',
-                        'Menú de Docentes → Proyectos extracurriculares',
-                        'El docente presenta a dirección una actividad extraprogramática: fechas, lugar, grupo, docentes y descripción.',
+                        'Proponer un proyecto',
+                        'Menú de Docentes o Menú de Secretaría → Proyectos extracurriculares',
+                        'Docentes, directivos y secretarios presentan a dirección una actividad extraprogramática: fechas, lugar, grupo, docentes y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
                         [
                             'Abra Proyectos extracurriculares y pulse Nuevo proyecto.',
                             'Complete el nombre, las fechas (un renglón por día, con horario de inicio y fin) y el lugar.',
                             'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
                             'Indique docente(s) a cargo y, si corresponde, otros docentes (legajos con rol Profesor/a).',
-                            'Complete la breve descripción (Actividades Previas / Durante / Posteriores) y la evaluación.',
+                            'Complete la breve descripción (Actividades Previas / Durante / Posteriores), la evaluación y el presupuesto de la actividad.',
                             'Pulse Presentar a dirección. El proyecto queda pendiente hasta que dirección lo apruebe.',
                         ],
                         [
                             'Solo puede editar o eliminar un proyecto mientras esté pendiente.',
                             'El tipo de registro es, por ahora, Actividad Extraprogramática.',
                         ],
+                        'Menú de Secretaría: permiso IA orden 109. Menú de Docentes: sin permiso IA',
                     ),
                     self::mod(
                         'Aprobar y comunicar (dirección)',
@@ -794,13 +795,30 @@ final class ManualSistemaCatalog
                         'Permiso IA orden 96',
                     ),
                     self::mod(
+                        'Autorizaciones y notificaciones',
+                        'Menú de Secretaría → Proyectos extracurriculares → Autorizaciones y notificaciones',
+                        'Lista las actividades ya aprobadas. Al elegir Autorizaciones se ven los alumnos del viaje y se emite un PDF con los datos personales y los de la actividad, listo para la firma del padre, la madre o el tutor. Notificaciones muestra el mismo listado; el PDF se agregará después.',
+                        [
+                            'Abra Autorizaciones y notificaciones.',
+                            'Busque la actividad aprobada y pulse Autorizaciones.',
+                            'Revise los alumnos (vienen marcados). Quite los que no correspondan.',
+                            'Pulse Generar autorizaciones. Se abre el PDF, una hoja por alumno.',
+                        ],
+                        [
+                            'Solo entran actividades aprobadas del nivel y ciclo activos.',
+                            'El grupo por cursos incluye alumnos regulares sin baja. El grupo por alumnos incluye los legajos elegidos que sigan matriculados en el ciclo.',
+                            'La firma, el DNI del adulto y el teléfono quedan en blanco para completar a mano. Si el legajo no tiene grupo sanguíneo, el formulario deja ese dato para completar.',
+                        ],
+                        'Permiso IA orden 110',
+                    ),
+                    self::mod(
                         'Calendario escolar',
                         'Menú de Secretaría o Menú de Docentes → Calendario escolar (también en el escritorio)',
                         'Muestra las actividades aprobadas por mes, semana o día. Al hacer clic se ve el detalle completo.',
                         [
                             'Abra el calendario o use el recuadro del escritorio.',
                             'Alterne Mes, Semana o Día y recorra el período con las flechas.',
-                            'Haga clic en el nombre de la actividad para ver fechas, lugar, grupo, docentes, descripción y evaluación.',
+                            'Haga clic en el nombre de la actividad para ver fechas, lugar, grupo, docentes, descripción, evaluación y presupuesto.',
                         ],
                         [
                             'Solo se listan proyectos aprobados del nivel y ciclo lectivo activos.',

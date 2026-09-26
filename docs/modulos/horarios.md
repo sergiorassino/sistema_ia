@@ -27,6 +27,7 @@ Comportamiento de Secretaría único para todos los tenants.
 |------------|------------------|
 | Menú de Secretaría (grupo HORARIOS) | Siempre; Configuración y Carga exigen permiso 13 |
 | Horario de clase (Menú de Alumnos) | `tenant.autogestion.horario_clase.habilitado` (default `false`). Opcional `niveles_habilitados` (p. ej. `[3]` solo secundario). Helper: `tenantAutogestionHorarioClaseHabilitada()` |
+| Mi horario (Menú de Docentes) | `tenant.portal_docente.menu.{inicial\|primario\|secundario}.horario` (default `false`). Helper: `tenantPortalDocenteHorarioHabilitado()`. Hoy **25demayo**. |
 
 ## Actores y permisos
 
@@ -39,8 +40,9 @@ Permiso IA orden **13** (`PermisosIaCatalog::HORARIOS`): *Configuración de hora
 | Impresión de horarios | Secretaría → HORARIOS | Cualquier usuario de Secretaría (**sin** 13) |
 | Profesores presentes | Secretaría → HORARIOS | Igual que Impresión (**sin** 13) |
 | Horario de clase (PDF) | Alumnos | Tenant + matrícula del ciclo de autogestión |
+| Mi horario (PDF) | Docentes | Flag de menú del nivel de sesión; solo el docente logueado |
 
-No hay ítems en Menú de Administración ni Menú de Docentes.
+No hay ítems en Menú de Administración.
 
 Requisitos de negocio para que la grilla tenga sentido:
 
@@ -110,6 +112,10 @@ Cruza `horarios26` + `reloj` + `ppc`. Un renglón por docente en el día y la fr
 
 Si el tenant lo habilita: PDF del curso de la matrícula del alumno (`HorarioCursoPdfExport`, misma grilla `horarios26`). URL opaca / sesión alumno; sin IDs de curso en la ruta pública.
 
+### 6. Mi horario (Menú de Docentes)
+
+Si el tenant lo habilita en el nivel de sesión: ítem **Mi horario** abre en otra pestaña el PDF del docente autenticado (`horarios26`, misma grilla que Impresión por docente). La ruta no lleva IDs: el profesor sale de `schoolCtx()->idProfesor`. Sin permiso 13. Hoy activo en **25demayo** (inicial, primario y secundario).
+
 ## Flujo principal (Secretaría)
 
 1. Configurar turnos, días y reloj (permiso 13).
@@ -128,9 +134,10 @@ Si el tenant lo habilita: PDF del curso de la matrícula del alumno (`HorarioCur
 | PDF curso | `app/Support/Horarios/HorarioCursoPdfExport.php` + `HorarioCursoPdfController` |
 | PDF docente | `app/Http/Controllers/Horarios/HorarioProfesorPdfController.php` |
 | PDF alumno | `app/Http/Controllers/Alumnos/HorarioClasePdfController.php` |
+| PDF docente (portal) | `app/Http/Controllers/PortalDocente/HorarioDocentePdfController.php` |
 | Profesores presentes | ver [profesores-presentes.md](profesores-presentes.md) |
 | Permiso en Livewire | `app/Livewire/Horarios/Concerns/RequiresPermisoHorariosConfigCarga.php` |
-| Rutas | `horarios.config`, `horarios.carga`, `horarios.impresion`, `horarios.pdf.curso`, `horarios.pdf.profesor`, `horarios.profesores-presentes` (+ `.pdf`), `alumnos.horario-clase` |
+| Rutas | `horarios.config`, `horarios.carga`, `horarios.impresion`, `horarios.pdf.curso`, `horarios.pdf.profesor`, `horarios.profesores-presentes` (+ `.pdf`), `alumnos.horario-clase`, `portalDocente.horario` |
 | Menú | `resources/views/layouts/app.blade.php` (grupo HORARIOS) |
 | SQL tabla grilla | `database/sql/horarios26_tabla_idempotente.sql` |
 
@@ -142,7 +149,7 @@ Si el tenant lo habilita: PDF del curso de la matrícula del alumno (`HorarioCur
 4. Filtrar cursos/materias por `schoolCtx()->idNivel` / `idTerlec`; revalidar IDs en los PDF.
 5. No marcar celdas sin asignación `ppc`.
 6. PDF de curso/docente: DomPDF existente (`pdf.horario-grid`); **Profesores presentes** es PDF nuevo → TCPDF + Arial.
-7. Autogestión: no poner IDs de curso/alumno en la URL (`OpaqueRouteToken` / sesión).
+7. Autogestión: no poner IDs de curso, alumno ni docente en la URL (`OpaqueRouteToken` / sesión). El PDF del Menú de Docentes es solo el de `schoolCtx()->idProfesor`.
 8. Confirmaciones y errores: `se-swal-*`, no `alert`/`confirm` nativos.
 
 ## Checklist al modificar

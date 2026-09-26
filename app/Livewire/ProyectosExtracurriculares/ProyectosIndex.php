@@ -3,6 +3,7 @@
 namespace App\Livewire\ProyectosExtracurriculares;
 
 use App\Support\ProyectosExtracurriculares\ExtActividadesService;
+use App\Support\ProyectosExtracurriculares\RutasPortal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
@@ -15,6 +16,11 @@ class ProyectosIndex extends Component
     public const POR_PAGINA = 50;
 
     public string $buscar = '';
+
+    public function mount(): void
+    {
+        RutasPortal::asegurarAcceso();
+    }
 
     public function updatedBuscar(): void
     {
@@ -52,6 +58,9 @@ class ProyectosIndex extends Component
             'tablasOk' => $tablasOk,
             'mensajeTabla' => $tablasOk ? '' : ExtActividadesService::mensajeTablasFaltantes(),
             'registros' => $tablasOk ? $q->paginate(self::POR_PAGINA) : null,
-        ])->layout('layouts.docente', ['pageTitle' => 'Proyectos extracurriculares']);
+            'rutaCrear' => RutasPortal::crear(),
+            'rutaEditar' => RutasPortal::editar(),
+            'eyebrow' => RutasPortal::eyebrow(),
+        ])->layout(RutasPortal::layout(), ['pageTitle' => 'Proyectos extracurriculares']);
     }
 }

@@ -20,6 +20,7 @@ class ExtActividad extends Model
         'horario',
         'descripcion',
         'evaluacion',
+        'presupuesto',
         'tipo_grupo',
         'estado',
         'aprobado_por',

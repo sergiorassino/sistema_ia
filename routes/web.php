@@ -34,11 +34,13 @@ use App\Http\Controllers\CalificacionesSecundario\CalifSecundarioFotoCarnetContr
 use App\Http\Controllers\CalificacionesSecundario\PlanillaCalificacionesEpqSecundarioPdfController;
 use App\Http\Controllers\PortalDocente\PortalDocentePlanillaCalificacionesPdfController;
 use App\Http\Controllers\PortalDocente\PortalDocenteCargaCalificacionesEpqSecundarioPdfController;
+use App\Http\Controllers\PortalDocente\HorarioDocentePdfController;
 use App\Http\Controllers\PortalDocente\PortalDocenteFotoCarnetController;
 use App\Http\Controllers\CalificacionesSecundario\ActaVolanteColoquiosPdfController;
 use App\Http\Controllers\CalificacionesSecundario\PlanillaResumenCalificacionesPdfController;
 use App\Http\Controllers\EstudiantesDatosExcelController;
 use App\Http\Controllers\EstudiantesDatosPdfController;
+use App\Http\Controllers\ProyectosExtracurriculares\AutorizacionActividadPdfController;
 use App\Http\Controllers\Viajes\SalidaViajePdfController;
 use App\Http\Controllers\EstudiantesExcelController;
 use App\Http\Controllers\InformeInasistenciasPdfController;
@@ -114,6 +116,8 @@ use App\Livewire\Docentes\CertificacionServicios\CertificacionServiciosIndex;
 use App\Livewire\Docentes\Capacitacion\CapacitacionDocenteIndex;
 use App\Livewire\Docentes\LibroDeTemas\LibroDeTemasClases;
 use App\Livewire\Docentes\LibroDeTemas\LibroDeTemasIndex;
+use App\Livewire\ProyectosExtracurriculares\AutorizacionAlumnos;
+use App\Livewire\ProyectosExtracurriculares\AutorizacionesIndex;
 use App\Livewire\ProyectosExtracurriculares\CalendarioEscolar;
 use App\Livewire\ProyectosExtracurriculares\GestionIndex as ProyectosExtracurricularesGestionIndex;
 use App\Livewire\ProyectosExtracurriculares\ProyectoForm as ProyectoExtracurricularForm;
@@ -526,6 +530,7 @@ Route::middleware(['auth', 'school.context'])->post('/autogestion-docente/activa
 // Menú de Docentes — IdTipoProf = 6 (profesortipo «Profesor/a»)
 Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('portal-docente')->group(function () {
     Route::get('/', DashboardController::class)->name('portalDocente.home');
+    Route::get('/horario', HorarioDocentePdfController::class)->name('portalDocente.horario');
 
     Route::get('/calificaciones', PortalDocenteCalificacionesIndex::class)
         ->name('portalDocente.calificaciones');
@@ -1113,9 +1118,31 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     });
 
     Route::get('/calendario-escolar', CalendarioEscolar::class)->name('calendarioEscolar');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER)->group(function () {
+        Route::get('/proyectos-extracurriculares/presentar', ProyectosExtracurricularesIndex::class)
+            ->name('proyectosExtracurriculares.proponer');
+        Route::get('/proyectos-extracurriculares/nuevo', ProyectoExtracurricularForm::class)
+            ->name('proyectosExtracurriculares.create');
+        Route::get('/proyectos-extracurriculares/{ref}/editar', ProyectoExtracurricularForm::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('proyectosExtracurriculares.edit');
+    });
     Route::get('/proyectos-extracurriculares', ProyectosExtracurricularesGestionIndex::class)
         ->middleware('permiso:'.\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR)
         ->name('proyectosExtracurriculares.gestion');
+
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS)->group(function () {
+        Route::get('/proyectos-extracurriculares/autorizaciones', AutorizacionesIndex::class)
+            ->name('proyectosExtracurriculares.autorizaciones');
+        Route::get('/proyectos-extracurriculares/autorizaciones/{id}', AutorizacionAlumnos::class)
+            ->whereNumber('id')
+            ->name('proyectosExtracurriculares.autorizaciones.alumnos');
+        Route::get('/proyectos-extracurriculares/notificaciones/{id}', AutorizacionAlumnos::class)
+            ->whereNumber('id')
+            ->name('proyectosExtracurriculares.notificaciones.alumnos');
+        Route::post('/proyectos-extracurriculares/autorizaciones/pdf', AutorizacionActividadPdfController::class)
+            ->name('proyectosExtracurriculares.autorizaciones.pdf');
+    });
 
     // Material Didáctico — acceso: Admin (68) | Profesor (69) | Solo Lectura (70)
     // Los órdenes separados por coma son OR (ver CheckPermiso con ...$ordenes).

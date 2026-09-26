@@ -534,6 +534,17 @@
     .gf.gf-ext-proy.gf-ext-proy--gestion {
         min-width: 52rem;
     }
+    .gf.gf-ext-proy .gf-col-lugar,
+    .gf.gf-ext-proy .gf-col-grupo {
+        flex: 1.1 1 9rem;
+    }
+    .gf.gf-ext-proy.gf-ext-proy--autorizaciones .gf-col-acciones {
+        flex: 0 0 16.5rem;
+        width: 16.5rem;
+    }
+    .gf.gf-ext-proy.gf-ext-proy--autorizaciones {
+        min-width: 58rem;
+    }
 
     /* Fila de datos (listado o formulario) */
     .gf-row {
