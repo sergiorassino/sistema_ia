@@ -3,6 +3,7 @@
 namespace App\Livewire\Cuotas;
 
 use App\Models\Cuota;
+use App\Support\Cuotas\CuotasDetalleCatalog;
 use App\Support\Cuotas\CuotasImportesCatalog;
 use App\Support\Cuotas\CuotasPlantillaCatalog;
 use App\Support\Navegacion\ContextoCuotasImportesSesion;
@@ -240,6 +241,7 @@ class CuotasPlantillaIndex extends Component
 
         $nombre = (string) $cuota->nombre;
         DB::transaction(function () use ($cuota): void {
+            CuotasDetalleCatalog::eliminarPorCuota((int) $cuota->id);
             CuotasImportesCatalog::eliminarPorCuota((int) $cuota->id);
             $cuota->delete();
         });

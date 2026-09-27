@@ -58,8 +58,20 @@
                     wire:target="impactarTodos"
                     @disabled($rendiciones->isEmpty())
                     class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">
-                Impactar los pagos en las cuotas de los alumnos
-            </button>
+                    Impactar los pagos en las cuotas de los alumnos
+                </button>
+                @if (tenantCuotasFacturacionAfipEnCobro())
+                    <button type="button"
+                            wire:click="abrirFacturacionCobro"
+                            wire:loading.attr="disabled"
+                            wire:target="abrirFacturacionCobro,emitirFacturacionCobro"
+                            @disabled($rendiciones->isEmpty())
+                            class="rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:border-primary-500 disabled:opacity-50"
+                            title="Facturar en AFIP los pagos ya impactados de esta planilla">
+                        <span wire:loading.remove wire:target="abrirFacturacionCobro">Facturar cobros</span>
+                        <span wire:loading wire:target="abrirFacturacionCobro">Preparando…</span>
+                    </button>
+                @endif
             @if ($rendiciones->isNotEmpty())
                 <a href="{{ $pdfUrl }}"
                    target="_blank"
@@ -181,6 +193,14 @@
             </div>
         @endif
     </section>
+
+    @if (tenantCuotasFacturacionAfipEnCobro())
+        @include('livewire.cuotas.partials.facturacion-cobro-afip-previa', [
+            'vistaPreviaCobro' => $vistaPreviaCobro,
+            'mostrarVolverSinFacturar' => false,
+        ])
+        @include('livewire.cuotas.partials.facturacion-masiva-afip-modal-resp-admi')
+    @endif
 
     @if ($modalResumenAbierto)
         @teleport('body')

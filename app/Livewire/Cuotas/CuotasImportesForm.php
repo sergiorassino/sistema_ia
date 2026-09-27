@@ -6,6 +6,7 @@ use App\Models\CuotasImporte;
 use App\Models\Curso;
 use App\Support\Cuotas\CuotasImportesCatalog;
 use App\Support\Database\PersistenciaColumnas;
+use App\Support\Navegacion\ContextoCuotasDetalleSesion;
 use App\Support\Navegacion\ContextoCuotasImportesSesion;
 use App\Support\PermisosCuotas;
 use Illuminate\Database\QueryException;
@@ -143,6 +144,14 @@ class CuotasImportesForm extends Component
             'value' => $formateado,
             'message' => '',
         ]);
+    }
+
+    public function irADiscriminacion(): void
+    {
+        abort_unless(PermisosCuotas::puedeImportesPorCurso(), 403);
+        CuotasImportesCatalog::cuotaDelCicloOrFail($this->idCuotas);
+        ContextoCuotasDetalleSesion::fijar($this->idCuotas);
+        $this->redirectRoute('cuotas.detalle.editar', navigate: true);
     }
 
     public function render()

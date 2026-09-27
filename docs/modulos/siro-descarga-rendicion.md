@@ -110,6 +110,10 @@ Recorre las rendiciones de la planilla (`orderBy id`):
 
 No se puede borrar la planilla ni sus pagos si `planilla.impactado=1`.
 
+### 4. Facturar cobros AFIP (modo `cobro`)
+
+Solo si `tenantCuotasFacturacionAfipEnCobro()` (EPQ y SFQ). El botón **Facturar cobros** arma la vista previa de los pagos **ya impactados** de esa planilla (un comprobante por estudiante). Se puede editar el destinatario (`legajos.respAdmiNom` / `respAdmiDni`) y después emitir. No factura rendiciones sin impactar ni pagos que ya tienen factura vigente. El importe es el del pago (capital + interés − bonificación). El PDF imprime el aporte estatal del nivel del alumno (`ento.aporteEstatal`).
+
 ## Identificación del cupón / cuota (cadena de match)
 
 Orden en `SiroDescargaRendicionCupon::resolver`:

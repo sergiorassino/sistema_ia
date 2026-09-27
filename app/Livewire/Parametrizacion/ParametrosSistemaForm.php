@@ -411,6 +411,7 @@ class ParametrosSistemaForm extends Component
             'telefono' => ($v = trim($this->telefono)) !== '' ? $v : null,
             'mail' => ($v = trim($this->mail)) !== '' ? $v : null,
             'replegal' => ($v = trim($this->replegal)) !== '' ? $v : null,
+            'aporteEstatal' => ($v = trim($this->aporteEstatal)) !== '' ? $v : null,
         ];
 
         if ($this->facturacionAfipHabilitadaEnTenant()) {
@@ -420,10 +421,6 @@ class ParametrosSistemaForm extends Component
             $payload['afipCertCarpeta'] = ($v = trim($this->afipCertCarpeta)) !== '' ? $v : null;
             $payload['afipCertKey'] = ($v = trim($this->afipCertKey)) !== '' ? $v : null;
             $payload['afipCertCrt'] = ($v = trim($this->afipCertCrt)) !== '' ? $v : null;
-        }
-
-        if ($this->muestraAporteEstatalEnTenant()) {
-            $payload['aporteEstatal'] = ($v = trim($this->aporteEstatal)) !== '' ? $v : null;
         }
 
         if ($this->puedeEditarCamposSiro()) {
@@ -844,7 +841,6 @@ class ParametrosSistemaForm extends Component
         return view('livewire.parametrizacion.parametros-sistema-form', [
             'nivelNombre' => schoolCtx()->nivelNombre(),
             'facturacionAfipHabilitada' => $this->facturacionAfipHabilitadaEnTenant(),
-            'muestraAporteEstatal' => $this->muestraAporteEstatalEnTenant(),
             'puedeEditarCamposSiro' => $this->puedeEditarCamposSiro(),
             'logoPreviewUrl' => $this->logoPreviewUrl,
             'logoLoginPreviewUrl' => $this->logoLoginPreviewUrl,
@@ -861,11 +857,6 @@ class ParametrosSistemaForm extends Component
     private function facturacionAfipHabilitadaEnTenant(): bool
     {
         return (bool) config('tenant.cuotas.facturacion_afip.habilitado', false);
-    }
-
-    private function muestraAporteEstatalEnTenant(): bool
-    {
-        return tenantCuotasFacturacionAfipMuestraAporteEstatal();
     }
 
     private static function fechaAfipParaInput(mixed $valor): string

@@ -52,7 +52,12 @@ class EstablecerContextoEstudianteController extends Controller
 
         if (isset($validated['idCuotaPago'])) {
             $datosContexto['idCuotaPago'] = (int) $validated['idCuotaPago'];
-        } elseif (in_array($destino, ['cuotas.cuota.historial-pagos', 'cuotas.estudiante', 'cuotas.estudiante.generar'], true)) {
+        } elseif (in_array($destino, [
+            'cuotas.cuota.historial-pagos',
+            'cuotas.cuota.comprobantes-afip',
+            'cuotas.estudiante',
+            'cuotas.estudiante.generar',
+        ], true)) {
             $datosContexto['idCuotaPago'] = 0;
         }
 

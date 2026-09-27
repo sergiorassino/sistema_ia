@@ -96,7 +96,9 @@ class CuotasEstudianteShow extends Component
         $cuotas = $this->cuotasListado();
         $idsCuotas = $cuotas->pluck('id')->map(fn ($id) => (int) $id)->all();
         $afipEnDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
-        $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible() && $afipEnDevengamiento;
+        $afipEnCobro = tenantCuotasFacturacionAfipEnCobro();
+        $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible()
+            && ($afipEnDevengamiento || $afipEnCobro);
 
         return view('livewire.cuotas.estudiante-show', [
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
@@ -104,7 +106,9 @@ class CuotasEstudianteShow extends Component
             'totalesAdeudados' => GestionAranceles::totalizarSaldosAdeudados($cuotas),
             'cantidadSeleccionadas' => count($this->cuotasSeleccionadas),
             'muestraComprobanteAfip' => $muestraComprobanteAfip,
-            'facturasAfipPorCuota' => [],
+            'facturasAfipPorCuota' => $afipEnCobro
+                ? ComprobantesAfipCuotaService::facturasVigentesPorCuotasGeneradas($idsCuotas)
+                : [],
             'cuotasConComprobanteAfip' => $muestraComprobanteAfip
                 ? ComprobantesAfipCuotaService::cuotasConComprobantesAfip($idsCuotas)
                 : [],

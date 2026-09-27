@@ -214,3 +214,4 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-09-10:** Configuración: **Promover a todos los alumnos** (permiso IA orden **106**, reservado al administrador). Visible en ambos menús, después de Copiar asignación de profesores y preceptores.
 - **2026-09-17:** Administración → Resúmenes: **Estadística de pago de cuotas** (`cuotas.estadistica-pago`; permiso IA orden **107**). Gráficos de % pagadas / no pagadas por plantilla del ciclo activo.
 - **2026-09-23:** Administración → Resúmenes: **Estadística de pago por curso y cuota** (`cuotas.estadistica-pago-por-curso`; permiso IA orden **108**). PDF apaisado por sala/grado y mes.
+- **2026-09-26:** Administración → Gestión masiva: **Discriminación de cuotas** (`cuotas.detalle.*`; mismo permiso que Importes por curso). Ítems de factura por curso (un curso puede tener un servicio que otro no), con nombre e importe en `cuotasdetalle`, y copia de la discriminación entre cursos.

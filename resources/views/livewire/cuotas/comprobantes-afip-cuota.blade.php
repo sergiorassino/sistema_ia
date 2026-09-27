@@ -10,7 +10,7 @@
         <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0 space-y-0.5">
                 <p class="se-eyebrow">Gestión de aranceles</p>
-                <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Comprobantes AFIP</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">{{ ($enCobro ?? false) ? 'Comprobantes ARCA' : 'Comprobantes AFIP' }}</h1>
                 @if ($encabezado)
                     <p class="text-xs font-semibold uppercase tracking-wide text-white/90 sm:text-sm">
                         {{ $encabezado['apellido'] }} {{ $encabezado['nombre'] }}
@@ -36,7 +36,7 @@
         </div>
     </section>
 
-    @if (tenantCuotasFacturacionAfipEnPago() || ($enDevengamiento ?? false))
+    @if (tenantCuotasFacturacionAfipEnPago() || ($enDevengamiento ?? false) || ($enCobro ?? false))
     <section class="se-card mb-4 p-4 space-y-4">
         @if (tenantCuotasFacturacionAfipEnPago())
             @include('livewire.cuotas.partials.imputar-pago-responsables-afip')
@@ -61,20 +61,30 @@
                 <p class="text-center text-xs text-neutral-600 sm:max-w-md">
                     La factura se emite por <strong>Facturación masiva AFIP</strong>. Desde aquí puede anular una factura vigente con nota de crédito.
                 </p>
+            @elseif ($enCobro ?? false)
+                <p class="text-center text-xs text-neutral-600 sm:max-w-md">
+                    Desde aquí puede anular una factura vigente con nota de crédito.
+                </p>
             @endif
 
+            @php
+                $textoConfirmacionNc = ($enCobro ?? false)
+                    ? '¿Emitir nota de crédito ARCA por el importe de la factura vigente?'
+                    : '¿Emitir nota de crédito AFIP por el importe de la factura vigente?';
+                $etiquetaNc = ($enCobro ?? false) ? 'Emitir nota de crédito' : 'Nota de crédito';
+            @endphp
             @if ($puedeNotaCredito)
                 <button type="button"
-                        x-on:click="window.seSwalConfirmar('¿Emitir nota de crédito AFIP por el importe de la factura vigente?', 'Nota de crédito', { confirmButtonText: 'Sí, emitir NC' }).then((ok) => { if (ok) $wire.emitirNotaCredito(); })"
+                        x-on:click="window.seSwalConfirmar(@js($textoConfirmacionNc), 'Nota de crédito', { confirmButtonText: 'Sí, emitir NC' }).then((ok) => { if (ok) $wire.emitirNotaCredito(); })"
                         class="inline-flex items-center rounded-xl border border-accent-200 bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm hover:bg-accent-50">
-                    Nota de crédito
+                    {{ $etiquetaNc }}
                 </button>
             @else
                 <button type="button"
                         disabled
                         title="{{ $mensajeNotaCredito }}"
                         class="inline-flex cursor-not-allowed items-center rounded-xl border border-accent-200 bg-accent-50 px-4 py-2 text-sm font-semibold text-neutral-400">
-                    Nota de crédito
+                    {{ $etiquetaNc }}
                 </button>
             @endif
         </div>
@@ -90,7 +100,7 @@
     <section class="se-card se-card-cuotas-grid p-0 overflow-hidden">
         @if ($comprobantes->isEmpty())
             <div class="py-14 text-center text-sm text-neutral-600">
-                No hay comprobantes AFIP registrados para esta cuota.
+                {{ ($enCobro ?? false) ? 'No hay comprobantes ARCA registrados para esta cuota.' : 'No hay comprobantes AFIP registrados para esta cuota.' }}
             </div>
         @else
             <div class="w-full overflow-x-auto se-grid-angosta-wrap">

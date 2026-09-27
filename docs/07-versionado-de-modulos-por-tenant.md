@@ -249,10 +249,10 @@ return [
 
 Consumir con `tenantCuotasInteresMoraEsDiario()` o `tenantCuotasInteresMoraModo()`. Afecta imputación, PDF morosos y cupón de pago.
 
-Porcentaje de aporte estatal en el PDF de factura AFIP (`ento.aporteEstatal` del **nivel pedagógico del alumno**, no del contexto de facturación). Default off; solo Instituto Ramallo lo imprime (secundario 100% / terciario 50%):
+Porcentaje de aporte estatal en el PDF de factura AFIP (`ento.aporteEstatal` del **nivel pedagógico del alumno**, no del contexto de facturación). Default off. Lo imprimen Instituto Ramallo, EPQ y SFQ:
 
 ```php
-// config/tenants/institutoramallo.php
+// config/tenants/institutoramallo.php, epq.php y sfq.php
 return [
     'cuotas' => [
         'facturacion_afip' => [
@@ -262,9 +262,11 @@ return [
 ];
 ```
 
-Consumir con `tenantCuotasFacturacionAfipMuestraAporteEstatal()`. El valor se carga en Parámetros del sistema (por nivel) y se formatea en el PDF.
+Consumir con `tenantCuotasFacturacionAfipMuestraAporteEstatal()`. El valor se carga en Parámetros del sistema (por nivel, en todos los colegios) y se formatea en el PDF.
 
 Facturación AFIP en modo `devengamiento` — importe a emitir (todos los colegios): neto con beca (`cuotasgeneradas.importe`); si la fórmula del 1.er vencimiento es bonificación (`cuotasimportes.signo1v = '-'` con valor > 0), neto − bonificación. Lógica en `FacturacionAfipComun::importeAFacturarDevengamiento()`. La leyenda de beca del PDF usa el neto **sin** beca (o ese neto − bonificación): `importeOriginalLeyendaBeca()`.
+
+Facturación AFIP en modo `cobro` (EPQ y SFQ): no es masiva ni al devengar. Se factura solo lo ya cobrado, un comprobante por estudiante, con vista previa y edición de `legajos.respAdmiNom` / `respAdmiDni`. Entradas en Imputar pago: **Registrar Pago (Comp. Interno)**, **Registrar Pago (Factura Arca)** y **Registrar Pago (Comp. Int. y Factura Arca)**. También **Facturar cobros** en la planilla de descarga SIRO (pagos ya impactados). El historial de pagos abre **Comprobantes ARCA**, donde se emite la nota de crédito de la factura vigente. Tras borrar el pago, el mismo historial sigue abriendo ese listado si la cuota tiene factura o nota de crédito. El importe es el del pago (capital + interés − bonificación). Instituto Ramallo sigue en `pago` y San Francisco de Asís en `devengamiento`. Helper: `tenantCuotasFacturacionAfipEnCobro()`.
 
 Correo de recibos cooperadora (origen estudiantes), distinto del cuaderno de comunicados:
 

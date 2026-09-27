@@ -41,6 +41,7 @@ Menú de Administración / Secretaría. Gate: `PermisosCuotas::puedeImportesPorC
 - No volver a poner `$draft` público ni `wire:model.live` en cada select: el remorph de toda la planilla vuelve a dejar la pantalla lenta y saca el foco.
 - No calcular ni mostrar promedios acá (no aplica).
 - URL de edición sin ID: la plantilla va en `ContextoCuotasImportesSesion`.
+- Desde el editor se puede abrir la discriminación de la misma cuota (`cuotas.detalle.editar`).
 
 ## Checklist al modificar
 

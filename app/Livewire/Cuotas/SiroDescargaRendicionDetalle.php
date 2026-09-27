@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaDestinatarioFacturacionAfip;
 use App\Models\PlanillaDescargaCuota;
 use App\Models\RendicionRoela;
 use App\Support\Cuotas\CuotasFormato;
+use App\Support\Cuotas\FacturacionCobroAfipService;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionArchivo;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionCanal;
 use App\Support\Cuotas\Siro\Descarga\SiroDescargaRendicionConsulta;
@@ -21,11 +23,18 @@ use Livewire\WithFileUploads;
  */
 class SiroDescargaRendicionDetalle extends Component
 {
+    use ManejaDestinatarioFacturacionAfip;
     use WithFileUploads;
 
     public int $nroPlanilla;
 
     public $archivoRendicion;
+
+    /** @var list<int> */
+    public array $idsPagosCobro = [];
+
+    /** @var array<string, mixed> */
+    public array $vistaPreviaCobro = [];
 
     public bool $modalResumenAbierto = false;
 
@@ -118,6 +127,91 @@ class SiroDescargaRendicionDetalle extends Component
         $resumen = SiroDescargaRendicionImpacto::impactarPlanilla($planilla, (int) schoolCtx()->idTerlec);
 
         $this->presentarResumenOperacion($resumen, 'Resultado del impacto de pagos', 'impacto');
+    }
+
+    public function abrirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $ids = FacturacionCobroAfipService::idsPagosDePlanilla($this->nroPlanilla);
+        if ($ids === []) {
+            $this->dispatch('se-swal-aviso', mensaje: 'No hay pagos impactados para facturar. Primero impacte la planilla en las cuotas.');
+
+            return;
+        }
+
+        $this->idsPagosCobro = $ids;
+        $this->vistaPreviaCobro = FacturacionCobroAfipService::vistaPreviaPorPagos($ids, null, $this->nroPlanilla);
+    }
+
+    public function emitirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $key = 'cuotas:facturacion-cobro-siro:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        if ($this->idsPagosCobro === []) {
+            $this->abrirFacturacionCobro();
+            if ($this->idsPagosCobro === []) {
+                return;
+            }
+        }
+
+        $resultado = FacturacionCobroAfipService::facturarPagos(
+            $this->idsPagosCobro,
+            null,
+            $this->nroPlanilla,
+        );
+        $this->vistaPreviaCobro = FacturacionCobroAfipService::vistaPreviaPorPagos(
+            $this->idsPagosCobro,
+            null,
+            $this->nroPlanilla,
+        );
+
+        $facturados = (int) ($resultado['facturados'] ?? 0);
+        $mensaje = (string) ($resultado['mensaje'] ?? '');
+        if ($facturados < 1) {
+            $this->dispatch('se-swal-error', mensaje: $mensaje !== '' ? $mensaje : 'No se pudo facturar.');
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: $mensaje);
+    }
+
+    protected function autorizarEdicionDestinatarioAfip(int $idLegajo): bool
+    {
+        abort_unless(PermisosCuotas::puedeSiroDescargaRendicion(), 403);
+
+        if ($idLegajo < 1) {
+            return false;
+        }
+
+        return RendicionRoela::query()
+            ->where('nroPlanilla', $this->nroPlanilla)
+            ->where('idLegajos', $idLegajo)
+            ->exists();
+    }
+
+    protected function afterGuardarDestinatarioAfip(): void
+    {
+        if ($this->idsPagosCobro === []) {
+            return;
+        }
+
+        $this->vistaPreviaCobro = FacturacionCobroAfipService::vistaPreviaPorPagos(
+            $this->idsPagosCobro,
+            null,
+            $this->nroPlanilla,
+        );
     }
 
     public function cerrarModalResumen(): void

@@ -54,4 +54,9 @@ class Cuota extends Model
     {
         return $this->hasMany(CuotasImporte::class, 'idCuotas');
     }
+
+    public function detalles()
+    {
+        return $this->hasMany(CuotasDetalle::class, 'idCuotas')->orderBy('orden')->orderBy('id');
+    }
 }

@@ -46,6 +46,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Listados de estudiantes con formato | [listado-estudiantes-formato.md](listado-estudiantes-formato.md) |
 | Imputar pago | [imputar-pago.md](imputar-pago.md) |
 | Importes por curso | [cuotas-importes-por-curso.md](cuotas-importes-por-curso.md) |
+| Discriminación de cuotas | [cuotas-detalle.md](cuotas-detalle.md) |
 | Libro de aranceles | [libro-aranceles.md](libro-aranceles.md) |
 | Estadística de pago de cuotas | [estadistica-pago-cuotas.md](estadistica-pago-cuotas.md) |
 | Estadística de pago por curso y cuota | [estadistica-pago-por-curso.md](estadistica-pago-por-curso.md) |

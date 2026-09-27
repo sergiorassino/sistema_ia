@@ -611,23 +611,30 @@ final class ComprobanteAfipTcpdf extends TCPDF
             ]];
         }
 
+        $becaYaImpresa = false;
         foreach ($lineas as $linea) {
-            $importeFmt = (string) ($linea['importeFmt'] ?? '0,00');
+            $esTitulo = ! empty($linea['esTitulo']);
+            $esDetalle = ! empty($linea['esDetalle']);
+            $importeFmt = $esTitulo ? '' : (string) ($linea['importeFmt'] ?? '0,00');
             $concepto = (string) ($linea['concepto'] ?? '');
             $becaPorcentaje = (int) ($this->datos['becaPorcentaje'] ?? 0);
             $becaImporteOriginalFmt = (string) ($this->datos['becaImporteOriginalFmt'] ?? '');
 
             $descripcion = $concepto;
-            if ($becaPorcentaje > 0 && $becaImporteOriginalFmt !== '') {
+            if (! $becaYaImpresa && $becaPorcentaje > 0 && $becaImporteOriginalFmt !== '') {
                 $descripcion .= "\n(Ayuda Familiar {$becaPorcentaje} % - Importe Original de la cuota: {$becaImporteOriginalFmt})";
+                $becaYaImpresa = true;
             }
 
-            TcpdfFuenteArial::aplicar($this, '', 8);
-            $altoFila = max(self::ALTO_FILA, $this->getStringHeight(130, $descripcion));
+            $sangria = $esDetalle ? 4.0 : 0.0;
+            $anchoDesc = 130.0 - $sangria;
+
+            TcpdfFuenteArial::aplicar($this, $esTitulo ? 'B' : '', 8);
+            $altoFila = max(self::ALTO_FILA, $this->getStringHeight($anchoDesc, $descripcion));
 
             $x = self::MARGEN_IZQ;
-            $this->SetXY($x, $y);
-            $this->MultiCell(130, self::ALTO_FILA, $descripcion, 0, 'L', false, 0);
+            $this->SetXY($x + $sangria, $y);
+            $this->MultiCell($anchoDesc, self::ALTO_FILA, $descripcion, 0, 'L', false, 0);
 
             $this->SetXY($x + 130, $y);
             $this->MultiCell(25, $altoFila, $importeFmt, 0, 'R', false, 0);

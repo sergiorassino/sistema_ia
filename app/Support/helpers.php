@@ -1119,13 +1119,13 @@ if (! function_exists('tenantCuotasFacturacionAfipHabilitada')) {
 
 if (! function_exists('tenantCuotasFacturacionAfipModo')) {
     /**
-     * @return 'devengamiento'|'pago'
+     * @return 'devengamiento'|'pago'|'cobro'
      */
     function tenantCuotasFacturacionAfipModo(): string
     {
         $modo = (string) config('tenant.cuotas.facturacion_afip.modo', 'devengamiento');
 
-        return $modo === 'pago' ? 'pago' : 'devengamiento';
+        return in_array($modo, ['pago', 'cobro'], true) ? $modo : 'devengamiento';
     }
 }
 
@@ -1145,6 +1145,17 @@ if (! function_exists('tenantCuotasFacturacionAfipEnDevengamiento')) {
     }
 }
 
+if (! function_exists('tenantCuotasFacturacionAfipEnCobro')) {
+    /**
+     * Factura solo las cuotas cobradas (imputación manual o planilla SIRO), con vista previa.
+     */
+    function tenantCuotasFacturacionAfipEnCobro(): bool
+    {
+        return tenantCuotasFacturacionAfipHabilitada()
+            && tenantCuotasFacturacionAfipModo() === 'cobro';
+    }
+}
+
 if (! function_exists('tenantCuotasFacturacionAfipMuestraEnImputacionPago')) {
     function tenantCuotasFacturacionAfipMuestraEnImputacionPago(): bool
     {
@@ -1155,7 +1166,7 @@ if (! function_exists('tenantCuotasFacturacionAfipMuestraEnImputacionPago')) {
 if (! function_exists('tenantCuotasFacturacionAfipMuestraAporteEstatal')) {
     /**
      * Si el PDF de factura AFIP imprime el % de aporte estatal (`ento.aporteEstatal` del nivel del alumno).
-     * Default off; solo Instituto Ramallo lo activa.
+     * Default off. Lo activan Instituto Ramallo, EPQ y SFQ.
      */
     function tenantCuotasFacturacionAfipMuestraAporteEstatal(): bool
     {

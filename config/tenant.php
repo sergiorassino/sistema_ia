@@ -634,11 +634,12 @@ return [
          *
          * `modo`:
          * - `devengamiento` (default): facturación masiva manual al devengar cuotas.
-         * - `pago`: emite al imputar pago (legacy).
+         * - `pago`: emite al imputar pago (legacy, Instituto Ramallo).
+         * - `cobro`: factura solo lo cobrado, con vista previa (imputación manual y planilla SIRO).
          */
         'facturacion_afip' => [
             'habilitado' => false,
-            /** @var 'devengamiento'|'pago' */
+            /** @var 'devengamiento'|'pago'|'cobro' */
             'modo' => 'devengamiento',
             'cert_usuario_id' => null,
             'cert_key' => null,
@@ -659,7 +660,8 @@ return [
             'condicion_venta' => 'contado',
             /**
              * Imprime `ento.aporteEstatal` del nivel pedagógico del alumno en el PDF AFIP.
-             * Default off; Instituto Ramallo lo activa (secundario 100% / terciario 50%).
+             * Default off. Lo activan Instituto Ramallo, EPQ y SFQ.
+             * El campo se carga en Parámetros del sistema en todos los colegios.
              */
             'mostrar_aporte_estatal' => false,
         ],

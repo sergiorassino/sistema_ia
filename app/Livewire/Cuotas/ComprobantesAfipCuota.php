@@ -33,6 +33,7 @@ class ComprobantesAfipCuota extends Component
         $idCuotaGenerada = ContextoEstudianteSesion::cuotaGenerada(ContextoEstudianteSesion::CUOTAS_GESTION);
         $idCuotaPago = ContextoEstudianteSesion::cuotaPago(ContextoEstudianteSesion::CUOTAS_GESTION);
         $enDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
+        $enCobro = tenantCuotasFacturacionAfipEnCobro();
 
         $cuotaValida = $idLegajo !== null
             && $idCuotaGenerada !== null
@@ -43,7 +44,12 @@ class ComprobantesAfipCuota extends Component
             abort(404);
         }
 
-        if (! $enDevengamiento) {
+        if ($enCobro && $idCuotaPago !== null
+            && ComprobantesAfipCuotaService::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null) {
+            $idCuotaPago = null;
+        }
+
+        if (! $enDevengamiento && ! $enCobro) {
             abort_if(
                 $idCuotaPago === null
                 || ComprobantesAfipCuotaService::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada) === null,
@@ -63,6 +69,7 @@ class ComprobantesAfipCuota extends Component
     public function generarFactura(): void
     {
         abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(! tenantCuotasFacturacionAfipEnCobro(), 404);
 
         $key = 'cuotas:comprobantes-afip:factura:'.(auth()->id() ?? 'guest');
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -172,7 +179,9 @@ class ComprobantesAfipCuota extends Component
             $this->idCuotaGenerada,
         );
 
-        $facturaVigente = tenantCuotasFacturacionAfipEnDevengamiento()
+        $enDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
+        $enCobro = tenantCuotasFacturacionAfipEnCobro();
+        $facturaVigente = $enDevengamiento || $enCobro
             ? ComprobantesAfipCuotaService::facturaVigentePorCuotaGenerada($this->idCuotaGenerada)
             : ComprobantesAfipCuotaService::facturaVigente($this->idCuotaPago);
 
@@ -190,7 +199,10 @@ class ComprobantesAfipCuota extends Component
             'puedeNotaCredito' => $puedeNc['ok'],
             'mensajeNotaCredito' => $puedeNc['mensaje'],
             'facturaVigente' => $facturaVigente,
-            'enDevengamiento' => tenantCuotasFacturacionAfipEnDevengamiento(),
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Comprobantes AFIP']);
+            'enDevengamiento' => $enDevengamiento,
+            'enCobro' => $enCobro,
+        ])->layout(layoutMenuStaff(), [
+            'pageTitle' => $enCobro ? 'Comprobantes ARCA' : 'Comprobantes AFIP',
+        ]);
     }
 }

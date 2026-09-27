@@ -21,7 +21,7 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 | `ento` | `verDatosFicha`, `verLibreDeuda`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. Carteles en pantalla si hay bloqueo (ficha / datos). |
 | `ento` | `mensajeComBloqMatricula`, `mensajeComDesbloqMatricula` | Cuerpo de Notif. Bloqueo / Notif. Desbloqueo (cuaderno + mail). Vacío = texto institucional por defecto. |
 | `ento` | `cuitFact`, `PtoVta` (legacy; no `ptoVta`), certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. Eloquent lee/escribe ambos nombres. |
-| `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo** (formulario). En la factura AFIP se imprime el de **nivel del alumno** (curso de la cuota), no el de Administración. Flag: `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` (Instituto Ramallo). |
+| `ento` | `aporteEstatal` | % de aporte estatal del **nivel activo**. El campo se muestra en todos los colegios. En la factura AFIP se imprime el del **nivel del alumno** (curso de la cuota), no el de Administración, y solo si `tenant.cuotas.facturacion_afip.mostrar_aporte_estatal` está activo (Instituto Ramallo, EPQ y SFQ). |
 | `ento` | `ctaEnvioMail`, `passEnvioMail` | Solapa Correo institucional (guardado aparte). |
 
 ## Flujo principal

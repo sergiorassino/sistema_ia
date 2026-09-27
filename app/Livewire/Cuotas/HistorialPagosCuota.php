@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\HistorialPagosCuotaService;
 use App\Support\Cuotas\ImputacionPagoService;
@@ -166,14 +167,22 @@ class HistorialPagosCuota extends Component
     public function render()
     {
         $registro = GestionAranceles::cuotaDelLegajo($this->idCuotaGenerada, $this->idLegajo);
+        $pagos = HistorialPagosCuotaService::pagosTodos(
+            $this->idCuotaGenerada,
+            $this->idLegajo,
+        );
+        $tieneComprobantesArca = tenantCuotasFacturacionAfipEnCobro()
+            && $pagos->isEmpty()
+            && ComprobantesAfipCuotaService::comprobantesDeCuota(
+                $this->idLegajo,
+                $this->idCuotaGenerada,
+            )->isNotEmpty();
 
         return view('livewire.cuotas.historial-pagos-cuota', [
             'registro' => $registro,
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
-            'pagos' => HistorialPagosCuotaService::pagosTodos(
-                $this->idCuotaGenerada,
-                $this->idLegajo,
-            ),
+            'pagos' => $pagos,
+            'tieneComprobantesArca' => $tieneComprobantesArca,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Historial de pagos']);
     }
 }

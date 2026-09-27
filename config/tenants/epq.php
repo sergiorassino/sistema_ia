@@ -79,7 +79,8 @@ return [
 
         'facturacion_afip' => [
             'habilitado' => true,
-            'modo' => 'devengamiento',
+            /** Solo cuotas cobradas: imputación manual y planilla SIRO. */
+            'modo' => 'cobro',
             // Certificados WSAA/WSFE: carpeta y nombres de archivo en Parámetros del sistema (ento).
             'cbte_tipo' => 11,
             'nota_credito_tipo' => 12,
@@ -88,6 +89,8 @@ return [
             // Emisión real en el servidor del colegio. En APP_ENV=local se simula
             // (CAE ficticio) salvo `simular_local => false`.
             'simular' => false,
+            /** Porcentaje de aporte estatal en el PDF (ento del nivel del alumno). */
+            'mostrar_aporte_estatal' => true,
         ],
     ],
 

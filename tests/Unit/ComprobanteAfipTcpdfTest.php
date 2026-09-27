@@ -60,10 +60,26 @@ class ComprobanteAfipTcpdfTest extends TestCase
             'condicionVenta' => 'Contado',
             'concepto' => 'Arancel septiembre 2026',
             'importeFmt' => '85.000,00',
-            'lineas' => [[
-                'concepto' => 'Arancel septiembre 2026',
-                'importeFmt' => '85.000,00',
-            ]],
+            'lineas' => [
+                [
+                    'concepto' => 'SEPTIEMBRE 2026',
+                    'importeFmt' => '',
+                    'esTitulo' => true,
+                    'esDetalle' => false,
+                ],
+                [
+                    'concepto' => 'Enseñanza Programática',
+                    'importeFmt' => '70.000,00',
+                    'esTitulo' => false,
+                    'esDetalle' => true,
+                ],
+                [
+                    'concepto' => 'Intereses',
+                    'importeFmt' => '8.000,00',
+                    'esTitulo' => false,
+                    'esDetalle' => true,
+                ],
+            ],
             'becaPorcentaje' => 0,
             'becaImporteOriginalFmt' => '',
             'obsFacturaHtml' => '',

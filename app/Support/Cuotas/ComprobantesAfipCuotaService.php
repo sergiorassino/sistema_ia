@@ -23,7 +23,7 @@ final class ComprobantesAfipCuotaService
             return collect();
         }
 
-        if (tenantCuotasFacturacionAfipEnDevengamiento()) {
+        if (tenantCuotasFacturacionAfipEnDevengamiento() || tenantCuotasFacturacionAfipEnCobro()) {
             return self::comprobantesDeCuota($idLegajo, $idCuotaGenerada);
         }
 
@@ -252,6 +252,10 @@ final class ComprobantesAfipCuotaService
             return ['ok' => false, 'mensaje' => 'La facturación AFIP se realiza por devengamiento (facturación masiva), no al imputar el pago.'];
         }
 
+        if (tenantCuotasFacturacionAfipEnCobro()) {
+            return ['ok' => false, 'mensaje' => 'La factura se emite al registrar el pago o desde la planilla SIRO.'];
+        }
+
         $pago = self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada);
         if ($pago === null) {
             return ['ok' => false, 'mensaje' => 'Pago no encontrado.'];
@@ -284,6 +288,14 @@ final class ComprobantesAfipCuotaService
         if (tenantCuotasFacturacionAfipEnDevengamiento()) {
             if (self::facturaVigentePorCuotaGenerada($idCuotaGenerada) === null) {
                 return ['ok' => false, 'mensaje' => 'No hay factura AFIP vigente para anular con nota de crédito.'];
+            }
+
+            return ['ok' => true, 'mensaje' => ''];
+        }
+
+        if (tenantCuotasFacturacionAfipEnCobro()) {
+            if (self::facturaVigentePorCuotaGenerada($idCuotaGenerada) === null) {
+                return ['ok' => false, 'mensaje' => 'No hay factura vigente para anular con nota de crédito.'];
             }
 
             return ['ok' => true, 'mensaje' => ''];
@@ -383,7 +395,7 @@ final class ComprobantesAfipCuotaService
             return ['ok' => false, 'mensaje' => 'Cuota no encontrada.'];
         }
 
-        $factura = tenantCuotasFacturacionAfipEnDevengamiento()
+        $factura = tenantCuotasFacturacionAfipEnDevengamiento() || tenantCuotasFacturacionAfipEnCobro()
             ? self::facturaVigentePorCuotaGenerada($idCuotaGenerada)
             : self::facturaVigente($idCuotaPago);
 

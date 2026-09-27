@@ -177,6 +177,8 @@ use App\Livewire\Cuotas\CuotasEstudianteShow;
 use App\Livewire\Cuotas\CuotasIndex;
 use App\Livewire\Cuotas\CuotasImportesForm;
 use App\Livewire\Cuotas\CuotasImportesIndex;
+use App\Livewire\Cuotas\CuotasDetalleForm;
+use App\Livewire\Cuotas\CuotasDetalleIndex;
 use App\Livewire\Cuotas\CuotasPlantillaIndex;
 use App\Livewire\Cuotas\TiposBecaIndex;
 use App\Livewire\Cuotas\AsignacionBecasIndex;
@@ -737,6 +739,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:administracion', 'admi
         Route::get('/importes/editar', CuotasImportesForm::class)
             ->middleware('permiso:'.$pi::ADMIN_CUOTAS_IMPORTES_CURSO)
             ->name('cuotas.importes.editar');
+        Route::get('/detalle', CuotasDetalleIndex::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_IMPORTES_CURSO)
+            ->name('cuotas.detalle.index');
+        Route::get('/detalle/editar', CuotasDetalleForm::class)
+            ->middleware('permiso:'.$pi::ADMIN_CUOTAS_IMPORTES_CURSO)
+            ->name('cuotas.detalle.editar');
         Route::get('/generacion-masiva', GeneracionMasivaCuotas::class)
             ->middleware('permiso:'.$pi::ADMIN_CUOTAS_GENERACION_MASIVA)
             ->name('cuotas.generacion-masiva');

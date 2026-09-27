@@ -26,9 +26,25 @@
                     </p>
                 @endif
             </div>
-            <x-volver-cuotas-estudiante
-                :id-legajos="$idLegajo"
-                class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20" />
+            <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <x-volver-cuotas-estudiante
+                    :id-legajos="$idLegajo"
+                    class="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20" />
+                @if (tenantCuotasFacturacionAfipEnCobro() && ($pagos->isNotEmpty() || ($tieneComprobantesArca ?? false)))
+                    <x-nav-contexto-estudiante
+                        destino="cuotas.cuota.comprobantes-afip"
+                        :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
+                        :id-legajos="$idLegajo"
+                        :id-cuota-generada="$idCuotaGenerada"
+                        :id-cuota-pago="$pagos->isNotEmpty() ? (int) $pagos->first()->id : null"
+                        :vista-cuotas="$vistaCuotasNav"
+                        class="inline">
+                        <span class="inline-flex shrink-0 items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-accent-50">
+                            Comprobantes ARCA
+                        </span>
+                    </x-nav-contexto-estudiante>
+                @endif
+            </div>
         </div>
     </section>
 
@@ -67,7 +83,7 @@
                                 $medioPago = trim((string) ($pago->tipoPago?->tipoPago ?? ''));
                             }
                             $importePago = (float) ($pago->importe ?? 0);
-                            $bloqueadoPorFacturaAfip = $muestraCompAfip
+                            $bloqueadoPorFacturaAfip = ComprobantesAfipCuotaService::moduloDisponible()
                                 && ComprobantesAfipCuotaService::facturaVigente((int) $pago->id) !== null;
                         @endphp
                         <div class="gf-row gf-row-hover" wire:key="pago-{{ $pago->id }}">
@@ -218,6 +234,13 @@
                 const mensaje = mensajeDeEvento(event, 'No se pudo completar la operación.');
                 if (typeof window.seSwalError === 'function') {
                     window.seSwalError(mensaje);
+                }
+            });
+
+            $wire.on('se-swal-aviso', (event) => {
+                const mensaje = mensajeDeEvento(event, '');
+                if (typeof window.seSwalAviso === 'function' && mensaje) {
+                    window.seSwalAviso(mensaje);
                 }
             });
         })();

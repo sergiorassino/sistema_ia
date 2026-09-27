@@ -312,10 +312,15 @@ final class ComprobanteAfipDatos
     }
 
     /**
-     * @return list<array{concepto: string, importe: float, importeFmt: string}>
+     * @return list<array{concepto: string, importe: float, importeFmt: string, esTitulo?: bool, esDetalle?: bool}>
      */
     private static function lineasDesdeComprobante(ComprobanteAfip $comprobante): array
     {
+        $detalle = FacturaAfipLineasDetalle::desdeComprobante($comprobante);
+        if ($detalle !== null) {
+            return $detalle;
+        }
+
         $subs = trim((string) ($comprobante->subConceptos ?? ''));
         $imps = trim((string) ($comprobante->importeSubConceptos ?? ''));
 

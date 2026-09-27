@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaDestinatarioFacturacionAfip;
 use App\Livewire\Cuotas\Concerns\ManejaResponsablesFacturacionImputacion;
 use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\CuotasFormato;
 use App\Support\Cuotas\FacturacionAfipImputacionPago;
+use App\Support\Cuotas\FacturacionCobroAfipService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\ImputacionPagoCalculo;
 use App\Support\Cuotas\ImputacionPagoService;
@@ -25,6 +27,7 @@ use Livewire\Component;
  */
 class ImputarPagoForm extends Component
 {
+    use ManejaDestinatarioFacturacionAfip;
     use ManejaResponsablesFacturacionImputacion;
 
     public int $idLegajo;
@@ -65,6 +68,17 @@ class ImputarPagoForm extends Component
      * @var array<int, array{saldo: string, porcent: string}>
      */
     public array $lineasImputacion = [];
+
+    /** Pagos recién imputados que esta pantalla puede facturar (modo cobro). */
+    public array $idsPagosCobro = [];
+
+    /** @var 'interno'|'arca'|'ambos'|'' */
+    public string $modoComprobanteCobro = '';
+
+    /** @var array<string, mixed> */
+    public array $vistaPreviaCobro = [];
+
+    private bool $prepararVistaCobro = false;
 
     public function mount(): void
     {
@@ -175,6 +189,152 @@ class ImputarPagoForm extends Component
         }
 
         $this->guardarVariasCuotas();
+    }
+
+    public function registrarPagoInterno(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $this->modoComprobanteCobro = 'interno';
+        $this->guardar();
+    }
+
+    public function registrarPagoFacturaArca(): void
+    {
+        $this->registrarPagoConFactura('arca');
+    }
+
+    public function registrarPagoInternoYArca(): void
+    {
+        $this->registrarPagoConFactura('ambos');
+    }
+
+    private function registrarPagoConFactura(string $modo): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+        abort_unless(in_array($modo, ['arca', 'ambos'], true), 404);
+
+        $this->modoComprobanteCobro = $modo;
+        $this->abrirFacturacionCobro();
+    }
+
+    public function abrirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        if ($this->idsPagosCobro !== []) {
+            $this->refrescarVistaPreviaCobro();
+
+            return;
+        }
+
+        $this->prepararVistaCobro = true;
+        try {
+            $this->guardar();
+        } finally {
+            $this->prepararVistaCobro = false;
+        }
+    }
+
+    public function emitirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $key = 'cuotas:facturacion-cobro:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 8)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        if ($this->idsPagosCobro === []) {
+            $this->dispatch('se-swal-error', mensaje: 'Primero registre el cobro para ver a quién se factura.');
+
+            return;
+        }
+
+        $resultado = FacturacionCobroAfipService::facturarPagos($this->idsPagosCobro, $this->idLegajo);
+        $this->refrescarVistaPreviaCobro();
+
+        if ((int) ($resultado['facturados'] ?? 0) < 1) {
+            $this->dispatch('se-swal-error', mensaje: (string) ($resultado['mensaje'] ?? 'No se pudo facturar.'));
+
+            return;
+        }
+
+        $urls = [];
+        foreach ($resultado['comprobantes'] ?? [] as $comprobante) {
+            $idComprobante = (int) ($comprobante['id'] ?? 0);
+            $idLegajo = (int) ($comprobante['idLegajo'] ?? $this->idLegajo);
+            if ($idComprobante <= 0) {
+                continue;
+            }
+            $urls[] = se_route_url('cuotas.comprobante-afip', [
+                'ref' => OpaqueRouteToken::forComprobanteAfipRegistro($idComprobante, $idLegajo),
+            ]);
+        }
+
+        $urlRecibo = $this->modoComprobanteCobro === 'ambos'
+            ? $this->urlReciboInterno($this->pagosCobroRegistrados())
+            : null;
+        if ($urlRecibo !== null) {
+            $urls[] = $urlRecibo;
+        }
+
+        if ($urls !== []) {
+            $this->dispatch('cuotas-imputar-pago-abrir-comprobante', urls: $urls);
+        }
+
+        session()->flash('afip_swal_tipo', 'exito');
+        session()->flash('afip_swal_mensaje', (string) $resultado['mensaje']);
+        $this->volverAlEstudiante();
+    }
+
+    public function volverSinFacturarCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        if ($this->modoComprobanteCobro === 'ambos') {
+            $this->abrirReciboInterno($this->pagosCobroRegistrados());
+        }
+        $this->volverAlEstudiante();
+    }
+
+    protected function autorizarEdicionDestinatarioAfip(int $idLegajo): bool
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+
+        return $idLegajo === $this->idLegajo;
+    }
+
+    protected function afterGuardarDestinatarioAfip(): void
+    {
+        if ($this->idsPagosCobro !== []) {
+            $this->refrescarVistaPreviaCobro();
+        }
+    }
+
+    private function refrescarVistaPreviaCobro(): void
+    {
+        $this->vistaPreviaCobro = FacturacionCobroAfipService::vistaPreviaPorPagos(
+            $this->idsPagosCobro,
+            $this->idLegajo,
+        );
+    }
+
+    private function volverAlEstudiante(): void
+    {
+        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
+            'idLegajos' => $this->idLegajo,
+            'idsCuotasGeneradas' => [],
+            'idCuotaGenerada' => 0,
+        ]);
+
+        $this->redirectRoute('cuotas.estudiante', navigate: true);
     }
 
     private function guardarUnaCuota(): void
@@ -338,6 +498,13 @@ class ImputarPagoForm extends Component
             ? 'Se imputaron '.$pagos->count().' cuotas correctamente.'
             : 'Pago imputado correctamente.');
 
+        if ($this->prepararVistaCobro && tenantCuotasFacturacionAfipEnCobro() && $pagos->isNotEmpty()) {
+            $this->idsPagosCobro = $pagos->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+            $this->refrescarVistaPreviaCobro();
+
+            return;
+        }
+
         if ($tipoComprobante === 'afip' && ! tenantCuotasFacturacionAfipMuestraEnImputacionPago()) {
             $tipoComprobante = 'interno';
         }
@@ -375,26 +542,64 @@ class ImputarPagoForm extends Component
                 $this->dispatch('cuotas-imputar-pago-abrir-comprobante', url: $url);
             }
         } elseif ($pagos->isNotEmpty() && $abrirComprobante) {
-            $url = $pagos->count() === 1
-                ? se_route_url('cuotas.comprobante-imputacion', [
-                    'ref' => OpaqueRouteToken::forComprobantePagoImputacionAdministracion((int) $pagos->first()->id, $this->idLegajo),
-                ])
-                : se_route_url('cuotas.comprobante-imputacion', [
-                    'ref' => OpaqueRouteToken::forComprobantePagoImputacionMultipleAdministracion(
-                        $pagos->pluck('id')->map(fn ($id) => (int) $id)->all(),
-                        $this->idLegajo,
-                    ),
-                ]);
-            $this->dispatch('cuotas-imputar-pago-abrir-comprobante', url: $url);
+            $this->abrirReciboInterno($pagos);
         }
 
-        ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
-            'idLegajos' => $this->idLegajo,
-            'idsCuotasGeneradas' => [],
-            'idCuotaGenerada' => 0,
-        ]);
+        $this->volverAlEstudiante();
+    }
 
-        $this->redirectRoute('cuotas.estudiante', navigate: true);
+    /**
+     * @return Collection<int, CuotaPago>
+     */
+    private function pagosCobroRegistrados(): Collection
+    {
+        if ($this->idsPagosCobro === []) {
+            return collect();
+        }
+
+        $orden = array_flip($this->idsPagosCobro);
+
+        return CuotaPago::query()
+            ->whereIn('id', $this->idsPagosCobro)
+            ->get()
+            ->sortBy(fn (CuotaPago $pago) => $orden[(int) $pago->id] ?? 0)
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, CuotaPago>  $pagos
+     */
+    private function abrirReciboInterno(Collection $pagos): void
+    {
+        $url = $this->urlReciboInterno($pagos);
+        if ($url === null) {
+            return;
+        }
+
+        $this->dispatch('cuotas-imputar-pago-abrir-comprobante', url: $url);
+    }
+
+    /**
+     * @param  Collection<int, CuotaPago>  $pagos
+     */
+    private function urlReciboInterno(Collection $pagos): ?string
+    {
+        if ($pagos->isEmpty()) {
+            return null;
+        }
+
+        if ($pagos->count() === 1) {
+            return se_route_url('cuotas.comprobante-imputacion', [
+                'ref' => OpaqueRouteToken::forComprobantePagoImputacionAdministracion((int) $pagos->first()->id, $this->idLegajo),
+            ]);
+        }
+
+        return se_route_url('cuotas.comprobante-imputacion', [
+            'ref' => OpaqueRouteToken::forComprobantePagoImputacionMultipleAdministracion(
+                $pagos->pluck('id')->map(fn ($id) => (int) $id)->all(),
+                $this->idLegajo,
+            ),
+        ]);
     }
 
     private function bloquearSiFaltaDestinatarioAfip(string $tipoComprobante): bool

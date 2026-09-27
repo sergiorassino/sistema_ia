@@ -18,11 +18,18 @@
                     </h1>
                     <p class="text-xs text-white/80">Importes y fórmulas por sala / grado / curso</p>
                 </div>
-                <a href="{{ route('cuotas.importes.index') }}"
-                   wire:navigate
-                   class="inline-flex shrink-0 items-center justify-center rounded-lg bg-white px-3 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
-                    Volver
-                </a>
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                    <button type="button"
+                            wire:click="irADiscriminacion"
+                            class="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-white/20">
+                        Discriminación
+                    </button>
+                    <a href="{{ route('cuotas.importes.index') }}"
+                       wire:navigate
+                       class="inline-flex shrink-0 items-center justify-center rounded-lg bg-white px-3 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:bg-accent-100">
+                        Volver
+                    </a>
+                </div>
             </div>
         </section>
 

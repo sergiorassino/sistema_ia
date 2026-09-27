@@ -4,9 +4,15 @@
 
 <div>
 <div class="se-page {{ $esUnaCuota ? ($muestraOpcionesComprobante ? 'max-w-2xl' : 'max-w-xl') : 'max-w-5xl' }} mx-auto"
-     x-on:cuotas-imputar-pago-abrir-comprobante.window="window.open($event.detail.url, '_blank')"
+     x-on:cuotas-imputar-pago-abrir-comprobante.window="abrirComprobante($event)"
      x-data="{
         showDatosCuota: false,
+        abrirComprobante(event) {
+            const detalle = event?.detail ?? {};
+            const urls = Array.isArray(detalle.urls) ? detalle.urls : [];
+            if (detalle.url) urls.push(detalle.url);
+            urls.forEach((url) => { if (url) window.open(url, '_blank'); });
+        },
         order: ['saldoAPagar', 'porcent', 'fechaPago', 'obs'],
         focusById(id) {
             const el = document.getElementById(id);
@@ -282,13 +288,54 @@
             </div>
         @endif
 
-        <div class="flex justify-center">
-            <button type="submit"
-                    class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700">
-                {{ $esUnaCuota ? 'Registrar pago' : 'Cobrar cuotas' }}
-            </button>
-        </div>
+        @if ($idsPagosCobro === [])
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2">
+                @if (\tenantCuotasFacturacionAfipEnCobro())
+                    <button type="button"
+                            wire:click="registrarPagoInterno"
+                            wire:loading.attr="disabled"
+                            wire:target="registrarPagoInterno,registrarPagoFacturaArca,registrarPagoInternoYArca"
+                            class="inline-flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-center text-xs font-semibold leading-tight text-white hover:bg-primary-700 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="registrarPagoInterno">Registrar Pago (Comp. Interno)</span>
+                        <span wire:loading wire:target="registrarPagoInterno">Preparando…</span>
+                    </button>
+                    <button type="button"
+                            wire:click="registrarPagoFacturaArca"
+                            wire:loading.attr="disabled"
+                            wire:target="registrarPagoInterno,registrarPagoFacturaArca,registrarPagoInternoYArca"
+                            class="inline-flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-center text-xs font-semibold leading-tight text-white hover:bg-primary-700 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="registrarPagoFacturaArca">Registrar Pago (Factura Arca)</span>
+                        <span wire:loading wire:target="registrarPagoFacturaArca">Preparando…</span>
+                    </button>
+                    <button type="button"
+                            wire:click="registrarPagoInternoYArca"
+                            wire:loading.attr="disabled"
+                            wire:target="registrarPagoInterno,registrarPagoFacturaArca,registrarPagoInternoYArca"
+                            class="inline-flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-center text-xs font-semibold leading-tight text-white hover:bg-primary-700 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="registrarPagoInternoYArca">Registrar Pago (Comp. Int. y Factura Arca)</span>
+                        <span wire:loading wire:target="registrarPagoInternoYArca">Preparando…</span>
+                    </button>
+                @else
+                    <button type="submit"
+                            class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700">
+                        {{ $esUnaCuota ? 'Registrar pago' : 'Cobrar cuotas' }}
+                    </button>
+                @endif
+            </div>
+        @else
+            <p class="text-center text-xs text-neutral-600">
+                El pago ya quedó registrado. Revise el destinatario y facture, o vuelva sin emitir la factura ARCA.
+            </p>
+        @endif
     </form>
+
+    @if (\tenantCuotasFacturacionAfipEnCobro())
+        @include('livewire.cuotas.partials.facturacion-cobro-afip-previa', [
+            'vistaPreviaCobro' => $vistaPreviaCobro,
+            'mostrarVolverSinFacturar' => true,
+        ])
+        @include('livewire.cuotas.partials.facturacion-masiva-afip-modal-resp-admi')
+    @endif
 </div>
 
     @script

@@ -308,6 +308,7 @@
                            && ($route ?? '') !== 'cuotas.asignacion-becas'
                            && ! in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true)
                            && ! str_starts_with($route ?? '', 'cuotas.importes.')
+                           && ! str_starts_with($route ?? '', 'cuotas.detalle.')
                            && ($route ?? '') !== 'cuotas.plantillas'
                            && ($route ?? '') !== 'cuotas.generacion-masiva'
                            && ($route ?? '') !== 'cuotas.facturacion-masiva-afip'
@@ -399,6 +400,20 @@
                               d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                     </svg>
                     <span class="truncate">Importes por curso</span>
+                </a>
+                @endif
+                @if (\App\Support\PermisosCuotas::puedeImportesPorCurso())
+                <a href="{{ route('cuotas.detalle.index') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => str_starts_with($route ?? '', 'cuotas.detalle.'),
+                   ])
+                   title="Ítems de discriminación e importes por curso">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 12h16M4 18h7"/>
+                    </svg>
+                    <span class="truncate">Discriminación de cuotas</span>
                 </a>
                 @endif
                 @if (\App\Support\PermisosCuotas::puedeGeneracionMasiva())
