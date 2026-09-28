@@ -4,6 +4,8 @@
 
 Constancia PDF de que el estudiante **no registra deuda** en Áulica, desde el Menú de Alumnos. Replica el FPDF legacy de Montecristo (`CONSTANCIA DE LIBRE DEUDA`).
 
+La constancia con cuotas internas del Menú de Administración está en [libre-deuda-familiar.md](libre-deuda-familiar.md).
+
 ## Modalidades / variantes
 
 Default off: `config/tenant.php` → `autogestion.libre_deuda`. Montecristo lo activa.

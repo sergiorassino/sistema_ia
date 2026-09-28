@@ -104,18 +104,22 @@
                 @foreach ($cuotas as $c)
                     @php
                         $pagada = (float) ($c->faltapa ?? 0) <= 0;
+                        $avisoPago = (int) ($c->avisoPago ?? 0) === 1;
                         $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
                         $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
                         $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
                         $nombreNivel = trim((string) ($c->curso?->nivel?->nivel ?? ''));
                         $interesHoy = (float) (($interesesPorCuota[(int) $c->id]['interes'] ?? 0));
                         $totalHoy = round((float) ($c->faltapa ?? 0) + $interesHoy, 2);
-                        $cardEstadoClass = $mostrarHistorial
-                            ? ($pagada ? 'border-green-200 bg-green-50/80' : 'border-accent-200 bg-white')
-                            : 'border-accent-200 bg-white';
+                        $cardEstadoClass = $avisoPago
+                            ? 'border-yellow-300 bg-yellow-100'
+                            : ($mostrarHistorial
+                                ? ($pagada ? 'border-green-200 bg-green-50/80' : 'border-accent-200 bg-white')
+                                : 'border-accent-200 bg-white');
                     @endphp
                     <article wire:key="cuota-m-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
-                             class="rounded-xl border p-4 shadow-sm {{ $cardEstadoClass }}">
+                             class="rounded-xl border p-4 shadow-sm {{ $cardEstadoClass }}"
+                             @if ($avisoPago) title="Aviso de pago" @endif>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0 flex-1">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Cuota</p>
@@ -276,9 +280,12 @@
                     @foreach ($cuotas as $c)
                         @php
                             $pagada = (float) ($c->faltapa ?? 0) <= 0;
-                            $rowEstadoClass = $mostrarHistorial
-                                ? ($pagada ? 'gf-row--pagada' : 'gf-row--adeudada')
-                                : '';
+                            $avisoPago = (int) ($c->avisoPago ?? 0) === 1;
+                            $rowEstadoClass = $avisoPago
+                                ? 'gf-row--aviso-pago'
+                                : ($mostrarHistorial
+                                    ? ($pagada ? 'gf-row--pagada' : 'gf-row--adeudada')
+                                    : '');
                             $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
                             $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
                             $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
@@ -287,7 +294,8 @@
                             $totalHoy = round((float) ($c->faltapa ?? 0) + $interesHoy, 2);
                         @endphp
                         <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
-                             wire:key="cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}">
+                             wire:key="cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
+                             @if ($avisoPago) title="Aviso de pago" @endif>
                             <div class="gf-td gf-col-dni">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</div>
                             <div class="gf-td gf-col-curso" title="{{ $nombreCurso }}">{{ $nombreCurso }}</div>
                             <div class="gf-td gf-col-nivel" title="{{ $nombreNivel }}">{{ $nombreNivel }}</div>

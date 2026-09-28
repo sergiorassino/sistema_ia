@@ -209,7 +209,7 @@
                     <span class="min-w-0">
                         Aviso de pago
                         <span class="mt-0.5 block text-[10px] font-medium text-neutral-500">
-                            Cupón pagado y aún sin impacto SIRO
+                            Cupón pagado y aún sin impacto SIRO. Se guarda al marcar.
                         </span>
                     </span>
                     <input type="checkbox"

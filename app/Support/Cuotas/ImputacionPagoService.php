@@ -4,7 +4,9 @@ namespace App\Support\Cuotas;
 
 use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
+use App\Support\Database\PersistenciaColumnas;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -184,5 +186,58 @@ final class ImputacionPagoService
         $locked->save();
 
         return $pagoCreado;
+    }
+
+    /**
+     * Marca o quita el aviso de pago de la cuota, sin crear un pago.
+     *
+     * @return array{ok: bool, mensaje: string}
+     */
+    public static function guardarAvisoPago(CuotaGenerada $registro, bool $aviso): array
+    {
+        $valor = $aviso ? 1 : 0;
+        $preparado = PersistenciaColumnas::prepararPayload('cuotasgeneradas', [
+            'avisoPago' => $valor,
+        ]);
+        if ($preparado['columnas_con_valor_sin_columna'] !== []) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeColumnasInexistentes(
+                    'cuotasgeneradas',
+                    $preparado['columnas_con_valor_sin_columna'],
+                ),
+            ];
+        }
+
+        try {
+            DB::transaction(function () use ($registro, $valor): void {
+                $locked = CuotaGenerada::query()->whereKey($registro->id)->lockForUpdate()->firstOrFail();
+                $locked->avisoPago = $valor;
+                $locked->save();
+            });
+        } catch (QueryException $e) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeDesdeQueryException($e)
+                    ?? 'No se pudo guardar el aviso de pago.',
+            ];
+        }
+
+        $noPersistidas = PersistenciaColumnas::columnasNoPersistidas(
+            'cuotasgeneradas',
+            ['id' => (int) $registro->id],
+            ['avisoPago' => $valor],
+        );
+        if ($noPersistidas !== []) {
+            return [
+                'ok' => false,
+                'mensaje' => PersistenciaColumnas::mensajeColumnasNoPersistidas('cuotasgeneradas', $noPersistidas),
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'mensaje' => $valor === 1 ? 'Aviso de pago guardado.' : 'Aviso de pago quitado.',
+        ];
     }
 }

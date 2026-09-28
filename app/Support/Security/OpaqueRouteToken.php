@@ -44,6 +44,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE = 'mora.estado-deuda-estudiante';
 
+    public const PURPOSE_MORA_LIBRE_DEUDA_FAMILIAR = 'mora.libre-deuda-familiar';
+
     public const PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_PDF = 'mora.estado-deuda-familiar.listado-pdf';
 
     public const PURPOSE_MORA_DEUDA_FAMILIAR_LISTADO_XLSX = 'mora.estado-deuda-familiar.listado-excel';
@@ -189,6 +191,11 @@ final class OpaqueRouteToken
     public static function forEstadoDeudaEstudiante(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_MORA_ESTADO_DEUDA_ESTUDIANTE, $idLegajo, $idLegajo);
+    }
+
+    public static function forLibreDeudaFamiliar(int $idLegajo): string
+    {
+        return self::encode(self::PURPOSE_MORA_LIBRE_DEUDA_FAMILIAR, $idLegajo, $idLegajo);
     }
 
     /**

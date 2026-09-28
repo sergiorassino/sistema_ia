@@ -808,8 +808,12 @@
     .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada {
         background-color: #ffffff;
     }
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--aviso-pago {
+        background-color: #fef08a;
+    }
     .gf.gf-cuotas-estudiante .gf-row.gf-row--pagada .gf-td,
-    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada .gf-td {
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--adeudada .gf-td,
+    .gf.gf-cuotas-estudiante .gf-row.gf-row--aviso-pago .gf-td {
         background-color: transparent;
     }
     .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--pagada:hover {
@@ -817,6 +821,9 @@
     }
     .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--adeudada:hover {
         background-color: #d4e8ec;
+    }
+    .gf.gf-cuotas-estudiante .gf-row-hover.gf-row--aviso-pago:hover {
+        background-color: #fde047;
     }
     /* Portal familia — aranceles escolares (desktop: planilla a ancho completo; mobile: cards en Blade) */
     .gf.gf-cuotas-autogestion {
@@ -903,11 +910,17 @@
     .gf.gf-cuotas-autogestion .gf-row.gf-row--adeudada {
         background-color: #ffffff;
     }
+    .gf.gf-cuotas-autogestion .gf-row.gf-row--aviso-pago {
+        background-color: #fef08a;
+    }
     .gf.gf-cuotas-autogestion .gf-row-hover.gf-row--pagada:hover {
         background-color: #b8e8c8;
     }
     .gf.gf-cuotas-autogestion .gf-row-hover.gf-row--adeudada:hover {
         background-color: #d4e8ec;
+    }
+    .gf.gf-cuotas-autogestion .gf-row-hover.gf-row--aviso-pago:hover {
+        background-color: #fde047;
     }
     .gf.gf-cuotas-autogestion .gf-th.gf-th-accion-cupon,
     .gf.gf-cuotas-autogestion .gf-td.gf-td-accion-cupon {

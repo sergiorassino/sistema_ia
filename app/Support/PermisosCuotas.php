@@ -133,7 +133,9 @@ final class PermisosCuotas
     /** Grupo sidebar «Gestión de aranceles». */
     public static function muestraGrupoGestionAranceles(): bool
     {
-        return self::puedeArancelesPorEstudiante() || self::puedeConsultaAfipComprobante();
+        return self::puedeArancelesPorEstudiante()
+            || self::puedeConsultaAfipComprobante()
+            || \App\Support\Mora\PermisosMora::puedeLibreDeudaFamiliar();
     }
 
     /** Grupo sidebar «Gestión masiva». */

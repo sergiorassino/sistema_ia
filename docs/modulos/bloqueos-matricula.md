@@ -26,11 +26,12 @@ Menú de Secretaría (`layouts/app`). Permiso `permisos_ia` orden **82** (`Permi
 ## Flujo principal
 
 1. Elegir curso o «Todos los cursos».
-2. Opcional: filtrar por apellido, nombre o DNI (mismo criterio que legajos; el masivo respeta ese filtro).
-3. Alternar SÍ/NO por fila (guarda al instante).
-4. Acciones masivas: bloquear o desbloquear **pedagógico** o **administrativo** para todos los alumnos del filtro actual (todas las páginas, no solo la visible). Confirmación SweetAlert con cantidad.
-5. **Notif. Bloqueo** (habilitado si hay al menos un bloqueo activo): el diálogo de confirmación muestra el **estudiante** y los **correos válidos** del legajo (madre / padre / tutor) que se usarán en el refuerzo. Crea un comunicado institucional hacia la familia del alumno (remitente = usuario logueado), con push si el canal lo permite y **refuerzo por correo**. El cuerpo sale de `ento.mensajeComBloqMatricula` del **nivel del alumno** (Parametrización → PARÁMETROS); si está vacío, el texto institucional por defecto. Marcadores `{motivos}` (`PEDAGÓGICOS`, `ADMINISTRATIVOS` o ambos) y `{contacto}` (Secretaría de Nivel [nivel del alumno] y, si aplica, Administración). Incluye `Estudiante`, `Curso` y `Nivel`. El correo de refuerzo usa **el mismo cuerpo** y se envía a **todos** los mails válidos del legajo (`emailmad`, `emailpad`, `emailtut`); el resto del módulo de comunicaciones sigue enviando un solo mail (madre→padre→tutor).
-6. **Notif. Desbloqueo** (habilitado si no hay bloqueos activos; ambos botones se muestran siempre en la columna Avisar): mismo canal y refuerzo de mail. Cuerpo de `ento.mensajeComDesbloqMatricula` (vacío = texto por defecto). Marcador `{requisitos}` según lo liberado (`pedagógicos`, `administrativos` o ambos). Incluye `Estudiante`, `Curso` y `Nivel`.
+2. Opcional: estado **Todos** / **Bloqueo pedagógico** (`bloqmatr = 1`) / **Bloqueo administrativo** (`bloqadmi = 1`) / **Bloqueo administrativo y pedagógico** (los dos en 1) / **No bloqueados** (ninguno de los dos en 1). Pedagógico y administrativo incluyen a quienes tienen el otro bloqueo también. El masivo respeta este filtro.
+3. Opcional: filtrar por apellido, nombre o DNI (mismo criterio que legajos; el masivo respeta ese filtro).
+4. Alternar SÍ/NO por fila (guarda al instante).
+5. Acciones masivas: bloquear o desbloquear **pedagógico** o **administrativo** para todos los alumnos del filtro actual (todas las páginas, no solo la visible). Confirmación SweetAlert con cantidad.
+6. **Notif. Bloqueo** (habilitado si hay al menos un bloqueo activo): el diálogo de confirmación muestra el **estudiante** y los **correos válidos** del legajo (madre / padre / tutor) que se usarán en el refuerzo. Crea un comunicado institucional hacia la familia del alumno (remitente = usuario logueado), con push si el canal lo permite y **refuerzo por correo**. El cuerpo sale de `ento.mensajeComBloqMatricula` del **nivel del alumno** (Parametrización → PARÁMETROS); si está vacío, el texto institucional por defecto. Marcadores `{motivos}` (`PEDAGÓGICOS`, `ADMINISTRATIVOS` o ambos) y `{contacto}` (Secretaría de Nivel [nivel del alumno] y, si aplica, Administración). Incluye `Estudiante`, `Curso` y `Nivel`. El correo de refuerzo usa **el mismo cuerpo** y se envía a **todos** los mails válidos del legajo (`emailmad`, `emailpad`, `emailtut`); el resto del módulo de comunicaciones sigue enviando un solo mail (madre→padre→tutor).
+7. **Notif. Desbloqueo** (habilitado si no hay bloqueos activos; ambos botones se muestran siempre en la columna Avisar): mismo canal y refuerzo de mail. Cuerpo de `ento.mensajeComDesbloqMatricula` (vacío = texto por defecto). Marcador `{requisitos}` según lo liberado (`pedagógicos`, `administrativos` o ambos). Incluye `Estudiante`, `Curso` y `Nivel`.
 
 ## Fuente de verdad
 
@@ -50,7 +51,7 @@ En autogestión familia, esos flags impiden entrar a **Actualización de Datos P
 ## Qué no hacer / reglas de negocio
 
 - No actualizar `legajos.bloqmatr` / `bloqadmi`.
-- No aplicar el masivo fuera del filtro de curso / búsqueda / `queryBase` (revalidar IDs con `idTerlec` y alcance de nivel).
+- No aplicar el masivo fuera del filtro de curso / búsqueda / estado (Todos, Bloqueo pedagógico, Bloqueo administrativo, Bloqueo administrativo y pedagógico, No bloqueados) / `queryBase` (revalidar IDs con `idTerlec` y alcance de nivel).
 - Guardado masivo con `PersistenciaColumnas` (sin falso éxito si falta la columna).
 - Confirmación con `seSwalConfirmar`; no `wire:confirm` ni `window.confirm`.
 - No notificar bloqueo si no hay bloqueo activo; no notificar desbloqueo si aún hay bloqueo; revalidar flags en servidor.

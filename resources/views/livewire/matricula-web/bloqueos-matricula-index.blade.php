@@ -16,10 +16,17 @@
         $etiquetaCursoFiltro = is_array($cursoFiltro)
             ? (string) ($cursoFiltro['etiqueta'] ?? 'el curso seleccionado')
             : ($idCurso > 0 ? 'el curso seleccionado' : 'el nivel activo');
+        $etiquetaEstadoFiltro = match ($estadoBloqueo) {
+            'pedagogico' => 'con bloqueo pedagógico',
+            'administrativo' => 'con bloqueo administrativo',
+            'ambos' => 'con bloqueo administrativo y pedagógico',
+            'no_bloqueados' => 'sin bloqueo',
+            default => '',
+        };
         $sujetoMasivo = $totalAlumnos === 1
             ? '1 alumno regular'
             : $totalAlumnos.' alumnos regulares';
-        $alcanceMasivo = $sujetoMasivo.' de '.$etiquetaCursoFiltro.' (listado actual, todas las páginas)';
+        $alcanceMasivo = trim($sujetoMasivo.' '.$etiquetaEstadoFiltro).' de '.$etiquetaCursoFiltro.' (listado actual, todas las páginas)';
         $msgBloquearPed = '¿Aplicar bloqueo pedagógico a '.$alcanceMasivo.'?';
         $msgDesbloquearPed = '¿Quitar el bloqueo pedagógico a '.$alcanceMasivo.'?';
         $msgBloquearAdm = '¿Aplicar bloqueo administrativo a '.$alcanceMasivo.'?';
@@ -37,6 +44,18 @@
                     @foreach ($opcionesCurso as $opcion)
                         <option value="{{ $opcion['id'] }}">{{ $opcion['etiqueta'] }}</option>
                     @endforeach
+                </select>
+            </div>
+            <div class="min-w-0 w-full sm:max-w-md">
+                <label for="bloqueos-estado" class="form-label">Estado</label>
+                <select id="bloqueos-estado"
+                        wire:model.live="estadoBloqueo"
+                        class="form-select mt-1.5">
+                    <option value="todos">Todos</option>
+                    <option value="pedagogico">Bloqueo pedagógico</option>
+                    <option value="administrativo">Bloqueo administrativo</option>
+                    <option value="ambos">Bloqueo administrativo y pedagógico</option>
+                    <option value="no_bloqueados">No bloqueados</option>
                 </select>
             </div>
             <div class="min-w-0 flex-1 max-w-xl">
@@ -117,6 +136,15 @@
         @elseif ($totalAlumnos === 0)
             <div class="px-6 py-12 text-center text-sm text-neutral-600">
                 No hay alumnos regulares
+                @if ($estadoBloqueo === 'pedagogico')
+                    con bloqueo pedagógico
+                @elseif ($estadoBloqueo === 'administrativo')
+                    con bloqueo administrativo
+                @elseif ($estadoBloqueo === 'ambos')
+                    con bloqueo administrativo y pedagógico
+                @elseif ($estadoBloqueo === 'no_bloqueados')
+                    sin bloqueo
+                @endif
                 @if (trim($busqueda) !== '')
                     que coincidan con la búsqueda
                     @if ($idCurso > 0)

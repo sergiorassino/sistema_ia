@@ -54,11 +54,11 @@ final class BloqueosMatriculaService
     }
 
     /**
-     * Aplica bloqueo o desbloqueo a todos los alumnos del listado (filtro de curso y búsqueda actual).
+     * Aplica bloqueo o desbloqueo a todos los alumnos del listado (curso, búsqueda y estado actuales).
      *
      * @return array{exito: bool, mensaje: string, afectados: int}
      */
-    public static function aplicarMasivo(int $idCurso, string $campo, bool $bloquear, string $busqueda = ''): array
+    public static function aplicarMasivo(int $idCurso, string $campo, bool $bloquear, string $busqueda = '', string $estadoBloqueo = BloqueosMatriculaConsulta::ESTADO_TODOS): array
     {
         if (! in_array($campo, ['bloqmatr', 'bloqadmi'], true)) {
             return [
@@ -81,7 +81,7 @@ final class BloqueosMatriculaService
             ];
         }
 
-        $ids = BloqueosMatriculaConsulta::idsDelListado($idCurso, $busqueda);
+        $ids = BloqueosMatriculaConsulta::idsDelListado($idCurso, $busqueda, $estadoBloqueo);
         if ($ids->isEmpty()) {
             return [
                 'exito' => false,

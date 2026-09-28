@@ -145,7 +145,10 @@
                         @foreach ($cuotas as $c)
                             @php
                                 $pagada = GestionAranceles::filaPagada($c);
-                                $rowEstadoClass = $pagada ? 'gf-row--pagada' : 'gf-row--adeudada';
+                                $avisoPago = GestionAranceles::filaAvisoPago($c);
+                                $rowEstadoClass = $avisoPago
+                                    ? 'gf-row--aviso-pago'
+                                    : ($pagada ? 'gf-row--pagada' : 'gf-row--adeudada');
                                 $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
                                 $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
                                 $etiquetaBeca = GestionAranceles::etiquetaBeca($c);
@@ -160,7 +163,9 @@
                                     ? round((float) ($c->faltapa ?? 0) + $interesCelda, 2)
                                     : (float) ($c->faltapa ?? 0);
                             @endphp
-                            <div class="gf-row gf-row-hover {{ $rowEstadoClass }}" wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}">
+                            <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
+                                 wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}"
+                                 @if ($avisoPago) title="Aviso de pago" @endif>
                                 <div class="gf-td gf-td-accion w-8 !py-1">
                                     @if ((float) $c->faltapa > 0)
                                         <label class="inline-flex h-6 w-6 cursor-pointer items-center justify-center">

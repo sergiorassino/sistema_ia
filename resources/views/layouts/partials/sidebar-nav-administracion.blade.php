@@ -335,6 +335,23 @@
                     <span class="truncate">Aranceles por estudiante</span>
                 </a>
                 @endif
+                @if (\App\Support\Mora\PermisosMora::puedeLibreDeudaFamiliar())
+                <a href="{{ route('mora.libre-deuda-familiar') }}"
+                   @class([
+                       'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                       'is-active shadow-sm' => in_array($route ?? '', [
+                           'mora.libre-deuda-familiar',
+                           'mora.libre-deuda-familiar.pdf',
+                       ], true),
+                   ])
+                   title="{{ seSidebarTooltip('Constancia de libre deuda del estudiante', \App\Support\PermisosIaCatalog::ADMIN_MORA_LIBRE_DEUDA_FAMILIAR) }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="truncate">Libre Deuda Familiar</span>
+                </a>
+                @endif
                 @if (\App\Support\PermisosCuotas::puedeConsultaAfipComprobante())
                 <a href="{{ route('cuotas.consulta-afip-comprobante') }}"
                    @class([

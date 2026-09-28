@@ -34,6 +34,11 @@ final class PermisosMora
         return self::tiene(PermisosIaCatalog::ADMIN_MORA_GESTION_MOROSOS);
     }
 
+    public static function puedeLibreDeudaFamiliar(): bool
+    {
+        return self::tiene(PermisosIaCatalog::ADMIN_MORA_LIBRE_DEUDA_FAMILIAR);
+    }
+
     /** Grupo sidebar «Gestión de mora». */
     public static function muestraGrupoGestionMora(): bool
     {

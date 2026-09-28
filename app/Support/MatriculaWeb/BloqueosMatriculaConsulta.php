@@ -17,6 +17,28 @@ final class BloqueosMatriculaConsulta
 {
     public const POR_PAGINA = 50;
 
+    public const ESTADO_TODOS = 'todos';
+
+    public const ESTADO_PEDAGOGICO = 'pedagogico';
+
+    public const ESTADO_ADMINISTRATIVO = 'administrativo';
+
+    public const ESTADO_AMBOS = 'ambos';
+
+    public const ESTADO_NO_BLOQUEADOS = 'no_bloqueados';
+
+    public static function normalizarEstado(string $estado): string
+    {
+        return in_array($estado, [
+            self::ESTADO_PEDAGOGICO,
+            self::ESTADO_ADMINISTRATIVO,
+            self::ESTADO_AMBOS,
+            self::ESTADO_NO_BLOQUEADOS,
+        ], true)
+            ? $estado
+            : self::ESTADO_TODOS;
+    }
+
     /**
      * @return Collection<int, array{id: int, etiqueta: string}>
      */
@@ -42,7 +64,7 @@ final class BloqueosMatriculaConsulta
      *     correosFamilia: list<array{rol: string, email: string}>
      * }>
      */
-    public static function paginar(int $idCurso = 0, string $busqueda = '', int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    public static function paginar(int $idCurso = 0, string $busqueda = '', int $porPagina = self::POR_PAGINA, string $estadoBloqueo = self::ESTADO_TODOS): LengthAwarePaginator
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
         if ($idTerlec < 1) {
@@ -51,7 +73,7 @@ final class BloqueosMatriculaConsulta
 
         $idCurso = self::validarIdCurso($idCurso);
 
-        $query = self::queryBase($idTerlec, $idCurso, $busqueda);
+        $query = self::queryBase($idTerlec, $idCurso, $busqueda, $estadoBloqueo);
 
         return $query
             ->paginate(max(10, min(100, $porPagina)))
@@ -74,11 +96,11 @@ final class BloqueosMatriculaConsulta
     }
 
     /**
-     * IDs de matrícula del listado actual (mismo filtro de curso y búsqueda que la grilla).
+     * IDs de matrícula del listado actual (mismo filtro de curso, búsqueda y estado que la grilla).
      *
      * @return Collection<int, int>
      */
-    public static function idsDelListado(int $idCurso = 0, string $busqueda = ''): Collection
+    public static function idsDelListado(int $idCurso = 0, string $busqueda = '', string $estadoBloqueo = self::ESTADO_TODOS): Collection
     {
         $idTerlec = (int) schoolCtx()->idTerlec;
         if ($idTerlec < 1) {
@@ -87,7 +109,7 @@ final class BloqueosMatriculaConsulta
 
         $idCurso = self::validarIdCurso($idCurso);
 
-        return self::queryBase($idTerlec, $idCurso, $busqueda)
+        return self::queryBase($idTerlec, $idCurso, $busqueda, $estadoBloqueo)
             ->pluck('idMatricula')
             ->map(fn ($id): int => (int) $id)
             ->filter(fn (int $id): bool => $id > 0)
@@ -115,7 +137,7 @@ final class BloqueosMatriculaConsulta
             ->first();
     }
 
-    private static function queryBase(int $idTerlec, ?int $idCurso, string $busqueda = ''): Builder
+    private static function queryBase(int $idTerlec, ?int $idCurso, string $busqueda = '', string $estadoBloqueo = self::ESTADO_TODOS): Builder
     {
         $query = DB::table('matricula as m')
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
@@ -139,6 +161,7 @@ final class BloqueosMatriculaConsulta
         }
 
         self::aplicarFiltroBusqueda($query, $busqueda);
+        self::aplicarFiltroEstado($query, $estadoBloqueo);
 
         return $query
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
@@ -197,6 +220,46 @@ final class BloqueosMatriculaConsulta
                 });
             }
         });
+    }
+
+    /**
+     * Pedagógico: bloqmatr = 1 (incluye quienes también tienen administrativo).
+     * Administrativo: bloqadmi = 1 (incluye quienes también tienen pedagógico).
+     * Ambos: los dos flags en 1.
+     * No bloqueados: ninguno de los dos flags en 1 (0 o nulo).
+     */
+    private static function aplicarFiltroEstado(Builder $query, string $estado): void
+    {
+        $estado = self::normalizarEstado($estado);
+
+        if ($estado === self::ESTADO_PEDAGOGICO) {
+            $query->where('m.bloqmatr', 1);
+
+            return;
+        }
+
+        if ($estado === self::ESTADO_ADMINISTRATIVO) {
+            $query->where('m.bloqadmi', 1);
+
+            return;
+        }
+
+        if ($estado === self::ESTADO_AMBOS) {
+            $query->where('m.bloqmatr', 1)
+                ->where('m.bloqadmi', 1);
+
+            return;
+        }
+
+        if ($estado === self::ESTADO_NO_BLOQUEADOS) {
+            $query->where(function (Builder $q): void {
+                $q->whereNull('m.bloqmatr')
+                    ->orWhere('m.bloqmatr', 0);
+            })->where(function (Builder $q): void {
+                $q->whereNull('m.bloqadmi')
+                    ->orWhere('m.bloqadmi', 0);
+            });
+        }
     }
 
     private static function validarIdCurso(int $idCurso): int

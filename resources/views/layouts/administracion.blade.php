@@ -34,7 +34,8 @@
         students: {{ (str_starts_with($route ?? '', 'abm.legajos') || (str_starts_with($route ?? '', 'listados.') && ! request()->routeIs('listados.estudiantes-datos', 'listados.estudiantes-datos.excel', 'listados.estudiantes-datos.pdf'))) ? 'true' : 'false' }},
         cuadernoComunicados: {{ ((str_starts_with($route ?? '', 'comunicaciones.') || str_starts_with($route ?? '', 'emails-masivos.') || ($route ?? '') === 'param.com-canales' || ($route ?? '') === 'push.suscribir') && (tienePermiso(3) || tienePermiso(43) || tienePermiso(4) || tienePermiso(8) || tienePermiso(5) || tienePermiso(78))) ? 'true' : 'false' }},
         docentes: {{ (str_starts_with($route ?? '', 'abm.profesores-por-materia') || str_starts_with($route ?? '', 'abm.cursos-por-profesor') || str_starts_with($route ?? '', 'abm.preceptores-por-curso') || str_starts_with($route ?? '', 'abm.legajos-profesor') || str_starts_with($route ?? '', 'docentes.inasistencias') || str_starts_with($route ?? '', 'docentes.certificacion-servicios') || str_starts_with($route ?? '', 'docentes.capacitacion') || str_starts_with($route ?? '', 'docentes.libro-de-temas') || request()->routeIs('listados.docentes', 'listados.docentes.pdf', 'listados.docentes.excel')) ? 'true' : 'false' }},
-        gestionCuotas: {{ str_starts_with($route ?? '', 'cuotas.')
+        gestionCuotas: {{ (str_starts_with($route ?? '', 'mora.libre-deuda-familiar')
+            || (str_starts_with($route ?? '', 'cuotas.')
             && ($route ?? '') !== 'cuotas.tipos-beca'
             && ($route ?? '') !== 'cuotas.asignacion-becas'
             && ! in_array($route ?? '', ['cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true)
@@ -59,7 +60,7 @@
             && ($route ?? '') !== 'cuotas.siro-subida'
             && ($route ?? '') !== 'cuotas.siro-subida.archivo'
             && ($route ?? '') !== 'cuotas.siro-descarga'
-            && ($route ?? '') !== 'cuotas.siro-descarga.detalle' ? 'true' : 'false' }},
+            && ($route ?? '') !== 'cuotas.siro-descarga.detalle')) ? 'true' : 'false' }},
         becas: {{ in_array($route ?? '', ['cuotas.tipos-beca', 'cuotas.asignacion-becas', 'cuotas.resumen-becas-por-nivel', 'cuotas.resumen-becas-por-nivel.csv', 'cuotas.solicitud-ayuda-familiar', 'cuotas.solicitud-ayuda-familiar.pdf'], true) ? 'true' : 'false' }},
         gestionMasiva: {{ in_array($route ?? '', ['cuotas.plantillas', 'cuotas.generacion-masiva', 'cuotas.facturacion-masiva-afip', 'cuotas.eliminacion-masiva', 'cuotas.edicion-generadas', 'cuotas.cancelar-todas-reservas'], true)
             || str_starts_with($route ?? '', 'cuotas.importes.')
@@ -75,7 +76,7 @@
             'cuotas.estadistica-pago-por-curso',
             'cuotas.estadistica-pago-por-curso.pdf',
         ], true) ? 'true' : 'false' }},
-        gestionMora: {{ str_starts_with($route ?? '', 'mora.') ? 'true' : 'false' }},
+        gestionMora: {{ str_starts_with($route ?? '', 'mora.') && ! str_starts_with($route ?? '', 'mora.libre-deuda-familiar') ? 'true' : 'false' }},
         mediosPago: {{ \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null) ? 'true' : 'false' }},
         mediosPagoSiro: {{ \App\Support\PermisosMediosPago::enRutaSubgrupoSiro($route ?? null) ? 'true' : 'false' }},
         arca: {{ in_array($route ?? '', ['arca.consulta-cuit-dni', 'arca.observacion-factura'], true) ? 'true' : 'false' }},

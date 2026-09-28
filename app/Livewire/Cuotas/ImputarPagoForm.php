@@ -139,6 +139,45 @@ class ImputarPagoForm extends Component
         }
     }
 
+    /**
+     * Persiste el aviso de pago al marcar o desmarcar, sin imputar un pago.
+     */
+    public function updatedAvisoPago(mixed $valor): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+
+        $activo = filter_var($valor, FILTER_VALIDATE_BOOLEAN);
+        $this->avisoPago = $activo;
+
+        if (! $this->esUnaCuota() || ! tenantCuotasSiroHabilitado()) {
+            $this->avisoPago = false;
+
+            return;
+        }
+
+        $rateKey = 'cuotas:aviso-pago:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($rateKey, 30)) {
+            $this->avisoPago = ! $activo;
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        $registro = $this->registro();
+        abort_unless($registro !== null, 404);
+
+        $resultado = ImputacionPagoService::guardarAvisoPago($registro, $activo);
+        if (! $resultado['ok']) {
+            $this->avisoPago = ! $activo;
+            $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);
+
+            return;
+        }
+
+        $this->dispatch('se-swal-exito', mensaje: $resultado['mensaje']);
+    }
+
     public function updatedLineasImputacion(mixed $value, string $key): void
     {
         if ($this->esUnaCuota()) {

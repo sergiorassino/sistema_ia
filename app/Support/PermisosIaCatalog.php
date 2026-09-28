@@ -265,6 +265,9 @@ final class PermisosIaCatalog
     /** Menú Administración — estado de deuda por estudiante. */
     public const ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE = 98;
 
+    /** Menú Administración — constancia de libre deuda (cuotas internas del estudiante). */
+    public const ADMIN_MORA_LIBRE_DEUDA_FAMILIAR = 111;
+
     /** Configuración: copiar cursos, materias y horarios de un año lectivo a otro. */
     public const COPIAR_CURSOS_MATERIAS_ANIO = 104;
 
@@ -356,6 +359,7 @@ final class PermisosIaCatalog
             ['id' => 63, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda familiar: listado de familias y deuda.'],
             ['id' => 64, 'orden' => self::ADMIN_MORA_GESTION_MOROSOS, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Gestión de morosos: filtros, listado de deuda (PDF) y notificaciones.'],
             ['id' => 98, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda por estudiante: listado de estudiantes (con o sin familia) y deuda.'],
+            ['id' => 111, 'orden' => self::ADMIN_MORA_LIBRE_DEUDA_FAMILIAR, 'tema' => 'GESTIÓN DE ARANCELES', 'descripcion' => 'Libre deuda familiar: listado de estudiantes matriculados y constancia PDF si no registran cuotas con saldo.'],
             ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
             ['id' => 67, 'orden' => self::VIAJES_SALIDAS_EDUCATIVAS, 'tema' => 'VIAJES / SALIDAS EDUCATIVAS', 'descripcion' => 'Gestión de salidas educativas, autorizaciones en PDF y exportación Excel de datos para viajes.'],
             ['id' => 68, 'orden' => self::RESERVA_MATERIAL_ADMIN, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — préstamos espontáneos, gestión de todas las reservas, ABM de grupos/recursos/disponibilidad y registro de entregas/devoluciones.'],

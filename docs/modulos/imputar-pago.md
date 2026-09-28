@@ -22,7 +22,7 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 
 | Tabla | Campos | Notas |
 |-------|--------|-------|
-| `cuotasgeneradas` | `faltapa`, `venc1`/`venc2`/`venc3`, `nueVenc`, `idCuotas`, `idCursos` | Tramos 1–3 = vencimientos originales. `nueVenc` = 4.º venc. (fórmula «después 3º»). |
+| `cuotasgeneradas` | `faltapa`, `venc1`/`venc2`/`venc3`, `nueVenc`, `idCuotas`, `idCursos`, `avisoPago` | Tramos 1–3 = vencimientos originales. `nueVenc` = 4.º venc. (fórmula «después 3º»). `avisoPago` se guarda al marcar el checkbox (SIRO), sin imputar. |
 | `cuotas` | `venc1` | Plantilla: 1.er vencimiento real si la generada tiene `venc1` = `nueVenc`. |
 | `cuotasimportes` | `signoNv`, `valorNv`, `porcanNv` (N=1..4) | Fórmula por cuota+curso. `porcan` vacío se normaliza a `%`. |
 | `cuotaspagos` | importe, interés, bonificación, fecha | Alta del pago. |
@@ -33,7 +33,8 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 1. Abrir imputación desde el estudiante (cuotas en sesión).
 2. Elegir medio de pago y fecha/hora. El % se sugiere con la fórmula del tramo de **hoy**.
 3. Al cambiar fecha, saldo o %, se recalcula interés / a pagar.
-4. Registrar: validación, rate-limit, persistencia y comprobante.
+4. Con SIRO y una sola cuota, marcar o desmarcar **Aviso de pago** persiste `cuotasgeneradas.avisoPago` en el momento, sin crear un pago. En el listado del estudiante (Secretaría y aranceles de autogestión) esa fila se pinta de amarillo.
+5. Registrar: validación, rate-limit, persistencia y comprobante.
 
 ## Fuente de verdad
 

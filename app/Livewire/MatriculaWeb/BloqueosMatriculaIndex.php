@@ -24,10 +24,14 @@ class BloqueosMatriculaIndex extends Component
     /** Apellido, nombre o DNI (mismo criterio que legajos). */
     public string $busqueda = '';
 
+    /** todos | pedagogico | administrativo | ambos | no_bloqueados */
+    public string $estadoBloqueo = BloqueosMatriculaConsulta::ESTADO_TODOS;
+
     /** @var array<string, array{except?: mixed, as?: string}> */
     protected $queryString = [
         'idCurso' => ['except' => 0, 'as' => 'curso'],
         'busqueda' => ['except' => '', 'as' => 'buscar'],
+        'estadoBloqueo' => ['except' => BloqueosMatriculaConsulta::ESTADO_TODOS, 'as' => 'estado'],
     ];
 
     protected function permisoMatriculaWebOrden(): int
@@ -47,6 +51,8 @@ class BloqueosMatriculaIndex extends Component
             ->contains($this->idCurso)
             ? $this->idCurso
             : 0;
+
+        $this->estadoBloqueo = BloqueosMatriculaConsulta::normalizarEstado($this->estadoBloqueo);
     }
 
     public function updatedIdCurso(): void
@@ -56,6 +62,12 @@ class BloqueosMatriculaIndex extends Component
 
     public function updatedBusqueda(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedEstadoBloqueo(): void
+    {
+        $this->estadoBloqueo = BloqueosMatriculaConsulta::normalizarEstado($this->estadoBloqueo);
         $this->resetPage();
     }
 
@@ -92,7 +104,13 @@ class BloqueosMatriculaIndex extends Component
         }
         RateLimiter::hit($rateKey, 60);
 
-        $resultado = BloqueosMatriculaService::aplicarMasivo($this->idCurso, $campo, $bloquear, $this->busqueda);
+        $resultado = BloqueosMatriculaService::aplicarMasivo(
+            $this->idCurso,
+            $campo,
+            $bloquear,
+            $this->busqueda,
+            $this->estadoBloqueo,
+        );
 
         if (! $resultado['exito']) {
             $this->dispatch('se-swal-error', mensaje: $resultado['mensaje']);
@@ -283,7 +301,7 @@ class BloqueosMatriculaIndex extends Component
     {
         $ctx = schoolCtx();
         $opcionesCurso = BloqueosMatriculaConsulta::opcionesCurso();
-        $alumnos = BloqueosMatriculaConsulta::paginar($this->idCurso, $this->busqueda);
+        $alumnos = BloqueosMatriculaConsulta::paginar($this->idCurso, $this->busqueda, BloqueosMatriculaConsulta::POR_PAGINA, $this->estadoBloqueo);
 
         return view('livewire.matricula-web.bloqueos-matricula-index', [
             'opcionesCurso' => $opcionesCurso,
