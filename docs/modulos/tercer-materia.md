@@ -7,6 +7,7 @@ Cargar y consultar las notas TM (TM1–TM6 y Nota) de alumnos regulares del cicl
 ## Modalidades / variantes
 
 - Solo visible si `tenantBoletinMuestraTercerMateria()` (`config/tenant.php` → `boletin.mostrar_tercer_materia`).
+- Tenants con la llave en `true`: **IESS** (`iess`), **San Francisco de Asís** (`sanfranciscoasis`) y **25 de Mayo** (`25demayo`). El resto usa el default `false`.
 - Carga en grilla Livewire (guardado al salir de cada campo). Flechas y Enter pasan de celda.
 - Desplegable de cada celda: 1 a 10, **a** (ausente), **Aprob** y **Reprob**.
 - Búsqueda por alumno y filtros por curso de la materia adeudada y por curso actual (orden pedagógico: 1.º, 2.º, 3.º… y sección A, B, C).

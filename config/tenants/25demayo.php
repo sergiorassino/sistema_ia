@@ -4,9 +4,17 @@
  | 25 de Mayo — personalización declarada en repo (no en .env).
  |
  | Requiere TENANT_SLUG=25demayo en el despliegue de ese colegio.
+ |
+ | Gestión de tercer materia: misma llave que IESS. Muestra el menú de
+ | Secretaría, la grilla de carga, el acta de compromiso y el pie TM en
+ | boletín y consulta de calificaciones.
  */
 
 return [
+    'boletin' => [
+        'mostrar_tercer_materia' => true,
+    ],
+
     'institucional' => [
         'membrete_subtitulo' => 'DE ENSEÑANZA PRIVADA',
         'membrete_adscripcion' => 'Adscripto a la Provincia Ley Nacional Nº 24049/91 y Provincial Nº 8253/92',
