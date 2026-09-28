@@ -92,9 +92,7 @@ if (! function_exists('studentEsNivelSecundario')) {
      */
     function studentEsNivelSecundario(): bool
     {
-        $nombre = mb_strtolower((string) studentCtx()->nivelNombre());
-
-        return str_contains($nombre, 'secundari') || str_contains($nombre, 'medio');
+        return NivelSistema::nombreEsSecundario(studentCtx()->nivelNombre());
     }
 }
 

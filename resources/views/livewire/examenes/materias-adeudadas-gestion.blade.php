@@ -19,7 +19,7 @@
         <div class="se-card mt-6 px-6 py-10 text-center">
             <p class="text-sm font-semibold text-neutral-800">Nivel no compatible</p>
             <p class="mt-2 text-sm text-neutral-600">
-                Este módulo está disponible con el contexto de gestión en <strong>Secundario</strong>.
+                Este módulo está disponible con el contexto de gestión en <strong>Secundario</strong> o <strong>Nivel Medio</strong>.
                 Cambiá el nivel en el selector superior e ingresá nuevamente.
             </p>
         </div>

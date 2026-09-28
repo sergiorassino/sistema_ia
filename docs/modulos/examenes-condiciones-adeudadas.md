@@ -13,7 +13,7 @@ Al entrar a Exámenes (listado, gestión, actas volantes, permiso) y confirmar t
   - **Diciembre** de ese año y **cualquier turno de años posteriores** → `PR`.
 - **Resto de no regulares:** `PR`. No se modifica `inscri`.
 
-El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')` (6 por defecto; 5 en EPQ). Solo corre en nivel cuyo nombre contiene «secundari».
+El último año de medio es `config('tenant.promocion.ultimo_curso_secundario')` (6 por defecto; 5 en EPQ). Solo corre si el nombre del nivel es secundario o medio (`NivelSistema::nombreEsSecundario()`: contiene «secundari» o «medio»). La gestión de materias adeudadas usa el mismo criterio.
 
 Variante por tenant: `config('tenant.examenes.egresados_ventana_condicion')` (`RE` default | `PR`). Helper: `tenantExamenesEgresadosVentanaCondicion()`.
 

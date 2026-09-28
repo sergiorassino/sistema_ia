@@ -3,6 +3,7 @@
 namespace App\Support\Examenes;
 
 use App\Models\Legajo;
+use App\Support\NivelSistema;
 use App\Support\SchoolContext;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -26,7 +27,7 @@ final class MateriasAdeudadasAlumnosListado
 
     public static function esNivelSecundario(SchoolContext $ctx): bool
     {
-        return str_contains(mb_strtolower($ctx->nivelNombre()), 'secundari');
+        return NivelSistema::nombreEsSecundario($ctx->nivelNombre());
     }
 
     public static function normalizeAmbito(?string $value): string

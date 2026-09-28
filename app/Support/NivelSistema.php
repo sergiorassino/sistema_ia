@@ -43,6 +43,16 @@ final class NivelSistema
         return $idNivel === self::SECUNDARIO;
     }
 
+    /**
+     * El nombre en `niveles.nivel` puede ser «Secundario» o «Nivel Medio».
+     */
+    public static function nombreEsSecundario(?string $nombre): bool
+    {
+        $nombre = mb_strtolower(trim((string) $nombre));
+
+        return str_contains($nombre, 'secundari') || str_contains($nombre, 'medio');
+    }
+
     public static function esAdministracion(int $idNivel): bool
     {
         return $idNivel === self::ADMINISTRACION;

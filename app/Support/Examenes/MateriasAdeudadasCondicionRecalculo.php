@@ -3,6 +3,7 @@
 namespace App\Support\Examenes;
 
 use App\Support\Configuracion\PromoverAlumnosAnio;
+use App\Support\NivelSistema;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -279,9 +280,9 @@ final class MateriasAdeudadasCondicionRecalculo
 
     private static function nivelEsSecundario(int $idNivel): bool
     {
-        $nombre = mb_strtolower(trim((string) DB::table('niveles')->where('id', $idNivel)->value('nivel')));
+        $nombre = (string) DB::table('niveles')->where('id', $idNivel)->value('nivel');
 
-        return str_contains($nombre, 'secundari');
+        return NivelSistema::nombreEsSecundario($nombre);
     }
 
     /**
