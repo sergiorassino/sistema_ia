@@ -362,7 +362,7 @@ final class PlanillaResumenCalificacionesSecundario
         array $items,
     ): array {
         $inas = self::valorItemBoletin($items, 'inasistencias');
-        $amon = self::valorItemBoletin($items, 'sanciones');
+        $amon = self::textoAmonestaciones($items);
 
         if ($inas === '' && $inasResumen !== null) {
             $total = $inasResumen->totalClase() + $inasResumen->educacionFisica;
@@ -419,12 +419,26 @@ final class PlanillaResumenCalificacionesSecundario
     }
 
     /**
+     * Total del ítem `itemsboletin` con etiqueta «Amonestaciones» (fuente `sanciones`).
+     * El número ya respeta el `condicion_where` de esa fila.
+     *
      * @param  list<object{etiqueta: string, fuente: string, total: float}>  $items
      */
-    private static function valorItemBoletin(array $items, string $fuente): string
+    public static function textoAmonestaciones(array $items): string
+    {
+        return self::valorItemBoletin($items, 'sanciones', 'Amonestaciones');
+    }
+
+    /**
+     * @param  list<object{etiqueta: string, fuente: string, total: float}>  $items
+     */
+    private static function valorItemBoletin(array $items, string $fuente, ?string $etiqueta = null): string
     {
         foreach ($items as $it) {
             if ((string) ($it->fuente ?? '') !== $fuente) {
+                continue;
+            }
+            if ($etiqueta !== null && strcasecmp(trim((string) ($it->etiqueta ?? '')), $etiqueta) !== 0) {
                 continue;
             }
             $t = (float) ($it->total ?? 0);
