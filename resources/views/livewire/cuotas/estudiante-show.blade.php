@@ -100,7 +100,7 @@
                 @if ($mostrarHistorial)
                     No hay cuotas registradas para este estudiante en ningún ciclo lectivo.
                 @else
-                    No hay cuotas del ciclo {{ $encabezado['terlecAno'] ?? schoolCtx()->terlecAno() }} ni deudas de años anteriores para este estudiante.
+                    No hay cuotas del ciclo {{ $encabezado['terlecAno'] ?? schoolCtx()->terlecAno() }}, de años posteriores, ni deudas de años anteriores para este estudiante.
                 @endif
             </div>
         @else

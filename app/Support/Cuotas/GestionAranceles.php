@@ -56,7 +56,8 @@ final class GestionAranceles
     }
 
     /**
-     * Vista normal: todas las cuotas del ciclo activo y las impagas de años anteriores.
+     * Vista normal: todas las cuotas del ciclo activo y de años posteriores,
+     * más las impagas de años anteriores.
      *
      * @return Collection<int, CuotaGenerada>
      */
@@ -86,7 +87,8 @@ final class GestionAranceles
     }
 
     /**
-     * Año del contexto (todas las cuotas, pagadas o no) + impagas de años lectivos anteriores.
+     * Año del contexto y años posteriores (todas las cuotas, pagadas o no)
+     * + impagas de años lectivos anteriores.
      *
      * @param  Builder<CuotaGenerada>  $query
      * @return Builder<CuotaGenerada>
@@ -107,7 +109,7 @@ final class GestionAranceles
         }
 
         return $query->where(function (Builder $q) use ($tabla, $anoActivo): void {
-            $q->whereIn("{$tabla}.idTerlec", fn ($sub) => self::subqueryIdsTerlecPorAno($sub, '=', $anoActivo))
+            $q->whereIn("{$tabla}.idTerlec", fn ($sub) => self::subqueryIdsTerlecPorAno($sub, '>=', $anoActivo))
                 ->orWhere(function (Builder $q2) use ($tabla, $anoActivo): void {
                     $q2->where("{$tabla}.faltapa", '>', 0)
                         ->whereIn("{$tabla}.idTerlec", fn ($sub) => self::subqueryIdsTerlecPorAno($sub, '<', $anoActivo));

@@ -9,7 +9,7 @@ use App\Support\PermisosCuotas;
 use Livewire\Component;
 
 /**
- * Listado de cuotas del estudiante: vista normal (año actual + impagas anteriores) o historial completo.
+ * Listado de cuotas del estudiante: vista normal (año actual, años posteriores e impagas anteriores) o historial completo.
  */
 class CuotasEstudianteShow extends Component
 {
