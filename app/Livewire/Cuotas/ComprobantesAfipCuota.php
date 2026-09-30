@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Livewire\Cuotas\Concerns\ManejaDestinatarioFacturacionAfip;
 use App\Livewire\Cuotas\Concerns\ManejaResponsablesFacturacionImputacion;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
+use App\Support\Cuotas\FacturacionCobroAfipService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
@@ -16,6 +18,7 @@ use Livewire\Component;
  */
 class ComprobantesAfipCuota extends Component
 {
+    use ManejaDestinatarioFacturacionAfip;
     use ManejaResponsablesFacturacionImputacion;
 
     public int $idLegajo;
@@ -23,6 +26,9 @@ class ComprobantesAfipCuota extends Component
     public int $idCuotaGenerada;
 
     public int $idCuotaPago;
+
+    /** @var array<string, mixed> */
+    public array $vistaPreviaCobro = [];
 
     public function mount(): void
     {
@@ -144,6 +150,91 @@ class ComprobantesAfipCuota extends Component
         $this->abrirPdfSiCorresponde($resultado);
     }
 
+    public function abrirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $puede = ComprobantesAfipCuotaService::puedeGenerarFacturaCobro($this->idLegajo, $this->idCuotaGenerada);
+        if (! $puede['ok']) {
+            $this->vistaPreviaCobro = [];
+            $this->dispatch('se-swal-error', mensaje: $puede['mensaje']);
+
+            return;
+        }
+
+        $this->refrescarVistaPreviaCobro();
+    }
+
+    public function emitirFacturacionCobro(): void
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+        abort_unless(tenantCuotasFacturacionAfipEnCobro(), 404);
+
+        $key = 'cuotas:comprobantes-afip:factura-cobro:'.(auth()->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+
+        $ids = ComprobantesAfipCuotaService::idsPagosPendientesDeFactura($this->idLegajo, $this->idCuotaGenerada);
+        if ($ids === []) {
+            $this->vistaPreviaCobro = [];
+            $this->dispatch('se-swal-error', mensaje: 'No hay cobros pendientes de facturar.');
+
+            return;
+        }
+
+        $resultado = FacturacionCobroAfipService::facturarPagos($ids, $this->idLegajo);
+        if ((int) ($resultado['facturados'] ?? 0) < 1) {
+            $this->refrescarVistaPreviaCobro();
+            $this->dispatch('se-swal-error', mensaje: (string) ($resultado['mensaje'] ?? 'No se pudo facturar.'));
+
+            return;
+        }
+
+        $this->vistaPreviaCobro = [];
+        $this->dispatch('se-swal-exito', mensaje: (string) $resultado['mensaje']);
+
+        foreach ($resultado['comprobantes'] ?? [] as $comprobante) {
+            $idComprobante = (int) ($comprobante['id'] ?? 0);
+            $idLegajo = (int) ($comprobante['idLegajo'] ?? 0);
+            if ($idComprobante <= 0 || $idLegajo !== $this->idLegajo) {
+                continue;
+            }
+            $this->abrirPdfSiCorresponde([
+                'ok' => true,
+                'mensaje' => (string) $resultado['mensaje'],
+                'idComprobanteAfip' => $idComprobante,
+            ]);
+        }
+    }
+
+    protected function autorizarEdicionDestinatarioAfip(int $idLegajo): bool
+    {
+        abort_unless(PermisosCuotas::puedeArancelesPorEstudiante(), 403);
+
+        return $idLegajo === $this->idLegajo
+            && GestionAranceles::legajoParaGestion($idLegajo) !== null;
+    }
+
+    protected function afterGuardarDestinatarioAfip(): void
+    {
+        if ($this->vistaPreviaCobro !== []) {
+            $this->refrescarVistaPreviaCobro();
+        }
+    }
+
+    private function refrescarVistaPreviaCobro(): void
+    {
+        $ids = ComprobantesAfipCuotaService::idsPagosPendientesDeFactura($this->idLegajo, $this->idCuotaGenerada);
+        $this->vistaPreviaCobro = $ids === []
+            ? []
+            : FacturacionCobroAfipService::vistaPreviaPorPagos($ids, $this->idLegajo);
+    }
+
     /**
      * @param  array{ok: bool, mensaje: string, idComprobanteAfip?: int}  $resultado
      */
@@ -181,6 +272,9 @@ class ComprobantesAfipCuota extends Component
 
         $enDevengamiento = tenantCuotasFacturacionAfipEnDevengamiento();
         $enCobro = tenantCuotasFacturacionAfipEnCobro();
+        $puedeFacturaCobro = $enCobro
+            ? ComprobantesAfipCuotaService::puedeGenerarFacturaCobro($this->idLegajo, $this->idCuotaGenerada)
+            : ['ok' => false, 'mensaje' => ''];
         $facturaVigente = $enDevengamiento || $enCobro
             ? ComprobantesAfipCuotaService::facturaVigentePorCuotaGenerada($this->idCuotaGenerada)
             : ComprobantesAfipCuotaService::facturaVigente($this->idCuotaPago);
@@ -201,6 +295,9 @@ class ComprobantesAfipCuota extends Component
             'facturaVigente' => $facturaVigente,
             'enDevengamiento' => $enDevengamiento,
             'enCobro' => $enCobro,
+            'puedeGenerarFacturaCobro' => $puedeFacturaCobro['ok'],
+            'mensajeFacturaCobro' => $puedeFacturaCobro['mensaje'],
+            'vistaPreviaCobro' => $this->vistaPreviaCobro,
         ])->layout(layoutMenuStaff(), [
             'pageTitle' => $enCobro ? 'Comprobantes ARCA' : 'Comprobantes AFIP',
         ]);

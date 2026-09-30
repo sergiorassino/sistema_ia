@@ -62,9 +62,23 @@
                     La factura se emite por <strong>Facturación masiva AFIP</strong>. Desde aquí puede anular una factura vigente con nota de crédito.
                 </p>
             @elseif ($enCobro ?? false)
-                <p class="text-center text-xs text-neutral-600 sm:max-w-md">
-                    Desde aquí puede anular una factura vigente con nota de crédito.
-                </p>
+                @if ($puedeGenerarFacturaCobro ?? false)
+                    <button type="button"
+                            wire:click="abrirFacturacionCobro"
+                            wire:loading.attr="disabled"
+                            wire:target="abrirFacturacionCobro,emitirFacturacionCobro"
+                            class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="abrirFacturacionCobro">Generar factura</span>
+                        <span wire:loading wire:target="abrirFacturacionCobro">Preparando…</span>
+                    </button>
+                @else
+                    <button type="button"
+                            disabled
+                            title="{{ $mensajeFacturaCobro ?? '' }}"
+                            class="inline-flex cursor-not-allowed items-center rounded-xl border border-accent-200 bg-accent-50 px-4 py-2 text-sm font-semibold text-neutral-400">
+                        Generar factura
+                    </button>
+                @endif
             @endif
 
             @php
@@ -95,6 +109,14 @@
             </p>
         @endif
     </section>
+    @endif
+
+    @if ($enCobro ?? false)
+        @include('livewire.cuotas.partials.facturacion-cobro-afip-previa', [
+            'vistaPreviaCobro' => $vistaPreviaCobro ?? [],
+            'mostrarVolverSinFacturar' => false,
+        ])
+        @include('livewire.cuotas.partials.facturacion-masiva-afip-modal-resp-admi')
     @endif
 
     <section class="se-card se-card-cuotas-grid p-0 overflow-hidden">

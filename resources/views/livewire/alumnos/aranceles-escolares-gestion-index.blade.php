@@ -60,6 +60,11 @@
                class="se-gestion-aranceles-btn se-gestion-aranceles-btn--secundario w-full sm:w-auto">
                 Resumen de Pagos
             </a>
+            <button type="button"
+                    wire:click="alternarVistaCuotas"
+                    class="se-gestion-aranceles-btn se-gestion-aranceles-btn--secundario w-full sm:w-auto">
+                {{ $mostrarHistorial ? 'Cuotas pendientes' : 'Historial' }}
+            </button>
             @if ($botonPagosUrl !== '')
                 <button type="button"
                         x-on:click="
@@ -87,7 +92,11 @@
                           d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                 </svg>
                 <p class="text-sm font-semibold text-neutral-700">
-                    No hay cuotas pendientes de pago
+                    @if ($mostrarHistorial)
+                        No hay cuotas registradas para este estudiante
+                    @else
+                        No hay cuotas pendientes de pago
+                    @endif
                 </p>
             </div>
         @else
@@ -95,21 +104,32 @@
             <div class="se-gestion-aranceles-cards space-y-3 p-4 md:hidden">
                 @foreach ($cuotas as $c)
                     @php
+                        $pagada = (float) ($c->faltapa ?? 0) <= 0;
+                        $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
                         $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
                         $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
                         $apellido = trim((string) ($c->legajo->apellido ?? ''));
                         $nombre = trim((string) ($c->legajo->nombre ?? ''));
                     @endphp
-                    <article wire:key="ga-cuota-m-{{ $c->id }}"
-                             class="se-gestion-aranceles-card rounded-xl border border-accent-200 bg-white p-4 shadow-sm">
+                    <article wire:key="ga-cuota-m-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
+                             @class([
+                                 'se-gestion-aranceles-card rounded-xl border p-4 shadow-sm',
+                                 'border-green-200 bg-green-50/80' => $mostrarHistorial && $pagada,
+                                 'border-accent-200 bg-white' => ! ($mostrarHistorial && $pagada),
+                             ])>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0 flex-1">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Cuota</p>
                                 <p class="mt-0.5 text-sm font-bold uppercase leading-snug text-primary-800">{{ $nombreCuota }}</p>
                             </div>
-                            <p class="shrink-0 text-base font-bold tabular-nums text-neutral-900">
-                                {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
-                            </p>
+                            <div class="shrink-0 text-right">
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+                                    {{ $mostrarHistorial ? 'Saldo' : 'Monto' }}
+                                </p>
+                                <p class="text-base font-bold tabular-nums text-neutral-900">
+                                    {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
+                                </p>
+                            </div>
                         </div>
 
                         <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-neutral-700">
@@ -125,6 +145,16 @@
                                 <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Sala/Grado/Curso</dt>
                                 <dd class="mt-0.5 uppercase">{{ $nombreCurso }}</dd>
                             </div>
+                            @if ($mostrarHistorial)
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Año</dt>
+                                    <dd class="mt-0.5 tabular-nums">{{ $c->terlec?->ano ?? '' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Pagado</dt>
+                                    <dd class="mt-0.5 tabular-nums font-semibold">{{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->pagado) }}</dd>
+                                </div>
+                            @endif
                             <div>
                                 <dt class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Venc 1</dt>
                                 <dd class="mt-0.5 tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</dd>
@@ -135,27 +165,41 @@
                             </div>
                         </dl>
 
-                        <div class="mt-4 border-t border-accent-100 pt-3">
-                            @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
-                                <button type="button"
-                                        x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
-                                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
-                                        title="Cupón no disponible — cuota vencida">
-                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                    </svg>
-                                    Cupón no disponible
-                                </button>
-                            @else
-                                <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                        <div class="mt-4 flex flex-col gap-2 border-t border-accent-100 pt-3">
+                            @if (! $mostrarHistorial || (float) $c->faltapa > 0)
+                                @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                    <button type="button"
+                                            x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
+                                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                                            title="Cupón no disponible — cuota vencida">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Cupón no disponible
+                                    </button>
+                                @else
+                                    <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-800 hover:bg-primary-100"
+                                       title="Descargar cupón de pago">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Descargar cupón
+                                    </a>
+                                @endif
+                            @endif
+                            @if ($muestraComprobanteAfip && $facturaAfip)
+                                <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante-afip', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobanteAfipAutogestion((int) $facturaAfip->idComprobanteAfip, (int) $c->id, (int) studentCtx()->idLegajo)]) }}"
                                    target="_blank"
                                    rel="noopener noreferrer"
-                                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-800 hover:bg-primary-100"
-                                   title="Descargar cupón de pago">
+                                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-800 hover:bg-accent-50"
+                                   title="Descargar factura">
                                     <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                     </svg>
-                                    Descargar cupón
+                                    Descargar factura
                                 </a>
                             @endif
                         </div>
@@ -166,57 +210,101 @@
             {{-- Desktop: tabla ancha con scroll horizontal si hace falta --}}
             <div class="hidden w-full overflow-x-auto md:block">
                 <div class="flex justify-start">
-                    <table class="se-gestion-aranceles-tabla min-w-[980px]">
+                    <table @class([
+                        'se-gestion-aranceles-tabla',
+                        'se-gestion-aranceles-tabla--con-anio' => $mostrarHistorial,
+                        'se-gestion-aranceles-tabla--con-factura' => $muestraComprobanteAfip,
+                    ])>
                         <thead>
                             <tr>
                                 <th scope="col">Apellido</th>
                                 <th scope="col">Nombre</th>
                                 <th scope="col">Dni</th>
                                 <th scope="col">Sala/Grado/Curso</th>
+                                @if ($mostrarHistorial)
+                                    <th scope="col">Año</th>
+                                @endif
                                 <th scope="col">Cuota</th>
                                 <th scope="col">Venc 1</th>
                                 <th scope="col">Venc 2</th>
+                                @if ($mostrarHistorial)
+                                    <th scope="col" class="se-gestion-aranceles-tabla-th-monto">Pagado</th>
+                                @endif
+                                <th scope="col" class="se-gestion-aranceles-tabla-th-monto">{{ $mostrarHistorial ? 'Saldo' : 'Monto' }}</th>
                                 <th scope="col" class="se-gestion-aranceles-tabla-th-accion">Descargar Cupón</th>
-                                <th scope="col" class="se-gestion-aranceles-tabla-th-monto">Monto</th>
+                                @if ($muestraComprobanteAfip)
+                                    <th scope="col" class="se-gestion-aranceles-tabla-th-accion">Factura</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($cuotas as $c)
-                                <tr wire:key="ga-cuota-{{ $c->id }}">
+                                @php
+                                    $pagada = (float) ($c->faltapa ?? 0) <= 0;
+                                    $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
+                                @endphp
+                                <tr wire:key="ga-cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
+                                    @class(['se-gestion-aranceles-fila--pagada' => $mostrarHistorial && $pagada])>
                                     <td class="uppercase">{{ trim((string) ($c->legajo->apellido ?? '')) }}</td>
                                     <td class="uppercase">{{ trim((string) ($c->legajo->nombre ?? '')) }}</td>
                                     <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearDni($c->legajo->dni ?? '') }}</td>
                                     <td class="uppercase">{{ trim((string) ($c->curso?->nombreParaListado() ?? '')) }}</td>
+                                    @if ($mostrarHistorial)
+                                        <td class="tabular-nums">{{ $c->terlec?->ano ?? '' }}</td>
+                                    @endif
                                     <td class="font-bold uppercase">{{ trim((string) ($c->cuota?->nombre ?? '')) }}</td>
                                     <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc1) }}</td>
                                     <td class="tabular-nums">{{ \App\Support\Alumnos\ArancelesEscolares::formatearFecha($c->venc2) }}</td>
-                                    <td class="se-gestion-aranceles-tabla-td-accion">
-                                        @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
-                                            <button type="button"
-                                                    x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
-                                                    class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
-                                                    title="Cupón no disponible — cuota vencida">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                </svg>
-                                                <span class="sr-only">Cupón no disponible</span>
-                                            </button>
-                                        @else
-                                            <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
-                                               target="_blank"
-                                               rel="noopener noreferrer"
-                                               class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                               title="Descargar cupón de pago">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                                </svg>
-                                                <span class="sr-only">Descargar cupón de pago</span>
-                                            </a>
-                                        @endif
-                                    </td>
+                                    @if ($mostrarHistorial)
+                                        <td class="se-gestion-aranceles-tabla-td-monto tabular-nums">
+                                            {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->pagado) }}
+                                        </td>
+                                    @endif
                                     <td class="se-gestion-aranceles-tabla-td-monto tabular-nums">
                                         {{ \App\Support\Alumnos\ArancelesEscolares::formatearImporte($c->faltapa) }}
                                     </td>
+                                    <td class="se-gestion-aranceles-tabla-td-accion">
+                                        @if (! $mostrarHistorial || (float) $c->faltapa > 0)
+                                            @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                                <button type="button"
+                                                        x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
+                                                        class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                        title="Cupón no disponible — cuota vencida">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    <span class="sr-only">Cupón no disponible</span>
+                                                </button>
+                                            @else
+                                                <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobantePagoCuota((int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                   title="Descargar cupón de pago">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    <span class="sr-only">Descargar cupón de pago</span>
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </td>
+                                    @if ($muestraComprobanteAfip)
+                                        <td class="se-gestion-aranceles-tabla-td-accion">
+                                            @if ($facturaAfip)
+                                                <a href="{{ se_route_url('alumnos.aranceles-escolares.comprobante-afip', ['ref' => \App\Support\Security\OpaqueRouteToken::forComprobanteAfipAutogestion((int) $facturaAfip->idComprobanteAfip, (int) $c->id, (int) studentCtx()->idLegajo)]) }}"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                   title="Descargar factura">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                    </svg>
+                                                    <span class="sr-only">Descargar factura</span>
+                                                </a>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>

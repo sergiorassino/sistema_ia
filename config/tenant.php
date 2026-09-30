@@ -106,7 +106,7 @@ return [
          * Listado de cuotas pendientes y comprobante de pago (portal familia).
          * `implementacion`: clave de variante en código:
          *   - `sanfranciscoasis` — UI SE (hero, historial, totales, banners opcionales).
-         *   - `gestion_aranceles` — UI legacy (CPE, botón SIRO Roela, tabla compacta).
+         *   - `gestion_aranceles` — UI legacy (CPE, botón SIRO Roela, tabla compacta, historial y factura AFIP).
          */
         'aranceles_escolares' => [
             'habilitado' => false,

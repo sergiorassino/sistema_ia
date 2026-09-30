@@ -1119,6 +1119,16 @@
     }
     .se-gestion-aranceles-tabla {
         @apply w-full border-collapse text-[12px] text-neutral-800;
+        min-width: 980px;
+    }
+    .se-gestion-aranceles-tabla--con-anio {
+        min-width: 1160px;
+    }
+    .se-gestion-aranceles-tabla--con-factura {
+        min-width: 1060px;
+    }
+    .se-gestion-aranceles-tabla--con-anio.se-gestion-aranceles-tabla--con-factura {
+        min-width: 1280px;
     }
     .se-gestion-aranceles-tabla thead th {
         @apply border border-accent-200 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-700;
@@ -1133,6 +1143,12 @@
     }
     .se-gestion-aranceles-tabla tbody tr:hover td {
         background: #eaf1f6;
+    }
+    .se-gestion-aranceles-tabla tbody tr.se-gestion-aranceles-fila--pagada td {
+        background: #ecfdf3;
+    }
+    .se-gestion-aranceles-tabla tbody tr.se-gestion-aranceles-fila--pagada:hover td {
+        background: #dcfce7;
     }
     .se-gestion-aranceles-tabla-th-accion,
     .se-gestion-aranceles-tabla-td-accion {

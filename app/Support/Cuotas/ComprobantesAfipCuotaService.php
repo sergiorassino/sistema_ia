@@ -253,7 +253,7 @@ final class ComprobantesAfipCuotaService
         }
 
         if (tenantCuotasFacturacionAfipEnCobro()) {
-            return ['ok' => false, 'mensaje' => 'La factura se emite al registrar el pago o desde la planilla SIRO.'];
+            return ['ok' => false, 'mensaje' => 'En este colegio la factura de un pago ya registrado se emite desde Comprobantes ARCA.'];
         }
 
         $pago = self::pagoParaGestion($idCuotaPago, $idLegajo, $idCuotaGenerada);
@@ -270,6 +270,67 @@ final class ComprobantesAfipCuotaService
         }
 
         return ['ok' => true, 'mensaje' => ''];
+    }
+
+    /**
+     * Pagos de la cuota sin factura vigente y con importe para facturar (modo cobro).
+     *
+     * @return list<int>
+     */
+    public static function idsPagosPendientesDeFactura(int $idLegajo, int $idCuotaGenerada): array
+    {
+        if (! self::moduloDisponible()
+            || ! tenantCuotasFacturacionAfipEnCobro()
+            || GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
+            return [];
+        }
+
+        $ids = [];
+        $pagos = CuotaPago::query()
+            ->where('idCuotasGeneradas', $idCuotaGenerada)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($pagos as $pago) {
+            if (self::importeFacturable($pago) <= 0) {
+                continue;
+            }
+            if (self::facturaVigente((int) $pago->id) !== null) {
+                continue;
+            }
+            $ids[] = (int) $pago->id;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @return array{ok: bool, mensaje: string}
+     */
+    public static function puedeGenerarFacturaCobro(int $idLegajo, int $idCuotaGenerada): array
+    {
+        if (! tenantCuotasFacturacionAfipEnCobro()) {
+            return ['ok' => false, 'mensaje' => 'La facturación al cobrar no está habilitada para este colegio.'];
+        }
+
+        if (GestionAranceles::cuotaDelLegajo($idCuotaGenerada, $idLegajo) === null) {
+            return ['ok' => false, 'mensaje' => 'Cuota no encontrada.'];
+        }
+
+        if (self::idsPagosPendientesDeFactura($idLegajo, $idCuotaGenerada) !== []) {
+            return ['ok' => true, 'mensaje' => ''];
+        }
+
+        $hayImporte = CuotaPago::query()
+            ->where('idCuotasGeneradas', $idCuotaGenerada)
+            ->get()
+            ->contains(fn (CuotaPago $pago): bool => self::importeFacturable($pago) > 0);
+
+        if (! $hayImporte) {
+            return ['ok' => false, 'mensaje' => 'Esta cuota no tiene pagos con importe para facturar.'];
+        }
+
+        return ['ok' => false, 'mensaje' => 'Los pagos de esta cuota ya tienen factura vigente.'];
     }
 
     /**
