@@ -8,6 +8,7 @@ use App\Support\InformeInasistenciasTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class InformeInasistenciasPdfController extends Controller
 {
@@ -20,6 +21,11 @@ class InformeInasistenciasPdfController extends Controller
             'tipo' => ['nullable', 'integer', 'min:0'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d'],
+            'ambito' => ['nullable', 'string', Rule::in([
+                InformeInasistencias::AMBITO_TODAS,
+                InformeInasistencias::AMBITO_CLASE,
+                InformeInasistencias::AMBITO_EDUCACION_FISICA,
+            ])],
         ]);
 
         $idMatricula = (int) $validated['matricula'];
@@ -40,15 +46,19 @@ class InformeInasistenciasPdfController extends Controller
             ->findOrFail($idMatricula);
 
         $idTipo = InformeInasistencias::tipoFiltroValido((int) ($validated['tipo'] ?? 0) ?: null);
-        $desde = trim((string) ($validated['desde'] ?? ''));
-        $hasta = trim((string) ($validated['hasta'] ?? ''));
+        [$desde, $hasta] = InformeInasistencias::rangoSolicitado(
+            $validated['desde'] ?? null,
+            $validated['hasta'] ?? null,
+        );
+        $ambito = InformeInasistencias::ambitoFiltroValido($validated['ambito'] ?? null);
 
         $datos = InformeInasistencias::datosPdf(
             $matricula,
             $idTipo,
             InformeInasistencias::anoLectivo(),
-            $desde !== '' ? $desde : null,
-            $hasta !== '' ? $hasta : null,
+            $desde,
+            $hasta,
+            $ambito,
         );
 
         $slug = Str::slug('informe-inasistencias-'.$datos['alumnoLinea'], '_');

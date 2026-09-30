@@ -8,6 +8,7 @@ use App\Models\Matricula;
 use App\Support\Alumnos\SinMatriculaAutogestionException;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Consulta de inasistencias del año lectivo activo.
@@ -17,6 +18,15 @@ use Illuminate\Support\Collection;
  */
 final class InformeInasistencias
 {
+    /** Todas las inasistencias del período (clase y educación física). */
+    public const AMBITO_TODAS = 'todas';
+
+    /** Inasistencias que no son de educación física. */
+    public const AMBITO_CLASE = 'clase';
+
+    /** Solo inasistencias de educación física (por concepto del catálogo). */
+    public const AMBITO_EDUCACION_FISICA = 'edfis';
+
     public static function anoLectivo(): int
     {
         return (int) (schoolCtx()->terlecAno() ?? now()->year);
@@ -182,6 +192,46 @@ final class InformeInasistencias
     }
 
     /**
+     * Normaliza el par de fechas del informe. Vacío significa sin tope de ese lado.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    public static function rangoSolicitado(?string $fechaDesde, ?string $fechaHasta): array
+    {
+        $desde = trim((string) $fechaDesde);
+        $hasta = trim((string) $fechaHasta);
+
+        if ($desde !== '' && $hasta !== '' && $desde > $hasta) {
+            throw ValidationException::withMessages([
+                'hasta' => 'La fecha hasta no puede ser anterior a la fecha desde.',
+            ]);
+        }
+
+        return [
+            $desde !== '' ? $desde : null,
+            $hasta !== '' ? $hasta : null,
+        ];
+    }
+
+    public static function ambitoFiltroValido(?string $ambito): string
+    {
+        $ambito = strtolower(trim((string) $ambito));
+
+        return in_array($ambito, [self::AMBITO_CLASE, self::AMBITO_EDUCACION_FISICA], true)
+            ? $ambito
+            : self::AMBITO_TODAS;
+    }
+
+    public static function etiquetaFiltroAmbito(?string $ambito): string
+    {
+        return match (self::ambitoFiltroValido($ambito)) {
+            self::AMBITO_CLASE => 'A clase',
+            self::AMBITO_EDUCACION_FISICA => 'A educación física',
+            default => 'Todas',
+        };
+    }
+
+    /**
      * Variables para `pdf.informe-inasistencias`.
      *
      * @return array{
@@ -192,6 +242,8 @@ final class InformeInasistencias
      *     fechaDesde: string,
      *     fechaHasta: string,
      *     filtroFechasActivo: bool,
+     *     filtroAmbitoActivo: bool,
+     *     etiquetaAmbitoFiltro: string,
      *     etiquetaTipoFiltro: string,
      *     inasistencias: Collection<int, Inasistencia>,
      *     resumen: InasistenciasResumen,
@@ -205,8 +257,10 @@ final class InformeInasistencias
         int $anoLectivo,
         ?string $fechaDesde = null,
         ?string $fechaHasta = null,
+        ?string $ambito = null,
     ): array {
         $idTipo = self::tipoFiltroValido($idTipo);
+        $ambito = self::ambitoFiltroValido($ambito);
         $rango = self::rangoFechasConFiltro($fechaDesde, $fechaHasta, $anoLectivo);
         $inasistencias = self::inasistenciasDelAno(
             (int) $matricula->id,
@@ -214,6 +268,7 @@ final class InformeInasistencias
             $anoLectivo,
             $fechaDesde,
             $fechaHasta,
+            $ambito,
         );
         $legajo = $matricula->legajo;
         $alumnoLinea = mb_strtoupper(trim(
@@ -228,6 +283,8 @@ final class InformeInasistencias
             'fechaDesde' => $rango['desde']->format('d/m/Y'),
             'fechaHasta' => $rango['hasta']->format('d/m/Y'),
             'filtroFechasActivo' => self::filtroFechasActivo($fechaDesde, $fechaHasta),
+            'filtroAmbitoActivo' => $ambito !== self::AMBITO_TODAS,
+            'etiquetaAmbitoFiltro' => self::etiquetaFiltroAmbito($ambito),
             'etiquetaTipoFiltro' => self::etiquetaFiltroTipos($idTipo),
             'inasistencias' => $inasistencias,
             'resumen' => InasistenciasResumen::desdeColeccion($inasistencias),
@@ -273,10 +330,12 @@ final class InformeInasistencias
         ?int $anoLectivo = null,
         ?string $fechaDesde = null,
         ?string $fechaHasta = null,
+        ?string $ambito = null,
     ): Collection {
         $ano = $anoLectivo ?? self::anoLectivo();
         $rango = self::rangoFechasConFiltro($fechaDesde, $fechaHasta, $ano);
         $idTipo = self::tipoFiltroValido($idTipo);
+        $ambito = self::ambitoFiltroValido($ambito);
 
         $query = Inasistencia::query()
             ->with('valorTipo')
@@ -290,9 +349,51 @@ final class InformeInasistencias
             $query->where('tipo', (string) $idTipo);
         }
 
+        self::aplicarFiltroAmbito($query, $ambito);
+
         return $query
             ->orderBy('fecha')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * «A clase» excluye educación física; «A educación física» deja solo esos tipos.
+     * La detección es por concepto del catálogo, no por un ID fijo.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Inasistencia>  $query
+     */
+    private static function aplicarFiltroAmbito($query, string $ambito): void
+    {
+        if ($ambito === self::AMBITO_TODAS) {
+            return;
+        }
+
+        $ids = InasistenciaValor::idsEducacionFisica()
+            ->map(fn ($id) => (string) $id)
+            ->filter(fn (string $id) => $id !== '' && $id !== '0')
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($ambito === self::AMBITO_EDUCACION_FISICA) {
+            if ($ids === []) {
+                $query->whereRaw('0 = 1');
+
+                return;
+            }
+
+            $query->whereIn('tipo', $ids);
+
+            return;
+        }
+
+        if ($ids === []) {
+            return;
+        }
+
+        $query->where(function ($q) use ($ids) {
+            $q->whereNotIn('tipo', $ids)->orWhereNull('tipo');
+        });
     }
 }

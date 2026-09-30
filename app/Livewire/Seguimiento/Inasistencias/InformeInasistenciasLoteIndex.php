@@ -4,6 +4,7 @@ namespace App\Livewire\Seguimiento\Inasistencias;
 
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\InformeInasistencias;
 use App\Support\InformeInasistenciasLoteParams;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\OrdenAlfabeticoEstudiante;
@@ -25,6 +26,67 @@ class InformeInasistenciasLoteIndex extends Component
 
     /** ID de matrícula marcados (`matriculas.id` como string). */
     public array $matriculasSeleccionadas = [];
+
+    /** Fecha desde del informe (Y-m-d). Vacío = inicio del año lectivo. */
+    public string $fechaDesdeFiltro = '';
+
+    /** Fecha hasta del informe (Y-m-d). Vacío = fin del rango del año lectivo. */
+    public string $fechaHastaFiltro = '';
+
+    /** todas | clase | edfis */
+    public string $ambitoFiltro = InformeInasistencias::AMBITO_TODAS;
+
+    public function updatedFechaDesdeFiltro(mixed $value): void
+    {
+        $this->fechaDesdeFiltro = $this->normalizarFechaFiltro(is_scalar($value) ? (string) $value : '');
+    }
+
+    public function updatedFechaHastaFiltro(mixed $value): void
+    {
+        $this->fechaHastaFiltro = $this->normalizarFechaFiltro(is_scalar($value) ? (string) $value : '');
+    }
+
+    public function updatedAmbitoFiltro(mixed $value): void
+    {
+        $this->ambitoFiltro = InformeInasistencias::ambitoFiltroValido(is_scalar($value) ? (string) $value : '');
+    }
+
+    private function normalizarFechaFiltro(string $value): string
+    {
+        $parsed = InformeInasistencias::parseFechaFiltro($value, InformeInasistencias::anoLectivo());
+
+        return $parsed?->toDateString() ?? '';
+    }
+
+    private function rangoFechasValido(): bool
+    {
+        return ! ($this->fechaDesdeFiltro !== ''
+            && $this->fechaHastaFiltro !== ''
+            && $this->fechaDesdeFiltro > $this->fechaHastaFiltro);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function camposFiltroPdf(): array
+    {
+        if (! $this->rangoFechasValido()) {
+            return [];
+        }
+
+        $campos = [
+            'ambito' => InformeInasistencias::ambitoFiltroValido($this->ambitoFiltro),
+        ];
+
+        if ($this->fechaDesdeFiltro !== '') {
+            $campos['desde'] = $this->fechaDesdeFiltro;
+        }
+        if ($this->fechaHastaFiltro !== '') {
+            $campos['hasta'] = $this->fechaHastaFiltro;
+        }
+
+        return $campos;
+    }
 
     public function elegirCurso(int $id): void
     {
@@ -92,7 +154,8 @@ class InformeInasistenciasLoteIndex extends Component
 
     public function puedeGenerarPdfLote(): bool
     {
-        return $this->cursoId !== null
+        return $this->rangoFechasValido()
+            && $this->cursoId !== null
             && collect($this->matriculasSeleccionadas)->filter(fn ($v) => (int) $v > 0)->isNotEmpty();
     }
 
@@ -176,6 +239,15 @@ class InformeInasistenciasLoteIndex extends Component
             ->filter(fn ($v) => (int) $v > 0)
             ->count();
 
+        $anoLectivo = InformeInasistencias::anoLectivo();
+        $rangoFechasValido = $this->rangoFechasValido();
+        $filtroFechasActivo = $this->fechaDesdeFiltro !== '' || $this->fechaHastaFiltro !== '';
+        $rangoFechas = InformeInasistencias::rangoFechasConFiltro(
+            $rangoFechasValido && $this->fechaDesdeFiltro !== '' ? $this->fechaDesdeFiltro : null,
+            $rangoFechasValido && $this->fechaHastaFiltro !== '' ? $this->fechaHastaFiltro : null,
+            $anoLectivo,
+        );
+
         $idsPdfLote = [];
         $puedePdfLote = false;
         if ($this->puedeGenerarPdfLote() && $this->cursoId) {
@@ -201,6 +273,14 @@ class InformeInasistenciasLoteIndex extends Component
             'todasMarcadas' => $this->todasLasMatriculasMarcadas(),
             'hayMatriculas' => $matriculas->isNotEmpty(),
             'maxMatriculasPdf' => InformeInasistenciasLoteParams::MAX_MATRICULAS,
+            'fechaMinimaFiltro' => InformeInasistencias::fechaMinimaAno($anoLectivo),
+            'fechaMaximaFiltro' => InformeInasistencias::fechaMaximaAno($anoLectivo),
+            'rangoFechasValido' => $rangoFechasValido,
+            'filtroFechasActivo' => $filtroFechasActivo,
+            'etiquetaPeriodoFiltro' => $rangoFechas['desde']->format('d/m/Y')
+                .' — '.$rangoFechas['hasta']->format('d/m/Y'),
+            'etiquetaAmbitoFiltro' => InformeInasistencias::etiquetaFiltroAmbito($this->ambitoFiltro),
+            'camposFiltroPdf' => $this->camposFiltroPdf(),
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Informe de Inasistencias']);
     }
 }

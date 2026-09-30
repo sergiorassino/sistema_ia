@@ -75,6 +75,54 @@
                 </p>
             </div>
 
+            <div class="border-b border-accent-100 bg-white px-5 py-3">
+                <div class="flex flex-wrap items-end justify-center gap-x-3 gap-y-2">
+                    <div class="w-[9.25rem] shrink-0">
+                        <label for="se-informe-inas-desde" class="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Fecha desde</label>
+                        <input id="se-informe-inas-desde"
+                               type="date"
+                               wire:model.live="fechaDesdeFiltro"
+                               min="{{ $fechaMinimaFiltro }}"
+                               max="{{ $fechaMaximaFiltro }}"
+                               class="form-input w-full rounded-lg px-2 py-1.5 text-xs text-neutral-700">
+                    </div>
+                    <div class="w-[9.25rem] shrink-0">
+                        <label for="se-informe-inas-hasta" class="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Fecha hasta</label>
+                        <input id="se-informe-inas-hasta"
+                               type="date"
+                               wire:model.live="fechaHastaFiltro"
+                               min="{{ $fechaMinimaFiltro }}"
+                               max="{{ $fechaMaximaFiltro }}"
+                               class="form-input w-full rounded-lg px-2 py-1.5 text-xs text-neutral-700">
+                    </div>
+                    <div class="w-[12.5rem] shrink-0">
+                        <label for="se-informe-inas-ambito" class="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Inasistencias</label>
+                        <select id="se-informe-inas-ambito"
+                                wire:model.live="ambitoFiltro"
+                                class="form-select w-full rounded-lg px-2 py-1.5 text-xs text-neutral-700">
+                            <option value="{{ \App\Support\InformeInasistencias::AMBITO_TODAS }}">Todas</option>
+                            <option value="{{ \App\Support\InformeInasistencias::AMBITO_CLASE }}">A clase</option>
+                            <option value="{{ \App\Support\InformeInasistencias::AMBITO_EDUCACION_FISICA }}">A educación física</option>
+                        </select>
+                    </div>
+                </div>
+                @if (! $rangoFechasValido)
+                    <p class="form-error mt-2 text-center">La fecha hasta no puede ser anterior a la fecha desde.</p>
+                @elseif ($filtroFechasActivo || $ambitoFiltro !== \App\Support\InformeInasistencias::AMBITO_TODAS)
+                    <p class="mt-1.5 text-center text-[11px] leading-snug text-neutral-500">
+                        @if ($filtroFechasActivo)
+                            Período: {{ $etiquetaPeriodoFiltro }}
+                        @endif
+                        @if ($filtroFechasActivo && $ambitoFiltro !== \App\Support\InformeInasistencias::AMBITO_TODAS)
+                            <span class="text-neutral-400"> · </span>
+                        @endif
+                        @if ($ambitoFiltro !== \App\Support\InformeInasistencias::AMBITO_TODAS)
+                            {{ $etiquetaAmbitoFiltro }}
+                        @endif
+                    </p>
+                @endif
+            </div>
+
             @if ($hayMatriculas)
                 <div class="se-toolbar-pocos-campos border-b border-accent-100 bg-white px-5 py-3">
                     <button type="button"
@@ -98,6 +146,9 @@
                               class="inline">
                             @csrf
                             <input type="hidden" name="curso" value="{{ (int) $cursoId }}">
+                            @foreach ($camposFiltroPdf as $nombreFiltro => $valorFiltro)
+                                <input type="hidden" name="{{ $nombreFiltro }}" value="{{ $valorFiltro }}">
+                            @endforeach
                             @foreach ($idsPdfLote as $idMat)
                                 <input type="hidden" name="matriculas[]" value="{{ (int) $idMat }}">
                             @endforeach
@@ -151,12 +202,15 @@
                                     @endif
                                 </td>
                                 <td class="py-2 text-right align-middle">
-                                    <x-pdf-post-matricula
-                                        :action="route('seguimiento.inasistencias.informe.pdf')"
-                                        :matricula="$mat->id"
-                                        button-class="inline-flex items-center justify-end gap-1.5 rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
-                                        PDF
-                                    </x-pdf-post-matricula>
+                                    @if ($rangoFechasValido)
+                                        <x-pdf-post-matricula
+                                            :action="route('seguimiento.inasistencias.informe.pdf')"
+                                            :matricula="$mat->id"
+                                            :fields="$camposFiltroPdf"
+                                            button-class="inline-flex items-center justify-end gap-1.5 rounded-xl border border-accent-200 bg-white px-3 py-2 text-xs font-semibold text-primary-700 shadow-sm transition hover:border-primary-300 hover:bg-accent-50">
+                                            PDF
+                                        </x-pdf-post-matricula>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

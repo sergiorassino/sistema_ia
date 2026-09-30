@@ -172,16 +172,24 @@ final class InformeInasistenciasTcpdf extends TCPDF
             $this->Cell($w, 3.5, $curso, 0, 2, 'C');
         }
 
-        if (! empty($datos['filtroFechasActivo'])) {
+        $mostrarPeriodo = ! empty($datos['filtroFechasActivo']);
+        $etiquetaAmbito = trim((string) ($datos['etiquetaAmbitoFiltro'] ?? ''));
+        $mostrarAmbito = ! empty($datos['filtroAmbitoActivo']) && $etiquetaAmbito !== '';
+        if ($mostrarPeriodo || $mostrarAmbito) {
             TcpdfFuenteArial::aplicar($this, '', 6.5);
-            $this->Cell(
-                $w,
-                3,
-                'Período: '.($datos['fechaDesde'] ?? '').' — '.($datos['fechaHasta'] ?? ''),
-                0,
-                2,
-                'C',
-            );
+            if ($mostrarPeriodo) {
+                $this->Cell(
+                    $w,
+                    3,
+                    'Período: '.($datos['fechaDesde'] ?? '').' — '.($datos['fechaHasta'] ?? ''),
+                    0,
+                    2,
+                    'C',
+                );
+            }
+            if ($mostrarAmbito) {
+                $this->Cell($w, 3, $etiquetaAmbito, 0, 2, 'C');
+            }
         }
 
         return $this->GetY() + 1.5;

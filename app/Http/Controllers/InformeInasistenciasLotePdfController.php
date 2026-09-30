@@ -9,6 +9,7 @@ use App\Support\InformeInasistenciasTcpdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Informes de inasistencias en un solo PDF (varias matrículas del mismo curso).
@@ -35,6 +36,11 @@ class InformeInasistenciasLotePdfController extends Controller
             'tipo' => ['nullable', 'integer', 'min:0'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d'],
+            'ambito' => ['nullable', 'string', Rule::in([
+                InformeInasistencias::AMBITO_TODAS,
+                InformeInasistencias::AMBITO_CLASE,
+                InformeInasistencias::AMBITO_EDUCACION_FISICA,
+            ])],
         ]);
 
         $cursoId = (int) $validated['curso'];
@@ -48,8 +54,11 @@ class InformeInasistenciasLotePdfController extends Controller
         }
 
         $idTipo = InformeInasistencias::tipoFiltroValido((int) ($validated['tipo'] ?? 0) ?: null);
-        $desde = trim((string) ($validated['desde'] ?? ''));
-        $hasta = trim((string) ($validated['hasta'] ?? ''));
+        [$desde, $hasta] = InformeInasistencias::rangoSolicitado(
+            $validated['desde'] ?? null,
+            $validated['hasta'] ?? null,
+        );
+        $ambito = InformeInasistencias::ambitoFiltroValido($validated['ambito'] ?? null);
         $ano = InformeInasistencias::anoLectivo();
 
         $hojas = [];
@@ -69,8 +78,9 @@ class InformeInasistenciasLotePdfController extends Controller
                 $matricula,
                 $idTipo,
                 $ano,
-                $desde !== '' ? $desde : null,
-                $hasta !== '' ? $hasta : null,
+                $desde,
+                $hasta,
+                $ambito,
             );
         }
 

@@ -51,6 +51,19 @@ Educación física se detecta por el **concepto** del catálogo (`InasistenciaVa
 4. Nueva / editar / borrar inasistencia.
 5. Informe PDF: detalle + pie legacy (total / justificadas / injustificadas / educación física). Si hay tipos con `mostrarTotal`, se listan debajo.
 
+### Informe PDF por curso (secretaría)
+
+Pantalla **Informe de Inasistencias** (`InformeInasistenciasLoteIndex`). Los filtros se aplican al PDF individual y al lote:
+
+| Filtro | Efecto |
+|--------|--------|
+| Fecha desde / fecha hasta | Acotan el detalle. Vacías: año lectivo del contexto (hasta hoy si el ciclo es el año en curso). Deben caer dentro de ese año. |
+| Todas | Clase y educación física. |
+| A clase | Todos los tipos salvo educación física. |
+| A educación física | Solo tipos cuyo concepto es educación física (`InasistenciaValor::conceptoEsEducacionFisica`). |
+
+Si hay fechas, el PDF imprime el período. Si el rubro no es «Todas», imprime «A clase» o «A educación física». El pie se calcula sobre las filas ya filtradas.
+
 ## Fuente de verdad
 
 | Dato | Quién escribe | Este módulo |
@@ -69,6 +82,7 @@ Educación física se detecta por el **concepto** del catálogo (`InasistenciaVa
 | Totales catálogo (pantalla) | `InasistenciasResumen::totalesCatalogo()` / `InasistenciaValor::tiposParaMostrarTotal()` |
 | Pie PDF legacy | `InasistenciasResumen::totalesPieInforme()` |
 | PDF | `InformeInasistenciasTcpdf` + `InformeInasistenciasPdfController` |
+| Informe por curso | `InformeInasistenciasLoteIndex` + `informe-lote-index.blade.php` |
 | Migración | `database/migrations/2026_09_03_180000_add_mostrar_total_to_inasistencias_valores.php` |
 
 ## Qué no hacer / reglas de negocio
