@@ -20,6 +20,38 @@ final class SiroIdFactura
     }
 
     /**
+     * Próximo ultUpload (1–99) que no figure en $ocupados.
+     *
+     * Arranca en {@code $ultUploadActual + 1}. Si ese número ya existe en
+     * cupones_a_pagar (reimpresión, subida SIRO previa o cuota regenerada),
+     * avanza hasta el primero libre. La clave única es id_factura, que incluye
+     * este número.
+     *
+     * @param  list<int>  $ocupados
+     */
+    public static function siguienteUltUploadLibre(int $ultUploadActual, array $ocupados): int
+    {
+        $usados = [];
+        foreach ($ocupados as $n) {
+            $usados[(int) $n] = true;
+        }
+
+        $candidato = max(0, $ultUploadActual) + 1;
+        if ($candidato < 1) {
+            $candidato = 1;
+        }
+
+        while ($candidato <= 99) {
+            if (! isset($usados[$candidato])) {
+                return $candidato;
+            }
+            $candidato++;
+        }
+
+        throw new \RuntimeException('No hay un número de cupón SIRO disponible para esta cuota (máximo 99).');
+    }
+
+    /**
      * @return array{idLegajos: int, idCuotas: int, ultUpload: int}|null
      */
     public static function decodificar(string $idFactura): ?array

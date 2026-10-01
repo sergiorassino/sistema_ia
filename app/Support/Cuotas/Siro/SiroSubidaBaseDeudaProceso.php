@@ -44,8 +44,10 @@ final class SiroSubidaBaseDeudaProceso
 
         $archivo = SiroSubidaBaseDeudaArchivo::generar($detalles);
         $porId = $registros->keyBy('id');
+        $cambioIdFactura = false;
+        $detallesPersistidos = [];
 
-        DB::transaction(function () use ($detalles, $archivo, $porId): void {
+        DB::transaction(function () use ($detalles, $archivo, $porId, &$cambioIdFactura, &$detallesPersistidos): void {
             $ids = array_map(fn (array $d) => (int) ($d['idCuotaGenerada'] ?? 0), $detalles);
 
             $pendientes = CuotaGenerada::query()
@@ -61,13 +63,22 @@ final class SiroSubidaBaseDeudaProceso
                     continue;
                 }
 
-                CuponAPagarEmision::desdeSubidaSiro(
+                $idAntes = (string) ($detalle['idFactura'] ?? '');
+                $persistido = CuponAPagarEmision::desdeSubidaSiro(
                     $registro,
                     $detalle,
                     (string) ($archivo['nombre'] ?? ''),
                 );
+                if ((string) ($persistido['idFactura'] ?? '') !== $idAntes) {
+                    $cambioIdFactura = true;
+                }
+                $detallesPersistidos[] = $persistido;
             }
         });
+
+        if ($cambioIdFactura && $detallesPersistidos !== []) {
+            $archivo = SiroSubidaBaseDeudaArchivo::generar($detallesPersistidos);
+        }
 
         return [
             'archivo' => $archivo,

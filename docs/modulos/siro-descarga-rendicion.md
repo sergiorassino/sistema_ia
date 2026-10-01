@@ -36,7 +36,7 @@ Nombre en el sidebar: **Descarga rendición** (grupo Medios de pago → SIRO).
 | `cuotaspagos` | `idCuotasGeneradas`, `idCuotastipopago`, `fechhora`, `importe`, `bonificacion`, `interes`, `nombreArchivo`, `cadenaPago` | Movimiento de caja al impactar. |
 | `cuotastipopago` | `id`, `abrev`, `tipoPago` | Canal SIRO (BPD, PF, RP, FSF, LK, TQR, …). Si el canal del archivo **no** está acá → rechazo SIRO (BPR, DDR, etc.), no se persiste. |
 
-`id_factura` SIRO (modelo 26, 20 dígitos): `legajo(8) + idCuotas(7) + ultUpload(2) + últimos 3 de idCuotas`. Clase: `App\Support\Cuotas\Siro\SiroIdFactura`.
+`id_factura` SIRO (modelo 26, 20 dígitos): `legajo(8) + idCuotas(7) + ultUpload(2) + últimos 3 de idCuotas`. Clase: `App\Support\Cuotas\Siro\SiroIdFactura`. Es único en `cupones_a_pagar`. Al imprimir o subir a SIRO, si ese número ya existe (cupón previo, cuota regenerada o `cuotasgeneradas.ultUpload` desfasado), se toma el siguiente `ultUpload` libre (1–99) y el PDF o el archivo SIRO usan ese mismo número.
 
 ## Pantallas y rutas
 

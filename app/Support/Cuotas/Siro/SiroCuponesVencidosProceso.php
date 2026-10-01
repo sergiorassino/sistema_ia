@@ -49,8 +49,10 @@ final class SiroCuponesVencidosProceso
 
         $archivo = SiroSubidaBaseDeudaArchivo::generar($detalles);
         $porId = $registros->keyBy('id');
+        $cambioIdFactura = false;
+        $detallesPersistidos = [];
 
-        DB::transaction(function () use ($detalles, $archivo, $porId, $fecha, $hoy): void {
+        DB::transaction(function () use ($detalles, $archivo, $porId, $fecha, $hoy, &$cambioIdFactura, &$detallesPersistidos): void {
             $ids = array_map(fn (array $d) => (int) ($d['idCuotaGenerada'] ?? 0), $detalles);
 
             CuotaGenerada::query()
@@ -74,13 +76,22 @@ final class SiroCuponesVencidosProceso
 
                 $registro->nueVenc = Carbon::parse($fecha)->startOfDay();
 
-                CuponAPagarEmision::desdeSubidaSiro(
+                $idAntes = (string) ($detalle['idFactura'] ?? '');
+                $persistido = CuponAPagarEmision::desdeSubidaSiro(
                     $registro,
                     $detalle,
                     (string) ($archivo['nombre'] ?? ''),
                 );
+                if ((string) ($persistido['idFactura'] ?? '') !== $idAntes) {
+                    $cambioIdFactura = true;
+                }
+                $detallesPersistidos[] = $persistido;
             }
         });
+
+        if ($cambioIdFactura && $detallesPersistidos !== []) {
+            $archivo = SiroSubidaBaseDeudaArchivo::generar($detallesPersistidos);
+        }
 
         return [
             'archivo' => $archivo,
