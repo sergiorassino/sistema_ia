@@ -217,6 +217,12 @@ final class PermisosIaCatalog
     /** Menú de Secretaría — estadística de rendimiento escolar (nivel medio). */
     public const ESTADISTICA_RENDIMIENTO_ESCOLAR = 65;
 
+    /** Menú de Secretaría — estadística de alumnos por edad (solo regulares). */
+    public const ESTADISTICA_POR_EDAD = 113;
+
+    /** Menú de Secretaría — estadística de alumnos regulares por curso y sexo. */
+    public const ESTADISTICA_SEXO_CURSO = 114;
+
     /** Menú de Administración — consulta CUIT/CUIL por DNI en ARCA (Padrón A13). */
     public const ADMIN_ARCA_CONSULTA_CUIT_DNI = 84;
 
@@ -361,6 +367,8 @@ final class PermisosIaCatalog
             ['id' => 98, 'orden' => self::ADMIN_MORA_ESTADO_DEUDA_ESTUDIANTE, 'tema' => 'GESTIÓN DE MORA', 'descripcion' => 'Estado de deuda por estudiante: listado de estudiantes (con o sin familia) y deuda.'],
             ['id' => 111, 'orden' => self::ADMIN_MORA_LIBRE_DEUDA_FAMILIAR, 'tema' => 'GESTIÓN DE ARANCELES', 'descripcion' => 'Libre deuda familiar: listado de estudiantes matriculados y constancia PDF si no registran cuotas con saldo.'],
             ['id' => 65, 'orden' => self::ESTADISTICA_RENDIMIENTO_ESCOLAR, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística de rendimiento escolar: aprobación por materias, docentes y estudiantes (nivel medio).'],
+            ['id' => 113, 'orden' => self::ESTADISTICA_POR_EDAD, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística por edad: cantidad de alumnos regulares de cada edad, por curso del nivel de sesión, a una fecha de cálculo.'],
+            ['id' => 114, 'orden' => self::ESTADISTICA_SEXO_CURSO, 'tema' => 'ESTADÍSTICAS', 'descripcion' => 'Estadística por sexo y curso: cantidad de alumnos regulares por curso, con una columna por cada sexo configurado en el colegio.'],
             ['id' => 67, 'orden' => self::VIAJES_SALIDAS_EDUCATIVAS, 'tema' => 'VIAJES / SALIDAS EDUCATIVAS', 'descripcion' => 'Gestión de salidas educativas, autorizaciones en PDF y exportación Excel de datos para viajes.'],
             ['id' => 68, 'orden' => self::RESERVA_MATERIAL_ADMIN, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — préstamos espontáneos, gestión de todas las reservas, ABM de grupos/recursos/disponibilidad y registro de entregas/devoluciones.'],
             ['id' => 69, 'orden' => self::RESERVA_MATERIAL_PROFESOR, 'tema' => 'MATERIAL DIDÁCTICO', 'descripcion' => 'Reserva de Material Didáctico — registrar, editar y cancelar pedidos propios (mientras el recurso no haya sido entregado).'],

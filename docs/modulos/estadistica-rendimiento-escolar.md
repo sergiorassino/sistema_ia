@@ -28,7 +28,7 @@ El año lectivo mostrado es el de **contexto de sesión** (`schoolCtx()->idTerle
 | Menú | **Menú de Secretaría** (`layouts/app`), grupo sidebar **ESTADÍSTICAS** |
 | Permiso | `PermisosIaCatalog::ESTADISTICA_RENDIMIENTO_ESCOLAR` — **orden 65** |
 | Nivel de sesión | `NivelSistema::esSecundario(schoolCtx()->idNivel)` — solo `niveles.id = 3` |
-| Visibilidad menú | `MenuSecretariaPerfil::muestraEstadisticas()` (equivale a mostrar calificaciones secundario) |
+| Visibilidad menú | Ítem solo en secundario: `MenuSecretariaPerfil::muestraCalificacionesSecundario()` y permiso 65. El grupo ESTADÍSTICAS también puede mostrar «Estadísticas por edad» en otros niveles pedagógicos. |
 | Rutas | Middleware `permiso:65` + trait `RequiresPermisoEstadisticaRendimiento` en cada componente Livewire |
 
 Sin permiso, nivel distinto de secundario o ciclo sin `idTerlec`: **403** o mensaje de contexto vacío.

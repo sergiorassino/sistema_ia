@@ -12,6 +12,8 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Reserva de Material Didáctico | [reserva-material-didactico.md](reserva-material-didactico.md) |
 | Gestión de asignaturas del año | [materias-anio.md](materias-anio.md) |
 | Estadística de rendimiento escolar | [estadistica-rendimiento-escolar.md](estadistica-rendimiento-escolar.md) |
+| Estadística por edad | [estadistica-por-edad.md](estadistica-por-edad.md) |
+| Estadística por sexo y curso | [estadistica-sexo-curso.md](estadistica-sexo-curso.md) |
 | Ficha de matrícula (Secretaría) | [ficha-matricula-secretaria.md](ficha-matricula-secretaria.md) |
 | Deuda Áulica (cliente API) | [aulica-deuda-matricula.md](aulica-deuda-matricula.md) |
 | Libre Deuda (constancia PDF, familia, Áulica) | [libre-deuda.md](libre-deuda.md) |

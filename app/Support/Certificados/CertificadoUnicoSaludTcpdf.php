@@ -86,64 +86,84 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
         ]);
     }
 
+    public static function aplicarMargenes(TCPDF $pdf): void
+    {
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false);
+    }
+
+    /**
+     * @param  array<string, mixed>  $alumno
+     * @param  array{insti?: string, logo_file?: ?string}|null  $header
+     */
+    public static function dibujarPagina(TCPDF $pdf, array $alumno, ?string $plantilla, ?array $header = null): void
+    {
+        self::aplicarMargenes($pdf);
+
+        if ($plantilla !== null && is_file($plantilla)) {
+            $pdf->Image($plantilla, 0, 0, 210, 0, '', '', '', false, 300);
+        }
+
+        self::dibujarLogoInstitucional($pdf, $header);
+
+        $cursec = (string) ($alumno['cursec'] ?? '');
+        $pdf->SetXY(155, 10);
+        TcpdfFuenteArial::aplicar($pdf, 'BI', 9);
+        $pdf->Cell(40, 6, 'CURSO:  '.$cursec, 1, 0, 'C');
+
+        $y = 40.0;
+        TcpdfFuenteArial::aplicar($pdf, '', 8);
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(30, 6, 'FECHA: ............. / .............. / ............', 0, 0, 'L');
+        $pdf->SetXY(150, $y);
+        $pdf->Cell(30, 6, 'D.N.I.: '.(string) ($alumno['dni'] ?? ''), 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(50, 6, 'Apellidos y Nombres (según DNI): ', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($pdf, 'BI', 9);
+        $pdf->Cell(30, 6, trim((string) ($alumno['apellido'] ?? '')).', '.trim((string) ($alumno['nombre'] ?? '')), 0, 0, 'L');
+
+        TcpdfFuenteArial::aplicar($pdf, '', 8);
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(50, 6, 'Fecha de Nacimiento: '.(string) ($alumno['fechnaci'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(20, 6, 'Edad: .......', 0, 0, 'L');
+        $pdf->Cell(30, 6, 'Sexo: '.(string) ($alumno['sexo_etiqueta'] ?? ''), 0, 0, 'L');
+        $lnCiudad = trim((string) ($alumno['ln_ciudad'] ?? ''));
+        $lnProvincia = trim((string) ($alumno['ln_provincia'] ?? ''));
+        $lugarNac = $lnCiudad.($lnProvincia !== '' ? ', '.$lnProvincia : '');
+        $pdf->Cell(30, 6, 'Lugar de Nacimiento: '.$lugarNac, 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(90, 6, 'Domicilio: '.(string) ($alumno['callenum'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(80, 6, 'Barrio: '.(string) ($alumno['barrio'] ?? ''), 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(80, 6, 'Localidad: '.(string) ($alumno['localidad'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(50, 6, 'Cel. de la madre: '.(string) ($alumno['telemad'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(50, 6, 'Cel. del padre: '.(string) ($alumno['telepad'] ?? ''), 0, 0, 'L');
+
+        $pdf->Rect(13, 39, 185, 32);
+    }
+
     /**
      * @param  array<string, mixed>  $alumno
      */
     private function dibujarHoja(array $alumno): void
     {
-        if ($this->plantilla !== null && is_file($this->plantilla)) {
-            $this->Image($this->plantilla, 0, 0, 210, 0, '', '', '', false, 300);
-        }
-
-        $this->dibujarLogoInstitucional();
-
-        $cursec = (string) ($alumno['cursec'] ?? '');
-        $this->SetXY(155, 10);
-        TcpdfFuenteArial::aplicar($this, 'BI', 9);
-        $this->Cell(40, 6, 'CURSO:  '.$cursec, 1, 0, 'C');
-
-        $y = 40.0;
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->SetXY(15, $y);
-        $this->Cell(30, 6, 'FECHA: ............. / .............. / ............', 0, 0, 'L');
-        $this->SetXY(150, $y);
-        $this->Cell(30, 6, 'D.N.I.: '.(string) ($alumno['dni'] ?? ''), 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(50, 6, 'Apellidos y Nombres (según DNI): ', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, 'BI', 9);
-        $this->Cell(30, 6, trim((string) ($alumno['apellido'] ?? '')).', '.trim((string) ($alumno['nombre'] ?? '')), 0, 0, 'L');
-
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(50, 6, 'Fecha de Nacimiento: '.(string) ($alumno['fechnaci'] ?? ''), 0, 0, 'L');
-        $this->Cell(20, 6, 'Edad: .......', 0, 0, 'L');
-        $this->Cell(30, 6, 'Sexo: '.(string) ($alumno['sexo_etiqueta'] ?? ''), 0, 0, 'L');
-        $lnCiudad = trim((string) ($alumno['ln_ciudad'] ?? ''));
-        $lnProvincia = trim((string) ($alumno['ln_provincia'] ?? ''));
-        $lugarNac = $lnCiudad.($lnProvincia !== '' ? ', '.$lnProvincia : '');
-        $this->Cell(30, 6, 'Lugar de Nacimiento: '.$lugarNac, 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(90, 6, 'Domicilio: '.(string) ($alumno['callenum'] ?? ''), 0, 0, 'L');
-        $this->Cell(80, 6, 'Barrio: '.(string) ($alumno['barrio'] ?? ''), 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(80, 6, 'Localidad: '.(string) ($alumno['localidad'] ?? ''), 0, 0, 'L');
-        $this->Cell(50, 6, 'Cel. de la madre: '.(string) ($alumno['telemad'] ?? ''), 0, 0, 'L');
-        $this->Cell(50, 6, 'Cel. del padre: '.(string) ($alumno['telepad'] ?? ''), 0, 0, 'L');
-
-        $this->Rect(13, 39, 185, 32);
+        self::dibujarPagina($this, $alumno, $this->plantilla, $this->header);
     }
 
-    private function dibujarLogoInstitucional(): void
+    /**
+     * @param  array{insti?: string, logo_file?: ?string}|null  $header
+     */
+    private static function dibujarLogoInstitucional(TCPDF $pdf, ?array $header): void
     {
-        $this->SetFillColor(255, 255, 255);
-        $this->Rect(
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->Rect(
             self::LEGACY_LOGO_TAPA_X,
             self::LEGACY_LOGO_TAPA_Y,
             self::LEGACY_LOGO_TAPA_ANCHO,
@@ -151,9 +171,9 @@ final class CertificadoUnicoSaludTcpdf extends TCPDF
             'F',
         );
 
-        $logoFile = pdfHeaderLogoAbsolutePath($this->header ?? schoolPdfHeaderData());
+        $logoFile = pdfHeaderLogoAbsolutePath($header ?? schoolPdfHeaderData());
         TcpdfLogoInstitucional::dibujarAjustado(
-            $this,
+            $pdf,
             self::LOGO_INST_X,
             self::LOGO_INST_Y,
             self::LOGO_INST_ANCHO,

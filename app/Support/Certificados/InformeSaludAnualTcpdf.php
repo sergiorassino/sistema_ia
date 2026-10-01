@@ -62,62 +62,78 @@ final class InformeSaludAnualTcpdf extends TCPDF
         ]);
     }
 
+    public static function aplicarMargenes(TCPDF $pdf): void
+    {
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false);
+    }
+
+    /**
+     * @param  array<string, mixed>  $alumno
+     */
+    public static function dibujarPagina(TCPDF $pdf, array $alumno, ?string $plantilla, string $insti): void
+    {
+        self::aplicarMargenes($pdf);
+
+        if ($plantilla !== null && is_file($plantilla)) {
+            $pdf->Image($plantilla, 0, 3, 210, 0, '', '', '', false, 300);
+        }
+
+        $cursec = (string) ($alumno['cursec'] ?? '');
+        $pdf->SetXY(15, 10);
+        TcpdfFuenteArial::aplicar($pdf, 'B', 14);
+        $pdf->Cell(180, 8, $insti.'   *   '.$cursec, 1, 0, 'C');
+
+        $y = 67.0;
+        TcpdfFuenteArial::aplicar($pdf, '', 8);
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(30, 6, 'FECHA: ............. / .............. / ............', 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(50, 6, 'Apellido y Nombre del Estudiante: ', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($pdf, 'BI', 9);
+        $pdf->Cell(100, 6, trim((string) ($alumno['apellido'] ?? '')).', '.trim((string) ($alumno['nombre'] ?? '')), 0, 0, 'L');
+
+        $y += 6;
+        TcpdfFuenteArial::aplicar($pdf, '', 8);
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(30, 6, 'D.N.I.: '.(string) ($alumno['dni'] ?? ''), 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(80, 6, 'Escuela: '.$insti, 0, 0, 'L');
+        $pdf->Cell(50, 6, 'Curso: '.$cursec, 0, 0, 'L');
+        $pdf->Cell(50, 6, 'Turno: .......................', 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(20, 6, 'Edad: .......', 0, 0, 'L');
+        $pdf->Cell(30, 6, 'Sexo: '.(string) ($alumno['sexo_etiqueta'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(50, 6, 'Fecha de Nacimiento: '.(string) ($alumno['fechnaci'] ?? ''), 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(90, 6, 'Domicilio: '.(string) ($alumno['callenum'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(80, 6, 'Localidad: '.(string) ($alumno['localidad'] ?? ''), 0, 0, 'L');
+
+        $y += 6;
+        $pdf->SetXY(15, $y);
+        $pdf->Cell(70, 6, 'Teléfonos: Madre: '.(string) ($alumno['telemad'] ?? '').'   Padre: '.(string) ($alumno['telepad'] ?? ''), 0, 0, 'L');
+        $pdf->Cell(17, 6, 'Obra Social: ', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($pdf, 'B', 8);
+        $pdf->Cell(15, 6, 'SI  /  NO', 0, 0, 'L');
+        TcpdfFuenteArial::aplicar($pdf, '', 8);
+        $pdf->Cell(30, 6, 'Cuál: ..........................................       Grupo Sanguíneo: ...........', 0, 0, 'L');
+
+        $pdf->Rect(13, 64, 185, 47);
+    }
+
     /**
      * @param  array<string, mixed>  $alumno
      */
     private function dibujarHoja(array $alumno): void
     {
-        if ($this->plantilla !== null && is_file($this->plantilla)) {
-            $this->Image($this->plantilla, 0, 3, 210, 0, '', '', '', false, 300);
-        }
-
-        $cursec = (string) ($alumno['cursec'] ?? '');
-        $this->SetXY(15, 10);
-        TcpdfFuenteArial::aplicar($this, 'B', 14);
-        $this->Cell(180, 8, $this->insti.'   *   '.$cursec, 1, 0, 'C');
-
-        $y = 67.0;
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->SetXY(15, $y);
-        $this->Cell(30, 6, 'FECHA: ............. / .............. / ............', 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(50, 6, 'Apellido y Nombre del Estudiante: ', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, 'BI', 9);
-        $this->Cell(100, 6, trim((string) ($alumno['apellido'] ?? '')).', '.trim((string) ($alumno['nombre'] ?? '')), 0, 0, 'L');
-
-        $y += 6;
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->SetXY(15, $y);
-        $this->Cell(30, 6, 'D.N.I.: '.(string) ($alumno['dni'] ?? ''), 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(80, 6, 'Escuela: '.$this->insti, 0, 0, 'L');
-        $this->Cell(50, 6, 'Curso: '.$cursec, 0, 0, 'L');
-        $this->Cell(50, 6, 'Turno: .......................', 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(20, 6, 'Edad: .......', 0, 0, 'L');
-        $this->Cell(30, 6, 'Sexo: '.(string) ($alumno['sexo_etiqueta'] ?? ''), 0, 0, 'L');
-        $this->Cell(50, 6, 'Fecha de Nacimiento: '.(string) ($alumno['fechnaci'] ?? ''), 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(90, 6, 'Domicilio: '.(string) ($alumno['callenum'] ?? ''), 0, 0, 'L');
-        $this->Cell(80, 6, 'Localidad: '.(string) ($alumno['localidad'] ?? ''), 0, 0, 'L');
-
-        $y += 6;
-        $this->SetXY(15, $y);
-        $this->Cell(70, 6, 'Teléfonos: Madre: '.(string) ($alumno['telemad'] ?? '').'   Padre: '.(string) ($alumno['telepad'] ?? ''), 0, 0, 'L');
-        $this->Cell(17, 6, 'Obra Social: ', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell(15, 6, 'SI  /  NO', 0, 0, 'L');
-        TcpdfFuenteArial::aplicar($this, '', 8);
-        $this->Cell(30, 6, 'Cuál: ..........................................       Grupo Sanguíneo: ...........', 0, 0, 'L');
-
-        $this->Rect(13, 64, 185, 47);
+        self::dibujarPagina($this, $alumno, $this->plantilla, $this->insti);
     }
 }

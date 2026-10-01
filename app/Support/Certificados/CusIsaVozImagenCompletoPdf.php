@@ -2,7 +2,6 @@
 
 namespace App\Support\Certificados;
 
-use App\Support\Pdf\PdfCombinadorArchivos;
 use TCPDF;
 
 /**
@@ -19,61 +18,33 @@ final class CusIsaVozImagenCompletoPdf
             throw new \InvalidArgumentException('No hay alumnos para el PDF.');
         }
 
-        $temporales = [];
+        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetCreator('Sistema Escolar');
+        $pdf->SetAuthor('Sistema Escolar');
+        $pdf->SetTitle('C.U.S. / I.S.A. / Voz-Imagen');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetAutoPageBreak(false);
+        $pdf->SetMargins(0, 0, 0);
 
-        try {
-            foreach ($alumnos as $alumno) {
-                $uno = [$alumno];
-                $temporales[] = self::volcar(CertificadoUnicoSaludTcpdf::generarLote($uno));
-                $temporales[] = self::volcar(InformeSaludAnualTcpdf::generarLote($uno, $insti));
-                $temporales[] = self::volcar(UsoImagenVozTcpdf::generarLote($uno, $insti));
-            }
+        $plantillaCus = CusIsaVozImagenDatos::rutaPlantilla('cus.jpg');
+        $plantillaIsa = CusIsaVozImagenDatos::rutaPlantilla('isa.jpg');
+        $plantillaVoz = CusIsaVozImagenDatos::rutaPlantilla('autorizacionImagen.jpg');
 
-            $salida = self::rutaPdfTemporal();
-            $temporales[] = $salida;
-            $fuentes = array_slice($temporales, 0, -1);
-            PdfCombinadorArchivos::combinar($fuentes, $salida);
+        foreach ($alumnos as $alumno) {
+            CertificadoUnicoSaludTcpdf::aplicarMargenes($pdf);
+            $pdf->AddPage('P', 'A4');
+            CertificadoUnicoSaludTcpdf::dibujarPagina($pdf, $alumno, $plantillaCus);
 
-            $binario = file_get_contents($salida);
-            if (! is_string($binario) || $binario === '') {
-                throw new \RuntimeException('No se pudo armar el PDF.');
-            }
+            InformeSaludAnualTcpdf::aplicarMargenes($pdf);
+            $pdf->AddPage('P', 'A4');
+            InformeSaludAnualTcpdf::dibujarPagina($pdf, $alumno, $plantillaIsa, $insti);
 
-            return $binario;
-        } finally {
-            foreach ($temporales as $ruta) {
-                if (is_file($ruta)) {
-                    @unlink($ruta);
-                }
-            }
-        }
-    }
-
-    private static function volcar(TCPDF $pdf): string
-    {
-        $pdf->setPDFVersion('1.4');
-        $ruta = self::rutaPdfTemporal();
-        $escrito = file_put_contents($ruta, $pdf->Output('certificado.pdf', 'S'));
-        if ($escrito === false) {
-            throw new \RuntimeException('No se pudo escribir el PDF temporal.');
+            UsoImagenVozTcpdf::aplicarMargenes($pdf);
+            $pdf->AddPage('P', 'A4');
+            UsoImagenVozTcpdf::dibujarPagina($pdf, $alumno, $plantillaVoz, $insti);
         }
 
-        return $ruta;
-    }
-
-    private static function rutaPdfTemporal(): string
-    {
-        $base = tempnam(sys_get_temp_dir(), 'se-cus-');
-        if ($base === false) {
-            throw new \RuntimeException('No se pudo crear un archivo temporal.');
-        }
-
-        $ruta = $base.'.pdf';
-        if (! @rename($base, $ruta)) {
-            @unlink($base);
-            throw new \RuntimeException('No se pudo preparar el PDF temporal.');
-        }
-
-        return $ruta;
+        return $pdf->Output('cus_isa_voz_imagen.pdf', 'S');
     }
 }

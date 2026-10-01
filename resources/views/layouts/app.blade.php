@@ -46,7 +46,7 @@
         calificacionesInicialSfq: {{ str_starts_with($route ?? '', 'calificacionesInicialSfq.') || (in_array($route ?? '', ['calificacionesInicial.sincroGe', 'calificacionesInicial.sincroDesempenos'], true) && \App\Support\Navegacion\MenuSecretariaPerfil::muestraCalificacionesInicialSfq()) ? 'true' : 'false' }},
         calificacionesPrimario: {{ str_starts_with($route ?? '', 'calificacionesPrimario.') ? 'true' : 'false' }},
         calificacionesSec: {{ (str_starts_with($route ?? '', 'calificacionesSecundario.') || str_starts_with($route ?? '', 'boletinesSecundario.') || str_starts_with($route ?? '', 'calificacionesSecundarioEpq.')) ? 'true' : 'false' }},
-        estadisticas: {{ str_starts_with($route ?? '', 'estadistica.rendimiento') ? 'true' : 'false' }},
+        estadisticas: {{ str_starts_with($route ?? '', 'estadistica.') ? 'true' : 'false' }},
         disciplinario: {{ str_starts_with($route ?? '', 'seguimiento.disciplinario') ? 'true' : 'false' }},
         gabinete: {{ str_starts_with($route ?? '', 'seguimiento.gabinete') ? 'true' : 'false' }},
         inasistenciasEstudiantes: {{ str_starts_with($route ?? '', 'seguimiento.inasistencias') || str_starts_with($route ?? '', 'seguimiento.partes-diarios') || str_starts_with($route ?? '', 'seguimiento.registro-asistencia') || ($route ?? '') === 'seguimiento.toma-asistencia-clase' ? 'true' : 'false' }},

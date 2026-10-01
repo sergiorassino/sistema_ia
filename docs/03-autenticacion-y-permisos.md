@@ -212,6 +212,8 @@ permisos_ia = "111111111111111..."
 - Preceptores por curso: orden **95** (`PermisosIaCatalog::PRECEPTORES_POR_CURSO`).
 - Permisos por Tarea: orden **99** (`PermisosIaCatalog::PERMISOS_POR_TAREA`). Consulta de usuarios habilitados por módulo o función (inverso de Permisos por Usuario, orden 14).
 - Listado de familias: orden **102** (`PermisosIaCatalog::LISTADO_FAMILIAS`). Consulta, PDF y Excel; aparece en el grupo **LEGAJOS ESTUDIANTES**. La edición en grilla sigue siendo orden **46** (`LEGAJOS_FAMILIAS_GESTION`).
+- Estadística por sexo y curso: orden **114** (`PermisosIaCatalog::ESTADISTICA_SEXO_CURSO`). Menú de Secretaría, grupo ESTADÍSTICAS. Alumnos regulares por curso; columnas de `sexos`.
+- Estadística por edad: orden **113** (`PermisosIaCatalog::ESTADISTICA_POR_EDAD`). Menú de Secretaría, grupo ESTADÍSTICAS. Alumnos regulares por edad y curso, a una fecha de cálculo.
 - Órdenes **25, 26, 33, 34, 35, 36, 104, 105, 106 y 100**: en asignación y consulta aparecen con aviso destacado `NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR` (`PermisosIaCatalog::ordenesReservadosAdministrador()`).
 - Copiar cursos, materias y horarios (año origen → año destino): orden **104** (`PermisosIaCatalog::COPIAR_CURSOS_MATERIAS_ANIO`).
 - Copiar asignación de profesores y preceptores (año origen → año destino): orden **105** (`PermisosIaCatalog::COPIAR_ASIGNACIONES_PROF_PRECEP`).

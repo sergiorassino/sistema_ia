@@ -84,16 +84,24 @@ final class UsoImagenVozTcpdf extends TCPDF
         ]);
     }
 
+    public static function aplicarMargenes(TCPDF $pdf): void
+    {
+        $pdf->SetMargins(self::MARGEN_LATERAL, 0, self::MARGEN_LATERAL);
+        $pdf->SetAutoPageBreak(false);
+    }
+
     /**
      * @param  array<string, mixed>  $alumno
      */
-    private function dibujarHoja(array $alumno): void
+    public static function dibujarPagina(TCPDF $pdf, array $alumno, ?string $plantilla, string $insti): void
     {
-        if ($this->plantilla !== null && is_file($this->plantilla)) {
-            $this->Image($this->plantilla, 0, 0, 210, 0, '', '', '', false, 300);
+        self::aplicarMargenes($pdf);
+
+        if ($plantilla !== null && is_file($plantilla)) {
+            $pdf->Image($plantilla, 0, 0, 210, 0, '', '', '', false, 300);
         }
 
-        $this->dibujarLogoInstitucional();
+        self::dibujarLogoInstitucional($pdf);
 
         $apellido = trim((string) ($alumno['apellido'] ?? ''));
         $nombre = trim((string) ($alumno['nombre'] ?? ''));
@@ -111,11 +119,11 @@ final class UsoImagenVozTcpdf extends TCPDF
             $dnipad,
             $nombremad,
             $dnimad,
-            $this->insti,
+            $insti,
         );
 
-        $this->SetFillColor(255, 255, 255);
-        $this->Rect(
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->Rect(
             self::MARGEN_LATERAL - 1.0,
             self::TEXTO_AREA_Y,
             self::ANCHO_TEXTO + 2.0,
@@ -123,15 +131,23 @@ final class UsoImagenVozTcpdf extends TCPDF
             'F',
         );
 
-        $this->SetXY(self::MARGEN_LATERAL, self::TEXTO_AREA_Y + 2.0);
-        TcpdfFuenteArial::aplicar($this, '', 11);
-        $this->MultiCell(self::ANCHO_TEXTO, 6, $texto, 0, 'L', false, 1);
+        $pdf->SetXY(self::MARGEN_LATERAL, self::TEXTO_AREA_Y + 2.0);
+        TcpdfFuenteArial::aplicar($pdf, '', 11);
+        $pdf->MultiCell(self::ANCHO_TEXTO, 6, $texto, 0, 'L', false, 1);
     }
 
-    private function dibujarLogoInstitucional(): void
+    /**
+     * @param  array<string, mixed>  $alumno
+     */
+    private function dibujarHoja(array $alumno): void
     {
-        $this->SetFillColor(255, 255, 255);
-        $this->Rect(
+        self::dibujarPagina($this, $alumno, $this->plantilla, $this->insti);
+    }
+
+    private static function dibujarLogoInstitucional(TCPDF $pdf): void
+    {
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->Rect(
             self::LOGO_AREA_X,
             self::LOGO_AREA_Y,
             self::LOGO_AREA_ANCHO,
@@ -141,7 +157,7 @@ final class UsoImagenVozTcpdf extends TCPDF
 
         $logoFile = pdfHeaderLogoAbsolutePath(schoolPdfHeaderData());
         TcpdfLogoInstitucional::dibujarAjustado(
-            $this,
+            $pdf,
             self::LOGO_AREA_X,
             self::LOGO_AREA_Y,
             self::LOGO_AREA_ANCHO,

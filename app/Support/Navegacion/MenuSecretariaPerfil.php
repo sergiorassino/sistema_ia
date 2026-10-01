@@ -70,10 +70,10 @@ final class MenuSecretariaPerfil
         return ! self::esAdministracion();
     }
 
-    /** Grupo sidebar «ESTADÍSTICAS» — solo sesión en `niveles.id` = 3 (secundario). */
+    /** Grupo sidebar «ESTADÍSTICAS» — sesión pedagógica (no Administración). */
     public static function muestraEstadisticas(): bool
     {
-        return self::muestraCalificacionesSecundario();
+        return ! self::ocultarGruposPedagogicos();
     }
 
     /** Gestión de cursos y materias del año: solo Menú de Secretaría. */

@@ -264,9 +264,13 @@ use App\Livewire\MatrizAnaliticos\LibroMatrizDatosAdicionales;
 use App\Livewire\MatrizAnaliticos\LibroMatrizEditar;
 use App\Livewire\MatrizAnaliticos\LibroMatrizIndex;
 use App\Livewire\BoletinesSecundario\BoletinesSecundarioIndex;
+use App\Http\Controllers\Estadistica\EstadisticaSexoCursoPdfController;
+use App\Http\Controllers\Estadistica\EstadisticaPorEdadPdfController;
+use App\Livewire\Estadistica\PorEdad as EstadisticaPorEdad;
 use App\Livewire\Estadistica\PorDocente as EstadisticaPorDocente;
 use App\Livewire\Estadistica\PorEstudiante as EstadisticaPorEstudiante;
 use App\Livewire\Estadistica\PorMateria as EstadisticaPorMateria;
+use App\Livewire\Estadistica\PorSexoYCurso as EstadisticaPorSexoYCurso;
 use App\Livewire\Estadistica\RendimientoEscolarIndex;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpeLotePdfController;
 use App\Http\Controllers\CalificacionesPrimario\BoletinIpePdfController;
@@ -1550,6 +1554,22 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         Route::get('/estadistica/rendimiento-escolar/por-estudiante', EstadisticaPorEstudiante::class)
             ->name('estadistica.rendimiento.porEstudiante');
     });
+
+    // Estadísticas — alumnos por edad (permiso orden 113)
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::ESTADISTICA_POR_EDAD)->group(function () {
+        Route::get('/estadistica/por-edad', EstadisticaPorEdad::class)
+            ->name('estadistica.porEdad');
+        Route::get('/estadistica/por-edad/pdf', EstadisticaPorEdadPdfController::class)
+            ->name('estadistica.porEdad.pdf');
+    });
+
+    // Estadísticas — alumnos regulares por curso y sexo (permiso orden 114)
+    Route::get('/estadistica/sexo-curso', EstadisticaPorSexoYCurso::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::ESTADISTICA_SEXO_CURSO)
+        ->name('estadistica.sexoCurso');
+    Route::get('/estadistica/sexo-curso/pdf', EstadisticaSexoCursoPdfController::class)
+        ->middleware('permiso:'.\App\Support\PermisosIaCatalog::ESTADISTICA_SEXO_CURSO)
+        ->name('estadistica.sexoCurso.pdf');
 
     // Seguimiento disciplinario (permiso orden 37)
     Route::middleware('permiso:37')->group(function () {
