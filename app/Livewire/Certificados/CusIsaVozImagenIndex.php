@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 use Livewire\Component;
 
 /**
- * C.U.S. / I.S.A. / Voz-Imagen: curso, selección de estudiantes y emisión de PDF.
+ * C.U.S. / I.S.A. / Voz-Imagen: curso, impresión por alumno y lote de estudiantes marcados.
  */
 class CusIsaVozImagenIndex extends Component
 {

@@ -6,6 +6,8 @@ Impresión en PDF del **Certificado Único de Salud (C.U.S.)** y del **Informe d
 
 Misma plantilla TCPDF que Secretaría (Certificados → C.U.S. / I.S.A. / Voz-Imagen), un alumno por documento.
 
+En Secretaría, cada fila del curso imprime un certificado suelto (C.U.S., I.S.A. o Voz-Imagen) o los tres en un solo PDF (`tipo=completo`), sin marcar al alumno. El lote de arriba sigue para varios estudiantes marcados.
+
 ## Modalidades / variantes
 
 Activación por tenant. Defaults en `config/tenant.php` (ambos **deshabilitados**). Override en `config/tenants/{slug}.php`:

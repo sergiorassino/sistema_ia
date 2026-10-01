@@ -23,6 +23,9 @@ final class CusIsaVozImagenDatos
 
     public const TIPO_VOZ_IMAGEN = 'voz-imagen';
 
+    /** Los tres certificados de un alumno, en un solo PDF. */
+    public const TIPO_COMPLETO = 'completo';
+
     /**
      * Matrículas regulares (idCondiciones = 1) del curso, nivel y ciclo del contexto.
      *
@@ -199,7 +202,7 @@ final class CusIsaVozImagenDatos
     public static function tipoValido(?string $tipo): ?string
     {
         return match ($tipo) {
-            self::TIPO_CUS, self::TIPO_ISA, self::TIPO_VOZ_IMAGEN => $tipo,
+            self::TIPO_CUS, self::TIPO_ISA, self::TIPO_VOZ_IMAGEN, self::TIPO_COMPLETO => $tipo,
             default => null,
         };
     }

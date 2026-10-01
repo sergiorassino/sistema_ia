@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Certificados;
 use App\Http\Controllers\Controller;
 use App\Support\BoletinSecundarioLoteParams;
 use App\Support\Certificados\CertificadoUnicoSaludTcpdf;
+use App\Support\Certificados\CusIsaVozImagenCompletoPdf;
 use App\Support\Certificados\CusIsaVozImagenDatos;
 use App\Support\Certificados\InformeSaludAnualTcpdf;
 use App\Support\Certificados\UsoImagenVozTcpdf;
@@ -37,9 +38,13 @@ class CusIsaVozImagenPdfController extends Controller
         }
         RateLimiter::hit($key, 60);
 
+        $maxMatriculas = $tipoValido === CusIsaVozImagenDatos::TIPO_COMPLETO
+            ? 1
+            : BoletinSecundarioLoteParams::MAX_MATRICULAS;
+
         $validated = $request->validate([
             'curso' => ['required', 'integer', 'min:1'],
-            'matriculas' => ['required', 'array', 'min:1', 'max:'.BoletinSecundarioLoteParams::MAX_MATRICULAS],
+            'matriculas' => ['required', 'array', 'min:1', 'max:'.$maxMatriculas],
             'matriculas.*' => ['integer', 'min:1'],
         ]);
 
@@ -58,6 +63,19 @@ class CusIsaVozImagenPdfController extends Controller
             abort(404);
         }
 
+        $ctx = CusIsaVozImagenDatos::contextoInstitucional();
+
+        if ($tipoValido === CusIsaVozImagenDatos::TIPO_COMPLETO) {
+            try {
+                $binario = CusIsaVozImagenCompletoPdf::generarBinario($alumnos, (string) $ctx['insti']);
+            } catch (\Throwable $e) {
+                report($e);
+                abort(500, 'No se pudo generar el PDF con los tres certificados.');
+            }
+
+            return self::respuestaInline($binario, 'cus_isa_voz_imagen.pdf');
+        }
+
         $cantidad = count($alumnos);
         $slugBase = match ($tipoValido) {
             CusIsaVozImagenDatos::TIPO_CUS => 'certificado-unico-salud',
@@ -71,8 +89,6 @@ class CusIsaVozImagenPdfController extends Controller
             $slug = $slugBase;
         }
 
-        $ctx = CusIsaVozImagenDatos::contextoInstitucional();
-
         $pdf = match ($tipoValido) {
             CusIsaVozImagenDatos::TIPO_CUS => CertificadoUnicoSaludTcpdf::generarLote($alumnos),
             CusIsaVozImagenDatos::TIPO_ISA => InformeSaludAnualTcpdf::generarLote($alumnos, (string) $ctx['insti']),
@@ -84,5 +100,19 @@ class CusIsaVozImagenPdfController extends Controller
             CusIsaVozImagenDatos::TIPO_ISA => InformeSaludAnualTcpdf::respuestaHttp($pdf, $slug.'.pdf'),
             CusIsaVozImagenDatos::TIPO_VOZ_IMAGEN => UsoImagenVozTcpdf::respuestaHttp($pdf, $slug.'.pdf'),
         };
+    }
+
+    private static function respuestaInline(string $binario, string $nombreArchivo): \Illuminate\Http\Response
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        return response($binario, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$nombreArchivo.'"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ]);
     }
 }

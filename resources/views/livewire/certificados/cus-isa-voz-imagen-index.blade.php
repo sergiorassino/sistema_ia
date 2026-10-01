@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-5xl space-y-6">
+<div class="mx-auto w-full max-w-7xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
             <div class="min-w-0 space-y-2">
@@ -35,7 +35,7 @@
             <div class="border-b border-accent-200 bg-accent-50 px-5 py-3">
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Estudiantes del curso</p>
                 <p class="text-sm text-neutral-600">
-                    Marque uno, varios o todos los estudiantes y genere el PDF correspondiente.
+                    Para un estudiante, imprima desde su fila. Para varios, márquelos y genere el PDF del lote.
                 </p>
             </div>
 
@@ -135,6 +135,7 @@
                             </th>
                             <th scope="col" class="py-3 pl-2 pr-5 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Apellido y nombre</th>
                             <th scope="col" class="py-3 pl-2 pr-5 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">DNI</th>
+                            <th scope="col" class="py-3 pl-2 text-left text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Imprimir</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-accent-100 bg-white">
@@ -152,10 +153,49 @@
                                 <td class="py-3 pl-2 pr-5 align-middle text-neutral-600">
                                     {{ trim((string) ($mat->legajo?->dni ?? '')) !== '' ? $mat->legajo->dni : '—' }}
                                 </td>
+                                <td class="py-2 pl-2 align-middle">
+                                    <form method="POST"
+                                          action="{{ route('certificados.cusIsaVozImagen.pdf', ['tipo' => 'cus']) }}"
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          class="inline-flex flex-wrap items-center gap-1.5">
+                                        @csrf
+                                        <input type="hidden" name="curso" value="{{ (int) $cursoId }}">
+                                        <input type="hidden" name="matriculas[]" value="{{ (int) $mat->id }}">
+                                        <button type="submit"
+                                                formaction="{{ route('certificados.cusIsaVozImagen.pdf', ['tipo' => 'cus']) }}"
+                                                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                title="Imprimir C.U.S."
+                                                aria-label="Imprimir C.U.S. de este estudiante">
+                                            C.U.S.
+                                        </button>
+                                        <button type="submit"
+                                                formaction="{{ route('certificados.cusIsaVozImagen.pdf', ['tipo' => 'isa']) }}"
+                                                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                title="Imprimir I.S.A."
+                                                aria-label="Imprimir I.S.A. de este estudiante">
+                                            I.S.A.
+                                        </button>
+                                        <button type="submit"
+                                                formaction="{{ route('certificados.cusIsaVozImagen.pdf', ['tipo' => 'voz-imagen']) }}"
+                                                class="inline-flex items-center justify-center rounded-lg border border-accent-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary-700 shadow-sm transition hover:border-primary-500 hover:bg-accent-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                title="Imprimir autorización de voz e imagen"
+                                                aria-label="Imprimir autorización de voz e imagen de este estudiante">
+                                            Voz-Imagen
+                                        </button>
+                                        <button type="submit"
+                                                formaction="{{ route('certificados.cusIsaVozImagen.pdf', ['tipo' => 'completo']) }}"
+                                                class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                title="Imprimir C.U.S., I.S.A. y Voz-Imagen en un mismo PDF"
+                                                aria-label="Imprimir los tres certificados de este estudiante en un mismo PDF">
+                                            Los tres
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-5 py-10 text-center text-sm text-neutral-500">
+                                <td colspan="4" class="px-5 py-10 text-center text-sm text-neutral-500">
                                     No hay matrículas en este curso para el ciclo lectivo actual.
                                 </td>
                             </tr>

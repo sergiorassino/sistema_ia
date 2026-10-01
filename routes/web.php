@@ -1513,7 +1513,7 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:66')
         ->name('certificados.cusIsaVozImagen');
     Route::post('/certificados/cus-isa-voz-imagen/pdf/{tipo}', CusIsaVozImagenPdfController::class)
-        ->where('tipo', 'cus|isa|voz-imagen')
+        ->where('tipo', 'cus|isa|voz-imagen|completo')
         ->middleware('permiso:66')
         ->name('certificados.cusIsaVozImagen.pdf');
 
