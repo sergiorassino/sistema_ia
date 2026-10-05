@@ -63,6 +63,7 @@ Consulta: `GestionMorososConsulta` + `GestionMorososFiltros::aplicarAConsulta`. 
 - URLs de PDF con `{ref}` opaco, no IDs de familia/legajo.
 - No dibujar bloque ni leyenda de firma (p. ej. «Representante Legal») al pie de la notificación.
 - No usar `ento.ctaEnvioMail` de Inicial/Primario/Secundario: el remitente es **siempre** Administración.
+- No hay fallback a `MAIL_*`. Si Administración no tiene cuenta, el correo no se envía.
 - No usar `legajos.emailmad` / `emailpad` / `emailtut` en este envío: el destinatario es `familias.email`.
 - No mostrar éxito si no se envió ningún correo.
 

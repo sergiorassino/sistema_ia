@@ -222,8 +222,8 @@ final class NotificarFamiliaBloqueoMatricula
             'email_estado'         => $resumenEmail['estado'],
             'email_motivo'         => $resumenEmail['motivo'],
             'email_destino'        => $resumenEmail['destino'],
-            'email_mailer'         => (string) config('mail.default'),
-            'email_smtp_user'      => trim((string) config('mail.mailers.smtp.username', '')),
+            'email_mailer'         => MailInstitucionalConfig::diagnosticoEnvio($idNivelAlumno)['mailer'],
+            'email_smtp_user'      => MailInstitucionalConfig::diagnosticoEnvio($idNivelAlumno)['username'],
             'refuerzo_mail_pedido' => true,
             'motivo_fallo'         => null,
         ];
@@ -374,7 +374,19 @@ final class NotificarFamiliaBloqueoMatricula
         }
 
         $idNivel = (int) ($hilo->id_nivel ?? 0);
-        MailInstitucionalConfig::aplicarParaNivel($idNivel > 0 ? $idNivel : null);
+        if (! MailInstitucionalConfig::aplicarParaNivel($idNivel > 0 ? $idNivel : null)) {
+            foreach ($restantes as $email) {
+                ComMensajeEnvio::create([
+                    'id_mensaje_destinatario' => (int) $destinatario->id,
+                    'medio'                   => 'email',
+                    'estado'                  => 'fallido',
+                    'motivo'                  => MailInstitucionalConfig::MOTIVO_SIN_CUENTA,
+                    'enviado_at'              => null,
+                ]);
+            }
+
+            return;
+        }
 
         $nombreColegio = '';
         if ($idNivel > 0) {

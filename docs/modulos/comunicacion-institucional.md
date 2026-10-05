@@ -66,7 +66,8 @@ SQL: `database/sql/create_com_grupos.sql`.
 4. No usar grupos en el portal familia.
 5. No mostrar éxito si faltan las tablas `com_grupos` / `com_grupos_miembros`.
 6. En `APP_ENV=local` el correo institucional **no sale por SMTP** (queda en `storage/logs`). Ver `docs/05-preferencias-y-convenciones.md` §15.
-7. En Windows, el push a FCM falla con `cURL error 60` si PHP no tiene bundle de CA (`curl.cainfo` vacío). El cliente usa `storage/certs/cacert.pem` si el archivo existe (gitignored). Descargarlo de https://curl.se/ca/cacert.pem. En hosting con `open_basedir`, no llamar `is_file()` sobre `curl.cainfo` si apunta fuera de la cuenta (p. ej. `/etc/ssl/certs/cacert.pem`): usar el pem de `storage/certs/`. El envío ya registrado queda en Fallido: hay que reenviar.
+7. El remitente es solo `ento.ctaEnvioMail` / `passEnvioMail` del `id_nivel` del hilo. Sin esa cuenta el medio correo queda **Fallido** y no se usa `MAIL_*` ni la cuenta de otro colegio.
+8. En Windows, el push a FCM falla con `cURL error 60` si PHP no tiene bundle de CA (`curl.cainfo` vacío). El cliente usa `storage/certs/cacert.pem` si el archivo existe (gitignored). Descargarlo de https://curl.se/ca/cacert.pem. En hosting con `open_basedir`, no llamar `is_file()` sobre `curl.cainfo` si apunta fuera de la cuenta (p. ej. `/etc/ssl/certs/cacert.pem`): usar el pem de `storage/certs/`. El envío ya registrado queda en Fallido: hay que reenviar.
 
 ## Checklist al modificar
 

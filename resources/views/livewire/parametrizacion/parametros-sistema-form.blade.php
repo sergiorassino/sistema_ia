@@ -655,6 +655,7 @@
                         Cuenta Gmail o Google Workspace (.edu.ar) del <strong>nivel activo</strong>
                         (<span class="font-mono">ento.ctaEnvioMail</span> / <span class="font-mono">passEnvioMail</span>).
                         Se usa para comunicados del cuaderno y notificaciones a familias.
+                        Si este nivel no tiene cuenta, esos correos no se envían: no se usa otra cuenta.
                         Usá una <strong>contraseña de aplicación</strong> de Google (no la contraseña principal).
                     </p>
                 </div>

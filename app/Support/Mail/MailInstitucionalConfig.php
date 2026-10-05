@@ -6,53 +6,54 @@ use App\Models\Ento;
 use App\Support\Database\PersistenciaColumnas;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Credenciales del correo institucional (Gmail / Google Workspace) por nivel.
  *
- * Fuente de verdad: `ento.ctaEnvioMail` y `ento.passEnvioMail` (fila del idNivel).
- * Nombre visible del remitente: `ento.insti` (fallback MAIL_FROM_NAME / cuenta).
+ * Única fuente: `ento.ctaEnvioMail` y `ento.passEnvioMail` de ese idNivel.
+ * Nombre visible: `ento.insti`; si está vacío, la propia cuenta.
  *
- * Compatibilidad: si el nivel no tiene cuenta en ento, se intenta el JSON legacy
- * en storage y luego MAIL_* del .env.
+ * No hay fallback a MAIL_* del .env ni a archivos. Sin cuenta del nivel, no se envía:
+ * usar otra cuenta mandaría correo a nombre de otro colegio.
  *
- * En APP_ENV=local no fuerza SMTP (MailDesarrollo): el envío queda en el log.
+ * En APP_ENV=local no fuerza SMTP (MailDesarrollo): si hay cuenta, el envío queda en el log.
  */
 final class MailInstitucionalConfig
 {
-    public static function path(): string
-    {
-        return storage_path('app/private/mail-institucional.json');
-    }
+    public const MOTIVO_SIN_CUENTA = 'Sin cuenta de correo del nivel (Parámetros → Correo institucional). No se envió.';
 
     /**
      * @return array{username: string, password: string, from_name: string, fuente: string}
      */
     public static function leer(?int $idNivel = null): array
     {
-        $idNivel = self::resolverIdNivel($idNivel);
+        $vacio = [
+            'username' => '',
+            'password' => '',
+            'from_name' => '',
+            'fuente' => 'ninguna',
+        ];
 
-        if ($idNivel > 0 && self::columnasEntoDisponibles()) {
-            $ento = Ento::query()->where('idNivel', $idNivel)->first();
-            if ($ento !== null) {
-                $user = trim((string) ($ento->ctaEnvioMail ?? ''));
-                $pass = (string) ($ento->passEnvioMail ?? '');
-                if ($user !== '' || trim($pass) !== '') {
-                    return [
-                        'username' => $user,
-                        'password' => $pass,
-                        'from_name' => self::nombreRemitenteDesdeEnto($ento),
-                        'fuente' => 'ento',
-                    ];
-                }
-            }
+        $idNivel = self::resolverIdNivel($idNivel);
+        if ($idNivel < 1 || ! self::columnasEntoDisponibles()) {
+            return $vacio;
         }
 
-        $legacy = self::leerLegacyJsonOEnv();
+        $ento = Ento::query()->where('idNivel', $idNivel)->first();
+        if ($ento === null) {
+            return $vacio;
+        }
 
-        return $legacy + ['fuente' => $legacy['fuente'] ?? 'env'];
+        $user = trim((string) ($ento->ctaEnvioMail ?? ''));
+        $pass = (string) ($ento->passEnvioMail ?? '');
+
+        return [
+            'username' => $user,
+            'password' => $pass,
+            'from_name' => self::nombreRemitenteDesdeEnto($ento, $user),
+            'fuente' => 'ento',
+        ];
     }
 
     public static function estaConfigurado(?int $idNivel = null): bool
@@ -158,7 +159,9 @@ final class MailInstitucionalConfig
         $pass = (string) ($c['password'] ?? '');
         $name = trim((string) ($c['from_name'] ?? ''));
 
-        if ($user === '') {
+        if ($user === '' || trim($pass) === '') {
+            self::anularCredencialesMailerPorDefecto();
+
             return;
         }
 
@@ -189,10 +192,40 @@ final class MailInstitucionalConfig
         ]);
     }
 
-    /** Aplica SMTP según el nivel del contexto o el indicado (p. ej. del hilo). */
-    public static function aplicarParaNivel(?int $idNivel = null): void
+    /**
+     * Aplica SMTP del nivel. false si no hay cuenta en ento: no se debe enviar.
+     * En ese caso borra usuario/remitente del mailer por defecto para que no quede MAIL_* de otro colegio.
+     */
+    public static function aplicarParaNivel(?int $idNivel = null): bool
     {
-        self::aplicar(null, $idNivel);
+        $c = self::leer($idNivel);
+        if (! self::credencialesCompletas($c)) {
+            self::anularCredencialesMailerPorDefecto();
+
+            return false;
+        }
+
+        self::aplicar($c, $idNivel);
+
+        return true;
+    }
+
+    /**
+     * Diagnóstico para la UI. Vacío si el nivel no tiene cuenta propia
+     * (no informa MAIL_USERNAME del .env).
+     *
+     * @return array{mailer: string, username: string}
+     */
+    public static function diagnosticoEnvio(?int $idNivel = null): array
+    {
+        if (! self::estaConfigurado($idNivel)) {
+            return ['mailer' => '', 'username' => ''];
+        }
+
+        return [
+            'mailer' => (string) config('mail.default'),
+            'username' => trim((string) (self::leer($idNivel)['username'] ?? '')),
+        ];
     }
 
     public static function columnasEntoDisponibles(): bool
@@ -215,46 +248,23 @@ final class MailInstitucionalConfig
         }
     }
 
-    private static function nombreRemitenteDesdeEnto(Ento $ento): string
+    private static function nombreRemitenteDesdeEnto(Ento $ento, string $cuenta = ''): string
     {
         $insti = trim((string) ($ento->insti ?? ''));
         if ($insti !== '') {
             return $insti;
         }
 
-        $fromEnv = trim((string) (config('mail.from.name') ?: env('MAIL_FROM_NAME', '')), " \t\n\r\0\x0B\"'");
-
-        return $fromEnv;
+        return trim($cuenta);
     }
 
-    /**
-     * @return array{username: string, password: string, from_name: string, fuente: string}
-     */
-    private static function leerLegacyJsonOEnv(): array
+    private static function anularCredencialesMailerPorDefecto(): void
     {
-        $path = self::path();
-        if (is_file($path)) {
-            $raw = File::get($path);
-            $data = json_decode($raw, true);
-            if (is_array($data)) {
-                $user = trim((string) ($data['username'] ?? ''));
-                $pass = (string) ($data['password'] ?? '');
-                if ($user !== '' || trim($pass) !== '') {
-                    return [
-                        'username' => $user,
-                        'password' => $pass,
-                        'from_name' => trim((string) ($data['from_name'] ?? '')),
-                        'fuente' => 'json',
-                    ];
-                }
-            }
-        }
-
-        return [
-            'username' => trim((string) (config('mail.mailers.smtp.username') ?: env('MAIL_USERNAME', ''))),
-            'password' => (string) (config('mail.mailers.smtp.password') ?: env('MAIL_PASSWORD', '')),
-            'from_name' => trim((string) (config('mail.from.name') ?: env('MAIL_FROM_NAME', '')), " \t\n\r\0\x0B\"'"),
-            'fuente' => 'env',
-        ];
+        Config::set([
+            'mail.mailers.smtp.username' => null,
+            'mail.mailers.smtp.password' => null,
+            'mail.from.address' => null,
+            'mail.from.name' => null,
+        ]);
     }
 }

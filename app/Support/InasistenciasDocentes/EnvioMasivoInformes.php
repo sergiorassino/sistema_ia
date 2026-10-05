@@ -5,6 +5,7 @@ namespace App\Support\InasistenciasDocentes;
 use App\Mail\InformeInasistenciasDocenteMail;
 use App\Models\Ento;
 use App\Support\InasistenciasDocentes as InasDocentesModulo;
+use App\Support\Mail\MailInstitucionalConfig;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -125,6 +126,25 @@ final class EnvioMasivoInformes
             ]));
 
             return;
+        }
+
+        if (! $soloPrueba) {
+            $idNivelMail = $idNivel > 0 ? $idNivel : (int) (schoolCtx()->idNivel ?? 0);
+            if (! MailInstitucionalConfig::aplicarParaNivel($idNivelMail)) {
+                self::escribirProgreso($token, array_merge($metaProgreso, [
+                    'total' => $totalConEmail,
+                    'current' => 0,
+                    'nombre' => '',
+                    'done' => true,
+                    'enviados' => 0,
+                    'sinEmail' => 0,
+                    'errores' => $totalConEmail,
+                    'mensaje' => MailInstitucionalConfig::MOTIVO_SIN_CUENTA,
+                    'lista' => [],
+                ]));
+
+                return;
+            }
         }
 
         foreach ($docentes as $d) {

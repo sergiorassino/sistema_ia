@@ -524,6 +524,7 @@ Valores vacíos (`null`, cadena vacía, flag en `false`) pueden omitirse del pay
 Con `APP_ENV=local` **no se envía correo por SMTP** (comunicados, recuperación de contraseña, cooperadora, emails masivos). Laravel usa el mailer `log`: el mensaje queda en `storage/logs`.
 
 - El bloqueo es de código (`App\Support\Mail\MailDesarrollo`): `MailInstitucionalConfig` ya no puede forzar SMTP al enviar.
+- La cuenta del colegio es solo `ento.ctaEnvioMail` / `passEnvioMail` del nivel (Parámetros → Correo institucional). No hay fallback a `MAIL_*` ni a otro archivo. Si el nivel no tiene cuenta, el correo no se envía.
 - En `.env` local conviene `MAIL_MAILER=log`. En producción: `APP_ENV=production` y `MAIL_MAILER=smtp`.
 - Escape hatch puntual en la PC: `MAIL_FORCE_REAL=true` (no usar en servidores).
 - Proyectos extracurriculares → **Comunicar**: además, en `APP_ENV=local` no se pide el medio email (solo el comunicado interno). En producción sí hay correo de refuerzo.

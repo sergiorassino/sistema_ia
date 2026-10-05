@@ -12,6 +12,7 @@ use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Models\Sancion;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
+use App\Support\Mail\MailInstitucionalConfig;
 
 /**
  * Envía un comunicado institucional a la familia del alumno
@@ -199,8 +200,8 @@ final class NotificarFamiliaSancion
             'email_estado'         => $resumenEmail['estado'],
             'email_motivo'         => $resumenEmail['motivo'],
             'email_destino'        => $resumenEmail['destino'],
-            'email_mailer'         => (string) config('mail.default'),
-            'email_smtp_user'      => trim((string) config('mail.mailers.smtp.username', '')),
+            'email_mailer'         => MailInstitucionalConfig::diagnosticoEnvio($idNivel)['mailer'],
+            'email_smtp_user'      => MailInstitucionalConfig::diagnosticoEnvio($idNivel)['username'],
             'refuerzo_mail_pedido' => $refuerzoMailPedido,
             'motivo_fallo'         => null,
         ];

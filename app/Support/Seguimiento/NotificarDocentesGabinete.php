@@ -11,6 +11,7 @@ use App\Models\ComMensajeEnvio;
 use App\Models\Gabinete;
 use App\Models\Matricula;
 use App\Models\Profesor;
+use App\Support\Mail\MailInstitucionalConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -194,8 +195,8 @@ final class NotificarDocentesGabinete
             'email_estado'    => $resumenEmail['estado'],
             'email_motivo'    => $resumenEmail['motivo'],
             'email_destino'   => $resumenEmail['destino'],
-            'email_mailer'    => (string) config('mail.default'),
-            'email_smtp_user' => trim((string) config('mail.mailers.smtp.username', '')),
+            'email_mailer'    => MailInstitucionalConfig::diagnosticoEnvio($idNivel)['mailer'],
+            'email_smtp_user' => MailInstitucionalConfig::diagnosticoEnvio($idNivel)['username'],
             'motivo_fallo'    => null,
         ];
     }

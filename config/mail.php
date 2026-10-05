@@ -19,6 +19,9 @@ return [
     /*
     | En APP_ENV=local el SMTP real se desactiva (MailDesarrollo): los mails van al log.
     | true solo para una prueba puntual en la PC. Producción no usa este flag.
+    |
+    | MAIL_* de este archivo no es el remitente institucional. Ese sale de
+    | ento.ctaEnvioMail / passEnvioMail del nivel. Sin esa cuenta no se envía.
     */
     'forzar_smtp_en_local' => filter_var(env('MAIL_FORCE_REAL', false), FILTER_VALIDATE_BOOLEAN),
 

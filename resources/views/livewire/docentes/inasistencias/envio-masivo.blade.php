@@ -200,7 +200,7 @@
         @endif
 
         <p class="text-[11px] text-neutral-500 leading-relaxed">
-            El envío usa la configuración de correo del sistema (<code class="text-neutral-600">MAIL_*</code> en <code class="text-neutral-600">.env</code>).
+            El envío usa la cuenta del nivel en Parámetros → Correo institucional. Si no está cargada, no se envía.
             En modo prueba los PDF se pueden revisar en pantalla antes de enviar correos reales.
         </p>
     </div>

@@ -27,7 +27,7 @@ class MailAdapter
         string $nombreColegio = ''
     ): void {
         $mensaje->loadMissing('hilo');
-        MailInstitucionalConfig::aplicarParaNivel((int) ($mensaje->hilo?->id_nivel ?? 0) ?: null);
+        $idNivel = (int) ($mensaje->hilo?->id_nivel ?? 0) ?: null;
 
         $pairs = [];
         foreach ($destinatarios as $d) {
@@ -47,6 +47,14 @@ class MailAdapter
         }
 
         if ($pairs === []) {
+            return;
+        }
+
+        if (! MailInstitucionalConfig::aplicarParaNivel($idNivel)) {
+            foreach ($pairs as $p) {
+                static::registrar($p['dest'], 'fallido', MailInstitucionalConfig::MOTIVO_SIN_CUENTA);
+            }
+
             return;
         }
 
@@ -136,7 +144,7 @@ class MailAdapter
             return;
         }
         $mensaje->load('hilo');
-        MailInstitucionalConfig::aplicarParaNivel((int) ($mensaje->hilo?->id_nivel ?? 0) ?: null);
+        $idNivel = (int) ($mensaje->hilo?->id_nivel ?? 0) ?: null;
 
         $pairs = [];
         foreach ($envios as $envio) {
@@ -168,6 +176,18 @@ class MailAdapter
         }
 
         if ($pairs === []) {
+            return;
+        }
+
+        if (! MailInstitucionalConfig::aplicarParaNivel($idNivel)) {
+            foreach ($pairs as $p) {
+                $p['envio']->update([
+                    'estado'     => 'fallido',
+                    'motivo'     => MailInstitucionalConfig::MOTIVO_SIN_CUENTA,
+                    'enviado_at' => null,
+                ]);
+            }
+
             return;
         }
 
