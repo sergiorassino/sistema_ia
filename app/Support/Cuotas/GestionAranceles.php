@@ -434,9 +434,14 @@ final class GestionAranceles
         return self::totalizarSaldosAdeudados($registros)['conIntereses'];
     }
 
+    /**
+     * Amarillo en la grilla: aviso de pago marcado y cuota todavía impaga.
+     * Con el saldo cubierto (faltapa <= 0) la fila queda verde aunque avisoPago siga en 1.
+     */
     public static function filaAvisoPago(CuotaGenerada $registro): bool
     {
-        return (int) ($registro->avisoPago ?? 0) === 1;
+        return (int) ($registro->avisoPago ?? 0) === 1
+            && ! self::filaPagada($registro);
     }
 
     /**

@@ -33,7 +33,7 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 1. Abrir imputación desde el estudiante (cuotas en sesión).
 2. Elegir medio de pago y fecha/hora. El % se sugiere con la fórmula del tramo de **hoy**.
 3. Al cambiar fecha, saldo o %, se recalcula interés / a pagar.
-4. Con SIRO y una sola cuota, marcar o desmarcar **Aviso de pago** persiste `cuotasgeneradas.avisoPago` en el momento, sin crear un pago. En el listado del estudiante (Secretaría y aranceles de autogestión) esa fila se pinta de amarillo.
+4. Con SIRO y una sola cuota, marcar o desmarcar **Aviso de pago** persiste `cuotasgeneradas.avisoPago` en el momento, sin crear un pago. En el listado del estudiante (Secretaría y aranceles de autogestión) esa fila se pinta de amarillo solo si sigue impaga (`faltapa` > 0). Al quedar saldada pasa a verde, aunque `avisoPago` siga en 1.
 5. Registrar: validación, rate-limit, persistencia y comprobante.
 
 ## Fuente de verdad

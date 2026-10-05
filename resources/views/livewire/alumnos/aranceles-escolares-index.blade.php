@@ -103,8 +103,8 @@
             <div class="space-y-3 p-4 md:hidden">
                 @foreach ($cuotas as $c)
                     @php
-                        $pagada = (float) ($c->faltapa ?? 0) <= 0;
-                        $avisoPago = (int) ($c->avisoPago ?? 0) === 1;
+                        $pagada = \App\Support\Cuotas\GestionAranceles::filaPagada($c);
+                        $avisoPago = \App\Support\Cuotas\GestionAranceles::filaAvisoPago($c);
                         $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
                         $nombreCuota = trim((string) ($c->cuota?->nombre ?? ''));
                         $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
@@ -279,8 +279,8 @@
 
                     @foreach ($cuotas as $c)
                         @php
-                            $pagada = (float) ($c->faltapa ?? 0) <= 0;
-                            $avisoPago = (int) ($c->avisoPago ?? 0) === 1;
+                            $pagada = \App\Support\Cuotas\GestionAranceles::filaPagada($c);
+                            $avisoPago = \App\Support\Cuotas\GestionAranceles::filaAvisoPago($c);
                             $rowEstadoClass = $avisoPago
                                 ? 'gf-row--aviso-pago'
                                 : ($mostrarHistorial
