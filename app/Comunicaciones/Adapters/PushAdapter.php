@@ -44,7 +44,14 @@ class PushAdapter
 
         $ok = ($result['ok'] ?? 0) > 0;
         $estado = $ok ? 'enviado' : 'fallido';
-        $motivo = $ok ? null : (implode('; ', $result['errors'] ?? []) ?: 'Error desconocido');
+        $motivo = null;
+        if (! $ok) {
+            $detalle = $result['failed_user_keys'][$userKey] ?? null;
+            if (! is_string($detalle) || trim($detalle) === '') {
+                $detalle = implode('; ', $result['errors'] ?? []);
+            }
+            $motivo = trim($detalle) !== '' ? mb_substr(trim($detalle), 0, 250) : 'Error desconocido';
+        }
 
         return static::registrar($destinatario, $estado, $motivo);
     }

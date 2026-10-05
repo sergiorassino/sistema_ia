@@ -55,10 +55,11 @@ class WebPushService
         $opts = [];
 
         $ca = trim((string) config('push.http.ca_bundle', ''));
-        if ($ca === '') {
-            foreach ([ini_get('curl.cainfo'), ini_get('openssl.cafile')] as $iniCa) {
-                if (is_string($iniCa) && $iniCa !== '' && is_file($iniCa)) {
-                    $ca = $iniCa;
+        if ($ca === '' || ! is_file($ca)) {
+            $ca = '';
+            foreach ([ini_get('curl.cainfo'), ini_get('openssl.cafile'), storage_path('certs/cacert.pem')] as $candidato) {
+                if (is_string($candidato) && $candidato !== '' && is_file($candidato)) {
+                    $ca = $candidato;
                     break;
                 }
             }
@@ -91,7 +92,7 @@ class WebPushService
     private static function mensajeCortoParaUsuario(string $reason): string
     {
         if (stripos($reason, 'SSL certificate') !== false || stripos($reason, 'curl error 60') !== false) {
-            return 'Certificado SSL (cURL 60): en el servidor falta el bundle de CA para notificaciones push. Configurá WEB_PUSH_CA_BUNDLE (cacert.pem) o curl.cainfo en php.ini.';
+            return 'Certificado SSL (cURL 60): falta el bundle de CA para notificaciones push. Colocá cacert.pem en storage/certs/ o configurá WEB_PUSH_CA_BUNDLE / curl.cainfo en php.ini.';
         }
         if (stripos($reason, '410') !== false || stripos($reason, 'Gone') !== false || stripos($reason, 'No such subscription') !== false) {
             return 'Suscripción expirada o ya no válida (410). Que el alumno reactive notificaciones en ese dispositivo.';

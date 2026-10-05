@@ -12,8 +12,8 @@ return [
     | Cliente HTTP (Guzzle) hacia FCM / push
     |--------------------------------------------------------------------------
     | En Windows suele aparecer "cURL error 60: SSL certificate problem" si no hay
-    | bundle de CA. Definí WEB_PUSH_CA_BUNDLE con ruta absoluta a cacert.pem
-    | (https://curl.se/ca/cacert.pem) o configurá curl.cainfo en php.ini.
+    | bundle de CA. El cliente usa, en este orden: WEB_PUSH_CA_BUNDLE, curl.cainfo,
+    | openssl.cafile y storage/certs/cacert.pem (https://curl.se/ca/cacert.pem).
     |
     | WEB_PUSH_SSL_VERIFY=false solo para entornos de prueba (inseguro).
     */
