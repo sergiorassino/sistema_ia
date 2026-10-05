@@ -2,6 +2,7 @@
 
 namespace App\Push;
 
+use App\Support\Http\CaBundle;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
 
@@ -54,18 +55,14 @@ class WebPushService
     {
         $opts = [];
 
-        $ca = trim((string) config('push.http.ca_bundle', ''));
-        if ($ca === '' || ! is_file($ca)) {
-            $ca = '';
-            foreach ([ini_get('curl.cainfo'), ini_get('openssl.cafile'), storage_path('certs/cacert.pem')] as $candidato) {
-                if (is_string($candidato) && $candidato !== '' && is_file($candidato)) {
-                    $ca = $candidato;
-                    break;
-                }
-            }
-        }
+        $ca = CaBundle::primeraRutaLegible([
+            config('push.http.ca_bundle'),
+            storage_path('certs/cacert.pem'),
+            ini_get('curl.cainfo'),
+            ini_get('openssl.cafile'),
+        ]);
 
-        if ($ca !== '' && is_file($ca)) {
+        if ($ca !== '') {
             $opts['verify'] = $ca;
         } elseif (config('push.http.verify', true) === false) {
             $opts['verify'] = false;

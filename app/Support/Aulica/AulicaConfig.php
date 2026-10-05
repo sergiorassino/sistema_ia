@@ -2,6 +2,8 @@
 
 namespace App\Support\Aulica;
 
+use App\Support\Http\CaBundle;
+
 /**
  * Configuración del cliente External API de Áulica (por tenant + .env).
  */
@@ -105,21 +107,12 @@ final class AulicaConfig
      */
     public static function caBundle(): string
     {
-        $candidatos = [
-            trim((string) config('services.aulica.ca_bundle', '')),
-            (string) ini_get('curl.cainfo'),
-            (string) ini_get('openssl.cafile'),
+        return CaBundle::primeraRutaLegible([
+            config('services.aulica.ca_bundle'),
             storage_path('certs/cacert.pem'),
-        ];
-
-        foreach ($candidatos as $ruta) {
-            $ruta = trim($ruta);
-            if ($ruta !== '' && is_file($ruta)) {
-                return $ruta;
-            }
-        }
-
-        return '';
+            ini_get('curl.cainfo'),
+            ini_get('openssl.cafile'),
+        ]);
     }
 
     public static function sslVerify(): bool
