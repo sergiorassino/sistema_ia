@@ -10,12 +10,12 @@
                 <p class="text-xs text-white/65">{{ schoolCtx()->nivelNombre() }}</p>
             </div>
             <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-                <x-pdf-post
+                <x-pdf-post-matricula
                     :action="route('seguimiento.disciplinario.antecedentes.pdf')"
                     :matricula="$base->id"
                     button-class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20">
                     Imprimir PDF
-                </x-pdf-post>
+                </x-pdf-post-matricula>
                 <x-nav-contexto-estudiante
                     destino="seguimiento.disciplinario"
                     :alcance="\App\Support\Navegacion\ContextoEstudianteSesion::SEGUIMIENTO_DISCIPLINARIO"

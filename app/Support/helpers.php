@@ -1936,6 +1936,35 @@ if (! function_exists('tenantParteDiarioImplementacion')) {
     }
 }
 
+if (! function_exists('tenantParteDiarioRenglonesAusentes')) {
+    /**
+     * Renglones de la grilla Ausentes / Retirados / Observaciones (PDF estándar).
+     * Sin valor en el tenant: 12. Entero fuera de 1–24 también vuelve a 12.
+     * Config: `tenant.parte_diario.renglones_ausentes`.
+     */
+    function tenantParteDiarioRenglonesAusentes(): int
+    {
+        $default = 12;
+        $raw = config('tenant.parte_diario.renglones_ausentes');
+
+        if ($raw === null || $raw === '') {
+            return $default;
+        }
+
+        $entero = is_int($raw) || (is_string($raw) && preg_match('/^[1-9]\d*$/', trim($raw)) === 1);
+        if (! $entero) {
+            return $default;
+        }
+
+        $n = (int) $raw;
+        if ($n < 1 || $n > 24) {
+            return $default;
+        }
+
+        return $n;
+    }
+}
+
 if (! function_exists('tenantSeguimientoComunicadoImplementacion')) {
     /**
      * Modelo de PDF del comunicado de seguimiento disciplinario: `estandar` | `iess`.

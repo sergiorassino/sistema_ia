@@ -51,33 +51,12 @@ final class NotificarPreceptorSituacionAulica
             return false;
         }
 
-        $sancion->loadMissing(['tipo']);
-        $matricula->loadMissing(['legajo', 'curso']);
-
-        $alumno = trim(($matricula->legajo?->apellido ?? '').', '.($matricula->legajo?->nombre ?? ''));
-        $curso = $matricula->curso?->nombreParaListado() ?? ('Curso '.$idCurso);
-        $tipo = $sancion->tipo?->tipo ?? SituacionAulicaTipo::label();
-        $fecha = $sancion->fecha ? $sancion->fecha->format('d/m/Y') : '—';
-        $motivo = trim((string) ($sancion->motivo ?? ''));
-
-        $asunto = 'Situación áulica — '.$alumno;
-        $lineas = [
-            'Se registró una nueva situación áulica en el Cuaderno de Seguimiento.',
-            '',
-            'Alumno/a: '.$alumno,
-            'Curso: '.$curso,
-            'Tipo: '.$tipo,
-            'Fecha: '.$fecha,
-            'Motivo: '.($motivo !== '' ? $motivo : '—'),
-        ];
-        $lineas[] = '';
-        $lineas[] = 'Registrado por: '.$profesor->nombre_completo;
-
+        $texto = self::asuntoYContenido($sancion, $matricula, $profesor);
         $mediosCanal = CanalesPolicy::mediosPermitidos($rolEmisor, $claveReceptor);
 
         ComunicacionesRepository::crearHiloConMensaje([
-            'asunto' => $asunto,
-            'contenido' => implode("\n", $lineas),
+            'asunto' => $texto['asunto'],
+            'contenido' => $texto['contenido'],
             'scope' => 'docentes',
             'id_legajos' => [],
             'id_curso' => $idCurso,
@@ -97,5 +76,40 @@ final class NotificarPreceptorSituacionAulica
         ], $mediosCanal);
 
         return true;
+    }
+
+    /**
+     * Asunto y cuerpo del aviso (preceptor y destinatarios adicionales usan el mismo texto).
+     *
+     * @return array{asunto: string, contenido: string}
+     */
+    public static function asuntoYContenido(Sancion $sancion, Matricula $matricula, Profesor $profesor): array
+    {
+        $sancion->loadMissing(['tipo']);
+        $matricula->loadMissing(['legajo', 'curso']);
+
+        $alumno = trim(($matricula->legajo?->apellido ?? '').', '.($matricula->legajo?->nombre ?? ''));
+        $idCurso = (int) ($matricula->idCursos ?? 0);
+        $curso = $matricula->curso?->nombreParaListado() ?? ('Curso '.$idCurso);
+        $tipo = $sancion->tipo?->tipo ?? SituacionAulicaTipo::label();
+        $fecha = $sancion->fecha ? $sancion->fecha->format('d/m/Y') : '—';
+        $motivo = trim((string) ($sancion->motivo ?? ''));
+
+        $lineas = [
+            'Se registró una nueva situación áulica en el Cuaderno de Seguimiento.',
+            '',
+            'Alumno/a: '.$alumno,
+            'Curso: '.$curso,
+            'Tipo: '.$tipo,
+            'Fecha: '.$fecha,
+            'Motivo: '.($motivo !== '' ? $motivo : '—'),
+            '',
+            'Registrado por: '.$profesor->nombre_completo,
+        ];
+
+        return [
+            'asunto' => 'Situación áulica — '.$alumno,
+            'contenido' => implode("\n", $lineas),
+        ];
     }
 }

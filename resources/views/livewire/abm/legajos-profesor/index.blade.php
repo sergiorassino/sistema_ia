@@ -145,7 +145,7 @@
                             <p class="text-sm leading-relaxed text-neutral-600">{{ $passwordModalTexto }}</p>
                         @else
                             <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">Contraseña</p>
-                            <p class="mt-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 font-mono text-lg font-semibold tracking-wide text-neutral-900">{{ $passwordModalTexto }}</p>
+                            <p class="se-pwrd-revelada mt-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-lg font-semibold text-neutral-900">{{ $passwordModalTexto }}</p>
                         @endif
                     </div>
                     <div class="flex justify-end border-t border-accent-200 bg-accent-50/70 px-6 py-4">

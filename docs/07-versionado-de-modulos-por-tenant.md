@@ -197,7 +197,11 @@ return [
 ];
 ```
 
-Consumir con `tenantParteDiarioImplementacion()`. Detalle: [modulos/parte-diario-preceptor.md](modulos/parte-diario-preceptor.md).
+Consumir con `tenantParteDiarioImplementacion()`.
+
+Renglones de la grilla Ausentes / Retirados / Observaciones (solo `estandar`): `parte_diario.renglones_ausentes`. Sin declarar queda en **12**. El alto de la grilla no crece: se reparte entre esos renglones. **Alfonsina** declara **8**. Helper: `tenantParteDiarioRenglonesAusentes()`.
+
+Detalle: [modulos/parte-diario-preceptor.md](modulos/parte-diario-preceptor.md).
 
 Comunicado de seguimiento disciplinario — modelo de PDF:
 

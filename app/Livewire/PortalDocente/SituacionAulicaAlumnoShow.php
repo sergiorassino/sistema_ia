@@ -5,6 +5,7 @@ namespace App\Livewire\PortalDocente;
 use App\Models\Matricula;
 use App\Models\Sancion;
 use App\Support\PortalDocente\CuadernoSeguimientoAulicoDocente;
+use App\Support\PortalDocente\NotificarDestinatariosSituacionAulica;
 use App\Support\PortalDocente\NotificarPreceptorSituacionAulica;
 use App\Support\PortalDocente\SituacionAulicaTipo;
 use Illuminate\Support\Collection;
@@ -153,15 +154,42 @@ class SituacionAulicaAlumnoShow extends Component
             $avisoPreceptor = false;
         }
 
+        try {
+            $avisoExtra = NotificarDestinatariosSituacionAulica::despachar($sancion, $m);
+        } catch (\Throwable $e) {
+            report($e);
+            $avisoExtra = NotificarDestinatariosSituacionAulica::FALLIDO;
+        }
+
         $this->mostrarFormNuevo = false;
         $this->reset(['motivo']);
         $this->fecha = now()->format('Y-m-d');
 
-        if ($avisoPreceptor) {
-            session()->flash('success', 'Registro guardado. Se notificó al preceptor del curso.');
-        } else {
-            session()->flash('success', 'Registro guardado. No se pudo notificar al preceptor (sin asignación o aviso no disponible).');
+        session()->flash('success', $this->mensajeGuardado($avisoPreceptor, $avisoExtra));
+    }
+
+    private function mensajeGuardado(bool $avisoPreceptor, string $avisoExtra): string
+    {
+        $extraEnviado = $avisoExtra === NotificarDestinatariosSituacionAulica::ENVIADO;
+        $extraFallido = $avisoExtra === NotificarDestinatariosSituacionAulica::FALLIDO;
+
+        if ($avisoPreceptor && $extraEnviado) {
+            return 'Registro guardado. Se notificó al preceptor del curso y a los destinatarios configurados.';
         }
+        if ($avisoPreceptor && $extraFallido) {
+            return 'Registro guardado. Se notificó al preceptor del curso. No se pudo notificar a los destinatarios configurados.';
+        }
+        if ($avisoPreceptor) {
+            return 'Registro guardado. Se notificó al preceptor del curso.';
+        }
+        if ($extraEnviado) {
+            return 'Registro guardado. No se pudo notificar al preceptor (sin asignación o aviso no disponible). Se notificó a los destinatarios configurados.';
+        }
+        if ($extraFallido) {
+            return 'Registro guardado. No se pudo notificar al preceptor (sin asignación o aviso no disponible) ni a los destinatarios configurados.';
+        }
+
+        return 'Registro guardado. No se pudo notificar al preceptor (sin asignación o aviso no disponible).';
     }
 
     public function render()

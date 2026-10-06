@@ -78,6 +78,24 @@
     .form-error {
         @apply mt-1 text-xs text-red-600;
     }
+    /*
+     * Contraseña en claro (modales Ver Pwrd).
+     * La mono semibold igualaba la altura de mayúsculas y minúsculas y hacía
+     * ver la O como 0; el login compara con hash_equals (distingue caso).
+     * Fuente proporcional + cero tachado: la mayúscula se lee y el dígito 0 no.
+     */
+    .se-pwrd-revelada {
+        font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        text-transform: none;
+        font-variant: normal;
+        font-variant-ligatures: none;
+        font-variant-numeric: slashed-zero;
+        font-feature-settings: "liga" 0, "calt" 0, "zero" 1;
+        letter-spacing: 0.03em;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
     .card {
         @apply rounded-2xl border bg-white shadow-sm shadow-neutral-900/5;
         border-color: var(--color-accent-200);

@@ -689,10 +689,15 @@ return [
     | `implementacion`:
     |   - `estandar` — DomPDF A4; impreso en media hoja oficio vertical (default).
     |   - `sanfranciscoasis` — TCPDF Legal: listado de alumnos regulares + firmas por hora.
+    | `renglones_ausentes`: solo modelo `estandar`. Cantidad de renglones de la grilla
+    |   Ausentes / Retirados / Observaciones. `null` o ausente = 12 (el alto actual).
+    |   Entero de 1 a 24. El alto total de esa grilla no cambia: se reparte entre
+    |   los renglones (menos renglones, cada uno más alto).
     | Override solo en `config/tenants/{slug}.php` cuando difiere.
     */
     'parte_diario' => [
         'implementacion' => 'estandar',
+        'renglones_ausentes' => null,
     ],
 
     /*

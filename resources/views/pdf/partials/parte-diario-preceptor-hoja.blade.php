@@ -20,13 +20,17 @@
     $padBottomMm = 6.0;
     $altoUtilMm = $altoImpresoMm - $padTopMm - $padBottomMm;
 
-    $renglonesManual = 12;
+    // 12 × 4 mm: alto del cuerpo de ausentes con el que entra la media hoja.
+    // Otra cantidad en el tenant reparte ese mismo alto (el renglón queda más alto).
+    $renglonesManualBase = 12;
+    $altoFilaManualBaseMm = 4.0;
+    $renglonesManual = tenantParteDiarioRenglonesAusentes();
     $altoCabeceraMm = 16.5;
     $altoMetaMm = 10.0;
     $gapMm = 1.5;
     // Filas de título de ambas grillas: compactas para no desbordar la media hoja.
     $altoThMm = 3.0;
-    $altoFilaManualMm = 4.0;
+    $altoFilaManualMm = round(($renglonesManualBase * $altoFilaManualBaseMm) / $renglonesManual, 2);
     // 0,5 mm menos por hora (profesores / firmas) para que la 10.ª no se corte.
     $reduccionFilaFirmaMm = 0.5;
 

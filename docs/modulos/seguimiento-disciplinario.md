@@ -20,6 +20,8 @@ Registrar, editar e imprimir sanciones del Cuaderno de Seguimiento; notificar a 
 
 Registro de **situación áulica** desde el portal docente (materias `ppc` del profesor). Default **off**. Activo en **iess**, **alfonsina** y **nocturna** (`config/tenants/{slug}.php` → `portal_docente.menu.secundario.cuaderno_seguimiento_aulico`). El alta usa el tipo `sanciontipo.tipo` = `Registro de Situación Áulica` (debe existir en la BD del tenant; `enResumenComunicado = 0`) y avisa al preceptor del curso.
 
+Además, Secretaría puede cargar **destinatarios adicionales** (profesores del nivel) en Configuración → Destinatarios situación áulica. Ese ítem usa el mismo permiso que Tipos de sanción (`SANCION_TIPOS_CONFIG`, orden 91) y solo se muestra si el cuaderno está activo en el tenant. Al guardar un registro se abre un **segundo hilo** de Comunicaciones, con el mismo texto, hacia esas personas (agrupadas por rol de canal). No se incluyen en ese segundo hilo quien registró ni los preceptores del curso (esos ya reciben el primer aviso). Si la lista está vacía, el alta se comporta como antes. El correo sale si el canal docente → ese rol lo permite y la persona tiene el correo activo. Tabla: `situacion_aulica_destinatarios` (`idNivel`, `idProfesor`). SQL: `database/sql/situacion_aulica_destinatarios.sql`.
+
 ## Actores y permisos
 
 - Menú de Secretaría / Administración (staff): permiso orden **37** (`permiso:37` / `SEGUIMIENTO_DISCIPLINARIO`).
@@ -32,6 +34,7 @@ Registro de **situación áulica** desde el portal docente (materias `ppc` del p
 |-------|--------|--------|
 | `sanciones` | `idMatricula`, `idTipoSancion`, **`idProfesores`**, `fecha`, **`fechaRegistro`**, `cantidad`, `motivo`, **`acta`**, `solipor`, `comunicadaPadres`, … | `idProfesores` = quién registró (`profesores.id`; 0 si falta). `fecha` = día del hecho. `fechaRegistro` = `DATETIME` NULL, momento del alta (no se pisa al editar). `acta` = `MEDIUMTEXT` NULL (HTML sanitizado). Sin texto = comportamiento anterior. |
 | `sanciontipo` | `tipo`, `textoNotifPadres`, `idProfesorNotif`, `refuerzoMail`, `permiteNotifPadres`, **`enResumenComunicado`** | Notif. Padres; `enResumenComunicado` 1 = botón «Comunicado» + entra en el resumen del PDF; 0 = ni botón ni PDF. |
+| `situacion_aulica_destinatarios` | `idNivel`, `idProfesor` | Destinatarios extra del aviso áulico (portal docente). Una fila por profesor y nivel. No sustituye al preceptor del curso. |
 | `matricula` / `legajos` / `cursos` | Alcance por contexto | Selector de alumno: solo `idCondiciones` 1, 2, 3 o 4. Seguridad de listado, PDF y acta. |
 
 Migración acta: `database/migrations/2026_08_10_120000_add_acta_to_sanciones.php`.  
@@ -72,11 +75,13 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - `app/Livewire/Parametrizacion/SancionTipoIndex.php`
 - `app/Support/Seguimiento/NotificarFamiliaSancion.php`
 - `app/Support/Seguimiento/SancionActaHtmlSanitizer.php`
-- Portal docente: `app/Livewire/PortalDocente/CuadernoSeguimientoIndex.php`, `RegistroSituacionAulicaIndex.php`, `SituacionAulicaAlumnoShow.php`; `App\Support\PortalDocente\CuadernoSeguimientoAulicoDocente`; config `config/tenants/{iess,alfonsina,nocturna}.php`
+- Portal docente: `app/Livewire/PortalDocente/CuadernoSeguimientoIndex.php`, `RegistroSituacionAulicaIndex.php`, `SituacionAulicaAlumnoShow.php`; `App\Support\PortalDocente\CuadernoSeguimientoAulicoDocente`; `NotificarPreceptorSituacionAulica`; `NotificarDestinatariosSituacionAulica`; config `config/tenants/{iess,alfonsina,nocturna}.php`
+- Parametrización destinatarios extra: `app/Livewire/Parametrizacion/SituacionAulicaDestinatariosIndex.php`; modelo `App\Models\SituacionAulicaDestinatario`
 
 ## Qué no hacer / reglas de negocio
 
 - No mezclar el alta por un alumno con el registro múltiple: el listado y `SancionForm` siguen siendo de a uno; el lote va en `SancionRegistroMultiple`.
+- No meter los destinatarios de `situacion_aulica_destinatarios` en el hilo del preceptor: van en un segundo hilo. Quien registró y los preceptores del curso no se repiten en ese segundo aviso.
 - No exigir acta: vacío = PDF y notificación como antes.
 - No usar `{!! !!}` en el PDF sin pasar por `SancionActaHtmlSanitizer::paraPdf()`.
 - No omitir en silencio el guardado de `acta` si el usuario cargó texto y falta la columna (usar `PersistenciaColumnas`).
@@ -105,3 +110,4 @@ SQL resumen PDF: `database/sql/sanciontipo_en_resumen_comunicado_idempotente.sql
 - [ ] ¿PDF muestra en letra chica `Fecha de Registro: dd/mm/aaaa hh:mm` (omitir si no hay dato)?
 - [ ] ¿Resumen del comunicado cortado por `fecha <=` la de la sanción impresa?
 - [ ] ¿Portal docente: flag `cuaderno_seguimiento_aulico` solo en tenants que lo usan, y tipo `Registro de Situación Áulica` en `sanciontipo`?
+- [ ] ¿Destinatarios extra: tabla `situacion_aulica_destinatarios` aplicada, ítem de menú solo con el flag del cuaderno, y el aviso al preceptor intacto si la lista está vacía?

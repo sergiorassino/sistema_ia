@@ -49,7 +49,7 @@
                 </button>
             </div>
             <p class="mb-5 text-xs text-neutral-500">
-                Una vez guardado, el registro no podrá editarse. Se notificará al preceptor del curso por COMUNICACIONES (sin correo ni push).
+                Una vez guardado, el registro no podrá editarse. Se notificará al preceptor del curso por Comunicaciones. Si Secretaría cargó destinatarios adicionales, también reciben el mismo aviso.
             </p>
 
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">

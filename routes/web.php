@@ -87,6 +87,7 @@ use App\Livewire\Aspirantes\InstanciaForm as AspirantesInstanciaForm;
 use App\Livewire\Aspirantes\InstanciaIndex as AspirantesInstanciaIndex;
 use App\Livewire\Parametrizacion\CamposAspirantesIndex;
 use App\Livewire\Parametrizacion\SancionTipoIndex;
+use App\Livewire\Parametrizacion\SituacionAulicaDestinatariosIndex;
 use App\Livewire\Programas\ProgramasExamenPublico;
 use App\Livewire\DocPp\DocPpForm;
 use App\Livewire\DocPp\DocPpIndex;
@@ -1088,6 +1089,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/parametrizacion/tipos-sancion', SancionTipoIndex::class)
         ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::SANCION_TIPOS_CONFIG)
         ->name('param.sancion-tipos');
+
+    Route::get('/parametrizacion/situacion-aulica-destinatarios', SituacionAulicaDestinatariosIndex::class)
+        ->middleware('permiso-config:'.\App\Support\PermisosConfiguracion::SANCION_TIPOS_CONFIG)
+        ->name('param.situacion-aulica-destinatarios');
 
     // Módulos pedagógicos (no disponibles en sesión Administración).
     Route::middleware('menu.portal:secretaria')->group(function () {
