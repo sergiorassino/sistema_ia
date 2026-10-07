@@ -3,6 +3,7 @@
 namespace App\Push;
 
 use App\Models\Curso;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use Illuminate\Support\Facades\DB;
 
 class DestinatariosRepository
@@ -106,6 +107,34 @@ class DestinatariosRepository
      */
     public static function alumnosPorCurso(int $idNivel, int $idTerlec, int $idCurso): array
     {
+        return self::pluckLegajosPorCurso(
+            self::queryAlumnosPorCurso($idNivel, $idTerlec, $idCurso)
+        );
+    }
+
+    /**
+     * Alumnos regulares del curso: condición Regular (`idCondiciones` = 1) y sin fecha de baja.
+     *
+     * @return list<string> user_keys (legajos.id)
+     */
+    public static function alumnosRegularesPorCurso(int $idNivel, int $idTerlec, int $idCurso): array
+    {
+        $q = self::queryAlumnosPorCurso($idNivel, $idTerlec, $idCurso)
+            ->whereIn(
+                'm.idCondiciones',
+                ListadoCursoCondicionFiltro::idCondicionesParaQuery(ListadoCursoCondicionFiltro::REGULARES)
+            )
+            ->where(function ($w) {
+                $w->whereNull('m.fechaBaja')
+                    ->orWhere('m.fechaBaja', '0000-00-00')
+                    ->orWhere('m.fechaBaja', '');
+            });
+
+        return self::pluckLegajosPorCurso($q);
+    }
+
+    private static function queryAlumnosPorCurso(int $idNivel, int $idTerlec, int $idCurso)
+    {
         return DB::table('matricula as m')
             ->join('legajos as l', 'l.id', '=', 'm.idLegajos')
             ->where('m.idNivel', $idNivel)
@@ -114,7 +143,15 @@ class DestinatariosRepository
             ->whereNotNull('m.idLegajos')
             ->distinct()
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
-            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
+            ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function pluckLegajosPorCurso($query): array
+    {
+        return $query
             ->pluck('m.idLegajos')
             ->map(fn ($v) => (string) $v)
             ->all();

@@ -41,7 +41,7 @@ Adjunto opcional del mensaje (`com_mensajes.adjunto_ruta`): disco `privado`. Los
 
 1. **Mis grupos:** alta/edición (nombre + integrantes mixtos: estudiantes y personal del nivel) y baja con SweetAlert.
 2. **Nuevo comunicado → Mis grupos:** opción de destinatario independiente; se eligen uno o varios grupos y el envío llega a todos los integrantes vigentes.
-3. **Nuevo comunicado → Familias / un rol de personal:** sigue la selección individual (alumnos, cursos, colegio o personas de ese rol).
+3. **Nuevo comunicado → Familias / un rol de personal:** sigue la selección individual (alumnos, cursos, colegio o personas de ese rol). Al elegir uno o varios cursos, el envío incluye solo alumnos regulares de ese curso en el nivel y ciclo de sesión: `matricula.idCondiciones = 1` y sin `fechaBaja` (`DestinatariosRepository::alumnosRegularesPorCurso`).
 
 ## Fuente de verdad
 

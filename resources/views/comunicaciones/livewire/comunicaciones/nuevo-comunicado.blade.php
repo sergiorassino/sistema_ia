@@ -119,7 +119,7 @@
                         <div class="mt-5">
                             <span class="form-label">Cursos</span>
                             <p class="mt-1 text-xs text-neutral-500">
-                                Abrí el listado con el botón y marcá uno o varios cursos. Podés filtrar por nombre dentro del panel.
+                                Abrí el listado con el botón y marcá uno o varios cursos. El envío incluye solo alumnos regulares. Podés filtrar por nombre dentro del panel.
                             </p>
                             <div class="mt-3 flex flex-wrap items-center gap-2">
                                 <button type="button"
@@ -431,7 +431,7 @@
             <div class="relative z-10 my-auto flex w-full max-w-lg max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5 sm:max-h-[min(calc(100dvh-2rem),30rem)]">
                 <div class="border-b border-accent-200 bg-accent-50/60 px-4 py-2.5 sm:px-5 sm:py-3">
                     <p id="com-modal-cursos-titulo" class="text-sm font-bold text-neutral-900">Elegir cursos</p>
-                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Marcá uno o varios cursos del ciclo lectivo actual.</p>
+                    <p class="mt-0.5 text-[11px] leading-snug text-neutral-600">Marcá uno o varios cursos del ciclo lectivo actual. Solo alumnos regulares.</p>
                 </div>
 
                 <div class="border-b border-accent-100 bg-white px-4 py-2 sm:px-5 sm:py-2.5">

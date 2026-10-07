@@ -591,7 +591,7 @@ class NuevoComunicado extends Component
                     return;
                 }
                 if (empty($idLegajos)) {
-                    $this->addError('tipoDestino', 'No hay alumnos matriculados en los cursos elegidos.');
+                    $this->addError('tipoDestino', 'No hay alumnos regulares en los cursos elegidos.');
 
                     return;
                 }
@@ -930,7 +930,7 @@ class NuevoComunicado extends Component
         }
         $ids = [];
         foreach ($this->cursosSeleccionados as $c) {
-            $porCurso = DestinatariosRepository::alumnosPorCurso($idNivel, $idTerlec, (int) $c['id']);
+            $porCurso = DestinatariosRepository::alumnosRegularesPorCurso($idNivel, $idTerlec, (int) $c['id']);
             foreach ($porCurso as $lk) {
                 $ids[] = (int) $lk;
             }
