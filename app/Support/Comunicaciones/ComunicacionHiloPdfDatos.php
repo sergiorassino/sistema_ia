@@ -144,12 +144,15 @@ final class ComunicacionHiloPdfDatos
         $contenido = preg_replace('/\A[\p{Z}\s]+/u', '', (string) $msg->contenido) ?? '';
         $contenido = preg_replace('/[\p{Z}\s]+\z/u', '', $contenido) ?? '';
 
+        $adjuntoNombre = $msg->tieneAdjunto() ? (string) ($msg->adjunto_nombre ?? '') : null;
+
         return [
             'numero'           => (int) $msg->id,
             'remitente'        => $remitente,
             'vinculo'          => $vinculo,
             'fechaHora'        => trim($fecha.' '.$hora),
             'contenido'        => $contenido,
+            'adjuntoNombre'    => $adjuntoNombre,
             'lecturaResumen'   => $lecturaResumen,
             'destinatarios'    => $destinatarios,
             'envios'           => $envios,

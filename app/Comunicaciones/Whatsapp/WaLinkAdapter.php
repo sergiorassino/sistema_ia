@@ -28,7 +28,10 @@ class WaLinkAdapter
 
         $asunto    = $mensaje->hilo?->asunto ?? 'Comunicado';
         $contenido = mb_substr((string) $mensaje->contenido, 0, 500);
-        $texto     = "{$asunto}\n\n{$contenido}";
+        $sufijo    = $mensaje->tieneAdjunto()
+            ? "\n\n[El comunicado incluye un archivo adjunto: {$mensaje->adjunto_nombre}. Ingresar al sistema para descargarlo.]"
+            : '';
+        $texto     = "{$asunto}\n\n{$contenido}{$sufijo}";
         // Sin prefijo + (wa.me y web.whatsapp.com/send lo aceptan así)
         $waNum = ltrim($telefono, '+');
         $textoEncoded = rawurlencode($texto);

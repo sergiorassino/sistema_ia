@@ -182,7 +182,7 @@ final class ManualComunicacionInstitucionalTcpdf extends TCPDF
             $pdf->h2('3) Redacción y límites');
             $pdf->bullets([
                 'Asunto: obligatorio (límite configurable, típico 200 caracteres).',
-                'Contenido: obligatorio (límite configurable, típico 2000 caracteres).',
+                'Contenido: obligatorio (límite configurable, típico 10000 caracteres).',
                 'Evite pegar texto con formatos raros: priorice mensajes claros, con fechas y acciones concretas.',
             ]);
 

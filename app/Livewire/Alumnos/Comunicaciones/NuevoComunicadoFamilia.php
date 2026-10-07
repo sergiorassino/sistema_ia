@@ -6,16 +6,23 @@ use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Models\Legajo;
 use App\Models\ProfesorTipo;
+use App\Support\Comunicaciones\ComunicacionAdjuntoStorage;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 class NuevoComunicadoFamilia extends Component
 {
+    use WithFileUploads;
+
     public string $vinculo   = '';  // madre|padre|tutor|resp_admin|otro
     public string $asunto    = '';
     public string $contenido = '';
+
+    /** Adjunto opcional (un solo archivo por mensaje). */
+    public $adjunto = null;
     /** Clave de canal receptor: `tipo:{id}` (profesortipo) */
     public string $rolReceptor = '';
 
@@ -106,8 +113,16 @@ class NuevoComunicadoFamilia extends Component
             'rolReceptor'    => ['required', 'string', Rule::in($valoresRol)],
             'idDestinatario' => 'required|integer',
             'asunto'         => 'required|string|max:' . config('comunicaciones.max_asunto', 200),
-            'contenido'      => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
+            'contenido'      => 'required|string|max:' . config('comunicaciones.max_contenido', 10000),
         ]);
+
+        if ($this->adjunto !== null) {
+            $errorAdjunto = ComunicacionAdjuntoStorage::validar($this->adjunto);
+            if ($errorAdjunto !== null) {
+                $this->addError('adjunto', $errorAdjunto);
+                return;
+            }
+        }
 
         $ctx      = studentCtx();
         $idLegajo = (int) $ctx->idLegajo;
@@ -145,6 +160,7 @@ class NuevoComunicadoFamilia extends Component
             'dni_remitente'            => $dniSnap,
             'destinatarios_profesores' => [$this->idDestinatario],
             'familia_puede_responder'  => true,
+            'adjunto'                  => $this->adjunto,
         ], $mediosCanal);
 
         session()->flash('success', 'Comunicado enviado.');
@@ -168,7 +184,7 @@ class NuevoComunicadoFamilia extends Component
     public function render()
     {
         return view('comunicaciones::livewire.alumnos.comunicaciones.nuevo-comunicado-familia', [
-            'maxContenido' => config('comunicaciones.max_contenido', 2000),
+            'maxContenido' => config('comunicaciones.max_contenido', 10000),
             'maxAsunto'    => config('comunicaciones.max_asunto', 200),
         ])->layout('layouts.alumno', ['pageTitle' => 'Nuevo comunicado']);
     }

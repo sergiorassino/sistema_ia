@@ -314,6 +314,27 @@
                     </div>
                 @endif
 
+                {{-- Adjunto opcional --}}
+                <div class="rounded-xl border border-dashed border-accent-300 bg-accent-50/50 px-4 py-3">
+                    <label class="block text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                        Adjunto opcional
+                        <span class="ml-1 font-normal normal-case text-neutral-400">(máx. {{ config('comunicaciones.adjunto_max_mb', 8) }} MB — {{ config('comunicaciones.adjunto_mimes', 'pdf,jpg,jpeg,png,doc,docx,xls,xlsx') }})</span>
+                    </label>
+                    <input type="file"
+                           wire:model="adjunto"
+                           accept=".{{ implode(',.', \App\Support\Comunicaciones\ComunicacionAdjuntoStorage::extensionesPermitidas()) }}"
+                           class="mt-1.5 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100">
+                    @if ($adjunto)
+                        <p class="mt-1.5 text-xs text-primary-700">📎 {{ $adjunto->getClientOriginalName() }}</p>
+                    @endif
+                    @error('adjunto') <p class="form-error mt-1">{{ $message }}</p> @enderror
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-neutral-400">
+                        Si el PDF supera el tamaño máximo, podés optimizarlo en
+                        <a href="https://www.ilovepdf.com/es/comprimir_pdf" target="_blank" rel="noopener noreferrer"
+                           class="font-medium text-primary-600 underline hover:text-primary-800">ilovepdf.com/es/comprimir_pdf</a>.
+                    </p>
+                </div>
+
                 <div class="flex justify-end border-t border-accent-200 pt-2">
                     <button type="button"
                             wire:click="enviar"

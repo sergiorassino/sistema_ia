@@ -7,10 +7,12 @@ use App\Comunicaciones\ComAuditoriaLogger;
 use App\Comunicaciones\ComunicacionesGestionSession;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Livewire\Concerns\DetalleLecturaDestinatariosModal;
+use App\Support\Comunicaciones\ComunicacionAdjuntoStorage;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 use App\Models\ComCanal;
 use App\Models\ComHilo;
 use App\Models\ComMensaje;
@@ -20,10 +22,14 @@ use App\Models\ComMensajeEnvio;
 class HiloShow extends Component
 {
     use DetalleLecturaDestinatariosModal;
+    use WithFileUploads;
 
     public int $idHilo;
     public string $respuesta = '';
     public bool $mostrarFormRespuesta = false;
+
+    /** Adjunto opcional de la respuesta (un solo archivo). */
+    public $adjuntoRespuesta = null;
 
     public bool $modalBorrarAbierto = false;
 
@@ -284,6 +290,10 @@ class HiloShow extends Component
 
         ComAuditoriaLogger::registrarBorrado($hilo, $msg, $borrarHilo, idProfesor: $idProf);
 
+        $rutasAdjunto = $borrarHilo
+            ? ComMensaje::query()->where('id_hilo', (int) $hilo->id)->pluck('adjunto_ruta')->all()
+            : [(string) ($msg->adjunto_ruta ?? '')];
+
         DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
             if ($borrarHilo) {
                 ComHilo::query()
@@ -321,6 +331,8 @@ class HiloShow extends Component
             ]);
         });
 
+        ComunicacionAdjuntoStorage::borrarRutas($rutasAdjunto);
+
         if ($borrarHilo) {
             session()->flash('success', 'Hilo eliminado.');
             $this->redirectRoute(ComunicacionesRutasGestion::nombreRuta('index'));
@@ -342,8 +354,16 @@ class HiloShow extends Component
         RateLimiter::hit($key, config('comunicaciones.rate_limit_decay', 60));
 
         $this->validate([
-            'respuesta' => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
+            'respuesta' => 'required|string|max:' . config('comunicaciones.max_contenido', 10000),
         ]);
+
+        if ($this->adjuntoRespuesta !== null) {
+            $errorAdjunto = ComunicacionAdjuntoStorage::validar($this->adjuntoRespuesta);
+            if ($errorAdjunto !== null) {
+                $this->addError('adjuntoRespuesta', $errorAdjunto);
+                return;
+            }
+        }
 
         $ctx      = schoolCtx();
         $idProf   = (int) $ctx->idProfesor;
@@ -401,7 +421,8 @@ class HiloShow extends Component
             contenido: $this->respuesta,
             mediosCanal: $medios,
             nombreSnapshot: $nombreProf,
-            dniSnapshot: (string) ($profesor->dni ?? '')
+            dniSnapshot: (string) ($profesor->dni ?? ''),
+            adjunto: $this->adjuntoRespuesta
         );
 
         $waLinks = ComunicacionesRepository::enlacesWhatsappWaMeDelMensaje((int) $mensajeResp->id);
@@ -413,6 +434,7 @@ class HiloShow extends Component
         }
 
         $this->respuesta              = '';
+        $this->adjuntoRespuesta       = null;
         $this->mostrarFormRespuesta   = false;
         session()->flash('success', 'Respuesta enviada.');
     }
@@ -528,7 +550,7 @@ class HiloShow extends Component
             'hilo'               => $hilo,
             'mensajesPorDia'     => $mensajesPorDia,
             'puedeResponder'     => $puedeResponder,
-            'maxContenido'       => config('comunicaciones.max_contenido', 2000),
+            'maxContenido'       => config('comunicaciones.max_contenido', 10000),
             'paraCompleto'       => $paraCompleto,
             'idProfesorSesion'   => (int) $ctx->idProfesor,
             'whatsappWaBanner'   => $whatsappWaBanner,

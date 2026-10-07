@@ -92,6 +92,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_GABINETE_HISTORIAL = 'seguimiento.gabinete.historial';
 
+    public const PURPOSE_COMUNICACION_ADJUNTO = 'comunicaciones.adjunto';
+
     public static function forComprobantePagoCuota(int $idCuotaGenerada, int $idLegajo): string
     {
         return self::encode(self::PURPOSE_COMPROBANTE_PAGO, $idCuotaGenerada, $idLegajo);
@@ -375,6 +377,17 @@ final class OpaqueRouteToken
     {
         return self::encodePayload(self::PURPOSE_GABINETE_HISTORIAL, [
             'l' => $idLegajo,
+        ]);
+    }
+
+    /**
+     * Token para descargar el adjunto de un mensaje de comunicación institucional.
+     * El portal (gestión o familia) valida alcance en el controlador.
+     */
+    public static function forComunicacionAdjunto(int $idMensaje): string
+    {
+        return self::encodePayload(self::PURPOSE_COMUNICACION_ADJUNTO, [
+            'm' => $idMensaje,
         ]);
     }
 

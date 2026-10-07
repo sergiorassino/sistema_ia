@@ -123,6 +123,27 @@
                                     'text-white' => ! $esPlataforma,
                                 ])>{{ preg_replace('/\A[\p{Z}\s]+/u', '', (string) $msg->contenido) }}</p>
 
+                                @if ($msg->tieneAdjunto())
+                                    @php
+                                        $adjRef = \App\Support\Security\OpaqueRouteToken::forComunicacionAdjunto((int) $msg->id);
+                                        $adjUrl = route('alumnos.comunicaciones.adjunto', ['ref' => $adjRef]);
+                                    @endphp
+                                    <a href="{{ $adjUrl }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       @class([
+                                           'mt-2 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition',
+                                           'border-accent-300 bg-white/70 text-primary-700 hover:bg-accent-50 hover:text-primary-800' => $esPlataforma,
+                                           'border-white/30 bg-white/20 text-white hover:bg-white/30' => ! $esPlataforma,
+                                       ])>
+                                        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                        </svg>
+                                        <span class="max-w-[180px] truncate">{{ $msg->adjunto_nombre }}</span>
+                                    </a>
+                                @endif
+
                                 <div @class([
                                     'mt-2 flex items-center justify-between gap-3',
                                     'text-neutral-500' => $esPlataforma,
@@ -238,6 +259,28 @@
                                   class="form-input min-h-[6rem] resize-none leading-relaxed"></textarea>
                         @error('respuesta') <p class="form-error">{{ $message }}</p> @enderror
                         <p class="text-right text-xs text-neutral-500 tabular-nums">{{ mb_strlen($respuesta) }} / {{ $maxContenido }}</p>
+
+                        {{-- Adjunto opcional --}}
+                        <div class="rounded-xl border border-dashed border-accent-300 bg-accent-50/50 px-4 py-3">
+                            <label class="block text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                                Adjunto opcional
+                                <span class="ml-1 font-normal normal-case text-neutral-400">(máx. {{ config('comunicaciones.adjunto_max_mb', 8) }} MB)</span>
+                            </label>
+                            <input type="file"
+                                   wire:model="adjuntoRespuesta"
+                                   accept=".{{ implode(',.', \App\Support\Comunicaciones\ComunicacionAdjuntoStorage::extensionesPermitidas()) }}"
+                                   class="mt-1.5 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100">
+                            @if ($adjuntoRespuesta)
+                                <p class="mt-1.5 text-xs text-primary-700">📎 {{ $adjuntoRespuesta->getClientOriginalName() }}</p>
+                            @endif
+                            @error('adjuntoRespuesta') <p class="form-error mt-1">{{ $message }}</p> @enderror
+                            <p class="mt-1.5 text-[11px] leading-relaxed text-neutral-400">
+                                Si el PDF supera el tamaño máximo, podés optimizarlo en
+                                <a href="https://www.ilovepdf.com/es/comprimir_pdf" target="_blank" rel="noopener noreferrer"
+                                   class="font-medium text-primary-600 underline hover:text-primary-800">ilovepdf.com/es/comprimir_pdf</a>.
+                            </p>
+                        </div>
+
                         <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                             <button type="button"
                                     wire:click="$set('mostrarFormRespuesta', false)"

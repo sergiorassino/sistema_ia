@@ -234,6 +234,17 @@ final class ComunicacionHiloTcpdf extends TCPDF
         $this->MultiCell($w - 4, 3.4, $contenido !== '' ? $contenido : '—', 0, 'L', false, 1);
         $y = $this->GetY() + 1;
 
+        // Adjunto (solo nombre — el binario no se incrusta en el PDF)
+        $adjuntoNombre = trim((string) ($msg['adjuntoNombre'] ?? ''));
+        if ($adjuntoNombre !== '') {
+            TcpdfFuenteArial::aplicar($this, 'B', 6);
+            $this->SetXY($x + 2, $y);
+            $this->SetTextColor(3, 105, 161); // azul informativo
+            $this->Cell($w - 4, 3.2, "\xF0\x9F\x93\x8E Adjunto: " . $adjuntoNombre, 0, 1, 'L');
+            $this->SetTextColor(0, 0, 0);
+            $y = $this->GetY() + 1;
+        }
+
         /** @var list<array<string, mixed>> $destinatarios */
         $destinatarios = $msg['destinatarios'] ?? [];
         if ($destinatarios !== []) {

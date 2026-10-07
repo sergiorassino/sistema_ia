@@ -142,7 +142,9 @@ use App\Livewire\Administracion\Configuracion\PromoverAlumnosIndex;
 use App\Livewire\Alumnos\Auth\Login as AlumnosLogin;
 use App\Livewire\Alumnos\Comunicaciones\BandejaFamilia;
 use App\Http\Controllers\Alumnos\AbrirHiloComunicacionFamiliaController;
+use App\Http\Controllers\Alumnos\ComunicacionAdjuntoFamiliaController;
 use App\Http\Controllers\Comunicaciones\AbrirHiloComunicacionGestionController;
+use App\Http\Controllers\Comunicaciones\ComunicacionAdjuntoGestionController;
 use App\Http\Controllers\Comunicaciones\ComunicacionHiloPdfController;
 use App\Livewire\Alumnos\Comunicaciones\HiloShowFamilia;
 use App\Livewire\Alumnos\Comunicaciones\NuevoComunicadoFamilia;
@@ -517,6 +519,9 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
         Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionFamiliaController::class)
             ->whereNumber('id')
             ->name('alumnos.comunicaciones.abrir');
+        Route::get('/comunicaciones/adjunto/{ref}', ComunicacionAdjuntoFamiliaController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('alumnos.comunicaciones.adjunto');
     });
 });
 
@@ -702,6 +707,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:docente'])->prefix('po
     Route::get('/comunicaciones/hilo.pdf/{ref}', ComunicacionHiloPdfController::class)
         ->where('ref', '[A-Za-z0-9_-]+')
         ->name('portalDocente.comunicaciones.hilo.pdf');
+    Route::get('/comunicaciones/adjunto/{ref}', ComunicacionAdjuntoGestionController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('portalDocente.comunicaciones.adjunto');
     Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
         ->whereNumber('id')
         ->name('portalDocente.comunicaciones.abrir');
@@ -1015,6 +1023,10 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->middleware('permiso:3')
         ->where('ref', '[A-Za-z0-9_-]+')
         ->name('comunicaciones.hilo.pdf');
+    Route::get('/comunicaciones/adjunto/{ref}', ComunicacionAdjuntoGestionController::class)
+        ->middleware('permiso:3')
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('comunicaciones.adjunto');
     Route::get('/comunicaciones/abrir/{id}', AbrirHiloComunicacionGestionController::class)
         ->middleware('permiso:3')
         ->whereNumber('id')

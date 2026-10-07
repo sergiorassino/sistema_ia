@@ -6,15 +6,19 @@ use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComGruposRepository;
 use App\Comunicaciones\ComunicacionesRepository;
 use App\Push\DestinatariosRepository;
+use App\Support\Comunicaciones\ComunicacionAdjuntoStorage;
 use App\Support\Comunicaciones\ComCanalRolCatalog;
 use App\Support\Comunicaciones\NuevoComunicadoDocenteDestino;
 use App\Support\ComunicacionesRutasGestion;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 class NuevoComunicado extends Component
 {
+    use WithFileUploads;
+
     /** `familia` o `tipo:{id}` de profesortipo — vacío hasta elegir destinatario */
     public string $destinatarioTipo = '';
 
@@ -30,6 +34,9 @@ class NuevoComunicado extends Component
 
     public string $asunto    = '';
     public string $contenido = '';
+
+    /** Adjunto opcional (un solo archivo por mensaje). */
+    public $adjunto = null;
 
     /** Si la familia podrá responder en el cuaderno (solo a envíos desde la escuela). */
     public bool $familiaPuedeResponder = true;
@@ -504,7 +511,7 @@ class NuevoComunicado extends Component
         $rules = [
             'destinatarioTipo' => ['required', 'string', Rule::in($valoresDest)],
             'asunto'           => 'required|string|max:' . config('comunicaciones.max_asunto', 200),
-            'contenido'        => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
+            'contenido'        => 'required|string|max:' . config('comunicaciones.max_contenido', 10000),
         ];
         if ($this->esDestinatarioFamilia()) {
             $rules['tipoDestino']           = 'required|in:alumnos,cursos,colegio';
@@ -516,6 +523,15 @@ class NuevoComunicado extends Component
             $rules['docentesDestinatariosPuedenResponder'] = 'boolean';
         }
         $this->validate($rules);
+
+        // Validar adjunto si se proporcionó
+        if ($this->adjunto !== null) {
+            $errorAdjunto = ComunicacionAdjuntoStorage::validar($this->adjunto);
+            if ($errorAdjunto !== null) {
+                $this->addError('adjunto', $errorAdjunto);
+                return;
+            }
+        }
 
         $idNivel  = (int) $ctx->idNivel;
         $idTerlec = (int) $ctx->idTerlec;
@@ -536,7 +552,8 @@ class NuevoComunicado extends Component
                 (string) ($profesor->dni ?? ''),
                 $idNivel,
                 $idTerlec,
-                $idProf
+                $idProf,
+                $this->adjunto
             );
 
             return;
@@ -616,6 +633,7 @@ class NuevoComunicado extends Component
                 'dni_remitente'            => (string) ($profesor->dni ?? ''),
                 'destinatarios_profesores' => [],
                 'familia_puede_responder'  => $this->familiaPuedeResponder,
+                'adjunto'                  => $this->adjunto,
             ], $mediosCanal);
         } else {
             $idTipoProf = $this->idTipoProfDestinatario();
@@ -669,6 +687,7 @@ class NuevoComunicado extends Component
                 'destinatarios_profesores' => $idsProf,
                 'familia_puede_responder'  => true,
                 'docentes_permite_respuestas' => $this->docentesDestinatariosPuedenResponder,
+                'adjunto'                  => $this->adjunto,
             ], $mediosCanal);
         }
 
@@ -693,7 +712,8 @@ class NuevoComunicado extends Component
         string $dniProfesor,
         int $idNivel,
         int $idTerlec,
-        int $idProf
+        int $idProf,
+        mixed $adjunto = null
     ): void {
         if ($this->gruposSeleccionados === []) {
             $this->addError('destinatarioTipo', 'Seleccione al menos un grupo.');
@@ -774,6 +794,7 @@ class NuevoComunicado extends Component
             'destinatarios_profesores'    => $idsProf,
             'familia_puede_responder'     => $idLegajos !== [] ? $this->familiaPuedeResponder : true,
             'docentes_permite_respuestas' => $idsProf !== [] ? $this->docentesDestinatariosPuedenResponder : true,
+            'adjunto'                     => $adjunto,
         ], $mediosCanal);
 
         $idPrimerMensaje = (int) ($hilo->cuerpo_inicial_id ?? 0);
@@ -932,7 +953,7 @@ class NuevoComunicado extends Component
 
         return view('comunicaciones::livewire.comunicaciones.nuevo-comunicado', [
             'cursos'       => $cursos,
-            'maxContenido' => config('comunicaciones.max_contenido', 2000),
+            'maxContenido' => config('comunicaciones.max_contenido', 10000),
             'maxAsunto'    => config('comunicaciones.max_asunto', 200),
         ])->layout(ComunicacionesRutasGestion::layout(), ['pageTitle' => 'Nuevo Comunicado']);
     }

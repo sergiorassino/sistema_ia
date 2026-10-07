@@ -6,6 +6,7 @@ use App\Models\Legajo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\WithFileUploads;
 use App\Comunicaciones\CanalesPolicy;
 use App\Comunicaciones\ComAuditoriaLogger;
 use App\Comunicaciones\ComunicacionesFamiliaSession;
@@ -15,16 +16,21 @@ use App\Models\ComHilo;
 use App\Models\ComMensaje;
 use App\Models\ComMensajeDestinatario;
 use App\Models\ComMensajeEnvio;
+use App\Support\Comunicaciones\ComunicacionAdjuntoStorage;
 
 class HiloShowFamilia extends Component
 {
     use DetalleLecturaDestinatariosModal;
+    use WithFileUploads;
 
     public int $idHilo;
 
     public string $vinculo   = '';
     public string $respuesta = '';
     public bool $mostrarFormRespuesta = false;
+
+    /** Adjunto opcional de la respuesta (un solo archivo). */
+    public $adjuntoRespuesta = null;
 
     public bool $modalBorrarAbierto = false;
 
@@ -264,6 +270,10 @@ class HiloShowFamilia extends Component
 
         ComAuditoriaLogger::registrarBorrado($hilo, $msg, $borrarHilo, idLegajo: $idLegajo);
 
+        $rutasAdjunto = $borrarHilo
+            ? ComMensaje::query()->where('id_hilo', (int) $hilo->id)->pluck('adjunto_ruta')->all()
+            : [(string) ($msg->adjunto_ruta ?? '')];
+
         DB::transaction(function () use ($msg, $hilo, $borrarHilo) {
             if ($borrarHilo) {
                 ComHilo::query()
@@ -301,6 +311,8 @@ class HiloShowFamilia extends Component
             ]);
         });
 
+        ComunicacionAdjuntoStorage::borrarRutas($rutasAdjunto);
+
         if ($borrarHilo) {
             session()->flash('success', 'Comunicado eliminado.');
             $this->redirectRoute('alumnos.comunicaciones.index');
@@ -323,8 +335,16 @@ class HiloShowFamilia extends Component
 
         $this->validate([
             'vinculo'   => 'required|in:madre,padre,tutor,resp_admin,otro',
-            'respuesta' => 'required|string|max:' . config('comunicaciones.max_contenido', 2000),
+            'respuesta' => 'required|string|max:' . config('comunicaciones.max_contenido', 10000),
         ]);
+
+        if ($this->adjuntoRespuesta !== null) {
+            $errorAdjunto = ComunicacionAdjuntoStorage::validar($this->adjuntoRespuesta);
+            if ($errorAdjunto !== null) {
+                $this->addError('adjuntoRespuesta', $errorAdjunto);
+                return;
+            }
+        }
 
         $ctx      = studentCtx();
         $idLegajo = (int) $ctx->idLegajo;
@@ -358,11 +378,13 @@ class HiloShowFamilia extends Component
             mediosCanal: $medios,
             vinculo: $this->vinculo,
             nombreSnapshot: $nombreSnap,
-            dniSnapshot: $dniSnap
+            dniSnapshot: $dniSnap,
+            adjunto: $this->adjuntoRespuesta
         );
 
-        $this->respuesta            = '';
-        $this->mostrarFormRespuesta = false;
+        $this->respuesta              = '';
+        $this->adjuntoRespuesta       = null;
+        $this->mostrarFormRespuesta   = false;
         session()->flash('success', 'Respuesta enviada.');
     }
 
@@ -434,7 +456,7 @@ class HiloShowFamilia extends Component
             'hilo'             => $hilo,
             'mensajesPorDia'   => $mensajesPorDia,
             'puedeResponder'   => $puedeResp,
-            'maxContenido'     => config('comunicaciones.max_contenido', 2000),
+            'maxContenido'     => config('comunicaciones.max_contenido', 10000),
             'paraCompleto'     => $paraCompleto,
             'idLegajoSesion'   => (int) $ctx->idLegajo,
         ])->layout('layouts.alumno', ['pageTitle' => $hilo->asunto]);

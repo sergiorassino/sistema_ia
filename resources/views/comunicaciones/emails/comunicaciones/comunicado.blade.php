@@ -38,6 +38,12 @@
 
         <div class="contenido">{{ $mensaje->contenido }}</div>
 
+        @if($mensaje->tieneAdjunto())
+        <p style="margin: 20px 0 0; padding: 10px 14px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; font-size: 13px; color: #0369a1;">
+            📎 <strong>Adjunto:</strong> {{ $mensaje->adjunto_nombre }}
+        </p>
+        @endif
+
         @if($mensaje->hilo && $mensaje->hilo->esComunicadoInformativoEscuela())
         <p style="margin: 20px 0 0; padding: 12px 14px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; font-size: 13px; color: #92400e;">
             Este mensaje es <strong>solo informativo</strong>: en el cuaderno de comunicados no podrá enviarse respuesta.

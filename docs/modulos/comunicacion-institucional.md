@@ -35,6 +35,8 @@ Al enviar, el grupo **se expande** a destinatarios individuales (familias y/o pe
 
 SQL: `database/sql/create_com_grupos.sql`.
 
+Adjunto opcional del mensaje (`com_mensajes.adjunto_ruta`): disco `privado`. Los archivos nuevos van a `storage/app/private/ento/comunicaciones/{tenant}/{idNivel}/{idMensaje}/`. Los que ya estaban en `comunicaciones/{tenant}/…` se dejan ahí; el botón del hilo abre esa ruta en una solapa (el PDF se muestra en el navegador). Al borrar el mensaje (o el hilo, si era el único), se borra también el archivo de esa ruta.
+
 ## Flujo principal
 
 1. **Mis grupos:** alta/edición (nombre + integrantes mixtos: estudiantes y personal del nivel) y baja con SweetAlert.

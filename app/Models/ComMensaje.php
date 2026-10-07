@@ -16,7 +16,14 @@ class ComMensaje extends Model
         'id_profesor', 'id_legajo', 'rol_remitente',
         'vinculo_familiar', 'nombre_remitente_snapshot', 'dni_remitente_snapshot',
         'contenido', 'fecha', 'hora',
+        'adjunto_nombre', 'adjunto_ruta', 'adjunto_mime', 'adjunto_bytes',
     ];
+
+    /** ¿El mensaje tiene adjunto guardado? */
+    public function tieneAdjunto(): bool
+    {
+        return $this->adjunto_ruta !== null && $this->adjunto_ruta !== '';
+    }
 
     protected $casts = [
         'fecha'      => 'date',

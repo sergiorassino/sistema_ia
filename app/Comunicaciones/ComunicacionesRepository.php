@@ -1501,6 +1501,7 @@ class ComunicacionesRepository
      *   destinatarios_profesores: list<int>,
      *   familia_puede_responder?: bool,
      *   docentes_permite_respuestas?: ?bool, // solo scope docentes; null = permitir respuestas (legado)
+     *   adjunto?: \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|\Illuminate\Http\UploadedFile|null,
      * } $datos
      * @param list<string> $mediosCanal
      */
@@ -1545,6 +1546,25 @@ class ComunicacionesRepository
                 'hora'                      => now()->toTimeString(),
                 'created_at'                => now(),
             ]);
+
+            // Adjunto opcional
+            $archivoAdjunto = $datos['adjunto'] ?? null;
+            if ($archivoAdjunto !== null) {
+                $meta = \App\Support\Comunicaciones\ComunicacionAdjuntoStorage::guardar(
+                    $archivoAdjunto,
+                    (int) $datos['id_nivel'],
+                    (int) $mensaje->id
+                );
+                if ($meta !== null) {
+                    $mensaje->update([
+                        'adjunto_nombre' => $meta['nombre'],
+                        'adjunto_ruta'   => $meta['ruta'],
+                        'adjunto_mime'   => $meta['mime'],
+                        'adjunto_bytes'  => $meta['bytes'],
+                    ]);
+                    $mensaje->refresh();
+                }
+            }
 
             // Vincula el primer mensaje al hilo
             $hilo->update(['cuerpo_inicial_id' => $mensaje->id]);
@@ -1712,6 +1732,7 @@ class ComunicacionesRepository
      * Agrega una respuesta a un hilo existente y actualiza estados.
      *
      * @param list<string> $mediosCanal
+     * @param \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|\Illuminate\Http\UploadedFile|null $adjunto
      */
     public static function responder(
         int $idHilo,
@@ -1723,11 +1744,12 @@ class ComunicacionesRepository
         ?string $vinculo = null,
         ?string $nombreSnapshot = null,
         ?string $dniSnapshot = null,
-        ?int $idMensajePadre = null
+        ?int $idMensajePadre = null,
+        mixed $adjunto = null
     ): ComMensaje {
         return DB::transaction(function () use (
             $idHilo, $tipoRemitente, $idRemitente, $rolRemitente,
-            $contenido, $mediosCanal, $vinculo, $nombreSnapshot, $dniSnapshot, $idMensajePadre
+            $contenido, $mediosCanal, $vinculo, $nombreSnapshot, $dniSnapshot, $idMensajePadre, $adjunto
         ) {
             $hilo = ComHilo::findOrFail($idHilo);
 
@@ -1746,6 +1768,25 @@ class ComunicacionesRepository
                 'hora'                      => now()->toTimeString(),
                 'created_at'                => now(),
             ]);
+
+            // Adjunto opcional
+            if ($adjunto !== null) {
+                $idNivel = (int) ($hilo->id_nivel ?? 0);
+                $meta = \App\Support\Comunicaciones\ComunicacionAdjuntoStorage::guardar(
+                    $adjunto,
+                    $idNivel,
+                    (int) $mensaje->id
+                );
+                if ($meta !== null) {
+                    $mensaje->update([
+                        'adjunto_nombre' => $meta['nombre'],
+                        'adjunto_ruta'   => $meta['ruta'],
+                        'adjunto_mime'   => $meta['mime'],
+                        'adjunto_bytes'  => $meta['bytes'],
+                    ]);
+                    $mensaje->refresh();
+                }
+            }
 
             if ($tipoRemitente === 'profesor') {
                 ComMensajeDestinatario::query()

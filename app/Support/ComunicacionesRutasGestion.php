@@ -63,4 +63,15 @@ final class ComunicacionesRutasGestion
     {
         return self::accesoNuevoComunicado();
     }
+
+    /**
+     * URL de descarga del adjunto de un mensaje de comunicación (portal gestión).
+     * Usa token opaco para no exponer el ID del mensaje en la URL.
+     */
+    public static function urlAdjunto(int $idMensaje): string
+    {
+        $ref = \App\Support\Security\OpaqueRouteToken::forComunicacionAdjunto($idMensaje);
+
+        return route(self::nombreRuta('adjunto'), ['ref' => $ref]);
+    }
 }

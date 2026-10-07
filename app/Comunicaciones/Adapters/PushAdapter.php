@@ -32,7 +32,9 @@ class PushAdapter
         $urlDestino = route('alumnos.comunicaciones.abrir', ['id' => $hiloId]);
 
         $asunto    = mb_substr((string) $mensaje->hilo?->asunto, 0, 80);
-        $contenido = mb_substr((string) $mensaje->contenido, 0, 280);
+        // Si el mensaje tiene adjunto, se añade una marca al texto del push
+        $sufijo    = $mensaje->tieneAdjunto() ? ' [📎 adjunto]' : '';
+        $contenido = mb_substr((string) $mensaje->contenido, 0, 280 - mb_strlen($sufijo)) . $sufijo;
 
         $result = WebPushService::sendToUsers(
             [$userKey],
