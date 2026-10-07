@@ -2456,6 +2456,26 @@
             minmax(7rem, 8.5rem)
             minmax(18rem, 20.5rem);
     }
+    /* Permiso 70: sin columna Acciones (horario, recurso, sala, usuario, observaciones, estado). */
+    .gf.gf-rrd-listado.gf-rrd-listado--consulta {
+        grid-template-columns:
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 1.15fr)
+            minmax(3rem, 1fr)
+            minmax(3rem, 1.1fr)
+            minmax(3rem, 1.2fr)
+            minmax(4.5rem, 5rem);
+    }
+    .gf.gf-rrd-listado.gf-rrd-listado--todas.gf-rrd-listado--consulta {
+        grid-template-columns:
+            minmax(4.5rem, 5rem)
+            minmax(4.25rem, 4.75rem)
+            minmax(3rem, 1fr)
+            minmax(3rem, 0.95fr)
+            minmax(3rem, 1fr)
+            minmax(3rem, 1.15fr)
+            minmax(4.5rem, 5rem);
+    }
     .gf.gf-rrd-listado .gf-head,
     .gf.gf-rrd-listado .gf-row {
         display: grid;

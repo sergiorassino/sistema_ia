@@ -310,7 +310,9 @@ class ReservasDashboard extends Component
         $query = RrdReserva::queryEnContexto()
             ->with(['recurso.grupo', 'pedido.profesor', 'pedido.reservas']);
 
-        if (! $this->esPortalDocente() && $rol !== 'admin') {
+        // Profesor (permiso 69): solo sus pedidos. Lectura (permiso 70, p. ej. portería):
+        // consulta de todas las reservas del ciclo, sin filtrar por quien las creó.
+        if (! $this->esPortalDocente() && $rol === 'profesor') {
             $idProfesor = (int) ($ctx->idProfesor ?? 0);
             $query->whereHas('pedido', fn ($q) => $q->where('id_profesor', $idProfesor));
         }

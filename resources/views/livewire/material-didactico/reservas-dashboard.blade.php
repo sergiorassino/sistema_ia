@@ -8,7 +8,7 @@
                     <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Listado de reservas</h1>
                     <p class="text-sm text-white/80">
                         {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
-                        @if($soloConsultaPortal || $puedeGestionarReservas)
+                        @if($soloConsultaPortal || $puedeGestionarReservas || $rol === 'lectura')
                             · Consulta de reservas
                         @elseif($rol !== 'admin')
                             · Mis reservas
@@ -106,6 +106,7 @@
                     <div @class([
                         'gf gf-vcenter gf-rrd-listado',
                         'gf-rrd-listado--admin' => $rol === 'admin',
+                        'gf-rrd-listado--consulta' => $rol === 'lectura',
                         'gf-rrd-listado--todas' => $modoFecha === 'todas',
                     ])>
                         <div class="gf-head">
@@ -122,7 +123,7 @@
                                 <div class="gf-th gf-rrd-entregado">Entregado a</div>
                                 <div class="gf-th gf-rrd-devuelto">Devuelto por</div>
                             @endif
-                            @if(! $soloConsultaPortal)
+                            @if($rol !== 'lectura')
                                 <div class="gf-th gf-rrd-acciones text-center">Acciones</div>
                             @endif
                         </div>
@@ -253,7 +254,7 @@
                                         </div>
                                     </div>
                                 @endif
-                                @if(! $soloConsultaPortal)
+                                @if($rol !== 'lectura')
                                 <div class="gf-td gf-td-actions gf-rrd-acciones">
                                     <div class="gf-rrd-acciones-inline">
                                         @if($rol === 'admin' && $grupo->alguna_activa_pedido)

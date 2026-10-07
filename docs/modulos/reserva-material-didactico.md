@@ -33,7 +33,7 @@ Helper: `rrdRol()` → `admin` \| `profesor` \| `lectura` \| `null` (gana el bit
 |----------------|----------------|---------|
 | **Admin** (Secretaría) | 68 `RESERVA_MATERIAL_ADMIN` | Todo: ABM grupos/recursos/disponibilidad, ver todos los pedidos del ciclo, préstamo espontáneo (entrega directa), registrar entrega/devolución |
 | **Profesor** (Secretaría) | 69 `RESERVA_MATERIAL_PROFESOR` | Crear/editar/cancelar **pedidos propios** mientras estén pendientes; en listado solo ve los suyos |
-| **Lectura** (Secretaría) | 70 `RESERVA_MATERIAL_LECTURA` | Solo consulta de **pedidos propios** |
+| **Lectura** (Secretaría) | 70 `RESERVA_MATERIAL_LECTURA` | Consulta de **todas** las reservas del ciclo (sin alta, edición, cancelación ni entrega/devolución). Pensado para portería y roles que no crean pedidos |
 | **Portal Docentes** | Flags tenant (no `permisos_ia`) | Listado: ve reservas del **ciclo** (todos los pedidos). Con `nueva_reserva`: actúa como profesor (propios al editar). Sin entrega/devolución ni ABM |
 
 Rutas Secretaría: `material-didactico.*` + middleware `permiso:…`.  
@@ -114,5 +114,6 @@ Tablas **nuevas** (migraciones `2026_06_11_*` / aditivas posteriores). No son le
 - [ ] ¿Antelación / ventanas / `siempre_disponible` intactos?
 - [ ] ¿Admin-only: ABM, entrega, devolución, préstamo espontáneo?
 - [ ] ¿Profesor Secretaría solo toca pedidos propios pendientes?
+- [ ] ¿Lectura (permiso 70) ve todas las reservas del ciclo, sin acciones?
 - [ ] ¿Tenant nuevo necesita flags `recursos_didacticos_*` por nivel?
 - [ ] ¿Sin PDF nuevo innecesario? Si hubiera PDF: TCPDF + Arial (regla de PDFs nuevos).
