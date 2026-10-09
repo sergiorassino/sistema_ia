@@ -10,6 +10,8 @@
  |
  | Egresados de último año (ventana feb–sep del año siguiente): Previo (`PR`).
  | Default global es Regular (`RE`).
+ |
+ | Planificaciones y programas (permiso 86, grupo EXÁMENES del Menú de Secretaría).
  */
 
 return [
@@ -61,5 +63,9 @@ return [
 
     'examenes' => [
         'egresados_ventana_condicion' => 'PR',
+    ],
+
+    'doc_pp' => [
+        'habilitado' => true,
     ],
 ];
