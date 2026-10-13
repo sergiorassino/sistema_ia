@@ -81,6 +81,15 @@ class MateriasAdeudadasCondicionRecalculoTest extends TestCase
         $this->assertSame('Regular', MateriasAdeudadasFiltros::condCalificacionDesdeExamen('TM'));
     }
 
+    public function test_solo_la_matricula_regular_del_curso_cuenta_como_previa(): void
+    {
+        $this->assertTrue(MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia(1));
+        $this->assertFalse(MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia(2));
+        $this->assertFalse(MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia(4));
+        $this->assertFalse(MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia(5));
+        $this->assertFalse(MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia(0));
+    }
+
     public function test_exam_todos_inscribe_regular_y_egresado_re_en_todas_las_materias(): void
     {
         $this->assertSame(

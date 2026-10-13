@@ -3,6 +3,7 @@
 namespace App\Support\CalificacionesSecundario;
 
 use App\Support\CalificacionesColoquioSecundario;
+use App\Support\Examenes\MateriasAdeudadasFiltros;
 use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\PromedioAnualCalificacionesSecundario;
 use App\Support\SchoolContext;
@@ -445,6 +446,12 @@ final class CierreAnualSecundario
                             continue;
                         }
 
+                        if (! MateriasAdeudadasFiltros::matriculaDelCursoCuentaComoPrevia((int) ($fila->idCondiciones ?? 0))) {
+                            $omitidos++;
+
+                            continue;
+                        }
+
                         if (self::yaMarcadaComoPrevia($fila)) {
                             $omitidos++;
 
@@ -573,6 +580,7 @@ final class CierreAnualSecundario
                 'c.escuapro',
                 'c.condAdeuda',
                 'c.inscri',
+                'm.idCondiciones',
                 'co.condicion as condicion_matricula',
                 'l.apellido',
                 'l.nombre',

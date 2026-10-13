@@ -144,7 +144,7 @@ final class MateriasAdeudadasPorCurso
 
         $idsLegajos = $alumnos->pluck('idLegajos')->map(fn ($id) => (int) $id)->unique()->values()->all();
 
-        $adeudasPorLegajo = DB::table('calificaciones as c')
+        $adeudasQuery = DB::table('calificaciones as c')
             ->join('materias as m', function ($join) {
                 $join->on('m.id', '=', 'c.idMaterias')
                     ->on('m.idTerlec', '=', 'c.idTerlec');
@@ -153,7 +153,10 @@ final class MateriasAdeudadasPorCurso
             ->join('terlec as t', 't.id', '=', 'c.idTerlec')
             ->whereIn('c.idLegajos', $idsLegajos)
             ->where('c.apro', 1)
-            ->where('cu.idNivel', $idNivel)
+            ->where('cu.idNivel', $idNivel);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($adeudasQuery);
+
+        $adeudasPorLegajo = $adeudasQuery
             ->orderBy('c.idLegajos')
             ->orderByDesc('t.ano')
             ->orderBy('m.materia')

@@ -24,7 +24,7 @@ final class MateriasAdeudadasInscripcion
             return [];
         }
 
-        $raw = DB::table('calificaciones as c')
+        $query = DB::table('calificaciones as c')
             ->join('materias as m', function ($join) {
                 $join->on('m.id', '=', 'c.idMaterias')
                     ->on('m.idTerlec', '=', 'c.idTerlec');
@@ -35,7 +35,10 @@ final class MateriasAdeudadasInscripcion
             ->join('terlec as t', 't.id', '=', 'c.idTerlec')
             ->where('c.idLegajos', $idLegajos)
             ->where('cu.idNivel', $idNivel)
-            ->where('c.apro', 1)
+            ->where('c.apro', 1);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($query);
+
+        $raw = $query
             ->orderByDesc('t.ano')
             ->orderBy('m.materia')
             ->select([

@@ -474,6 +474,7 @@ final class ActaVolantePrevios
             ->where('c.inscri', 1)
             ->where('c.apro', 1)
             ->where('cu.idNivel', $idNivel);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($query);
 
         if ($conTurnoClase) {
             $query->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase');

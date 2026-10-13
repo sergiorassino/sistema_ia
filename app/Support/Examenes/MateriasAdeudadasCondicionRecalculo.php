@@ -53,10 +53,13 @@ final class MateriasAdeudadasCondicionRecalculo
         $actualizados = 0;
         $omitidos = 0;
 
-        DB::table('calificaciones as c')
+        $adeudadas = DB::table('calificaciones as c')
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->where('c.apro', 1)
-            ->where('cu.idNivel', $idNivel)
+            ->where('cu.idNivel', $idNivel);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($adeudadas);
+
+        $adeudadas
             ->select([
                 'c.id',
                 'c.idLegajos',

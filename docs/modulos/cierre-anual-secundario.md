@@ -7,7 +7,7 @@ Pasar al **libro matriz** las materias aprobadas del ciclo lectivo activo (dicie
 ## Modalidades / variantes
 
 - **Diciembre:** solo aprobadas (promedio anual ≥ 7 o coloquio dic ≥ 7) → `apro = 2` y datos de matriz (`calif`, `mes = 12`, `ano`, `cond`, `escuapro`).
-- **Febrero:** aprobadas (promedio, dic o feb ≥ 7) → matriz (`mes = 2`, limpia `condAdeuda` / `inscri`); el resto → previa (`apro = 1`, `condAdeuda = PR`, `inscri = 0`). Re-ejecutar no duplica previas ya marcadas; una previa que ahora aprueba pasa al matriz.
+- **Febrero:** aprobadas (promedio, dic o feb ≥ 7) → matriz (`mes = 2`, limpia `condAdeuda` / `inscri`); el resto → previa (`apro = 1`, `condAdeuda = PR`, `inscri = 0`) **solo si** la matrícula de esa calificación es regular (`idCondiciones = 1`). Otra condición en el curso de la materia no se marca como previa. Re-ejecutar no duplica previas ya marcadas; una previa que ahora aprueba pasa al matriz.
 
 ## Actores y permisos
 

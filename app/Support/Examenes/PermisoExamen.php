@@ -62,12 +62,15 @@ final class PermisoExamen
             return collect();
         }
 
-        return DB::table('calificaciones as c')
+        $query = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
             ->join('cursos as cu', 'cu.Id', '=', 'c.idCursos')
             ->where('c.apro', 1)
             ->where('c.inscri', 1)
-            ->where('cu.idNivel', $idNivel)
+            ->where('cu.idNivel', $idNivel);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($query);
+
+        return $query
             ->groupBy('l.id', 'l.apellido', 'l.nombre', 'l.dni')
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.apellido'))
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
@@ -151,7 +154,7 @@ final class PermisoExamen
             return [];
         }
 
-        $raw = DB::table('calificaciones as c')
+        $query = DB::table('calificaciones as c')
             ->join('materias as m', function ($join) {
                 $join->on('m.id', '=', 'c.idMaterias')
                     ->on('m.idTerlec', '=', 'c.idTerlec');
@@ -173,7 +176,10 @@ final class PermisoExamen
             ->where('c.idLegajos', $idLegajos)
             ->where('cu.idNivel', $idNivel)
             ->where('c.apro', 1)
-            ->where('c.inscri', 1)
+            ->where('c.inscri', 1);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($query);
+
+        $raw = $query
             ->orderByDesc('t.ano')
             ->orderBy('mp.ord')
             ->orderBy('m.ord')

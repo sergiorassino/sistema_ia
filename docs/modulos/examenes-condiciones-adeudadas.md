@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Al entrar a Exámenes (listado, gestión, actas volantes, permiso) y confirmar turno + año lectivo, recalcular `calificaciones.condAdeuda` (y a veces `inscri`) en materias adeudadas (`apro = 1`) del nivel activo.
+Al entrar a Exámenes (listado, gestión, actas volantes, permiso) y confirmar turno + año lectivo, recalcular `calificaciones.condAdeuda` (y a veces `inscri`) en materias adeudadas (`apro = 1`) del nivel activo cuya matrícula en el curso de esa materia es regular (`matricula.idCondiciones = 1`).
 
 ## Modalidades / variantes
 
@@ -48,7 +48,7 @@ return [
 ## Flujo principal
 
 1. Elegir turno de examen y año lectivo; confirmar.
-2. Recorrer `apro = 1` del nivel.
+2. Recorrer `apro = 1` del nivel solo si `calificaciones.idMatricula` apunta a una matrícula regular (`idCondiciones = 1`).
 3. EQ/TM: omitir. Regular: PR. Egresado + feb/abr/jul/sep del año siguiente: condición de ventana (`RE` default, `PR` si el tenant lo configura) en todas las deudas. Resto: PR.
 
 ## Fuente de verdad
@@ -68,6 +68,7 @@ return [
 ## Qué no hacer / reglas de negocio
 
 - No pisar EQ/TM.
+- No tratar como previa una calificación cuya matrícula en ese curso no es regular (`idCondiciones` distinto de 1).
 - No borrar `inscri` de no regulares (mesas cargadas a mano). En la ventana feb–sep sí se puede **poner** `inscri = 1` si `examTodosInscri = T` (no se pone 0).
 - Actas volantes: no exigir `calificaciones.idMatPlan`; resolver el plan como listado/permiso (`materias.idMatPlan` o, si falta, `calificaciones.idMatPlan`). Si no hay plan, agrupar por `idMaterias`. Detalle: [examenes-actas-volantes.md](examenes-actas-volantes.md).
 - No usar `idTerlec - 1` ni IDs fijos de turno.
@@ -76,6 +77,7 @@ return [
 ## Checklist al modificar
 
 - [ ] ¿EQ/TM siguen intactos?
+- [ ] ¿Una matrícula no regular en el curso de la materia queda fuera del recálculo?
 - [ ] ¿Regulares del ciclo actual siguen en PR?
 - [ ] ¿Egresados: ventana hasta septiembre del año siguiente (`RE` default / `PR` por tenant) y PR desde diciembre?
 - [ ] ¿El ciclo anterior se resuelve por `terlec.ano`?

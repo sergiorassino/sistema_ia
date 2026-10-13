@@ -23,6 +23,9 @@ final class MateriasAdeudadasFiltros
 
     public const INSCRI_NO = 'no';
 
+    /** `matricula.idCondiciones` de un alumno regular en el curso de la materia. */
+    public const ID_CONDICION_REGULAR = 1;
+
     public static function normalizeAgrupar(?string $value): string
     {
         return $value === self::AGRUPAR_MATERIA_CURSO
@@ -92,6 +95,30 @@ final class MateriasAdeudadasFiltros
             'TM' => 'Regular (Tercer Materia)',
             default => $cond !== '' ? $cond : 'Examen',
         };
+    }
+
+    /**
+     * La materia cuenta como previa solo si la matrícula de esa calificación
+     * (el curso de la materia) es regular.
+     */
+    public static function matriculaDelCursoCuentaComoPrevia(int $idCondiciones): bool
+    {
+        return $idCondiciones === self::ID_CONDICION_REGULAR;
+    }
+
+    /**
+     * Restringe calificaciones a las cuya matrícula (`idMatricula`) es regular.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     */
+    public static function aplicarMatriculaRegularDelCurso($query, string $aliasCalif = 'c'): void
+    {
+        $query->whereExists(function ($sub) use ($aliasCalif) {
+            $sub->selectRaw('1')
+                ->from('matricula as mat_reg')
+                ->whereColumn('mat_reg.id', $aliasCalif.'.idMatricula')
+                ->where('mat_reg.idCondiciones', self::ID_CONDICION_REGULAR);
+        });
     }
 
     /** Condición de examen (PR/RE/EQ/LI/TM) → valor persistido en `calificaciones.cond` al aprobar. */

@@ -64,8 +64,10 @@ final class MateriasAdeudadasExporter
             ->leftJoin('turnos_clase as tc', 'tc.id', '=', 'cu.idTurnoClase')
             ->join('terlec as t', 't.id', '=', 'c.idTerlec')
             ->where('c.apro', 1)
-            ->where('cu.idNivel', $idNivel)
-            ->select([
+            ->where('cu.idNivel', $idNivel);
+        MateriasAdeudadasFiltros::aplicarMatriculaRegularDelCurso($q);
+
+        $q->select([
                 'c.id',
                 'c.idLegajos',
                 'l.apellido',
