@@ -6,7 +6,9 @@ use App\Livewire\Cuotas\Concerns\ManejaDestinatarioFacturacionAfip;
 use App\Livewire\Cuotas\Concerns\ManejaResponsablesFacturacionImputacion;
 use App\Models\CuotaGenerada;
 use App\Models\CuotaPago;
+use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
+use App\Support\Cuotas\DeudaFamiliarVencida;
 use App\Support\Cuotas\CuotasFormato;
 use App\Support\Cuotas\FacturacionAfipImputacionPago;
 use App\Support\Cuotas\FacturacionCobroAfipService;
@@ -92,6 +94,18 @@ class ImputarPagoForm extends Component
         abort_if($registros->count() !== count($idsCuotas), 404);
 
         $this->idLegajo = $idLegajo;
+
+        $impedimento = $this->primerImpedimentoCupon($registros);
+        if ($impedimento !== null) {
+            session()->flash(
+                $impedimento['motivo'] === 'deuda' ? 'cuotas_cupon_deuda' : 'cuotas_cupon_bloqueado',
+                $impedimento['mensaje'],
+            );
+            $this->redirectRoute('cuotas.estudiante', navigate: true);
+
+            return;
+        }
+
         $this->idsCuotasGeneradas = $registros->pluck('id')->map(fn ($id) => (int) $id)->all();
         $this->idCuotaGenerada = (int) ($this->idsCuotasGeneradas[0] ?? 0);
 
@@ -389,6 +403,10 @@ class ImputarPagoForm extends Component
         $registro = $this->registro();
         abort_unless($registro !== null, 404);
 
+        if ($this->rechazarCuponImpedido($registro)) {
+            return;
+        }
+
         $validated = $this->validate([
             'idCuotastipopago' => ['required', 'integer', Rule::in(GestionAranceles::idsMediosPagoImputacion())],
             'saldoAPagar' => ['required', 'string'],
@@ -476,6 +494,10 @@ class ImputarPagoForm extends Component
         $items = [];
 
         foreach ($registros as $registro) {
+            if ($this->rechazarCuponImpedido($registro)) {
+                return;
+            }
+
             $id = (int) $registro->id;
             $faltapa = round((float) ($registro->faltapa ?? 0), 2);
             if ($faltapa <= 0) {
@@ -672,6 +694,60 @@ class ImputarPagoForm extends Component
         }
 
         return false;
+    }
+
+    /**
+     * @param  Collection<int, CuotaGenerada>  $registros
+     * @return array{titulo: string, mensaje: string, motivo: string}|null
+     */
+    private function primerImpedimentoCupon(Collection $registros): ?array
+    {
+        $contexto = $this->contextoImpedimentoCupon();
+        foreach ($registros as $registro) {
+            $impedimento = ArancelesEscolares::impedimentoCuponGestion(
+                $registro,
+                $contexto['cicloBloqueado'],
+                $contexto['tieneDeudaFamiliar'],
+                $contexto['mensajeBloqueo'],
+            );
+            if ($impedimento !== null) {
+                return $impedimento;
+            }
+        }
+
+        return null;
+    }
+
+    private function rechazarCuponImpedido(CuotaGenerada $registro): bool
+    {
+        $contexto = $this->contextoImpedimentoCupon();
+        $impedimento = ArancelesEscolares::impedimentoCuponGestion(
+            $registro,
+            $contexto['cicloBloqueado'],
+            $contexto['tieneDeudaFamiliar'],
+            $contexto['mensajeBloqueo'],
+        );
+        if ($impedimento === null) {
+            return false;
+        }
+
+        $this->dispatch('se-swal-error', mensaje: $impedimento['mensaje'], titulo: $impedimento['titulo']);
+
+        return true;
+    }
+
+    /**
+     * @return array{cicloBloqueado: bool, tieneDeudaFamiliar: bool, mensajeBloqueo: string}
+     */
+    private function contextoImpedimentoCupon(): array
+    {
+        $matriculaBloqueada = ArancelesEscolares::matriculaBloqueadaCicloActivo($this->idLegajo);
+
+        return [
+            'cicloBloqueado' => $matriculaBloqueada !== null,
+            'tieneDeudaFamiliar' => DeudaFamiliarVencida::tiene($this->idLegajo),
+            'mensajeBloqueo' => ArancelesEscolares::mensajeBloqueoMatriculaGestion($matriculaBloqueada),
+        ];
     }
 
     /**

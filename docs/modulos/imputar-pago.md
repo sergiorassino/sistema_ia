@@ -61,6 +61,7 @@ Menú de Secretaría / Administración → Gestión de aranceles por estudiante.
 - Si en `cuotasgeneradas` el campo `venc1` quedó copiado igual a `nueVenc` y es posterior a venc2/venc3, el cálculo debe tomar el 1.er vencimiento de la **plantilla** (`cuotas.venc1`), no el actualizado.
 - No tratar el número del campo **% INTERÉS** como pesos cuando el tramo actual es `$ 0` (al día) y el usuario trae un % de mora (p. ej. 10 → debe ser 10 % del saldo, no $ 10).
 - No calcular el % de `p`/`m` sin los meses desde el **1.er vencimiento real** (`mesesMoraAcumuladaDesdeVenc1`).
+- Reserva (`idCuotastipo` 2) y matrícula (3) no se imputan si el estudiante tiene bloqueo de matrícula en el ciclo activo (o en la matrícula de esa cuota) o deuda familiar vencida. El listado no ofrece el botón y el guardado lo rechaza.
 - No facturar AFIP en modo `pago` sin una persona seleccionada con nombre y DNI válidos; no registrar el pago primero y fallar después.
 - No usar el estudiante como destino de persistencia: su nombre/DNI en el cobro son de lectura.
 - URLs de comprobante con `{ref}` opaco.

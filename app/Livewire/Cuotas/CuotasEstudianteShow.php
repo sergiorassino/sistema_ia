@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Cuotas;
 
+use App\Models\CuotaGenerada;
+use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
+use App\Support\Cuotas\DeudaFamiliarVencida;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\PermisosCuotas;
@@ -45,8 +48,11 @@ class CuotasEstudianteShow extends Component
 
     public function seleccionarTodasAdeudadas(): void
     {
+        $contexto = $this->contextoImpedimentoCupon();
+
         $this->cuotasSeleccionadas = $this->cuotasListado()
-            ->filter(fn ($c) => (float) ($c->faltapa ?? 0) > 0)
+            ->filter(fn ($c) => (float) ($c->faltapa ?? 0) > 0
+                && $this->impedimentoCupon($c, $contexto) === null)
             ->map(fn ($c) => (string) (int) $c->id)
             ->values()
             ->all();
@@ -72,12 +78,23 @@ class CuotasEstudianteShow extends Component
             return;
         }
 
-        $validas = GestionAranceles::cuotasParaImputacion($ids, $this->idLegajo)->pluck('id')->all();
+        $registros = GestionAranceles::cuotasParaImputacion($ids, $this->idLegajo);
+        $validas = $registros->pluck('id')->all();
         if (count($validas) !== count($ids)) {
             $this->dispatch('se-swal-error', mensaje: 'Alguna cuota seleccionada ya no está disponible para cobro.', titulo: 'Cobro de cuotas');
             $this->cuotasSeleccionadas = $validas;
 
             return;
+        }
+
+        $contexto = $this->contextoImpedimentoCupon();
+        foreach ($registros as $registro) {
+            $impedimento = $this->impedimentoCupon($registro, $contexto);
+            if ($impedimento !== null) {
+                $this->dispatch('se-swal-aviso', mensaje: $impedimento['mensaje'], titulo: $impedimento['titulo']);
+
+                return;
+            }
         }
 
         ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
@@ -100,9 +117,14 @@ class CuotasEstudianteShow extends Component
         $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible()
             && ($afipEnDevengamiento || $afipEnCobro);
 
+        $contextoCupon = $this->contextoImpedimentoCupon();
+
         return view('livewire.cuotas.estudiante-show', [
             'encabezado' => GestionAranceles::encabezadoEstudiante($this->idLegajo),
             'cuotas' => $cuotas,
+            'cicloBloqueado' => $contextoCupon['cicloBloqueado'],
+            'tieneDeudaFamiliar' => $contextoCupon['tieneDeudaFamiliar'],
+            'mensajeBloqueoMatricula' => $contextoCupon['mensajeBloqueo'],
             'totalesAdeudados' => GestionAranceles::totalizarSaldosAdeudados($cuotas),
             'cantidadSeleccionadas' => count($this->cuotasSeleccionadas),
             'muestraComprobanteAfip' => $muestraComprobanteAfip,
@@ -114,6 +136,34 @@ class CuotasEstudianteShow extends Component
                 : [],
             'afipEnDevengamiento' => $afipEnDevengamiento,
         ])->layout(layoutMenuStaff(), ['pageTitle' => 'Gestión de aranceles']);
+    }
+
+    /**
+     * @return array{cicloBloqueado: bool, tieneDeudaFamiliar: bool, mensajeBloqueo: string}
+     */
+    private function contextoImpedimentoCupon(): array
+    {
+        $matriculaBloqueada = ArancelesEscolares::matriculaBloqueadaCicloActivo($this->idLegajo);
+
+        return [
+            'cicloBloqueado' => $matriculaBloqueada !== null,
+            'tieneDeudaFamiliar' => DeudaFamiliarVencida::tiene($this->idLegajo),
+            'mensajeBloqueo' => ArancelesEscolares::mensajeBloqueoMatriculaGestion($matriculaBloqueada),
+        ];
+    }
+
+    /**
+     * @param  array{cicloBloqueado: bool, tieneDeudaFamiliar: bool, mensajeBloqueo: string}  $contexto
+     * @return array{titulo: string, mensaje: string, motivo: string}|null
+     */
+    private function impedimentoCupon(CuotaGenerada $registro, array $contexto): ?array
+    {
+        return ArancelesEscolares::impedimentoCuponGestion(
+            $registro,
+            $contexto['cicloBloqueado'],
+            $contexto['tieneDeudaFamiliar'],
+            $contexto['mensajeBloqueo'],
+        );
     }
 
     private function cuotasListado()

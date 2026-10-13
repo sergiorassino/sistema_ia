@@ -162,12 +162,18 @@
                                 $saldoCelda = $ajusteHoy !== null
                                     ? round((float) ($c->faltapa ?? 0) + $interesCelda, 2)
                                     : (float) ($c->faltapa ?? 0);
+                                $impedimentoCupon = ArancelesEscolares::impedimentoCuponGestion(
+                                    $c,
+                                    $cicloBloqueado,
+                                    $tieneDeudaFamiliar,
+                                    $mensajeBloqueoMatricula,
+                                );
                             @endphp
                             <div class="gf-row gf-row-hover {{ $rowEstadoClass }}"
                                  wire:key="cg-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'anio' }}"
                                  @if ($avisoPago) title="Aviso de pago" @endif>
                                 <div class="gf-td gf-td-accion w-8 !py-1">
-                                    @if ((float) $c->faltapa > 0)
+                                    @if ((float) $c->faltapa > 0 && $impedimentoCupon === null)
                                         <label class="inline-flex h-6 w-6 cursor-pointer items-center justify-center">
                                             <input type="checkbox"
                                                    wire:model.live="cuotasSeleccionadas"
@@ -232,23 +238,39 @@
                                      @if ($ajusteHoy !== null) title="Saldo neto más interés al día de hoy" @endif>{{ CuotasFormato::formatearImporte($saldoCelda) }}</div>
                                 <div class="gf-td gf-td-accion !py-1">
                                     @if ((float) $c->faltapa > 0)
-                                        <x-nav-contexto-estudiante
-                                            destino="cuotas.cuota.imputar"
-                                            :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
-                                            :id-legajos="$idLegajo"
-                                            :id-cuota-generada="$c->id"
-                                            :vista-cuotas="$vistaCuotasNav"
-                                            class="inline">
-                                            <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
-                                                  title="Imputar pago">
+                                        @if ($impedimentoCupon)
+                                            <button type="button"
+                                                    x-on:click="window.seSwalAviso(@js($impedimentoCupon['mensaje']), @js($impedimentoCupon['titulo']))"
+                                                    class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                    title="Pago no disponible">
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                            </span>
-                                        </x-nav-contexto-estudiante>
+                                            </button>
+                                        @else
+                                            <x-nav-contexto-estudiante
+                                                destino="cuotas.cuota.imputar"
+                                                :alcance="ContextoEstudianteSesion::CUOTAS_GESTION"
+                                                :id-legajos="$idLegajo"
+                                                :id-cuota-generada="$c->id"
+                                                :vista-cuotas="$vistaCuotasNav"
+                                                class="inline">
+                                                <span class="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-gray-400 bg-white text-primary-700 hover:bg-primary-50"
+                                                      title="Imputar pago">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                </span>
+                                            </x-nav-contexto-estudiante>
+                                        @endif
                                     @endif
                                 </div>
                                 <div class="gf-td gf-td-accion !py-1">
                                     @if ((float) $c->faltapa > 0)
-                                        @if (ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                        @if ($impedimentoCupon)
+                                            <button type="button"
+                                                    x-on:click="window.seSwalAviso(@js($impedimentoCupon['mensaje']), @js($impedimentoCupon['titulo']))"
+                                                    class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                    title="Cupón no disponible">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            </button>
+                                        @elseif (ArancelesEscolares::cuotaVencidaParaReimpresion($c))
                                             <button type="button"
                                                     x-on:click="window.seSwalAviso(@js(ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
                                                     class="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
@@ -358,6 +380,18 @@
 @script
 <script>
     (function () {
+        @if (session('cuotas_cupon_bloqueado'))
+            if (typeof window.seSwalAviso === 'function') {
+                window.seSwalAviso(@js(session('cuotas_cupon_bloqueado')), 'Matrícula bloqueada');
+            }
+        @endif
+
+        @if (session('cuotas_cupon_deuda'))
+            if (typeof window.seSwalAviso === 'function') {
+                window.seSwalAviso(@js(session('cuotas_cupon_deuda')), 'Deuda familiar');
+            }
+        @endif
+
         @if (session('cuotas_cuota_vencida'))
             if (typeof window.seSwalAviso === 'function') {
                 window.seSwalAviso(@js(session('cuotas_cuota_vencida')), 'Cuota vencida');

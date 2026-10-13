@@ -75,6 +75,37 @@ class ArancelesEscolaresCuponBloqueoMatriculaTest extends TestCase
         $this->assertFalse(ArancelesEscolares::cuponBloqueadoPorDeudaFamiliar($reserva, false));
     }
 
+    public function test_gestion_no_impide_una_cuota_mensual(): void
+    {
+        $cuota = new CuotaGenerada(['idCuotastipo' => 1]);
+
+        $this->assertNull(ArancelesEscolares::impedimentoCuponGestion($cuota, true, true, 'Bloqueo'));
+    }
+
+    public function test_gestion_impide_reserva_por_bloqueo_antes_que_por_deuda(): void
+    {
+        $cuota = new CuotaGenerada(['idCuotastipo' => 2]);
+
+        $impedimento = ArancelesEscolares::impedimentoCuponGestion($cuota, true, true, 'Cartel del nivel.');
+
+        $this->assertSame('bloqueo', $impedimento['motivo'] ?? null);
+        $this->assertSame('Cartel del nivel.', $impedimento['mensaje'] ?? null);
+    }
+
+    public function test_gestion_impide_matricula_por_deuda_familiar(): void
+    {
+        $cuota = new CuotaGenerada(['idCuotastipo' => 3]);
+        $cuota->setRelation('matricula', new Matricula([
+            'bloqmatr' => false,
+            'bloqadmi' => false,
+        ]));
+
+        $impedimento = ArancelesEscolares::impedimentoCuponGestion($cuota, false, true);
+
+        $this->assertSame('deuda', $impedimento['motivo'] ?? null);
+        $this->assertSame(ArancelesEscolares::MENSAJE_CUPON_DEUDA_FAMILIAR_GESTION, $impedimento['mensaje'] ?? null);
+    }
+
     public function test_mensaje_de_sesion_bloqueada_es_el_cartel_configurado(): void
     {
         $cuota = new CuotaGenerada(['idCuotastipo' => 2]);

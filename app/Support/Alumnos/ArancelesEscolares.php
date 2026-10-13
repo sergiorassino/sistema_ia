@@ -4,14 +4,17 @@ namespace App\Support\Alumnos;
 
 use App\Models\ComprobanteAfip;
 use App\Models\CuotaGenerada;
+use App\Models\Matricula;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
 use App\Support\Cuotas\DeudaFamiliarVencida;
 use App\Support\Cuotas\GeneracionCuotaEstudianteService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\InformeInasistencias;
 use App\Support\MatriculaBloqueos;
+use App\Support\SchoolAlcancePedagogico;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -22,6 +25,10 @@ final class ArancelesEscolares
     public const MENSAJE_CUPON_BLOQUEO_MATRICULA = 'Esta cuota no se puede descargar ni pagar desde autogestión mientras la matrícula tenga un bloqueo. Comuníquese con secretaría.';
 
     public const MENSAJE_CUPON_DEUDA_FAMILIAR = 'Esta cuota no se puede descargar ni pagar desde autogestión mientras haya deuda familiar vencida. Comuníquese con administración.';
+
+    public const MENSAJE_CUPON_BLOQUEO_MATRICULA_GESTION = 'Esta cuota no se puede descargar ni pagar mientras la matrícula tenga un bloqueo.';
+
+    public const MENSAJE_CUPON_DEUDA_FAMILIAR_GESTION = 'Esta cuota no se puede descargar ni pagar mientras haya deuda familiar vencida.';
 
     /**
      * @return Collection<int, CuotaGenerada>
@@ -322,6 +329,85 @@ final class ArancelesEscolares
         }
 
         return $tieneDeudaFamiliar ?? DeudaFamiliarVencida::tiene((int) studentCtx()->idLegajo);
+    }
+
+    /**
+     * Matrícula del ciclo activo con bloqueo pedagógico y/o administrativo.
+     * En Administración abarca todos los niveles pedagógicos.
+     */
+    public static function matriculaBloqueadaCicloActivo(int $idLegajo): ?Matricula
+    {
+        $idTerlec = (int) schoolCtx()->idTerlec;
+        if ($idLegajo < 1 || $idTerlec < 1) {
+            return null;
+        }
+
+        $query = Matricula::query()
+            ->where('idLegajos', $idLegajo)
+            ->where('idTerlec', $idTerlec)
+            ->where(function (Builder $q): void {
+                $q->where('bloqmatr', 1)
+                    ->orWhere('bloqadmi', 1);
+            });
+
+        SchoolAlcancePedagogico::aplicarFiltroColumnaNivel($query, 'idNivel');
+
+        return $query->orderByDesc('id')->first();
+    }
+
+    public static function mensajeBloqueoMatriculaGestion(?Matricula $matricula): string
+    {
+        if ($matricula !== null) {
+            $restriccion = MatriculaBloqueos::impideFichaYDatosAutogestion($matricula);
+            if ($restriccion['mensaje'] !== '') {
+                return $restriccion['mensaje'];
+            }
+        }
+
+        return self::MENSAJE_CUPON_BLOQUEO_MATRICULA_GESTION;
+    }
+
+    /**
+     * Reserva o matrícula que Gestión de aranceles no puede cobrar ni cuponear.
+     *
+     * @return array{titulo: string, mensaje: string, motivo: string}|null
+     */
+    public static function impedimentoCuponGestion(
+        CuotaGenerada $registro,
+        bool $cicloBloqueado,
+        bool $tieneDeudaFamiliar,
+        string $mensajeBloqueo = '',
+    ): ?array {
+        if (self::cuponBloqueadoPorMatricula($registro, $cicloBloqueado)) {
+            if ($cicloBloqueado) {
+                $mensaje = trim($mensajeBloqueo) !== ''
+                    ? trim($mensajeBloqueo)
+                    : self::MENSAJE_CUPON_BLOQUEO_MATRICULA_GESTION;
+            } else {
+                $restriccion = MatriculaBloqueos::impideFichaYDatosAutogestion(
+                    MatriculaBloqueos::paraCuotaGenerada($registro),
+                );
+                $mensaje = $restriccion['mensaje'] !== ''
+                    ? $restriccion['mensaje']
+                    : self::MENSAJE_CUPON_BLOQUEO_MATRICULA_GESTION;
+            }
+
+            return [
+                'titulo' => 'Matrícula bloqueada',
+                'mensaje' => $mensaje,
+                'motivo' => 'bloqueo',
+            ];
+        }
+
+        if (self::cuponBloqueadoPorDeudaFamiliar($registro, $tieneDeudaFamiliar)) {
+            return [
+                'titulo' => 'Deuda familiar',
+                'mensaje' => self::MENSAJE_CUPON_DEUDA_FAMILIAR_GESTION,
+                'motivo' => 'deuda',
+            ];
+        }
+
+        return null;
     }
 
     /**

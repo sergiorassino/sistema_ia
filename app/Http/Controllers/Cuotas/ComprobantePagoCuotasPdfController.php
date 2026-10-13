@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Alumnos\ComprobantePagoDatos;
 use App\Support\Alumnos\ComprobantePagoPdf;
+use App\Support\Cuotas\DeudaFamiliarVencida;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\Cuotas\Siro\SiroConfiguracionIncompletaException;
 use App\Support\Navegacion\ContextoEstudianteSesion;
@@ -44,6 +45,26 @@ class ComprobantePagoCuotasPdfController extends Controller
         $registro = ArancelesEscolares::cuotaPendienteParaAdministracion($id, $idLegajo);
         if ($registro === null) {
             abort(404, 'No se encontró la cuota pendiente solicitada.');
+        }
+
+        $matriculaBloqueada = ArancelesEscolares::matriculaBloqueadaCicloActivo($idLegajo);
+        $impedimento = ArancelesEscolares::impedimentoCuponGestion(
+            $registro,
+            $matriculaBloqueada !== null,
+            DeudaFamiliarVencida::tiene($idLegajo),
+            ArancelesEscolares::mensajeBloqueoMatriculaGestion($matriculaBloqueada),
+        );
+        if ($impedimento !== null) {
+            ContextoEstudianteSesion::fijar(ContextoEstudianteSesion::CUOTAS_GESTION, [
+                'idLegajos' => $idLegajo,
+                'idCuotaGenerada' => 0,
+            ]);
+
+            $flash = $impedimento['motivo'] === 'deuda' ? 'cuotas_cupon_deuda' : 'cuotas_cupon_bloqueado';
+
+            return redirect()
+                ->route('cuotas.estudiante')
+                ->with($flash, $impedimento['mensaje']);
         }
 
         if (ArancelesEscolares::cuotaVencidaParaReimpresion($registro)) {

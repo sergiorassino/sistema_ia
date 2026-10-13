@@ -39,7 +39,7 @@ Columnas `matricula.bloqmatr` y `matricula.bloqadmi` del ciclo activo. Lectura e
 
 En autogestión familia, esos flags impiden entrar a **Actualización de Datos Personales** e **Imprimir Ficha de Matrícula**. El cartel visible es `ento.mensajeBloqPeda` / `ento.mensajeBloqAdmi` del nivel del alumno (Parametrización → Parámetros). Ese cartel **no** es el texto de Notif. Bloqueo / Desbloqueo.
 
-En **Aranceles** de autogestión, no se emite el cupón de las cuotas **reserva** (`cuotasgeneradas.idCuotastipo = 2`) ni **matrícula** (`idCuotastipo = 3`) cuando hay bloqueo pedagógico, administrativo o ambos, o cuando hay **deuda familiar vencida**. El botón queda en «Cupón no disponible» y el PDF rechaza el enlace directo. El cartel del bloqueo es el de `ento`; el de la deuda avisa que hay saldo con 2.º vencimiento ya cumplido y sin aviso de pago (misma base que la subida a SIRO). Si el alumno no tiene familia asignada (`idFamilias` 0 o 1), esa deuda es solo la suya. Las demás cuotas (marzo, abril, etc.) se descargan igual. Secretaría sigue pudiendo emitir ese cupón desde Gestión de aranceles. El bloqueo se toma de la matrícula de la sesión y, si esa no está bloqueada, de la matrícula del ciclo de la cuota.
+En **Aranceles** de autogestión y en **Gestión de aranceles** (nivel Administración), no se emite el cupón ni se imputa el pago de las cuotas **reserva** (`cuotasgeneradas.idCuotastipo = 2`) ni **matrícula** (`idCuotastipo = 3`) cuando hay bloqueo pedagógico, administrativo o ambos, o cuando hay **deuda familiar vencida**. El botón queda deshabilitado y el PDF rechaza el enlace directo. En Administración, el cobro múltiple tampoco incluye esas cuotas. El cartel del bloqueo es el de `ento`; el de la deuda avisa que hay saldo con 2.º vencimiento ya cumplido y sin aviso de pago (misma base que la subida a SIRO). Si el alumno no tiene familia asignada (`idFamilias` 0 o 1), esa deuda es solo la suya. Las demás cuotas (marzo, abril, etc.) se descargan y se cobran igual. En autogestión el bloqueo se toma de la matrícula de la sesión; en Administración, de la matrícula del estudiante en el ciclo activo. Si esa no está bloqueada, se mira la matrícula del ciclo de la cuota.
 
 ## Archivos clave
 
@@ -49,12 +49,13 @@ En **Aranceles** de autogestión, no se emite el cupón de las cuotas **reserva*
 - `app/Support/MatriculaWeb/NotificarFamiliaBloqueoMatricula.php`
 - `resources/views/livewire/matricula-web/bloqueos-matricula-index.blade.php`
 - Cupón autogestión: `app/Support/Alumnos/ArancelesEscolares.php`, `app/Support/Cuotas/DeudaFamiliarVencida.php`, `app/Http/Controllers/Alumnos/ComprobantePagoPdfController.php`
+- Cupón y cobro en Gestión de aranceles: `app/Livewire/Cuotas/CuotasEstudianteShow.php`, `app/Livewire/Cuotas/ImputarPagoForm.php`, `app/Http/Controllers/Cuotas/ComprobantePagoCuotasPdfController.php`
 - Mensajes por nivel: `app/Livewire/Parametrizacion/ParametrosSistemaForm.php` (solapa PARÁMETROS)
 
 ## Qué no hacer / reglas de negocio
 
 - No actualizar `legajos.bloqmatr` / `bloqadmi`.
-- No bloquear en autogestión el cupón de cuotas que no sean reserva (2) o matrícula (3). No aplicar este corte al cupón de Secretaría.
+- No bloquear el cupón ni el cobro de cuotas que no sean reserva (2) o matrícula (3).
 - No aplicar el masivo fuera del filtro de curso / búsqueda / estado (Todos, Bloqueo pedagógico, Bloqueo administrativo, Bloqueo administrativo y pedagógico, No bloqueados) / `queryBase` (revalidar IDs con `idTerlec` y alcance de nivel).
 - Guardado masivo con `PersistenciaColumnas` (sin falso éxito si falta la columna).
 - Confirmación con `seSwalConfirmar`; no `wire:confirm` ni `window.confirm`.
