@@ -41,19 +41,24 @@ final class FichaMatriculaMontecristoDatos
     /**
      * @return array<string, mixed>|null
      */
-    public static function paraMatricula(int $idMatricula): ?array
+    public static function paraMatricula(int $idMatricula, ?int $idTerlec = null): ?array
     {
         $ctx = schoolCtx();
         if (! $ctx->isValid()) {
             return null;
         }
 
+        $idTerlec = $idTerlec ?? (int) $ctx->idTerlec;
+        $ano = $idTerlec === (int) $ctx->idTerlec
+            ? (int) ($ctx->terlecAno() ?? 0)
+            : (int) (Terlec::query()->whereKey($idTerlec)->value('ano') ?? 0);
+
         return self::desdeMatriculaEnContexto(
             $idMatricula,
             (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
+            $idTerlec,
             schoolPdfHeaderData(),
-            (int) ($ctx->terlecAno() ?? 0),
+            $ano,
         );
     }
 

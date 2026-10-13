@@ -1,4 +1,4 @@
-{{-- Coloquios Dic/Feb: solo alumnos regulares con módulos desaprobados o TEA. Guardado vía `saveCell` + delegación focusout en tbody (app.js). --}}
+{{-- Coloquios Dic/Feb: solo alumnos regulares con módulos desaprobados o TEA de esa materia. Guardado vía `saveCell` + delegación focusout en tbody (app.js). --}}
 <div class="mx-auto w-full max-w-5xl space-y-6">
     <section class="se-hero">
         <div class="se-hero-inner">
@@ -71,7 +71,7 @@
                 <span class="font-semibold text-primary-700">{{ $etiquetaPeriodo }}</span>
             </p>
             <p class="mt-2 text-xs text-neutral-500">
-                Solo alumnos <strong>regulares</strong> con algún módulo desaprobado o con <strong>TEA</strong> (inasistencias — recuperan todas las materias).
+                Solo alumnos <strong>regulares</strong> con algún módulo desaprobado o con <strong>TEA</strong> en esta materia.
                 Se edita la columna <strong>{{ strtoupper($campoActivo) }}</strong>. Los datos se guardan al salir de cada celda.
                 Si la nota de coloquio es <strong>≥ 7</strong>, se traslada al <strong>promedio anual</strong>.
                 Quien aprueba en <strong>diciembre</strong> no puede cargar febrero.

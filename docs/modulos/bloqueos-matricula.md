@@ -39,6 +39,8 @@ Columnas `matricula.bloqmatr` y `matricula.bloqadmi` del ciclo activo. Lectura e
 
 En autogestión familia, esos flags impiden entrar a **Actualización de Datos Personales** e **Imprimir Ficha de Matrícula**. El cartel visible es `ento.mensajeBloqPeda` / `ento.mensajeBloqAdmi` del nivel del alumno (Parametrización → Parámetros). Ese cartel **no** es el texto de Notif. Bloqueo / Desbloqueo.
 
+En **Aranceles** de autogestión, no se emite el cupón de las cuotas **reserva** (`cuotasgeneradas.idCuotastipo = 2`) ni **matrícula** (`idCuotastipo = 3`) cuando hay bloqueo pedagógico, administrativo o ambos, o cuando hay **deuda familiar vencida**. El botón queda en «Cupón no disponible» y el PDF rechaza el enlace directo. El cartel del bloqueo es el de `ento`; el de la deuda avisa que hay saldo con 2.º vencimiento ya cumplido y sin aviso de pago (misma base que la subida a SIRO). Si el alumno no tiene familia asignada (`idFamilias` 0 o 1), esa deuda es solo la suya. Las demás cuotas (marzo, abril, etc.) se descargan igual. Secretaría sigue pudiendo emitir ese cupón desde Gestión de aranceles. El bloqueo se toma de la matrícula de la sesión y, si esa no está bloqueada, de la matrícula del ciclo de la cuota.
+
 ## Archivos clave
 
 - `app/Livewire/MatriculaWeb/BloqueosMatriculaIndex.php`
@@ -46,11 +48,13 @@ En autogestión familia, esos flags impiden entrar a **Actualización de Datos P
 - `app/Support/MatriculaWeb/BloqueosMatriculaService.php`
 - `app/Support/MatriculaWeb/NotificarFamiliaBloqueoMatricula.php`
 - `resources/views/livewire/matricula-web/bloqueos-matricula-index.blade.php`
+- Cupón autogestión: `app/Support/Alumnos/ArancelesEscolares.php`, `app/Support/Cuotas/DeudaFamiliarVencida.php`, `app/Http/Controllers/Alumnos/ComprobantePagoPdfController.php`
 - Mensajes por nivel: `app/Livewire/Parametrizacion/ParametrosSistemaForm.php` (solapa PARÁMETROS)
 
 ## Qué no hacer / reglas de negocio
 
 - No actualizar `legajos.bloqmatr` / `bloqadmi`.
+- No bloquear en autogestión el cupón de cuotas que no sean reserva (2) o matrícula (3). No aplicar este corte al cupón de Secretaría.
 - No aplicar el masivo fuera del filtro de curso / búsqueda / estado (Todos, Bloqueo pedagógico, Bloqueo administrativo, Bloqueo administrativo y pedagógico, No bloqueados) / `queryBase` (revalidar IDs con `idTerlec` y alcance de nivel).
 - Guardado masivo con `PersistenciaColumnas` (sin falso éxito si falta la columna).
 - Confirmación con `seSwalConfirmar`; no `wire:confirm` ni `window.confirm`.
@@ -64,5 +68,6 @@ En autogestión familia, esos flags impiden entrar a **Actualización de Datos P
 - [ ] ¿Curso inválido no cae a «todos» en el masivo sin `validarIdCurso`?
 - [ ] ¿Rate-limit en toggle individual, masivo y notificación?
 - [ ] ¿Autogestión (ficha + datos personales) usa `MatriculaBloqueos::impideFichaYDatosAutogestion()` y el mensaje de `ento` del nivel?
+- [ ] ¿El cupón de reserva/matrícula en autogestión usa `cuponBloqueadoPorMatricula()` y `cuponBloqueadoPorDeudaFamiliar()` (listado y PDF)?
 - [ ] ¿Notif. Bloqueo / Desbloqueo exige canal remitente→familia y reporta estado del correo de refuerzo?
 - [ ] ¿El cuerpo del aviso usa `mensajeComBloqMatricula` / `mensajeComDesbloqMatricula` y no los carteles de autogestión?

@@ -23,10 +23,20 @@ final class EstudiantesDatosConsulta
     {
         $ctx = schoolCtx();
 
+        return self::cursosPorNivelYTerlec((int) $ctx->idNivel, (int) $ctx->idTerlec);
+    }
+
+    /** @return Collection<int, Curso> */
+    public static function cursosPorNivelYTerlec(int $idNivel, int $idTerlec): Collection
+    {
+        if ($idNivel <= 0 || $idTerlec <= 0) {
+            return collect();
+        }
+
         return Curso::query()
             ->with('turnoClase')
-            ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
             ->orderBy('orden')
             ->orderBy('cursec')
             ->orderBy('Id')
@@ -50,7 +60,7 @@ final class EstudiantesDatosConsulta
      *   telemad: string
      * }>
      */
-    public static function alumnosRegularesPorCursos(array $cursoIds): Collection
+    public static function alumnosRegularesPorCursos(array $cursoIds, ?int $idNivel = null, ?int $idTerlec = null): Collection
     {
         $cursoIds = collect($cursoIds)
             ->map(fn ($id) => (int) $id)
@@ -64,10 +74,11 @@ final class EstudiantesDatosConsulta
         }
 
         $ctx = schoolCtx();
-        $idNivel = (int) $ctx->idNivel;
-        $idTerlec = (int) $ctx->idTerlec;
+        $idNivel ??= (int) $ctx->idNivel;
+        $idTerlec ??= (int) $ctx->idTerlec;
 
-        $permitidos = self::cursosEnContexto()
+        $cursos = self::cursosPorNivelYTerlec($idNivel, $idTerlec);
+        $permitidos = $cursos
             ->pluck('Id')
             ->map(fn ($id) => (int) $id)
             ->flip();
@@ -77,7 +88,7 @@ final class EstudiantesDatosConsulta
             return collect();
         }
 
-        $cursosPorId = self::cursosEnContexto()->keyBy(fn (Curso $c) => (int) $c->Id);
+        $cursosPorId = $cursos->keyBy(fn (Curso $c) => (int) $c->Id);
 
         $select = [
             'matricula.id as matricula_id',

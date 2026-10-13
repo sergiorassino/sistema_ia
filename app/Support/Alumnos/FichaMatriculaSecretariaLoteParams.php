@@ -2,6 +2,7 @@
 
 namespace App\Support\Alumnos;
 
+use App\Models\Terlec;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,7 +16,7 @@ final class FichaMatriculaSecretariaLoteParams
      * @param  list<int>  $idsSolicitados
      * @return list<int>
      */
-    public static function resolverIdsMatriculas(array $idsSolicitados): array
+    public static function resolverIdsMatriculas(array $idsSolicitados, ?int $idTerlec = null): array
     {
         $parsed = collect($idsSolicitados)
             ->map(fn ($v) => (int) $v)
@@ -29,13 +30,19 @@ final class FichaMatriculaSecretariaLoteParams
         }
 
         $ctx = schoolCtx();
+        $idTerlec ??= (int) $ctx->idTerlec;
+        if (! self::terlecExiste($idTerlec)) {
+            return [];
+        }
 
         return DB::table('matricula')
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->join('cursos', 'cursos.Id', '=', 'matricula.idCursos')
             ->whereIn('matricula.id', $parsed)
-            ->where('matricula.idTerlec', (int) $ctx->idTerlec)
+            ->where('matricula.idTerlec', $idTerlec)
+            ->where('cursos.idTerlec', $idTerlec)
             ->where('matricula.idNivel', (int) $ctx->idNivel)
+            ->where('cursos.idNivel', (int) $ctx->idNivel)
             ->where('matricula.idCondiciones', 1)
             ->whereNull('matricula.fechaBaja')
             ->orderBy('cursos.orden')
@@ -53,7 +60,7 @@ final class FichaMatriculaSecretariaLoteParams
     /**
      * @return list<int>
      */
-    public static function resolverIdsMatriculasDesdeQuery(string $matriculasParam): array
+    public static function resolverIdsMatriculasDesdeQuery(string $matriculasParam, ?int $idTerlec = null): array
     {
         if (trim($matriculasParam) === '') {
             return [];
@@ -66,6 +73,11 @@ final class FichaMatriculaSecretariaLoteParams
             ->values()
             ->all();
 
-        return self::resolverIdsMatriculas($parsed);
+        return self::resolverIdsMatriculas($parsed, $idTerlec);
+    }
+
+    private static function terlecExiste(int $idTerlec): bool
+    {
+        return $idTerlec > 0 && Terlec::query()->whereKey($idTerlec)->exists();
     }
 }

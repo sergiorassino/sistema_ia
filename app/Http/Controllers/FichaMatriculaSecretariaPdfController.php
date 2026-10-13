@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Terlec;
 use App\Support\Alumnos\FichaMatriculaSecretariaLoteParams;
 use App\Support\Alumnos\FichaMatriculaSecretariaPdf;
 use Illuminate\Http\Request;
@@ -29,14 +30,20 @@ class FichaMatriculaSecretariaPdfController extends Controller
             'matriculas' => ['required', 'string', 'max:12000'],
         ]);
 
+        $idTerlec = (int) $request->query('terlec', 0);
+        if (! Terlec::query()->whereKey($idTerlec)->exists()) {
+            abort(404);
+        }
+
         $ids = FichaMatriculaSecretariaLoteParams::resolverIdsMatriculasDesdeQuery(
             (string) $validated['matriculas'],
+            $idTerlec,
         );
 
         if ($ids === []) {
             abort(404);
         }
 
-        return FichaMatriculaSecretariaPdf::respuestaHttp($ids);
+        return FichaMatriculaSecretariaPdf::respuestaHttp($ids, $idTerlec);
     }
 }

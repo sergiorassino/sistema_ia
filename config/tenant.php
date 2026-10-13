@@ -431,7 +431,8 @@ return [
      * Menú de Secretaría — impresión de ficha de matrícula por curso (PDF en lote).
      * `implementacion`: variante en código (`sanfranciscoasis` = con aceptación de documentos;
      * `montecristo` = solicitud de matrícula solo datos; `sanjose` = solicitud A4 San José;
-     * `iess` = ficha con autorización de imágenes IESS VCP).
+     * `iess` = ficha con autorización de imágenes IESS VCP;
+     * `caixalsf` = ficha pedagógica A4 Caixal).
      * `niveles_deshabilitados`: IDs de `niveles` sin ítem ni PDF (p. ej. `[1, 2]` solo secundario).
      */
     'secretaria' => [

@@ -146,7 +146,6 @@ class CargaColoquiosSecundario extends Component
         $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
             ListadoCursoCondicionFiltro::REGULARES
         );
-        $teaPorLegajo = $this->legajosConTeaEnCurso($cursoId, $idTerlec);
 
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
@@ -162,7 +161,6 @@ class CargaColoquiosSecundario extends Component
             ->where('c.idCursos', $cursoId)
             ->get([
                 'c.idMaterias',
-                'c.idLegajos',
                 'c.dic',
                 'c.tea',
                 'c.ic01', 'c.ic02', 'c.ic03', 'c.ic04', 'c.ic05', 'c.ic06', 'c.ic07', 'c.ic08', 'c.ic09', 'c.ic10',
@@ -177,14 +175,12 @@ class CargaColoquiosSecundario extends Component
                 continue;
             }
 
-            $idLegajo = (int) $r->idLegajos;
             $rowModulos = $this->rowModulosDesdeCalificacion($r);
 
             if (CalificacionesColoquioSecundario::cuentaParaMateriaConCarga(
                 $periodo,
                 $rowModulos,
                 (string) ($r->dic ?? ''),
-                isset($teaPorLegajo[$idLegajo]),
             )) {
                 $materiasConAlumnos[$idMateria] = true;
             }
@@ -217,28 +213,6 @@ class CargaColoquiosSecundario extends Component
     }
 
     /**
-     * Legajos con TEA en cualquier materia del curso (recuperan todas las materias).
-     *
-     * @return array<int, true> idLegajos
-     */
-    protected function legajosConTeaEnCurso(int $cursoId, int $idTerlec): array
-    {
-        $ids = DB::table('calificaciones')
-            ->where('idTerlec', $idTerlec)
-            ->where('idCursos', $cursoId)
-            ->where('tea', 1)
-            ->distinct()
-            ->pluck('idLegajos');
-
-        $map = [];
-        foreach ($ids as $id) {
-            $map[(int) $id] = true;
-        }
-
-        return $map;
-    }
-
-    /**
      * @return array<int, array<string, mixed>>
      */
     protected function fetchRowsSnapshot(): array
@@ -253,8 +227,6 @@ class CargaColoquiosSecundario extends Component
         $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
             ListadoCursoCondicionFiltro::REGULARES
         );
-
-        $teaPorLegajo = $this->legajosConTeaEnCurso($cursoId, $idTerlec);
 
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
@@ -275,7 +247,6 @@ class CargaColoquiosSecundario extends Component
             ->get([
                 'c.id',
                 'c.ord',
-                'c.idLegajos',
                 'l.apellido',
                 'l.nombre',
                 'c.ic01', 'c.ic02', 'c.ic03', 'c.ic04', 'c.ic05', 'c.ic06', 'c.ic07', 'c.ic08', 'c.ic09', 'c.ic10',
@@ -287,12 +258,10 @@ class CargaColoquiosSecundario extends Component
         $periodo = $this->campoActivo();
         $out = [];
         foreach ($califs as $r) {
-            $idLegajo = (int) $r->idLegajos;
-            $teaEnCurso = isset($teaPorLegajo[$idLegajo]);
             $rowModulos = $this->rowModulosDesdeCalificacion($r);
             $dic = (string) ($r->dic ?? '');
 
-            if (! CalificacionesColoquioSecundario::apareceEnListadoColoquio($periodo, $rowModulos, $dic, $teaEnCurso)) {
+            if (! CalificacionesColoquioSecundario::apareceEnListadoColoquio($periodo, $rowModulos, $dic)) {
                 continue;
             }
 
@@ -305,7 +274,7 @@ class CargaColoquiosSecundario extends Component
                 'dic' => $dic,
                 'feb' => (string) ($r->feb ?? ''),
                 'calif' => (string) ($r->calif ?? ''),
-                'motivo' => CalificacionesColoquioSecundario::motivoElegibilidad($rowModulos, $teaEnCurso),
+                'motivo' => CalificacionesColoquioSecundario::motivoElegibilidad($rowModulos),
                 'dic_aprobado' => $dicAprobado,
                 'feb_inhabilitado' => $dicAprobado,
             ];

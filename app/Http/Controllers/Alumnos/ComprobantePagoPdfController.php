@@ -46,6 +46,18 @@ class ComprobantePagoPdfController extends Controller
             ], 422);
         }
 
+        if (ArancelesEscolares::cuponBloqueadoPorMatricula($registro)) {
+            return redirect()
+                ->route('alumnos.aranceles-escolares')
+                ->with('aranceles_cupon_bloqueado', ArancelesEscolares::mensajeCuponBloqueadoPorMatricula($registro));
+        }
+
+        if (ArancelesEscolares::cuponBloqueadoPorDeudaFamiliar($registro)) {
+            return redirect()
+                ->route('alumnos.aranceles-escolares')
+                ->with('aranceles_cupon_deuda', ArancelesEscolares::MENSAJE_CUPON_DEUDA_FAMILIAR);
+        }
+
         if (ArancelesEscolares::cuotaVencidaParaReimpresion($registro)) {
             return redirect()
                 ->route('alumnos.aranceles-escolares')

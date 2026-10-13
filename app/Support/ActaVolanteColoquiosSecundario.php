@@ -136,7 +136,6 @@ final class ActaVolanteColoquiosSecundario
         }
 
         $cursoLabel = $curso->nombreParaListado();
-        $teaPorLegajo = self::legajosConTeaEnCurso($cursoId, $idTerlec);
         $materiaIdsSet = array_flip($materiaIds);
 
         $materias = DB::table('materias')
@@ -175,7 +174,6 @@ final class ActaVolanteColoquiosSecundario
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('l.nombre'))
             ->get([
                 'c.idMaterias',
-                'c.idLegajos',
                 'l.apellido',
                 'l.nombre',
                 'l.dni',
@@ -193,7 +191,6 @@ final class ActaVolanteColoquiosSecundario
                 continue;
             }
 
-            $idLegajo = (int) $r->idLegajos;
             $rowModulos = self::rowModulosDesdeCalificacion($r);
             $dic = (string) ($r->dic ?? '');
 
@@ -201,7 +198,6 @@ final class ActaVolanteColoquiosSecundario
                 $periodo,
                 $rowModulos,
                 $dic,
-                isset($teaPorLegajo[$idLegajo]),
             )) {
                 continue;
             }
@@ -272,7 +268,6 @@ final class ActaVolanteColoquiosSecundario
         $idsCondicionesRegulares = ListadoCursoCondicionFiltro::idCondicionesParaQuery(
             ListadoCursoCondicionFiltro::REGULARES
         );
-        $teaPorLegajo = self::legajosConTeaEnCurso($cursoId, $idTerlec);
 
         $califs = DB::table('calificaciones as c')
             ->join('legajos as l', 'l.id', '=', 'c.idLegajos')
@@ -288,7 +283,6 @@ final class ActaVolanteColoquiosSecundario
             ->where('c.idCursos', $cursoId)
             ->get([
                 'c.idMaterias',
-                'c.idLegajos',
                 'c.dic',
                 'c.tea',
                 'c.ic01', 'c.ic02', 'c.ic03', 'c.ic04', 'c.ic05', 'c.ic06', 'c.ic07', 'c.ic08', 'c.ic09', 'c.ic10',
@@ -303,14 +297,12 @@ final class ActaVolanteColoquiosSecundario
                 continue;
             }
 
-            $idLegajo = (int) $r->idLegajos;
             $rowModulos = self::rowModulosDesdeCalificacion($r);
 
             if (CalificacionesColoquioSecundario::apareceEnListadoColoquio(
                 $periodo,
                 $rowModulos,
                 (string) ($r->dic ?? ''),
-                isset($teaPorLegajo[$idLegajo]),
             )) {
                 $materiasConAlumnos[$idMateria] = true;
             }
@@ -331,26 +323,6 @@ final class ActaVolanteColoquiosSecundario
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
-    }
-
-    /**
-     * @return array<int, true>
-     */
-    private static function legajosConTeaEnCurso(int $cursoId, int $idTerlec): array
-    {
-        $ids = DB::table('calificaciones')
-            ->where('idTerlec', $idTerlec)
-            ->where('idCursos', $cursoId)
-            ->where('tea', 1)
-            ->distinct()
-            ->pluck('idLegajos');
-
-        $map = [];
-        foreach ($ids as $id) {
-            $map[(int) $id] = true;
-        }
-
-        return $map;
     }
 
     /**

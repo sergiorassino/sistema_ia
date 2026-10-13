@@ -105,7 +105,7 @@
                 @if ($cursoLabel)
                     <strong>{{ $cursoLabel }}</strong> —
                 @endif
-                Listado de alumnos <strong>regulares</strong> con algún módulo desaprobado o con <strong>TEA</strong> (recuperan todas las materias del curso).
+                Listado de alumnos <strong>regulares</strong> con algún módulo desaprobado o con <strong>TEA</strong> en esa materia. En febrero no figuran quienes ya aprobaron diciembre.
                 Las columnas Escrito, Oral y Prom quedan en blanco para completar en el examen.
             </p>
             <a href="{{ $pdfUrl }}"

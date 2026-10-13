@@ -6,7 +6,8 @@ namespace App\Support;
  * Coloquios de recuperación (diciembre / febrero) — nivel secundario.
  *
  * Elegibilidad: alumno regular con fila en `calificaciones` para la materia y
- * (algún módulo desaprobado en esa materia o TEA activo en el curso).
+ * (algún módulo desaprobado en esa materia, o `tea = 1` en esa misma fila).
+ * El TEA de otra materia del curso no incluye al alumno.
  */
 final class CalificacionesColoquioSecundario
 {
@@ -61,9 +62,9 @@ final class CalificacionesColoquioSecundario
     /**
      * @param  array<string, mixed>  $row
      */
-    public static function motivoElegibilidad(array $row, bool $teaEnCurso): string
+    public static function motivoElegibilidad(array $row): string
     {
-        if ($teaEnCurso || ((int) ($row['tea'] ?? 0)) === 1) {
+        if (((int) ($row['tea'] ?? 0)) === 1) {
             return 'TEA';
         }
 
@@ -75,33 +76,33 @@ final class CalificacionesColoquioSecundario
     }
 
     /**
+     * TEA solo de esta fila de `calificaciones`, o algún módulo desaprobado en la materia.
+     *
      * @param  array<string, mixed>  $row
      */
-    public static function esElegible(array $row, bool $teaEnCurso): bool
+    public static function esElegible(array $row): bool
     {
-        return $teaEnCurso
-            || ((int) ($row['tea'] ?? 0)) === 1
+        return ((int) ($row['tea'] ?? 0)) === 1
             || self::tieneAlgunBloqueDesaprobado($row);
     }
 
     /**
-     * Si el alumno debe figurar en la grilla o contar para el select de materias.
+     * Si el alumno debe figurar en la grilla, el acta volante o el select de materias.
      *
-     * Criterio base: rinde coloquio (módulo con nota &lt; 7 o TEA). No se oculta por tener
-     * ya cargada una nota aprobatoria en Dic o Feb (puede editarse).
+     * Criterio base: módulo con nota &lt; 7, o `tea = 1` en esta materia (aunque los
+     * módulos estén aprobados). El TEA de otra materia no alcanza.
      *
-     * En febrero no se listan quienes ya aprobaron diciembre (Dic ≥ 7): van a febrero solo
-     * quienes no cerraron en diciembre.
+     * En diciembre se lista igual si ya hay nota de coloquio. En febrero no se listan
+     * quienes ya aprobaron diciembre (Dic ≥ 7).
      *
-     * @param  array<string, mixed>  $rowModulos  ic01..ic28 y tea (entero 0/1)
+     * @param  array<string, mixed>  $rowModulos  ic01..ic28 y tea (entero 0/1) de esta materia
      */
     public static function apareceEnListadoColoquio(
         string $periodo,
         array $rowModulos,
         string $dic,
-        bool $teaEnCurso,
     ): bool {
-        if (! self::esElegible($rowModulos, $teaEnCurso)) {
+        if (! self::esElegible($rowModulos)) {
             return false;
         }
 
@@ -118,9 +119,8 @@ final class CalificacionesColoquioSecundario
         string $periodo,
         array $rowModulos,
         string $dic,
-        bool $teaEnCurso,
     ): bool {
-        return self::apareceEnListadoColoquio($periodo, $rowModulos, $dic, $teaEnCurso);
+        return self::apareceEnListadoColoquio($periodo, $rowModulos, $dic);
     }
 
     public static function parseNotaColoquio(mixed $raw): ?float

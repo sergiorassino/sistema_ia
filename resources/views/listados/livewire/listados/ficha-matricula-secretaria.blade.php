@@ -6,7 +6,7 @@
                 <div>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ $etiqueta }}</h2>
                     <p class="mt-2 max-w-2xl text-sm text-white/80">
-                        {{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}
+                        {{ schoolCtx()->nivelNombre() }}@if ($anoTerlec !== '') · Ciclo lectivo {{ $anoTerlec }}@endif
                         @if ($implementacion === 'sanfranciscoasis')
                             · Formato con aceptación de documentos
                         @elseif ($implementacion === 'iess')
@@ -15,6 +15,8 @@
                             · Formato solicitud de matrícula (solo datos)
                         @elseif ($implementacion === 'sanjose')
                             · Formato solicitud de matrícula San José (A4, foto carnet)
+                        @elseif ($implementacion === 'caixalsf')
+                            · Formato ficha pedagógica Caixal
                         @endif
                     </p>
                 </div>
@@ -31,15 +33,35 @@
         </div>
     </section>
 
-    @if ($cursos->isEmpty())
-        <div class="se-card p-8">
-            <p class="text-sm font-semibold text-neutral-800">Sin cursos en este contexto</p>
-            <p class="mt-1 text-sm text-neutral-600">No hay cursos cargados para el nivel y año lectivo activos.</p>
-        </div>
-    @elseif ($paso === 1)
+    @if ($paso === 1)
         <div class="se-card overflow-hidden">
             <div class="border-b border-accent-200 bg-white px-5 py-4">
-                <p class="se-section-title">1. Seleccionar cursos</p>
+                <p class="se-section-title">1. Ciclo lectivo</p>
+                <label class="mt-3 block text-[11px] font-semibold uppercase tracking-wide text-neutral-500" for="ficha-matricula-idTerlec">
+                    Ciclo lectivo
+                </label>
+                <livewire:components.terlec-selector
+                    wire:model.live="idTerlec"
+                    input-id="ficha-matricula-idTerlec"
+                    select-class="form-select mt-1 w-full max-w-xs rounded-xl"
+                    :key="'ficha-matricula-terlec'" />
+                @error('idTerlec')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            @if ((int) $idTerlec <= 0)
+                <div class="px-5 py-6">
+                    <p class="text-sm text-neutral-600">Elija el ciclo lectivo para ver los cursos.</p>
+                </div>
+            @elseif ($cursos->isEmpty())
+                <div class="px-5 py-6">
+                    <p class="text-sm font-semibold text-neutral-800">Sin cursos en este ciclo</p>
+                    <p class="mt-1 text-sm text-neutral-600">No hay cursos cargados para el nivel y el ciclo lectivo elegidos.</p>
+                </div>
+            @else
+            <div class="border-b border-accent-200 bg-white px-5 py-4">
+                <p class="se-section-title">2. Seleccionar cursos</p>
                 <p class="mt-1 text-sm text-neutral-600">
                     Elija uno o más cursos. Luego podrá incluir o excluir alumnos antes de imprimir las fichas.
                 </p>
@@ -68,6 +90,7 @@
                     Continuar con alumnos
                 </button>
             </div>
+            @endif
         </div>
     @else
         <div class="se-toolbar flex-wrap gap-3">

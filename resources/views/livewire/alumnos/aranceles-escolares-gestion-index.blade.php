@@ -110,6 +110,8 @@
                         $nombreCurso = trim((string) ($c->curso?->nombreParaListado() ?? ''));
                         $apellido = trim((string) ($c->legajo->apellido ?? ''));
                         $nombre = trim((string) ($c->legajo->nombre ?? ''));
+                        $cuponPorBloqueo = \App\Support\Alumnos\ArancelesEscolares::cuponBloqueadoPorMatricula($c, $matriculaSesionBloqueada);
+                        $cuponPorDeuda = \App\Support\Alumnos\ArancelesEscolares::cuponBloqueadoPorDeudaFamiliar($c, $tieneDeudaFamiliar);
                     @endphp
                     <article wire:key="ga-cuota-m-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
                              @class([
@@ -167,7 +169,27 @@
 
                         <div class="mt-4 flex flex-col gap-2 border-t border-accent-100 pt-3">
                             @if (! $mostrarHistorial || (float) $c->faltapa > 0)
-                                @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                @if ($cuponPorBloqueo)
+                                    <button type="button"
+                                            x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuponBloqueadoPorMatricula($c, $matriculaSesionBloqueada, $mensajeBloqueoMatricula)), 'Matrícula bloqueada')"
+                                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                                            title="Cupón no disponible — matrícula bloqueada">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Cupón no disponible
+                                    </button>
+                                @elseif ($cuponPorDeuda)
+                                    <button type="button"
+                                            x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::MENSAJE_CUPON_DEUDA_FAMILIAR), 'Deuda familiar')"
+                                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                                            title="Cupón no disponible — deuda familiar">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Cupón no disponible
+                                    </button>
+                                @elseif (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
                                     <button type="button"
                                             x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
                                             class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-400"
@@ -242,6 +264,8 @@
                                 @php
                                     $pagada = (float) ($c->faltapa ?? 0) <= 0;
                                     $facturaAfip = $facturasAfip[(int) $c->id] ?? null;
+                                    $cuponPorBloqueo = \App\Support\Alumnos\ArancelesEscolares::cuponBloqueadoPorMatricula($c, $matriculaSesionBloqueada);
+                                    $cuponPorDeuda = \App\Support\Alumnos\ArancelesEscolares::cuponBloqueadoPorDeudaFamiliar($c, $tieneDeudaFamiliar);
                                 @endphp
                                 <tr wire:key="ga-cuota-{{ $c->id }}-{{ $mostrarHistorial ? 'hist' : 'pend' }}"
                                     @class(['se-gestion-aranceles-fila--pagada' => $mostrarHistorial && $pagada])>
@@ -265,7 +289,27 @@
                                     </td>
                                     <td class="se-gestion-aranceles-tabla-td-accion">
                                         @if (! $mostrarHistorial || (float) $c->faltapa > 0)
-                                            @if (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
+                                            @if ($cuponPorBloqueo)
+                                                <button type="button"
+                                                        x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuponBloqueadoPorMatricula($c, $matriculaSesionBloqueada, $mensajeBloqueoMatricula)), 'Matrícula bloqueada')"
+                                                        class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                        title="Cupón no disponible — matrícula bloqueada">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    <span class="sr-only">Cupón no disponible</span>
+                                                </button>
+                                            @elseif ($cuponPorDeuda)
+                                                <button type="button"
+                                                        x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::MENSAJE_CUPON_DEUDA_FAMILIAR), 'Deuda familiar')"
+                                                        class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
+                                                        title="Cupón no disponible — deuda familiar">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                    </svg>
+                                                    <span class="sr-only">Cupón no disponible</span>
+                                                </button>
+                                            @elseif (\App\Support\Alumnos\ArancelesEscolares::cuotaVencidaParaReimpresion($c))
                                                 <button type="button"
                                                         x-on:click="window.seSwalAviso(@js(\App\Support\Alumnos\ArancelesEscolares::mensajeCuotaVencidaReimpresion()), 'Cuota vencida')"
                                                         class="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-400 bg-white text-neutral-400"
@@ -318,6 +362,18 @@
 @script
 <script>
     (function () {
+        @if (session('aranceles_cupon_bloqueado'))
+            if (typeof window.seSwalAviso === 'function') {
+                window.seSwalAviso(@js(session('aranceles_cupon_bloqueado')), 'Matrícula bloqueada');
+            }
+        @endif
+
+        @if (session('aranceles_cupon_deuda'))
+            if (typeof window.seSwalAviso === 'function') {
+                window.seSwalAviso(@js(session('aranceles_cupon_deuda')), 'Deuda familiar');
+            }
+        @endif
+
         @if (session('aranceles_cuota_vencida'))
             if (typeof window.seSwalAviso === 'function') {
                 window.seSwalAviso(@js(session('aranceles_cuota_vencida')), 'Cuota vencida');

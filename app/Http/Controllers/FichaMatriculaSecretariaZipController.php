@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Terlec;
 use App\Support\Alumnos\FichaMatriculaSecretariaLoteParams;
 use App\Support\Alumnos\FichaMatriculaSecretariaZip;
 use Illuminate\Http\Request;
@@ -29,14 +30,20 @@ class FichaMatriculaSecretariaZipController extends Controller
             'matriculas' => ['required', 'string', 'max:12000'],
         ]);
 
+        $idTerlec = (int) $request->query('terlec', 0);
+        if (! Terlec::query()->whereKey($idTerlec)->exists()) {
+            abort(404);
+        }
+
         $ids = FichaMatriculaSecretariaLoteParams::resolverIdsMatriculasDesdeQuery(
             (string) $validated['matriculas'],
+            $idTerlec,
         );
 
         if ($ids === []) {
             abort(404);
         }
 
-        return FichaMatriculaSecretariaZip::respuestaHttp($ids);
+        return FichaMatriculaSecretariaZip::respuestaHttp($ids, $idTerlec);
     }
 }

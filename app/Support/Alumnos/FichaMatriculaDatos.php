@@ -5,6 +5,7 @@ namespace App\Support\Alumnos;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Sexo;
+use App\Models\Terlec;
 use App\Support\InformeInasistencias;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use Carbon\CarbonInterface;
@@ -94,19 +95,21 @@ final class FichaMatriculaDatos
      *
      * @return array<string, mixed>|null
      */
-    public static function paraMatricula(int $idMatricula): ?array
+    public static function paraMatricula(int $idMatricula, ?int $idTerlec = null): ?array
     {
         $ctx = schoolCtx();
         if (! $ctx->isValid()) {
             return null;
         }
 
+        $idTerlec = self::idTerlecEfectivo($idTerlec);
+
         /** @var Matricula|null $matricula */
         $matricula = Matricula::query()
             ->with(['curso.nivel'])
             ->where('id', $idMatricula)
             ->where('idNivel', (int) $ctx->idNivel)
-            ->where('idTerlec', (int) $ctx->idTerlec)
+            ->where('idTerlec', $idTerlec)
             ->whereNull('fechaBaja')
             ->first();
 
@@ -126,7 +129,7 @@ final class FichaMatriculaDatos
             $legajo,
             $matricula,
             (int) $ctx->idNivel,
-            (int) ($ctx->terlecAno() ?? 0),
+            self::anoDeTerlec($idTerlec),
             schoolPdfHeaderData(),
         );
     }
@@ -257,6 +260,23 @@ final class FichaMatriculaDatos
             'reglamDni' => trim((string) ($legajo->reglamDni ?? '')),
             'reglamEmail' => trim((string) ($legajo->reglamEmail ?? '')),
         ]);
+    }
+
+    private static function idTerlecEfectivo(?int $idTerlec): int
+    {
+        $id = $idTerlec ?? (int) (schoolCtx()->idTerlec ?? 0);
+
+        return $id > 0 ? $id : 0;
+    }
+
+    private static function anoDeTerlec(int $idTerlec): int
+    {
+        $ctx = schoolCtx();
+        if ($idTerlec > 0 && $idTerlec === (int) $ctx->idTerlec) {
+            return (int) ($ctx->terlecAno() ?? 0);
+        }
+
+        return (int) (Terlec::query()->whereKey($idTerlec)->value('ano') ?? 0);
     }
 
     private static function fecha(mixed $valor): string

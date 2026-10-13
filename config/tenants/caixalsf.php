@@ -6,12 +6,14 @@
  | Requiere TENANT_SLUG=caixalsf en el despliegue de ese colegio.
  |
  | Autogestión familia (inicial / primario): mismas opciones de menú que San José.
+ | Ficha de matrícula pedagógica (secretaría y autogestión): implementación `caixalsf`.
  | Menú de Docentes (nivel inicial): carga de observaciones, por espacio curricular e informe de progreso.
  |
  | Egresados de último año (ventana feb–sep del año siguiente): Previo (`PR`).
  | Default global es Regular (`RE`).
  |
  | Planificaciones y programas (permiso 86, grupo EXÁMENES del Menú de Secretaría).
+ | Descarga pública: /programas-examen (años de ento.idTerlecVerNotas si no se lista `anios`).
  */
 
 return [
@@ -50,7 +52,7 @@ return [
         ],
         'ficha_matricula' => [
             'habilitado' => true,
-            'implementacion' => 'sanjose',
+            'implementacion' => 'caixalsf',
         ],
         // Nivel inicial: sin comunicación institucional ni informe de inasistencias.
         'comunicaciones' => [
@@ -61,11 +63,22 @@ return [
         ],
     ],
 
+    'secretaria' => [
+        'ficha_matricula' => [
+            'habilitado' => true,
+            'implementacion' => 'caixalsf',
+        ],
+    ],
+
     'examenes' => [
         'egresados_ventana_condicion' => 'PR',
     ],
 
     'doc_pp' => [
+        'habilitado' => true,
+    ],
+
+    'programas_examen' => [
         'habilitado' => true,
     ],
 ];

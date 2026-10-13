@@ -14,7 +14,7 @@ final class FichaMatriculaSecretariaZip
     /**
      * @param  list<int>  $matriculaIds
      */
-    public static function respuestaHttp(array $matriculaIds): Response
+    public static function respuestaHttp(array $matriculaIds, int $idTerlec): Response
     {
         abort_unless(tenantSecretariaFichaMatriculaHabilitada(), 404);
 
@@ -22,7 +22,7 @@ final class FichaMatriculaSecretariaZip
             abort(500, 'La extensión ZIP no está disponible en el servidor.');
         }
 
-        $ids = FichaMatriculaSecretariaLoteParams::resolverIdsMatriculas($matriculaIds);
+        $ids = FichaMatriculaSecretariaLoteParams::resolverIdsMatriculas($matriculaIds, $idTerlec);
         if ($ids === []) {
             abort(404);
         }
@@ -33,8 +33,9 @@ final class FichaMatriculaSecretariaZip
 
         foreach ($ids as $idMatricula) {
             $datos = match ($implementacion) {
-                'sanfranciscoasis', 'iess' => FichaMatriculaDatos::paraMatricula($idMatricula),
-                'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula),
+                'sanfranciscoasis', 'iess' => FichaMatriculaDatos::paraMatricula($idMatricula, $idTerlec),
+                'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraMatricula($idMatricula, $idTerlec),
+                'caixalsf' => FichaMatriculaCaixalsfDatos::paraMatricula($idMatricula, $idTerlec),
                 default => null,
             };
 
@@ -76,6 +77,10 @@ final class FichaMatriculaSecretariaZip
                 ),
                 'montecristo' => FichaMatriculaSolicitudMontecristoTcpdf::generar($datos),
                 'sanjose' => FichaMatriculaSanJoseTcpdf::generar($datos),
+                'caixalsf' => FichaMatriculaCaixalsfTcpdf::generar(
+                    $datos,
+                    $datos['header'] ?? $header,
+                ),
                 default => null,
             };
 

@@ -14,6 +14,7 @@ Activación por tenant en `config/tenants/{slug}.php` → `secretaria.ficha_matr
 | `iess` | `FichaMatriculaIessTcpdf` (layout legacy IESS: AEC en primario, autorización de imágenes en secundario, `grupsang` a la derecha del nombre) | `FichaMatriculaDatos` |
 | `montecristo` | `FichaMatriculaSolicitudMontecristoTcpdf` | `FichaMatriculaMontecristoDatos` |
 | `sanjose` | `FichaMatriculaSanJoseTcpdf` | `FichaMatriculaMontecristoDatos`. Misma ficha que autogestión: hueco 30×40 mm a la derecha; la foto entra ahí sin deformar y el marco negro rodea la imagen (no el hueco). `grupsang` a la derecha del nombre (misma lógica que IESS: `EstudiantesDatosConsulta::valorGrupoSanguineo()`). |
+| `caixalsf` | `FichaMatriculaCaixalsfTcpdf` (ficha pedagógica A4: alumno, madre, padre y tutor). Misma variante en autogestión (`autogestion.ficha_matricula.implementacion`). Fechas en `d/m/Y`. | `FichaMatriculaCaixalsfDatos` |
 
 `niveles_deshabilitados`: oculta ítem y PDF en esos IDs de `niveles` (opcional). IESS: todos los niveles.
 
@@ -23,8 +24,8 @@ Menú de Secretaría (`layouts/app`). Rutas bajo `auth`; datos filtrados por `sc
 
 ## Flujo principal
 
-1. Listados → Ficha de Matrícula → elegir cursos → marcar alumnos.
-2. PDF único o ZIP por alumno (`listados.ficha-matricula.pdf` / `.zip`).
+1. Listados → Ficha de Matrícula → elegir ciclo lectivo (`terlec`, año más reciente primero) → elegir cursos de ese ciclo y del nivel de `schoolCtx()` → marcar alumnos.
+2. PDF único o ZIP por alumno (`listados.ficha-matricula.pdf` / `.zip`), con `terlec` en la query. El año impreso es el del ciclo elegido, no necesariamente el de la sesión. El nivel sigue siendo el de `schoolCtx()`.
 
 ## Archivos clave
 
@@ -32,9 +33,12 @@ Menú de Secretaría (`layouts/app`). Rutas bajo `auth`; datos filtrados por `sc
 - `app/Support/Alumnos/FichaMatriculaSecretariaPdf.php` / `…Zip.php`
 - `app/Support/Alumnos/FichaMatriculaIessTcpdf.php`
 - `app/Support/Alumnos/FichaMatriculaSanJoseTcpdf.php`
+- `app/Support/Alumnos/FichaMatriculaCaixalsfTcpdf.php`
+- `app/Support/Alumnos/FichaMatriculaCaixalsfDatos.php`
 - Helpers: `tenantSecretariaFichaMatriculaHabilitada()`, `…Implementacion()`, `…Etiqueta()`
 
 ## Qué no hacer
 
 - No ramificar por `tenantSlug() === 'iess'` en Blade; usar `implementacion` desde config.
-- No calcular datos fuera de `FichaMatriculaDatos` / `FichaMatriculaMontecristoDatos`.
+- No calcular datos fuera de `FichaMatriculaDatos` / `FichaMatriculaMontecristoDatos` / `FichaMatriculaCaixalsfDatos`.
+- No listar cursos del ciclo de sesión si el usuario eligió otro `idTerlec`.

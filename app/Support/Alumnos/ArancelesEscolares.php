@@ -5,8 +5,11 @@ namespace App\Support\Alumnos;
 use App\Models\ComprobanteAfip;
 use App\Models\CuotaGenerada;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
+use App\Support\Cuotas\DeudaFamiliarVencida;
+use App\Support\Cuotas\GeneracionCuotaEstudianteService;
 use App\Support\Cuotas\GestionAranceles;
 use App\Support\InformeInasistencias;
+use App\Support\MatriculaBloqueos;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -16,6 +19,10 @@ use Illuminate\Support\Collection;
  */
 final class ArancelesEscolares
 {
+    public const MENSAJE_CUPON_BLOQUEO_MATRICULA = 'Esta cuota no se puede descargar ni pagar desde autogestión mientras la matrícula tenga un bloqueo. Comuníquese con secretaría.';
+
+    public const MENSAJE_CUPON_DEUDA_FAMILIAR = 'Esta cuota no se puede descargar ni pagar desde autogestión mientras haya deuda familiar vencida. Comuníquese con administración.';
+
     /**
      * @return Collection<int, CuotaGenerada>
      */
@@ -280,8 +287,86 @@ final class ArancelesEscolares
             'curso.curplan:id,curPlanCurso',
             'curso.turnoClase:id,nombre',
             'curso.nivel:id,nivel',
-            'cuota:id,nombre,orden',
+            'cuota:id,nombre,orden,idCuotastipo',
         ];
+    }
+
+    /**
+     * Reserva (cuotastipo 2) o matrícula (cuotastipo 3) con bloqueo pedagógico
+     * y/o administrativo: no se emite el cupón en autogestión.
+     *
+     * El bloqueo se lee de la matrícula de la sesión y, si esa no está bloqueada,
+     * de la matrícula de la cuota (mismo ciclo que el arancel).
+     */
+    public static function cuponBloqueadoPorMatricula(CuotaGenerada $registro, ?bool $sesionBloqueada = null): bool
+    {
+        if (! self::esReservaOMatricula($registro)) {
+            return false;
+        }
+
+        $sesionBloqueada ??= MatriculaBloqueos::autogestionFichaYDatosBloqueada();
+        if ($sesionBloqueada) {
+            return true;
+        }
+
+        return MatriculaBloqueos::estaBloqueado(MatriculaBloqueos::paraCuotaGenerada($registro));
+    }
+
+    /**
+     * Reserva o matrícula con deuda familiar vencida: no se emite el cupón en autogestión.
+     */
+    public static function cuponBloqueadoPorDeudaFamiliar(CuotaGenerada $registro, ?bool $tieneDeudaFamiliar = null): bool
+    {
+        if (! self::esReservaOMatricula($registro)) {
+            return false;
+        }
+
+        return $tieneDeudaFamiliar ?? DeudaFamiliarVencida::tiene((int) studentCtx()->idLegajo);
+    }
+
+    /**
+     * Cartel de autogestión (ento del nivel) o el texto por defecto del bloqueo.
+     */
+    public static function mensajeCuponBloqueadoPorMatricula(
+        CuotaGenerada $registro,
+        ?bool $sesionBloqueada = null,
+        ?string $mensajeSesion = null,
+    ): string {
+        $sesionBloqueada ??= MatriculaBloqueos::autogestionFichaYDatosBloqueada();
+
+        if ($sesionBloqueada) {
+            $mensaje = trim((string) ($mensajeSesion ?? MatriculaBloqueos::mensajeAutogestionFichaYDatos()));
+            if ($mensaje !== '') {
+                return $mensaje;
+            }
+        } else {
+            $restriccion = MatriculaBloqueos::impideFichaYDatosAutogestion(
+                MatriculaBloqueos::paraCuotaGenerada($registro),
+            );
+            if ($restriccion['mensaje'] !== '') {
+                return $restriccion['mensaje'];
+            }
+        }
+
+        return self::MENSAJE_CUPON_BLOQUEO_MATRICULA;
+    }
+
+    private static function esReservaOMatricula(CuotaGenerada $registro): bool
+    {
+        $idTipo = self::idTipoCuota($registro);
+
+        return $idTipo === GeneracionCuotaEstudianteService::TIPO_RESERVA
+            || $idTipo === GeneracionCuotaEstudianteService::TIPO_MATRICULA;
+    }
+
+    private static function idTipoCuota(CuotaGenerada $registro): int
+    {
+        $idTipo = (int) ($registro->idCuotastipo ?? 0);
+        if ($idTipo > 0) {
+            return $idTipo;
+        }
+
+        return (int) ($registro->cuota?->idCuotastipo ?? 0);
     }
 
     private static function parseFecha(mixed $fecha): ?CarbonInterface

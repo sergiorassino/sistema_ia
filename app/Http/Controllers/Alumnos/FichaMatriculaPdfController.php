@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Alumnos;
 
 use App\Http\Controllers\Controller;
+use App\Support\Alumnos\FichaMatriculaCaixalsfDatos;
+use App\Support\Alumnos\FichaMatriculaCaixalsfTcpdf;
 use App\Support\Alumnos\FichaMatriculaConAceptacionTcpdf;
 use App\Support\Alumnos\FichaMatriculaDatos;
 use App\Support\Alumnos\FichaMatriculaMontecristoDatos;
@@ -40,6 +42,7 @@ class FichaMatriculaPdfController extends Controller
         $datos = match ($implementacion) {
             'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion(),
             'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraAutogestion(),
+            'caixalsf' => FichaMatriculaCaixalsfDatos::paraAutogestion(),
             default => null,
         };
 
@@ -73,6 +76,13 @@ class FichaMatriculaPdfController extends Controller
             ),
             'sanjose' => FichaMatriculaSanJoseTcpdf::respuestaHttp(
                 FichaMatriculaSanJoseTcpdf::generar($datos),
+                $slug.'.pdf',
+            ),
+            'caixalsf' => FichaMatriculaCaixalsfTcpdf::respuestaHttp(
+                FichaMatriculaCaixalsfTcpdf::generar(
+                    $datos,
+                    is_array($datos['header'] ?? null) ? $datos['header'] : studentPdfHeaderData(),
+                ),
                 $slug.'.pdf',
             ),
             default => abort(404),

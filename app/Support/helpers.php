@@ -1771,7 +1771,7 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
 
 if (! function_exists('tenantSecretariaFichaMatriculaImplementacion')) {
     /**
-     * Variante de ficha de matrícula para secretaría (`sanfranciscoasis` | `montecristo` | `sanjose` | `iess`).
+     * Variante de ficha de matrícula para secretaría (`sanfranciscoasis` | `montecristo` | `sanjose` | `iess` | `caixalsf`).
      */
     function tenantSecretariaFichaMatriculaImplementacion(): ?string
     {
@@ -1816,6 +1816,7 @@ if (! function_exists('tenantSecretariaFichaMatriculaEtiqueta')) {
     {
         return match (tenantSecretariaFichaMatriculaImplementacion()) {
             'montecristo', 'sanjose' => 'Ficha de Solicitud de Matrícula',
+            'caixalsf' => 'Ficha de Matrícula Pedagógica',
             'sanfranciscoasis', 'iess' => 'Ficha de Matrícula',
             default => 'Ficha de Matrícula',
         };

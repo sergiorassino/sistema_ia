@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Listados;
 
+use App\Models\Terlec;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
@@ -14,10 +15,15 @@ class FichaMatriculaSecretaria extends Component
     public function mount(): void
     {
         abort_unless(tenantSecretariaFichaMatriculaHabilitada(), 404);
+
+        $actual = (int) (schoolCtx()->idTerlec ?? 0);
+        $this->idTerlec = $this->idsTerlecPermitidos()->contains($actual) ? $actual : '';
     }
 
-    /** 1 = cursos, 2 = alumnos */
+    /** 1 = ciclo y cursos, 2 = alumnos */
     public int $paso = 1;
+
+    public int|string $idTerlec = '';
 
     /** @var list<string> */
     public array $cursosSeleccionados = [];
@@ -25,17 +31,35 @@ class FichaMatriculaSecretaria extends Component
     /** @var array<string, bool> matricula_id => incluido */
     public array $alumnosIncluidos = [];
 
+    public function updatedIdTerlec(): void
+    {
+        $this->paso = 1;
+        $this->cursosSeleccionados = [];
+        $this->alumnosIncluidos = [];
+        $this->resetErrorBag();
+    }
+
     public function continuarConAlumnos(): void
     {
+        $idsTerlec = $this->idsTerlecPermitidos()->all();
         $this->validate([
+            'idTerlec' => ['required', function (string $attribute, mixed $value, \Closure $fail) use ($idsTerlec): void {
+                if (! in_array((int) $value, $idsTerlec, true)) {
+                    $fail('Seleccione el ciclo lectivo.');
+                }
+            }],
             'cursosSeleccionados' => ['required', 'array', 'min:1'],
             'cursosSeleccionados.*' => ['integer', 'min:1'],
         ], [
+            'idTerlec.required' => 'Seleccione el ciclo lectivo.',
             'cursosSeleccionados.required' => 'Seleccione al menos un curso.',
             'cursosSeleccionados.min' => 'Seleccione al menos un curso.',
         ]);
 
-        $permitidos = EstudiantesDatosConsulta::cursosEnContexto()
+        $permitidos = EstudiantesDatosConsulta::cursosPorNivelYTerlec(
+            (int) schoolCtx()->idNivel,
+            (int) $this->idTerlec,
+        )
             ->pluck('Id')
             ->map(fn ($id) => (string) (int) $id)
             ->flip();
@@ -115,6 +139,7 @@ class FichaMatriculaSecretaria extends Component
 
         return route($routeName, [
             'matriculas' => implode(',', $ids),
+            'terlec' => (int) $this->idTerlec,
         ]);
     }
 
@@ -141,12 +166,22 @@ class FichaMatriculaSecretaria extends Component
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        return EstudiantesDatosConsulta::alumnosRegularesPorCursos($cursoIds);
+        $idTerlec = (int) $this->idTerlec;
+
+        return EstudiantesDatosConsulta::alumnosRegularesPorCursos(
+            $cursoIds,
+            (int) schoolCtx()->idNivel,
+            $idTerlec,
+        );
     }
 
     public function render()
     {
-        $cursos = EstudiantesDatosConsulta::cursosEnContexto();
+        $idTerlec = (int) $this->idTerlec;
+        $cursos = $idTerlec > 0
+            ? EstudiantesDatosConsulta::cursosPorNivelYTerlec((int) schoolCtx()->idNivel, $idTerlec)
+            : collect();
+        $anoTerlec = (string) (Terlec::paraSelector()->firstWhere('id', $idTerlec)?->ano ?? '');
         $alumnos = $this->paso === 2 ? $this->alumnosCargados() : collect();
         $alumnosPorCurso = $alumnos->groupBy(fn (object $row) => (string) (int) $row->id_curso);
         $cursosConAlumnos = $cursos
@@ -167,6 +202,13 @@ class FichaMatriculaSecretaria extends Component
             'totalAlumnos',
             'etiqueta',
             'implementacion',
+            'anoTerlec',
         ));
+    }
+
+    /** @return \Illuminate\Support\Collection<int, int> */
+    private function idsTerlecPermitidos(): Collection
+    {
+        return Terlec::paraSelector()->pluck('id')->map(fn ($id) => (int) $id);
     }
 }

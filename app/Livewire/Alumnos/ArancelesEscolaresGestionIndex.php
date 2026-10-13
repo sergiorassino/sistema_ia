@@ -4,6 +4,8 @@ namespace App\Livewire\Alumnos;
 
 use App\Support\Alumnos\ArancelesEscolares;
 use App\Support\Cuotas\ComprobantesAfipCuotaService;
+use App\Support\Cuotas\DeudaFamiliarVencida;
+use App\Support\MatriculaBloqueos;
 use Livewire\Component;
 
 /**
@@ -35,10 +37,14 @@ class ArancelesEscolaresGestionIndex extends Component
             : ArancelesEscolares::cuotasPendientes();
 
         $muestraComprobanteAfip = ComprobantesAfipCuotaService::moduloDisponible();
+        $restriccionMatricula = MatriculaBloqueos::paraEstudianteActual();
 
         return view('livewire.alumnos.aranceles-escolares-gestion-index', [
             'cuotas' => $cuotas,
             'encabezado' => ArancelesEscolares::encabezadoAutogestion(),
+            'matriculaSesionBloqueada' => $restriccionMatricula['bloqueada'],
+            'mensajeBloqueoMatricula' => $restriccionMatricula['mensaje'],
+            'tieneDeudaFamiliar' => DeudaFamiliarVencida::tiene((int) studentCtx()->idLegajo),
             'botonPagosUrl' => tenantArancelesEscolaresBotonPagosUrl(),
             'facturasAfip' => $muestraComprobanteAfip
                 ? ArancelesEscolares::facturasAfipVigentes($cuotas)
