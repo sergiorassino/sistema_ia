@@ -7,7 +7,7 @@
                 Calendario escolar
             </h2>
             <p class="mt-0.5 text-sm text-neutral-600">
-                Próximas actividades extracurriculares aprobadas
+                Próximas actividades institucionales aprobadas
             </p>
         </div>
         <a href="{{ route($rutaCalendario) }}"
@@ -38,7 +38,10 @@
                     <li class="flex flex-col gap-0.5 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div class="min-w-0">
                             <p class="truncate font-semibold text-neutral-900">{{ $act?->nombre ?? 'Actividad' }}</p>
-                            <p class="text-xs text-neutral-500">{{ $act?->lugar ?: 'Lugar no informado' }}</p>
+                            <p class="text-xs text-neutral-500">
+                                {{ $act?->tipoRegistro?->nombre ?: 'Actividad' }}
+                                · {{ $act?->lugar ?: 'Lugar no informado' }}
+                            </p>
                         </div>
                         <p class="shrink-0 text-sm font-semibold tabular-nums text-primary-700">
                             {{ $d }}{{ $hora !== '' ? ' · '.$hora : '' }}

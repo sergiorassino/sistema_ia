@@ -4,7 +4,7 @@
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
                     <p class="se-eyebrow">Dirección</p>
-                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Proyectos extracurriculares</h2>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Actividad Institucional</h2>
                     <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Aprobación y comunicación</p>
                 </div>
                 <a href="{{ route('calendarioEscolar') }}"
@@ -29,7 +29,7 @@
                            placeholder="Buscar actividad…"
                            class="form-input w-full pl-9"
                            autocomplete="off"
-                           aria-label="Buscar proyecto">
+                           aria-label="Buscar actividad">
                 </div>
                 <select wire:model.live="filtroEstado" class="form-input w-full sm:max-w-[11rem]" aria-label="Estado">
                     <option value="">Todos</option>
@@ -44,7 +44,7 @@
             <div class="se-card overflow-hidden">
                 @if ($registros->isEmpty())
                     <div class="px-5 py-10 text-center text-sm text-neutral-500">
-                        No hay proyectos en este ciclo.
+                        No hay actividades en este ciclo.
                     </div>
                 @else
                     <div class="w-full overflow-x-auto">
@@ -58,7 +58,12 @@
                             </div>
                             @foreach ($registros as $reg)
                                 <div class="gf-row gf-row-hover" wire:key="ext-ges-{{ $reg->id }}">
-                                    <div class="gf-td gf-col-actividad font-semibold text-neutral-900">{{ $reg->nombre }}</div>
+                                    <div class="gf-td gf-col-actividad">
+                                        <p class="font-semibold text-neutral-900">{{ $reg->nombre }}</p>
+                                        @if ($reg->tipoRegistro?->nombre)
+                                            <p class="mt-0.5 text-[11px] font-medium text-neutral-500">{{ $reg->tipoRegistro->nombre }}</p>
+                                        @endif
+                                    </div>
                                     <div class="gf-td gf-col-proponente text-neutral-700">
                                         {{ $reg->proponente?->nombre_completo ?? '—' }}
                                     </div>
@@ -84,13 +89,13 @@
                                                 @if ($reg->estaPendiente())
                                                     <button type="button"
                                                             class="inline-flex items-center rounded-lg bg-primary-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-primary-700"
-                                                            x-on:click="window.seSwalConfirmar('¿Aprobar este proyecto? Pasará al calendario escolar.', 'Aprobar').then(ok => ok && $wire.aprobar({{ (int) $reg->id }}))">
+                                                            x-on:click="window.seSwalConfirmar('¿Aprobar esta actividad? Pasará al calendario escolar.', 'Aprobar').then(ok => ok && $wire.aprobar({{ (int) $reg->id }}))">
                                                         Aprobar
                                                     </button>
                                                 @else
                                                     <button type="button"
                                                             class="inline-flex items-center rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-50"
-                                                            x-on:click="window.seSwalConfirmar('¿Volver el proyecto a pendiente? Saldrá del calendario.', 'Confirmar').then(ok => ok && $wire.volverAPendiente({{ (int) $reg->id }}))">
+                                                            x-on:click="window.seSwalConfirmar('¿Volver la actividad a pendiente? Saldrá del calendario.', 'Confirmar').then(ok => ok && $wire.volverAPendiente({{ (int) $reg->id }}))">
                                                         Volver a pendiente
                                                     </button>
                                                     <button type="button"
@@ -124,7 +129,7 @@
                     <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarDetalle"></div>
                     <div class="relative z-10 my-auto flex w-full max-w-2xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
                         <div class="shrink-0 border-b border-accent-200 px-5 py-4">
-                            <h3 id="ext-detalle-title" class="text-lg font-bold text-neutral-900">Detalle del proyecto</h3>
+                            <h3 id="ext-detalle-title" class="text-lg font-bold text-neutral-900">Detalle de la actividad</h3>
                         </div>
                         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                             @include('livewire.proyectos-extracurriculares.partials.detalle-actividad', ['actividad' => $detalle])
@@ -133,7 +138,7 @@
                             @if ($detalle->estaPendiente())
                                 <button type="button"
                                         class="inline-flex cursor-pointer items-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                                        x-on:click="window.seSwalConfirmar('¿Aprobar este proyecto? Pasará al calendario escolar.', 'Aprobar').then(ok => ok && $wire.aprobar({{ (int) $detalle->id }}))">
+                                        x-on:click="window.seSwalConfirmar('¿Aprobar esta actividad? Pasará al calendario escolar.', 'Aprobar').then(ok => ok && $wire.aprobar({{ (int) $detalle->id }}))">
                                     Aprobar
                                 </button>
                             @else

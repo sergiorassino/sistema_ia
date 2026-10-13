@@ -8,8 +8,11 @@ CREATE TABLE IF NOT EXISTS `ext_tipo_registro` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Ids 2 y 3 también están en database/sql/seed_ext_tipo_registro_nivel_institucional.sql
 INSERT INTO `ext_tipo_registro` (`id`, `nombre`) VALUES
-(1, 'Actividad Extraprogramática')
+(1, 'Actividad Extraprogramática'),
+(2, 'Actividad de Nivel'),
+(3, 'Actividad Institucional')
 ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`);
 
 CREATE TABLE IF NOT EXISTS `ext_actividades` (

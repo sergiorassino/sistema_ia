@@ -10,13 +10,13 @@
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
                     <p class="se-eyebrow">{{ $eyebrow }}</p>
-                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Proyectos extracurriculares</h2>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Actividad Institucional</h2>
                     <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Presentación a dirección</p>
                 </div>
                 @if ($tablasOk)
                     <a href="{{ route($rutaCrear) }}"
                        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-50">
-                        Nuevo proyecto
+                        Nueva actividad
                     </a>
                 @endif
             </div>
@@ -37,7 +37,7 @@
                            placeholder="Buscar actividad…"
                            class="form-input w-full pl-9"
                            autocomplete="off"
-                           aria-label="Buscar proyecto">
+                           aria-label="Buscar actividad">
                 </div>
                 <p class="shrink-0 text-[11px] font-medium tabular-nums text-neutral-500">
                     {{ $registros->total() }} registros
@@ -47,7 +47,7 @@
             <div class="se-card overflow-hidden">
                 @if ($registros->isEmpty())
                     <div class="px-5 py-10 text-center text-sm text-neutral-500">
-                        Todavía no presentó proyectos en este ciclo.
+                        Todavía no presentó actividades en este ciclo.
                     </div>
                 @else
                     <div class="w-full overflow-x-auto">
@@ -60,7 +60,12 @@
                             </div>
                             @foreach ($registros as $reg)
                                 <div class="gf-row gf-row-hover" wire:key="ext-doc-{{ $reg->id }}">
-                                    <div class="gf-td gf-col-actividad font-semibold text-neutral-900">{{ $reg->nombre }}</div>
+                                    <div class="gf-td gf-col-actividad">
+                                        <p class="font-semibold text-neutral-900">{{ $reg->nombre }}</p>
+                                        @if ($reg->tipoRegistro?->nombre)
+                                            <p class="mt-0.5 text-[11px] font-medium text-neutral-500">{{ $reg->tipoRegistro->nombre }}</p>
+                                        @endif
+                                    </div>
                                     <div class="gf-td gf-col-fechas text-neutral-700">
                                         {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($reg) ?: '—' }}
                                     </div>
@@ -82,7 +87,7 @@
                                             @if ($reg->estaPendiente())
                                                 <button type="button"
                                                         class="inline-flex items-center rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-red-700 ring-1 ring-red-200 transition hover:bg-red-50"
-                                                        x-on:click="window.seSwalConfirmar('¿Eliminar este proyecto pendiente?', 'Eliminar').then(ok => ok && $wire.eliminar({{ (int) $reg->id }}))">
+                                                        x-on:click="window.seSwalConfirmar('¿Eliminar esta actividad pendiente?', 'Eliminar').then(ok => ok && $wire.eliminar({{ (int) $reg->id }}))">
                                                     Eliminar
                                                 </button>
                                             @endif

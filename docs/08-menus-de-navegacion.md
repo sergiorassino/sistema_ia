@@ -73,7 +73,7 @@ Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcio
 Implementación: `App\Support\ProfesorMenuPortal` y middleware `menu.portal:secretaria` / `menu.portal:docente`.
 Un profesor (`IdTipoProf = 6`) no puede abrir rutas de secretaría (redirección al portal); el resto no puede abrir `/portal-docente`.
 
-**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`. El escritorio incluye el widget de **calendario escolar** (próximas actividades extracurriculares aprobadas).
+**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`. El escritorio incluye el widget de **calendario escolar** (próximas actividades institucionales aprobadas).
 
 ### Sidebar dinámico (tenant × nivel × implementación)
 
@@ -209,8 +209,9 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 - **2026-09-07:** Menú de Alumnos (SFQ): comunicación institucional visible en inicial y primario (se quita el `niveles_deshabilitados => [2]` copiado de EPQ).
 - **2026-09-10:** Configuración: **Copiar cursos, materias y horarios** (permiso IA orden **104**, reservado al administrador). Visible en Menú de Administración y Menú de Secretaría, después de Gestión de cursos y materias del año.
 - **2026-09-26:** Menú de Docentes (25 de Mayo): **Mi horario** (`portalDocente.horario`). PDF de las horas cátedra del docente de la sesión, sin permiso IA. Flag `portal_docente.menu.{nivel}.horario`.
-- **2026-09-26:** Menú de Secretaría → PROYECTOS EXTRACURRICULARES: ítem **Proyectos extracurriculares** (propuestas propias). Permiso IA orden **109** para verlo y usarlo. Aprobar sigue en el orden **96**. El calendario del grupo no pide ese permiso.
-- **2026-09-26:** Menú de Secretaría → PROYECTOS EXTRACURRICULARES: **Autorizaciones y notificaciones** (permiso IA orden **110**). Lista actividades aprobadas, muestra los alumnos y emite el PDF de autorización. Las notificaciones quedan en el mismo ítem, sin PDF todavía.
+- **2026-10-13:** Menú de Secretaría y Menú de Docentes: el grupo y el ítem **Proyectos extracurriculares** pasan a llamarse **Actividad Institucional**. El ítem de aprobación pasa a **Aprobar actividades**. Los botones de alta y edición dicen **Nueva actividad**, **Editar actividad** y **Ver actividad**.
+- **2026-09-26:** Menú de Secretaría → ACTIVIDAD INSTITUCIONAL: ítem **Actividad Institucional** (propuestas propias). Permiso IA orden **109** para verlo y usarlo. Aprobar sigue en el orden **96**. El calendario del grupo no pide ese permiso.
+- **2026-09-26:** Menú de Secretaría → ACTIVIDAD INSTITUCIONAL: **Autorizaciones y notificaciones** (permiso IA orden **110**). Lista actividades aprobadas, muestra los alumnos y emite el PDF de autorización. Las notificaciones quedan en el mismo ítem, sin PDF todavía.
 - **2026-09-10:** Configuración: **Copiar asignación de profesores y preceptores** (permiso IA orden **105**, reservado al administrador). Visible en ambos menús, después de Copiar cursos, materias y horarios.
 - **2026-09-10:** Configuración: **Promover a todos los alumnos** (permiso IA orden **106**, reservado al administrador). Visible en ambos menús, después de Copiar asignación de profesores y preceptores.
 - **2026-10-01:** Menú de Secretaría → ESTADÍSTICAS: **Estadística por Sexo y Curso** (`estadistica.sexoCurso` + PDF; permiso IA orden **114**). Alumnos regulares del ciclo y nivel de sesión; columnas según la tabla `sexos`.

@@ -209,7 +209,7 @@ class CalendarioEscolar extends Component
 
     /**
      * @param  \Illuminate\Support\Collection<int, \App\Models\ExtFecha>  $eventos
-     * @return list<array{id: int, nombre: string, hora: string, ymd: string, lugar: string}>
+     * @return list<array{id: int, nombre: string, tipo: string, hora: string, ymd: string, lugar: string}>
      */
     private static function mapearEventos($eventos): array
     {
@@ -225,6 +225,7 @@ class CalendarioEscolar extends Component
             $out[] = [
                 'id' => (int) $act->id,
                 'nombre' => (string) $act->nombre,
+                'tipo' => (string) ($act->tipoRegistro?->nombre ?? ''),
                 'hora' => $hora,
                 'ymd' => $f->fecha instanceof Carbon ? $f->fecha->format('Y-m-d') : (string) $f->fecha,
                 'lugar' => (string) ($act->lugar ?? ''),

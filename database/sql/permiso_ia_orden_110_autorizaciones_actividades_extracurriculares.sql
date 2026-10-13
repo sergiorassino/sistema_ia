@@ -1,12 +1,12 @@
--- Permiso IA orden 110 — Autorizaciones y notificaciones de actividades extracurriculares
--- Menú de Secretaría → PROYECTOS EXTRACURRICULARES → Autorizaciones y notificaciones
+-- Permiso IA orden 110 — Autorizaciones y notificaciones de actividades institucionales
+-- Menú de Secretaría → ACTIVIDAD INSTITUCIONAL → Autorizaciones y notificaciones
 -- Alcance: tabla permisos_ia + extensión de profesores.permisos_ia.
 -- Equivalente (solo INSERT catálogo): database/migrations/2026_09_26_150000_add_permiso_ia_orden_110_autorizaciones_actividades_extracurriculares.php
 -- Revisar antes de ejecutar. No otorga el permiso (queda en 0); activarlo en Permisos por usuario.
 -- ADVERTENCIA: el UPDATE alarga profesores.permisos_ia. Irreversible en la práctica (no recorta la cadena).
 
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
-(110, 110, 'PROYECTOS EXTRACURRICULARES', 'Ver actividades extracurriculares aprobadas e imprimir autorizaciones de padres o tutores para los alumnos involucrados.')
+(110, 110, 'ACTIVIDAD INSTITUCIONAL', 'Ver actividades institucionales aprobadas e imprimir autorizaciones de padres o tutores para los alumnos involucrados.')
 ON DUPLICATE KEY UPDATE
     `orden` = VALUES(`orden`),
     `tema` = VALUES(`tema`),

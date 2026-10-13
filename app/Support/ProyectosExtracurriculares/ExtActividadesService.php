@@ -33,6 +33,10 @@ final class ExtActividadesService
 {
     public const TIPO_REGISTRO_ACTIVIDAD = 1;
 
+    public const TIPO_REGISTRO_NIVEL = 2;
+
+    public const TIPO_REGISTRO_INSTITUCIONAL = 3;
+
     public const DESCRIPCION_PLANTILLA = "Actividades Previas:\n\nActividades Durante:\n\nActividades Posteriores:\n";
 
     /**
@@ -63,7 +67,7 @@ final class ExtActividadesService
 
     public static function mensajeTablasFaltantes(): string
     {
-        return 'No están disponibles las tablas de proyectos extracurriculares. Ejecute el SQL de actualización de esquema del módulo.';
+        return 'No están disponibles las tablas de actividad institucional. Ejecute el SQL de actualización de esquema del módulo.';
     }
 
     public static function idNivelContexto(): int
@@ -76,6 +80,27 @@ final class ExtActividadesService
         return (int) (schoolCtx()->idTerlec ?? 0);
     }
 
+    /**
+     * @return list<int>
+     */
+    public static function idsTiposRegistro(): array
+    {
+        return [
+            self::TIPO_REGISTRO_ACTIVIDAD,
+            self::TIPO_REGISTRO_NIVEL,
+            self::TIPO_REGISTRO_INSTITUCIONAL,
+        ];
+    }
+
+    /**
+     * Actividad extraprogramática: evaluación, presupuesto y otros docentes.
+     * Actividad de nivel e institucional: nombre, fechas, lugar, horario, descripción, grupo y docentes a cargo.
+     */
+    public static function tipoUsaCamposCompletos(int $idTipo): bool
+    {
+        return $idTipo === self::TIPO_REGISTRO_ACTIVIDAD;
+    }
+
     public static function tipoRegistroDefault(): ?ExtTipoRegistro
     {
         if (! Schema::hasTable('ext_tipo_registro')) {
@@ -83,6 +108,21 @@ final class ExtActividadesService
         }
 
         return ExtTipoRegistro::query()->find(self::TIPO_REGISTRO_ACTIVIDAD);
+    }
+
+    /**
+     * @return Collection<int, ExtTipoRegistro>
+     */
+    public static function tiposParaSelector(): Collection
+    {
+        if (! Schema::hasTable('ext_tipo_registro')) {
+            return collect();
+        }
+
+        return ExtTipoRegistro::query()
+            ->whereIn('id', self::idsTiposRegistro())
+            ->orderBy('id')
+            ->get();
     }
 
     public static function scopedQuery(?int $idProponente = null)
@@ -101,7 +141,7 @@ final class ExtActividadesService
     public static function scopedOrFail(int $id, ?int $idProponente = null): ExtActividad
     {
         $act = self::scopedQuery($idProponente)->whereKey($id)->first();
-        abort_if($act === null, 404, 'El proyecto no pertenece al contexto activo.');
+        abort_if($act === null, 404, 'La actividad no pertenece al contexto activo.');
 
         return $act;
     }
@@ -120,13 +160,14 @@ final class ExtActividadesService
             ])
             ->whereKey($id)
             ->first();
-        abort_if($act === null, 404, 'El proyecto no pertenece al contexto activo.');
+        abort_if($act === null, 404, 'La actividad no pertenece al contexto activo.');
 
         return $act;
     }
 
     /**
      * @param  array{
+     *   id_tipo_registro: int,
      *   nombre: string,
      *   lugar: string,
      *   horario: string,
@@ -145,14 +186,19 @@ final class ExtActividadesService
     {
         $idNivel = self::idNivelContexto();
         $idTerlec = self::idTerlecContexto();
+        $idTipo = (int) ($datos['id_tipo_registro'] ?? self::TIPO_REGISTRO_ACTIVIDAD);
+        if (! in_array($idTipo, self::idsTiposRegistro(), true) || ! ExtTipoRegistro::query()->whereKey($idTipo)->exists()) {
+            throw new \RuntimeException('El tipo de registro no está disponible.');
+        }
+        $camposCompletos = self::tipoUsaCamposCompletos($idTipo);
 
-        return DB::transaction(function () use ($id, $datos, $idProponente, $idNivel, $idTerlec) {
+        return DB::transaction(function () use ($id, $datos, $idProponente, $idNivel, $idTerlec, $idTipo, $camposCompletos) {
             if ($id !== null && $id > 0) {
                 $act = self::scopedOrFail($id, $idProponente);
-                abort_unless($act->estaPendiente(), 403, 'Solo se puede editar un proyecto pendiente de aprobación.');
+                abort_unless($act->estaPendiente(), 403, 'Solo se puede editar una actividad pendiente de aprobación.');
             } else {
                 $act = new ExtActividad;
-                $act->id_tipo_registro = self::TIPO_REGISTRO_ACTIVIDAD;
+                $act->id_tipo_registro = $idTipo;
                 $act->id_nivel = $idNivel;
                 $act->id_terlec = $idTerlec;
                 $act->id_profesor_proponente = $idProponente;
@@ -164,17 +210,19 @@ final class ExtActividadesService
                 $horario = self::horarioDesdeFechas($datos['fechas']);
             }
 
+            $evaluacion = $camposCompletos ? trim((string) ($datos['evaluacion'] ?? '')) : '';
+            $presupuesto = $camposCompletos ? trim((string) ($datos['presupuesto'] ?? '')) : '';
             $payload = [
+                'id_tipo_registro' => $idTipo,
                 'nombre' => $datos['nombre'],
                 'lugar' => $datos['lugar'] !== '' ? $datos['lugar'] : null,
                 'horario' => $horario !== '' ? $horario : null,
                 'descripcion' => $datos['descripcion'],
-                'evaluacion' => $datos['evaluacion'] !== '' ? $datos['evaluacion'] : null,
-                'presupuesto' => trim((string) ($datos['presupuesto'] ?? '')) !== '' ? trim((string) $datos['presupuesto']) : null,
+                'evaluacion' => $evaluacion !== '' ? $evaluacion : null,
+                'presupuesto' => $presupuesto !== '' ? $presupuesto : null,
                 'tipo_grupo' => $datos['tipo_grupo'],
             ];
             if ($id === null || $id <= 0) {
-                $payload['id_tipo_registro'] = self::TIPO_REGISTRO_ACTIVIDAD;
                 $payload['id_nivel'] = $idNivel;
                 $payload['id_terlec'] = $idTerlec;
                 $payload['id_profesor_proponente'] = $idProponente;
@@ -241,7 +289,8 @@ final class ExtActividadesService
                     'rol' => ExtActividad::ROL_A_CARGO,
                 ]);
             }
-            foreach ($datos['ids_otros_docentes'] as $idProf) {
+            $otros = $camposCompletos ? $datos['ids_otros_docentes'] : [];
+            foreach ($otros as $idProf) {
                 if (in_array($idProf, $datos['ids_docentes_a_cargo'], true)) {
                     continue;
                 }
@@ -259,7 +308,7 @@ final class ExtActividadesService
     public static function eliminar(int $id, int $idProponente): void
     {
         $act = self::scopedOrFail($id, $idProponente);
-        abort_unless($act->estaPendiente(), 403, 'Solo se puede eliminar un proyecto pendiente de aprobación.');
+        abort_unless($act->estaPendiente(), 403, 'Solo se puede eliminar una actividad pendiente de aprobación.');
 
         DB::transaction(function () use ($act) {
             ExtFecha::query()->where('id_actividad', $act->id)->delete();
@@ -273,7 +322,7 @@ final class ExtActividadesService
     public static function aprobar(int $id, int $idAprobador): ExtActividad
     {
         $act = self::scopedOrFail($id);
-        abort_unless($act->estaPendiente(), 403, 'El proyecto ya está aprobado.');
+        abort_unless($act->estaPendiente(), 403, 'La actividad ya está aprobada.');
 
         $act->estado = ExtActividad::ESTADO_APROBADO;
         $act->aprobado_por = $idAprobador;
@@ -286,7 +335,7 @@ final class ExtActividadesService
     public static function volverAPendiente(int $id): ExtActividad
     {
         $act = self::scopedOrFail($id);
-        abort_unless($act->estaAprobada(), 403, 'El proyecto no está aprobado.');
+        abort_unless($act->estaAprobada(), 403, 'La actividad no está aprobada.');
 
         $act->estado = ExtActividad::ESTADO_PENDIENTE;
         $act->aprobado_por = null;
@@ -462,7 +511,7 @@ final class ExtActividadesService
     public static function comunicarInvolucrados(int $id): array
     {
         $act = self::cargarCompleta($id);
-        abort_unless($act->estaAprobada(), 403, 'Solo se comunica un proyecto aprobado.');
+        abort_unless($act->estaAprobada(), 403, 'Solo se comunica una actividad aprobada.');
 
         /** @var Profesor|null $emisor */
         $emisor = Auth::user();
@@ -473,7 +522,7 @@ final class ExtActividadesService
         $ids = self::idsDestinatariosComunicacion($act);
         $ids = array_values(array_diff($ids, [(int) $emisor->id]));
         if ($ids === []) {
-            return self::resultadoComunicar(false, 'No hay destinatarios distintos del remitente para este proyecto.', 0);
+            return self::resultadoComunicar(false, 'No hay destinatarios distintos del remitente para esta actividad.', 0);
         }
 
         $emisor->loadMissing('tipo');
@@ -494,7 +543,7 @@ final class ExtActividadesService
         }
 
         $contenido = self::textoComunicado($act);
-        $asunto = 'Proyecto extracurricular aprobado: '.$act->nombre;
+        $asunto = 'Actividad institucional aprobada: '.$act->nombre;
         $enviados = 0;
         $omitidosCanal = 0;
         $pidioEmail = false;
@@ -718,7 +767,7 @@ final class ExtActividadesService
                     ->where('id_terlec', self::idTerlecContexto())
                     ->where('estado', ExtActividad::ESTADO_APROBADO);
             })
-            ->with(['actividad'])
+            ->with(['actividad.tipoRegistro'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->limit($limite)
@@ -936,7 +985,7 @@ final class ExtActividadesService
 
     public static function mensajeDesdeQueryException(QueryException $e): string
     {
-        return 'No se pudo guardar el proyecto. Verifique los datos e intente nuevamente.';
+        return 'No se pudo guardar la actividad. Verifique los datos e intente nuevamente.';
     }
 
     /**
@@ -1012,7 +1061,7 @@ final class ExtActividadesService
             ->implode('; ');
 
         $lineas = [
-            'Se aprobó el siguiente proyecto extracurricular:',
+            'Se aprobó la siguiente actividad:',
             '',
             'Actividad: '.$act->nombre,
             'Tipo: '.($act->tipoRegistro?->nombre ?? 'Actividad Extraprogramática'),

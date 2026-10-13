@@ -36,7 +36,7 @@ class AutorizacionesIndex extends Component
 
         if ($tablasOk) {
             $q = ExtActividadesService::scopedQuery()
-                ->with(['fechas', 'cursos.curso'])
+                ->with(['fechas', 'tipoRegistro', 'cursos.curso'])
                 ->withCount('alumnos')
                 ->where('estado', ExtActividad::ESTADO_APROBADO)
                 ->orderByDesc('id');

@@ -19,6 +19,8 @@ class ProyectoForm extends Component
 {
     public ?int $actividadId = null;
 
+    public int $idTipoRegistro = ExtActividadesService::TIPO_REGISTRO_ACTIVIDAD;
+
     public string $nombre = '';
 
     public string $lugar = '';
@@ -82,10 +84,15 @@ class ProyectoForm extends Component
         $act = ExtActividadesService::cargarCompleta($id, (int) Auth::id());
         $this->actividadId = (int) $act->id;
         $this->soloLectura = $act->estaAprobada();
+        $this->idTipoRegistro = (int) ($act->id_tipo_registro ?: ExtActividadesService::TIPO_REGISTRO_ACTIVIDAD);
         $this->nombre = (string) $act->nombre;
         $this->lugar = (string) ($act->lugar ?? '');
         $this->horario = (string) ($act->horario ?? '');
-        $this->descripcion = (string) ($act->descripcion ?? ExtActividadesService::DESCRIPCION_PLANTILLA);
+        $desc = (string) ($act->descripcion ?? '');
+        if ($desc === '' && ExtActividadesService::tipoUsaCamposCompletos($this->idTipoRegistro)) {
+            $desc = ExtActividadesService::DESCRIPCION_PLANTILLA;
+        }
+        $this->descripcion = $desc;
         $this->evaluacion = (string) ($act->evaluacion ?? '');
         $this->presupuesto = (string) ($act->presupuesto ?? '');
         $this->tipo_grupo = (string) $act->tipo_grupo;
@@ -115,6 +122,15 @@ class ProyectoForm extends Component
             ->map(fn ($id) => (string) (int) $id)
             ->values()
             ->all();
+    }
+
+    public function updatedIdTipoRegistro(): void
+    {
+        $this->idTipoRegistro = (int) $this->idTipoRegistro;
+        if (! in_array($this->idTipoRegistro, ExtActividadesService::idsTiposRegistro(), true)) {
+            $this->idTipoRegistro = ExtActividadesService::TIPO_REGISTRO_ACTIVIDAD;
+        }
+        $this->aplicarCamposSegunTipo();
     }
 
     public function updatedTipoGrupo(): void
@@ -232,6 +248,8 @@ class ProyectoForm extends Component
             return;
         }
 
+        $this->idTipoRegistro = (int) $this->idTipoRegistro;
+        $this->aplicarCamposSegunTipo();
         $this->nombre = trim($this->nombre);
         $this->lugar = trim($this->lugar);
         $this->horario = trim($this->horario);
@@ -318,6 +336,7 @@ class ProyectoForm extends Component
             }
 
             ExtActividadesService::guardar($this->actividadId, [
+                'id_tipo_registro' => $this->idTipoRegistro,
                 'nombre' => $this->nombre,
                 'lugar' => $this->lugar,
                 'horario' => $this->horario,
@@ -352,13 +371,13 @@ class ProyectoForm extends Component
             return;
         } catch (\Throwable $e) {
             report($e);
-            $this->avisoError('No se pudo guardar el proyecto. Intente nuevamente.');
+            $this->avisoError('No se pudo guardar la actividad. Intente nuevamente.');
 
             return;
         }
 
         $url = route(RutasPortal::index());
-        session()->flash('success', $this->actividadId ? 'Proyecto actualizado.' : 'Proyecto presentado a dirección.');
+        session()->flash('success', $this->actividadId ? 'Actividad actualizada.' : 'Actividad presentada a dirección.');
         $this->skipRender();
         $this->redirect($url, navigate: false);
     }
@@ -377,7 +396,13 @@ class ProyectoForm extends Component
      */
     private function reglas(): array
     {
+        $idsTipos = ExtActividadesService::tiposParaSelector()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        if ($idsTipos === []) {
+            $idsTipos = [ExtActividadesService::TIPO_REGISTRO_ACTIVIDAD];
+        }
+
         return [
+            'idTipoRegistro' => ['required', 'integer', Rule::in($idsTipos)],
             'nombre' => ['required', 'string', 'max:255'],
             'lugar' => ['nullable', 'string', 'max:255'],
             'horario' => ['nullable', 'string', 'max:255'],
@@ -398,8 +423,10 @@ class ProyectoForm extends Component
     private function mensajes(): array
     {
         return [
+            'idTipoRegistro.required' => 'Seleccione el tipo de registro.',
+            'idTipoRegistro.in' => 'El tipo de registro no es válido.',
             'nombre.required' => 'Indique el nombre de la actividad.',
-            'descripcion.required' => 'Complete la breve descripción.',
+            'descripcion.required' => 'Complete la descripción.',
             'fechas.required' => 'Indique al menos un día.',
             'fechas.*.fecha.required' => 'Cada día debe tener fecha.',
             'fechas.*.hora_inicio.regex' => 'El horario de inicio no es válido.',
@@ -540,9 +567,28 @@ class ProyectoForm extends Component
         ];
     }
 
+    private function aplicarCamposSegunTipo(): void
+    {
+        if (ExtActividadesService::tipoUsaCamposCompletos($this->idTipoRegistro)) {
+            if (trim($this->descripcion) === '') {
+                $this->descripcion = ExtActividadesService::DESCRIPCION_PLANTILLA;
+            }
+
+            return;
+        }
+
+        $this->evaluacion = '';
+        $this->presupuesto = '';
+        $this->idsOtrosDocentes = [];
+        if (trim($this->descripcion) === trim(ExtActividadesService::DESCRIPCION_PLANTILLA)) {
+            $this->descripcion = '';
+        }
+    }
+
     public function render()
     {
-        $tipo = ExtActividadesService::tipoRegistroDefault();
+        $tipos = ExtActividadesService::tiposParaSelector();
+        $tipoActual = $tipos->first(fn ($t) => (int) $t->id === (int) $this->idTipoRegistro);
         $cursos = ExtActividadesService::cursosDelContexto();
         $docentes = ExtActividadesService::docentesAulaParaSelector('', 200);
         $idActual = (int) Auth::id();
@@ -583,7 +629,9 @@ class ProyectoForm extends Component
         }
 
         return view('livewire.proyectos-extracurriculares.form', [
-            'tipoRegistroNombre' => $tipo?->nombre ?? 'Actividad Extraprogramática',
+            'tiposRegistro' => $tipos,
+            'tipoRegistroNombre' => $tipoActual?->nombre ?? 'Actividad Extraprogramática',
+            'usaCamposCompletos' => ExtActividadesService::tipoUsaCamposCompletos((int) $this->idTipoRegistro),
             'cursos' => $cursos,
             'docentes' => $docentes,
             'alumnosBusqueda' => $alumnosBusqueda,
@@ -592,7 +640,9 @@ class ProyectoForm extends Component
             'eyebrow' => RutasPortal::eyebrow(),
             'fechasAlpine' => $fechasAlpine,
         ])->layout(RutasPortal::layout(), [
-            'pageTitle' => $this->actividadId ? 'Editar proyecto extracurricular' : 'Nuevo proyecto extracurricular',
+            'pageTitle' => $this->soloLectura
+                ? 'Ver actividad'
+                : ($this->actividadId ? 'Editar actividad' : 'Nueva actividad'),
         ]);
     }
 }

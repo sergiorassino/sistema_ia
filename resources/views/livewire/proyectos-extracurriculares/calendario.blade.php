@@ -10,7 +10,7 @@
                 @if ($rutaIndexProyectos)
                     <a href="{{ route($rutaIndexProyectos) }}"
                        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-accent-50">
-                        Proyectos
+                        Actividades
                     </a>
                 @endif
             </div>
@@ -121,6 +121,9 @@
                             <button type="button" wire:click="verDetalle({{ (int) $ev['id'] }})"
                                     class="flex w-full cursor-pointer flex-col gap-1 rounded-2xl border border-accent-200 bg-white p-4 text-left transition hover:border-primary-500 hover:shadow-sm">
                                 <p class="text-base font-bold text-neutral-900">{{ $ev['nombre'] }}</p>
+                                @if (($ev['tipo'] ?? '') !== '')
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{{ $ev['tipo'] }}</p>
+                                @endif
                                 <p class="text-sm text-neutral-600">
                                     {{ $ev['hora'] !== '' ? $ev['hora'] : 'Horario no informado' }}
                                     @if ($ev['lugar'] !== '')
@@ -146,7 +149,7 @@
                     <div class="absolute inset-0 bg-neutral-900/55 backdrop-blur-sm" wire:click="cerrarDetalle()"></div>
                     <div class="relative z-10 my-auto flex w-full max-w-2xl max-h-[calc(100dvh-1.75rem)] flex-col overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
                         <div class="shrink-0 border-b border-accent-200 px-5 py-4">
-                            <h3 id="ext-cal-detalle-title" class="text-lg font-bold text-neutral-900">Detalle del proyecto</h3>
+                            <h3 id="ext-cal-detalle-title" class="text-lg font-bold text-neutral-900">Detalle de la actividad</h3>
                         </div>
                         <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                             @include('livewire.proyectos-extracurriculares.partials.detalle-actividad', ['actividad' => $detalle])

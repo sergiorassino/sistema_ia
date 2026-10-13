@@ -26,7 +26,7 @@ class GestionIndex extends Component
         abort_unless(
             tienePermiso(PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR),
             403,
-            'Sin permiso para gestionar proyectos extracurriculares.',
+            'Sin permiso para gestionar actividades institucionales.',
         );
     }
 
@@ -45,7 +45,7 @@ class GestionIndex extends Component
         $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
         if ($act === null) {
             $this->detalleId = null;
-            $this->js('window.seSwalError('.json_encode('No se encontró el proyecto en el ciclo y nivel actuales.', JSON_UNESCAPED_UNICODE).')');
+            $this->js('window.seSwalError('.json_encode('No se encontró la actividad en el ciclo y nivel actuales.', JSON_UNESCAPED_UNICODE).')');
 
             return;
         }
@@ -69,7 +69,7 @@ class GestionIndex extends Component
         }
 
         ExtActividadesService::aprobar($id, (int) Auth::id());
-        $this->dispatch('se-swal-exito', mensaje: 'Proyecto aprobado. Ya figura en el calendario escolar.');
+        $this->dispatch('se-swal-exito', mensaje: 'Actividad aprobada. Ya figura en el calendario escolar.');
     }
 
     public function volverAPendiente(int $id): void
@@ -83,7 +83,7 @@ class GestionIndex extends Component
         }
 
         ExtActividadesService::volverAPendiente($id);
-        $this->dispatch('se-swal-exito', mensaje: 'El proyecto volvió a pendiente y salió del calendario.');
+        $this->dispatch('se-swal-exito', mensaje: 'La actividad volvió a pendiente y salió del calendario.');
     }
 
     public function confirmarComunicar(int $id): void
@@ -92,19 +92,19 @@ class GestionIndex extends Component
 
         $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
         if ($act === null) {
-            $this->dispatch('se-swal-error', mensaje: 'No se encontró el proyecto en el ciclo y nivel actuales.');
+            $this->dispatch('se-swal-error', mensaje: 'No se encontró la actividad en el ciclo y nivel actuales.');
 
             return;
         }
         if (! $act->estaAprobada()) {
-            $this->dispatch('se-swal-error', mensaje: 'Solo se comunica un proyecto aprobado.');
+            $this->dispatch('se-swal-error', mensaje: 'Solo se comunica una actividad aprobada.');
 
             return;
         }
 
         $html = ExtActividadesService::htmlConfirmarComunicar($id, (int) Auth::id());
         if ($html === '') {
-            $this->dispatch('se-swal-error', mensaje: 'No hay destinatarios distintos del remitente para este proyecto.');
+            $this->dispatch('se-swal-error', mensaje: 'No hay destinatarios distintos del remitente para esta actividad.');
 
             return;
         }
@@ -178,6 +178,6 @@ class GestionIndex extends Component
             'mensajeTabla' => $tablasOk ? '' : ExtActividadesService::mensajeTablasFaltantes(),
             'registros' => $registros,
             'detalle' => $detalle,
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Proyectos extracurriculares']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Actividad Institucional']);
     }
 }

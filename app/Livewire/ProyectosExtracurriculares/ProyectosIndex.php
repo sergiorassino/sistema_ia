@@ -36,7 +36,7 @@ class ProyectosIndex extends Component
         }
 
         ExtActividadesService::eliminar($id, (int) Auth::id());
-        $this->dispatch('se-swal-exito', mensaje: 'Proyecto eliminado.');
+        $this->dispatch('se-swal-exito', mensaje: 'Actividad eliminada.');
         $this->resetPage();
     }
 
@@ -61,6 +61,6 @@ class ProyectosIndex extends Component
             'rutaCrear' => RutasPortal::crear(),
             'rutaEditar' => RutasPortal::editar(),
             'eyebrow' => RutasPortal::eyebrow(),
-        ])->layout(RutasPortal::layout(), ['pageTitle' => 'Proyectos extracurriculares']);
+        ])->layout(RutasPortal::layout(), ['pageTitle' => 'Actividad Institucional']);
     }
 }

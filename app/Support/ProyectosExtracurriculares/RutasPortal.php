@@ -61,13 +61,13 @@ final class RutasPortal
         abort_unless(
             MenuSecretariaPerfil::muestraProyectosExtracurriculares(),
             403,
-            'Proyectos extracurriculares solo están disponibles en el Menú de Secretaría (niveles pedagógicos).',
+            'Actividad Institucional solo está disponible en el Menú de Secretaría (niveles pedagógicos).',
         );
 
         abort_unless(
             tienePermiso(PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER),
             403,
-            'Sin permiso para ver proyectos extracurriculares.',
+            'Sin permiso para ver actividades institucionales.',
         );
     }
 }

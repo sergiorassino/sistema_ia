@@ -1,12 +1,12 @@
--- Permiso IA orden 109 — Ver proyectos extracurriculares en el Menú de Secretaría
--- Menú de Secretaría → PROYECTOS EXTRACURRICULARES → Proyectos extracurriculares
+-- Permiso IA orden 109 — Ver Actividad Institucional en el Menú de Secretaría
+-- Menú de Secretaría → ACTIVIDAD INSTITUCIONAL → Actividad Institucional
 -- Alcance: tabla permisos_ia + extensión de profesores.permisos_ia.
 -- Equivalente (solo INSERT catálogo): database/migrations/2026_09_26_120000_add_permiso_ia_orden_109_proyectos_extracurriculares_ver.php
 -- Revisar antes de ejecutar. No otorga el permiso (queda en 0); activarlo en Permisos por usuario.
 -- ADVERTENCIA: el UPDATE alarga profesores.permisos_ia. Irreversible en la práctica (no recorta la cadena).
 
 INSERT INTO `permisos_ia` (`id`, `orden`, `tema`, `descripcion`) VALUES
-(109, 109, 'PROYECTOS EXTRACURRICULARES', 'Ver y presentar proyectos extracurriculares propios en el Menú de Secretaría (listado, alta y edición).')
+(109, 109, 'ACTIVIDAD INSTITUCIONAL', 'Ver y presentar actividades institucionales propias en el Menú de Secretaría (listado, alta y edición).')
 ON DUPLICATE KEY UPDATE
     `orden` = VALUES(`orden`),
     `tema` = VALUES(`tema`),

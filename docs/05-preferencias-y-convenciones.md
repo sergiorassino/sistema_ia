@@ -527,7 +527,7 @@ Con `APP_ENV=local` **no se envía correo por SMTP** (comunicados, recuperación
 - La cuenta del colegio es solo `ento.ctaEnvioMail` / `passEnvioMail` del nivel (Parámetros → Correo institucional). No hay fallback a `MAIL_*` ni a otro archivo. Si el nivel no tiene cuenta, el correo no se envía.
 - En `.env` local conviene `MAIL_MAILER=log`. En producción: `APP_ENV=production` y `MAIL_MAILER=smtp`.
 - Escape hatch puntual en la PC: `MAIL_FORCE_REAL=true` (no usar en servidores).
-- Proyectos extracurriculares → **Comunicar**: además, en `APP_ENV=local` no se pide el medio email (solo el comunicado interno). En producción sí hay correo de refuerzo.
+- Actividad Institucional → **Comunicar**: además, en `APP_ENV=local` no se pide el medio email (solo el comunicado interno). En producción sí hay correo de refuerzo.
 
 ---
 

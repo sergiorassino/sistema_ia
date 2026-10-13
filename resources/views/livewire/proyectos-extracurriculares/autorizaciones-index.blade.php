@@ -3,7 +3,7 @@
         <section class="se-hero">
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
-                    <p class="se-eyebrow">Proyectos extracurriculares</p>
+                    <p class="se-eyebrow">Actividad Institucional</p>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Autorizaciones y notificaciones</h2>
                     <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}</p>
                 </div>
@@ -50,7 +50,12 @@
                                 </div>
                                 @foreach ($registros as $reg)
                                     <div class="gf-row gf-row-hover" wire:key="ext-aut-{{ $reg->id }}">
-                                        <div class="gf-td gf-col-actividad font-semibold text-neutral-900">{{ $reg->nombre }}</div>
+                                        <div class="gf-td gf-col-actividad">
+                                            <p class="font-semibold text-neutral-900">{{ $reg->nombre }}</p>
+                                            @if ($reg->tipoRegistro?->nombre)
+                                                <p class="mt-0.5 text-[11px] font-medium text-neutral-500">{{ $reg->tipoRegistro->nombre }}</p>
+                                            @endif
+                                        </div>
                                         <div class="gf-td gf-col-fechas text-neutral-700">
                                             {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($reg) ?: '—' }}
                                         </div>

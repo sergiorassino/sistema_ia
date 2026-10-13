@@ -1640,11 +1640,37 @@ class LegajoForm extends Component
         }
     }
 
+    /**
+     * Nombre: mayúsculas sostenidas si se escribió así; si no, primera mayúscula de cada palabra.
+     */
+    private function formatearNombreEstudiante(string $nombre): string
+    {
+        $nombre = trim($nombre);
+        if ($nombre === '') {
+            return '';
+        }
+
+        if ($this->textoEnMayusculasSostenidas($nombre)) {
+            return $nombre;
+        }
+
+        return ucwords(strtolower($nombre));
+    }
+
+    private function textoEnMayusculasSostenidas(string $texto): bool
+    {
+        if (! preg_match('/\p{L}/u', $texto)) {
+            return false;
+        }
+
+        return mb_strtoupper($texto, 'UTF-8') === $texto;
+    }
+
     private function formData(): array
     {
         $data = [
             'apellido' => strtoupper(trim($this->apellido)),
-            'nombre' => ucwords(strtolower(trim($this->nombre))),
+            'nombre' => $this->formatearNombreEstudiante($this->nombre),
             'dni' => $this->dni !== '' ? (int) $this->dni : null,
             'cuil' => $this->cuil,
             'fechnaci' => $this->fechnaci ?: null,
