@@ -4,17 +4,21 @@ namespace App\Support\Auth;
 
 use App\Mail\RecuperacionContrasenaMail;
 use App\Models\Legajo;
+use App\Models\Matricula;
 use App\Models\Profesor;
 use App\Support\DniInput;
+use App\Support\Mail\MailInstitucionalConfig;
 use App\Support\NivelSistema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
  * Recuperación de contraseña por correo (login staff y alumnos).
- * Usa el mailer `sistemas_escolares` (SE_CLIENTES_MAIL_* en .env).
+ * Remitente: cuenta institucional del nivel (`ento.ctaEnvioMail` / `passEnvioMail`,
+ * Parámetros → Correo institucional). No usa la casilla compartida SE_CLIENTES_MAIL_*.
  */
 final class RecuperacionContrasenaPorCorreo
 {
@@ -48,11 +52,6 @@ final class RecuperacionContrasenaPorCorreo
 
         RateLimiter::hit($throttleKey, self::SEGUNDOS_BLOQUEO);
 
-        $from = seClientesMailFrom();
-        if ($from === null) {
-            return RecuperacionContrasenaResultado::mailNoConfigurado();
-        }
-
         $datos = match ($origen) {
             RecuperacionContrasenaOrigen::Profesor => self::datosProfesor($dni, (int) $idNivel),
             RecuperacionContrasenaOrigen::Alumno => self::datosAlumno($dni),
@@ -71,31 +70,54 @@ final class RecuperacionContrasenaPorCorreo
             return RecuperacionContrasenaResultado::contrasenaNoEnviable();
         }
 
+        $idNivelMail = $origen === RecuperacionContrasenaOrigen::Profesor
+            ? (int) $idNivel
+            : (int) $datos['idNivel'];
+
+        if ($idNivelMail < 1 || ! MailInstitucionalConfig::aplicarParaNivel($idNivelMail)) {
+            Log::warning('Recuperación de contraseña: sin cuenta institucional del nivel', [
+                'origen' => $origen->value,
+                'idNivel' => $idNivelMail,
+            ]);
+
+            return RecuperacionContrasenaResultado::mailNoConfigurado();
+        }
+
+        $cuenta = MailInstitucionalConfig::leer($idNivelMail);
+        $fromAddress = trim((string) ($cuenta['username'] ?? ''));
+        $fromName = trim((string) ($cuenta['from_name'] ?? ''));
+
         $portalEtiqueta = match ($origen) {
             RecuperacionContrasenaOrigen::Profesor => 'Portal del personal',
             RecuperacionContrasenaOrigen::Alumno => 'Portal de estudiantes',
         };
 
-        $nombreInstitucion = trim((string) config('tenant.nombre', 'Colegio'));
+        $nombreInstitucion = ($fromName !== '' && ! str_contains($fromName, '@'))
+            ? $fromName
+            : trim((string) config('tenant.nombre', 'Colegio'));
         if ($nombreInstitucion === '') {
             $nombreInstitucion = trim((string) config('app.name', 'Sistemas Escolares'));
         }
+        if ($fromName === '') {
+            $fromName = $nombreInstitucion;
+        }
 
         try {
-            Mail::mailer('sistemas_escolares')->to($datos['email'])->send(new RecuperacionContrasenaMail(
+            Mail::to($datos['email'])->send(new RecuperacionContrasenaMail(
                 nombreDestinatario: $datos['nombre'],
                 contrasena: $contrasena,
                 portalEtiqueta: $portalEtiqueta,
                 nombreInstitucion: $nombreInstitucion,
-                fromAddress: $from['address'],
-                fromName: $from['name'],
+                fromAddress: $fromAddress,
+                fromName: $fromName,
             ));
 
             Log::info('Recuperación de contraseña enviada', [
                 'origen' => $origen->value,
                 'dni' => $dni,
-                'idNivel' => $idNivel,
+                'idNivel' => $idNivelMail,
                 'destinatario' => $datos['email'],
+                'remitente' => $fromAddress,
             ]);
 
             return RecuperacionContrasenaResultado::enviado($datos['email']);
@@ -103,7 +125,7 @@ final class RecuperacionContrasenaPorCorreo
             Log::error('Error al enviar recuperación de contraseña', [
                 'origen' => $origen->value,
                 'dni' => $dni,
-                'idNivel' => $idNivel,
+                'idNivel' => $idNivelMail,
                 'destinatario' => $datos['email'],
                 'error' => $e->getMessage(),
             ]);
@@ -115,7 +137,7 @@ final class RecuperacionContrasenaPorCorreo
     }
 
     /**
-     * @return array{nombre: string, email: string, pwrd: string}|null
+     * @return array{nombre: string, email: string, pwrd: string, idNivel: int}|null
      */
     private static function datosProfesor(string $dni, int $idNivel): ?array
     {
@@ -132,18 +154,24 @@ final class RecuperacionContrasenaPorCorreo
             'nombre' => trim($profesor->apellido.', '.$profesor->nombre, ' ,'),
             'email' => self::normalizarEmail($profesor->email ?? null, $profesor->emailInsti ?? null),
             'pwrd' => (string) ($profesor->pwrd ?? ''),
+            'idNivel' => $idNivel,
         ];
     }
 
     /**
-     * @return array{nombre: string, email: string, pwrd: string}|null
+     * @return array{nombre: string, email: string, pwrd: string, idNivel: int}|null
      */
     private static function datosAlumno(string $dni): ?array
     {
+        $columnas = ['id', 'apellido', 'nombre', 'email', 'pwrd'];
+        if (Schema::hasColumn('legajos', 'idnivel')) {
+            $columnas[] = 'idnivel';
+        }
+
         $legajo = Legajo::query()
             ->where('dni', $dni)
             ->orderBy('id')
-            ->first(['apellido', 'nombre', 'email', 'pwrd']);
+            ->first($columnas);
 
         if ($legajo === null) {
             return null;
@@ -153,7 +181,22 @@ final class RecuperacionContrasenaPorCorreo
             'nombre' => trim($legajo->apellido.', '.$legajo->nombre, ' ,'),
             'email' => self::normalizarEmail($legajo->email ?? null),
             'pwrd' => (string) ($legajo->pwrd ?? ''),
+            'idNivel' => self::idNivelAlumno($legajo),
         ];
+    }
+
+    private static function idNivelAlumno(Legajo $legajo): int
+    {
+        $idNivel = (int) ($legajo->idnivel ?? 0);
+        if ($idNivel > 0) {
+            return $idNivel;
+        }
+
+        return (int) (Matricula::query()
+            ->where('idLegajos', (int) $legajo->id)
+            ->orderByDesc('idTerlec')
+            ->orderByDesc('id')
+            ->value('idNivel') ?? 0);
     }
 
     private static function normalizarEmail(?string ...$candidatos): string

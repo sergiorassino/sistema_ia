@@ -1024,28 +1024,35 @@ if (! function_exists('tenantCooperadoraReciboEmailAsunto')) {
 
 if (! function_exists('seClientesMailFrom')) {
     /**
-     * Remitente del mailer `sistemas_escolares` (recuperación de contraseña, avisos SE).
-     * null si faltan SE_CLIENTES_MAIL_* en .env.
+     * Remitente del mailer `sistemas_escolares` (avisos SE, no la recuperación de contraseña).
+     * Lee `config('mail.mailers.sistemas_escolares')`, no `env()`: con `config:cache`
+     * el .env no se carga y `env()` fuera de config/*.php devuelve vacío.
+     * null si faltan usuario, contraseña o host (SE_CLIENTES_MAIL_*).
      *
      * @return array{address: string, name: string}|null
      */
     function seClientesMailFrom(): ?array
     {
-        $address = trim((string) env('SE_CLIENTES_MAIL_FROM_ADDRESS', ''));
-        if ($address === '') {
-            $address = trim((string) env('SE_CLIENTES_MAIL_USERNAME', ''));
+        $mailer = config('mail.mailers.sistemas_escolares', []);
+        if (! is_array($mailer)) {
+            return null;
         }
-        $password = trim((string) env('SE_CLIENTES_MAIL_PASSWORD', ''));
-        $host = trim((string) env('SE_CLIENTES_MAIL_HOST', ''));
+
+        $address = trim((string) ($mailer['from']['address'] ?? ''));
+        if ($address === '') {
+            $address = trim((string) ($mailer['username'] ?? ''));
+        }
+        $password = trim((string) ($mailer['password'] ?? ''));
+        $host = trim((string) ($mailer['host'] ?? ''));
 
         if ($address === '' || $password === '' || $host === '') {
             return null;
         }
 
-        $nameEnv = trim((string) env('SE_CLIENTES_MAIL_FROM_NAME', ''));
-        $name = $nameEnv !== ''
-            ? $nameEnv
-            : trim((string) config('app.name', 'Sistemas Escolares'));
+        $name = trim((string) ($mailer['from']['name'] ?? ''));
+        if ($name === '') {
+            $name = trim((string) config('app.name', 'Sistemas Escolares'));
+        }
 
         return [
             'address' => $address,

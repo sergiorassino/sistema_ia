@@ -73,8 +73,8 @@ return [
         ],
 
         /**
-         * Sistemas Escolares — recuperación de contraseña y otros avisos transversales.
-         * Cuenta compartida por todos los colegios: SE_CLIENTES_MAIL_* (.env).
+         * Avisos transversales de Sistemas Escolares (SE_CLIENTES_MAIL_*).
+         * La recuperación de contraseña no usa este mailer: sale por ento.ctaEnvioMail del nivel.
          */
         'sistemas_escolares' => [
             'transport' => 'smtp',
@@ -85,6 +85,10 @@ return [
             'password' => env('SE_CLIENTES_MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
+            'from' => [
+                'address' => env('SE_CLIENTES_MAIL_FROM_ADDRESS', env('SE_CLIENTES_MAIL_USERNAME')),
+                'name' => env('SE_CLIENTES_MAIL_FROM_NAME', 'Sistemas Escolares'),
+            ],
         ],
 
         'ses' => [

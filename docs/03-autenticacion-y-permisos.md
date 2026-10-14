@@ -104,6 +104,12 @@ Las contraseñas se almacenan en **texto plano** en las tablas legacy (`profesor
 **Motivo operativo:** secretaría informa la clave al docente/alumno; la contraseña debe poder
 consultarse en ABM y enviarse por correo en recuperación olvidada cuando corresponda.
 
+**Olvidé mi contraseña:** el correo sale de la cuenta institucional del nivel
+(`ento.ctaEnvioMail` / `passEnvioMail`, Parámetros → Correo institucional). En el portal
+del personal se usa el nivel elegido en el diálogo. En el portal de estudiantes, el nivel
+del legajo (o, si no tiene, el de su matrícula). Sin esa cuenta el envío no se hace y no
+se usa otra casilla.
+
 ### 2.1 Alta de legajo docente (Menú de Secretaría)
 
 Al **crear** un legajo nuevo en **Legajos del docente** (`LegajoProfesorForm`), el sistema asigna automáticamente:

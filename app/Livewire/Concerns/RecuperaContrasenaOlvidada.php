@@ -51,7 +51,7 @@ trait RecuperaContrasenaOlvidada
             ),
             RecuperacionContrasenaResultado::ESTADO_MAIL_NO_CONFIGURADO => $this->dispatch(
                 'se-swal-error',
-                mensaje: 'El envío de correo no está configurado en el servidor. Contacte al administrador del sistema.',
+                mensaje: 'El correo institucional de este nivel no está configurado. Contacte al administrador del sistema.',
                 titulo: 'Correo no disponible',
             ),
             RecuperacionContrasenaResultado::ESTADO_DNI_INVALIDO => $this->dispatch(
