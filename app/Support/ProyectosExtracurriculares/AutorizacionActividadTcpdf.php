@@ -39,7 +39,7 @@ final class AutorizacionActividadTcpdf extends TCPDF
         parent::__construct('P', 'mm', 'A4', true, 'UTF-8', false);
         $this->SetCreator('Sistema Escolar');
         $this->SetAuthor('Sistema Escolar');
-        $this->SetTitle('Formulario de autorización de padres para actividad extraprogramática');
+        $this->SetTitle('Formulario de autorización de padres para la actividad');
         $this->SetSubject('Autorización de padres o tutores');
         $this->setPrintHeader(false);
         $this->setPrintFooter(false);
@@ -112,14 +112,12 @@ final class AutorizacionActividadTcpdf extends TCPDF
         $this->SetTextColor(0, 0, 0);
 
         TcpdfFuenteArial::aplicar($this, 'B', 12);
-        $this->MultiCell($ancho, 6, 'FORMULARIO DE AUTORIZACIÓN DE PADRES PARA ACTIVIDAD EXTRAPROGRAMÁTICA.', 0, 'C', false, 1);
+        $this->MultiCell($ancho, 6, 'FORMULARIO DE AUTORIZACIÓN DE PADRES PARA LA ACTIVIDAD:', 0, 'C', false, 1);
         $this->Ln(1);
 
         $nombre = trim($viaje['nombre']);
-        if ($nombre !== '') {
-            TcpdfFuenteArial::aplicar($this, 'B', 11);
-            $this->MultiCell($ancho, 5.5, '"'.$nombre.'"', 0, 'C', false, 1);
-        }
+        TcpdfFuenteArial::aplicar($this, 'B', 11);
+        $this->MultiCell($ancho, 5.5, $nombre !== '' ? '"'.$nombre.'"' : '______________________________', 0, 'C', false, 1);
 
         $centro = $this->institucion !== '' ? $this->institucion : '______________________________';
         $this->lineaEtiquetaValorCentrada($ancho, 'Centro Educativo: ', $centro);
