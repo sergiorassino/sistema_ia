@@ -59,6 +59,7 @@ use App\Http\Controllers\ListadoFamiliasPdfController;
 use App\Http\Controllers\Push\SuscribirController;
 use App\Http\Controllers\Horarios\HorarioCursoPdfController;
 use App\Http\Controllers\Horarios\HorarioProfesorPdfController;
+use App\Http\Controllers\Horarios\ListadoProfesoresHorariosPdfController;
 use App\Http\Controllers\Horarios\ProfesoresPresentesPdfController;
 use App\Http\Controllers\Examenes\ActaVolantePreviosPdfController;
 use App\Http\Controllers\Examenes\MateriasAdeudadasEntradaController;
@@ -365,6 +366,7 @@ use App\Livewire\Seguimiento\Gabinete\GabineteForm;
 use App\Livewire\Seguimiento\Gabinete\GabineteIndex;
 use App\Livewire\Seguimiento\Inasistencias\InasistenciaForm;
 use App\Livewire\Horarios\HorariosCargaIndex;
+use App\Livewire\Horarios\ListadoProfesoresHorariosIndex;
 use App\Livewire\Horarios\HorariosConfigIndex;
 use App\Livewire\Horarios\HorariosImpresionIndex;
 use App\Livewire\Horarios\ProfesoresPresentesIndex;
@@ -1276,6 +1278,12 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('horarios.profesores-presentes');
     Route::get('/horarios/profesores-presentes/pdf', ProfesoresPresentesPdfController::class)
         ->name('horarios.profesores-presentes.pdf');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS)->group(function () {
+        Route::get('/horarios/listado-profesores', ListadoProfesoresHorariosIndex::class)
+            ->name('horarios.listado-profesores');
+        Route::get('/horarios/listado-profesores/pdf', ListadoProfesoresHorariosPdfController::class)
+            ->name('horarios.listado-profesores.pdf');
+    });
     Route::get('/horarios/pdf/curso', HorarioCursoPdfController::class)
         ->name('horarios.pdf.curso');
     Route::get('/horarios/pdf/profesor', HorarioProfesorPdfController::class)

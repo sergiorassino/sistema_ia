@@ -39,6 +39,7 @@ Permiso IA orden **13** (`PermisosIaCatalog::HORARIOS`): *Configuración de hora
 | Carga de horarios | Secretaría → HORARIOS | Orden **13** |
 | Impresión de horarios | Secretaría → HORARIOS | Cualquier usuario de Secretaría (**sin** 13) |
 | Profesores presentes | Secretaría → HORARIOS | Igual que Impresión (**sin** 13) |
+| Listado de Profesores con Horarios | Secretaría → HORARIOS | Orden **115** (`PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS`). Ficha: [listado-profesores-horarios.md](listado-profesores-horarios.md) |
 | Horario de clase (PDF) | Alumnos | Tenant + matrícula del ciclo de autogestión |
 | Mi horario (PDF) | Docentes | Flag de menú del nivel de sesión; solo el docente logueado |
 
@@ -136,6 +137,7 @@ Si el tenant lo habilita en el nivel de sesión: ítem **Mi horario** abre en ot
 | PDF alumno | `app/Http/Controllers/Alumnos/HorarioClasePdfController.php` |
 | PDF docente (portal) | `app/Http/Controllers/PortalDocente/HorarioDocentePdfController.php` |
 | Profesores presentes | ver [profesores-presentes.md](profesores-presentes.md) |
+| Listado de Profesores con Horarios | ver [listado-profesores-horarios.md](listado-profesores-horarios.md) |
 | Permiso en Livewire | `app/Livewire/Horarios/Concerns/RequiresPermisoHorariosConfigCarga.php` |
 | Rutas | `horarios.config`, `horarios.carga`, `horarios.impresion`, `horarios.pdf.curso`, `horarios.pdf.profesor`, `horarios.profesores-presentes` (+ `.pdf`), `alumnos.horario-clase`, `portalDocente.horario` |
 | Menú | `resources/views/layouts/app.blade.php` (grupo HORARIOS) |
@@ -156,7 +158,7 @@ Si el tenant lo habilita en el nivel de sesión: ítem **Mi horario** abre en ot
 
 - [ ] Lecturas de grilla/PDF/listados van a `horarios26`, no a `horarios`.
 - [ ] Carga inserta/borra solo `horarios26` (`idHora` 1–10 + `idTurnoClase`).
-- [ ] Permiso 13 solo en Configuración y Carga; Impresión y Profesores presentes abiertos a Secretaría.
+- [ ] Permiso 13 solo en Configuración y Carga; Impresión y Profesores presentes abiertos a Secretaría. El listado semanal usa el permiso 115.
 - [ ] Filtro `schoolCtx()` en consultas y PDF.
 - [ ] Reloj por turno (`relojPorTurnoClase`); doble jornada: ambas bandas.
 - [ ] Días con códigos legacy (`lun`, `mar`, …).

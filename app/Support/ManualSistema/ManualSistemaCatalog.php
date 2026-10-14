@@ -695,7 +695,7 @@ final class ManualSistemaCatalog
             [
                 'grupo'       => 'HORARIOS',
                 'grupo_id'    => self::idGrupo('HORARIOS'),
-                'descripcion' => 'Armado e impresión de grillas horarias por curso o docente, y listado de profesores presentes en una franja horaria.',
+                'descripcion' => 'Armado e impresión de grillas horarias por curso o docente, listado de profesores presentes en una franja y listado semanal de horarios por docente.',
                 'modulos'     => [
                     self::mod(
                         'Configuración de horarios',
@@ -752,6 +752,22 @@ final class ManualSistemaCatalog
                             'Si un módulo del reloj no tiene hora interpretable (por ejemplo 08:00-08:40), no entra en el filtro de franja.',
                             'La impresión no usa el permiso orden 13; ese permiso solo habilita Configuración y Carga de horarios.',
                         ],
+                    ),
+                    self::mod(
+                        'Listado de Profesores con Horarios',
+                        'Menú Horarios → Listado de Profesores con Horarios',
+                        'Lista los docentes que tienen materia y curso asignados, con una columna por cada día (lunes a viernes) y el horario en que asisten.',
+                        [
+                            'Abra Listado de Profesores con Horarios.',
+                            'Revise el listado del nivel y ciclo activos.',
+                            'Pulse Imprimir PDF para abrir el documento en otra pestaña.',
+                        ],
+                        [
+                            'Solo entran docentes con asignación (ppc) y celdas cargadas en la grilla (horarios26) de lunes a viernes.',
+                            'Cada columna muestra la hora reloj; los módulos seguidos se unen (por ejemplo 08:00 a 12:40). Si hay un hueco, aparecen varios tramos.',
+                            'Sábado y domingo no tienen columna. El permiso es el orden 115, distinto del 13 de Configuración y Carga.',
+                        ],
+                        'Permiso IA orden 115',
                     ),
                 ],
             ],

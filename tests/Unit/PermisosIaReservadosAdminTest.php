@@ -114,6 +114,28 @@ class PermisosIaReservadosAdminTest extends TestCase
         $this->assertSame('LEGAJOS ESTUDIANTES', $fila['tema']);
     }
 
+    public function test_listado_profesores_horarios_esta_en_horarios(): void
+    {
+        $this->assertSame(115, PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS);
+
+        $fila = null;
+        $ids = [];
+        $ordenes = [];
+        foreach (PermisosIaCatalog::definicionCatalogo() as $row) {
+            $ids[] = (int) $row['id'];
+            $ordenes[] = (int) $row['orden'];
+            if ((int) $row['orden'] === PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS) {
+                $fila = $row;
+            }
+        }
+
+        $this->assertNotNull($fila);
+        $this->assertSame(115, $fila['id']);
+        $this->assertSame('HORARIOS', $fila['tema']);
+        $this->assertSame(count($ids), count(array_unique($ids)));
+        $this->assertSame(count($ordenes), count(array_unique($ordenes)));
+    }
+
     public function test_descripcion_con_aviso_no_duplica(): void
     {
         $una = PermisosIaCatalog::descripcionConAvisoAdmin('Términos lectivos.');

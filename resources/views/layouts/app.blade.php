@@ -1404,6 +1404,26 @@
                         </svg>
                         <span class="truncate">Profesores presentes</span>
                     </a>
+
+                    @if (tienePermiso(\App\Support\PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS))
+                        @php
+                            if (! \Illuminate\Support\Facades\Route::has('horarios.listado-profesores')) {
+                                throw new \RuntimeException("Sidebar: falta la ruta 'horarios.listado-profesores'.");
+                            }
+                        @endphp
+                        <a href="{{ route('horarios.listado-profesores') }}"
+                           @class([
+                               'se-sidebar-link flex items-center gap-2 px-2.5 py-2 text-[13px] rounded-md transition-colors',
+                               'is-active shadow-sm' => request()->routeIs('horarios.listado-profesores', 'horarios.listado-profesores.pdf'),
+                           ])
+                           title="{{ seSidebarTooltip('Docentes con materia y curso, horario de lunes a viernes', \App\Support\PermisosIaCatalog::LISTADO_PROFESORES_HORARIOS) }}">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                            </svg>
+                            <span class="truncate">Listado de Profesores con Horarios</span>
+                        </a>
+                    @endif
             </div>
 
         @include('layouts.partials.sidebar-grupo-estadisticas')

@@ -48,6 +48,9 @@ final class PermisosIaCatalog
 
     public const HORARIOS = 13;
 
+    /** Listado semanal (lun–vie) de docentes con materia y curso asignados, en PDF. */
+    public const LISTADO_PROFESORES_HORARIOS = 115;
+
     public const PERMISOS_POR_USUARIO = 14;
 
     /** Consultar usuarios con permiso por módulo o función (módulo Permisos por Tarea). */
@@ -303,6 +306,7 @@ final class PermisosIaCatalog
             ['id' => 48, 'orden' => self::ASIGNACION_PROFESORES_POR_CURSO, 'tema' => 'LEGAJOS DOCENTES', 'descripcion' => 'Asignar y quitar docentes en materias por curso (ppc); consultar cursos por profesor.'],
             ['id' => 13, 'orden' => self::EXAMENES, 'tema' => 'EXÁMENES', 'descripcion' => 'Módulo de exámenes: materias adeudadas, gestión, listados y borrado de inscripciones.'],
             ['id' => 14, 'orden' => self::HORARIOS, 'tema' => 'HORARIOS', 'descripcion' => 'Configuración de horarios (turnos, días, reloj) y carga de horas cátedra por docente. No incluye impresión de horarios.'],
+            ['id' => 115, 'orden' => self::LISTADO_PROFESORES_HORARIOS, 'tema' => 'HORARIOS', 'descripcion' => 'Listado de profesores con horarios: docentes con materia y curso asignados, e impresión PDF con el horario de asistencia de lunes a viernes.'],
             ['id' => 15, 'orden' => self::PERMISOS_POR_USUARIO, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar permisos concedidos por usuario (módulo Permisos por Usuario).'],
             ['id' => 99, 'orden' => self::PERMISOS_POR_TAREA, 'tema' => 'ADMINISTRACIÓN', 'descripcion' => 'Consultar usuarios con permiso por módulo o función (módulo Permisos por Tarea).'],
             ['id' => 17, 'orden' => self::CALIF_CIERRE_ANUAL, 'tema' => 'CALIFICACIONES SECUNDARIO', 'descripcion' => 'Cierre anual: historial de calificaciones y pasaje al matriz (Dic / Feb).'],

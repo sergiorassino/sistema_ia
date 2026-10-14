@@ -37,6 +37,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Cierre anual (secundario) | [cierre-anual-secundario.md](cierre-anual-secundario.md) |
 | Horarios (configuración, carga, impresión) | [horarios.md](horarios.md) |
 | Profesores presentes | [profesores-presentes.md](profesores-presentes.md) |
+| Listado de Profesores con Horarios | [listado-profesores-horarios.md](listado-profesores-horarios.md) |
 | Preceptores por curso | [preceptores-por-curso.md](preceptores-por-curso.md) |
 | Calendario Institucional | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |
 | Constancia de Alumno Regular | [certificado-alumno-regular.md](certificado-alumno-regular.md) |
