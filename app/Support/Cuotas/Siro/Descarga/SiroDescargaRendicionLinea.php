@@ -14,6 +14,11 @@ final class SiroDescargaRendicionLinea
     /** Hasta canal (pos. 124–126, base 1). */
     public const LARGO_MINIMO = 126;
 
+    /** Código de barras: pos. 45–103 (base 1). */
+    public const OFFSET_CODIGO_BARRAS = 44;
+
+    public const LARGO_CODIGO_BARRAS = 59;
+
     /**
      * @return array{
      *     fechaPago: string,
@@ -67,15 +72,22 @@ final class SiroDescargaRendicionLinea
     }
 
     /**
-     * Algunos archivos traen ceros de más antes del prefijo 0448/0449 en el campo de barras.
+     * Prefijo 0448/0449 dentro del campo de barras (offset 44).
+     *
+     * Algunos archivos anteponen ceros al inicio de ese campo; se saltean solo ahí.
+     * No se recorre el resto de la línea: el importe (termina en 0) y un id de usuario
+     * que empieza en 448/449 forman un prefijo falso antes del campo.
      */
     private static function extraerCodigoBarras(string $linea): string
     {
-        if (preg_match('/04(?:48|49)\d{55}/', $linea, $coincidencia) === 1) {
-            return substr($coincidencia[0], 0, 59);
+        $campo = substr($linea, self::OFFSET_CODIGO_BARRAS, self::LARGO_CODIGO_BARRAS);
+        if (preg_match('/^(0*)(04(?:48|49))/', $campo, $coincidencia) === 1) {
+            $inicio = self::OFFSET_CODIGO_BARRAS + strlen($coincidencia[1]);
+
+            return substr($linea, $inicio, self::LARGO_CODIGO_BARRAS);
         }
 
-        return substr($linea, 44, 59);
+        return $campo;
     }
 
     public static function importeDesdeCentavos(int $centavos): float

@@ -62,7 +62,7 @@ Posiciones **0-based** en código (el manual SIRO las documenta en base 1):
 | Importe pagado | 24, 11 | **centavos** enteros |
 | Id usuario | 35, 8 | |
 | Concepto | 43, 1 | |
-| Código de barras | 44, 59 (o regex `0448`/`0449`…) | Familia 448 vs 449/444/447 |
+| Código de barras | 44, 59 | Prefijo `0448`/`0449` solo dentro de este campo. Ceros de más al inicio del campo se saltean. No buscar el prefijo en el resto de la línea. |
 | Id comprobante | 103, 20 | Electrónicos: suele ser el `id_factura` |
 | Canal | 123, 3 | BPD, PF, BPR, … |
 | Texto tras canal | 126+ | Motivo de rechazo (BPR 402 FONDOS INSUFICIENTES, …) |
@@ -264,6 +264,7 @@ php artisan test --filter=SiroDescargaRendicion
 - No meter 448 en el provisorio 1 (upload cercano).
 - No poner avisos de provisorio en `rendicionesroela.obs`.
 - No buscar el id SIRO con `LIKE '%id%'` suelto: el id también puede aparecer en el código de barras. Usar `patronLikeIdPagoSiro` (226 `_` + id + `%`).
+- No buscar `0448`/`0449` en toda la línea. El campo es el offset 44 (59 dígitos). Un importe que termina en `0` y un legajo terminado en 448 o 449 arman un prefijo falso justo antes.
 - No omitir la segunda fila del **mismo** archivo: se registra con `PAGO DUPLICADO`. Omitir solo si esa cadena/id **ya estaba en BD** en esta planilla.
 - No abortar el impacto porque la cadena SIRO ya esté en `cuotaspagos`: el duplicado de la misma planilla debe imputarse (saldo negativo).
 - No calcular el desglose con el estado actual de la cuota si hay cupón con vencimientos que cierran.

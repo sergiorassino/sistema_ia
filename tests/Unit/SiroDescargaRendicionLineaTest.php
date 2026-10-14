@@ -62,6 +62,53 @@ class SiroDescargaRendicionLineaTest extends TestCase
         $this->assertStringStartsWith('0449', $parsed['codigoBarras']);
     }
 
+    public function test_barcode_0448_en_posicion_oficial_aunque_el_importe_arme_0449(): void
+    {
+        $barcode = '04480091002449030912610140011430000140012700000515001105225';
+        $this->assertSame(SiroDescargaRendicionLinea::LARGO_CODIGO_BARRAS, strlen($barcode));
+
+        $header = '202610102026101520261014'.'00011430000'.'44903091'.'2';
+        $this->assertSame(SiroDescargaRendicionLinea::OFFSET_CODIGO_BARRAS, strlen($header));
+        $this->assertSame('0449', substr($header, 34, 4));
+
+        $linea = str_pad($header.$barcode.str_repeat('0', 20).'PF', SiroDescargaRendicionLinea::LARGO_MINIMO, ' ', STR_PAD_RIGHT);
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame($barcode, $parsed['codigoBarras']);
+        $this->assertSame('PF', $parsed['canalAbrev']);
+    }
+
+    public function test_barcode_salta_ceros_solo_al_inicio_del_campo(): void
+    {
+        $barcode = '04481032840860000002606120010980000140012200000515001102925';
+        $this->assertSame(SiroDescargaRendicionLinea::LARGO_CODIGO_BARRAS, strlen($barcode));
+
+        $header = '202606162026061820260612'.'00005550000'.'86000000'.'0';
+        $linea = str_pad($header.'00'.$barcode, SiroDescargaRendicionLinea::LARGO_MINIMO, '0', STR_PAD_RIGHT);
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame($barcode, $parsed['codigoBarras']);
+    }
+
+    public function test_no_toma_un_0449_posterior_si_el_campo_empieza_con_otro_prefijo(): void
+    {
+        $campo = '0447'.str_repeat('1', 55);
+        $header = str_repeat('0', SiroDescargaRendicionLinea::OFFSET_CODIGO_BARRAS);
+        $linea = str_pad(
+            $header.$campo.'0449'.str_repeat('2', 55),
+            220,
+            ' ',
+            STR_PAD_RIGHT,
+        );
+
+        $parsed = SiroDescargaRendicionLinea::parsear($linea);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame($campo, $parsed['codigoBarras']);
+    }
+
     public function test_extrae_barcode_0448_con_ceros_iniciales_de_mas(): void
     {
         $linea = rtrim(file('d:/_enviar/_06-Junio/sanfra/nuevo/CobranzasSiro_Cta. 1102_20260625txt.txt')[0], "\r\n");
