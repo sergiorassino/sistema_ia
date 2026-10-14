@@ -57,12 +57,29 @@ class AutorizacionActividadRedaccionTest extends TestCase
         $this->assertStringContainsString('Curso 3ro división A', $parrafo);
         $this->assertStringContainsString('Calle San Martín Número 120', $parrafo);
         $this->assertStringContainsString('Localidad de General Deheza', $parrafo);
+        $this->assertStringContainsString('a realizar la actividad', $parrafo);
+        $this->assertStringNotContainsString('un Viaje Educativo', $parrafo);
         $this->assertStringContainsString('salida desde General Deheza hasta Córdoba Capital', $parrafo);
         $this->assertStringContainsString('para participar de visitas guiadas al Jardín Botánico', $parrafo);
         $this->assertStringContainsString('a realizarse el día 16 de octubre de 2026', $parrafo);
         $this->assertStringContainsString('acompañado/a de Raquel Monetti', $parrafo);
         $this->assertStringContainsString('según Agenda, desde el inicio al final del viaje:', $parrafo);
         $this->assertStringNotContainsString('05:00', $parrafo);
+    }
+
+    public function test_parrafo_de_actividad_sin_viaje_omite_lugar_y_descripcion(): void
+    {
+        $viaje = $this->viaje();
+        $viaje['es_viaje'] = false;
+
+        $parrafo = AutorizacionActividadRedaccion::parrafoAutorizacion($this->alumno(), $viaje);
+
+        $this->assertStringContainsString('a realizar la actividad', $parrafo);
+        $this->assertStringContainsString('a realizarse el día 16 de octubre de 2026', $parrafo);
+        $this->assertStringNotContainsString('Córdoba Capital', $parrafo);
+        $this->assertStringNotContainsString('Jardín Botánico', $parrafo);
+        $this->assertStringNotContainsString('salida desde', $parrafo);
+        $this->assertStringNotContainsString('viaje', $parrafo);
     }
 
     public function test_detalle_sigue_el_orden_del_formulario(): void

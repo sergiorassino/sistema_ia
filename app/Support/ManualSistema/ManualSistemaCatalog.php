@@ -763,18 +763,18 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Proponer una actividad',
                         'Menú de Docentes o Menú de Secretaría → Calendario Institucional',
-                        'Docentes, directivos y secretarios presentan a dirección una actividad: fechas, lugar, grupo, docentes y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
+                        'Docentes, directivos y secretarios presentan a dirección una actividad: fechas, grupo y docentes. El tipo Viaje Educativo además pide lugar y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
                         [
                             'Abra Calendario Institucional y pulse Nueva actividad.',
-                            'Complete el nombre, las fechas (un renglón por día, con horario de inicio y fin) y el lugar.',
+                            'Complete el nombre y las fechas (un renglón por día, con horario de inicio y fin). En Viaje Educativo indique también el lugar.',
                             'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
-                            'Indique docente(s) a cargo. En Actividad Extraprogramática puede sumar otros docentes (legajos con rol Profesor/a).',
-                            'En Actividad Extraprogramática complete la breve descripción (Actividades Previas / Durante / Posteriores), la evaluación y el presupuesto. En Actividad de Nivel y Actividad Institucional complete la descripción.',
+                            'Indique docente(s) a cargo. En Viaje Educativo puede sumar otros docentes (legajos con rol Profesor/a).',
+                            'En Viaje Educativo complete la breve descripción (Actividades Previas / Durante / Posteriores), la evaluación y el presupuesto.',
                             'Pulse Presentar a dirección. La actividad queda pendiente hasta que dirección la apruebe.',
                         ],
                         [
                             'Solo puede editar o eliminar una actividad mientras esté pendiente.',
-                            'Los tipos son Actividad Extraprogramática, Actividad de Nivel y Actividad Institucional. Los dos últimos no piden evaluación, presupuesto ni otros docentes.',
+                            'Los tipos son Viaje Educativo, Actividad de Nivel y Actividad Institucional. Los dos últimos no piden lugar, descripción, evaluación, presupuesto ni otros docentes.',
                         ],
                         'Menú de Secretaría: permiso IA orden 109. Menú de Docentes: sin permiso IA',
                     ),
@@ -797,7 +797,7 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Autorizaciones y notificaciones',
                         'Menú de Secretaría → Calendario Institucional → Autorizaciones y notificaciones',
-                        'Lista las actividades ya aprobadas. Al elegir Autorizaciones se ven los alumnos del viaje y se emite un PDF con los datos personales y los de la actividad, listo para la firma del padre, la madre o el tutor. Notificaciones muestra el mismo listado; el PDF se agregará después.',
+                        'Lista las actividades ya aprobadas. Al elegir Autorizaciones se ven los alumnos y se emite un PDF con los datos personales, listo para la firma del padre, la madre o el tutor. En Viaje Educativo el PDF incluye lugar, descripción, salida y regreso. En Actividad de Nivel y Actividad Institucional esos datos no van. Notificaciones muestra el mismo listado; el PDF se agregará después.',
                         [
                             'Abra Autorizaciones y notificaciones.',
                             'Busque la actividad aprobada y pulse Autorizaciones.',

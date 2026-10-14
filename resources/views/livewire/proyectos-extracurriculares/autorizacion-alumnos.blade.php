@@ -27,7 +27,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Alumnos de la actividad</p>
                 @if ($esAutorizacion)
                     <p class="mt-1 text-sm text-neutral-600">
-                        Revise quiénes reciben la autorización. El PDF trae los datos personales y los del viaje; la firma queda en blanco.
+                        Revise quiénes reciben la autorización. El PDF trae los datos personales y los de la actividad; la firma queda en blanco.
                     </p>
                 @else
                     <p class="mt-1 text-sm text-neutral-600">

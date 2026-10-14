@@ -1,6 +1,6 @@
 @php
     $act = $actividad;
-    $tipoNombre = $act->tipoRegistro?->nombre ?? 'Actividad Extraprogramática';
+    $tipoNombre = $act->tipoRegistro?->nombre ?? 'Viaje Educativo';
     $camposCompletos = \App\Support\ProyectosExtracurriculares\ExtActividadesService::tipoUsaCamposCompletos((int) $act->id_tipo_registro);
     $fechasTxt = \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($act);
     $grupoTxt = \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoGrupoInvolucrado($act);
@@ -34,10 +34,12 @@
             <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Horario</p>
             <p class="mt-0.5">{{ $act->horario ?: '—' }}</p>
         </div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Lugar</p>
-            <p class="mt-0.5">{{ $act->lugar ?: '—' }}</p>
-        </div>
+        @if ($camposCompletos)
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Lugar</p>
+                <p class="mt-0.5">{{ $act->lugar ?: '—' }}</p>
+            </div>
+        @endif
         <div>
             <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Estado</p>
             <p class="mt-0.5">
@@ -65,11 +67,11 @@
             <p class="mt-0.5">{{ $otros }}</p>
         </div>
     @endif
-    <div>
-        <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">{{ $camposCompletos ? 'Breve descripción' : 'Descripción' }}</p>
-        <p class="mt-1 whitespace-pre-wrap leading-relaxed text-neutral-700">{{ $act->descripcion ?: '—' }}</p>
-    </div>
     @if ($camposCompletos)
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Breve descripción</p>
+            <p class="mt-1 whitespace-pre-wrap leading-relaxed text-neutral-700">{{ $act->descripcion ?: '—' }}</p>
+        </div>
         <div>
             <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Evaluación</p>
             <p class="mt-1 whitespace-pre-wrap leading-relaxed text-neutral-700">{{ $act->evaluacion ?: '—' }}</p>

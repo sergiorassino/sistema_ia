@@ -406,7 +406,9 @@ class ProyectoForm extends Component
             'nombre' => ['required', 'string', 'max:255'],
             'lugar' => ['nullable', 'string', 'max:255'],
             'horario' => ['nullable', 'string', 'max:255'],
-            'descripcion' => ['required', 'string', 'max:8000'],
+            'descripcion' => ExtActividadesService::tipoEsViajeEducativo($this->idTipoRegistro)
+                ? ['required', 'string', 'max:8000']
+                : ['nullable', 'string', 'max:8000'],
             'evaluacion' => ['nullable', 'string', 'max:4000'],
             'presupuesto' => ['nullable', 'string', 'max:4000'],
             'tipo_grupo' => ['required', Rule::in([ExtActividad::TIPO_GRUPO_CURSOS, ExtActividad::TIPO_GRUPO_ALUMNOS])],
@@ -569,7 +571,7 @@ class ProyectoForm extends Component
 
     private function aplicarCamposSegunTipo(): void
     {
-        if (ExtActividadesService::tipoUsaCamposCompletos($this->idTipoRegistro)) {
+        if (ExtActividadesService::tipoEsViajeEducativo($this->idTipoRegistro)) {
             if (trim($this->descripcion) === '') {
                 $this->descripcion = ExtActividadesService::DESCRIPCION_PLANTILLA;
             }
@@ -577,12 +579,11 @@ class ProyectoForm extends Component
             return;
         }
 
+        $this->lugar = '';
+        $this->descripcion = '';
         $this->evaluacion = '';
         $this->presupuesto = '';
         $this->idsOtrosDocentes = [];
-        if (trim($this->descripcion) === trim(ExtActividadesService::DESCRIPCION_PLANTILLA)) {
-            $this->descripcion = '';
-        }
     }
 
     public function render()
@@ -630,7 +631,7 @@ class ProyectoForm extends Component
 
         return view('livewire.proyectos-extracurriculares.form', [
             'tiposRegistro' => $tipos,
-            'tipoRegistroNombre' => $tipoActual?->nombre ?? 'Actividad Extraprogramática',
+            'tipoRegistroNombre' => $tipoActual?->nombre ?? 'Viaje Educativo',
             'usaCamposCompletos' => ExtActividadesService::tipoUsaCamposCompletos((int) $this->idTipoRegistro),
             'cursos' => $cursos,
             'docentes' => $docentes,

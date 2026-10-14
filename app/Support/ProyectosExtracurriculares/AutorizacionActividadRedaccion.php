@@ -195,11 +195,13 @@ final class AutorizacionActividadRedaccion
      *   acompanantes: string,
      *   horario: string,
      *   participacion: string,
+     *   es_viaje: bool,
      *   jornadas: list<array{fecha: string, fecha_larga: string, inicio: string, fin: string}>
      * }  $viaje
      */
     public static function parrafoAutorizacion(array $alumno, array $viaje): string
     {
+        $esViaje = ($viaje['es_viaje'] ?? true) !== false;
         $estudiante = trim($alumno['apellido'].', '.$alumno['nombre']);
         if ($estudiante === ',' || $estudiante === '') {
             $estudiante = '_______________________________';
@@ -225,20 +227,26 @@ final class AutorizacionActividadRedaccion
             $domicilioTxt = 'Calle '.$calle;
         }
 
-        $desde = trim($viaje['localidad_salida']);
-        $hasta = trim($viaje['lugar']);
-        if ($desde !== '' && $hasta !== '') {
-            $salida = ', con salida desde '.$desde.' hasta '.$hasta;
-        } elseif ($hasta !== '') {
-            $salida = ', hasta '.$hasta;
-        } elseif ($desde !== '') {
-            $salida = ', con salida desde '.$desde;
-        } else {
-            $salida = '';
+        $salida = '';
+        $participar = '';
+        if ($esViaje) {
+            $desde = trim($viaje['localidad_salida']);
+            $hasta = trim($viaje['lugar']);
+            if ($desde !== '' && $hasta !== '') {
+                $salida = ', con salida desde '.$desde.' hasta '.$hasta;
+            } elseif ($hasta !== '') {
+                $salida = ', hasta '.$hasta;
+            } elseif ($desde !== '') {
+                $salida = ', con salida desde '.$desde;
+            }
+
+            $participacion = trim($viaje['participacion']);
+            $participar = $participacion !== '' ? ' para participar de '.$participacion : '';
         }
 
-        $participacion = trim($viaje['participacion']);
-        $participar = $participacion !== '' ? ' para participar de '.$participacion : '';
+        $cierre = $esViaje
+            ? ', según Agenda, desde el inicio al final del viaje:'
+            : '.';
 
         $acompanantes = trim($viaje['acompanantes']);
         $acomp = $acompanantes !== ''
@@ -251,12 +259,12 @@ final class AutorizacionActividadRedaccion
             .' Alumno/a del '.$cursoTxt
             .', con domicilio en '.$domicilioTxt
             .', de la Localidad de '.self::oLinea($alumno['localidad'], '_________________________________')
-            .' a realizar un Viaje Educativo'
+            .' a realizar la actividad'
             .$salida
             .$participar
             .self::fraseCuando($viaje)
             .$acomp
-            .', según Agenda, desde el inicio al final del viaje:';
+            .$cierre;
     }
 
     /**

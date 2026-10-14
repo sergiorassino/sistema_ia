@@ -93,12 +93,17 @@ final class ExtActividadesService
     }
 
     /**
-     * Actividad extraprogramática: evaluación, presupuesto y otros docentes.
-     * Actividad de nivel e institucional: nombre, fechas, lugar, horario, descripción, grupo y docentes a cargo.
+     * Viaje educativo (tipo 1): lugar, descripción, evaluación, presupuesto y otros docentes.
+     * Actividad de nivel e institucional: nombre, fechas, horario, grupo y docentes a cargo.
      */
-    public static function tipoUsaCamposCompletos(int $idTipo): bool
+    public static function tipoEsViajeEducativo(int $idTipo): bool
     {
         return $idTipo === self::TIPO_REGISTRO_ACTIVIDAD;
+    }
+
+    public static function tipoUsaCamposCompletos(int $idTipo): bool
+    {
+        return self::tipoEsViajeEducativo($idTipo);
     }
 
     public static function tipoRegistroDefault(): ?ExtTipoRegistro
@@ -212,12 +217,14 @@ final class ExtActividadesService
 
             $evaluacion = $camposCompletos ? trim((string) ($datos['evaluacion'] ?? '')) : '';
             $presupuesto = $camposCompletos ? trim((string) ($datos['presupuesto'] ?? '')) : '';
+            $lugar = $camposCompletos ? trim((string) ($datos['lugar'] ?? '')) : '';
+            $descripcion = $camposCompletos ? (string) ($datos['descripcion'] ?? '') : '';
             $payload = [
                 'id_tipo_registro' => $idTipo,
                 'nombre' => $datos['nombre'],
-                'lugar' => $datos['lugar'] !== '' ? $datos['lugar'] : null,
+                'lugar' => $lugar !== '' ? $lugar : null,
                 'horario' => $horario !== '' ? $horario : null,
-                'descripcion' => $datos['descripcion'],
+                'descripcion' => $descripcion,
                 'evaluacion' => $evaluacion !== '' ? $evaluacion : null,
                 'presupuesto' => $presupuesto !== '' ? $presupuesto : null,
                 'tipo_grupo' => $datos['tipo_grupo'],
@@ -1060,21 +1067,24 @@ final class ExtActividadesService
             ->filter()
             ->implode('; ');
 
+        $esViaje = self::tipoEsViajeEducativo((int) $act->id_tipo_registro);
         $lineas = [
             'Se aprobó la siguiente actividad:',
             '',
             'Actividad: '.$act->nombre,
-            'Tipo: '.($act->tipoRegistro?->nombre ?? 'Actividad Extraprogramática'),
+            'Tipo: '.($act->tipoRegistro?->nombre ?? 'Viaje Educativo'),
             'Fechas: '.($fechas !== '' ? $fechas : '—'),
-            'Lugar: '.($act->lugar ?: '—'),
-            'Horario: '.($act->horario ?: '—'),
-            'Grupo involucrado: '.($grupo !== '' ? $grupo : '—'),
-            'Docente a cargo: '.($aCargo !== '' ? $aCargo : '—'),
         ];
+        if ($esViaje) {
+            $lineas[] = 'Lugar: '.($act->lugar ?: '—');
+        }
+        $lineas[] = 'Horario: '.($act->horario ?: '—');
+        $lineas[] = 'Grupo involucrado: '.($grupo !== '' ? $grupo : '—');
+        $lineas[] = 'Docente a cargo: '.($aCargo !== '' ? $aCargo : '—');
         if ($otros !== '') {
             $lineas[] = 'Otros docentes: '.$otros;
         }
-        if (trim((string) $act->descripcion) !== '') {
+        if ($esViaje && trim((string) $act->descripcion) !== '') {
             $lineas[] = '';
             $lineas[] = 'Descripción:';
             $lineas[] = trim((string) $act->descripcion);

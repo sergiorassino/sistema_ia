@@ -185,6 +185,7 @@ final class AutorizacionActividadDatos
      *   acompanantes: string,
      *   horario: string,
      *   participacion: string,
+     *   es_viaje: bool,
      *   jornadas: list<array{fecha: string, fecha_larga: string, inicio: string, fin: string}>
      * }
      */
@@ -237,19 +238,24 @@ final class AutorizacionActividadDatos
             }
         }
 
+        $esViaje = ExtActividadesService::tipoEsViajeEducativo((int) $actividad->id_tipo_registro);
+
         return [
             'nombre' => trim((string) $actividad->nombre),
-            'lugar' => trim((string) ($actividad->lugar ?? '')),
-            'localidad_salida' => trim((string) ($header['localidad'] ?? '')),
+            'lugar' => $esViaje ? trim((string) ($actividad->lugar ?? '')) : '',
+            'localidad_salida' => $esViaje ? trim((string) ($header['localidad'] ?? '')) : '',
             'institucion' => $institucion,
             'acompanantes' => AutorizacionActividadRedaccion::enumerar($nombres),
             'horario' => AutorizacionActividadRedaccion::horarioComplementario(
                 trim((string) ($actividad->horario ?? '')),
                 $jornadas
             ),
-            'participacion' => AutorizacionActividadRedaccion::textoParticipacion(
-                AutorizacionActividadRedaccion::seccionesCronograma((string) ($actividad->descripcion ?? ''))
-            ),
+            'participacion' => $esViaje
+                ? AutorizacionActividadRedaccion::textoParticipacion(
+                    AutorizacionActividadRedaccion::seccionesCronograma((string) ($actividad->descripcion ?? ''))
+                )
+                : '',
+            'es_viaje' => $esViaje,
             'jornadas' => $jornadas,
         ];
     }

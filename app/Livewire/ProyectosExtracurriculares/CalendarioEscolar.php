@@ -232,7 +232,9 @@ class CalendarioEscolar extends Component
                 'tipo' => $tipo,
                 'hora' => $hora,
                 'ymd' => $f->fecha instanceof Carbon ? $f->fecha->format('Y-m-d') : (string) $f->fecha,
-                'lugar' => (string) ($act->lugar ?? ''),
+                'lugar' => ExtActividadesService::tipoEsViajeEducativo((int) $act->id_tipo_registro)
+                    ? (string) ($act->lugar ?? '')
+                    : '',
                 'clase' => MatriculaNivelEstilo::claseCalendarioActividad(
                     $institucional,
                     (string) ($act->nivel?->nivel ?? ''),

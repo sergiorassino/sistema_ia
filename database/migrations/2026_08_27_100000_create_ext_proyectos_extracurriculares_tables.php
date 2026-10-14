@@ -25,7 +25,7 @@ return new class extends Migration
             if (! $existe) {
                 DB::table('ext_tipo_registro')->insert([
                     'id' => 1,
-                    'nombre' => 'Actividad Extraprogramática',
+                    'nombre' => 'Viaje Educativo',
                 ]);
             }
         }

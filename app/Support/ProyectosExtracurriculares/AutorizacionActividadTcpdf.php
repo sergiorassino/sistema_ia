@@ -57,6 +57,7 @@ final class AutorizacionActividadTcpdf extends TCPDF
      *   acompanantes: string,
      *   horario: string,
      *   participacion: string,
+     *   es_viaje: bool,
      *   jornadas: list<array{fecha: string, fecha_larga: string, inicio: string, fin: string}>
      * }  $viaje
      * @param  list<array{apellido: string, nombre: string, dni: string, grupo_sanguineo: string, curso: string, division: string, calle: string, numero: string, localidad: string}>  $alumnos
@@ -101,6 +102,7 @@ final class AutorizacionActividadTcpdf extends TCPDF
      *   acompanantes: string,
      *   horario: string,
      *   participacion: string,
+     *   es_viaje: bool,
      *   jornadas: list<array{fecha: string, fecha_larga: string, inicio: string, fin: string}>
      * }  $viaje
      * @param  array{apellido: string, nombre: string, dni: string, grupo_sanguineo: string, curso: string, division: string, calle: string, numero: string, localidad: string}  $alumno
@@ -135,24 +137,26 @@ final class AutorizacionActividadTcpdf extends TCPDF
         );
         $this->Ln(4);
 
-        $this->tituloSeccion('CRONOGRAMA DE ACTIVIDADES.');
-        TcpdfFuenteArial::aplicar($this, '', 11);
-        $this->SetX(self::MARGEN_L);
-        TcpdfMultiCellJustificado::escribir(
-            $this,
-            $ancho,
-            5,
-            AutorizacionActividadRedaccion::fraseTraslado($viaje)
-        );
-        $this->Ln(4);
-
-        $this->tituloSeccion('Detalle del Viaje Educativo de acuerdo al lugar de arribo o descenso:');
-        TcpdfFuenteArial::aplicar($this, '', 11);
-        foreach (AutorizacionActividadRedaccion::lineasDetalle($viaje) as $linea) {
+        if (($viaje['es_viaje'] ?? true) !== false) {
+            $this->tituloSeccion('CRONOGRAMA DE ACTIVIDADES.');
+            TcpdfFuenteArial::aplicar($this, '', 11);
             $this->SetX(self::MARGEN_L);
-            $this->MultiCell($ancho, 5.5, $linea, 0, 'L', false, 1);
+            TcpdfMultiCellJustificado::escribir(
+                $this,
+                $ancho,
+                5,
+                AutorizacionActividadRedaccion::fraseTraslado($viaje)
+            );
+            $this->Ln(4);
+
+            $this->tituloSeccion('Detalle del Viaje Educativo de acuerdo al lugar de arribo o descenso:');
+            TcpdfFuenteArial::aplicar($this, '', 11);
+            foreach (AutorizacionActividadRedaccion::lineasDetalle($viaje) as $linea) {
+                $this->SetX(self::MARGEN_L);
+                $this->MultiCell($ancho, 5.5, $linea, 0, 'L', false, 1);
+            }
+            $this->Ln(4);
         }
-        $this->Ln(4);
 
         $this->asegurarEspacio(42);
         $this->tituloSeccion('AUTORIZACIÓN DEL/LOS PADRE/S O TUTOR.');

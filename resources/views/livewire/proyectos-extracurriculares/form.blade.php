@@ -2,9 +2,6 @@
     <style>
         .ext-proy-form[data-ext-tipo="2"] .ext-proy-solo-completo,
         .ext-proy-form[data-ext-tipo="3"] .ext-proy-solo-completo { display: none; }
-        .ext-proy-form[data-ext-tipo="1"] .ext-proy-label-reducido { display: none; }
-        .ext-proy-form[data-ext-tipo="2"] .ext-proy-label-completo,
-        .ext-proy-form[data-ext-tipo="3"] .ext-proy-label-completo { display: none; }
         @media (min-width: 1024px) {
             .ext-proy-form[data-ext-tipo="1"] .ext-proy-docentes-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -170,7 +167,7 @@
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
+                    <div class="ext-proy-solo-completo">
                         <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Lugar</label>
                         <input type="text" wire:model="lugar" maxlength="255" @disabled($soloLectura) class="form-input w-full" autocomplete="off">
                     </div>
@@ -305,16 +302,14 @@
                 </div>
             </div>
 
-            <div class="se-card space-y-4 p-5 sm:p-6">
+            <div class="se-card space-y-4 p-5 sm:p-6 ext-proy-solo-completo">
                 <div>
-                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
-                        <span class="ext-proy-label-completo">Breve descripción</span><span class="ext-proy-label-reducido">Descripción</span>
-                    </label>
+                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Breve descripción</label>
                     <textarea wire:model="descripcion" data-ext-descripcion rows="8" @disabled($soloLectura)
                               class="form-input w-full leading-relaxed"></textarea>
                     @error('descripcion') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
-                <div class="ext-proy-solo-completo space-y-4">
+                <div class="space-y-4">
                     <div>
                         <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Evaluación</label>
                         <textarea wire:model="evaluacion" rows="4" @disabled($soloLectura)

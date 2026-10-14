@@ -59,7 +59,7 @@
                                         <div class="gf-td gf-col-fechas text-neutral-700">
                                             {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoResumenFechas($reg) ?: '—' }}
                                         </div>
-                                        <div class="gf-td gf-col-lugar text-neutral-700">{{ $reg->lugar ?: '—' }}</div>
+                                        <div class="gf-td gf-col-lugar text-neutral-700">{{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::tipoEsViajeEducativo((int) $reg->id_tipo_registro) ? ($reg->lugar ?: '—') : '—' }}</div>
                                         <div class="gf-td gf-col-grupo text-neutral-700">
                                             @if ($reg->tipo_grupo === \App\Models\ExtActividad::TIPO_GRUPO_CURSOS)
                                                 {{ \App\Support\ProyectosExtracurriculares\ExtActividadesService::textoGrupoInvolucrado($reg) ?: '—' }}
