@@ -61,6 +61,6 @@ class ProyectosIndex extends Component
             'rutaCrear' => RutasPortal::crear(),
             'rutaEditar' => RutasPortal::editar(),
             'eyebrow' => RutasPortal::eyebrow(),
-        ])->layout(RutasPortal::layout(), ['pageTitle' => 'Actividad Institucional']);
+        ])->layout(RutasPortal::layout(), ['pageTitle' => 'Calendario Institucional']);
     }
 }

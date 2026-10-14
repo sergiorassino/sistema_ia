@@ -4418,6 +4418,57 @@ html.se-pwa-can-install [data-se-pwa-install-wrap] {
 .se-cal-chip-hora {
     @apply shrink-0 text-[10px] font-bold tabular-nums opacity-80;
 }
+/* Mismos colores de texto que el chip de nivel del legajo del estudiante. */
+.se-cal-nivel-inicial {
+    color: #3f6212;
+}
+.se-cal-nivel-primario {
+    color: #854d0e;
+}
+.se-cal-nivel-secundario {
+    color: #1d4ed8;
+}
+.se-cal-nivel-default {
+    color: #404040;
+}
+.se-cal-nivel-institucional {
+    color: #111111;
+}
+.se-cal-chip.se-cal-nivel-inicial {
+    background-color: #ecfccb;
+}
+.se-cal-chip.se-cal-nivel-primario {
+    background-color: #fef9c3;
+}
+.se-cal-chip.se-cal-nivel-secundario {
+    background-color: #eff6ff;
+}
+.se-cal-chip.se-cal-nivel-default {
+    background-color: var(--color-accent-50);
+}
+.se-cal-chip.se-cal-nivel-institucional {
+    background-color: #f5f5f5;
+}
+.se-cal-chip.se-cal-nivel-inicial:hover {
+    background-color: #d9f99d;
+    color: #3f6212;
+}
+.se-cal-chip.se-cal-nivel-primario:hover {
+    background-color: #fef08a;
+    color: #854d0e;
+}
+.se-cal-chip.se-cal-nivel-secundario:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+.se-cal-chip.se-cal-nivel-default:hover {
+    background-color: var(--color-accent-100);
+    color: #404040;
+}
+.se-cal-chip.se-cal-nivel-institucional:hover {
+    background-color: #e5e5e5;
+    color: #111111;
+}
 .se-cal-semana {
     display: grid;
     grid-template-columns: repeat(7, minmax(8rem, 1fr));

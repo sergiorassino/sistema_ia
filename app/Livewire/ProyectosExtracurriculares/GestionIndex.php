@@ -178,6 +178,6 @@ class GestionIndex extends Component
             'mensajeTabla' => $tablasOk ? '' : ExtActividadesService::mensajeTablasFaltantes(),
             'registros' => $registros,
             'detalle' => $detalle,
-        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Actividad Institucional']);
+        ])->layout(layoutMenuStaff(), ['pageTitle' => 'Calendario Institucional']);
     }
 }

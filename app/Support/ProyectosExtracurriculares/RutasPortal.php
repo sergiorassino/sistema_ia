@@ -61,7 +61,7 @@ final class RutasPortal
         abort_unless(
             MenuSecretariaPerfil::muestraProyectosExtracurriculares(),
             403,
-            'Actividad Institucional solo está disponible en el Menú de Secretaría (niveles pedagógicos).',
+            'Calendario Institucional solo está disponible en el Menú de Secretaría (niveles pedagógicos).',
         );
 
         abort_unless(

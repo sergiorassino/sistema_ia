@@ -3,7 +3,7 @@
         <section class="se-hero">
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
-                    <p class="se-eyebrow">Actividad Institucional</p>
+                    <p class="se-eyebrow">Calendario Institucional</p>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Autorizaciones y notificaciones</h2>
                     <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Ciclo lectivo {{ schoolCtx()->terlecAno() }}</p>
                 </div>

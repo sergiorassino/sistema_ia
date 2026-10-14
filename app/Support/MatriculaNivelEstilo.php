@@ -16,6 +16,34 @@ final class MatriculaNivelEstilo
 
     public const CHIP_DEFAULT = 'se-mat-nivel-default';
 
+    public const CAL_INICIAL = 'se-cal-nivel-inicial';
+
+    public const CAL_PRIMARIO = 'se-cal-nivel-primario';
+
+    public const CAL_SECUNDARIO = 'se-cal-nivel-secundario';
+
+    public const CAL_DEFAULT = 'se-cal-nivel-default';
+
+    public const CAL_INSTITUCIONAL = 'se-cal-nivel-institucional';
+
+    /**
+     * Clase de color del texto en el calendario (mes, semana y día).
+     * Actividad institucional en negro; el resto, el mismo color que el chip del legajo.
+     */
+    public static function claseCalendarioActividad(bool $institucional, ?string $nivelNombre): string
+    {
+        if ($institucional) {
+            return self::CAL_INSTITUCIONAL;
+        }
+
+        return match (self::claseChipPorNombreNivel($nivelNombre)) {
+            self::CHIP_INICIAL => self::CAL_INICIAL,
+            self::CHIP_PRIMARIO => self::CAL_PRIMARIO,
+            self::CHIP_SECUNDARIO => self::CAL_SECUNDARIO,
+            default => self::CAL_DEFAULT,
+        };
+    }
+
     public static function claseChipPorNombreNivel(?string $nivelNombre): string
     {
         $nivelNombre = mb_strtolower(trim((string) $nivelNombre));

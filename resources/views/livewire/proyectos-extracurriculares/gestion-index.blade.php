@@ -4,7 +4,7 @@
             <div class="se-hero-inner flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0 space-y-1">
                     <p class="se-eyebrow">Dirección</p>
-                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Actividad Institucional</h2>
+                    <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Calendario Institucional</h2>
                     <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · Aprobación y comunicación</p>
                 </div>
                 <a href="{{ route('calendarioEscolar') }}"

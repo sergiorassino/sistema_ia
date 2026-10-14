@@ -50,6 +50,11 @@ class ExtActividad extends Model
         return $this->belongsTo(ExtTipoRegistro::class, 'id_tipo_registro');
     }
 
+    public function nivel(): BelongsTo
+    {
+        return $this->belongsTo(Nivel::class, 'id_nivel');
+    }
+
     public function proponente(): BelongsTo
     {
         return $this->belongsTo(Profesor::class, 'id_profesor_proponente');

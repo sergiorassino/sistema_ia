@@ -38,7 +38,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Horarios (configuración, carga, impresión) | [horarios.md](horarios.md) |
 | Profesores presentes | [profesores-presentes.md](profesores-presentes.md) |
 | Preceptores por curso | [preceptores-por-curso.md](preceptores-por-curso.md) |
-| Actividad Institucional | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |
+| Calendario Institucional | [proyectos-extracurriculares.md](proyectos-extracurriculares.md) |
 | Constancia de Alumno Regular | [certificado-alumno-regular.md](certificado-alumno-regular.md) |
 | Certificado de Asistencia del Profesor | [certificado-asistencia-profesor.md](certificado-asistencia-profesor.md) |
 | Certificado Jardín / Sexto Grado | [certificado-jardin-sexto.md](certificado-jardin-sexto.md) |

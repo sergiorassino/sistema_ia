@@ -40,8 +40,8 @@ final class PortalDocenteMenuCatalog
                     'portalDocente.proyectosExtracurriculares.create',
                     'portalDocente.proyectosExtracurriculares.edit',
                 ],
-                'label' => 'Actividad Institucional',
-                'title' => 'Proponer actividades institucionales a dirección',
+                'label' => 'Calendario Institucional',
+                'title' => 'Proponer actividades a dirección',
                 'icon' => 'document',
             ],
             [
@@ -186,8 +186,8 @@ final class PortalDocenteMenuCatalog
                     'portalDocente.proyectosExtracurriculares.create',
                     'portalDocente.proyectosExtracurriculares.edit',
                 ],
-                'label' => 'Actividad Institucional',
-                'title' => 'Proponer actividades institucionales a dirección',
+                'label' => 'Calendario Institucional',
+                'title' => 'Proponer actividades a dirección',
                 'icon' => 'document',
             ],
             [
@@ -304,8 +304,8 @@ final class PortalDocenteMenuCatalog
                     'portalDocente.proyectosExtracurriculares.create',
                     'portalDocente.proyectosExtracurriculares.edit',
                 ],
-                'label' => 'Actividad Institucional',
-                'title' => 'Proponer actividades institucionales a dirección',
+                'label' => 'Calendario Institucional',
+                'title' => 'Proponer actividades a dirección',
                 'icon' => 'document',
             ],
             [

@@ -3,6 +3,7 @@
 namespace App\Livewire\ProyectosExtracurriculares;
 
 use App\Models\ExtActividad;
+use App\Support\MatriculaNivelEstilo;
 use App\Support\PermisosIaCatalog;
 use App\Support\ProfesorMenuPortal;
 use App\Support\ProyectosExtracurriculares\ExtActividadesService;
@@ -209,7 +210,7 @@ class CalendarioEscolar extends Component
 
     /**
      * @param  \Illuminate\Support\Collection<int, \App\Models\ExtFecha>  $eventos
-     * @return list<array{id: int, nombre: string, tipo: string, hora: string, ymd: string, lugar: string}>
+     * @return list<array{id: int, nombre: string, tipo: string, hora: string, ymd: string, lugar: string, clase: string}>
      */
     private static function mapearEventos($eventos): array
     {
@@ -222,13 +223,20 @@ class CalendarioEscolar extends Component
             $ini = ExtActividadesService::formatearHora((string) ($f->hora_inicio ?? ''));
             $fin = ExtActividadesService::formatearHora((string) ($f->hora_fin ?? ''));
             $hora = trim($ini.($ini !== '' && $fin !== '' ? '–' : '').$fin);
+            $tipo = (string) ($act->tipoRegistro?->nombre ?? '');
+            $institucional = (int) $act->id_tipo_registro === ExtActividadesService::TIPO_REGISTRO_INSTITUCIONAL
+                || mb_strtolower(trim($tipo)) === 'actividad institucional';
             $out[] = [
                 'id' => (int) $act->id,
                 'nombre' => (string) $act->nombre,
-                'tipo' => (string) ($act->tipoRegistro?->nombre ?? ''),
+                'tipo' => $tipo,
                 'hora' => $hora,
                 'ymd' => $f->fecha instanceof Carbon ? $f->fecha->format('Y-m-d') : (string) $f->fecha,
                 'lugar' => (string) ($act->lugar ?? ''),
+                'clase' => MatriculaNivelEstilo::claseCalendarioActividad(
+                    $institucional,
+                    (string) ($act->nivel?->nivel ?? ''),
+                ),
             ];
         }
 

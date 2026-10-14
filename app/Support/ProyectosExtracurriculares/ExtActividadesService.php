@@ -743,7 +743,7 @@ final class ExtActividadesService
                     ->where('id_terlec', self::idTerlecContexto())
                     ->where('estado', ExtActividad::ESTADO_APROBADO);
             })
-            ->with(['actividad.tipoRegistro'])
+            ->with(['actividad.tipoRegistro', 'actividad.nivel'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get();

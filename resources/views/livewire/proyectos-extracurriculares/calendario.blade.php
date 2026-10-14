@@ -74,7 +74,7 @@
                                             <button type="button"
                                                     wire:key="ext-cal-chip-{{ $celda['ymd'] }}-{{ $ev['id'] }}"
                                                     wire:click.stop="verDetalle({{ (int) $ev['id'] }})"
-                                                    class="se-cal-chip cursor-pointer"
+                                                    @class(['se-cal-chip cursor-pointer', $ev['clase']])
                                                     title="{{ $ev['nombre'] }}">
                                                 @if ($ev['hora'] !== '')
                                                     <span class="se-cal-chip-hora">{{ $ev['hora'] }}</span>
@@ -99,13 +99,13 @@
                                         <button type="button"
                                                 wire:key="ext-cal-sem-{{ $dia['ymd'] }}-{{ $ev['id'] }}"
                                                 wire:click.stop="verDetalle({{ (int) $ev['id'] }})"
-                                                class="se-cal-chip se-cal-chip--block cursor-pointer">
+                                                @class(['se-cal-chip se-cal-chip--block cursor-pointer', $ev['clase']])>
                                             @if ($ev['hora'] !== '')
                                                 <span class="se-cal-chip-hora">{{ $ev['hora'] }}</span>
                                             @endif
                                             <span>{{ $ev['nombre'] }}</span>
                                             @if ($ev['lugar'] !== '')
-                                                <span class="block text-[10px] font-normal text-primary-800/80">{{ $ev['lugar'] }}</span>
+                                                <span class="block text-[10px] font-normal opacity-80">{{ $ev['lugar'] }}</span>
                                             @endif
                                         </button>
                                     @empty
@@ -120,7 +120,7 @@
                         @forelse ($eventosDia as $ev)
                             <button type="button" wire:click="verDetalle({{ (int) $ev['id'] }})"
                                     class="flex w-full cursor-pointer flex-col gap-1 rounded-2xl border border-accent-200 bg-white p-4 text-left transition hover:border-primary-500 hover:shadow-sm">
-                                <p class="text-base font-bold text-neutral-900">{{ $ev['nombre'] }}</p>
+                                <p @class(['text-base font-bold', $ev['clase']])>{{ $ev['nombre'] }}</p>
                                 @if (($ev['tipo'] ?? '') !== '')
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{{ $ev['tipo'] }}</p>
                                 @endif

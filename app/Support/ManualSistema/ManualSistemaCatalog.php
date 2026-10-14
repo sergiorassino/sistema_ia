@@ -756,16 +756,16 @@ final class ManualSistemaCatalog
                 ],
             ],
             [
-                'grupo'       => 'ACTIVIDAD INSTITUCIONAL',
-                'grupo_id'    => self::idGrupo('ACTIVIDAD INSTITUCIONAL'),
+                'grupo'       => 'CALENDARIO INSTITUCIONAL',
+                'grupo_id'    => self::idGrupo('CALENDARIO INSTITUCIONAL'),
                 'descripcion' => 'Propuestas de docentes, aprobación de dirección y calendario escolar compartido.',
                 'modulos'     => [
                     self::mod(
                         'Proponer una actividad',
-                        'Menú de Docentes o Menú de Secretaría → Actividad Institucional',
+                        'Menú de Docentes o Menú de Secretaría → Calendario Institucional',
                         'Docentes, directivos y secretarios presentan a dirección una actividad: fechas, lugar, grupo, docentes y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
                         [
-                            'Abra Actividad Institucional y pulse Nueva actividad.',
+                            'Abra Calendario Institucional y pulse Nueva actividad.',
                             'Complete el nombre, las fechas (un renglón por día, con horario de inicio y fin) y el lugar.',
                             'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
                             'Indique docente(s) a cargo. En Actividad Extraprogramática puede sumar otros docentes (legajos con rol Profesor/a).',
@@ -780,7 +780,7 @@ final class ManualSistemaCatalog
                     ),
                     self::mod(
                         'Aprobar y comunicar (dirección)',
-                        'Menú de Secretaría → Actividad Institucional → Aprobar actividades',
+                        'Menú de Secretaría → Calendario Institucional → Aprobar actividades',
                         'Dirección revisa las propuestas, las aprueba (pasan al calendario) y avisa a los involucrados.',
                         [
                             'Abra Aprobar actividades y revise el detalle de cada propuesta.',
@@ -796,7 +796,7 @@ final class ManualSistemaCatalog
                     ),
                     self::mod(
                         'Autorizaciones y notificaciones',
-                        'Menú de Secretaría → Actividad Institucional → Autorizaciones y notificaciones',
+                        'Menú de Secretaría → Calendario Institucional → Autorizaciones y notificaciones',
                         'Lista las actividades ya aprobadas. Al elegir Autorizaciones se ven los alumnos del viaje y se emite un PDF con los datos personales y los de la actividad, listo para la firma del padre, la madre o el tutor. Notificaciones muestra el mismo listado; el PDF se agregará después.',
                         [
                             'Abra Autorizaciones y notificaciones.',
@@ -822,6 +822,7 @@ final class ManualSistemaCatalog
                         ],
                         [
                             'Solo se listan actividades aprobadas del nivel y ciclo lectivo activos.',
+                            'El nombre se escribe con el color del nivel (el mismo del legajo del estudiante). Actividad Institucional va en negro.',
                             'El calendario del escritorio muestra las próximas fechas a partir de hoy.',
                         ],
                     ),
