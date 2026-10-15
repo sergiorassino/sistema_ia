@@ -778,10 +778,10 @@ final class ManualSistemaCatalog
                 'modulos'     => [
                     self::mod(
                         'Proponer una actividad',
-                        'Menú de Docentes o Menú de Secretaría → Mis Actividades',
+                        'Menú de Docentes o Menú de Secretaría → Mis Actividades de Calendario',
                         'Docentes, directivos y secretarios presentan a dirección una actividad: fechas, grupo y docentes. El tipo Viaje Educativo además pide lugar y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
                         [
-                            'Abra Mis Actividades y pulse Nueva actividad.',
+                            'Abra Mis Actividades de Calendario y pulse Nueva actividad.',
                             'Complete el nombre y las fechas (un renglón por día, con horario de inicio y fin). En Viaje Educativo indique también el lugar.',
                             'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
                             'Indique docente(s) a cargo. En Viaje Educativo puede sumar otros docentes (legajos con rol Profesor/a).',

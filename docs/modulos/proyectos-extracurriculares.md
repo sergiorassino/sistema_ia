@@ -9,7 +9,7 @@ Los docentes proponen actividades extraprogramáticas a dirección. El directivo
 | Superficie | Cómo se habilita | Qué hace |
 |------------|------------------|----------|
 | **Menú de Docentes** | `tenant.portal_docente.menu.{nivel}.proyectos_extracurriculares` y `calendario_escolar` (default `true`) | Alta/edición de propuestas propias; calendario de aprobadas |
-| **Menú de Secretaría** | Niveles pedagógicos 1–4 | **Mis Actividades** con permiso IA **109**; calendario (todos); **Aprobar actividades** con permiso IA **96**; **Autorizaciones y notificaciones** con permiso IA **110** |
+| **Menú de Secretaría** | Niveles pedagógicos 1–4 | **Mis Actividades de Calendario** con permiso IA **109**; calendario (todos); **Aprobar actividades** con permiso IA **96**; **Autorizaciones y notificaciones** con permiso IA **110** |
 
 No hay ítem en el Menú de Alumnos ni en Administración.
 
@@ -18,7 +18,7 @@ No hay ítem en el Menú de Alumnos ni en Administración.
 | Rol | Permiso / acceso | Alcance |
 |-----|------------------|---------|
 | Docente (portal aula) | Catálogo del Menú de Docentes (sin `permiso_ia`) | CRUD de **sus** actividades pendientes; ver calendario de **todos los niveles** del ciclo (solo aprobadas) |
-| Dirección / Secretaría | `PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER` (orden **109**) | Alta/edición de **sus** propuestas (ítem **Mis Actividades**) |
+| Dirección / Secretaría | `PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER` (orden **109**) | Alta/edición de **sus** propuestas (ítem **Mis Actividades de Calendario**) |
 | Dirección / Secretaría | `PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_APROBAR` (orden **96**) | Listado del nivel/ciclo, aprobar, volver a pendiente, comunicar |
 | Dirección / Secretaría | `PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS` (orden **110**) | Listar actividades aprobadas, revisar alumnos e imprimir autorizaciones |
 | Dirección / Secretaría | `PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER_PENDIENTES` (orden **116**) | Ver en el calendario (mes, semana y día) las actividades **pendientes de todos los niveles**, en rojo y sin negrita |
@@ -43,7 +43,7 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · tipos 2 y 3: `
 
 ## Flujo principal
 
-1. El docente abre **Mis Actividades**, elige el tipo de registro y carga el formulario (fechas por día, grupo y docentes a cargo). En Viaje Educativo también completa lugar, la descripción con subtítulos Previas/Durante/Posteriores, la evaluación, el presupuesto y, si corresponde, otros docentes. Presenta a dirección.
+1. El docente abre **Mis Actividades de Calendario**, elige el tipo de registro y carga el formulario (fechas por día, grupo y docentes a cargo). En Viaje Educativo también completa lugar, la descripción con subtítulos Previas/Durante/Posteriores, la evaluación, el presupuesto y, si corresponde, otros docentes. Presenta a dirección.
 2. Dirección abre **Aprobar actividades**, revisa el detalle y marca **Aprobado**. Desde entonces figura en el calendario.
 3. **Comunicar** abre un diálogo con el listado de destinatarios (nombre y participación: docente a cargo, otro docente, docente del curso `ppc`, preceptor). Envía hilos `scope=docentes` por canal habilitado y, en producción, **correo de refuerzo** (`profesores.email` / `emailInsti`). En `APP_ENV=local` el correo no se pide (queda el comunicado interno); para una prueba SMTP real: `MAIL_FORCE_REAL=true`. El remitente no figura en el listado ni recibe el aviso. El texto incluye lugar y descripción solo en Viaje Educativo.
 4. Secretaría y docentes ven el **calendario** (mes/semana/día) con las actividades **aprobadas de todos los niveles** del ciclo lectivo activo, y el widget del escritorio (próximas fechas desde hoy, solo aprobadas del nivel de sesión). Clic en la actividad abre el detalle, incluido el nivel. En mes, semana y día, el nombre aprobado se escribe con el color del nivel del legajo del estudiante (inicial, primario o secundario). El tipo **Actividad Institucional** va en negro. Quien tiene el permiso **116** también ve las pendientes de todos los niveles: letra normal (sin negrita) y en rojo. El lugar se muestra solo en Viaje Educativo.
@@ -82,7 +82,7 @@ SQL: `database/sql/create_ext_proyectos_extracurriculares.sql` · tipos 2 y 3: `
 
 ## Checklist al modificar
 
-- [ ] Permiso 109 en el ítem «Mis Actividades» de Secretaría, rutas de alta/edición y `PermisosIaCatalog`.
+- [ ] Permiso 109 en el ítem «Mis Actividades de Calendario» de Secretaría, rutas de alta/edición y `PermisosIaCatalog`.
 - [ ] Permiso 96 en gestión, sidebar «Aprobar actividades» y `PermisosIaCatalog`.
 - [ ] Permiso 110 en «Autorizaciones y notificaciones», rutas del PDF y `PermisosIaCatalog`.
 - [ ] Permiso 116 para ver pendientes en el calendario (rojo, sin negrita) y `PermisosIaCatalog`.
