@@ -70,6 +70,7 @@ class Ento extends Model
 
         // Parámetros operativos (legacy ento)
         'idTerlecVerNotas',
+        'matriAnioSiguiente',
         'cargaNotasOff',
         'notasOffMensaje',
         'verNotasOff',
@@ -97,6 +98,7 @@ class Ento extends Model
     private static array $columnaPuntoVentaCache = [];
 
     protected $casts = [
+        'matriAnioSiguiente' => 'integer',
         'cargaNotasOff' => 'integer',
         'verNotasOff' => 'integer',
         'verBimesOff' => 'integer',

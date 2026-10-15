@@ -6,7 +6,6 @@ use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\DniInput;
-use App\Support\InformeInasistencias;
 use App\Support\NivelSistema;
 use App\Support\MatriculaBloqueos;
 use Illuminate\Database\QueryException;
@@ -31,7 +30,7 @@ final class ActualizacionDatosPersonalesComun
             return null;
         }
 
-        $matricula = InformeInasistencias::matriculaAutogestion();
+        $matricula = MatriculaFamiliaCiclo::matricula();
         if ($matricula === null) {
             return null;
         }
@@ -42,6 +41,37 @@ final class ActualizacionDatosPersonalesComun
         }
 
         return ['legajo' => $legajo, 'matricula' => $matricula];
+    }
+
+    /**
+     * Flag de año siguiente activo y el estudiante no tiene esa matrícula.
+     *
+     * @return array{legajo: Legajo, mensaje: string}|null
+     */
+    public static function avisoSinMatriculaAnioSiguiente(): ?array
+    {
+        if (! MatriculaFamiliaCiclo::anioSiguienteActivo()) {
+            return null;
+        }
+
+        if (MatriculaFamiliaCiclo::matricula() !== null) {
+            return null;
+        }
+
+        $ctx = studentCtx();
+        if (! $ctx->isValid()) {
+            return null;
+        }
+
+        $legajo = Legajo::query()->where('id', (int) $ctx->idLegajo)->first();
+        if ($legajo === null) {
+            return null;
+        }
+
+        return [
+            'legajo' => $legajo,
+            'mensaje' => MatriculaFamiliaCiclo::mensajeSinMatricula(),
+        ];
     }
 
     public static function estaBloqueado(Matricula $matricula): bool

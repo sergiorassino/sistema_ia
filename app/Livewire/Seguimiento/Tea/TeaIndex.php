@@ -5,6 +5,7 @@ namespace App\Livewire\Seguimiento\Tea;
 use App\Livewire\Seguimiento\Tea\Concerns\RequiresPermisoTeaGestion;
 use App\Models\Curso;
 use App\Models\Matricula;
+use App\Support\Listados\ListadoCursoCondicionFiltro;
 use App\Support\Navegacion\ContextoEstudianteSesion;
 use App\Support\Tea\ReincoTea;
 use Illuminate\Support\Collection;
@@ -65,6 +66,7 @@ class TeaIndex extends Component
             ->where('matricula.idNivel', schoolCtx()->idNivel)
             ->where('matricula.idTerlec', schoolCtx()->idTerlec)
             ->where('matricula.idCursos', $idCurso)
+            ->whereIn('matricula.idCondiciones', $this->idsCondicionesRegulares())
             ->join('legajos', 'legajos.id', '=', 'matricula.idLegajos')
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.apellido'))
             ->orderByRaw(\App\Support\OrdenAlfabeticoEstudiante::sql('legajos.nombre'))
@@ -89,7 +91,16 @@ class TeaIndex extends Component
             ->with(['legajo', 'curso'])
             ->where('idNivel', schoolCtx()->idNivel)
             ->where('idTerlec', schoolCtx()->idTerlec)
+            ->whereIn('idCondiciones', $this->idsCondicionesRegulares())
             ->find($id);
+    }
+
+    /** @return list<int> */
+    private function idsCondicionesRegulares(): array
+    {
+        return ListadoCursoCondicionFiltro::idCondicionesParaQuery(
+            ListadoCursoCondicionFiltro::REGULARES
+        );
     }
 
     public function borrar(int $id): void
@@ -134,6 +145,9 @@ class TeaIndex extends Component
             $registros = ReincoTea::registrosDeMatricula((int) $matricula->id);
         } elseif ((int) $this->idMatricula > 0) {
             $this->idMatricula = '';
+            if ($matricula === null) {
+                $this->persistirContextoEnSesion();
+            }
         }
 
         return view('livewire.seguimiento.tea.index', compact(

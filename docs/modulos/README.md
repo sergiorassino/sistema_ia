@@ -22,6 +22,7 @@ La ficha de **Descarga de rendición SIRO** es más larga a propósito (archivo 
 | Boletines (secundario) — informe de progreso | [boletines-secundario.md](boletines-secundario.md) |
 | Registro de Asistencia | [registro-asistencia.md](registro-asistencia.md) |
 | Gestión de inasistencias del estudiante | [inasistencias-estudiante.md](inasistencias-estudiante.md) |
+| Gestión de TEA | [gestion-tea.md](gestion-tea.md) |
 | Parte diario del preceptor | [parte-diario-preceptor.md](parte-diario-preceptor.md) |
 | Actualización de datos personales (familia) | [actualizacion-datos-personales.md](actualizacion-datos-personales.md) |
 | C.U.S. e I.S.A. (autogestión familia) | [cus-isa-autogestion.md](cus-isa-autogestion.md) |

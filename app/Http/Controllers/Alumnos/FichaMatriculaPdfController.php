@@ -10,6 +10,7 @@ use App\Support\Alumnos\FichaMatriculaDatos;
 use App\Support\Alumnos\FichaMatriculaMontecristoDatos;
 use App\Support\Alumnos\FichaMatriculaSanJoseTcpdf;
 use App\Support\Alumnos\FichaMatriculaSolicitudMontecristoTcpdf;
+use App\Support\Alumnos\MatriculaFamiliaCiclo;
 use App\Support\MatriculaBloqueos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,7 +25,7 @@ class FichaMatriculaPdfController extends Controller
     {
         abort_unless(tenantAutogestionFichaMatriculaHabilitada(), 404);
 
-        $restriccion = MatriculaBloqueos::paraEstudianteActual();
+        $restriccion = MatriculaBloqueos::paraFichaYDatosAutogestion();
         if ($restriccion['bloqueada']) {
             return response()->view('errors.alumno-pdf', [
                 'mensaje' => $restriccion['mensaje'],
@@ -38,12 +39,9 @@ class FichaMatriculaPdfController extends Controller
         RateLimiter::hit($key, 60);
 
         $implementacion = (string) config('tenant.autogestion.ficha_matricula.implementacion', '');
-        $ciclo = tenantAutogestionFichaMatriculaElegirAnio()
-            ? FichaMatriculaDatos::cicloAutogestionValido((string) $request->query('ciclo', 'actual'))
-            : 'actual';
 
         $datos = match ($implementacion) {
-            'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion($ciclo),
+            'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion(),
             'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraAutogestion(),
             'caixalsf' => FichaMatriculaCaixalsfDatos::paraAutogestion(),
             default => null,
@@ -51,7 +49,9 @@ class FichaMatriculaPdfController extends Controller
 
         if ($datos === null) {
             return response()->view('errors.alumno-pdf', [
-                'mensaje' => 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
+                'mensaje' => MatriculaFamiliaCiclo::anioSiguienteActivo()
+                    ? MatriculaFamiliaCiclo::mensajeSinMatricula()
+                    : 'No hay matrícula registrada para este ciclo lectivo. Contacte a secretaría.',
             ], 422);
         }
 

@@ -8,7 +8,6 @@ use App\Models\Matricula;
 use App\Models\Sexo;
 use App\Models\Terlec;
 use Illuminate\Support\Facades\Storage;
-use App\Support\InformeInasistencias;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Schema;
@@ -137,50 +136,16 @@ final class FichaMatriculaDatos
     }
 
     /**
-     * Año del ciclo de autogestión (ento.idTerlecVerNotas). Si no hay, el año calendario.
-     */
-    public static function anioActualAutogestion(): int
-    {
-        $ano = (int) (studentCtx()->terlecAno() ?? 0);
-
-        return $ano >= 2000 ? $ano : (int) now()->year;
-    }
-
-    /**
-     * @return list<array{ciclo: string, etiqueta: string, anio: int}>
-     */
-    public static function opcionesCicloAutogestion(): array
-    {
-        $actual = self::anioActualAutogestion();
-
-        return [
-            ['ciclo' => 'actual', 'etiqueta' => 'Año actual', 'anio' => $actual],
-            ['ciclo' => 'proximo', 'etiqueta' => 'Año próximo', 'anio' => $actual + 1],
-        ];
-    }
-
-    public static function cicloAutogestionValido(string $ciclo): string
-    {
-        return $ciclo === 'proximo' ? 'proximo' : 'actual';
-    }
-
-    /**
      * @return array<string, mixed>|null
      */
-    public static function paraAutogestion(string $ciclo = 'actual'): ?array
+    public static function paraAutogestion(): ?array
     {
         $ctx = studentCtx();
         if (! $ctx->isValid()) {
             return null;
         }
 
-        $ciclo = self::cicloAutogestionValido($ciclo);
-        $ano = $ciclo === 'proximo'
-            ? self::anioActualAutogestion() + 1
-            : self::anioActualAutogestion();
-
-        $matricula = self::matriculaDelAnio((int) $ctx->idLegajo, (int) $ctx->idNivel, $ano)
-            ?? InformeInasistencias::matriculaAutogestion();
+        $matricula = MatriculaFamiliaCiclo::matricula();
         if ($matricula === null) {
             return null;
         }
@@ -193,40 +158,19 @@ final class FichaMatriculaDatos
             return null;
         }
 
+        $idNivel = (int) ($matricula->idNivel ?? 0);
+        if ($idNivel < 1) {
+            $idNivel = (int) $ctx->idNivel;
+        }
+
         return self::armarDesdeRegistros(
             $legajo,
             $matricula,
-            (int) $ctx->idNivel,
-            $ano,
-            studentPdfHeaderData(),
+            $idNivel,
+            MatriculaFamiliaCiclo::ano($matricula),
+            studentPdfHeaderData($idNivel),
             true,
         );
-    }
-
-    private static function matriculaDelAnio(int $idLegajo, int $idNivel, int $ano): ?Matricula
-    {
-        if ($idLegajo < 1 || $idNivel < 1 || $ano < 2000) {
-            return null;
-        }
-
-        $idTerlec = (int) (Terlec::query()
-            ->where('ano', $ano)
-            ->orderByDesc('orden')
-            ->orderByDesc('id')
-            ->value('id') ?? 0);
-
-        if ($idTerlec < 1) {
-            return null;
-        }
-
-        return Matricula::query()
-            ->with(['curso.nivel'])
-            ->where('idLegajos', $idLegajo)
-            ->where('idNivel', $idNivel)
-            ->where('idTerlec', $idTerlec)
-            ->whereNull('fechaBaja')
-            ->orderByDesc('id')
-            ->first();
     }
 
     /**

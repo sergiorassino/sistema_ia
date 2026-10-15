@@ -7,7 +7,6 @@ use App\Models\Matricula;
 use App\Models\Nivel;
 use App\Models\Terlec;
 use App\Support\Alumnos\FotoCarnetLegajo;
-use App\Support\InformeInasistencias;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -74,17 +73,22 @@ final class FichaMatriculaMontecristoDatos
             return null;
         }
 
-        $matricula = InformeInasistencias::matriculaAutogestion();
+        $matricula = MatriculaFamiliaCiclo::matricula();
         if ($matricula === null) {
             return null;
         }
 
+        $idNivel = (int) ($matricula->idNivel ?? 0);
+        if ($idNivel < 1) {
+            $idNivel = (int) $ctx->idNivel;
+        }
+
         return self::desdeMatriculaEnContexto(
             (int) $matricula->id,
-            (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
-            studentPdfHeaderData(),
-            (int) ($ctx->terlecAno() ?? 0),
+            $idNivel,
+            (int) $matricula->idTerlec,
+            studentPdfHeaderData($idNivel),
+            MatriculaFamiliaCiclo::ano($matricula),
         );
     }
 

@@ -478,8 +478,7 @@ Route::middleware(['auth:alumno', 'student.context'])->prefix('alumnos')->group(
         ->name('alumnos.informe-pedagogico-inicial');
     Route::get('/inasistencias/informe', InformeInasistenciasController::class)->name('alumnos.inasistencias.informe');
     Route::get('/horario-clase', HorarioClasePdfController::class)->name('alumnos.horario-clase');
-    Route::get('/ficha-matricula', \App\Http\Controllers\Alumnos\FichaMatriculaElegirController::class)
-        ->name('alumnos.ficha-matricula.elegir');
+    Route::get('/ficha-matricula', FichaMatriculaPdfController::class);
     Route::get('/ficha-matricula/pdf', FichaMatriculaPdfController::class)->name('alumnos.ficha-matricula');
     Route::get('/libre-deuda', LibreDeudaForm::class)->name('alumnos.libre-deuda');
     Route::get('/libre-deuda/pdf', LibreDeudaPdfController::class)->name('alumnos.libre-deuda.pdf');

@@ -91,13 +91,11 @@ return [
          * Impresión de ficha de matrícula en PDF (portal familia).
          * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
          * Visibilidad por nivel: `ento.verDatosFicha` (Parametrización → Parámetros).
-         * `elegir_anio`: en autogestión, el padre elige año actual o año próximo
-         * antes de imprimir. Default off.
+         * El año de la ficha lo decide `ento.matriAnioSiguiente` del nivel.
          */
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
-            'elegir_anio' => false,
         ],
 
         /**

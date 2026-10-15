@@ -111,7 +111,7 @@ final class PortalFamiliaDashboard
             ];
         }
 
-        $restriccionFichaYDatos = MatriculaBloqueos::paraEstudianteActual();
+        $restriccionFichaYDatos = MatriculaBloqueos::paraFichaYDatosAutogestion();
 
         if (tenantAutogestionActualizacionDatosHabilitada()) {
             $accesoDatos = [
@@ -130,15 +130,12 @@ final class PortalFamiliaDashboard
         }
 
         if (tenantAutogestionFichaMatriculaHabilitada()) {
-            $eligeAnio = tenantAutogestionFichaMatriculaElegirAnio();
             $accesoFicha = [
                 'id' => 'ficha-matricula',
                 'titulo' => 'Imprimir ficha de matrícula',
-                'descripcion' => $eligeAnio
-                    ? 'Elija el año lectivo e imprima la ficha.'
-                    : 'Descargue la ficha en PDF.',
-                'url' => se_route_url($eligeAnio ? 'alumnos.ficha-matricula.elegir' : 'alumnos.ficha-matricula'),
-                'externo' => ! $eligeAnio,
+                'descripcion' => 'Descargue la ficha en PDF.',
+                'url' => se_route_url('alumnos.ficha-matricula'),
+                'externo' => true,
                 'icono' => 'ficha',
             ];
             if ($restriccionFichaYDatos['bloqueada']) {

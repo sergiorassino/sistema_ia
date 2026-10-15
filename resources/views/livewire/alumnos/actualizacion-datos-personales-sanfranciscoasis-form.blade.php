@@ -73,7 +73,12 @@
         @if ($requiereDocumentos)
         {{-- Aceptaciones --}}
         <section id="documentos-institucionales" class="se-card p-4 sm:p-5 space-y-4 scroll-mt-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">Documentos institucionales</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary-700">
+                Documentos institucionales
+                @if ($anioAceptacion)
+                    <span class="font-semibold normal-case tracking-normal text-neutral-500">— matrícula {{ $anioAceptacion }}</span>
+                @endif
+            </p>
 
             @foreach ($documentos as $clave => $doc)
                 @php

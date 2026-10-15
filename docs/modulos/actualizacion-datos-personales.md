@@ -50,6 +50,11 @@ Tenants:
 ## Actores y permisos
 
 - Auth guard `alumno`; matrícula del ciclo `ento.idTerlecVerNotas`.
+- Con `ento.matriAnioSiguiente` = 1 (Parametrización → Parámetros, por nivel), la aceptación
+  de documentos (`matricula.acept1`–`acept4`) y el bloqueo de esta pantalla usan la matrícula
+  del año siguiente. Los datos del legajo siguen siendo los mismos. Si no hay esa matrícula,
+  el formulario muestra el aviso y no graba la aceptación sobre el ciclo abierto.
+  Los PDF se leen del nivel de esa matrícula (en un pase de nivel, los del nivel de destino).
 - Bloqueo pedagógico (`matricula.bloqmatr`) y/o administrativo (`matricula.bloqadmi`):
   impide **entrar** a este módulo y a Imprimir Ficha de Matrícula.
   El mensaje es el de `ento.mensajeBloqPeda` / `ento.mensajeBloqAdmi` del nivel del alumno
@@ -115,7 +120,8 @@ Para que la familia también pueda subirla, además:
 - **Destinatario de facturación ARCA** (ambas variantes): `legajos.respAdmiNom`, `legajos.respAdmiDni` — obligatorios (nombre real + DNI de 7 a 11 dígitos; no admite guión). **Solo si el colegio tiene nivel Administración** (`niveles.id = 5` y, con filtro de login, incluido en `tenant.login.niveles_ids`). Sin ese nivel no hay sistema de cuotas: el bloque no se muestra y no se valida ni se pisa al guardar. Helper: `NivelSistema::tieneNivelAdministracion()` / `nivelSistemaTieneAdministracion()`.
 - **Variante `sanfranciscoasis` (además):** `reglamApenom`, `reglamDni`, `reglamEmail`, `ec_padres`, `contacto1`, `contacto2`, `contacto3`, `retira1`, `obs_web`. Si faltan, el guardado se aborta (sin falso éxito). SQL: `database/sql/legajos_sfa_autogestion_columnas_idempotente.sql`. Tenants que usan esta variante: `sanfranciscoasis`, `epq`, `sfq`.
 - **Contactos unificados (solo San Francisco de Asís):** `config/tenants/sanfranciscoasis.php` → `autogestion.actualizacion_datos.contactos_emergencia_unificados`. Reemplaza `contacto1`–`contacto3` y `retira1` por la tabla `legajo_autorizados_emergencia` (apellido y nombre, DNI, relación, teléfono). La familia carga de 2 a 6 personas. Esos cuatro campos de `legajos` no se pisan al guardar. EPQ y SFQ siguen con los textos libres. SQL: `database/sql/legajo_autorizados_emergencia.sql`. Helper: `tenantAutogestionContactosEmergenciaUnificados()`.
-- `matricula` (bloqueos / aceptaciones SFA)
+- `matricula` (bloqueos / aceptaciones SFA). Con `ento.matriAnioSiguiente` = 1, la fila del año siguiente.
+- `ento.matriAnioSiguiente` (flag por nivel, junto a `idTerlecVerNotas`)
 - `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
 - `campos_legajo` / `solapas_legajo` (visibilidad de foto carnet)
 - Documentos estudiante (estándar): tipos configurados por matrícula web

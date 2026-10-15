@@ -687,13 +687,14 @@ if (! function_exists('schoolPdfHeaderData')) {
 
 if (! function_exists('studentPdfHeaderData')) {
     /**
-     * Encabezado institucional para PDFs del portal alumno (Dompdf), según `studentCtx()->idNivel`.
+     * Encabezado institucional para PDFs del portal alumno, según el nivel indicado
+     * o, si no se pasa, `studentCtx()->idNivel`.
      *
      * @return array{insti:string,direccion:string,localidad:string,provincia:string,cue:string,ee:string,logo_file:?string}
      */
-    function studentPdfHeaderData(): array
+    function studentPdfHeaderData(?int $idNivel = null): array
     {
-        $idNivel = (int) (studentCtx()->idNivel ?? 0);
+        $idNivel ??= (int) (studentCtx()->idNivel ?? 0);
         if ($idNivel <= 0) {
             return [
                 'insti' => '',
@@ -1785,21 +1786,6 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
         }
 
         return entoAutogestionVerDatosYFichaHabilitada();
-    }
-}
-
-if (! function_exists('tenantAutogestionFichaMatriculaElegirAnio')) {
-    /**
-     * Si el portal familia pide año actual o año próximo antes de imprimir la ficha.
-     * Default off. San Francisco de Asís lo activa en su config de tenant.
-     */
-    function tenantAutogestionFichaMatriculaElegirAnio(): bool
-    {
-        if (! tenantAutogestionFichaMatriculaHabilitada()) {
-            return false;
-        }
-
-        return (bool) config('tenant.autogestion.ficha_matricula.elegir_anio', false);
     }
 }
 

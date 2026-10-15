@@ -135,6 +135,18 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
         abort_if(tenantAutogestionActualizacionDatosImplementacion() === 'sanfranciscoasis', 404);
 
+        $sinMatricula = ActualizacionDatosPersonalesComun::avisoSinMatriculaAnioSiguiente();
+        if ($sinMatricula !== null) {
+            $legajo = $sinMatricula['legajo'];
+            $this->apellido = (string) ($legajo->apellido ?? '');
+            $this->nombre = (string) ($legajo->nombre ?? '');
+            $this->dni = (string) ($legajo->dni ?? '');
+            $this->bloqueado = true;
+            $this->mensajeBloqueo = $sinMatricula['mensaje'];
+
+            return;
+        }
+
         $ctx = ActualizacionDatosPersonalesEstandar::contexto();
         if ($ctx === null) {
             abort(404, 'No se encontró la matrícula del ciclo de autogestión.');

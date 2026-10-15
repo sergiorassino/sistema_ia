@@ -3,6 +3,7 @@
 namespace App\Livewire\Alumnos;
 
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
+use App\Support\Alumnos\MatriculaFamiliaCiclo;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Livewire\Component;
 
@@ -58,7 +59,7 @@ class AceptacionDocumentoFamilia extends Component
     public function render()
     {
         $def = MatriculaWebDocumentos::definicion($this->tipo);
-        $pdfUrl = matriculaWebDocumentoUrl($this->tipo);
+        $pdfUrl = matriculaWebDocumentoUrl($this->tipo, MatriculaFamiliaCiclo::idNivelDocumentos());
 
         return view('livewire.alumnos.aceptacion-documento-familia', [
             'def' => $def,

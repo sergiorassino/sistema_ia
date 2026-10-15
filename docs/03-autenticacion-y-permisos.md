@@ -68,6 +68,7 @@ Si se abre `/loginEstudiante` con sesión alumno aún válida (p. ej. un PDF red
 - Sin selección de nivel ni ciclo lectivo en el formulario.
 - El ciclo lectivo se determina automáticamente desde `ento.idTerlecVerNotas` **del nivel de la matrícula** que coincide con ese ciclo. `legajos.idnivel` suele estar en 0; no se usa la matrícula de `idTerlec` más alto (preinscripción del año siguiente en otro nivel).
 - Ejemplo: sexto de primario 2026 ya inscripto en 1.º de secundario 2027 entra al curso 2026 mientras `idTerlecVerNotas` de primario siga siendo 2026. Lo mismo entre sala de 5 e 1.º de primario. Cuando secretaría pase `idTerlecVerNotas` al ciclo nuevo, el ingreso queda en esa matrícula.
+- `ento.matriAnioSiguiente` no cambia el ciclo con el que se entra. Con el flag del nivel en 1, la ficha de matrícula y la aceptación de documentos institucionales usan la matrícula del año siguiente (en el ejemplo, la de 1.º de secundario 2027).
 - Quien **solo** tiene matrícula de un ciclo posterior (ingreso nuevo 2027, sin matrículas anteriores) entra con esa matrícula: puede actualizar datos y descargar la ficha. Una matrícula de un ciclo ya cerrado no habilita el ingreso.
 - Requiere su propio auth provider, guard y rutas separadas.
 

@@ -463,6 +463,16 @@
                     <p class="mt-1 text-xs text-neutral-500">Corresponde a <span class="font-mono">idTerlecVerNotas</span> (autogestión familia y docente).</p>
                     @error('idTerlecVerNotas') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
+
+                <label class="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50/40 px-4 py-3">
+                    <input type="checkbox" wire:model="matriAnioSiguiente"
+                           class="mt-0.5 shrink-0 rounded border-accent-300 text-primary-600 focus:ring-primary-500">
+                    <span>
+                        <span class="block text-sm font-semibold text-neutral-800">Matrícula del año siguiente en autogestión del estudiante</span>
+                        <span class="mt-0.5 block text-xs text-neutral-500">Corresponde a <span class="font-mono">matriAnioSiguiente</span>. La aceptación de documentos institucionales y la ficha de matrícula usan la matrícula del año siguiente al ciclo de arriba. Notas e inasistencias siguen en ese ciclo.</span>
+                    </span>
+                </label>
+                @error('matriAnioSiguiente') <p class="form-error">{{ $message }}</p> @enderror
             </div>
 
             <div class="border-t border-accent-200 pt-6">

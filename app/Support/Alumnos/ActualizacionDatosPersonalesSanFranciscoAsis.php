@@ -98,7 +98,7 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
     public static function documentoDisponible(string $clave): bool
     {
-        return MatriculaWebDocumentos::pathAlmacenado($clave) !== null;
+        return MatriculaWebDocumentos::pathAlmacenado($clave, MatriculaFamiliaCiclo::idNivelDocumentos()) !== null;
     }
 
     /**

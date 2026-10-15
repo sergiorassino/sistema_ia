@@ -71,7 +71,6 @@ return [
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
-            'elegir_anio' => true,
         ],
         'aranceles_escolares' => [
             'habilitado' => true,

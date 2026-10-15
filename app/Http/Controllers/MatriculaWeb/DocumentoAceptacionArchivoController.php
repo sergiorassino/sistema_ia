@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\MatriculaWeb;
 
 use App\Http\Controllers\Controller;
+use App\Support\Alumnos\MatriculaFamiliaCiclo;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use App\Support\PermisosMatriculaWeb;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class DocumentoAceptacionArchivoController extends Controller
             abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
             abort_unless(tenantAutogestionActualizacionDatosRequiereDocumentos(), 404);
 
-            $idNivel = (int) (studentCtx()->idNivel ?? 0);
+            $idNivel = MatriculaFamiliaCiclo::idNivelDocumentos();
             abort_unless($idNivel > 0, 403);
         } else {
             abort_unless(auth()->check(), 403);

@@ -6,7 +6,6 @@ use App\Models\Curso;
 use App\Models\Ento;
 use App\Models\Nivel;
 use App\Models\Terlec;
-use App\Support\InformeInasistencias;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -62,17 +61,22 @@ final class FichaMatriculaCaixalsfDatos
             return null;
         }
 
-        $matricula = InformeInasistencias::matriculaAutogestion();
+        $matricula = MatriculaFamiliaCiclo::matricula();
         if ($matricula === null) {
             return null;
         }
 
+        $idNivel = (int) ($matricula->idNivel ?? 0);
+        if ($idNivel < 1) {
+            $idNivel = (int) $ctx->idNivel;
+        }
+
         return self::desdeMatriculaEnContexto(
             (int) $matricula->id,
-            (int) $ctx->idNivel,
-            (int) $ctx->idTerlec,
-            studentPdfHeaderData(),
-            (int) ($ctx->terlecAno() ?? 0),
+            $idNivel,
+            (int) $matricula->idTerlec,
+            studentPdfHeaderData($idNivel),
+            MatriculaFamiliaCiclo::ano($matricula),
         );
     }
 

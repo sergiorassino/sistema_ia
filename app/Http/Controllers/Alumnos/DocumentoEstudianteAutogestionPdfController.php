@@ -22,7 +22,7 @@ class DocumentoEstudianteAutogestionPdfController extends Controller
     {
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
 
-        $restriccion = MatriculaBloqueos::paraEstudianteActual();
+        $restriccion = MatriculaBloqueos::paraFichaYDatosAutogestion();
         if ($restriccion['bloqueada']) {
             return response()->view('errors.alumno-pdf', [
                 'mensaje' => $restriccion['mensaje'],

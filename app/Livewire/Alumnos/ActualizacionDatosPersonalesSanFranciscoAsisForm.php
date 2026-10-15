@@ -6,6 +6,7 @@ use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
+use App\Support\Alumnos\MatriculaFamiliaCiclo;
 use App\Support\Alumnos\AutorizadosEmergenciaRetiro;
 use App\Support\DniInput;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
@@ -131,6 +132,9 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public string $mensajeBloqueo = '';
 
+    /** Año de la matrícula cuyas aceptaciones se muestran, si el nivel apunta al año siguiente. */
+    public ?int $anioAceptacion = null;
+
     public bool $mostrarAvisoDocumentosPendientes = false;
 
     public bool $mostrarAvisoCamposIncompletos = false;
@@ -184,6 +188,18 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         abort_unless(tenantAutogestionActualizacionDatosHabilitada(), 404);
         abort_unless(tenantAutogestionActualizacionDatosImplementacion() === 'sanfranciscoasis', 404);
 
+        $sinMatricula = ActualizacionDatosPersonalesComun::avisoSinMatriculaAnioSiguiente();
+        if ($sinMatricula !== null) {
+            $legajo = $sinMatricula['legajo'];
+            $this->apellido = (string) ($legajo->apellido ?? '');
+            $this->nombre = (string) ($legajo->nombre ?? '');
+            $this->dni = (string) ($legajo->dni ?? '');
+            $this->bloqueado = true;
+            $this->mensajeBloqueo = $sinMatricula['mensaje'];
+
+            return;
+        }
+
         $ctx = ActualizacionDatosPersonalesSanFranciscoAsis::contexto();
         if ($ctx === null) {
             abort(404, 'No se encontró la matrícula del ciclo de autogestión.');
@@ -207,6 +223,10 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
         $this->montarFotoCarnetDesdeLegajo($legajo);
         $this->aceptaciones = ActualizacionDatosPersonalesSanFranciscoAsis::aceptacionesDesdeMatricula($matricula);
+        if (MatriculaFamiliaCiclo::anioSiguienteActivo()) {
+            $ano = MatriculaFamiliaCiclo::ano($matricula);
+            $this->anioAceptacion = $ano >= 2000 ? $ano : null;
+        }
 
         if (AutorizadosEmergenciaRetiro::habilitado()) {
             $this->autorizadosEmergencia = AutorizadosEmergenciaRetiro::filasParaFormulario((int) $legajo->id);

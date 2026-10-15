@@ -18,6 +18,7 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 |-------|--------|--------|
 | `ento` | `insti`, CUE, dirección, logos, SIRO, AFIP | Una fila por `idNivel`. |
 | `ento` | `cargaNotasOff`, `verNotasOff`, `verBimesOff`, `imprBoleOff` | Flags 1/0 del **nivel activo**, no de toda la escuela. |
+| `ento` | `matriAnioSiguiente` | Junto a `idTerlecVerNotas`. 1: ficha y aceptación de documentos del Menú de Alumnos usan la matrícula del año siguiente. 0: usan el ciclo abierto. |
 | `ento` | `verDatosFicha`, `verLibreDeuda`, `mensajeBloqPeda`, `mensajeBloqAdmi` | Autogestión familia. Carteles en pantalla si hay bloqueo (ficha / datos). |
 | `ento` | `mensajeComBloqMatricula`, `mensajeComDesbloqMatricula` | Cuerpo de Notif. Bloqueo / Notif. Desbloqueo (cuaderno + mail). Vacío = texto institucional por defecto. |
 | `ento` | `cuitFact`, `PtoVta` (legacy; no `ptoVta`), certificados AFIP | Emisor de comprobantes. Vacío no debe impedir guardar otros parámetros. Eloquent lee/escribe ambos nombres. |
@@ -57,7 +58,8 @@ Menú de Secretaría. Permiso de configuración `PermisosConfiguracion::PARAMETR
 ## Checklist al modificar
 
 - [ ] Guardar con AFIP habilitado y `cuitFact` vacío (niveles pedagógicos) sigue persistiendo flags.
-- [ ] Toggle de `cargaNotasOff` / `verNotasOff` / `verLibreDeuda` desde la solapa Parámetros queda en `ento` al recargar.
+- [ ] Toggle de `cargaNotasOff` / `verNotasOff` / `verLibreDeuda` / `matriAnioSiguiente` desde la solapa Parámetros queda en `ento` al recargar.
+- [ ] Con `matriAnioSiguiente` en 1, la ficha y la aceptación de documentos del Menú de Alumnos usan la matrícula del año siguiente a `idTerlecVerNotas`. Con 0, usan el ciclo abierto.
 - [ ] Con `verNotasOff` en el nivel activo, el portal familia no abre ninguna consulta de calificaciones (aviso + PDF 403), en todos los niveles y variantes.
 - [ ] Con `verLibreDeuda` en 0, el portal familia no muestra Libre Deuda (sidebar, escritorio) y las rutas responden 404.
 - [ ] En PARÁMETROS se distinguen carteles de autogestión (`mensajeBloqPeda` / `mensajeBloqAdmi`) del cuerpo de Notif. Bloqueo / Desbloqueo (`mensajeComBloqMatricula` / `mensajeComDesbloqMatricula`).

@@ -31,7 +31,7 @@ Menú de Secretaría (`layouts/app`). Rutas bajo `auth`; datos filtrados por `sc
 
 Misma ficha que Secretaría cuando la implementación coincide.
 
-San Francisco de Asís (`autogestion.ficha_matricula.elegir_anio`): el ítem abre una pantalla con **Año actual** y **Año próximo** (el ciclo de `ento.idTerlecVerNotas` y el siguiente). El PDF sale con `?ciclo=actual` o `?ciclo=proximo`, sin id de `terlec` en la URL. Si el estudiante ya tiene matrícula en ese año, el curso es el de esa matrícula; si no, se usa la matrícula del ciclo de autogestión y el título lleva el año elegido.
+El ítem abre el PDF directo. El año es el de `ento.idTerlecVerNotas` del nivel, salvo que `ento.matriAnioSiguiente` esté en 1: entonces el curso y el ciclo impreso son los de la matrícula del año siguiente (mismo nivel, o la de otro nivel si es la única de ese año, por ejemplo un pase de 6.º a 1.º). Si esa matrícula no existe, el PDF avisa y no reutiliza la del ciclo abierto. El parámetro se cambia en Parametrización → Parámetros.
 
 ## Archivos clave
 

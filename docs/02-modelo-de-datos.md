@@ -57,6 +57,7 @@ La tabla `ento` almacena la configuración institucional, con **un registro por 
 | `idNivel`          | int (FK) | Nivel al que pertenece este registro de entorno          |
 | (institucionales)  | varios   | Nombre del colegio, dirección, CUIT, etc.                |
 | `idTerlecVerNotas` | int (FK) | **Campo crítico**: ciclo lectivo activo para autogestión  |
+| `matriAnioSiguiente` | tinyint | Menú de Alumnos: ficha y aceptación de documentos usan la matrícula del año siguiente a `idTerlecVerNotas` (1/0). El resto del portal sigue en el ciclo abierto. |
 | `verDatosFicha`    | tinyint  | Menú de Alumnos: mostrar Actualización de Datos + Ficha de Matrícula (1/0) |
 | `verLibreDeuda`    | tinyint  | Menú de Alumnos: mostrar Libre Deuda (1/0), por nivel |
 | `mensajeBloqPeda`  | varchar  | Cartel en autogestión si `matricula.bloqmatr` (ficha / datos; no es el comunicado) |
@@ -72,6 +73,9 @@ La tabla `ento` almacena la configuración institucional, con **un registro por 
   **independientemente** del ciclo lectivo seleccionado en el login de gestión.
 - Es el mecanismo para que la institución controle qué año ven los usuarios 
   de autogestión.
+- `matriAnioSiguiente` (Parametrización → Parámetros, por nivel) no mueve ese ciclo.
+  Con valor 1, la ficha de matrícula y la aceptación de documentos institucionales
+  leen la matrícula del año siguiente. Notas e inasistencias siguen en `idTerlecVerNotas`.
 
 ---
 

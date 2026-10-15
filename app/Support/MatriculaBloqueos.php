@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\CuotaGenerada;
 use App\Models\Matricula;
+use App\Support\Alumnos\MatriculaFamiliaCiclo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -74,6 +75,16 @@ final class MatriculaBloqueos
     public static function paraEstudianteActual(): array
     {
         return self::impideFichaYDatosAutogestion(InformeInasistencias::matriculaAutogestion());
+    }
+
+    /**
+     * Bloqueo de ficha y actualización de datos. Con `matriAnioSiguiente` mira esa matrícula.
+     *
+     * @return array{bloqueada: bool, mensaje: string}
+     */
+    public static function paraFichaYDatosAutogestion(): array
+    {
+        return self::impideFichaYDatosAutogestion(MatriculaFamiliaCiclo::matricula());
     }
 
     public static function autogestionFichaYDatosBloqueada(): bool

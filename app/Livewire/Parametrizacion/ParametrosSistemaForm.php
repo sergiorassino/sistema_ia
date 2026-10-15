@@ -85,6 +85,8 @@ class ParametrosSistemaForm extends Component
 
     public int|string $idTerlecVerNotas = '';
 
+    public bool $matriAnioSiguiente = false;
+
     public bool $cargaNotasOff = false;
 
     public string $notasOffMensaje = '';
@@ -201,6 +203,7 @@ class ParametrosSistemaForm extends Component
             'removeLogo' => ['boolean'],
             'removeLogoLogin' => ['boolean'],
             'idTerlecVerNotas' => ['nullable', 'integer', Rule::in($terlecIds)],
+            'matriAnioSiguiente' => ['boolean'],
             'cargaNotasOff' => ['boolean'],
             'notasOffMensaje' => ['nullable', 'string', 'max:500'],
             'verNotasOff' => ['boolean'],
@@ -889,6 +892,9 @@ class ParametrosSistemaForm extends Component
         $attrs = $ento->getAttributes();
 
         $this->idTerlecVerNotas = self::terlecIdParaInput($attrs['idTerlecVerNotas'] ?? null);
+        $this->matriAnioSiguiente = Schema::hasColumn('ento', 'matriAnioSiguiente')
+            ? self::entoFlagActivo($attrs['matriAnioSiguiente'] ?? 0)
+            : false;
 
         $this->cargaNotasOff = self::entoFlagActivo($attrs['cargaNotasOff'] ?? null);
         $this->notasOffMensaje = (string) ($attrs['notasOffMensaje'] ?? '');
@@ -917,6 +923,7 @@ class ParametrosSistemaForm extends Component
         $payload = [];
 
         $this->asignarTerlecPayload($payload, 'idTerlecVerNotas', $this->idTerlecVerNotas);
+        $this->asignarFlagPayload($payload, 'matriAnioSiguiente', $this->matriAnioSiguiente);
 
         $this->asignarFlagPayload($payload, 'cargaNotasOff', $this->cargaNotasOff);
         $this->asignarTextoPayload($payload, 'notasOffMensaje', $this->notasOffMensaje);
@@ -1012,6 +1019,7 @@ class ParametrosSistemaForm extends Component
     {
         $payload = [];
         foreach ([
+            'matriAnioSiguiente' => $this->matriAnioSiguiente,
             'cargaNotasOff' => $this->cargaNotasOff,
             'verNotasOff' => $this->verNotasOff,
             'verBimesOff' => $this->verBimesOff,
@@ -1087,7 +1095,7 @@ class ParametrosSistemaForm extends Component
     private function mostrarSolapaDelCampo(string $campo): void
     {
         $this->activeTab = match ($campo) {
-            'idTerlecVerNotas',
+            'idTerlecVerNotas', 'matriAnioSiguiente',
             'cargaNotasOff', 'notasOffMensaje',
             'verNotasOff', 'verOffMensaje',
             'verBimesOff', 'bimesOffMensaje',
