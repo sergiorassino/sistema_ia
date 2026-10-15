@@ -16,7 +16,7 @@ class CalendarioWidget extends Component
         $visible = $modoPortalDocente || MenuSecretariaPerfil::muestraProyectosExtracurriculares();
 
         $tablasOk = $visible && ExtActividadesService::tablasDisponibles();
-        $eventos = $tablasOk ? ExtActividadesService::proximosEventos(6) : collect();
+        $eventos = $tablasOk ? ExtActividadesService::proximosEventos() : collect();
 
         return view('livewire.proyectos-extracurriculares.calendario-widget', [
             'visible' => $visible,

@@ -73,7 +73,7 @@ Orientación UI: **mobile-first** (ver [01-descripcion-general.md](01-descripcio
 Implementación: `App\Support\ProfesorMenuPortal` y middleware `menu.portal:secretaria` / `menu.portal:docente`.
 Un profesor (`IdTipoProf = 6`) no puede abrir rutas de secretaría (redirección al portal); el resto no puede abrir `/portal-docente`.
 
-**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`. El escritorio incluye el widget de **calendario escolar** (próximas actividades institucionales aprobadas).
+**Pantalla inicial placeholder:** `portalDocente.home` → vista `resources/views/portal-docente/home.blade.php`. El escritorio incluye el widget de **calendario escolar** (actividades institucionales aprobadas de la semana en curso; las de días ya pasados aparecen tachadas).
 
 ### Sidebar dinámico (tenant × nivel × implementación)
 

@@ -7,7 +7,7 @@
                 Calendario escolar
             </h2>
             <p class="mt-0.5 text-sm text-neutral-600">
-                Próximas actividades institucionales aprobadas
+                Actividades aprobadas de esta semana
             </p>
         </div>
         <a href="{{ route($rutaCalendario) }}"
@@ -23,7 +23,7 @@
     <div class="p-5 sm:p-6">
         @if (! $tablasOk || $eventos->isEmpty())
             <p class="py-4 text-center text-sm text-neutral-500">
-                No hay actividades próximas en el calendario.
+                No hay actividades en esta semana.
             </p>
         @else
             <ul class="divide-y divide-accent-200/80">
@@ -36,15 +36,16 @@
                         $hora = trim($ini.($ini !== '' && $fin !== '' ? '–' : '').$fin);
                         $esViaje = $act !== null && \App\Support\ProyectosExtracurriculares\ExtActividadesService::tipoEsViajeEducativo((int) $act->id_tipo_registro);
                         $lugar = $esViaje ? trim((string) ($act->lugar ?? '')) : '';
+                        $pasada = $f->fecha !== null && $f->fecha->lt(\Carbon\Carbon::today());
                     @endphp
                     <li class="flex flex-col gap-0.5 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div class="min-w-0">
-                            <p class="truncate font-semibold text-neutral-900">{{ $act?->nombre ?? 'Actividad' }}</p>
-                            <p class="text-xs text-neutral-500">
+                            <p class="truncate font-semibold {{ $pasada ? 'text-neutral-400 line-through' : 'text-neutral-900' }}">{{ $act?->nombre ?? 'Actividad' }}</p>
+                            <p class="text-xs {{ $pasada ? 'text-neutral-400 line-through' : 'text-neutral-500' }}">
                                 {{ $act?->tipoRegistro?->nombre ?: 'Actividad' }}@if ($lugar !== '') · {{ $lugar }}@endif
                             </p>
                         </div>
-                        <p class="shrink-0 text-sm font-semibold tabular-nums text-primary-700">
+                        <p class="shrink-0 text-sm font-semibold tabular-nums {{ $pasada ? 'text-neutral-400 line-through' : 'text-primary-700' }}">
                             {{ $d }}{{ $hora !== '' ? ' · '.$hora : '' }}
                         </p>
                     </li>

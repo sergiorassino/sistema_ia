@@ -790,18 +790,24 @@ final class ExtActividadesService
     }
 
     /**
-     * Próximas fechas aprobadas desde hoy (widget).
+     * Fechas aprobadas de la semana en curso, de lunes a domingo (widget).
+     * La semana es lunes–domingo, igual que el calendario. Las anteriores a hoy
+     * se muestran tachadas en la vista.
      *
      * @return Collection<int, ExtFecha>
      */
-    public static function proximosEventos(int $limite = 6): Collection
+    public static function proximosEventos(): Collection
     {
         if (! self::tablasDisponibles()) {
             return collect();
         }
 
+        $hoy = Carbon::today();
+        $desde = $hoy->copy()->startOfWeek(Carbon::MONDAY);
+        $hasta = $hoy->copy()->endOfWeek(Carbon::SUNDAY);
+
         return ExtFecha::query()
-            ->where('fecha', '>=', Carbon::today()->toDateString())
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
             ->whereHas('actividad', function ($q) {
                 $q->where('id_nivel', self::idNivelContexto())
                     ->where('id_terlec', self::idTerlecContexto())
@@ -810,7 +816,6 @@ final class ExtActividadesService
             ->with(['actividad.tipoRegistro'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
-            ->limit($limite)
             ->get();
     }
 
