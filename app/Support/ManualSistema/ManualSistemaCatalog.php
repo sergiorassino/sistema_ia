@@ -778,10 +778,10 @@ final class ManualSistemaCatalog
                 'modulos'     => [
                     self::mod(
                         'Proponer una actividad',
-                        'Menú de Docentes o Menú de Secretaría → Calendario Institucional',
+                        'Menú de Docentes o Menú de Secretaría → Mis Actividades',
                         'Docentes, directivos y secretarios presentan a dirección una actividad: fechas, grupo y docentes. El tipo Viaje Educativo además pide lugar y descripción. En el Menú de Secretaría el ítem pide el permiso 109. En el Menú de Docentes no. Aprobar sigue pidiendo el permiso 96.',
                         [
-                            'Abra Calendario Institucional y pulse Nueva actividad.',
+                            'Abra Mis Actividades y pulse Nueva actividad.',
                             'Complete el nombre y las fechas (un renglón por día, con horario de inicio y fin). En Viaje Educativo indique también el lugar.',
                             'Elija el grupo: uno, varios o todos los cursos, o bien alumnos de a uno.',
                             'Indique docente(s) a cargo. En Viaje Educativo puede sumar otros docentes (legajos con rol Profesor/a).',
@@ -806,7 +806,7 @@ final class ManualSistemaCatalog
                         [
                             'La comunicación usa los canales institucionales ya configurados. Si un rol no tiene canal, ese destinatario no recibe el aviso.',
                             'El correo de refuerzo usa el mail del legajo docente. En el entorno de desarrollo no se envía correo real.',
-                            'Puede volver una actividad a pendiente: deja de verse en el calendario.',
+                            'Puede volver una actividad a pendiente: deja de verse en el calendario, salvo para quien tenga el permiso 116.',
                         ],
                         'Permiso IA orden 96',
                     ),
@@ -830,16 +830,17 @@ final class ManualSistemaCatalog
                     self::mod(
                         'Calendario escolar',
                         'Menú de Secretaría o Menú de Docentes → Calendario escolar (también en el escritorio)',
-                        'Muestra las actividades aprobadas por mes, semana o día. Al hacer clic se ve el detalle completo.',
+                        'Muestra por mes, semana o día las actividades aprobadas de todos los niveles del ciclo lectivo. Al hacer clic se ve el detalle completo. Quien tiene el permiso 116 también ve las que aún no están aprobadas, de todos los niveles.',
                         [
                             'Abra el calendario o use el recuadro del escritorio.',
                             'Alterne Mes, Semana o Día y recorra el período con las flechas.',
                             'Haga clic en el nombre de la actividad para ver fechas, lugar, grupo, docentes, descripción, evaluación y presupuesto.',
                         ],
                         [
-                            'Solo se listan actividades aprobadas del nivel y ciclo lectivo activos.',
-                            'El nombre se escribe con el color del nivel (el mismo del legajo del estudiante). Actividad Institucional va en negro.',
-                            'El calendario del escritorio muestra las próximas fechas a partir de hoy.',
+                            'Se listan las actividades aprobadas de todos los niveles del ciclo lectivo activo.',
+                            'Con el permiso 116 también aparecen las pendientes de todos los niveles: letra normal y en rojo. El resto del personal no las ve.',
+                            'El nombre aprobado se escribe con el color del nivel (el mismo del legajo del estudiante). Actividad Institucional va en negro.',
+                            'El calendario del escritorio muestra las próximas fechas aprobadas a partir de hoy.',
                         ],
                     ),
                 ],

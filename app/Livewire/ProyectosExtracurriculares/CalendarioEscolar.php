@@ -90,8 +90,8 @@ class CalendarioEscolar extends Component
             return;
         }
 
-        $act = ExtActividadesService::scopedQuery()->whereKey($id)->first();
-        if (! $act instanceof ExtActividad || ! $act->estaAprobada()) {
+        $act = ExtActividadesService::cargarParaCalendario($id);
+        if (! $act instanceof ExtActividad || ! self::actividadVisibleEnCalendario($act)) {
             $this->detalleId = null;
 
             return;
@@ -108,6 +108,7 @@ class CalendarioEscolar extends Component
     public function render()
     {
         $tablasOk = ExtActividadesService::tablasDisponibles();
+        $vePendientes = self::puedeVerPendientes();
         $ancla = Carbon::parse($this->ancla)->startOfDay();
         $hoy = Carbon::today();
 
@@ -124,7 +125,7 @@ class CalendarioEscolar extends Component
                 $tituloPeriodo = self::nombreMes($inicioMes->month).' '.$inicioMes->year;
                 $inicioGrilla = $inicioMes->copy()->startOfWeek(Carbon::MONDAY);
                 $finGrilla = $finMes->copy()->endOfWeek(Carbon::SUNDAY);
-                $eventos = ExtActividadesService::eventosEnRango($inicioGrilla, $finGrilla);
+                $eventos = ExtActividadesService::eventosEnRango($inicioGrilla, $finGrilla, $vePendientes);
                 $eventosPorDia = self::agruparPorDia($eventos);
                 $cursor = $inicioGrilla->copy();
                 while ($cursor->lte($finGrilla)) {
@@ -142,7 +143,7 @@ class CalendarioEscolar extends Component
                 $inicio = $ancla->copy()->startOfWeek(Carbon::MONDAY);
                 $fin = $ancla->copy()->endOfWeek(Carbon::SUNDAY);
                 $tituloPeriodo = $inicio->format('d/m/Y').' — '.$fin->format('d/m/Y');
-                $eventos = ExtActividadesService::eventosEnRango($inicio, $fin);
+                $eventos = ExtActividadesService::eventosEnRango($inicio, $fin, $vePendientes);
                 $eventosPorDia = self::agruparPorDia($eventos);
                 $cursor = $inicio->copy();
                 while ($cursor->lte($fin)) {
@@ -157,20 +158,15 @@ class CalendarioEscolar extends Component
                 }
             } else {
                 $tituloPeriodo = self::nombreDia($ancla->dayOfWeekIso).' '.$ancla->format('d/m/Y');
-                $eventos = ExtActividadesService::eventosEnRango($ancla->copy(), $ancla->copy());
+                $eventos = ExtActividadesService::eventosEnRango($ancla->copy(), $ancla->copy(), $vePendientes);
                 $eventosDia = self::mapearEventos($eventos);
             }
         }
 
         $detalle = null;
         if ($tablasOk && $this->detalleId !== null) {
-            try {
-                $detalle = ExtActividadesService::cargarCompleta($this->detalleId);
-                if (! $detalle->estaAprobada()) {
-                    $detalle = null;
-                    $this->detalleId = null;
-                }
-            } catch (\Throwable $e) {
+            $detalle = ExtActividadesService::cargarParaCalendario($this->detalleId);
+            if (! $detalle instanceof ExtActividad || ! self::actividadVisibleEnCalendario($detalle)) {
                 $detalle = null;
                 $this->detalleId = null;
             }
@@ -187,6 +183,7 @@ class CalendarioEscolar extends Component
             'eventosDia' => $eventosDia,
             'tituloPeriodo' => $tituloPeriodo,
             'detalle' => $detalle,
+            'vePendientes' => $vePendientes,
             'nombresDias' => ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
             'rutaIndexProyectos' => $modoPortalDocente
                 ? 'portalDocente.proyectosExtracurriculares.index'
@@ -210,7 +207,7 @@ class CalendarioEscolar extends Component
 
     /**
      * @param  \Illuminate\Support\Collection<int, \App\Models\ExtFecha>  $eventos
-     * @return list<array{id: int, nombre: string, tipo: string, hora: string, ymd: string, lugar: string, clase: string}>
+     * @return list<array{id: int, nombre: string, tipo: string, hora: string, ymd: string, lugar: string, clase: string, pendiente: bool}>
      */
     private static function mapearEventos($eventos): array
     {
@@ -224,6 +221,7 @@ class CalendarioEscolar extends Component
             $fin = ExtActividadesService::formatearHora((string) ($f->hora_fin ?? ''));
             $hora = trim($ini.($ini !== '' && $fin !== '' ? '–' : '').$fin);
             $tipo = (string) ($act->tipoRegistro?->nombre ?? '');
+            $pendiente = $act->estaPendiente();
             $institucional = (int) $act->id_tipo_registro === ExtActividadesService::TIPO_REGISTRO_INSTITUCIONAL
                 || mb_strtolower(trim($tipo)) === 'actividad institucional';
             $out[] = [
@@ -235,14 +233,35 @@ class CalendarioEscolar extends Component
                 'lugar' => ExtActividadesService::tipoEsViajeEducativo((int) $act->id_tipo_registro)
                     ? (string) ($act->lugar ?? '')
                     : '',
-                'clase' => MatriculaNivelEstilo::claseCalendarioActividad(
-                    $institucional,
-                    (string) ($act->nivel?->nivel ?? ''),
-                ),
+                'pendiente' => $pendiente,
+                'clase' => $pendiente
+                    ? 'se-cal-pendiente'
+                    : MatriculaNivelEstilo::claseCalendarioActividad(
+                        $institucional,
+                        (string) ($act->nivel?->nivel ?? ''),
+                    ),
             ];
         }
 
         return $out;
+    }
+
+    private static function puedeVerPendientes(): bool
+    {
+        return tienePermiso(PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER_PENDIENTES);
+    }
+
+    private static function actividadVisibleEnCalendario(ExtActividad $act): bool
+    {
+        if ((int) $act->id_terlec !== ExtActividadesService::idTerlecContexto()) {
+            return false;
+        }
+
+        if ($act->estaAprobada()) {
+            return true;
+        }
+
+        return $act->estaPendiente() && self::puedeVerPendientes();
     }
 
     private static function nombreMes(int $mes): string

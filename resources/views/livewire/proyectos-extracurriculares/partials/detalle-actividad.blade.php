@@ -17,9 +17,15 @@
 @endphp
 
 <div class="space-y-4 text-sm text-neutral-800">
-    <div>
-        <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Tipo de registro</p>
-        <p class="mt-0.5 font-semibold">{{ $tipoNombre }}</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Tipo de registro</p>
+            <p class="mt-0.5 font-semibold">{{ $tipoNombre }}</p>
+        </div>
+        <div>
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Nivel</p>
+            <p class="mt-0.5 font-semibold">{{ $act->nivel?->nivel ?: '—' }}</p>
+        </div>
     </div>
     <div>
         <p class="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Actividad</p>

@@ -156,6 +156,7 @@ final class ExtActividadesService
         $act = self::scopedQuery($idProponente)
             ->with([
                 'tipoRegistro',
+                'nivel',
                 'proponente',
                 'fechas',
                 'cursos.curso.curplan',
@@ -168,6 +169,31 @@ final class ExtActividadesService
         abort_if($act === null, 404, 'La actividad no pertenece al contexto activo.');
 
         return $act;
+    }
+
+    /**
+     * Actividad del ciclo lectivo activo, de cualquier nivel, para el detalle del calendario.
+     */
+    public static function cargarParaCalendario(int $id): ?ExtActividad
+    {
+        if ($id < 1 || ! self::tablasDisponibles()) {
+            return null;
+        }
+
+        return ExtActividad::query()
+            ->with([
+                'tipoRegistro',
+                'nivel',
+                'proponente',
+                'fechas',
+                'cursos.curso.curplan',
+                'cursos.curso.turnoClase',
+                'alumnos.legajo',
+                'docentes.profesor',
+            ])
+            ->where('id_terlec', self::idTerlecContexto())
+            ->whereKey($id)
+            ->first();
     }
 
     /**
@@ -733,11 +759,12 @@ final class ExtActividadesService
     }
 
     /**
-     * Eventos aprobados en un rango de fechas (calendario).
+     * Eventos del calendario en un rango de fechas, de todos los niveles del ciclo activo.
+     * Por defecto solo aprobados. Con permiso, también las pendientes de todos los niveles.
      *
      * @return Collection<int, object>
      */
-    public static function eventosEnRango(Carbon $desde, Carbon $hasta): Collection
+    public static function eventosEnRango(Carbon $desde, Carbon $hasta, bool $incluirPendientes = false): Collection
     {
         if (! self::tablasDisponibles()) {
             return collect();
@@ -745,10 +772,16 @@ final class ExtActividadesService
 
         return ExtFecha::query()
             ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
-            ->whereHas('actividad', function ($q) {
-                $q->where('id_nivel', self::idNivelContexto())
-                    ->where('id_terlec', self::idTerlecContexto())
-                    ->where('estado', ExtActividad::ESTADO_APROBADO);
+            ->whereHas('actividad', function ($q) use ($incluirPendientes) {
+                $q->where('id_terlec', self::idTerlecContexto());
+                if ($incluirPendientes) {
+                    $q->whereIn('estado', [
+                        ExtActividad::ESTADO_APROBADO,
+                        ExtActividad::ESTADO_PENDIENTE,
+                    ]);
+                } else {
+                    $q->where('estado', ExtActividad::ESTADO_APROBADO);
+                }
             })
             ->with(['actividad.tipoRegistro', 'actividad.nivel'])
             ->orderBy('fecha')

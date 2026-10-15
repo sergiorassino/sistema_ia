@@ -5,7 +5,7 @@
                 <div class="min-w-0 space-y-1">
                     <p class="se-eyebrow">Calendario</p>
                     <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Calendario escolar</h2>
-                    <p class="text-sm text-white/80">{{ schoolCtx()->nivelNombre() }} · {{ schoolCtx()->terlecAno() }} · Actividades aprobadas</p>
+                    <p class="text-sm text-white/80">Todos los niveles · {{ schoolCtx()->terlecAno() }} · {{ $vePendientes ? 'Aprobadas y pendientes (en rojo)' : 'Actividades aprobadas' }}</p>
                 </div>
                 @if ($rutaIndexProyectos)
                     <a href="{{ route($rutaIndexProyectos) }}"
@@ -75,7 +75,7 @@
                                                     wire:key="ext-cal-chip-{{ $celda['ymd'] }}-{{ $ev['id'] }}"
                                                     wire:click.stop="verDetalle({{ (int) $ev['id'] }})"
                                                     @class(['se-cal-chip cursor-pointer', $ev['clase']])
-                                                    title="{{ $ev['nombre'] }}">
+                                                    title="{{ $ev['pendiente'] ? $ev['nombre'].' (pendiente de aprobación)' : $ev['nombre'] }}">
                                                 @if ($ev['hora'] !== '')
                                                     <span class="se-cal-chip-hora">{{ $ev['hora'] }}</span>
                                                 @endif
@@ -99,7 +99,8 @@
                                         <button type="button"
                                                 wire:key="ext-cal-sem-{{ $dia['ymd'] }}-{{ $ev['id'] }}"
                                                 wire:click.stop="verDetalle({{ (int) $ev['id'] }})"
-                                                @class(['se-cal-chip se-cal-chip--block cursor-pointer', $ev['clase']])>
+                                                @class(['se-cal-chip se-cal-chip--block cursor-pointer', $ev['clase']])
+                                                title="{{ $ev['pendiente'] ? $ev['nombre'].' (pendiente de aprobación)' : $ev['nombre'] }}">
                                             @if ($ev['hora'] !== '')
                                                 <span class="se-cal-chip-hora">{{ $ev['hora'] }}</span>
                                             @endif
@@ -119,8 +120,9 @@
                     <div class="space-y-3">
                         @forelse ($eventosDia as $ev)
                             <button type="button" wire:click="verDetalle({{ (int) $ev['id'] }})"
+                                    title="{{ $ev['pendiente'] ? $ev['nombre'].' (pendiente de aprobación)' : $ev['nombre'] }}"
                                     class="flex w-full cursor-pointer flex-col gap-1 rounded-2xl border border-accent-200 bg-white p-4 text-left transition hover:border-primary-500 hover:shadow-sm">
-                                <p @class(['text-base font-bold', $ev['clase']])>{{ $ev['nombre'] }}</p>
+                                <p @class(['text-base', 'font-bold' => ! $ev['pendiente'], 'font-normal' => $ev['pendiente'], $ev['clase']])>{{ $ev['nombre'] }}</p>
                                 @if (($ev['tipo'] ?? '') !== '')
                                     <p class="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{{ $ev['tipo'] }}</p>
                                 @endif
@@ -132,7 +134,7 @@
                                 </p>
                             </button>
                         @empty
-                            <p class="py-10 text-center text-sm text-neutral-500">No hay actividades aprobadas en este día.</p>
+                            <p class="py-10 text-center text-sm text-neutral-500">{{ $vePendientes ? 'No hay actividades en este día.' : 'No hay actividades aprobadas en este día.' }}</p>
                         @endforelse
                     </div>
                 @endif

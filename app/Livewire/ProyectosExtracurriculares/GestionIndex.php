@@ -83,7 +83,7 @@ class GestionIndex extends Component
         }
 
         ExtActividadesService::volverAPendiente($id);
-        $this->dispatch('se-swal-exito', mensaje: 'La actividad volvió a pendiente y salió del calendario.');
+        $this->dispatch('se-swal-exito', mensaje: 'La actividad volvió a pendiente. En el calendario solo la ven quienes tienen permiso para ver actividades sin aprobar.');
     }
 
     public function confirmarComunicar(int $id): void

@@ -95,7 +95,7 @@
                                                 @else
                                                     <button type="button"
                                                             class="inline-flex items-center rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-50"
-                                                            x-on:click="window.seSwalConfirmar('¿Volver la actividad a pendiente? Saldrá del calendario.', 'Confirmar').then(ok => ok && $wire.volverAPendiente({{ (int) $reg->id }}))">
+                                                            x-on:click="window.seSwalConfirmar('¿Volver la actividad a pendiente? Deja de verse en el calendario, salvo para quien pueda ver actividades sin aprobar.', 'Confirmar').then(ok => ok && $wire.volverAPendiente({{ (int) $reg->id }}))">
                                                         Volver a pendiente
                                                     </button>
                                                     <button type="button"

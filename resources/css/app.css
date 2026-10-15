@@ -4469,6 +4469,24 @@ html.se-pwa-can-install [data-se-pwa-install-wrap] {
     background-color: #e5e5e5;
     color: #111111;
 }
+/* Actividad aún no aprobada: letra normal y roja (permiso IA 116). */
+.se-cal-pendiente {
+    color: #b91c1c;
+    font-weight: 400;
+}
+.se-cal-chip.se-cal-pendiente {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    font-weight: 400;
+}
+.se-cal-chip.se-cal-pendiente .se-cal-chip-hora {
+    font-weight: 400;
+    color: inherit;
+}
+.se-cal-chip.se-cal-pendiente:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
 .se-cal-semana {
     display: grid;
     grid-template-columns: repeat(7, minmax(8rem, 1fr));
