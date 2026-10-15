@@ -2,10 +2,12 @@
 
 namespace App\Support\Alumnos;
 
+use App\Models\Ento;
 use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Models\Sexo;
 use App\Models\Terlec;
+use Illuminate\Support\Facades\Storage;
 use App\Support\InformeInasistencias;
 use App\Support\Listados\EstudiantesDatosConsulta;
 use Carbon\CarbonInterface;
@@ -135,16 +137,50 @@ final class FichaMatriculaDatos
     }
 
     /**
+     * Año del ciclo de autogestión (ento.idTerlecVerNotas). Si no hay, el año calendario.
+     */
+    public static function anioActualAutogestion(): int
+    {
+        $ano = (int) (studentCtx()->terlecAno() ?? 0);
+
+        return $ano >= 2000 ? $ano : (int) now()->year;
+    }
+
+    /**
+     * @return list<array{ciclo: string, etiqueta: string, anio: int}>
+     */
+    public static function opcionesCicloAutogestion(): array
+    {
+        $actual = self::anioActualAutogestion();
+
+        return [
+            ['ciclo' => 'actual', 'etiqueta' => 'Año actual', 'anio' => $actual],
+            ['ciclo' => 'proximo', 'etiqueta' => 'Año próximo', 'anio' => $actual + 1],
+        ];
+    }
+
+    public static function cicloAutogestionValido(string $ciclo): string
+    {
+        return $ciclo === 'proximo' ? 'proximo' : 'actual';
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
-    public static function paraAutogestion(): ?array
+    public static function paraAutogestion(string $ciclo = 'actual'): ?array
     {
         $ctx = studentCtx();
         if (! $ctx->isValid()) {
             return null;
         }
 
-        $matricula = InformeInasistencias::matriculaAutogestion();
+        $ciclo = self::cicloAutogestionValido($ciclo);
+        $ano = $ciclo === 'proximo'
+            ? self::anioActualAutogestion() + 1
+            : self::anioActualAutogestion();
+
+        $matricula = self::matriculaDelAnio((int) $ctx->idLegajo, (int) $ctx->idNivel, $ano)
+            ?? InformeInasistencias::matriculaAutogestion();
         if ($matricula === null) {
             return null;
         }
@@ -161,10 +197,36 @@ final class FichaMatriculaDatos
             $legajo,
             $matricula,
             (int) $ctx->idNivel,
-            (int) ($ctx->terlecAno() ?? 0),
+            $ano,
             studentPdfHeaderData(),
             true,
         );
+    }
+
+    private static function matriculaDelAnio(int $idLegajo, int $idNivel, int $ano): ?Matricula
+    {
+        if ($idLegajo < 1 || $idNivel < 1 || $ano < 2000) {
+            return null;
+        }
+
+        $idTerlec = (int) (Terlec::query()
+            ->where('ano', $ano)
+            ->orderByDesc('orden')
+            ->orderByDesc('id')
+            ->value('id') ?? 0);
+
+        if ($idTerlec < 1) {
+            return null;
+        }
+
+        return Matricula::query()
+            ->with(['curso.nivel'])
+            ->where('idLegajos', $idLegajo)
+            ->where('idNivel', $idNivel)
+            ->where('idTerlec', $idTerlec)
+            ->whereNull('fechaBaja')
+            ->orderByDesc('id')
+            ->first();
     }
 
     /**
@@ -194,6 +256,8 @@ final class FichaMatriculaDatos
         if ($obs === '') {
             $obs = trim((string) ($legajo->obs_web ?? ''));
         }
+
+        $header = self::headerConLogo($header, $idNivel);
 
         $base = [
             'header' => $header,
@@ -238,7 +302,7 @@ final class FichaMatriculaDatos
             return $base;
         }
 
-        return array_merge($base, [
+        $extra = [
             'mostrarRetira2' => $idNivel !== 3,
             'escori' => trim((string) ($legajo->escori ?? '')),
             'needes' => trim((string) ($legajo->needes ?? '')),
@@ -259,7 +323,95 @@ final class FichaMatriculaDatos
             'reglamApenom' => trim((string) ($legajo->reglamApenom ?? '')),
             'reglamDni' => trim((string) ($legajo->reglamDni ?? '')),
             'reglamEmail' => trim((string) ($legajo->reglamEmail ?? '')),
-        ]);
+        ];
+
+        if (AutorizadosEmergenciaRetiro::habilitado()) {
+            $extra['autorizadosEmergencia'] = AutorizadosEmergenciaRetiro::filasDeLegajo((int) $matricula->idLegajos);
+        }
+
+        return array_merge($base, $extra);
+    }
+
+    /**
+     * El logo de secretaría sale del nivel de la sesión del personal.
+     * En autogestión ese archivo a veces no se resuelve: se busca el del nivel
+     * del estudiante y, si no está, cualquier logo institucional que exista.
+     *
+     * @param  array{insti: string, direccion: string, localidad: string, provincia?: string, cue: string, ee: string, logo_file: ?string}  $header
+     * @return array{insti: string, direccion: string, localidad: string, provincia?: string, cue: string, ee: string, logo_file: ?string}
+     */
+    private static function headerConLogo(array $header, int $idNivel): array
+    {
+        $actual = $header['logo_file'] ?? null;
+        if (is_string($actual) && $actual !== '' && is_file($actual)) {
+            return $header;
+        }
+
+        $header['logo_file'] = self::buscarLogoAbsoluto($idNivel);
+
+        return $header;
+    }
+
+    private static function buscarLogoAbsoluto(int $idNivel): ?string
+    {
+        $rutas = [];
+
+        if ($idNivel > 0) {
+            $propia = Ento::query()->where('idNivel', $idNivel)->value('logo_path');
+            if (is_string($propia) && trim($propia) !== '') {
+                $rutas[] = trim($propia);
+            }
+        }
+
+        $otras = Ento::query()
+            ->whereNotNull('logo_path')
+            ->where('logo_path', '<>', '')
+            ->orderBy('idNivel')
+            ->pluck('logo_path');
+
+        foreach ($otras as $ruta) {
+            if (is_string($ruta) && trim($ruta) !== '') {
+                $rutas[] = trim($ruta);
+            }
+        }
+
+        $login = entoLoginLogoStoragePath();
+        if (is_string($login) && $login !== '') {
+            $rutas[] = $login;
+        }
+
+        foreach ($rutas as $ruta) {
+            $abs = self::absolutoSiExiste($ruta);
+            if ($abs !== null) {
+                return $abs;
+            }
+        }
+
+        return null;
+    }
+
+    private static function absolutoSiExiste(string $ruta): ?string
+    {
+        $relativa = ltrim(str_replace('\\', '/', trim($ruta)), '/');
+        if ($relativa === '' || str_contains($relativa, '..')) {
+            return null;
+        }
+
+        $candidatas = [];
+        if (is_file($ruta)) {
+            $candidatas[] = $ruta;
+        }
+        $candidatas[] = Storage::disk('public')->path($relativa);
+        $candidatas[] = public_path('storage/'.$relativa);
+        $candidatas[] = storage_path('app/public/'.$relativa);
+
+        foreach ($candidatas as $abs) {
+            if ($abs !== '' && is_file($abs)) {
+                return $abs;
+            }
+        }
+
+        return null;
     }
 
     private static function idTerlecEfectivo(?int $idTerlec): int

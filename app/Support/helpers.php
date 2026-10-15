@@ -1742,6 +1742,18 @@ if (! function_exists('tenantAutogestionActualizacionDatosRequiereDocumentos')) 
     }
 }
 
+if (! function_exists('tenantAutogestionContactosEmergenciaUnificados')) {
+    /**
+     * Si la actualización de datos unifica contactos de emergencia y personas
+     * autorizadas a retirar en la tabla `legajo_autorizados_emergencia`.
+     * Default off. San Francisco de Asís lo activa en su config de tenant.
+     */
+    function tenantAutogestionContactosEmergenciaUnificados(): bool
+    {
+        return (bool) config('tenant.autogestion.actualizacion_datos.contactos_emergencia_unificados', false);
+    }
+}
+
 if (! function_exists('tenantAutogestionActualizacionDatosLivewireComponent')) {
     /**
      * Componente Livewire del formulario según la variante del tenant.
@@ -1773,6 +1785,21 @@ if (! function_exists('tenantAutogestionFichaMatriculaHabilitada')) {
         }
 
         return entoAutogestionVerDatosYFichaHabilitada();
+    }
+}
+
+if (! function_exists('tenantAutogestionFichaMatriculaElegirAnio')) {
+    /**
+     * Si el portal familia pide año actual o año próximo antes de imprimir la ficha.
+     * Default off. San Francisco de Asís lo activa en su config de tenant.
+     */
+    function tenantAutogestionFichaMatriculaElegirAnio(): bool
+    {
+        if (! tenantAutogestionFichaMatriculaHabilitada()) {
+            return false;
+        }
+
+        return (bool) config('tenant.autogestion.ficha_matricula.elegir_anio', false);
     }
 }
 

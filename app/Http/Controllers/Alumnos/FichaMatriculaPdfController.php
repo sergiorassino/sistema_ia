@@ -38,9 +38,12 @@ class FichaMatriculaPdfController extends Controller
         RateLimiter::hit($key, 60);
 
         $implementacion = (string) config('tenant.autogestion.ficha_matricula.implementacion', '');
+        $ciclo = tenantAutogestionFichaMatriculaElegirAnio()
+            ? FichaMatriculaDatos::cicloAutogestionValido((string) $request->query('ciclo', 'actual'))
+            : 'actual';
 
         $datos = match ($implementacion) {
-            'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion(),
+            'sanfranciscoasis' => FichaMatriculaDatos::paraAutogestion($ciclo),
             'montecristo', 'sanjose' => FichaMatriculaMontecristoDatos::paraAutogestion(),
             'caixalsf' => FichaMatriculaCaixalsfDatos::paraAutogestion(),
             default => null,

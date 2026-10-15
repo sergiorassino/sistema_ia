@@ -130,12 +130,15 @@ final class PortalFamiliaDashboard
         }
 
         if (tenantAutogestionFichaMatriculaHabilitada()) {
+            $eligeAnio = tenantAutogestionFichaMatriculaElegirAnio();
             $accesoFicha = [
                 'id' => 'ficha-matricula',
                 'titulo' => 'Imprimir ficha de matrícula',
-                'descripcion' => 'Descargue la ficha en PDF.',
-                'url' => se_route_url('alumnos.ficha-matricula'),
-                'externo' => true,
+                'descripcion' => $eligeAnio
+                    ? 'Elija el año lectivo e imprima la ficha.'
+                    : 'Descargue la ficha en PDF.',
+                'url' => se_route_url($eligeAnio ? 'alumnos.ficha-matricula.elegir' : 'alumnos.ficha-matricula'),
+                'externo' => ! $eligeAnio,
                 'icono' => 'ficha',
             ];
             if ($restriccionFichaYDatos['bloqueada']) {

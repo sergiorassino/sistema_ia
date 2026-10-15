@@ -6,6 +6,7 @@ use App\Livewire\Alumnos\Concerns\ConFotoCarnetActualizacionDatos;
 use App\Models\Legajo;
 use App\Support\Alumnos\ActualizacionDatosPersonalesComun;
 use App\Support\Alumnos\ActualizacionDatosPersonalesSanFranciscoAsis;
+use App\Support\Alumnos\AutorizadosEmergenciaRetiro;
 use App\Support\DniInput;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Illuminate\Support\Facades\RateLimiter;
@@ -110,6 +111,13 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public string $retira1 = '';
 
+    /**
+     * Personas autorizadas (San Francisco de Asís). Mínimo 2, máximo 6.
+     *
+     * @var list<array{apellido_nombre: string, dni: string, relacion: string, telefono: string}>
+     */
+    public array $autorizadosEmergencia = [];
+
     public string $obs_web = '';
 
     public string $respAdmiNom = '';
@@ -132,6 +140,27 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
     public function updated(string $property): void
     {
+        if (preg_match('/^autorizadosEmergencia\.(\d+)\.(apellido_nombre|dni|relacion|telefono)$/', $property, $m)) {
+            $indice = (int) $m[1];
+            $campo = $m[2];
+            if (! isset($this->autorizadosEmergencia[$indice]) || ! is_array($this->autorizadosEmergencia[$indice])) {
+                return;
+            }
+
+            $valor = (string) ($this->autorizadosEmergencia[$indice][$campo] ?? '');
+            $this->autorizadosEmergencia[$indice][$campo] = $campo === 'dni'
+                ? DniInput::digitsOnly($valor)
+                : ActualizacionDatosPersonalesComun::normalizarTextoInput($valor);
+
+            $this->resetValidation($property);
+            if ($this->getErrorBag()->isEmpty()) {
+                $this->mostrarAvisoCamposIncompletos = false;
+                $this->camposIncompletosAviso = [];
+            }
+
+            return;
+        }
+
         $campos = array_keys(ActualizacionDatosPersonalesSanFranciscoAsis::etiquetasCampos());
         if (! in_array($property, $campos, true) || ! property_exists($this, $property)) {
             return;
@@ -178,6 +207,52 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
         $this->montarFotoCarnetDesdeLegajo($legajo);
         $this->aceptaciones = ActualizacionDatosPersonalesSanFranciscoAsis::aceptacionesDesdeMatricula($matricula);
+
+        if (AutorizadosEmergenciaRetiro::habilitado()) {
+            $this->autorizadosEmergencia = AutorizadosEmergenciaRetiro::filasParaFormulario((int) $legajo->id);
+        }
+    }
+
+    public function agregarAutorizadoEmergencia(): void
+    {
+        if ($this->bloqueado || ! AutorizadosEmergenciaRetiro::habilitado()) {
+            return;
+        }
+
+        if (count($this->autorizadosEmergencia) >= AutorizadosEmergenciaRetiro::MAX) {
+            return;
+        }
+
+        $this->autorizadosEmergencia[] = AutorizadosEmergenciaRetiro::filaVacia();
+    }
+
+    public function quitarAutorizadoEmergencia(int $indice): void
+    {
+        if ($this->bloqueado || ! AutorizadosEmergenciaRetiro::habilitado()) {
+            return;
+        }
+
+        if (count($this->autorizadosEmergencia) <= AutorizadosEmergenciaRetiro::MIN) {
+            return;
+        }
+
+        if (! array_key_exists($indice, $this->autorizadosEmergencia)) {
+            return;
+        }
+
+        unset($this->autorizadosEmergencia[$indice]);
+        $this->autorizadosEmergencia = array_values($this->autorizadosEmergencia);
+
+        foreach ($this->getErrorBag()->keys() as $key) {
+            if ($key === 'autorizadosEmergencia' || str_starts_with($key, 'autorizadosEmergencia.')) {
+                $this->resetValidation($key);
+            }
+        }
+
+        if ($this->getErrorBag()->isEmpty()) {
+            $this->mostrarAvisoCamposIncompletos = false;
+            $this->camposIncompletosAviso = [];
+        }
     }
 
     public function updatedNeedes(string $value): void
@@ -266,11 +341,19 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
 
             $this->{$campo} = ActualizacionDatosPersonalesComun::normalizarTextoInput($this->{$campo});
         }
-        $validator = Validator::make(
-            $this->only($keys),
-            ActualizacionDatosPersonalesSanFranciscoAsis::reglasValidacion($this->needes),
-            ActualizacionDatosPersonalesSanFranciscoAsis::mensajesValidacion(),
-        );
+
+        $reglas = ActualizacionDatosPersonalesSanFranciscoAsis::reglasValidacion($this->needes);
+        $mensajes = ActualizacionDatosPersonalesSanFranciscoAsis::mensajesValidacion();
+        $datos = $this->only($keys);
+
+        if (AutorizadosEmergenciaRetiro::habilitado()) {
+            $this->autorizadosEmergencia = AutorizadosEmergenciaRetiro::normalizarLista($this->autorizadosEmergencia);
+            $datos['autorizadosEmergencia'] = $this->autorizadosEmergencia;
+            $reglas = array_merge($reglas, AutorizadosEmergenciaRetiro::reglas());
+            $mensajes = array_merge(AutorizadosEmergenciaRetiro::mensajes(), $mensajes);
+        }
+
+        $validator = Validator::make($datos, $reglas, $mensajes);
 
         if ($validator->fails()) {
             $this->resetErrorBag();
@@ -294,10 +377,21 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         $state = $this->only($keys);
 
         try {
-            ActualizacionDatosPersonalesSanFranciscoAsis::guardar($ctx['legajo'], $matricula, $state);
+            ActualizacionDatosPersonalesSanFranciscoAsis::guardar(
+                $ctx['legajo'],
+                $matricula,
+                $state,
+                AutorizadosEmergenciaRetiro::habilitado() ? $this->autorizadosEmergencia : null,
+            );
         } catch (\RuntimeException $e) {
             if (str_contains($e->getMessage(), 'documentos institucionales')) {
                 $this->mostrarAvisoDocumentosPendientes = true;
+
+                return;
+            }
+            if (str_contains($e->getMessage(), 'personas autorizadas')
+                || str_contains($e->getMessage(), 'legajo_autorizados_emergencia')) {
+                $this->addError('autorizadosEmergencia', $e->getMessage());
 
                 return;
             }
@@ -318,9 +412,13 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
         }
 
         foreach (ActualizacionDatosPersonalesSanFranciscoAsis::atributosParaFormulario($legajo) as $k => $v) {
-            if (property_exists($this, $k)) {
+            if (property_exists($this, $k) && is_string($this->{$k})) {
                 $this->{$k} = $v;
             }
+        }
+
+        if (AutorizadosEmergenciaRetiro::habilitado()) {
+            $this->autorizadosEmergencia = AutorizadosEmergenciaRetiro::filasParaFormulario((int) $legajo->id);
         }
 
         $this->resetErrorBag();
@@ -351,6 +449,7 @@ class ActualizacionDatosPersonalesSanFranciscoAsisForm extends Component
             'requiereDocumentos' => $requiereDocumentos,
             'esSecundario' => studentEsNivelSecundario(),
             'textoCompromiso' => ActualizacionDatosPersonalesSanFranciscoAsis::TEXTO_COMPROMISO_PARENTAL,
+            'contactosUnificados' => AutorizadosEmergenciaRetiro::habilitado(),
         ], $this->datosVistaFotoCarnet()))->layout('layouts.alumno', ['pageTitle' => 'Actualización de Datos Personales']);
     }
 }

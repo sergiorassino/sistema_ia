@@ -359,31 +359,117 @@
                     @error('vivecon') <p class="form-error">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="rounded-xl border border-accent-200 bg-accent-50/60 p-4 space-y-4">
-                    <p class="text-sm font-bold leading-snug text-neutral-900">
-                        En caso de imposibilidad de contactar a padres/tutor
-                    </p>
-                    <div>
-                        <label class="form-label">Apellido y Nombres, relación y teléfono (1) *</label>
-                        <input id="campo-contacto1" wire:model.live.blur="contacto1" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
-                        @error('contacto1') <p class="form-error">{{ $message }}</p> @enderror
+                @if ($contactosUnificados)
+                    <div id="campo-autorizadosEmergencia" class="rounded-xl border border-accent-200 bg-accent-50/60 p-4 space-y-4">
+                        <p class="text-sm font-semibold leading-relaxed text-neutral-900">
+                            En caso de emergencia y si no es posible contactar a los Padres o Tutores, se autoriza a las siguientes personas para la comunicación y el retiro del estudiante (<strong>teniendo en cuenta que deben ser mayores de 18 años</strong>):
+                        </p>
+                        @error('autorizadosEmergencia') <p class="form-error">{{ $message }}</p> @enderror
+
+                        <div class="space-y-3">
+                            @foreach ($autorizadosEmergencia as $i => $fila)
+                                <div class="rounded-xl border border-accent-200 bg-white p-3 sm:p-4" wire:key="autorizado-emergencia-{{ $i }}">
+                                    <div class="mb-3 flex items-center justify-between gap-3">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-primary-800">Persona {{ $i + 1 }}</p>
+                                        @if (count($autorizadosEmergencia) > 2)
+                                            <button type="button"
+                                                    wire:click="quitarAutorizadoEmergencia({{ $i }})"
+                                                    @disabled($bloqueado)
+                                                    class="text-xs font-semibold text-red-700 hover:text-red-800 disabled:opacity-50">
+                                                Quitar
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <div class="sm:col-span-2">
+                                            <label class="form-label" for="campo-autorizadosEmergencia-{{ $i }}-apellido_nombre">Apellido y nombre *</label>
+                                            <input id="campo-autorizadosEmergencia-{{ $i }}-apellido_nombre"
+                                                   wire:model.live.blur="autorizadosEmergencia.{{ $i }}.apellido_nombre"
+                                                   type="text"
+                                                   maxlength="120"
+                                                   autocomplete="name"
+                                                   class="form-input mt-1"
+                                                   @disabled($bloqueado)>
+                                            @error('autorizadosEmergencia.'.$i.'.apellido_nombre') <p class="form-error">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="campo-autorizadosEmergencia-{{ $i }}-dni">DNI *</label>
+                                            <input id="campo-autorizadosEmergencia-{{ $i }}-dni"
+                                                   wire:model.live.blur="autorizadosEmergencia.{{ $i }}.dni"
+                                                   type="text"
+                                                   inputmode="numeric"
+                                                   maxlength="11"
+                                                   autocomplete="off"
+                                                   class="form-input mt-1"
+                                                   @disabled($bloqueado)>
+                                            @error('autorizadosEmergencia.'.$i.'.dni') <p class="form-error">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="campo-autorizadosEmergencia-{{ $i }}-relacion">Relación con el estudiante *</label>
+                                            <input id="campo-autorizadosEmergencia-{{ $i }}-relacion"
+                                                   wire:model.live.blur="autorizadosEmergencia.{{ $i }}.relacion"
+                                                   type="text"
+                                                   maxlength="60"
+                                                   class="form-input mt-1"
+                                                   @disabled($bloqueado)>
+                                            @error('autorizadosEmergencia.'.$i.'.relacion') <p class="form-error">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="form-label" for="campo-autorizadosEmergencia-{{ $i }}-telefono">Teléfono *</label>
+                                            <input id="campo-autorizadosEmergencia-{{ $i }}-telefono"
+                                                   wire:model.live.blur="autorizadosEmergencia.{{ $i }}.telefono"
+                                                   type="text"
+                                                   inputmode="tel"
+                                                   maxlength="40"
+                                                   autocomplete="tel"
+                                                   class="form-input mt-1"
+                                                   @disabled($bloqueado)>
+                                            @error('autorizadosEmergencia.'.$i.'.telefono') <p class="form-error">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if (count($autorizadosEmergencia) < 6)
+                            <button type="button"
+                                    wire:click="agregarAutorizadoEmergencia"
+                                    @disabled($bloqueado)
+                                    class="inline-flex items-center justify-center rounded-xl border border-accent-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-700 shadow-sm hover:border-primary-500 disabled:opacity-50">
+                                Agregar persona
+                            </button>
+                        @endif
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                            {{ count($autorizadosEmergencia) }} de 6 · mínimo 2
+                        </p>
+                    </div>
+                @else
+                    <div class="rounded-xl border border-accent-200 bg-accent-50/60 p-4 space-y-4">
+                        <p class="text-sm font-bold leading-snug text-neutral-900">
+                            En caso de imposibilidad de contactar a padres/tutor
+                        </p>
+                        <div>
+                            <label class="form-label">Apellido y Nombres, relación y teléfono (1) *</label>
+                            <input id="campo-contacto1" wire:model.live.blur="contacto1" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
+                            @error('contacto1') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="form-label">Apellido y Nombres, relación y teléfono (2)</label>
+                            <input id="campo-contacto2" wire:model.live.blur="contacto2" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
+                            @error('contacto2') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="form-label">Apellido y Nombres, relación y teléfono (3)</label>
+                            <input id="campo-contacto3" wire:model.live.blur="contacto3" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
+                            @error('contacto3') <p class="form-error">{{ $message }}</p> @enderror
+                        </div>
                     </div>
                     <div>
-                        <label class="form-label">Apellido y Nombres, relación y teléfono (2)</label>
-                        <input id="campo-contacto2" wire:model.live.blur="contacto2" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
-                        @error('contacto2') <p class="form-error">{{ $message }}</p> @enderror
+                        <label class="form-label">Personas autorizadas para el retiro del estudiante</label>
+                        <input id="campo-retira1" wire:model.live.blur="retira1" type="text" class="form-input mt-1" placeholder="Apellido, nombre, relación, teléfono" @disabled($bloqueado)>
+                        @error('retira1') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    <div>
-                        <label class="form-label">Apellido y Nombres, relación y teléfono (3)</label>
-                        <input id="campo-contacto3" wire:model.live.blur="contacto3" type="text" class="form-input mt-1 bg-white" @disabled($bloqueado)>
-                        @error('contacto3') <p class="form-error">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-                <div>
-                    <label class="form-label">Personas autorizadas para el retiro del estudiante</label>
-                    <input id="campo-retira1" wire:model.live.blur="retira1" type="text" class="form-input mt-1" placeholder="Apellido, nombre, relación, teléfono" @disabled($bloqueado)>
-                    @error('retira1') <p class="form-error">{{ $message }}</p> @enderror
-                </div>
+                @endif
             </div>
         </section>
 

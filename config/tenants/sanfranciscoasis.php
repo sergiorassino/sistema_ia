@@ -66,10 +66,12 @@ return [
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
+            'contactos_emergencia_unificados' => true,
         ],
         'ficha_matricula' => [
             'habilitado' => true,
             'implementacion' => 'sanfranciscoasis',
+            'elegir_anio' => true,
         ],
         'aranceles_escolares' => [
             'habilitado' => true,

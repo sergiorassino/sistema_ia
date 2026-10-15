@@ -75,22 +75,29 @@ return [
          * `requiere_documentos`: solo aplica a `implementacion = sanfranciscoasis`.
          * Si true, el formulario muestra y exige los cuatro PDF institucionales.
          * Si false, se mantiene el formulario SFA sin ese bloque (p. ej. EPQ).
+         * `contactos_emergencia_unificados`: lista de hasta 6 personas (mínimo 2)
+         * con apellido y nombre, DNI, relación y teléfono, en tabla propia.
+         * Default off. San Francisco de Asís lo activa en su config de tenant.
          */
         'actualizacion_datos' => [
             'habilitado' => true,
             'implementacion' => 'estandar',
             'foto_carnet' => false,
             'requiere_documentos' => true,
+            'contactos_emergencia_unificados' => false,
         ],
 
         /**
          * Impresión de ficha de matrícula en PDF (portal familia).
          * `implementacion`: clave de variante en código (ej. sanfranciscoasis).
          * Visibilidad por nivel: `ento.verDatosFicha` (Parametrización → Parámetros).
+         * `elegir_anio`: en autogestión, el padre elige año actual o año próximo
+         * antes de imprimir. Default off.
          */
         'ficha_matricula' => [
             'habilitado' => false,
             'implementacion' => null,
+            'elegir_anio' => false,
         ],
 
         /**

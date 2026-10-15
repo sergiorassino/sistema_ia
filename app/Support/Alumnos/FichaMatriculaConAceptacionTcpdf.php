@@ -17,7 +17,15 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
 
     private const ANCHO_BLOQUE = 160.0;
 
-    private const ALTURA_CABECERA_INST = 13.0;
+    /** El sello llena el alto del membrete, con un margen corto. */
+    private const LOGO_ANCHO = 18.4;
+
+    private const LOGO_ALTO = 18.4;
+
+    private const ALTURA_CABECERA_INST = 20.8;
+
+    /** @var array<string, string> */
+    private static array $logoRecortado = [];
 
     /** Altura de filas de datos (formato legacy FPDF). */
     private const ALTURA_FILA = 5.0;
@@ -123,9 +131,29 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
         $this->SetDrawColor(17, 17, 17);
         $this->RoundedRect($x, $y, $w, $h, 1.5, '1111', 'D');
 
+        $margenLogo = ($h - self::LOGO_ALTO) / 2;
+        $reservaLogo = self::LOGO_ANCHO + ($margenLogo * 2);
         $logo = $this->header['logo_file'] ?? null;
         if (is_string($logo) && $logo !== '' && is_file($logo)) {
-            $this->Image(TcpdfImagenPng::fuenteTcpdf($logo), $x + 1.5, $y + 1, 9, 11, '', '', '', false, 300);
+            $this->Image(
+                self::logoSinMargen($logo),
+                $x + $margenLogo,
+                $y + $margenLogo,
+                self::LOGO_ANCHO,
+                self::LOGO_ALTO,
+                '',
+                '',
+                '',
+                false,
+                300,
+                '',
+                false,
+                false,
+                0,
+                'CM',
+            );
+        } else {
+            $reservaLogo = 0.0;
         }
 
         $insti = trim((string) ($this->header['insti'] ?? ''));
@@ -136,20 +164,132 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
         $ee = trim((string) ($this->header['ee'] ?? ''));
         $lineaIds = trim(($cue !== '' ? 'CUE: '.$cue : '').(($cue !== '' && $ee !== '') ? '   ' : '').($ee !== '' ? 'EE: '.$ee : ''));
 
-        $this->SetXY($x, $y + 1.5);
+        $altoTexto = 3.2
+            + ($lineaDir !== '' ? 2.6 : 0)
+            + ($lineaIds !== '' ? 2.4 : 0);
+        $xTexto = $x + $reservaLogo;
+        $wTexto = $w - $reservaLogo;
+        $this->SetXY($xTexto, $y + max(1.0, ($h - $altoTexto) / 2));
         TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell($w, 3.2, $insti !== '' ? $insti : 'Institución', 0, 2, 'C');
+        $this->Cell($wTexto, 3.2, $insti !== '' ? $insti : 'Institución', 0, 2, 'C');
 
         if ($lineaDir !== '') {
             TcpdfFuenteArial::aplicar($this, '', 6);
-            $this->Cell($w, 2.6, $lineaDir, 0, 2, 'C');
+            $this->SetX($xTexto);
+            $this->Cell($wTexto, 2.6, $lineaDir, 0, 2, 'C');
         }
         if ($lineaIds !== '') {
             TcpdfFuenteArial::aplicar($this, '', 5.5);
-            $this->Cell($w, 2.4, $lineaIds, 0, 2, 'C');
+            $this->SetX($xTexto);
+            $this->Cell($wTexto, 2.4, $lineaIds, 0, 2, 'C');
         }
 
         return $y + $h + 1.0;
+    }
+
+    /**
+     * Quita el margen blanco o transparente del archivo para que el sello
+     * ocupe el recuadro y no quede chico en el centro de la imagen.
+     */
+    private static function logoSinMargen(string $ruta): string
+    {
+        $mtime = filemtime($ruta) ?: 0;
+        $clave = $ruta.'|'.$mtime;
+        if (isset(self::$logoRecortado[$clave])) {
+            return self::$logoRecortado[$clave];
+        }
+
+        $fuente = TcpdfImagenPng::fuenteTcpdf($ruta);
+        if (! function_exists('imagecreatefromstring')) {
+            return self::$logoRecortado[$clave] = $fuente;
+        }
+
+        $binario = str_starts_with($fuente, '@') ? substr($fuente, 1) : (string) file_get_contents($fuente);
+        if ($binario === '') {
+            return self::$logoRecortado[$clave] = $fuente;
+        }
+
+        $imagen = @imagecreatefromstring($binario);
+        if ($imagen === false) {
+            return self::$logoRecortado[$clave] = $fuente;
+        }
+
+        $recorte = self::recortarMargenLogo($imagen);
+        if ($recorte === null) {
+            return self::$logoRecortado[$clave] = $fuente;
+        }
+
+        ob_start();
+        imagepng($recorte);
+
+        return self::$logoRecortado[$clave] = '@'.(string) ob_get_clean();
+    }
+
+    /**
+     * @param  \GdImage|resource  $imagen
+     * @return \GdImage|resource|null
+     */
+    private static function recortarMargenLogo($imagen)
+    {
+        $ancho = imagesx($imagen);
+        $alto = imagesy($imagen);
+        if ($ancho < 2 || $alto < 2) {
+            return null;
+        }
+
+        $minX = $ancho;
+        $minY = $alto;
+        $maxX = 0;
+        $maxY = 0;
+
+        for ($y = 0; $y < $alto; $y++) {
+            for ($x = 0; $x < $ancho; $x++) {
+                if (self::pixelEsMargen($imagen, $x, $y)) {
+                    continue;
+                }
+                $minX = min($minX, $x);
+                $minY = min($minY, $y);
+                $maxX = max($maxX, $x);
+                $maxY = max($maxY, $y);
+            }
+        }
+
+        if ($maxX < $minX || $maxY < $minY) {
+            return null;
+        }
+
+        $recorteAncho = $maxX - $minX + 1;
+        $recorteAlto = $maxY - $minY + 1;
+        if ($recorteAncho >= $ancho - 2 && $recorteAlto >= $alto - 2) {
+            return null;
+        }
+
+        $destino = imagecreatetruecolor($recorteAncho, $recorteAlto);
+        imagealphablending($destino, false);
+        imagesavealpha($destino, true);
+        $transparente = imagecolorallocatealpha($destino, 0, 0, 0, 127);
+        imagefilledrectangle($destino, 0, 0, $recorteAncho, $recorteAlto, $transparente);
+        imagecopy($destino, $imagen, 0, 0, $minX, $minY, $recorteAncho, $recorteAlto);
+
+        return $destino;
+    }
+
+    /**
+     * @param  \GdImage|resource  $imagen
+     */
+    private static function pixelEsMargen($imagen, int $x, int $y): bool
+    {
+        $color = imagecolorat($imagen, $x, $y);
+        $alfa = ($color >> 24) & 0x7F;
+        if ($alfa > 100) {
+            return true;
+        }
+
+        $rojo = ($color >> 16) & 0xFF;
+        $verde = ($color >> 8) & 0xFF;
+        $azul = $color & 0xFF;
+
+        return $rojo >= 248 && $verde >= 248 && $azul >= 248;
     }
 
     private function dibujarTituloFicha(float $y): float
@@ -321,36 +461,41 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
         $this->filaEtiquetaValor('Estado civil de los Padres: ', (string) $d['ec_padres'], 40, 80);
         $this->filaEtiquetaValor('¿Con quién vive el estudiante?: ', (string) $d['vivecon'], 50, 80);
 
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell(
-            50,
-            self::ALTURA_FILA,
-            'En caso de emergencia e imposibilitados de contactar a los padres o tutor comunicar para el retiro de estudiantes a: ',
-            0,
-            1,
-            'L',
-            false,
-        );
+        $autorizados = $d['autorizadosEmergencia'] ?? null;
+        if (is_array($autorizados)) {
+            $this->dibujarAutorizadosEmergencia($autorizados);
+        } else {
+            TcpdfFuenteArial::aplicar($this, 'B', 8);
+            $this->Cell(
+                50,
+                self::ALTURA_FILA,
+                'En caso de emergencia e imposibilitados de contactar a los padres o tutor comunicar para el retiro de estudiantes a: ',
+                0,
+                1,
+                'L',
+                false,
+            );
 
-        $this->filaEtiquetaValor('Teléfono de contacto 1: ', (string) $d['contacto1'], 40, 80);
-        $this->filaEtiquetaValor('Teléfono de contacto 2: ', (string) $d['contacto2'], 40, 80);
-        $this->filaEtiquetaValor('Teléfono de contacto 3: ', (string) $d['contacto3'], 40, 80);
+            $this->filaEtiquetaValor('Teléfono de contacto 1: ', (string) $d['contacto1'], 40, 80);
+            $this->filaEtiquetaValor('Teléfono de contacto 2: ', (string) $d['contacto2'], 40, 80);
+            $this->filaEtiquetaValor('Teléfono de contacto 3: ', (string) $d['contacto3'], 40, 80);
 
-        TcpdfFuenteArial::aplicar($this, 'B', 8);
-        $this->Cell(
-            50,
-            self::ALTURA_FILA,
-            'Personas autorizadas para el reitro del estudiante en caso de imposibilidad de contactar: ',
-            0,
-            1,
-            'L',
-            false,
-        );
+            TcpdfFuenteArial::aplicar($this, 'B', 8);
+            $this->Cell(
+                50,
+                self::ALTURA_FILA,
+                'Personas autorizadas para el reitro del estudiante en caso de imposibilidad de contactar: ',
+                0,
+                1,
+                'L',
+                false,
+            );
 
-        $this->filaEtiquetaValor('Apellido, Nombre, Relación, Teléfono (1): ', (string) $d['retira1'], 60, 80);
+            $this->filaEtiquetaValor('Apellido, Nombre, Relación, Teléfono (1): ', (string) $d['retira1'], 60, 80);
 
-        if (! empty($d['mostrarRetira2'])) {
-            $this->filaEtiquetaValor('Apellido, Nombre, Relación, Teléfono (2): ', (string) $d['retira2'], 60, 80);
+            if (! empty($d['mostrarRetira2'])) {
+                $this->filaEtiquetaValor('Apellido, Nombre, Relación, Teléfono (2): ', (string) $d['retira2'], 60, 80);
+            }
         }
 
         // Una sola fila (nombre + DNI) para no empujar el documento a una 2.ª página.
@@ -368,6 +513,37 @@ final class FichaMatriculaConAceptacionTcpdf extends TCPDF
         TcpdfFuenteArial::aplicar($this, '', 8);
         $this->MultiCell(0, self::ALTURA_FILA, (string) $d['obs_web'], 0, 'L', false, 1);
         $this->Ln(1);
+    }
+
+    /**
+     * @param  list<array{apellido_nombre: string, dni: string, relacion: string, telefono: string}>  $filas
+     */
+    private function dibujarAutorizadosEmergencia(array $filas): void
+    {
+        $intro = 'En caso de emergencia y si no es posible contactar a los Padres o Tutores, '
+            .'se autoriza a las siguientes personas para la comunicación y el retiro del estudiante '
+            .'(teniendo en cuenta que deben ser mayores de 18 años):';
+
+        $this->SetX(self::MARGEN_IZQ);
+        TcpdfFuenteArial::aplicar($this, 'B', 8);
+        $this->MultiCell(self::ANCHO_BLOQUE, self::ALTURA_FILA, $intro, 0, 'L', false, 1);
+
+        foreach (array_values($filas) as $i => $fila) {
+            $linea = ($i + 1).'. '
+                .trim((string) ($fila['apellido_nombre'] ?? ''))
+                .' — DNI '.trim((string) ($fila['dni'] ?? ''))
+                .' — '.trim((string) ($fila['relacion'] ?? ''))
+                .' — Tel. '.trim((string) ($fila['telefono'] ?? ''));
+            $linea = preg_replace('/\s+/u', ' ', $linea) ?? $linea;
+
+            $this->SetX(self::MARGEN_IZQ);
+            TcpdfFuenteArial::aplicar($this, '', 7.5);
+            if ($this->GetStringWidth($linea) > self::ANCHO_BLOQUE) {
+                $this->MultiCell(self::ANCHO_BLOQUE, 3.4, $linea, 0, 'L', false, 1);
+            } else {
+                $this->Cell(self::ANCHO_BLOQUE, 3.6, $linea, 0, 1, 'L', false);
+            }
+        }
     }
 
     private function dibujarConsentimiento(): void
@@ -389,7 +565,14 @@ Mediante la presente, manifiesto que toda la información aquí consignada es ve
 
     private function dibujarFirma(): void
     {
-        $this->Ln(self::ESPACIO_ANTES_FIRMA);
+        $espacio = self::ESPACIO_ANTES_FIRMA;
+        if (! empty($this->datos['autorizadosEmergencia'])) {
+            $limite = 279.0;
+            if ($this->GetY() + $espacio > $limite) {
+                $espacio = max(3.0, $limite - $this->GetY());
+            }
+        }
+        $this->Ln($espacio);
         TcpdfFuenteArial::aplicar($this, '', 7);
         $this->Write(
             4,

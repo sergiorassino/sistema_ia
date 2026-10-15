@@ -6,6 +6,7 @@ use App\Models\Legajo;
 use App\Models\Matricula;
 use App\Support\MatriculaWeb\MatriculaWebDocumentos;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -196,13 +197,16 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'telltm' => self::trimCampo($state['telltm'] ?? ''),
             'ec_padres' => self::trimCampo($state['ec_padres'] ?? ''),
             'vivecon' => self::trimCampo($state['vivecon'] ?? ''),
-            'contacto1' => self::trimCampo($state['contacto1'] ?? ''),
-            'contacto2' => self::trimCampo($state['contacto2'] ?? ''),
-            'contacto3' => self::trimCampo($state['contacto3'] ?? ''),
-            'retira1' => self::trimCampo($state['retira1'] ?? ''),
             'obs_web' => self::trimCampo($state['obs_web'] ?? ''),
             'fechActDatos' => now()->format('Y-m-d H:i:s'),
         ];
+
+        if (! AutorizadosEmergenciaRetiro::habilitado()) {
+            $data['contacto1'] = self::trimCampo($state['contacto1'] ?? '');
+            $data['contacto2'] = self::trimCampo($state['contacto2'] ?? '');
+            $data['contacto3'] = self::trimCampo($state['contacto3'] ?? '');
+            $data['retira1'] = self::trimCampo($state['retira1'] ?? '');
+        }
 
         if ($tutorActivo) {
             $data['nombretut'] = self::trimCampo($state['nombretut'] ?? '');
@@ -228,14 +232,25 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
         );
     }
 
-    public static function guardar(Legajo $legajo, Matricula $matricula, array $state): void
+    /**
+     * @param  list<array<string, mixed>>|null  $autorizados
+     */
+    public static function guardar(Legajo $legajo, Matricula $matricula, array $state, ?array $autorizados = null): void
     {
         $matricula = $matricula->fresh();
         if ($matricula === null || ! self::todasAceptadas($matricula)) {
             throw new \RuntimeException('Debe aceptar todos los documentos institucionales antes de guardar.');
         }
 
-        ActualizacionDatosPersonalesComun::persistirLegajo($legajo, self::datosParaGuardar($state));
+        $idLegajo = (int) $legajo->id;
+
+        DB::transaction(function () use ($legajo, $state, $autorizados, $idLegajo): void {
+            ActualizacionDatosPersonalesComun::persistirLegajo($legajo, self::datosParaGuardar($state));
+
+            if (AutorizadosEmergenciaRetiro::habilitado()) {
+                AutorizadosEmergenciaRetiro::reemplazar($idLegajo, $autorizados ?? []);
+            }
+        });
     }
 
     /**
@@ -291,10 +306,6 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             'telltm' => $opc,
             'ec_padres' => $req,
             'vivecon' => $req,
-            'contacto1' => $req,
-            'contacto2' => $opc,
-            'contacto3' => $opc,
-            'retira1' => $req,
             'obs_web' => $opc,
             'nombretut' => $opc,
             'dnitut' => ['nullable', 'string', 'max:20'],
@@ -308,6 +319,13 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
             $rules['telefono'] = $req;
         } else {
             $rules['telefono'] = $opc;
+        }
+
+        if (! AutorizadosEmergenciaRetiro::habilitado()) {
+            $rules['contacto1'] = $req;
+            $rules['contacto2'] = $opc;
+            $rules['contacto3'] = $opc;
+            $rules['retira1'] = $req;
         }
 
         return $rules;
@@ -392,8 +410,10 @@ final class ActualizacionDatosPersonalesSanFranciscoAsis
 
         foreach ($errors->keys() as $campo) {
             $lista[] = [
-                'campo' => $campo,
-                'etiqueta' => $etiquetas[$campo] ?? ucfirst(str_replace('_', ' ', $campo)),
+                'campo' => str_replace('.', '-', $campo),
+                'etiqueta' => AutorizadosEmergenciaRetiro::etiqueta($campo)
+                    ?? $etiquetas[$campo]
+                    ?? ucfirst(str_replace('_', ' ', $campo)),
             ];
         }
 

@@ -192,15 +192,21 @@
         @endif
 
         @if (tenantAutogestionFichaMatriculaHabilitada())
-            <a href="{{ se_route_url('alumnos.ficha-matricula') }}"
+            @php
+                $fichaEligeAnio = tenantAutogestionFichaMatriculaElegirAnio();
+            @endphp
+            <a href="{{ se_route_url($fichaEligeAnio ? 'alumnos.ficha-matricula.elegir' : 'alumnos.ficha-matricula') }}"
                @if ($bloqueoFichaYDatosAlumno['bloqueada'])
                    @click.prevent="window.seSwalAviso(@js($bloqueoFichaYDatosAlumno['mensaje']), 'Ficha de matrícula')"
-               @else
+               @elseif (! $fichaEligeAnio)
                    target="_blank"
                    rel="noopener noreferrer"
                @endif
-               class="se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors"
-               title="{{ $bloqueoFichaYDatosAlumno['bloqueada'] ? 'Imprimir ficha de matrícula' : 'Imprimir ficha de matrícula (se abre en una nueva pestaña)' }}">
+               @class([
+                   'se-sidebar-link flex items-center gap-2 px-2.5 py-2 rounded-md transition-colors',
+                   'is-active shadow-sm' => $fichaEligeAnio && request()->routeIs('alumnos.ficha-matricula.elegir'),
+               ])
+               title="{{ $bloqueoFichaYDatosAlumno['bloqueada'] || $fichaEligeAnio ? 'Imprimir ficha de matrícula' : 'Imprimir ficha de matrícula (se abre en una nueva pestaña)' }}">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
