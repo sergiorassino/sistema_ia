@@ -36,7 +36,7 @@ Referencia de despliegue: `docs/09-despliegue-sin-public-en-url.md`.
 
 ## Backup y VPS de emergencia
 
-Misma rutina que Silavet, por colegio: cron horario `scripts/emergencia/respaldar.sh` (dump MySQL + archivos que no están en git) hacia S3. El VPS de reserva no tiene sync horario; se restaura a demanda con `restaurar.sh` o `public/emergencia-restaurar.php`. Prefijos S3 propios (`backupDedicado/sistema/…`), para no mezclar dumps con los laboratorios. Detalle: `docs/10-backup-y-vps-emergencia.md`.
+Misma rutina que Silavet, por colegio: cron horario `scripts/emergencia/respaldar.sh` (dump MySQL + archivos que no están en git) hacia S3. El VPS de reserva no tiene sync horario; se restaura a demanda con `restaurar.sh` o `public/emergencia-restaurar.php`. Carpetas S3 compartidas con Silavet (`backupDedicado/backupHora` y `backupDedicado/archivos`). El dump del colegio empieza con `e`. Detalle: `docs/10-backup-y-vps-emergencia.md`.
 
 ## Promedio de calificaciones (secundario)
 

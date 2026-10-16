@@ -389,7 +389,8 @@ respaldar_mysql_hora() {
 
 # Carpetas relativas al proyecto que no están en git (o no de forma fiable).
 # Array (no process substitution): en Hostinger no existe /dev/fd.
-# Prefijo S3 distinto al de Silavet: backupDedicado/sistema/… (no mezclar dumps).
+# Mismas carpetas S3 que Silavet: backupDedicado/backupHora y backupDedicado/archivos.
+# El dump del colegio se distingue por el prefijo e (e1_slug_…).
 RUTAS_ARCHIVOS_COLEGIO=(
     public/archivos
     public/storage
@@ -546,7 +547,7 @@ clave_dump_mas_reciente() {
     local listado linea clave err
     err="$(mktemp)"
     if ! listado="$(aws s3 ls "$(s3_uri_dumps)/" --recursive "${extra[@]}" 2>"$err")"; then
-        die "Falló aws s3 ls en $(s3_uri_dumps)/ — $(tr '\n' ' ' <"$err"). Probá: aws s3 ls s3://${S3_BUCKET}/  y ajustá S3_PREFIX_DUMPS (debe ser backupDedicado/sistema/backupHora)."
+        die "Falló aws s3 ls en $(s3_uri_dumps)/ — $(tr '\n' ' ' <"$err"). Probá: aws s3 ls s3://${S3_BUCKET}/  y ajustá S3_PREFIX_DUMPS (debe ser backupDedicado/backupHora)."
     fi
     rm -f "$err"
 

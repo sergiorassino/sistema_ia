@@ -2,9 +2,9 @@
 
 Misma rutina que Silavet (`SILAVET/docs/13-backup-y-vps-emergencia.md`), adaptada
 a **un colegio = un despliegue**. El VPS de reserva es el mismo DirectAdmin
-(`sistemasescolares4.com` / `sistemasescolares4.com.ar`). Los dumps de los
-laboratorios **no** se mezclan con los de los colegios: acá el prefijo S3 es
-`backupDedicado/sistema/…`.
+(`sistemasescolares4.com` / `sistemasescolares4.com.ar`). Archivos y dumps van
+a las mismas carpetas S3 que los laboratorios. El dump del colegio empieza
+con `e`; el del laboratorio, con `l`.
 
 Cómo dejar un colegio de reserva que se levanta **a demanda** (última hora),
 sin que el VPS de emergencia se actualice cada hora.
@@ -14,7 +14,7 @@ Piezas:
 | Pieza | Dónde | Qué cubre |
 |-------|--------|-----------|
 | Código | Git (`main`, o `sergio` si así se despliega) | Laravel, vistas, `public/build/` |
-| Base de datos | S3 `backupDedicado/sistema/backupHora` | Dump MySQL horario |
+| Base de datos | S3 `backupDedicado/backupHora` | Dump MySQL horario |
 | Archivos del colegio | S3 espejo incremental | Lo que no está en git |
 
 El VPS de emergencia queda **preparado** (stack + clone + Composer + overlay de
@@ -25,7 +25,7 @@ comando (SSH) o, si está el Paso H, un botón en el celular.
 
 ## 1. Qué se sube a S3 (archivos)
 
-Prefijo: `s3://sistesco/backupDedicado/sistema/archivos/{TENANT_SLUG}/`
+Prefijo: `s3://sistesco/backupDedicado/archivos/{TENANT_SLUG}/`
 
 | Ruta | Contenido |
 |------|-----------|
@@ -43,7 +43,7 @@ No se sube `vendor/`, logs, cache, `livewire-tmp` ni el árbol git. El sync **no
 usa `--delete`: un archivo borrado en disco no se borra en S3.
 
 Dump horario (misma rutina): `e{LAB_ORDEN}_{TENANT_SLUG}_YYYY_MM_DD_HH_MM_SS.sql.gz`
-en `s3://sistesco/backupDedicado/sistema/backupHora`.
+en `s3://sistesco/backupDedicado/backupHora`.
 Ejemplo: `e1_montecristo_2026_10_16_21_30_02.sql.gz`. La **e** es de escuela.
 `LAB_ORDEN` es el número que sigue (`e1_`, `e2_`, …). La marca de
 tiempo del nombre es **hora argentina** (`America/Argentina/Buenos_Aires`), no
@@ -52,8 +52,9 @@ la del reloj del servidor (suele ser UTC). Override opcional: `SE_TZ` en el
 (no en `config.env`). La BD que se dumpuea es `DB_*` de producción.
 `EMERGENCIA_DB_*` es el MySQL **local del VPS de reserva** (se usa al restaurar).
 
-Los dumps de Silavet siguen en `backupDedicado/backupHora`. No apuntes
-`S3_PREFIX_DUMPS` de un colegio a ese prefijo.
+Los dumps de Silavet están en la misma carpeta. El de un colegio se reconoce
+porque el archivo empieza con `e` (`e1_montecristo_…`). El de un laboratorio
+empieza con `l`.
 
 ---
 
@@ -158,7 +159,7 @@ Probar (en el hosting del colegio, no en el VPS de reserva):
 ```bash
 bash /ruta/al/colegio/scripts/emergencia/respaldar.sh --dry-run
 bash /ruta/al/colegio/scripts/emergencia/respaldar.sh
-aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep e1_montecristo | tail
+aws s3 ls s3://sistesco/backupDedicado/backupHora/ | grep e1_montecristo | tail
 ```
 
 Cron **por colegio** (ejemplo montecristo; desplazá el minuto si varios
@@ -302,8 +303,8 @@ composer -V
 
 command -v aws || echo "falta AWS CLI — igual que en producción, o §2.1"
 aws sts get-caller-identity
-aws s3 ls s3://sistesco/backupDedicado/sistema/archivos/montecristo/
-aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep e1_montecristo | tail
+aws s3 ls s3://sistesco/backupDedicado/archivos/montecristo/
+aws s3 ls s3://sistesco/backupDedicado/backupHora/ | grep e1_montecristo | tail
 ```
 
 Si `composer` queda en `$HOME/bin`, ese directorio tiene que estar en PATH
@@ -345,8 +346,8 @@ GIT_URL=https://github.com/sergiorassino/sistema_ia.git
 GIT_BRANCH=main
 PHP_BIN=/usr/local/php83/bin/php
 S3_BUCKET=sistesco
-S3_PREFIX_DUMPS=backupDedicado/sistema/backupHora
-S3_PREFIX_ARCHIVOS=backupDedicado/sistema/archivos
+S3_PREFIX_DUMPS=backupDedicado/backupHora
+S3_PREFIX_ARCHIVOS=backupDedicado/archivos
 AWS_REGION=sa-east-1
 HABILITAR_RESTAURAR_WEB=1
 RESTAURAR_WEB_TOKEN=…   # ya viene en la plantilla; no hace falta openssl
@@ -547,8 +548,8 @@ Override puntual: variable `SE_EMERGENCIA_CONF`.
 - Subir `vendor/` o todo el proyecto a S3.
 - Restaurar el `.env` de producción sin overlay (`APP_URL` / `DB_HOST` del
   servidor caído).
-- Usar el prefijo S3 de Silavet (`backupDedicado/backupHora` o
-  `backupDedicado/archivos`) para un colegio.
+- Cambiar el prefijo del dump: tiene que seguir siendo `e{LAB_ORDEN}_{slug}_`
+  dentro de `backupDedicado/backupHora`, para distinguirlo de los `l1_…` de Silavet.
 - En DirectAdmin: `extension=pdo_mysql` (u otras) en el `php.ini` CLI; ni
   `php scripts/emergencia/preparar-vps.sh` (es bash).
 - Correr `preparar-vps.sh` como **root** (los archivos quedarían fuera del
