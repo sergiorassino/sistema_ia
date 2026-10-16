@@ -10,6 +10,7 @@ use App\Support\Alumnos\DocumentosEstudianteAutogestion;
 use App\Support\DniInput;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
@@ -27,6 +28,8 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
     public string $nombre = '';
 
     public string $dni = '';
+
+    public string $cursoEstudiante = '';
 
     public string $nombrepad = '';
 
@@ -104,8 +107,37 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
      */
     public array $revisionInputsDocumento = [];
 
+    public bool $vistaDocumentoAbierta = false;
+
+    public string $vistaDocumentoTitulo = '';
+
+    public string $vistaDocumentoFecha = '';
+
+    #[Locked]
+    public string $vistaDocumentoSrc = '';
+
+    public bool $vistaDocumentoEsPdf = false;
+
+    public bool $vistaDocumentoPuedeRotar = false;
+
+    public string $vistaDocumentoRotacionAviso = '';
+
+    public int $vistaDocumentoRevision = 0;
+
+    #[Locked]
+    public string $vistaDocumentoClave = '';
+
+    #[Locked]
+    public int $vistaDocumentoIndice = 1;
+
     public function updated(string $property): void
     {
+        if (preg_match('/^archivosDocumento\.([^.]+)$/', $property, $coincidencias) === 1) {
+            $this->subirDocumento($coincidencias[1]);
+
+            return;
+        }
+
         if (preg_match('/^archivosDocumento\.([^.]+)\.(\d+)$/', $property, $coincidencias) === 1) {
             $this->validarArchivoDocumentoSlotEnVivo($coincidencias[1], (int) $coincidencias[2]);
 
@@ -157,6 +189,7 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         $this->apellido = (string) ($legajo->apellido ?? '');
         $this->nombre = (string) ($legajo->nombre ?? '');
         $this->dni = (string) ($legajo->dni ?? '');
+        $this->cursoEstudiante = trim((string) ($ctx['matricula']->curso?->nombreParaListado() ?? ''));
         $estadoBloqueo = ActualizacionDatosPersonalesEstandar::estadoBloqueo($ctx['matricula']);
         $this->bloqueado = $estadoBloqueo['bloqueado'];
         $this->mensajeBloqueo = $estadoBloqueo['mensaje'];
@@ -204,14 +237,28 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         }
 
         $slots = $this->archivosDocumento[$clave] ?? [];
-        if (! is_array($slots)) {
+        if ($slots instanceof TemporaryUploadedFile) {
+            $slots = [$slots];
+        } elseif (! is_array($slots)) {
             $slots = [];
         }
 
         $archivos = DocumentosEstudianteAutogestion::archivosDesdeSlots($slots);
+        if ($archivos === []) {
+            return;
+        }
+
+        if ((DocumentosEstudianteAutogestion::estadoDocumento($this->dni, $clave)['existe'] ?? false) === true) {
+            $this->addError('archivosDocumento.'.$clave, 'Elimine el documento actual antes de subir otro.');
+            $this->reiniciarInputDocumento($clave);
+
+            return;
+        }
+
         $error = DocumentosEstudianteAutogestion::validarArchivos($clave, $archivos);
         if ($error !== null) {
             $this->addError('archivosDocumento.'.$clave, $error);
+            $this->reiniciarInputDocumento($clave);
 
             return;
         }
@@ -222,21 +269,25 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
             DocumentosEstudianteAutogestion::guardarDesdeUploads($this->dni, $clave, $archivos);
         } catch (\InvalidArgumentException $e) {
             $this->addError('archivosDocumento.'.$clave, $e->getMessage());
+            $this->reiniciarInputDocumento($clave);
 
             return;
         } catch (\RuntimeException $e) {
             report($e);
             $this->addError('archivosDocumento.'.$clave, self::mensajeErrorDocumentoParaUsuario($e));
+            $this->reiniciarInputDocumento($clave);
 
             return;
         } catch (\Throwable $e) {
             report($e);
             $this->addError('archivosDocumento.'.$clave, 'No se pudo guardar el documento. Intente nuevamente.');
+            $this->reiniciarInputDocumento($clave);
 
             return;
         }
 
         $this->limpiarSeleccionArchivosDocumento($clave);
+        $this->cerrarVistaDocumento();
         $this->refrescarEstadoDocumentos();
 
         $def = DocumentosEstudianteAutogestion::definicion($clave);
@@ -300,11 +351,128 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         }
 
         $this->limpiarSeleccionArchivosDocumento($clave);
+        $this->cerrarVistaDocumento();
         $this->refrescarEstadoDocumentos();
 
         $def = DocumentosEstudianteAutogestion::definicion($clave);
         $label = $def['label'] ?? 'Documento';
         $this->dispatch('se-swal-exito', mensaje: $label.' eliminado correctamente.');
+    }
+
+    public function abrirVistaDocumento(string $clave, int $indice): void
+    {
+        if ($this->bloqueado) {
+            return;
+        }
+
+        if (! DocumentosEstudianteAutogestion::claveValida($clave)) {
+            return;
+        }
+
+        $indice = max(1, $indice);
+        $idLegajo = (int) (studentCtx()->idLegajo ?? 0);
+        $vista = DocumentosEstudianteAutogestion::srcVista($this->dni, $clave, $idLegajo, $indice);
+        if ($vista === null) {
+            $this->addError('archivosDocumento.'.$clave, 'No hay un documento subido para visualizar.');
+
+            return;
+        }
+
+        $def = DocumentosEstudianteAutogestion::definicion($clave);
+        $titulo = $def['label'] ?? 'Documento';
+        if ($indice > 1) {
+            $titulo .= ' · archivo '.$indice;
+        }
+
+        $fecha = '';
+        $estado = DocumentosEstudianteAutogestion::estadoDocumento($this->dni, $clave, $idLegajo);
+        if (! empty($estado['actualizado_en'])) {
+            $fecha = (string) $estado['actualizado_en'];
+        }
+
+        $this->vistaDocumentoTitulo = $titulo;
+        $this->vistaDocumentoFecha = $fecha;
+        $this->vistaDocumentoEsPdf = $vista['es_pdf'];
+        $this->vistaDocumentoSrc = $vista['src'];
+        $this->vistaDocumentoPuedeRotar = ! $vista['es_pdf'] && ! $this->bloqueado;
+        $this->vistaDocumentoRotacionAviso = '';
+        $this->vistaDocumentoClave = $clave;
+        $this->vistaDocumentoIndice = $indice;
+        $this->vistaDocumentoAbierta = true;
+    }
+
+    public function rotarVistaDocumento(): void
+    {
+        if ($this->bloqueado || ! $this->vistaDocumentoAbierta || $this->vistaDocumentoEsPdf || $this->vistaDocumentoClave === '') {
+            return;
+        }
+
+        if (! DocumentosEstudianteAutogestion::claveValida($this->vistaDocumentoClave)) {
+            return;
+        }
+
+        $ctx = ActualizacionDatosPersonalesEstandar::contexto();
+        if ($ctx === null) {
+            abort(404);
+        }
+
+        $dniLegajo = trim((string) ($ctx['legajo']->dni ?? ''));
+        if ($dniLegajo === '' || DocumentosEstudianteAutogestion::dniSanitizado($dniLegajo) !== DocumentosEstudianteAutogestion::dniSanitizado($this->dni)) {
+            abort(403);
+        }
+
+        $clave = $this->vistaDocumentoClave;
+        $indice = max(1, $this->vistaDocumentoIndice);
+        $key = 'alumnos-doc-estudiante-rot:'.$clave.':'.(auth('alumno')->id() ?? 'guest');
+        if (RateLimiter::tooManyAttempts($key, 40)) {
+            $this->dispatch('se-swal-error', mensaje: 'Demasiados intentos. Espere un momento.');
+
+            return;
+        }
+
+        RateLimiter::hit($key, 60);
+
+        try {
+            DocumentosEstudianteAutogestion::rotarImagenGuardada($dniLegajo, $clave, $indice);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo rotar la imagen. Intente nuevamente.');
+
+            return;
+        }
+
+        $idLegajo = (int) ($ctx['legajo']->id ?? studentCtx()->idLegajo ?? 0);
+        $vista = DocumentosEstudianteAutogestion::srcVista($dniLegajo, $clave, $idLegajo, $indice);
+        if ($vista === null || $vista['es_pdf']) {
+            $this->dispatch('se-swal-error', mensaje: 'No se pudo mostrar la imagen rotada.');
+
+            return;
+        }
+
+        $this->vistaDocumentoSrc = $vista['src'];
+        $this->vistaDocumentoRevision++;
+        $this->vistaDocumentoRotacionAviso = 'Orientación guardada.';
+
+        $estado = DocumentosEstudianteAutogestion::estadoDocumento($dniLegajo, $clave, $idLegajo);
+        if (! empty($estado['actualizado_en'])) {
+            $this->vistaDocumentoFecha = (string) $estado['actualizado_en'];
+        }
+
+        $this->refrescarEstadoDocumentos();
+        $this->dispatch('documento-estudiante-rotado');
+    }
+
+    public function cerrarVistaDocumento(): void
+    {
+        $this->vistaDocumentoAbierta = false;
+        $this->vistaDocumentoTitulo = '';
+        $this->vistaDocumentoFecha = '';
+        $this->vistaDocumentoSrc = '';
+        $this->vistaDocumentoEsPdf = false;
+        $this->vistaDocumentoPuedeRotar = false;
+        $this->vistaDocumentoRotacionAviso = '';
+        $this->vistaDocumentoClave = '';
+        $this->vistaDocumentoIndice = 1;
     }
 
     public function guardar(): void
@@ -445,6 +613,12 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
         }
     }
 
+    private function reiniciarInputDocumento(string $clave): void
+    {
+        unset($this->archivosDocumento[$clave]);
+        $this->revisionInputsDocumento[$clave] = ($this->revisionInputsDocumento[$clave] ?? 0) + 1;
+    }
+
     private function limpiarSeleccionArchivosDocumento(string $clave): void
     {
         unset($this->archivosDocumento[$clave]);
@@ -471,8 +645,10 @@ class ActualizacionDatosPersonalesEstandarForm extends Component
             'No se pudo leer el PDF seleccionado.',
             'No se pudo generar el PDF final.',
             'El PDF no pudo leerse o está protegido.',
-            'La imagen no es válida.',
+            'No se pudo comprimir la imagen.',
+            'La imagen no es un JPG válido.',
             'La imagen no tiene dimensiones válidas.',
+            'No se pudo guardar el documento en el servidor.',
             'Archivo no encontrado:',
         ];
 

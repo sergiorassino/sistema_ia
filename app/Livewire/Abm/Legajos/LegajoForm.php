@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Abm\Legajos;
 
+use App\Livewire\Abm\Legajos\Concerns\ConDocumentacionEstudianteLegajo;
 use App\Models\CampoLegajo;
 use App\Models\Condicion;
 use App\Models\Curso;
@@ -13,7 +14,9 @@ use App\Models\Sexo;
 use App\Models\SolapaLegajo;
 use App\Models\Terlec;
 use App\Support\Abm\LegajoDependenciasEliminacion;
+use App\Support\Alumnos\DocumentosEstudianteAutogestion;
 use App\Support\Alumnos\FotoCarnetLegajo;
+use App\Support\Alumnos\SolapaDocumentacionLegajo;
 use App\Support\Database\PersistenciaColumnas;
 use App\Support\DniInput;
 use App\Support\PermisosIaCatalog;
@@ -28,6 +31,7 @@ use Livewire\Features\SupportFileUploads\WithFileUploads;
 
 class LegajoForm extends Component
 {
+    use ConDocumentacionEstudianteLegajo;
     use WithFileUploads;
 
     /** Columnas siempre visibles y persistidas (no pueden desactivarse). */
@@ -384,6 +388,10 @@ class LegajoForm extends Component
 
     public function setTab(string $tab): void
     {
+        if ($tab !== SolapaDocumentacionLegajo::SLUG) {
+            $this->cerrarVistaDocumento();
+        }
+
         $this->activeTab = $tab;
     }
 
@@ -803,6 +811,10 @@ class LegajoForm extends Component
 
     public function updated($property, $value = null): void
     {
+        if (is_string($property) && $this->procesarCambioArchivoDocumento($property)) {
+            return;
+        }
+
         if ($property === 'm_idCursos') {
             $idCurso = (int) ($value ?? $this->m_idCursos);
             if (! $this->matriculaEditId) {
@@ -2111,6 +2123,12 @@ class LegajoForm extends Component
             [$tabsVisibles, $tabSlugToPanel] = $this->resolverTabsVisibles($camposActivos);
         }
 
+        $tiposDocumentoEstudiante = DocumentosEstudianteAutogestion::tiposConfigurados();
+        $tabsVisibles = SolapaDocumentacionLegajo::insertar(
+            $tabsVisibles,
+            $tiposDocumentoEstudiante !== [],
+        );
+
         if (! isset($tabsVisibles[$this->activeTab])) {
             $this->activeTab = array_key_first($tabsVisibles) ?? 'alumno';
         }
@@ -2142,6 +2160,32 @@ class LegajoForm extends Component
             || ($fotoColumnaOk && $this->fotoCarnetUpload instanceof TemporaryUploadedFile)
             || ($this->removeFotoCarnet && trim($this->fotoCarnetPath) !== '');
 
+        $estadoDocumentos = [];
+        $puedeCargarDocumentacion = false;
+        $avisoCargaDocumentacion = '';
+        $cursoEstudiante = '';
+        $dniDocumento = '';
+        if ($tiposDocumentoEstudiante !== [] && ($this->activeTab === SolapaDocumentacionLegajo::SLUG || $this->vistaDocumentoAbierta)) {
+            $dniDoc = $this->dniDocumentacionPersistido();
+            $dniDocumento = $dniDoc;
+            if ($this->id && $dniDoc !== '') {
+                $estadoDocumentos = DocumentosEstudianteAutogestion::estadoTodos(
+                    $dniDoc,
+                    (int) $this->id,
+                    DocumentosEstudianteAutogestion::AUDIENCIA_LEGAJO,
+                );
+                $puedeCargarDocumentacion = $puedeEditar;
+            } elseif (! $this->id) {
+                $avisoCargaDocumentacion = 'Guarde el legajo para cargar la documentación.';
+            } else {
+                $avisoCargaDocumentacion = 'El legajo no tiene DNI guardado. Guarde el DNI para cargar la documentación.';
+            }
+
+            if ($matriculaAnioActivo?->curso !== null) {
+                $cursoEstudiante = trim((string) $matriculaAnioActivo->curso->nombreParaListado());
+            }
+        }
+
         $etiquetaFotoCarnet = 'Foto carnet';
         if ($modoParametrizadoLegajo) {
             foreach ($columnasPorSolapaSlug as $camposSolapa) {
@@ -2161,6 +2205,8 @@ class LegajoForm extends Component
             'modoParametrizadoLegajo', 'columnasPorSolapaSlug', 'puedeEditar', 'puedeGestionarFamilias',
             'matriculaEditFueraDeAnioActivo', 'matriculaCursoEtiqueta',
             'fotoCarnetActivo', 'fotoCarnetUrl', 'mostrarFotoSticky', 'etiquetaFotoCarnet',
+            'tiposDocumentoEstudiante', 'estadoDocumentos', 'puedeCargarDocumentacion',
+            'avisoCargaDocumentacion', 'cursoEstudiante', 'dniDocumento',
         ))->layout(layoutMenuStaff(), ['pageTitle' => $pageTitle]);
     }
 }

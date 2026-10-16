@@ -271,6 +271,9 @@ final class PermisosIaCatalog
     /** Ver en el calendario las actividades que aún no están aprobadas, de todos los niveles. */
     public const PROYECTOS_EXTRACURRICULARES_VER_PENDIENTES = 116;
 
+    /** ZIP con la documentación del estudiante de un curso (Menú de Secretaría y Administración). */
+    public const DESCARGA_DOCUMENTACION_CURSO = 117;
+
     /** Certificado de Jardín (inicial, sala de 5) y Certificado de Sexto Grado (primario). */
     public const CERT_JARDIN_SEXTO_GRADO = 97;
 
@@ -403,6 +406,7 @@ final class PermisosIaCatalog
             ['id' => 109, 'orden' => self::PROYECTOS_EXTRACURRICULARES_VER, 'tema' => 'CALENDARIO INSTITUCIONAL', 'descripcion' => 'Ver y presentar actividades institucionales propias en el Menú de Secretaría (listado, alta y edición).'],
             ['id' => 110, 'orden' => self::PROYECTOS_EXTRACURRICULARES_DOCUMENTOS, 'tema' => 'CALENDARIO INSTITUCIONAL', 'descripcion' => 'Ver actividades institucionales aprobadas e imprimir autorizaciones de padres o tutores para los alumnos involucrados.'],
             ['id' => 116, 'orden' => self::PROYECTOS_EXTRACURRICULARES_VER_PENDIENTES, 'tema' => 'CALENDARIO INSTITUCIONAL', 'descripcion' => 'Ver en el calendario institucional las actividades que aún no están aprobadas, de todos los niveles del ciclo. Se muestran en rojo y sin negrita. Sin este permiso el calendario solo muestra las aprobadas, también de todos los niveles.'],
+            ['id' => 117, 'orden' => self::DESCARGA_DOCUMENTACION_CURSO, 'tema' => 'LEGAJOS ESTUDIANTES', 'descripcion' => 'Descarga de documentación por curso: ZIP con los archivos cargados de los estudiantes regulares del curso (carpeta del curso y una carpeta por alumno).'],
             ['id' => 104, 'orden' => self::COPIAR_CURSOS_MATERIAS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar cursos, materias y horarios de un año lectivo de origen a un año de destino (por nivel).')],
             ['id' => 105, 'orden' => self::COPIAR_ASIGNACIONES_PROF_PRECEP, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Copiar asignación de profesores por curso (ppc) y de preceptores por curso de un año lectivo de origen a un año de destino (por nivel).')],
             ['id' => 106, 'orden' => self::PROMOVER_ALUMNOS_ANIO, 'tema' => 'CONFIGURACIÓN', 'descripcion' => self::descripcionConAvisoAdmin('Promover a todos los alumnos: crear matrícula y calificaciones en el año de destino a partir de los cursos marcados del año de origen.')],

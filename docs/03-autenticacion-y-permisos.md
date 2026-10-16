@@ -221,6 +221,7 @@ permisos_ia = "111111111111111..."
 - Listado de familias: orden **102** (`PermisosIaCatalog::LISTADO_FAMILIAS`). Consulta, PDF y Excel; aparece en el grupo **LEGAJOS ESTUDIANTES**. La edición en grilla sigue siendo orden **46** (`LEGAJOS_FAMILIAS_GESTION`).
 - Estadística por sexo y curso: orden **114** (`PermisosIaCatalog::ESTADISTICA_SEXO_CURSO`). Menú de Secretaría, grupo ESTADÍSTICAS. Alumnos regulares por curso; columnas de `sexos`.
 - Calendario institucional, ver actividades sin aprobar: orden **116** (`PermisosIaCatalog::PROYECTOS_EXTRACURRICULARES_VER_PENDIENTES`). En el calendario (mes, semana y día) se ven las aprobadas de todos los niveles del ciclo. Con este permiso también las pendientes de todos los niveles, en rojo y sin negrita.
+- Descarga de documentación por curso: orden **117** (`PermisosIaCatalog::DESCARGA_DOCUMENTACION_CURSO`). Menú de Secretaría y Menú de Administración, grupo Estudiantes. ZIP de la documentación cargada de los regulares del curso.
 - Estadística por edad: orden **113** (`PermisosIaCatalog::ESTADISTICA_POR_EDAD`). Menú de Secretaría, grupo ESTADÍSTICAS. Alumnos regulares por edad y curso, a una fecha de cálculo.
 - Órdenes **25, 26, 33, 34, 35, 36, 104, 105, 106 y 100**: en asignación y consulta aparecen con aviso destacado `NO OTORGAR: RESERVADO PARA EL ADMINISTRADOR` (`PermisosIaCatalog::ordenesReservadosAdministrador()`).
 - Copiar cursos, materias y horarios (año origen → año destino): orden **104** (`PermisosIaCatalog::COPIAR_CURSOS_MATERIAS_ANIO`).

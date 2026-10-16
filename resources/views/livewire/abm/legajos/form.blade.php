@@ -147,6 +147,7 @@
         @endif
         <div class="se-legajo-form-campos min-w-0 flex-1">
         <fieldset @disabled(! $puedeEditar) class="min-w-0 border-0 p-0 m-0">
+        @if (($activeTab ?? '') !== 'documentacion')
         {{-- Contenido de solapas: parametrizado = orden desde campos_legajo; sin param = plantillas legacy --}}
         @if($modoParametrizadoLegajo)
             <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="legajo-tab-{{ $activeTab }}">
@@ -615,7 +616,18 @@
 
         </div>
         @endif
+        @endif
         </fieldset>
+
+        @if (($activeTab ?? '') === 'documentacion')
+            <div class="space-y-5 px-5 py-5 sm:px-6" wire:key="legajo-tab-documentacion">
+                <p class="se-section-title mb-2">Documentación del estudiante</p>
+                @include('livewire.partials.documentos-estudiante-lista', [
+                    'bloqueado' => ! ($puedeCargarDocumentacion ?? false),
+                    'avisoCargaDocumentacion' => $avisoCargaDocumentacion ?? '',
+                ])
+            </div>
+        @endif
         </div>{{-- /se-legajo-form-campos --}}
         </div>{{-- /se-legajo-form-body --}}
 
@@ -988,6 +1000,12 @@
                 </div>
             </div>
         </div>
+        @endteleport
+    @endif
+
+    @if ($vistaDocumentoAbierta && $vistaDocumentoSrc !== '')
+        @teleport('body')
+            @include('livewire.partials.documentos-estudiante-modal')
         @endteleport
     @endif
 

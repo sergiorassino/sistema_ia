@@ -76,6 +76,8 @@ final class OpaqueRouteToken
 
     public const PURPOSE_LEGAJO_FOTO_CARNET = 'abm.legajos.foto-carnet';
 
+    public const PURPOSE_LEGAJO_DOC_ESTUDIANTE = 'abm.legajos.doc-estudiante';
+
     public const PURPOSE_PORTAL_DOCENTE_FOTO_CARNET = 'portal-docente.foto-carnet';
 
     public const PURPOSE_CALIF_SECUNDARIO_FOTO_CARNET = 'calificaciones-secundario.foto-carnet';
@@ -83,6 +85,8 @@ final class OpaqueRouteToken
     public const PURPOSE_MATERIAS_ADEUDADAS_POR_CURSO = 'examenes.materias-adeudadas-por-curso';
 
     public const PURPOSE_EXT_ACTIVIDAD = 'ext.actividad';
+
+    public const PURPOSE_DESCARGA_DOCUMENTACION_CURSO = 'listados.documentacion-curso.zip';
 
     public const PURPOSE_LISTADO_FAMILIAS_PDF = 'listados.familias.pdf';
 
@@ -271,9 +275,9 @@ final class OpaqueRouteToken
         return self::encode(self::PURPOSE_COOP_PAGOS_ESTUDIANTE, $idLegajo, $idLegajo);
     }
 
-    public static function forDocumentoEstudianteAutogestion(int $idDocEstudianteTipo, int $idLegajo): string
+    public static function forDocumentoEstudianteAutogestion(int $idDocEstudianteTipo, int $idLegajo, int $indice = 1): string
     {
-        return self::encode(self::PURPOSE_DOC_ESTUDIANTE_AUTOGESTION, $idDocEstudianteTipo, $idLegajo);
+        return self::encode(self::PURPOSE_DOC_ESTUDIANTE_AUTOGESTION, $idDocEstudianteTipo, $idLegajo, max(1, $indice));
     }
 
     public static function forDocPpArchivo(int $idDocPp): string
@@ -293,6 +297,11 @@ final class OpaqueRouteToken
     public static function forLegajoFotoCarnet(int $idLegajo): string
     {
         return self::encode(self::PURPOSE_LEGAJO_FOTO_CARNET, $idLegajo, $idLegajo);
+    }
+
+    public static function forLegajoDocumentoEstudiante(int $idDocEstudianteTipo, int $idLegajo, int $indice = 1): string
+    {
+        return self::encode(self::PURPOSE_LEGAJO_DOC_ESTUDIANTE, $idDocEstudianteTipo, $idLegajo, max(1, $indice));
     }
 
     public static function forPortalDocenteFotoCarnet(int $idLegajo): string
@@ -384,6 +393,13 @@ final class OpaqueRouteToken
      * Token para descargar el adjunto de un mensaje de comunicación institucional.
      * El portal (gestión o familia) valida alcance en el controlador.
      */
+    public static function forDescargaDocumentacionCurso(int $idCurso): string
+    {
+        return self::encodePayload(self::PURPOSE_DESCARGA_DOCUMENTACION_CURSO, [
+            'c' => $idCurso,
+        ]);
+    }
+
     public static function forComunicacionAdjunto(int $idMensaje): string
     {
         return self::encodePayload(self::PURPOSE_COMUNICACION_ADJUNTO, [
@@ -419,7 +435,7 @@ final class OpaqueRouteToken
     }
 
     /**
-     * @return array{id: int, legajo: int}|null
+     * @return array{id: int, legajo: int, n: int}|null
      */
     public static function decode(string $ref, string $purpose): ?array
     {
@@ -447,16 +463,25 @@ final class OpaqueRouteToken
             return null;
         }
 
-        return ['id' => $id, 'legajo' => $legajo];
+        return [
+            'id' => $id,
+            'legajo' => $legajo,
+            'n' => max(1, (int) ($payload['n'] ?? 1)),
+        ];
     }
 
-    private static function encode(string $purpose, int $id, int $idLegajo): string
+    private static function encode(string $purpose, int $id, int $idLegajo, int $indice = 0): string
     {
-        $payload = json_encode([
+        $data = [
             'p' => $purpose,
             'i' => $id,
             'l' => $idLegajo,
-        ], JSON_THROW_ON_ERROR);
+        ];
+        if ($indice > 1) {
+            $data['n'] = $indice;
+        }
+
+        $payload = json_encode($data, JSON_THROW_ON_ERROR);
 
         return self::toUrlSafe(Crypt::encryptString($payload));
     }

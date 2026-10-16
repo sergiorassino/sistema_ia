@@ -187,6 +187,7 @@ Implementación: `App\Support\NivelSistema`, `App\Support\SchoolAlcancePedagogic
 
 ## Historial
 
+- **2026-10-16:** Menú de Secretaría y Menú de Administración → Estudiantes: **Descarga de documentación** (`listados.documentacion-curso`; permiso IA orden **117**). ZIP de la documentación cargada de los estudiantes regulares del curso.
 - **2026-05-22:** Definición de los tres nombres oficiales; scaffold del menú de Docentes (`layouts/docente.blade.php`, `portalDocente.home`).
 - **2026-05-22:** Redirección post-login y separación de rutas por `IdTipoProf` (6 → Docentes; demás → Secretaría).
 - **2026-05-23:** Menú de Docentes: sección Comunicación institucional (`portalDocente.comunicaciones.*`, mismos componentes que secretaría).

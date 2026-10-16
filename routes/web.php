@@ -48,6 +48,7 @@ use App\Http\Controllers\InformeInasistenciasLotePdfController;
 use App\Http\Controllers\ParteDiarioPreceptorPdfController;
 use App\Http\Controllers\RegistroAsistenciaPdfController;
 use App\Http\Controllers\FichaMatriculaSecretariaPdfController;
+use App\Http\Controllers\DescargaDocumentacionCursoZipController;
 use App\Http\Controllers\FichaMatriculaSecretariaZipController;
 use App\Http\Controllers\LibroMatriculaPdfController;
 use App\Http\Controllers\ListadoCursoPdfController;
@@ -102,6 +103,7 @@ use App\Livewire\Abm\Legajos\LegajoBuscarFamilias;
 use App\Livewire\Abm\Legajos\LegajoFamilia;
 use App\Livewire\Abm\Legajos\LegajoForm;
 use App\Livewire\Abm\Legajos\LegajosIndex;
+use App\Http\Controllers\Abm\DocumentoEstudianteLegajoController;
 use App\Http\Controllers\Abm\FotoCarnetLegajoController;
 use App\Livewire\Abm\LegajosProfesor\LegajoProfesorForm;
 use App\Livewire\Abm\LegajosProfesor\LegajosProfesorIndex;
@@ -324,6 +326,7 @@ use App\Livewire\EmailsMasivos\EmailsMasivosEnviar;
 use App\Livewire\EmailsMasivos\EmailsMasivosForm;
 use App\Livewire\EmailsMasivos\EmailsMasivosHistorial;
 use App\Livewire\EmailsMasivos\EmailsMasivosIndex;
+use App\Livewire\Listados\DescargaDocumentacionCurso;
 use App\Livewire\Listados\EstudiantesDatosExport;
 use App\Livewire\Viajes\SalidaViajeForm;
 use App\Livewire\Viajes\SalidaViajeImpresion;
@@ -1711,6 +1714,9 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
     Route::get('/abm/legajos/{id}/foto-carnet', FotoCarnetLegajoController::class)
         ->whereNumber('id')
         ->name('abm.legajos.foto-carnet');
+    Route::get('/abm/legajos/documento-estudiante/{ref}', DocumentoEstudianteLegajoController::class)
+        ->where('ref', '[A-Za-z0-9_-]+')
+        ->name('abm.legajos.documento-estudiante');
     Route::get('/abm/legajos/familia', LegajoFamilia::class)->name('abm.legajos.familia');
     Route::get('/abm/legajos/buscar-familias', LegajoBuscarFamilias::class)->name('abm.legajos.buscar-familias');
 
@@ -1777,6 +1783,13 @@ Route::middleware(['auth', 'school.context', 'menu.portal:staff'])->group(functi
         ->name('listados.ficha-matricula.pdf');
     Route::get('/listados/ficha-matricula/zip', FichaMatriculaSecretariaZipController::class)
         ->name('listados.ficha-matricula.zip');
+    Route::middleware('permiso:'.\App\Support\PermisosIaCatalog::DESCARGA_DOCUMENTACION_CURSO)->group(function () {
+        Route::get('/listados/documentacion-curso', DescargaDocumentacionCurso::class)
+            ->name('listados.documentacion-curso');
+        Route::get('/listados/documentacion-curso/zip/{ref}', DescargaDocumentacionCursoZipController::class)
+            ->where('ref', '[A-Za-z0-9_-]+')
+            ->name('listados.documentacion-curso.zip');
+    });
 
     Route::get('/listados/docentes', ListadoDocentes::class)->name('listados.docentes');
     Route::get('/listados/docentes/listado', ListadoDocentesPdfController::class)->name('listados.docentes.pdf');

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Visualiza el PDF de documentación del estudiante subido desde autogestión.
+ * Visualiza la documentación del estudiante subida desde autogestión (JPG o PDF).
  */
 class DocumentoEstudianteAutogestionPdfController extends Controller
 {
@@ -60,17 +60,26 @@ class DocumentoEstudianteAutogestionPdfController extends Controller
         }
 
         $dni = trim((string) ($legajo->dni ?? ''));
-        $path = DocumentosEstudianteAutogestion::pathAlmacenadoResuelto($dni, (string) $tipo->clave);
+        $indice = max(1, (int) ($decoded['n'] ?? 1));
+        $path = DocumentosEstudianteAutogestion::pathParte($dni, (string) $tipo->clave, $indice);
         if ($path === null) {
             abort(404, 'No hay un documento subido para visualizar.');
         }
 
         $disk = Storage::disk(DocumentosEstudianteAutogestion::DISK);
-        $nombreDescarga = DocumentosEstudianteAutogestion::nombreArchivoPdf($dni, (string) $tipo->clave);
+        $absoluta = $disk->path($path);
+        if (! is_file($absoluta)) {
+            abort(404, 'No hay un documento subido para visualizar.');
+        }
 
-        return $disk->response($path, $nombreDescarga, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="documento.pdf"',
+        $extension = strtolower(pathinfo($absoluta, PATHINFO_EXTENSION));
+        $mime = $extension === 'pdf' ? 'application/pdf' : ($extension === 'png' ? 'image/png' : 'image/jpeg');
+
+        return response()->file($absoluta, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'private, max-age=120',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 }

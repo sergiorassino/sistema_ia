@@ -433,6 +433,8 @@
                     </a>
                 @endif
 
+                @include('layouts.partials.sidebar-item-descarga-documentacion')
+
             </div>
         @endif
 

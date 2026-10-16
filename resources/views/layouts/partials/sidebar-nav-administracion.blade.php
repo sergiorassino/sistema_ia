@@ -129,6 +129,8 @@
                     </a>
                 @endif
 
+                @include('layouts.partials.sidebar-item-descarga-documentacion')
+
             </div>
 
         {{-- Comunicación institucional --}}

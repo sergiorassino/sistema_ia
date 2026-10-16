@@ -124,11 +124,20 @@ Para que la familia también pueda subirla, además:
 - `ento.matriAnioSiguiente` (flag por nivel, junto a `idTerlecVerNotas`)
 - `ento` (`mensajeBloqPeda`, `mensajeBloqAdmi` del nivel)
 - `campos_legajo` / `solapas_legajo` (visibilidad de foto carnet)
-- Documentos estudiante (estándar): tipos configurados por matrícula web
+- Documentos estudiante (estándar): tipos configurados por matrícula web. Las fotos JPG/JPEG se guardan como JPG (lado largo máx. 1200 px, calidad 25), una por archivo (`{dni}_{clave}.jpg`, `{dni}_{clave}_2.jpg`, …). No se convierten a PDF. Un PDF subido se guarda como PDF. Los PDF ya guardados siguen abriéndose. La familia los ve en un modal de la misma pantalla (la foto va embebida, con zoom y un botón Rotar; el PDF, en un recuadro). Rotar gira la imagen 90° a la derecha, vuelve a comprimirla (lado largo máx. 1200 px, calidad 25) y reemplaza el archivo, así la próxima apertura (familia o Secretaría) ya sale derecha. En Secretaría el botón solo aparece con permiso de modificación del legajo. Un PDF no se rota. Al elegir el archivo se guarda solo. Si ya hay uno, hay que eliminarlo para poder cargar otro. Carpeta: `storage/app/private/ento/doc-estudiante/{tenant}/`.
+- **Solapa DOCUMENTACIÓN (Menú de Secretaría, ABM de legajos):** aparece a la derecha de la solapa Foto Carnet solo si hay tipos activos en Documentos a subir (familia). No es una fila de `solapas_legajo`. Muestra los mismos archivos (recibidos o pendientes) y permite subir o eliminar con permiso de modificación del legajo. La consulta puede abrir el archivo. El alta usa el DNI ya guardado: hay que guardar el legajo antes de cargar archivos. El PDF se abre por `abm.legajos.documento-estudiante` (token opaco), no por la ruta del portal de alumnos.
+- **Descarga por curso:** Menú de Secretaría / Administración → Estudiantes → Descarga de documentación (permiso IA orden 117). ZIP con una carpeta del curso y una carpeta por alumno regular que tenga archivos. Ficha: [descarga-documentacion-curso.md](descarga-documentacion-curso.md).
 
 ## Archivos clave
 
 - `app/Livewire/Alumnos/ActualizacionDatosPersonalesEstandarForm.php`
+- `app/Support/Alumnos/DocumentosEstudianteAutogestion.php`
+- `app/Http/Controllers/Alumnos/DocumentoEstudianteAutogestionPdfController.php`
+- `app/Http/Controllers/Abm/DocumentoEstudianteLegajoController.php`
+- `app/Support/Alumnos/SolapaDocumentacionLegajo.php`
+- `app/Livewire/Abm/Legajos/Concerns/ConDocumentacionEstudianteLegajo.php`
+- `resources/views/livewire/partials/documentos-estudiante-lista.blade.php`
+- `resources/views/livewire/partials/documentos-estudiante-modal.blade.php`
 - `app/Livewire/Alumnos/ActualizacionDatosPersonalesSanFranciscoAsisForm.php`
 - `app/Livewire/Alumnos/Concerns/ConFotoCarnetActualizacionDatos.php`
 - `app/Support/Alumnos/ActualizacionDatosPersonales*.php`
@@ -145,6 +154,7 @@ Para que la familia también pueda subirla, además:
 - No mostrar destinatario ARCA si el colegio no tiene nivel Administración (cuotas). No ramificar por `tenantSlug() === 'sanjose'`: usar `NivelSistema::tieneNivelAdministracion()`. Sin ese nivel, no validar ni pisar `respAdmiNom` / `respAdmiDni` al guardar.
 - No mostrar foto carnet en autogestión solo porque está en solapas: hace falta `foto_carnet` del tenant.
 - No mostrar foto carnet en Secretaría (ABM ni modal de carga) ni en el portal docente si no está en solapas (aunque la columna exista).
+- No crear una solapa `documentacion` en `solapas_legajo` ni mostrarla si no hay tipos activos. No servir el PDF del legajo con la ruta de autogestión (`auth:alumno`). No asociar el archivo al DNI escrito en el formulario si todavía no se guardó.
 - No poner IDs de legajo en URLs de la foto en carga de calificaciones; Secretaría y docentes usan `OpaqueRouteToken`.
 - No calcular promedios ni tocar calificaciones desde este módulo.
 - No dejar entrar al formulario si hay `bloqmatr` o `bloqadmi`; usar el mensaje de `ento` del nivel, no un texto genérico.
