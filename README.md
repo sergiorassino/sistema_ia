@@ -36,6 +36,10 @@ Toda la documentación del proyecto está en `sistema/docs/`:
 | 04 | `04-identidad-visual.md`             | Paleta de colores, logos, design system    |
 | 05 | `05-preferencias-y-convenciones.md`  | Convenciones de código, preferencias       |
 | 06 | `06-reglas-de-seguridad.md`          | Baseline de seguridad obligatorio          |
+| 07 | `07-versionado-de-modulos-por-tenant.md` | Personalización por colegio            |
+| 08 | `08-menus-de-navegacion.md`          | Menús de Secretaría, Alumnos y Docentes    |
+| 09 | `09-despliegue-sin-public-en-url.md` | Apache en subcarpeta, sin `/public`        |
+| 10 | `10-backup-y-vps-emergencia.md`      | Backup horario a S3 y VPS de emergencia    |
 
 ## Flujo de ramas Git
 

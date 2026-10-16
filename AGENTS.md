@@ -34,6 +34,10 @@ Usar el mismo criterio que para SQL: rutas concretas, sin carpetas genéricas sa
 
 Referencia de despliegue: `docs/09-despliegue-sin-public-en-url.md`.
 
+## Backup y VPS de emergencia
+
+Misma rutina que Silavet, por colegio: cron horario `scripts/emergencia/respaldar.sh` (dump MySQL + archivos que no están en git) hacia S3. El VPS de reserva no tiene sync horario; se restaura a demanda con `restaurar.sh` o `public/emergencia-restaurar.php`. Prefijos S3 propios (`backupDedicado/sistema/…`), para no mezclar dumps con los laboratorios. Detalle: `docs/10-backup-y-vps-emergencia.md`.
+
 ## Promedio de calificaciones (secundario)
 
 No calcular promedios salvo en **carga manual / coloquios** (`CargaCalificacionesSecundario` / `CargaColoquiosSecundario`) y el **recálculo masivo** de Secretaría (`RecalculoPromediosSecundario`), siempre vía `RecalculoPromedioAnualSecundario::califDesdeFilaModulos()`. El resto del sistema solo **lee** `calificaciones.calif`. Detalle: `docs/05-preferencias-y-convenciones.md` §7.
