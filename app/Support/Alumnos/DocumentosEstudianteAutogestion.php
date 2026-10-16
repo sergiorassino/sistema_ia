@@ -308,9 +308,9 @@ final class DocumentosEstudianteAutogestion
 
         $maxBytes = self::maxBytesPorArchivo($clave);
         $extensiones = array_map('strtolower', $def['extensiones']);
-        $ext = strtolower((string) $archivo->getClientOriginalExtension());
+        $ext = self::extensionDeUpload($archivo);
 
-        if (! in_array($ext, $extensiones, true)) {
+        if (! self::extensionPermitida($ext, $extensiones)) {
             return 'Formato no permitido. Extensiones aceptadas: '.implode(', ', $extensiones).'.';
         }
 
@@ -472,8 +472,7 @@ final class DocumentosEstudianteAutogestion
         $hayFoto = false;
         $hayPdf = false;
         foreach ($validos as $archivo) {
-            $extLote = strtolower((string) $archivo->getClientOriginalExtension());
-            if ($extLote === 'pdf') {
+            if (self::extensionDeUpload($archivo) === 'pdf') {
                 $hayPdf = true;
             } else {
                 $hayFoto = true;
@@ -491,8 +490,8 @@ final class DocumentosEstudianteAutogestion
         $extensiones = array_map('strtolower', $def['extensiones']);
 
         foreach ($validos as $archivo) {
-            $ext = strtolower((string) $archivo->getClientOriginalExtension());
-            if (! in_array($ext, $extensiones, true)) {
+            $ext = self::extensionDeUpload($archivo);
+            if (! self::extensionPermitida($ext, $extensiones)) {
                 return 'Formato no permitido. Extensiones aceptadas: '.implode(', ', $extensiones).'.';
             }
 
@@ -620,7 +619,7 @@ final class DocumentosEstudianteAutogestion
     private static function loteEsPdf(array $archivos): bool
     {
         foreach ($archivos as $archivo) {
-            if (strtolower((string) $archivo->getClientOriginalExtension()) !== 'pdf') {
+            if (self::extensionDeUpload($archivo) !== 'pdf') {
                 return false;
             }
         }
@@ -917,6 +916,49 @@ final class DocumentosEstudianteAutogestion
         }
 
         return $borrados;
+    }
+
+    /**
+     * Extensión efectiva del upload. La cámara del celular a veces no manda extensión;
+     * en ese caso se infiere por el MIME. jpeg se trata como jpg.
+     */
+    public static function extensionDeUpload(TemporaryUploadedFile $archivo): string
+    {
+        $ext = strtolower((string) $archivo->getClientOriginalExtension());
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+        if ($ext !== '') {
+            return $ext;
+        }
+
+        $mime = strtolower((string) ($archivo->getMimeType() ?? ''));
+        if (in_array($mime, ['image/jpeg', 'image/jpg', 'image/pjpeg'], true)) {
+            return 'jpg';
+        }
+        if (in_array($mime, ['application/pdf', 'application/x-pdf'], true)) {
+            return 'pdf';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  list<string>  $permitidas
+     */
+    private static function extensionPermitida(string $ext, array $permitidas): bool
+    {
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+
+        $normalizadas = [];
+        foreach ($permitidas as $permitida) {
+            $permitida = strtolower(trim($permitida));
+            $normalizadas[] = $permitida === 'jpeg' ? 'jpg' : $permitida;
+        }
+
+        return $ext !== '' && in_array($ext, $normalizadas, true);
     }
 
     public static function acceptAttribute(array $extensiones): string

@@ -84,16 +84,30 @@
                 <div class="mt-3"
                      wire:key="doc-slots-{{ $clave }}-{{ $revisionInputsDocumento[$clave] ?? 0 }}">
                     @php
+                        $extensionesDoc = array_map('strtolower', $tipo['extensiones']);
+                        $admiteFoto = in_array('jpg', $extensionesDoc, true) || in_array('jpeg', $extensionesDoc, true);
                         $inputId = 'doc-estudiante-'.$clave.'-'.($revisionInputsDocumento[$clave] ?? 0);
                     @endphp
-                    <label class="form-label" for="{{ $inputId }}">Archivo</label>
-                    <input id="{{ $inputId }}"
-                           type="file"
-                           wire:model="archivosDocumento.{{ $clave }}"
-                           @if ($maxArchivos > 1) multiple @endif
-                           accept="{{ \App\Support\Alumnos\DocumentosEstudianteAutogestion::acceptAttribute($tipo['extensiones']) }}"
-                           @disabled($cargaBloqueada)
-                           class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+                    @if ($admiteFoto)
+                        <p class="form-label">Archivo</p>
+                        @include('livewire.partials.documentos-estudiante-upload-controles', [
+                            'clave' => $clave,
+                            'inputIdPrefix' => $inputId,
+                            'acceptArchivo' => \App\Support\Alumnos\DocumentosEstudianteAutogestion::acceptAttribute($tipo['extensiones']),
+                            'multiple' => $maxArchivos > 1,
+                            'admitePdf' => in_array('pdf', $extensionesDoc, true),
+                            'deshabilitado' => $cargaBloqueada,
+                        ])
+                    @else
+                        <label class="form-label" for="{{ $inputId }}">Archivo</label>
+                        <input id="{{ $inputId }}"
+                               type="file"
+                               wire:model="archivosDocumento.{{ $clave }}"
+                               @if ($maxArchivos > 1) multiple @endif
+                               accept="{{ \App\Support\Alumnos\DocumentosEstudianteAutogestion::acceptAttribute($tipo['extensiones']) }}"
+                               @disabled($cargaBloqueada)
+                               class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700">
+                    @endif
                     <div wire:loading wire:target="archivosDocumento.{{ $clave }}" class="mt-1 text-xs text-neutral-500">
                         Subiendo archivo…
                     </div>
