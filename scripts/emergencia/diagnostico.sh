@@ -125,7 +125,7 @@ if [[ -f "$APP_DIR/.env" ]]; then
     slug="$(env_valor "$APP_DIR/.env" TENANT_SLUG 0)"
     [[ -n "$slug" ]] && PROYECTO="$slug"
     orden="$(env_valor "$APP_DIR/.env" LAB_ORDEN 0)"
-    [[ -n "$orden" ]] && S3_DUMP_FILTER="l${orden}_${PROYECTO}"
+    [[ -n "$orden" ]] && S3_DUMP_FILTER="e${orden}_${PROYECTO}"
     edb="$(env_valor "$APP_DIR/.env" EMERGENCIA_DB_DATABASE 0)"
     euser="$(env_valor "$APP_DIR/.env" EMERGENCIA_DB_USERNAME 0)"
     ehost="$(env_valor "$APP_DIR/.env" EMERGENCIA_DB_HOST 0)"

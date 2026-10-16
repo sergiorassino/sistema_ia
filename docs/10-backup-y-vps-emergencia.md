@@ -42,10 +42,10 @@ Prefijo: `s3://sistesco/backupDedicado/sistema/archivos/{TENANT_SLUG}/`
 No se sube `vendor/`, logs, cache, `livewire-tmp` ni el árbol git. El sync **no**
 usa `--delete`: un archivo borrado en disco no se borra en S3.
 
-Dump horario (misma rutina): `l{LAB_ORDEN}_{TENANT_SLUG}_YYYY_MM_DD_HH_MM_SS.sql.gz`
+Dump horario (misma rutina): `e{LAB_ORDEN}_{TENANT_SLUG}_YYYY_MM_DD_HH_MM_SS.sql.gz`
 en `s3://sistesco/backupDedicado/sistema/backupHora`.
-Ejemplo: `l1_montecristo_2026_10_16_21_30_02.sql.gz`. `LAB_ORDEN` es el número
-del nombre (igual que en Silavet); no implica un laboratorio. La marca de
+Ejemplo: `e1_montecristo_2026_10_16_21_30_02.sql.gz`. La **e** es de escuela.
+`LAB_ORDEN` es el número que sigue (`e1_`, `e2_`, …). La marca de
 tiempo del nombre es **hora argentina** (`America/Argentina/Buenos_Aires`), no
 la del reloj del servidor (suele ser UTC). Override opcional: `SE_TZ` en el
 `.env`. `LAB_ORDEN` y el resto de la emergencia van en el **`.env` del colegio**
@@ -150,7 +150,7 @@ EMERGENCIA_DB_PASSWORD=…
 ```
 
 La carpeta del colegio debe llamarse igual que `TENANT_SLUG`
-(`…/ia/montecristo`). El filtro del dump es `l{LAB_ORDEN}_{TENANT_SLUG}`.
+(`…/ia/montecristo`). El filtro del dump es `e{LAB_ORDEN}_{TENANT_SLUG}`.
 Con slugs distintos, `LAB_ORDEN=1` en todos no choca.
 
 Probar (en el hosting del colegio, no en el VPS de reserva):
@@ -158,7 +158,7 @@ Probar (en el hosting del colegio, no en el VPS de reserva):
 ```bash
 bash /ruta/al/colegio/scripts/emergencia/respaldar.sh --dry-run
 bash /ruta/al/colegio/scripts/emergencia/respaldar.sh
-aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep l1_montecristo | tail
+aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep e1_montecristo | tail
 ```
 
 Cron **por colegio** (ejemplo montecristo; desplazá el minuto si varios
@@ -303,7 +303,7 @@ composer -V
 command -v aws || echo "falta AWS CLI — igual que en producción, o §2.1"
 aws sts get-caller-identity
 aws s3 ls s3://sistesco/backupDedicado/sistema/archivos/montecristo/
-aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep l1_montecristo | tail
+aws s3 ls s3://sistesco/backupDedicado/sistema/backupHora/ | grep e1_montecristo | tail
 ```
 
 Si `composer` queda en `$HOME/bin`, ese directorio tiene que estar en PATH
@@ -490,7 +490,7 @@ bash scripts/emergencia/restaurar.sh --yes
 
 Hace, en orden: `git pull` → `composer install --no-dev` → `s3 sync` de
 archivos → aplica `EMERGENCIA_*` del `.env` sobre `APP_URL`/`DB_*` → importa
-el dump más reciente `l{LAB_ORDEN}_{TENANT_SLUG}_…` → caches Artisan y
+el dump más reciente `e{LAB_ORDEN}_{TENANT_SLUG}_…` → caches Artisan y
 `php artisan se:migrate-legacy --force` (no uses `migrate` a secas: en una base
 legacy recrearía el esquema).
 

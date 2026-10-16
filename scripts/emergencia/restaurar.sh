@@ -17,7 +17,7 @@ En el VPS de emergencia (tras preparar-vps.sh):
   2. composer install --no-dev
   3. baja el espejo de archivos desde S3 (carpeta = TENANT_SLUG del colegio)
   4. aplica EMERGENCIA_* del .env sobre APP_URL / DB_*
-  5. importa el dump MySQL más reciente (l{LAB_ORDEN}_{tenant}_…)
+  5. importa el dump MySQL más reciente (e{LAB_ORDEN}_{tenant}_…)
   6. limpia caches Laravel y corre se:migrate-legacy --force
 
 Opciones:

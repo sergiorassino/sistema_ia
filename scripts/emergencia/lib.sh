@@ -98,7 +98,7 @@ cargar_config() {
     fi
 
     if [[ -z "${S3_DUMP_FILTER:-}" && -n "${LAB_ORDEN:-}" && -n "${PROYECTO:-}" ]]; then
-        S3_DUMP_FILTER="l${LAB_ORDEN}_${PROYECTO}"
+        S3_DUMP_FILTER="e${LAB_ORDEN}_${PROYECTO}"
         log "S3_DUMP_FILTER por defecto: $S3_DUMP_FILTER"
     fi
 
@@ -211,7 +211,7 @@ aplicar_env_colegio() {
     if [[ -n "$orden" ]]; then
         LAB_ORDEN="$orden"
     fi
-    [[ -n "${LAB_ORDEN:-}" ]] || die "Falta LAB_ORDEN en $envf (bloque de emergencia; número del dump l1_, l2_, …). Ver .env.example."
+    [[ -n "${LAB_ORDEN:-}" ]] || die "Falta LAB_ORDEN en $envf (bloque de emergencia; número del dump e1_, e2_, …). Ver .env.example."
 
     ehost="$(env_valor "$envf" EMERGENCIA_DB_HOST 0)"
     eport="$(env_valor "$envf" EMERGENCIA_DB_PORT 0)"
@@ -226,7 +226,7 @@ aplicar_env_colegio() {
     MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
     MYSQL_PORT="${MYSQL_PORT:-3306}"
 
-    S3_DUMP_FILTER="l${LAB_ORDEN}_${PROYECTO}"
+    S3_DUMP_FILTER="e${LAB_ORDEN}_${PROYECTO}"
     log "Colegio TENANT_SLUG=$PROYECTO LAB_ORDEN=$LAB_ORDEN filtro=$S3_DUMP_FILTER"
 }
 
@@ -286,17 +286,17 @@ s3_uri_dumps() {
     echo "s3://${S3_BUCKET}/${S3_PREFIX_DUMPS%/}"
 }
 
-# Nombre: l1_alqu_2026_07_24_21_30_02.sql.gz (hora Argentina, ver aplicar_zona_horaria).
+# Nombre: e1_montecristo_2026_07_24_21_30_02.sql.gz (hora Argentina, ver aplicar_zona_horaria).
 nombre_dump_hora() {
     require_vars LAB_ORDEN PROYECTO
-    [[ "$LAB_ORDEN" =~ ^[0-9]+$ ]] || die "LAB_ORDEN debe ser un número (1 → l1_, 2 → l2_, …)."
+    [[ "$LAB_ORDEN" =~ ^[0-9]+$ ]] || die "LAB_ORDEN debe ser un número (1 → e1_, 2 → e2_, …)."
     aplicar_zona_horaria
-    echo "l${LAB_ORDEN}_${PROYECTO}_$(date +%Y_%m_%d_%H_%M_%S).sql.gz"
+    echo "e${LAB_ORDEN}_${PROYECTO}_$(date +%Y_%m_%d_%H_%M_%S).sql.gz"
 }
 
 filtro_dump_por_defecto() {
     require_vars LAB_ORDEN PROYECTO
-    echo "l${LAB_ORDEN}_${PROYECTO}"
+    echo "e${LAB_ORDEN}_${PROYECTO}"
 }
 
 # Lee una clave de .env Laravel (última aparición). No hace source (valores con espacios/$).

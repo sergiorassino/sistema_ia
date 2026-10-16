@@ -21,7 +21,7 @@ uso() {
 Uso: respaldar.sh [--dry-run] [--solo-dump] [--solo-archivos]
 
 En el hosting de producción (HABILITAR_RESPALDO=1 en el .env):
-  1. mysqldump de DB_* del .env → s3://…/backupHora/l{LAB_ORDEN}_{TENANT_SLUG}_….sql.gz
+  1. mysqldump de DB_* del .env → s3://…/backupHora/e{LAB_ORDEN}_{TENANT_SLUG}_….sql.gz
   2. espejo incremental de archivos del colegio (sin --delete)
 
 Opciones:
