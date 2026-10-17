@@ -418,6 +418,92 @@ function lanzar_en_fondo(string $lanzador): ?int
     return null;
 }
 
+function salida_comando(string $cmd): ?string
+{
+    if (php_fn_ok('exec')) {
+        $out = [];
+        $code = 1;
+        @exec($cmd, $out, $code);
+        if ($code !== 0) {
+            return null;
+        }
+
+        return trim(implode("\n", $out));
+    }
+    if (php_fn_ok('shell_exec')) {
+        $out = shell_exec($cmd.' 2>/dev/null');
+        if (! is_string($out)) {
+            return null;
+        }
+
+        return trim($out);
+    }
+    if (php_fn_ok('proc_open')) {
+        $des = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $pipes = [];
+        $proc = @proc_open($cmd, $des, $pipes);
+        if (! is_resource($proc)) {
+            return null;
+        }
+        $out = isset($pipes[1]) && is_resource($pipes[1]) ? (string) stream_get_contents($pipes[1]) : '';
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+        if (proc_close($proc) !== 0) {
+            return null;
+        }
+
+        return trim($out);
+    }
+
+    return null;
+}
+
+/**
+ * DirectAdmin deja /bin y /usr/bin fuera de open_basedir: is_executable()
+ * dice que bash no existe aunque exec() sí pueda lanzarlo.
+ */
+function resolver_bash(): string
+{
+    foreach (['/bin/bash', '/usr/bin/bash'] as $bin) {
+        if (@is_executable($bin)) {
+            return $bin;
+        }
+    }
+    $puede = php_fn_ok('exec') || php_fn_ok('shell_exec') || php_fn_ok('proc_open') || php_fn_ok('popen');
+    if (! $puede) {
+        return '/bin/bash';
+    }
+    foreach (['/usr/bin/bash', '/bin/bash'] as $bin) {
+        $cmd = escapeshellarg($bin).' -c '.escapeshellarg('echo ok');
+        if (salida_comando($cmd) === 'ok') {
+            return $bin;
+        }
+    }
+
+    return '';
+}
+
+function resolver_setsid(string $bash): string
+{
+    foreach (['/usr/bin/setsid', '/bin/setsid'] as $bin) {
+        if (@is_executable($bin)) {
+            return $bin;
+        }
+    }
+    if ($bash === '') {
+        return '';
+    }
+    $cual = salida_comando(escapeshellarg($bash).' -c '.escapeshellarg('command -v setsid'));
+    if (is_string($cual) && $cual !== '' && $cual[0] === '/') {
+        return $cual;
+    }
+
+    return '';
+}
+
 function lanzar_restaurar(
     string $appDir,
     string $scriptSh,
@@ -426,8 +512,9 @@ function lanzar_restaurar(
     array $conf,
     bool $dry
 ): array {
-    if (! is_executable('/bin/bash') && ! is_executable('/usr/bin/bash')) {
-        return ['ok' => false, 'mensaje' => 'No está /bin/bash en este servidor.'];
+    $bash = resolver_bash();
+    if ($bash === '') {
+        return ['ok' => false, 'mensaje' => 'No está bash en este servidor (/bin/bash ni /usr/bin/bash).'];
     }
     if (! is_readable($scriptSh)) {
         return ['ok' => false, 'mensaje' => 'No se encuentra restaurar.sh.'];
@@ -454,19 +541,19 @@ function lanzar_restaurar(
     $phpBin = $conf['PHP_BIN'] ?? '/usr/local/php83/bin/php';
     $phpDir = dirname((string) $phpBin);
     $path = $phpDir.':'.$home.'/bin:'.$home.'/.local/bin:/usr/local/bin:/usr/bin:/bin';
-    $setsid = is_executable('/usr/bin/setsid') ? '/usr/bin/setsid' : (is_executable('/bin/setsid') ? '/bin/setsid' : '');
+    $setsid = resolver_setsid($bash);
 
     $inner = 'export HOME='.escapeshellarg($home)
         .' USER='.escapeshellarg(basename($home))
         .' LOGNAME='.escapeshellarg(basename($home))
         .' PATH='.escapeshellarg($path)
         .'; cd '.escapeshellarg($appDir)
-        .'; /bin/bash '.escapeshellarg($scriptSh).' '.$modo
+        .'; '.escapeshellarg($bash).' '.escapeshellarg($scriptSh).' '.$modo
         .' >> '.escapeshellarg($logFile).' 2>&1'
         .'; echo EXIT:$? >> '.escapeshellarg($logFile);
 
-    $lanzador = ($setsid !== '' ? $setsid.' ' : '')
-        .'nohup /bin/bash -c '.escapeshellarg($inner)
+    $lanzador = ($setsid !== '' ? escapeshellarg($setsid).' ' : '')
+        .'nohup '.escapeshellarg($bash).' -c '.escapeshellarg($inner)
         .' </dev/null >/dev/null 2>&1 & echo $!';
 
     ignore_user_abort(true);
